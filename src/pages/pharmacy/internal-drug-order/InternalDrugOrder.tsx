@@ -1,322 +1,317 @@
 import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
-import { Form } from 'rsuite';
+import { Form, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
-import { faCapsules } from '@fortawesome/free-solid-svg-icons';
-import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
+import { faPills } from '@fortawesome/free-solid-svg-icons';
+
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import MyTable from '@/components/MyTable';
+import MyNestedTable from '@/components/MyNestedTable';
 import './styles.less';
-import PatientSide from '@/pages/lab-module/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+
 const InternalDrugOrder = () => {
   const dispatch = useAppDispatch();
-  const [order, serOrder] = useState({});
-  // Fetch orders tatus Lov response
-  const { data: orderstatusLovQueryResponse } = useGetLovValuesByCodeQuery('PHARMACY_ORDER_STATUS');
 
-  // class name for selected row
-  const isSelectedOrder = rowData => {
-    if (rowData && order && order?.key === rowData.key) {
-      return 'selected-row';
-    } else return '';
-  };
   // dummy data
   const data = [
     {
       key: '1',
-      patientName: 'pat1',
-      MRN: 'MRN1',
-      wardName: 'ward1',
-      bed: 'bed1',
-      prescriber: 'pre1',
-      numberOfMedications: 1,
-      orderStatus: 'pending',
+      wardName: 'ICU Ward A',
+      medicationName: 'Paracetamol 500mg',
+      patientCount: '8',
+      tolalRequiredDoses: '24',
+      dispenseUOM: 'Tablets',
+      orderStatus: 'Pending',
       medications: [
         {
           key: '1',
-          medication: 'med11',
-          route: 'route11',
-          frequency: 11,
-          dose: 'dose11',
-          unit: 'u11',
-          duration: 'dur11',
-          qtyToDispense: 'q11',
-          totalDoses: 11,
-          startDateTime: '2025-01-01',
-          instructions: 'inst11',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Paracetamol 500mg',
+          route: 'Oral',
+          frequency: 3,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '7 days',
+          qtyToDispense: '21',
+          patientName: 'Ahmed Hassan',
+          totalCountAndUOM: '21 Tablets',
+          instructions: 'Take 1 tablet every 8 hours for fever',
+          DayNo: 'Day 1',
+          status: 'InTransit'
         },
         {
           key: '2',
-          medication: 'med12',
-          route: 'route12',
-          frequency: 12,
-          dose: 'dose12',
-          unit: 'u12',
-          duration: 'dur12',
-          qtyToDispense: 'q12',
-          totalDoses: 12,
-          startDateTime: '2025-01-02',
-          instructions: 'inst12',
-          stockAvailable: 'yes',
-          isValid: false
+          medication: 'Paracetamol 500mg',
+          route: 'Oral',
+          frequency: 3,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '5 days',
+          qtyToDispense: '15',
+          patientName: 'Fatima Ali',
+          totalCountAndUOM: '15 Tablets',
+          instructions: 'Take 1 tablet every 8 hours for pain',
+          DayNo: 'Day 1',
+          status: 'Pending'
         },
         {
           key: '3',
-          medication: 'med13',
-          route: 'route13',
-          frequency: 13,
-          dose: 'dose13',
-          unit: 'u12',
-          duration: 'dur13',
-          qtyToDispense: 'q13',
-          totalDoses: 13,
-          startDateTime: '2025-01-03',
-          instructions: 'inst13',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Paracetamol 500mg',
+          route: 'Oral',
+          frequency: 2,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '3 days',
+          qtyToDispense: '6',
+          patientName: 'Omar Khalil',
+          totalCountAndUOM: '6 Tablets',
+          instructions: 'Take 1 tablet every 12 hours',
+          DayNo: 'Day 2',
+          status: 'InTransit'
         },
         {
           key: '4',
-          medication: 'med14',
-          route: 'route14',
-          frequency: 14,
-          dose: 'dose14',
-          unit: 'u14',
-          duration: 'dur14',
-          qtyToDispense: 'q14',
-          totalDoses: 14,
-          startDateTime: '2025-01-04',
-          instructions: 'inst14',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Paracetamol 500mg',
+          route: 'Oral',
+          frequency: 4,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '10 days',
+          qtyToDispense: '40',
+          patientName: 'Layla Ahmed',
+          totalCountAndUOM: '40 Tablets',
+          instructions: 'Take 1 tablet every 6 hours for fever',
+          DayNo: 'Day 1',
+          status: 'Received'
         }
       ]
     },
     {
       key: '2',
-      patientName: 'pat2',
-      MRN: 'MRN2',
-      wardName: 'ward2',
-      bed: 'bed2',
-      prescriber: 'pre2',
-      numberOfMedications: 2,
-      orderStatus: 'pending',
+      wardName: 'Cardiology Ward',
+      medicationName: 'Aspirin 100mg',
+      patientCount: '12',
+      tolalRequiredDoses: '36',
+      dispenseUOM: 'Tablets',
+      orderStatus: 'Received',
       medications: [
         {
           key: '1',
-          medication: 'med21',
-          route: 'route21',
-          frequency: 21,
-          dose: 'dose21',
-          unit: 'u21',
-          duration: 'dur21',
-          qtyToDispense: 'q21',
-          totalDoses: 21,
-          startDateTime: '2025-02-01',
-          instructions: 'inst21',
-          stockAvailable: 'yes',
-          isValid: false
+          medication: 'Aspirin 100mg',
+          route: 'Oral',
+          frequency: 1,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '30 days',
+          qtyToDispense: '30',
+          patientName: 'Mohammed Saleh',
+          totalCountAndUOM: '30 Tablets',
+          instructions: 'Take 1 tablet daily with food',
+          DayNo: 'Day 1',
+          status: 'Received'
         },
         {
           key: '2',
-          medication: 'med22',
-          route: 'route22',
-          frequency: 22,
-          dose: 'dose22',
-          unit: 'u22',
-          duration: 'dur22',
-          qtyToDispense: 'q22',
-          totalDoses: 22,
-          startDateTime: '2025-02-02',
-          instructions: 'inst22',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Aspirin 100mg',
+          route: 'Oral',
+          frequency: 1,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '30 days',
+          qtyToDispense: '30',
+          patientName: 'Aisha Rahman',
+          totalCountAndUOM: '30 Tablets',
+          instructions: 'Take 1 tablet daily after breakfast',
+          DayNo: 'Day 1',
+          status: 'Received'
         },
         {
           key: '3',
-          medication: 'med23',
-          route: 'route23',
-          frequency: 23,
-          dose: 'dose23',
-          unit: 'u23',
-          duration: 'dur23',
-          qtyToDispense: 'q23',
-          totalDoses: 23,
-          startDateTime: '2025-02-03',
-          instructions: 'inst23',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Aspirin 100mg',
+          route: 'Oral',
+          frequency: 1,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '30 days',
+          qtyToDispense: '30',
+          patientName: 'Khalid Ibrahim',
+          totalCountAndUOM: '30 Tablets',
+          instructions: 'Take 1 tablet daily with water',
+          DayNo: 'Day 1',
+          status: 'Received'
         },
         {
           key: '4',
-          medication: 'med24',
-          route: 'route24',
-          frequency: 24,
-          dose: 'dose24',
-          unit: 'u24',
-          duration: 'dur24',
-          qtyToDispense: 'q24',
-          totalDoses: 24,
-          startDateTime: '2025-02-04',
-          instructions: 'inst24',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Aspirin 100mg',
+          route: 'Oral',
+          frequency: 1,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '30 days',
+          qtyToDispense: '30',
+          patientName: 'Noor Al-Zahra',
+          totalCountAndUOM: '30 Tablets',
+          instructions: 'Take 1 tablet daily',
+          DayNo: 'Day 2',
+          status: 'Received'
         }
       ]
     },
     {
       key: '3',
-      patientName: 'pat3',
-      MRN: 'MRN3',
-      wardName: 'ward3',
-      bed: 'bed3',
-      prescriber: 'pre3',
-      numberOfMedications: 3,
+      wardName: 'Pediatrics Ward',
+      medicationName: 'Amoxicillin 250mg',
+      patientCount: '6',
+      tolalRequiredDoses: '18',
+      dispenseUOM: 'Capsules',
       orderStatus: 'pending',
       medications: [
         {
           key: '1',
-          medication: 'med31',
-          route: 'route31',
-          frequency: 31,
-          dose: 'dose31',
-          unit: 'u31',
-          duration: 'dur31',
-          qtyToDispense: 'q31',
-          totalDoses: 31,
-          startDateTime: '2025-03-01',
-          instructions: 'inst31',
-          stockAvailable: 'yes',
-          isValid: false
+          medication: 'Amoxicillin 250mg',
+          route: 'Oral',
+          frequency: 3,
+          dose: '1',
+          unit: 'Capsule',
+          duration: '7 days',
+          qtyToDispense: '21',
+          patientName: 'Yusuf Ahmed',
+          totalCountAndUOM: '21 Capsules',
+          instructions: 'Take 1 capsule every 8 hours',
+          DayNo: 'Day 1',
+          status: 'Pending'
         },
         {
           key: '2',
-          medication: 'med32',
-          route: 'route32',
-          frequency: 32,
-          dose: 'dose32',
-          unit: 'u32',
-          duration: 'dur32',
-          qtyToDispense: 'q32',
-          totalDoses: 32,
-          startDateTime: '2025-03-02',
-          instructions: 'inst32',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Amoxicillin 250mg',
+          route: 'Oral',
+          frequency: 3,
+          dose: '1',
+          unit: 'Capsule',
+          duration: '7 days',
+          qtyToDispense: '21',
+          patientName: 'Mariam Hassan',
+          totalCountAndUOM: '21 Capsules',
+          instructions: 'Take 1 capsule every 8 hours with food',
+          dayNo: 'Day 1',
+          status: 'Prepared'
         },
         {
           key: '3',
-          medication: 'med33',
-          route: 'route33',
-          frequency: 33,
-          dose: 'dose33',
-          unit: 'u33',
-          duration: 'dur33',
-          qtyToDispense: 'q33',
-          totalDoses: 33,
-          startDateTime: '2025-03-03',
-          instructions: 'inst33',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Amoxicillin 250mg',
+          route: 'Oral',
+          frequency: 2,
+          dose: '1',
+          unit: 'Capsule',
+          duration: '5 days',
+          qtyToDispense: '10',
+          patientName: 'Adam Khalil',
+          totalCountAndUOM: '10 Capsules',
+          instructions: 'Take 1 capsule every 12 hours',
+          dayNo: 'Day 1',
+          status: 'InTransit'
         },
         {
           key: '4',
-          medication: 'med34',
-          route: 'route34',
-          frequency: 34,
-          dose: 'dose34',
-          unit: 'u34',
-          duration: 'dur34',
-          qtyToDispense: 'q34',
-          totalDoses: 34,
-          startDateTime: '2025-03-04',
-          instructions: 'inst34',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Amoxicillin 250mg',
+          route: 'Oral',
+          frequency: 3,
+          dose: '1',
+          unit: 'Capsule',
+          duration: '7 days',
+          qtyToDispense: '21',
+          patientName: 'Zara Ali',
+          totalCountAndUOM: '21 Capsules',
+          instructions: 'Take 1 capsule every 8 hours',
+          dayNo: 'Day 2',
+          status: 'Received'
         }
       ]
     },
     {
       key: '4',
-      patientName: 'pat4',
-      MRN: 'MRN4',
-      wardName: 'ward4',
-      bed: 'bed4',
-      prescriber: 'pre4',
-      numberOfMedications: 4,
+      wardName: 'Emergency Ward',
+      medicationName: 'Ibuprofen 400mg',
+      patientCount: '15',
+      tolalRequiredDoses: '45',
+      dispenseUOM: 'Tablets',
       orderStatus: 'pending',
       medications: [
         {
           key: '1',
-          medication: 'med41',
-          route: 'route41',
-          frequency: 41,
-          dose: 'dose41',
-          unit: 'u41',
-          duration: 'dur41',
-          qtyToDispense: 'q41',
-          totalDoses: 41,
-          startDateTime: '2025-04-01',
-          instructions: 'inst41',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Ibuprofen 400mg',
+          route: 'Oral',
+          frequency: 3,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '5 days',
+          qtyToDispense: '15',
+          patientName: 'Samir Mansour',
+          totalCountAndUOM: '15 Tablets',
+          instructions: 'Take 1 tablet every 8 hours for pain',
+          dayNo: 'Day 1',
+          status: 'Prepared'
         },
         {
           key: '2',
-          medication: 'med42',
-          route: 'route42',
-          frequency: 42,
-          dose: 'dose42',
-          unit: 'u42',
-          duration: 'dur42',
-          qtyToDispense: 'q42',
-          totalDoses: 42,
-          startDateTime: '2025-04-02',
-          instructions: 'inst42',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Ibuprofen 400mg',
+          route: 'Oral',
+          frequency: 2,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '3 days',
+          qtyToDispense: '6',
+          patientName: 'Rania Fawzi',
+          totalCountAndUOM: '6 Tablets',
+          instructions: 'Take 1 tablet every 12 hours',
+          dayNo: 'Day 1',
+          status: 'InTransit'
         },
         {
           key: '3',
-          medication: 'med43',
-          route: 'route43',
-          frequency: 43,
-          dose: 'dose43',
-          unit: 'u42',
-          duration: 'dur43',
-          qtyToDispense: 'q43',
-          totalDoses: 43,
-          startDateTime: '2025-04-03',
-          instructions: 'inst43',
-          stockAvailable: 'yes',
-          isValid: false
+          medication: 'Ibuprofen 400mg',
+          route: 'Oral',
+          frequency: 3,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '7 days',
+          qtyToDispense: '21',
+          patientName: 'Tarek El-Sayed',
+          totalCountAndUOM: '21 Tablets',
+          instructions: 'Take 1 tablet every 8 hours with food',
+          dayNo: 'Day 1',
+          status: 'Pending'
         },
         {
           key: '4',
-          medication: 'med44',
-          route: 'route44',
-          frequency: 44,
-          dose: 'dose44',
-          unit: 'u44',
-          duration: 'dur44',
-          qtyToDispense: 'q44',
-          totalDoses: 44,
-          startDateTime: '2025-04-04',
-          instructions: 'inst44',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Ibuprofen 400mg',
+          route: 'Oral',
+          frequency: 2,
+          dose: '1',
+          unit: 'Tablet',
+          duration: '5 days',
+          qtyToDispense: '10',
+          patientName: 'Hanaa Mostafa',
+          totalCountAndUOM: '10 Tablets',
+          instructions: 'Take 1 tablet every 12 hours',
+          dayNo: 'Day 2',
+          status: 'Received'
         }
       ]
     }
   ];
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Fetch orders tatus Lov response
+  const { data: orderstatusLovQueryResponse } = useGetLovValuesByCodeQuery('PHARMACY_ORDER_STATUS');
 
   // Icons column (start)
   const iconsForActionsOrders = () => (
@@ -330,27 +325,9 @@ const InternalDrugOrder = () => {
     </div>
   );
 
-  // Icons column (Dispense, Reject)
-  const iconsForActionsMedications = () => (
-    <div className="container-of-icons">
-      <FontAwesomeIcon
-        className="icons-style"
-        title="Dispense"
-        color="var(--primary-gray)"
-        icon={faCapsules}
-      />
-      <FontAwesomeIcon
-        className="icons-style"
-        title="Reject"
-        color="var(--primary-gray)"
-        icon={faCircleXmark}
-      />
-    </div>
-  );
-
   // Filter orders table
   const filters = () => (
-    <Form layout="inline" fluid className='filter-fields-pharmacey'>
+    <Form layout="inline" fluid className="filter-fields-pharmacey">
       <MyInput
         column
         fieldName=""
@@ -370,18 +347,7 @@ const InternalDrugOrder = () => {
         record={{}}
         setRecord={{}}
       />
-      <MyInput
-        column
-        width={250}
-        fieldType="select"
-        fieldName=""
-        fieldLabel="Medication Name"
-        selectData={[]}
-        selectDataLabel=""
-        selectDataValue=""
-        record={{}}
-        setRecord={{}}
-      />
+
       <MyInput
         column
         fieldType="date"
@@ -398,44 +364,33 @@ const InternalDrugOrder = () => {
         record={{}}
         setRecord={{}}
       />
-      <MyButton
-        color="var(--deep-blue)"
-        width="109px"
-      >
+      <MyButton color="var(--deep-blue)" width="109px">
         Search
       </MyButton>
     </Form>
   );
 
   //Table columns
-  const tableOrdersColumns = [
-    {
-      key: 'patientName',
-      title: <Translate>Patient Name</Translate>
-    },
-    {
-      key: 'MRN',
-      title: <Translate>MRN</Translate>
-    },
+  const orderColumns = [
     {
       key: 'wardName',
       title: <Translate>Ward Name</Translate>
     },
     {
-      key: 'bed',
-      title: <Translate>Bed</Translate>
+      key: 'medicationName',
+      title: <Translate>Medication Name</Translate>
     },
     {
-      key: 'prescriber',
-      title: <Translate>Prescriber</Translate>
+      key: 'patientCount',
+      title: <Translate>Patient Count</Translate>
     },
     {
-      key: 'numberOfMedications',
-      title: <Translate>Number of Medications</Translate>
+      key: 'tolalRequiredDoses',
+      title: <Translate>Tolal Required Doses</Translate>
     },
     {
-      key: 'orderStatus',
-      title: <Translate>Order Status</Translate>
+      key: 'dispenseUOM',
+      title: <Translate>Dispense UOM</Translate>
     },
     {
       key: 'icons',
@@ -445,61 +400,116 @@ const InternalDrugOrder = () => {
     }
   ];
 
+  // Function to get nested table data
+  const getNestedTable = rowData => {
+    return {
+      data: rowData.medications || [],
+      columns: tableMedicationsColumns
+    };
+  };
+
   //Table columns
   const tableMedicationsColumns = [
     {
-      key: 'medication',
-      title: <Translate>Medication</Translate>
+      key: 'patientName',
+      title: <Translate>Patient Name</Translate>
     },
-    {
-      key: 'route',
-      title: <Translate>Route</Translate>
-    },
-    {
-      key: 'frequency',
-      title: <Translate>Frequency</Translate>
-    },
-    {
-      key: 'dose',
-      title: <Translate>Dose</Translate>
-    },
-    {
-      key: 'unit',
-      title: <Translate>Unit</Translate>
-    },
-    {
-      key: 'duration',
-      title: <Translate>Duration</Translate>
-    },
-    {
-      key: 'qtyToDispense',
-      title: <Translate>Qty to Dispense</Translate>
-    },
-    {
-      key: 'totalDoses',
-      title: <Translate>Total Doses</Translate>
-    },
-    {
-      key: 'startDateTime',
-      title: <Translate>Start DateTime</Translate>
-    },
+
     {
       key: 'instructions',
       title: <Translate>Instructions</Translate>
     },
     {
-      key: 'stockAvailable',
-      title: <Translate>Stock Available</Translate>
+      key: 'totalCountAndUOM',
+      title: <Translate>Total Count & UOM</Translate>
     },
     {
-      key: 'isValid',
-      title: <Translate>Status</Translate>
+      key: 'DayNo',
+      title: <Translate>Day No.</Translate>,
+      render: rowData => {
+        return rowData.DayNo || rowData.dayNo || 'N/A';
+      }
     },
     {
-      key: 'icons',
-      title: <Translate></Translate>,
-      flexGrow: 3,
-      render: () => iconsForActionsMedications()
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      render: rowData => {
+        const status = rowData.status || 'Pending';
+
+        const getStatusConfig = status => {
+          switch (status) {
+            case 'Pending':
+              return {
+                backgroundColor: 'var(--light-orange)',
+                color: 'var(--primary-orange)',
+                contant: 'Pending'
+              };
+            case 'Prepared':
+              return {
+                backgroundColor: 'var(--light-blue)',
+                color: 'var(--primary-blue)',
+                contant: 'Prepared'
+              };
+            case 'InTransit':
+              return {
+                backgroundColor: 'var(--light-yellow)',
+                color: 'var(--primary-yellow)',
+                contant: 'InTransit'
+              };
+            case 'Received':
+              return {
+                backgroundColor: 'var(--light-green)',
+                color: 'var(--primary-green)',
+                contant: 'Received'
+              };
+            default:
+              return {
+                backgroundColor: 'var(--background-gray)',
+                color: 'var(--primary-gray)',
+                contant: 'Unknown'
+              };
+          }
+        };
+
+        const config = getStatusConfig(status);
+        return (
+          <MyBadgeStatus
+            backgroundColor={config.backgroundColor}
+            color={config.color}
+            contant={config.contant}
+          />
+        );
+      }
+    },
+    {
+      key: 'actions',
+      title: <Translate> </Translate>,
+      render: () => {
+        const tooltipNurse = <Tooltip>Clinical Check</Tooltip>;
+        const tooltipDoctor = <Tooltip>MAR</Tooltip>;
+        return (
+          <Form layout="inline" fluid className="nurse-doctor-form">
+            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+              <div>
+                <MyButton size="small">
+                  <FontAwesomeIcon icon={faUserCheck} />
+                </MyButton>
+              </div>
+            </Whisper>
+            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+              <div>
+                <MyButton
+                  size="small"
+                  style={{ backgroundColor: 'var(--primary-gray)', color: 'white' }}
+                >
+                  <FontAwesomeIcon icon={faPills} />
+                </MyButton>
+              </div>
+            </Whisper>
+          </Form>
+        );
+      },
+      expandable: false
     }
   ];
 
@@ -523,26 +533,22 @@ const InternalDrugOrder = () => {
 
   return (
     <div className="container-internal-drug-order">
-      <div className="container-of-tables-int">
-        <MyTable
-          height={450}
+      <div className="container-of-tables-int" style={{ width: '100%' }}>
+        <MyNestedTable
           data={data}
-          columns={tableOrdersColumns}
-          rowClassName={isSelectedOrder}
-          filters={filters()}
-          onRowClick={rowData => {
-            serOrder(rowData);
+          columns={orderColumns}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalCount={data.length}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          onRowsPerPageChange={e => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
           }}
+          getNestedTable={getNestedTable}
+          height={500}
+          filters={filters()}
         />
-
-        <MyTable
-          height={450}
-          data={order.medications ? order.medications : []}
-          columns={tableMedicationsColumns}
-        />
-      </div>
-      <div className="patient-side-internal-drug-order">
-        <PatientSide patient={{}} encounter={{}} />
       </div>
     </div>
   );

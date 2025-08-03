@@ -20,3 +20,55 @@
   padding: 2px;
   align-items: flex-end;
 }
+
+// Remove hover from rows with no-hover class
+:global(.rs-table-row.no-hover:hover) {
+  background-color: transparent !important;
+}
+
+:global(.rs-table-row.no-hover:hover td) {
+  background-color: transparent !important;
+}
+
+:global(.rs-table-row.no-hover:hover .rs-table-cell) {
+  background-color: transparent !important;
+}
+
+// Add hover effect only for selected row
+:global(.rs-table-row.selected-row:hover) {
+  background-color: var(--light-blue) !important;
+}
+
+:global(.rs-table-row.selected-row:hover td) {
+  background-color: var(--light-blue) !important;
+}
+
+:global(.rs-table-row.selected-row:hover .rs-table-cell) {
+  background-color: var(--light-blue) !important;
+}
+
+// Keep selected row highlighted
+:global(.rs-table-row.selected-row) {
+  background-color: var(--light-blue) !important;
+}
+
+:global(.rs-table-row.selected-row td) {
+  background-color: var(--light-blue) !important;
+}
+
+:global(.rs-table-row.selected-row .rs-table-cell) {
+  background-color: var(--light-blue) !important;
+}
+
+// Override all default hover effects
+:global(.rs-table-row:hover) {
+  background-color: transparent !important;
+}
+
+:global(.rs-table-row:hover td) {
+  background-color: transparent !important;
+}
+
+:global(.rs-table-row:hover .rs-table-cell) {
+  background-color: transparent !important;
+}
