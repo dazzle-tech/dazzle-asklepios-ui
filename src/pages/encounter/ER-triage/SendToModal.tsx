@@ -12,7 +12,7 @@ import './styles.less'
 import { useERCompleteEncounterMutation } from '@/services/encounterService';
 import { useSentToERMutation } from '@/services/encounterService';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-const SendToModal = ({ open, setOpen, encounter, triage }) => {
+const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
     const [completeEncounter, completeEncounterMutation] = useERCompleteEncounterMutation();
     const dispatch = useAppDispatch();
     const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...newApEncounter });
@@ -34,6 +34,9 @@ const SendToModal = ({ open, setOpen, encounter, triage }) => {
                 dispatch(notify({ msg: 'Patient has been successfully moved to the ER Waiting List' }));
                 setShowModal(false);
                 setOpen(false);
+                if (refetch !== null) {
+                    refetch();
+                }
             }).catch((e) => {
 
                 if (e.status === 422) {
@@ -50,14 +53,16 @@ const SendToModal = ({ open, setOpen, encounter, triage }) => {
     };
     // handle Complete Encounter Function
     const handleCompleteEncounter = async (destinationKey) => {
-        console.log(" emergencyTriage?.key ===> ", emergencyTriage?.key);
         try {
             await completeEncounter({
                 encounter: localEncounter,
                 triageKey: emergencyTriage?.key,
                 destinationKey: destinationKey
             }).unwrap();
-
+            if (refetch !== null) {
+                refetch();
+            }
+            refetch();
             dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
         } catch (error) {
             console.error("Encounter completion error:", error);

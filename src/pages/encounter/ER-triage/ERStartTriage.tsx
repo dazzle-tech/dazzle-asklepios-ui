@@ -411,6 +411,15 @@ const ERStartTriage = () => {
                                     />
                                 </Form>
                             )}
+                            <div className="button-right">
+                                <MyButton
+                                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                                    className="button-bottom-align"
+                                    onClick={handleSave}
+                                >
+                                    <Translate>Save</Translate>
+                                </MyButton>
+                            </div>
 
                         </Form>
                     </Panel>
