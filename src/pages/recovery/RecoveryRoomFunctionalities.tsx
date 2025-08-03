@@ -26,7 +26,8 @@ import './styles.less';
 import PostProcedureAnesthesia from '../encounter/encounter-component/procedure/Post-ProcedureCare/PostProcedureAnesthesia';
 import ArrivalRecoveryRoom from './ArrivalRecoveryRoom';
 import DischargeReadinessAssessment from './DischargeReadinessAssessment';
-const RecoveryRoomFunctionalities = ({ patient, encounter ,operation }) => {
+import ContinuousVitalsMonitoring from './ContinuousVitalsMonitoring';
+const RecoveryRoomFunctionalities = ({ patient, encounter, operation }) => {
   const [iVFluidsGivenTags, setiVFluidsGivenTags] = useState([]);
   const [analgesicsGivenTags, setAanalgesicsGivenTags] = useState([]);
   const [drainsAndTubesTags, setDrainsAndTubesTags] = useState([]);
@@ -54,109 +55,13 @@ const RecoveryRoomFunctionalities = ({ patient, encounter ,operation }) => {
       }
     ]
   });
-  const anesthesiaRef = useRef(null);
 
-  // dummy data
-  const data = [
-    {
-      key: '1',
-      time: '12:12',
-      latestbpSystolic: '20',
-      latestbpDiastolic: '20',
-      latestheartrate: '20',
-      latestrespiratoryrate: '20',
-      latestoxygensaturation: '20',
-      latesttemperature: '20'
-    },
-    {
-      key: '2',
-      time: '11:11',
-      latestbpSystolic: '30',
-      latestbpDiastolic: '30',
-      latestheartrate: '30',
-      latestrespiratoryrate: '30',
-      latestoxygensaturation: '30',
-      latesttemperature: '30'
-    },
-    {
-      key: '3',
-      time: '10:10',
-      latestbpSystolic: '40',
-      latestbpDiastolic: '40',
-      latestheartrate: '40',
-      latestrespiratoryrate: '40',
-      latestoxygensaturation: '40',
-      latesttemperature: '40'
-    }
-  ];
 
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && observation && rowData.key === observation.key) {
-      return 'selected-row';
-    } else return '';
-  };
+ 
 
-  // Icons column for
-  const iconsForActions = () => (
-    <div className="container-of-icons">
-      <MdModeEdit
-        title="Edit"
-        size={20}
-        fill="var(--primary-gray)"
-        className="icons-style"
-        onClick={() => setOpenAddNewPopup(true)}
-      />
-      <ImCancelCircle
-        title="Cancel"
-        size={18}
-        fill="var(--primary-gray)"
-        className="icons-style"
-        onClick={() => setPopupCancelOpen(true)}
-      />
-    </div>
-  );
 
-  // Table Columns
-  const tableColumns = [
-    {
-      key: 'time',
-      title: <Translate>Time</Translate>
-    },
-    {
-      key: 'latestbpSystolic',
-      title: <Translate>BP</Translate>,
-      render: (rowData: any) => `${rowData?.latestbpSystolic}/${rowData?.latestbpDiastolic} mmHg`
-    },
-    {
-      key: 'latestheartrate',
-      title: <Translate>Pulse</Translate>,
-      render: (rowData: any) => (rowData?.latestheartrate ? `${rowData?.latestheartrate} bpm` : ' ')
-    },
-    {
-      key: 'latestrespiratoryrate',
-      title: <Translate>R.R</Translate>,
-      render: (rowData: any) =>
-        rowData?.latestrespiratoryrate ? `${rowData?.latestrespiratoryrate} bpm` : ' '
-    },
-    {
-      key: 'latestoxygensaturation',
-      title: <Translate>SpO2</Translate>,
-      render: (rowData: any) =>
-        rowData?.latestoxygensaturation ? `${rowData?.latestoxygensaturation} %` : ' '
-    },
-    {
-      key: 'latesttemperature',
-      title: <Translate>Temp</Translate>,
-      render: (rowData: any) =>
-        rowData?.latesttemperature ? `${rowData?.latesttemperature} °C` : ' '
-    },
-    {
-      key: 'icons',
-      title: <Translate></Translate>,
-      render: () => iconsForActions()
-    }
-  ];
+
+ 
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -171,7 +76,7 @@ const RecoveryRoomFunctionalities = ({ patient, encounter ,operation }) => {
           <Form fluid>
             <Col md={12}>
               <Row>
-             <ArrivalRecoveryRoom operation={operation} />
+                <ArrivalRecoveryRoom operation={operation} />
               </Row>
               <Row>
                 <div className="container-form">
@@ -361,54 +266,10 @@ const RecoveryRoomFunctionalities = ({ patient, encounter ,operation }) => {
             </Col>
             <Col md={12}>
               <Row>
-                <div className="container-form">
-                  <div className="title-div">
-                    <Text>Continuous Vitals Monitoring</Text>
-                  </div>
-                  <Divider />
-                  <div className="container-of-add-new-button">
-                    <MyButton
-                      prefixIcon={() => <AddIcon />}
-                      color="var(--deep-blue)"
-                      width="90px"
-                      onClick={() => {
-                        setOpenAddNewPopup(true);
-                        setObservation({});
-                      }}
-                    >
-                      Add
-                    </MyButton>
-                  </div>
-                  <MyTable
-                    data={data}
-                    columns={tableColumns}
-                    onRowClick={rowData => {
-                      setObservation({ ...rowData });
-                    }}
-                    rowClassName={rowData => isSelected(rowData)}
-                  />
-                  <AddEditPopup
-                    open={openAddNewPopup}
-                    setOpen={setOpenAddNewPopup}
-                    observation={observation}
-                    setObservation={setObservation}
-                    width={width}
-                  />
-                  <CancellationModal
-                    title="Cancel Observation"
-                    fieldLabel="Cancellation Reason"
-                    open={popupCancelOpen}
-                    setOpen={setPopupCancelOpen}
-                    object={observation}
-                    setObject={setObservation}
-                    handleCancle=""
-                    fieldName="cancellationReason"
-                  />
-                  <br />
-                </div>
+                <ContinuousVitalsMonitoring operation={operation} />
               </Row>
               <Row>
-              <DischargeReadinessAssessment operation={operation}/>
+                <DischargeReadinessAssessment operation={operation} />
               </Row>
               <Row>
                 <div className="container-form">
