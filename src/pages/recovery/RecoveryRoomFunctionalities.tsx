@@ -20,20 +20,12 @@ import ContinuousVitalsMonitoring from './ContinuousVitalsMonitoring';
 import DischargeReadinessAssessment from './DischargeReadinessAssessment';
 import './styles.less';
 import AnesthesiaRecovery from './AnesthesiaRecovery';
+import NursingCare from './NursingCareInterventions';
 const RecoveryRoomFunctionalities = ({ patient, encounter, operation }) => {
-  const [iVFluidsGivenTags, setiVFluidsGivenTags] = useState([]);
-  const [analgesicsGivenTags, setAanalgesicsGivenTags] = useState([]);
-  const [drainsAndTubesTags, setDrainsAndTubesTags] = useState([]);
-  const [complicationsObservedTags, setComplicationsObservedTags] = useState([]);
   const [object, setObject] = useState({ oxygenGiven: false, returnToDifferentWard: false });
   const [departmentListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [openAddNewPopup, setOpenAddNewPopup] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
 
-  // Fetch  consciousness Level Lov response
-  const { data: consciousnessLevelLovQueryResponse } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
-  // Fetch  pain Level Lov response
-  const { data: painLevelLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
   // Fetch  department List response
   const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
   const { data: userList } = useGetUsersQuery({
@@ -74,65 +66,7 @@ const RecoveryRoomFunctionalities = ({ patient, encounter, operation }) => {
                 <AnesthesiaRecovery operation={operation} />
               </Row>
               <Row>
-                <div className="container-form">
-                  <div className="title-div">
-                    <Text>Nursing Care & Interventions</Text>
-                  </div>
-                  <Divider />
-                  <Row>
-                    <Col md={12}>
-                      <MyTagInput
-                        tags={iVFluidsGivenTags}
-                        setTags={setiVFluidsGivenTags}
-                        labelText="IV Fluids Given"
-                      />
-                    </Col>
-                    <Col md={12}>
-                      <MyTagInput
-                        tags={analgesicsGivenTags}
-                        setTags={setAanalgesicsGivenTags}
-                        labelText="Analgesics Given"
-                      />
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={12}>
-                      <MyTagInput
-                        tags={drainsAndTubesTags}
-                        setTags={setDrainsAndTubesTags}
-                        labelText="Drains & Tubes"
-                      />
-                    </Col>
-                    <Col md={12}>
-                      <MyTagInput
-                        tags={complicationsObservedTags}
-                        setTags={setComplicationsObservedTags}
-                        labelText="Complications Observed"
-                      />
-                    </Col>
-                  </Row>
-                  <Row className="container-of-radio-recovery">
-                    <Col md={8}>
-                      <label>Wound/Dressing Checked</label>
-                    </Col>
-
-                    <Col md={16}>
-                      <RadioGroup name="extubationStatus" inline>
-                        <Radio value="clean">Clean</Radio>
-                        <Radio value="Not extubated">Oozing</Radio>
-                        <Radio value="na">Reinforced</Radio>
-                      </RadioGroup>
-                    </Col>
-                  </Row>
-                  <br />
-                  <Row>
-                    <div className="container-of-add-new-button">
-                      <MyButton color="var(--deep-blue)" width="90px">
-                        Save
-                      </MyButton>
-                    </div>
-                  </Row>
-                </div>
+              <NursingCare operation={operation} />
               </Row>
             </Col>
             <Col md={12}>

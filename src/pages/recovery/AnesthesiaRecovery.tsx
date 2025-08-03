@@ -15,7 +15,7 @@ import { newApOperationAnesthesiaRecovery } from "@/types/model-types-constructo
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import GenericAdministeredMedications from "../encounter/encounter-component/procedure/Post-ProcedureCare/AdministeredMedications ";
 import MyButton from "@/components/MyButton/MyButton";
-import { tr } from "date-fns/locale";
+
 import { useAppDispatch } from "@/hooks";
 
 
@@ -28,6 +28,7 @@ const AnesthesiaRecovery = ({ operation }) => {
     skip: !operation?.key,
     refetchOnMountOrArgChange: true,
   });
+  console.log("anesthesiaData", anesthesiaData);
   const [save] = useSaveAnesthesiaRecoveryMutation();
   // Fetch  consciousness Level Lov response
   const { data: consciousnessLevelLovQueryResponse } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
@@ -35,14 +36,15 @@ const AnesthesiaRecovery = ({ operation }) => {
   const { data: painLevelLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
  
    useEffect(() => {
-          setAnethesia({ ...anesthesia, extubationStatusLkey: status })
+          setAnethesia({ ...anesthesia, extubationStatus: status })
       }, [status])
 
 
   useEffect(() => {
     if (anesthesiaData?.object) {
+      
       setAnethesia(normalizeDates(anesthesiaData?.object));
-      setStatus(anesthesiaData?.object.extubationStatusLkey || '');
+      setStatus(anesthesiaData?.object.extubationStatus || '');
     }
   }, [anesthesiaData]);
 
