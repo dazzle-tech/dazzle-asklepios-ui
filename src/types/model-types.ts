@@ -1421,6 +1421,7 @@ export interface ApEncounter {
 	planInstructionsNote:string;
 	discharge:boolean;
 	emergencyLevelLkey:string;
+	dischargeAt:number;
 } 
 
 export interface ApEncounterAppliedService { 
@@ -2186,7 +2187,7 @@ export interface ApOperationAnesthesiaRecovery {
 	oxygenGiven:boolean;
 	oxygenFlowLpm:number;
 	extubationTime:number;
-	extubationStatusLkey:string;
+	extubationStatus:string;
 	consciousnessLevelLkey:string;
 	painLevelLkey:string;
 	nauseaVomiting:boolean;
@@ -2277,7 +2278,7 @@ export interface ApOperationDischargeToWard {
 	receivingNurseKey:string;
 	finalNotes:string;
 	patientIdBandRechecked:boolean;
-	transportModeLkey:string;
+	transportMode:string;
 	createdBy:string;
 	createdAt:number;
 	updatedBy:string;
