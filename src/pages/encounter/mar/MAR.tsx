@@ -2,7 +2,7 @@ import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
-import { Col, Form, Panel, Row, Text } from 'rsuite';
+import { Col, Form, Panel, Row, Text, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPills } from '@fortawesome/free-solid-svg-icons';
@@ -52,77 +52,92 @@ const MAR = () => {
       key: '1',
       title: 'Action',
       icon: (
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Action</Tooltip>}>
         <FontAwesomeIcon
           icon={faPills}
           title="Action"
           onClick={() => setOpenActionModal(true)}
           className="icons-style"
         />
+        </Whisper>
       )
     },
     {
       key: '8632641360936162',
       title: 'On Hold',
       icon: (
+          <Whisper trigger="hover" placement="top" speaker={<Tooltip>On Hold</Tooltip>}>
         <FontAwesomeIcon
           icon={faCirclePause}
           title="On Hold"
           color="var(--primary-orange)"
           className="icons-style"
         />
+      </Whisper>
       )
     },
     {
       key: '8632624584925141',
       title: 'Administered',
       icon: (
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Administered</Tooltip>}>
         <FontAwesomeIcon
           icon={faCircleCheck}
           title="Administered"
           color="var(--primary-green)"
           className="icons-style"
         />
+        </Whisper>
       )
     },
     {
       key: '8632633074146151',
       title: 'DC',
       icon: (
+          <Whisper trigger="hover" placement="top" speaker={<Tooltip>D\C</Tooltip>}>
         <FontAwesomeIcon
           icon={faCircleStop}
           title="D\C"
           color="var(--primary-pink)"
           className="icons-style"
         />
+        </Whisper>
       )
     },
     {
       key: '8632651909869906',
       title: 'Missed',
-      icon: <FontAwesomeIcon icon={faClock} title="Missed" className="icons-style" />
+      icon: 
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Missed</Tooltip>}>
+      <FontAwesomeIcon icon={faClock} title="Missed" className="icons-style" />
+      </Whisper>
     },
     {
       key: '8632666911581391',
-      title: 'MAR_CANCELLED',
+      title: 'Cancelled',
       icon: (
+          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Cancelled</Tooltip>}>
         <FontAwesomeIcon
           icon={faBan}
-          title="MAR_CANCELLED"
+          title="Cancelled"
           color="var(--gray-dark)"
           className="icons-style"
         />
+        </Whisper>
       )
     },
     {
       key: '8632772055422992',
       title: 'DiscardedReturned',
       icon: (
+          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Discarded\Returned</Tooltip>}>
         <FontAwesomeIcon
           icon={faTrash}
           title="Discarded\Returned"
           color="var(--primary-purple)"
           className="icons-style"
         />
+        </Whisper>
       )
     }
   ];
@@ -142,7 +157,7 @@ const MAR = () => {
         {
           date: '31/7/2025',
           hour: '06:00',
-          status: '1'
+          status: '8632641360936162'
         },
         {
           date: '31/7/2025',
@@ -151,71 +166,101 @@ const MAR = () => {
         },
         {
           date: '31/7/2025',
-          hour: '18:00',
-          status: '8632641360936162'
+          hour: '6:00',
+          status: '8632633074146151'
         },
         {
-          date: '31/7/2025',
+          date: '1/8/2025',
           hour: '00:00',
-          status: '8632633074146151'
+          status: '8632651909869906'
         }
       ],
       day2: [
         {
-          date: '3/8/2025',
+          date: '1/8/2025',
           hour: '06:00',
-          status: '8632641360936162'
+          status: '8632772055422992'
         },
         {
-          date: '3/8/2025',
+          date: '1/8/2025',
           hour: '12:00',
           status: '8632633074146151'
+        },
+         {
+          date: '1/8/2025',
+          hour: '06:00',
+          status: '1'
+        },
+        {
+          date: '2/8/2025',
+          hour: '00:00',
+          status: '1'
         }
       ],
       day3: [
         {
-          date: '4/8/2025',
+          date: '2/8/2025',
           hour: '06:00',
-          status: '8632633074146151'
+          status: '1'
         },
         {
-          date: '4/8/2025',
+          date: '2/8/2025',
           hour: '12:00',
-          status: '8632772055422992'
+          status: '1'
         },
         {
-          date: '4/8/2025',
-          hour: '12:00',
-          status: '8632641360936162'
+          date: '2/8/2025',
+          hour: '6:00',
+          status: '1'
+        },
+         {
+          date: '3/8/2025',
+          hour: '00:00',
+          status: '1'
         }
       ],
       day4: [
         {
-          date: '5/8/2025',
+          date: '3/8/2025',
           hour: '06:00',
           status: '1'
-        }
+        },
+         {
+          date: '3/8/2025',
+          hour: '12:00',
+          status: '1'
+        },
+         {
+          date: '3/8/2025',
+          hour: '06:00',
+          status: '1'
+        },
+         {
+          date: '4/8/2025',
+          hour: '00:00',
+          status: '1'
+        },
       ],
       day5: [
         {
-          date: '5/8/2025',
+          date: '4/8/2025',
           hour: '06:00',
-          status: '8632651909869906'
+          status: '1'
         },
         {
-          date: '5/8/2025',
+          date: '4/8/2025',
           hour: '12:00',
           status: '1'
         },
         {
-          date: '5/8/2025',
-          hour: '12:00',
-          status: '8632641360936162'
+          date: '4/8/2025',
+          hour: '06:00',
+          status: '1'
         },
         {
           date: '5/8/2025',
-          hour: '12:00',
-          status: '8632651909869906'
+          hour: '00:00',
+          status: '1'
         }
       ]
     },
@@ -233,70 +278,61 @@ const MAR = () => {
         {
           date: '1/8/2025',
           hour: '08:00',
-          status: '8632651909869906'
+          status: '8632641360936162'
         },
         {
           date: '1/8/2025',
           hour: '20:00',
-          status: '8632772055422992'
+          status: '8632624584925141'
         }
       ],
       day2: [
         {
-          date: '7/8/2025',
+          date: '2/8/2025',
           hour: '08:00',
-          status: '8632651909869906'
+          status: '8632633074146151'
         },
         {
-          date: '7/8/2025',
+          date: '2/8/2025',
           hour: '20:00',
           status: '1'
-        },
-        {
-          date: '7/8/2025',
-          hour: '20:00',
-          status: '8632641360936162'
         }
       ],
       day3: [
         {
-          date: '8/8/2025',
-          hour: '08:00',
-          status: '8632772055422992'
-        },
-        {
-          date: '8/8/2025',
-          hour: '20:00',
-          status: '8632624584925141'
-        },
-        {
-          date: '8/8/2025',
-          hour: '21:00',
-          status: '1'
-        },
-        {
-          date: '8/8/2025',
-          hour: '23:00',
-          status: '8632772055422992'
-        }
-      ],
-      day4: [
-        {
-          date: '9/8/2025',
+          date: '3/8/2025',
           hour: '08:00',
           status: '8632651909869906'
         },
         {
-          date: '9/8/2025',
+          date: '3/8/2025',
           hour: '20:00',
-          status: '8632633074146151'
+          status: '8632772055422992'
+        },
+      ],
+      day4: [
+        {
+          date: '4/8/2025',
+          hour: '08:00',
+          status: '1'
+        },
+        {
+          date: '4/8/2025',
+          hour: '20:00',
+          status: '1'
         }
       ],
       day5: [
         {
-          date: '10/8/2025',
-          hour: '09:00',
-          status: '8632624584925141'
+          date: '5/8/2025',
+          hour: '08:00',
+          status: '1'
+        }
+        ,
+        {
+          date: '5/8/2025',
+          hour: '20:00',
+          status: '1'
         }
       ]
     }
