@@ -27,6 +27,7 @@ const BedAssignmentModal = ({ open, setOpen, encounter, refetchEncounter, depart
             }],
         pageSize: 100,
     });
+    
     // State to hold the request object for fetching bed list
     const [bedListRequest, setBedListRequest] = useState<ListRequest>({
         ...initialListRequest,

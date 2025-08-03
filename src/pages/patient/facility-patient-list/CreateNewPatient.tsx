@@ -72,7 +72,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     encounterStatusLkey: '91063195286200',
                     patientAge: calculateAgeFormat(savedPatient.dob),
                     visitTypeLkey: '2041082245699228',
-                    resourceTypeLkey: '6743167799449277'
+                    resourceTypeLkey: '6743167799449277',
+                    resourceKey: '7101086042442391',
                 });
                 dispatch(setRefetchEncounter(true));    
             }

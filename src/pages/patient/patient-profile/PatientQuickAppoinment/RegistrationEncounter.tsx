@@ -46,7 +46,6 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }
         setUniqueDepartmentKeys(uniqueDepartmentKeys);
     }, [localEncounter, resourceAvailabilityTimeListResponse]);
 
-
     return (
         <Form fluid layout="inline" className='fields-container'>
             <MyInput
