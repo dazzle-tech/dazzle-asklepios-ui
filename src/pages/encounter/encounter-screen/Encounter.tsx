@@ -1,6 +1,7 @@
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { faPersonFallingBurst } from '@fortawesome/free-solid-svg-icons';
 import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
@@ -184,16 +185,17 @@ const Encounter = () => {
     '/encounter/medications-record': 'medications Record ',
     '/encounter/vaccine-record': 'Vaccine Record',
     '/encounter/diagnostics-result': 'Diagnostics Result ',
-    '/encounter/operation-request': 'Operation Requests',
-    '/encounter/multidisciplinary-team-notes': 'Multidisciplinary Team Notes',
-    '/encounter/care-plan-and-goals': 'Care Plan & Goals',
-    '/encounter/discharge-planning': 'Discharge Planning',
-    '/encounter/bedside-procedures-requests': 'Bedside Procedures',
-    '/encounter/day-case': 'DayCase',
-    '/encounter/blood-order': 'Blood Order',
-    '/encounter/intake-output-balance': 'Intake Output Balance',
-    '/encounter/referral-request': 'Referral Request',
-    '/encounter/iv-fluid-order': 'IV Fluid Order',
+    '/encounter/operation-request':'Operation Requests',
+    '/encounter/multidisciplinary-team-notes':'Multidisciplinary Team Notes',
+    '/encounter/care-plan-and-goals':'Care Plan & Goals',
+    '/encounter/discharge-planning':'Discharge Planning',
+    '/encounter/bedside-procedures-requests':'Bedside Procedures',
+   '/encounter/day-case':'DayCase',
+    '/encounter/blood-order':'Blood Order',
+   '/encounter/intake-output-balance':'Intake Output Balance',
+    '/encounter/referral-request':'Referral Request',
+    '/encounter/iv-fluid-order':'IV Fluid Order',
+    '/encounter/morse-fall-scale':'Morse Fall Scale (MFS)',
   };
 
   const menuItems = [
@@ -230,7 +232,8 @@ const Encounter = () => {
     { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
     { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
     { key: 'dayCase', label: 'DayCase', icon: faBed, path: 'day-case' },
-    { key: 'ivFluidOrder', label: 'IV Fluid Order', icon: faSyringe, path: 'iv-fluid-order' },
+    { key: 'ivFluidOrder', label: 'IV Fluid Order', icon: faSyringe , path: 'iv-fluid-order' },
+     { key: 'morseFallScale', label: 'Morse Fall Scale (MFS)', icon: faPersonFallingBurst , path: 'morse-fall-scale' },
 
   ];
   const [currentHeader, setCurrentHeader] = useState();

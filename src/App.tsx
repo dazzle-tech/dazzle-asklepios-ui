@@ -141,6 +141,8 @@ import InventoryTransferApproval from './pages/inventory-transaction/inventory-t
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import MAR from './pages/encounter/mar';
 import ERList from './pages/encounter/ER-triage/ERList';
+import MorseFallScale from './pages/encounter/encounter-component/morse-fall-scale';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -339,6 +341,7 @@ const App = () => {
                 <Route path="intake-output-balance" element={<IntakeOutputBalance />} />
                 <Route path="referral-request" element={<ReferralRequest />} />
                 <Route path="iv-fluid-order" element={<IVFluidOrder />} />
+                <Route path="morse-fall-scale" element={<MorseFallScale />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
