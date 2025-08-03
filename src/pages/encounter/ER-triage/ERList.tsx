@@ -342,20 +342,6 @@ const ERList = () => {
                                 </MyButton>
                             </div>
                         </Whisper>
-                        <Whisper trigger="hover" placement="top" speaker={toolTransferPatient}>
-                            <div>
-                                <MyButton
-                                    size="small"
-                                    backgroundColor="var(--deep-blue)"
-                                    onClick={() => {
-                                        setOpenTransferPatientModal(true);
-                                        setLocalEncounter(rowData);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faArrowRightArrowLeft} />
-                                </MyButton>
-                            </div>
-                        </Whisper>
                         <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
                             <div>
                                 <MyButton

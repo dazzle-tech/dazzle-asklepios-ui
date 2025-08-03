@@ -466,7 +466,9 @@ const ERTriage = () => {
                 open={openSendToModal}
                 setOpen={setOpenSendToModal}
                 encounter={encounter}
-                triage={encounter?.emergencyTriage} />
+                triage={encounter?.emergencyTriage}
+                refetch={refetchEncounter}
+            />
         </Panel>
     );
 };

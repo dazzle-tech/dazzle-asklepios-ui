@@ -76,7 +76,7 @@ const InpatientList = () => {
         isLoading
     } = useGetInpatientEncountersQuery({
         listRequest,
-        department_key: switchDepartment ? departmentFilter?.key !=null ?  departmentFilter?.key : '':''
+        department_key: switchDepartment ? departmentFilter?.key != null ? departmentFilter?.key : '' : ''
     });
 
     // Fetch department list response
@@ -368,7 +368,7 @@ const InpatientList = () => {
                                 </MyButton>
                             </div>
                         </Whisper>
-                         <Whisper trigger="hover" placement="top" speaker={toolTransferPatient}>
+                        <Whisper trigger="hover" placement="top" speaker={toolTransferPatient}>
                             <div>
                                 <MyButton
                                     size="small"
@@ -391,7 +391,7 @@ const InpatientList = () => {
                                     <FontAwesomeIcon icon={faFileWaveform} />
                                 </MyButton>
                             </div>
-                        </Whisper>  
+                        </Whisper>
                     </Form>
                 );
             },
