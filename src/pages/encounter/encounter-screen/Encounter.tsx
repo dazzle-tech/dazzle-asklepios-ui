@@ -13,9 +13,24 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 import {
-  faBedPulse, faCheckDouble, faClockRotateLeft, faFilePrescription, faFileWaveform,
-  faHandDots, faNotesMedical, faPersonDotsFromLine, faPills, faStethoscope, faSyringe, faTooth, faTriangleExclamation, faUserDoctor, faVials
+  faBedPulse,
+  faCheckDouble,
+  faClockRotateLeft,
+  faFilePrescription,
+  faFileWaveform,
+  faHandDots,
+  faNotesMedical,
+  faPersonDotsFromLine,
+  faPills,
+  faStethoscope,
+  faSyringe,
+  faTooth,
+  faTriangleExclamation,
+  faUserDoctor,
+  faVials
 } from '@fortawesome/free-solid-svg-icons';
+import { faPersonFallingBurst } from '@fortawesome/free-solid-svg-icons';
+
 import { faBed } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BarChartHorizontalIcon from '@rsuite/icons/BarChartHorizontal';
@@ -29,7 +44,13 @@ import './styles.less';
 import BackButton from '@/components/BackButton/BackButton';
 import { useGetAppointmentsQuery } from '@/services/appointmentService';
 import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
-import { faBrain, faEarListen, faEye, faHeartPulse, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBrain,
+  faEarListen,
+  faEye,
+  faHeartPulse,
+  faUserPlus
+} from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom';
 import AllergiesModal from './AllergiesModal';
 import WarningiesModal from './WarningiesModal';
@@ -43,7 +64,7 @@ const Encounter = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
-  const savedState = sessionStorage.getItem("encounterPageSource");
+  const savedState = sessionStorage.getItem('encounterPageSource');
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -69,7 +90,6 @@ const Encounter = () => {
     resources: selectedResources ? selectedResources.resourceKey : []
   });
 
-
   // Step 2: Fetch the resource if needed "IF Clinic"
   const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(medicalSheetRowSourceKey!, {
     skip: !medicalSheetRowSourceKey
@@ -79,7 +99,6 @@ const Encounter = () => {
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(medicalSheetSourceKey!, {
     skip: !medicalSheetSourceKey
   });
-
 
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -96,9 +115,15 @@ const Encounter = () => {
     if (!propsData?.encounter) {
       navigate('/encounter-list');
     } else {
-      setEdit(fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === "CLOSED");
+      setEdit(
+        fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === 'CLOSED'
+      );
       //TODO convert key to code
-      if (propsData?.encounter?.resourceTypeLkey === '2039516279378421' || "4217389643435490" || "6743167799449277") {
+      if (
+        propsData?.encounter?.resourceTypeLkey === '2039516279378421' ||
+        '4217389643435490' ||
+        '6743167799449277'
+      ) {
         // Clinic, then we need to get its resource details
         setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
         setMedicalSheetSourceKey(undefined);
@@ -118,14 +143,15 @@ const Encounter = () => {
   }, [resourcesResponse]);
 
   useEffect(() => {
-    if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" && completeEncounterMutation.status === 'fulfilled') {
+    if (
+      localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT' &&
+      completeEncounterMutation.status === 'fulfilled'
+    ) {
       navigate('/inpatient-encounters-list');
     } else if (completeEncounterMutation.status === 'fulfilled') {
       navigate('/encounter-list');
     }
   }, [completeEncounterMutation]);
-
-
 
   const handleGoBack = () => {
     if (savedState === 'PatientEMR') {
@@ -135,10 +161,9 @@ const Encounter = () => {
           fromPage: 'clinicalVisit'
         }
       });
-    } else if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT") {
-      navigate('/inpatient-encounters-list')
-    }
-    else {
+    } else if (localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT') {
+      navigate('/inpatient-encounters-list');
+    } else {
       navigate('/encounter-list');
     }
   };
@@ -152,12 +177,12 @@ const Encounter = () => {
 
   const handleCompleteEncounter = async () => {
     try {
-       if (propsData.encounter) {
+      if (propsData.encounter) {
         await completeEncounter(propsData.encounter).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
     } catch (error) {
-      console.error("Encounter completion error:", error);
+      console.error('Encounter completion error:', error);
       dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
     }
   };
@@ -183,17 +208,17 @@ const Encounter = () => {
     '/encounter/medications-record': 'medications Record ',
     '/encounter/vaccine-record': 'Vaccine Record',
     '/encounter/diagnostics-result': 'Diagnostics Result ',
-    '/encounter/operation-request':'Operation Requests',
-    '/encounter/multidisciplinary-team-notes':'Multidisciplinary Team Notes',
-    '/encounter/care-plan-and-goals':'Care Plan & Goals',
-    '/encounter/discharge-planning':'Discharge Planning',
-    '/encounter/bedside-procedures-requests':'Bedside Procedures',
-   '/encounter/day-case':'DayCase',
-    '/encounter/blood-order':'Blood Order',
-   '/encounter/intake-output-balance':'Intake Output Balance',
-    '/encounter/referral-request':'Referral Request',
-    '/encounter/iv-fluid-order':'IV Fluid Order',
-    '/encounter/morse-fall-scale':'Morse Fall Scale (MFS)',
+    '/encounter/operation-request': 'Operation Requests',
+    '/encounter/multidisciplinary-team-notes': 'Multidisciplinary Team Notes',
+    '/encounter/care-plan-and-goals': 'Care Plan & Goals',
+    '/encounter/discharge-planning': 'Discharge Planning',
+    '/encounter/bedside-procedures-requests': 'Bedside Procedures',
+    '/encounter/day-case': 'DayCase',
+    '/encounter/blood-order': 'Blood Order',
+    '/encounter/intake-output-balance': 'Intake Output Balance',
+    '/encounter/referral-request': 'Referral Request',
+    '/encounter/iv-fluid-order': 'IV Fluid Order',
+    '/encounter/morse-fall-scale': 'Morse Fall Scale (MFS)'
   };
 
   const menuItems = [
@@ -201,43 +226,172 @@ const Encounter = () => {
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
     { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
-    { key: 'medicalWarnings', label: 'Medical Warnings', icon: faTriangleExclamation, path: 'medical-warnings' },
-    { key: 'diagnosticsResult', label: 'Diagnostics Test Result', icon: faFileWaveform, path: 'diagnostics-result' },
-
+    {
+      key: 'medicalWarnings',
+      label: 'Medical Warnings',
+      icon: faTriangleExclamation,
+      path: 'medical-warnings'
+    },
+    {
+      key: 'diagnosticsResult',
+      label: 'Diagnostics Test Result',
+      icon: faFileWaveform,
+      path: 'diagnostics-result'
+    },
+    {
+      key: 'medicalWarnings',
+      label: 'Medical Warnings',
+      icon: faTriangleExclamation,
+      path: 'medical-warnings'
+    },
+    {
+      key: 'diagnosticsResult',
+      label: 'Diagnostics Test Result',
+      icon: faFileWaveform,
+      path: 'diagnostics-result'
+    },
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
-    { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
+    {
+      key: 'diagnosticsOrder',
+      label: 'Diagnostics Order',
+      icon: faVials,
+      path: 'diagnostics-order'
+    },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
-    { key: 'referralRequest', label: 'Referral Request', icon: faUserDoctor, path: 'referral-request' },
-    { key: 'multidisciplinaryTeamNotes', label: 'Multidisciplinary Team Notes', icon: faComment, path: 'multidisciplinary-team-notes' },
-    { key: 'carePlanAndGoals', label: 'Care Plan & Goals', icon: faNotesMedical, path: 'care-plan-and-goals' },
-    { key: 'dischargePlanning', label: 'Discharge Planning', icon: faRightFromBracket, path: 'discharge-planning' },
-    { key: 'bedsideProceduresRequest', label: 'Bedside Procedures', icon: faSuitcaseMedical, path: 'bedside-procedures-requests' },
+    {
+      key: 'referralRequest',
+      label: 'Referral Request',
+      icon: faUserDoctor,
+      path: 'referral-request'
+    },
+    {
+      key: 'multidisciplinaryTeamNotes',
+      label: 'Multidisciplinary Team Notes',
+      icon: faComment,
+      path: 'multidisciplinary-team-notes'
+    },
+    {
+      key: 'carePlanAndGoals',
+      label: 'Care Plan & Goals',
+      icon: faNotesMedical,
+      path: 'care-plan-and-goals'
+    },
+    {
+      key: 'dischargePlanning',
+      label: 'Discharge Planning',
+      icon: faRightFromBracket,
+      path: 'discharge-planning'
+    },
+    {
+      key: 'bedsideProceduresRequest',
+      label: 'Bedside Procedures',
+      icon: faSuitcaseMedical,
+      path: 'bedside-procedures-requests'
+    },
     { key: 'bloodOrder', label: 'Blood Order', icon: faDroplet, path: 'blood-order' },
-    { key: 'intakeOutputBalance', label: 'Intake Output Balance', icon: faSquarePollHorizontal, path: 'intake-output-balance' },
-
+    {
+      key: 'intakeOutputBalance',
+      label: 'Intake Output Balance',
+      icon: faSquarePollHorizontal,
+      path: 'intake-output-balance'
+    },
+    {
+      key: 'referralRequest',
+      label: 'Referral Request',
+      icon: faUserDoctor,
+      path: 'referral-request'
+    },
+    {
+      key: 'multidisciplinaryTeamNotes',
+      label: 'Multidisciplinary Team Notes',
+      icon: faComment,
+      path: 'multidisciplinary-team-notes'
+    },
+    {
+      key: 'carePlanAndGoals',
+      label: 'Care Plan & Goals',
+      icon: faNotesMedical,
+      path: 'care-plan-and-goals'
+    },
+    {
+      key: 'dischargePlanning',
+      label: 'Discharge Planning',
+      icon: faRightFromBracket,
+      path: 'discharge-planning'
+    },
+    {
+      key: 'bedsideProceduresRequest',
+      label: 'Bedside Procedures',
+      icon: faSuitcaseMedical,
+      path: 'bedside-procedures-requests'
+    },
+    { key: 'bloodOrder', label: 'Blood Order', icon: faDroplet, path: 'blood-order' },
+    {
+      key: 'intakeOutputBalance',
+      label: 'Intake Output Balance',
+      icon: faSquarePollHorizontal,
+      path: 'intake-output-balance'
+    },
+    {
+      key: 'johnsHopkinsFallRiskAssessmentTool',
+      label: 'Johns Hopkins Tool',
+      icon: faPersonFallingBurst,
+      path: 'johns-hopkins-tool'
+    },
 
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
-    { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
-    { key: 'medicationsRecord', label: 'Medications Record', icon: faPills, path: 'medications-record' },
+    {
+      key: 'patientHistory',
+      label: 'Patient History',
+      icon: faClockRotateLeft,
+      path: 'patient-history'
+    },
+    {
+      key: 'medicationsRecord',
+      label: 'Medications Record',
+      icon: faPills,
+      path: 'medications-record'
+    },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
-    { key: 'operationRequests', label: 'Operation Requests', icon: faBedPulse, path: 'operation-request' },
+
+    {
+      key: 'operationRequests',
+      label: 'Operation Requests',
+      icon: faBedPulse,
+      path: 'operation-request'
+    },
+    {
+      key: 'operationRequests',
+      label: 'Operation Requests',
+      icon: faBedPulse,
+      path: 'operation-request'
+    },
 
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
     { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
-    { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
+    {
+      key: 'psychologicalExam',
+      label: 'Psychological Exam',
+      icon: faBrain,
+      path: 'psychological-exam'
+    },
     { key: 'dayCase', label: 'DayCase', icon: faBed, path: 'day-case' },
-    { key: 'ivFluidOrder', label: 'IV Fluid Order', icon: faSyringe , path: 'iv-fluid-order' },
-     { key: 'morseFallScale', label: 'Morse Fall Scale (MFS)', icon: faPersonFallingBurst , path: 'morse-fall-scale' },
-
+    { key: 'ivFluidOrder', label: 'IV Fluid Order', icon: faSyringe, path: 'iv-fluid-order' },
+    {
+      key: 'morseFallScale',
+      label: 'Morse Fall Scale (MFS)',
+      icon: faPersonFallingBurst,
+      path: 'morse-fall-scale'
+    }
   ];
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <Text className='title-font-style'>Patient Visit &gt; {currentHeader}</Text>
+      <Text className="title-font-style">Patient Visit &gt; {currentHeader}</Text>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
@@ -246,8 +400,7 @@ const Encounter = () => {
     dispatch(setDivContent(divContentHTML));
   }, [currentHeader, dispatch]);
   useEffect(() => {
-
-    setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard')
+    setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
   }, [location.pathname, dispatch]);
 
   return (
@@ -263,7 +416,7 @@ const Encounter = () => {
                 prefixIcon={() => <BarChartHorizontalIcon />}
                 backgroundColor={'var(--deep-blue)'}
                 onClick={() => {
-                  setIsDrawerOpen(true)
+                  setIsDrawerOpen(true);
                 }}
               >
                 Medical Sheets
@@ -297,33 +450,41 @@ const Encounter = () => {
               >
                 Warning
               </MyButton>
-              {!(propsData?.encounter?.resourceTypeLkey === "4217389643435490") && !(propsData?.encounter?.resourceTypeLkey === "91084250213000") && <MyButton
-                prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
-                onClick={() => { setOpenAdmitModal(true) }}
-                appearance="ghost"
-              >
-                <Translate>Admit to Inpatient</Translate>
-              </MyButton>}
+              {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
+                !(propsData?.encounter?.resourceTypeLkey === '91084250213000') && (
+                  <MyButton
+                    prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
+                    onClick={() => {
+                      setOpenAdmitModal(true);
+                    }}
+                    appearance="ghost"
+                  >
+                    <Translate>Admit to Inpatient</Translate>
+                  </MyButton>
+                )}
               {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={()=>(propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT" ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_DAYCASE"  ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_PROC"     ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_EMERGENCY") ? setOpenDischargeModal(true) : handleCompleteEncounter()}
+                  onClick={() =>
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                      ? setOpenDischargeModal(true)
+                      : handleCompleteEncounter()
+                  }
                   appearance="ghost"
                 >
                   <Translate>
-                    {(propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT" ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_DAYCASE"  ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_PROC"     ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_EMERGENCY") 
-                      ? "Discharge"
-                      : "Complete Visit"}
+                    {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                      ? 'Discharge'
+                      : 'Complete Visit'}
                   </Translate>
                 </MyButton>
               )}
-
             </div>
           </div>
           <Divider />
@@ -352,10 +513,18 @@ const Encounter = () => {
 
                 {menuItems.map(({ key, label, icon, path }) =>
                   medicalSheet?.object?.[key] ? (
-                    <List.Item key={key} className="drawer-item"
+                    <List.Item
+                      key={key}
+                      className="drawer-item"
                       onClick={() => {
-                        setIsDrawerOpen(false)
-                        navigate(path, { state: { patient: propsData.patient, encounter: propsData.encounter, edit } });
+                        setIsDrawerOpen(false);
+                        navigate(path, {
+                          state: {
+                            patient: propsData.patient,
+                            encounter: propsData.encounter,
+                            edit
+                          }
+                        });
                       }}
                     >
                       <Link
@@ -369,8 +538,6 @@ const Encounter = () => {
                     </List.Item>
                   ) : null
                 )}
-
-
               </List>
             </Drawer.Body>
           </Drawer>

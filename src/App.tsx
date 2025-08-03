@@ -142,6 +142,8 @@ import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import MAR from './pages/encounter/mar';
 import ERList from './pages/encounter/ER-triage/ERList';
 import MorseFallScale from './pages/encounter/encounter-component/morse-fall-scale';
+import JohnsHopkinsTool from './pages/encounter/encounter-component/fall-risk-assessments';
+
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -316,6 +318,7 @@ const App = () => {
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
+                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
                 <Route path="psychological-exam" element={<PsychologicalExam />} />
                 <Route path="vaccination" element={<VaccinationTab />} />
@@ -387,6 +390,7 @@ const App = () => {
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
               <Route path='inventory-product-setup' element={<ProductSetup />} />
+              <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="warehouse-setup" element={<WarehouseSetup />} />
               <Route path="warehouse-items-setup" element={<WarehouseItemsSetup />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
