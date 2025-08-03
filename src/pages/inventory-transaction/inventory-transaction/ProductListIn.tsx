@@ -152,6 +152,11 @@ const ProductListIn = ({
     }
   }, [recordOfFilter]);
 
+   //useEffect
+  useEffect(() => {
+  refetchProduct();
+  }, [showSubChildModal]);
+
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -293,15 +298,13 @@ const ProductListIn = ({
       key: 'productType',
       title: <Translate>Product Type</Translate>,
       flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            productTypeLovQueryResponse?.object ?? [],
-            rowData.productObj.typeLvalue,
-            'lovDisplayVale'
-          )}
-        </span>
-      )
+      render: rowData => {
+        return (
+          <p>
+             {rowData.productObj.typeLvalue ? rowData.productObj.typeLvalue.lovDisplayVale : rowData.productObj.typeLkey}
+          </p>
+        );
+      }
     },
     {
       key: 'productcode',
@@ -379,13 +382,6 @@ const ProductListIn = ({
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-      {/* <AddEditProductIn
-        open={showSubChildModal}
-        setOpen={setShowSubChildModal}
-        transactionProduct={transactionProduct}
-        setTransactionProduct={setTransactionProduct}
-        refetch={transactionProductRefetch}
-      /> */}
 
       <DeletionConfirmationModal
         open={openConfirmDeleteTransactionProductModal}

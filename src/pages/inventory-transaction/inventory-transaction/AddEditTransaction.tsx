@@ -31,7 +31,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyModal from '@/components/MyModal/MyModal';
 import { FaBabyCarriage, FaInbox, FaProductHunt } from 'react-icons/fa6';
-import {  useConfirmTransProductStockInMutation, useGetInventoryTransactionsProductQuery, useSaveInventoryTransactionMutation, useSaveInventoryTransactionProductMutation } from '@/services/inventoryTransactionService';
+import {  useConfirmTransProductStockInMutation, useConfirmTransProductStockOutMutation, useGetInventoryTransactionsProductQuery, useSaveInventoryTransactionMutation, useSaveInventoryTransactionProductMutation } from '@/services/inventoryTransactionService';
 import { create, set } from 'lodash';
 import authSlice from '@/reducers/authSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -93,7 +93,8 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
 
      const [saveTransactionProduct, saveTransactionProductMutation] = useSaveInventoryTransactionProductMutation();
      const [confirmProductStockIn, confirmProductStockInMutation] = useConfirmTransProductStockInMutation();
-     
+     const [confirmProductStockOut, confirmProductStockOutMutation] = useConfirmTransProductStockOutMutation();
+
     const [transProduct, setTransProduct] = useState<ApInventoryTransactionProduct>({ ...newApInventoryTransactionProduct });
 
     const now = new Date();
@@ -408,7 +409,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
         
             };
 
-             const handleSavechild = () => {
+             const handleSavechildIn = () => {
                 setOpenChildModal(false);
                 confirmProductStockIn({
                   key: transaction?.key
@@ -431,7 +432,28 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                   });
               };
               
-
+              const handleSavechildOut = () => {
+                setOpenChildModal(false);
+                confirmProductStockOut({
+                  key: transaction?.key
+                })
+                  .unwrap()
+                  .then(() => {
+                    dispatch(
+                      notify({
+                        msg: 'The product was successfully Added to stock',
+                        sev: 'success'
+                      })
+                    );
+                  }).catch(() => {
+                      dispatch(
+                      notify({
+                        msg: 'Fail',
+                        sev: 'error'
+                      })
+                    );
+                  });
+              };
 
     return (
 
@@ -460,7 +482,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
             childSize="sm"
             subChildSize="xs"
             actionChildButtonLabel="Confirm"
-             actionChildButtonFunction={handleSavechild}
+             actionChildButtonFunction={transaction.transTypeLkey === '6509244814441399' ?  handleSavechildIn : handleSavechildOut}
         />
     );
 };
