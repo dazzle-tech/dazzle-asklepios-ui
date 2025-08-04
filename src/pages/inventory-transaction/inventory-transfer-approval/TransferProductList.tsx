@@ -373,7 +373,8 @@ const TransferProductList = ({
             // onChange={(value) =>
             //   setTransferProduct({ ...transferProduct, quentityApproved: Number(value) })
             // }
-            value={rowData.quentityApproved}
+            disabled={rowData.statusLkey !== '164797574082125'}
+            defaultValue={rowData.quentityApproved}
             onChange={(value) => handleApprovedQuantitySave(rowData.key, Number(value))}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -386,7 +387,7 @@ const TransferProductList = ({
           <span>
             <FontAwesomeIcon
               icon={faPenToSquare}
-              onClick={() => setActiveRowKey(rowData.key)}
+              onClick={() =>  rowData.statusLkey !== '164797574082125' ? setActiveRowKey(rowData.key) : null}
               style={{ marginRight: "8px", cursor: "pointer" }}
             />
             {rowData.quentityApproved}
