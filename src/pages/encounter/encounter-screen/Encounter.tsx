@@ -219,6 +219,7 @@ const Encounter = () => {
     '/encounter/iv-fluid-order': 'IV Fluid Order',
     '/encounter/morse-fall-scale': 'Morse Fall Scale (MFS)',
     '/encounter/stratify-scale': 'STRATIFY Scale',
+    '/encounter/hendrich-fall-risk': 'Hendrich II Fall Risk Model',
   };
 
   const menuItems = [
@@ -316,6 +317,7 @@ const Encounter = () => {
       path: 'morse-fall-scale'
     },
     { key: 'stratifyScale', label: 'STRATIFY Scale', icon: faPersonFallingBurst, path: 'stratify-scale' },
+    { key: 'hendrichFallRisk', label: 'Hendrich II Fall Risk Model', icon: faPersonFallingBurst, path: 'hendrich-fall-risk' },
 
   ];
   const [currentHeader, setCurrentHeader] = useState();
