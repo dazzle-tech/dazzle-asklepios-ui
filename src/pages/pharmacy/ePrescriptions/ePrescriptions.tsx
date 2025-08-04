@@ -2,305 +2,394 @@ import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
 import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay } from '@fortawesome/free-solid-svg-icons';
-import { faCapsules } from '@fortawesome/free-solid-svg-icons';
-import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+// import { faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import PatientSide from '@/pages/lab-module/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { formatDateWithoutSeconds } from '@/utils';
+import PatientSearch from '@/pages/patient/patient-profile/tabs/FamilyMember/PatientSearch';
+import SearchIcon from '@rsuite/icons/Search';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { fromCamelCaseToDBName } from '@/utils';
+import MedicationsModal from './MedicationsModal';
+import { newApPatientRelation } from '@/types/model-types-constructor';
+
+
 const EPrepscriptions = () => {
   const dispatch = useAppDispatch();
-  const [order, serOrder] = useState({});
-  // Fetch orders tatus Lov response
-  const { data: orderstatusLovQueryResponse } = useGetLovValuesByCodeQuery('PHARMACY_ORDER_STATUS');
+  const [page, setPage] = useState(0);
+  const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
+    ...newApPatientRelation
+  });
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [openMedicationsModal, setOpenMedicationsModal] = useState(false);
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
 
-  // class name for selected row
-  const isSelectedOrder = rowData => {
-    if (rowData && order && order?.key === rowData.key) {
-      return 'selected-row';
-    } else return '';
+  const [patientSearchTarget, setPatientSearchTarget] = useState('primary'); // primary, relation, etc..
+  const [searchResultVisible, setSearchResultVisible] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedCriterion, setSelectedCriterion] = useState('');
+
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    ignore: !searchKeyword || searchKeyword.length < 3
+  });
+  const search = target => {
+    setPatientSearchTarget(target);
+    setSearchResultVisible(true);
+
+    if (searchKeyword && searchKeyword.length >= 3 && selectedCriterion) {
+      setListRequest({
+        ...listRequest,
+        ignore: false,
+        filters: [
+          {
+            fieldName: fromCamelCaseToDBName(selectedCriterion),
+            operator: 'containsIgnoreCase',
+            value: searchKeyword
+          }
+        ]
+      });
+    }
   };
   // dummy data
   const data = [
     {
       key: '1',
-      patientName: 'pat1',
-      MRN: 'MRN1',
-      prescriber: 'pre1',
-      numberOfMedications: 1,
-      orderStatus: 'pending',
+      prescriptionId: 'PRES-001',
+      patientName: 'Ahmed Hassan',
+      prescribedByAt: 'Dr. Sarah Johnson / Cardiology Ward',
+      prescribedAt: '2025-01-01T12:00:00',
+      prescribedBy: 'Dr. Sarah Johnson',
+      status: 'New',
       medications: [
         {
           key: '1',
-          medication: 'med11',
-          route: 'route11',
-          duration: 'dur11',
-          qtyToDispense: 'q11',
-          unit: 'u11',
-          instructions: 'inst11',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Paracetamol 500mg',
+          instructions: 'Take 1 tablet every 8 hours for fever',
+          duration: '7 days',
+          qtyToDispense: '21',
+          DispenseBy: 'Dr. Sarah Johnson',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Main Pharmacy',
+          availableQty: '150',
+          unit: 'Tablets',
+          priceCurrency: '$5.50 USD'
         },
         {
           key: '2',
-          medication: 'med12',
-          route: 'route12',
-          duration: 'dur12',
-          qtyToDispense: 'q12',
-          unit: 'u12',
-          instructions: 'inst12',
-          stockAvailable: 'yes',
-          isValid: false
+          medication: 'Ibuprofen 400mg',
+          instructions: 'Take 1 tablet every 8 hours for pain',
+          duration: '5 days',
+          qtyToDispense: '15',
+          DispenseBy: 'Dr. Sarah Johnson',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Emergency Pharmacy',
+          availableQty: '75',
+          unit: 'Tablets',
+          priceCurrency: '$3.25 USD'
         },
         {
           key: '3',
-          medication: 'med13',
-          route: 'route13',
-          duration: 'dur13',
-          qtyToDispense: 'q13',
-          unit: 'u13',
-          instructions: 'inst13',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Amoxicillin 250mg',
+          instructions: 'Take 1 capsule every 8 hours',
+          duration: '10 days',
+          qtyToDispense: '30',
+          DispenseBy: 'Dr. Sarah Johnson',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Main Pharmacy',
+          availableQty: '0',
+          unit: 'Capsules',
+          priceCurrency: '$12.80 USD'
         },
         {
           key: '4',
-          medication: 'med14',
-          route: 'route14',
-          duration: 'dur14',
-          qtyToDispense: 'q14',
-          unit: 'u14',
-          instructions: 'inst14',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Omeprazole 20mg',
+          instructions: 'Take 1 capsule daily before breakfast',
+          duration: '14 days',
+          qtyToDispense: '28',
+          DispenseBy: 'Dr. Sarah Johnson',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Cardiology Pharmacy',
+          availableQty: '45',
+          unit: 'Capsules',
+          priceCurrency: '$18.90 USD'
         }
       ]
     },
     {
       key: '2',
-      patientName: 'pat2',
-      MRN: 'MRN2',
-      prescriber: 'pre2',
-      numberOfMedications: 2,
-      orderStatus: 'pending',
+      prescriptionId: 'PRES-002',
+      patientName: 'Fatima Ali',
+      prescribedByAt: 'Dr. Mohammed Ahmed / Emergency Ward',
+      prescribedAt: '2025-01-01T12:00:00',
+      prescribedBy: 'Dr. Mohammed Ahmed',
+      status: 'Completed',
       medications: [
         {
           key: '1',
-          medication: 'med21',
-          route: 'route21',
-          duration: 'dur21',
-          qtyToDispense: 'q21',
-          unit: 'u21',
-          instructions: 'inst21',
-          stockAvailable: 'yes',
-          isValid: false
+          medication: 'Aspirin 100mg',
+          instructions: 'Take 1 tablet daily with food',
+          duration: '30 days',
+          qtyToDispense: '30',
+          DispenseBy: 'Dr. Mohammed Ahmed',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Cardiology Pharmacy',
+          availableQty: '200',
+          unit: 'Tablets',
+          priceCurrency: '$2.10 USD'
         },
         {
           key: '2',
-          medication: 'med22',
-          route: 'route22',
-          duration: 'dur22',
-          qtyToDispense: 'q22',
-          unit: 'u22',
-          instructions: 'inst22',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Metformin 500mg',
+          instructions: 'Take 1 tablet twice daily with meals',
+          duration: '30 days',
+          qtyToDispense: '60',
+          DispenseBy: 'Dr. Mohammed Ahmed',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Diabetes Clinic',
+          availableQty: '120',
+          unit: 'Tablets',
+          priceCurrency: '$8.75 USD'
         },
         {
           key: '3',
-          medication: 'med23',
-          route: 'route23',
-          duration: 'dur23',
-          qtyToDispense: 'q23',
-          unit: 'u23',
-          instructions: 'inst23',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Lisinopril 10mg',
+          instructions: 'Take 1 tablet daily in the morning',
+          duration: '30 days',
+          qtyToDispense: '30',
+          DispenseBy: 'Dr. Mohammed Ahmed',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Main Pharmacy',
+          availableQty: '85',
+          unit: 'Tablets',
+          priceCurrency: '$15.40 USD'
         },
         {
           key: '4',
-          medication: 'med24',
-          route: 'route24',
-          duration: 'dur24',
-          qtyToDispense: 'q24',
-          unit: 'u24',
-          instructions: 'inst24',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Atorvastatin 20mg',
+          instructions: 'Take 1 tablet daily at bedtime',
+          duration: '30 days',
+          qtyToDispense: '30',
+          DispenseBy: 'Dr. Mohammed Ahmed',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Cardiology Pharmacy',
+          availableQty: '0',
+          unit: 'Tablets',
+          priceCurrency: '$22.60 USD'
         }
       ]
     },
     {
       key: '3',
-      patientName: 'pat3',
-      MRN: 'MRN3',
-      prescriber: 'pre3',
-      numberOfMedications: 3,
-      orderStatus: 'pending',
+      prescriptionId: 'PRES-003',
+      patientName: 'Omar Khalil',
+      prescribedByAt: 'Dr. Layla Mansour / ICU Ward',
+      prescribedAt: '2025-01-01T12:00:00',
+      prescribedBy: 'Dr. Layla Mansour',
+      status: 'New',
       medications: [
         {
           key: '1',
-          medication: 'med31',
-          route: 'route31',
-          duration: 'dur31',
-          qtyToDispense: 'q31',
-          unit: 'u31',
-          instructions: 'inst31',
-          stockAvailable: 'yes',
-          isValid: false
+          medication: 'Morphine 10mg',
+          instructions: 'Administer 1 vial every 8 hours for severe pain',
+          duration: '3 days',
+          qtyToDispense: '9',
+          DispenseBy: 'Dr. Layla Mansour',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'ICU Pharmacy',
+          availableQty: '25',
+          unit: 'Vials',
+          priceCurrency: '$45.20 USD'
         },
         {
           key: '2',
-          medication: 'med32',
-          route: 'route32',
-          duration: 'dur32',
-          qtyToDispense: 'q32',
-          unit: 'u32',
-          instructions: 'inst32',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Furosemide 40mg',
+          instructions: 'Administer 1 vial daily for fluid retention',
+          duration: '5 days',
+          qtyToDispense: '15',
+          DispenseBy: 'Dr. Layla Mansour',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'ICU Pharmacy',
+          availableQty: '60',
+          unit: 'Vials',
+          priceCurrency: '$8.90 USD'
         },
         {
           key: '3',
-          medication: 'med33',
-          route: 'route33',
-          duration: 'dur33',
-          qtyToDispense: 'q33',
-          unit: 'u33',
-          instructions: 'inst33',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Insulin Regular',
+          instructions: 'Administer 3 units before each meal',
+          duration: '7 days',
+          qtyToDispense: '21',
+          DispenseBy: 'Dr. Layla Mansour',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Diabetes Clinic',
+          availableQty: '100',
+          unit: 'Units',
+          priceCurrency: '$12.50 USD'
         },
         {
           key: '4',
-          medication: 'med34',
-          route: 'route34',
-          duration: 'dur34',
-          qtyToDispense: 'q34',
-          unit: 'u34',
-          instructions: 'inst34',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Heparin 5000IU',
+          instructions: 'Administer 1 unit twice daily',
+          duration: '10 days',
+          qtyToDispense: '30',
+          DispenseBy: 'Dr. Layla Mansour',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'ICU Pharmacy',
+          availableQty: '0',
+          unit: 'Units',
+          priceCurrency: '$18.75 USD'
         }
       ]
     },
     {
       key: '4',
-      patientName: 'pat4',
-      MRN: 'MRN4',
-      prescriber: 'pre4',
-      numberOfMedications: 4,
-      orderStatus: 'pending',
+      prescriptionId: 'PRES-004',
+      patientName: 'Aisha Rahman',
+      prescribedByAt: 'Dr. Khalid Ibrahim / Pediatrics Ward',
+      prescribedAt: '2025-01-01T12:00:00',
+      prescribedBy: 'Dr. Khalid Ibrahim',
+      status: 'Completed',
       medications: [
         {
           key: '1',
-          medication: 'med41',
-          route: 'route41',
-          duration: 'dur41',
-          qtyToDispense: 'q41',
-          unit: 'u41',
-          instructions: 'inst41',
-          stockAvailable: 'yes',
-          isValid: true
+          medication: 'Amoxicillin 125mg',
+          instructions: 'Take 1 teaspoon three times daily',
+          duration: '7 days',
+          qtyToDispense: '21',
+          DispenseBy: 'Dr. Khalid Ibrahim',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Pediatrics Pharmacy',
+          availableQty: '80',
+          unit: 'Suspension',
+          priceCurrency: '$6.25 USD'
         },
         {
           key: '2',
-          medication: 'med42',
-          route: 'route42',
-          duration: 'dur42',
-          qtyToDispense: 'q42',
-          unit: 'u42',
-          instructions: 'inst42',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Paracetamol 120mg',
+          instructions: 'Take 1 teaspoon every 6 hours for fever',
+          duration: '5 days',
+          qtyToDispense: '15',
+          DispenseBy: 'Dr. Khalid Ibrahim',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Pediatrics Pharmacy',
+          availableQty: '0',
+          unit: 'Suspension',
+          priceCurrency: '$4.10 USD'
         },
         {
           key: '3',
-          medication: 'med43',
-          route: 'route43',
-          duration: 'dur43',
-          qtyToDispense: 'q43',
-          unit: 'u43',
-          instructions: 'inst43',
-          stockAvailable: 'yes',
-          isValid: false
+          medication: 'Salbutamol Inhaler',
+          instructions: 'Use 2 puffs every 4 hours as needed',
+          duration: '30 days',
+          qtyToDispense: '1',
+          DispenseBy: 'Dr. Khalid Ibrahim',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Respiratory Clinic',
+          availableQty: '35',
+          unit: 'Inhaler',
+          priceCurrency: '$28.90 USD'
         },
         {
           key: '4',
-          medication: 'med44',
-          route: 'route44',
-          duration: 'dur44',
-          qtyToDispense: 'q44',
-          unit: 'u44',
-          instructions: 'inst44',
-          stockAvailable: 'no',
-          isValid: true
+          medication: 'Multivitamin Drops',
+          instructions: 'Take 1 drop daily',
+          duration: '30 days',
+          qtyToDispense: '30',
+          DispenseBy: 'Dr. Khalid Ibrahim',
+          DispenseAt: '2025-01-01T12:00:00',
+          warehouse: 'Pediatrics Pharmacy',
+          availableQty: '0',
+          unit: 'Drops',
+          priceCurrency: '$9.75 USD'
         }
       ]
     }
   ];
 
-  // Icons column (start)
-  const iconsForActionsOrders = () => (
-    <div className="container-of-icons">
-      <FontAwesomeIcon
-        className="icons-style"
-        title="Start"
-        color="var(--primary-gray)"
-        icon={faPlay}
-      />
-    </div>
-  );
+  // Actions column (View, Complete, Print)
+  const actionsForOrders = rowData => {
+    const isCompleted = rowData?.status === 'Completed';
 
-  // Icons column (Dispense, Reject)
-  const iconsForActionsMedications = () => (
-    <div className="container-of-icons">
-      <FontAwesomeIcon
-        className="icons-style"
-        title="Dispense"
-        color="var(--primary-gray)"
-        icon={faCapsules}
-      />
-      <FontAwesomeIcon
-        className="icons-style"
-        title="Reject"
-        color="var(--primary-gray)"
-        icon={faCircleXmark}
-      />
-    </div>
-  );
+    const handleViewClick = () => {
+      setSelectedPrescription(rowData);
+      setOpenMedicationsModal(true);
+    };
+
+    return (
+      <div className="container-of-actions">
+        <FontAwesomeIcon
+          icon={faEye}
+          title="View"
+          id="icon1"
+          className="icons-style"
+          style={{ cursor: 'pointer' }}
+          onClick={handleViewClick}
+        />
+        <FontAwesomeIcon
+          icon={faCircleCheck}
+          title="Complete"
+          id="icon2"
+          className="icons-style"
+          style={{ cursor: 'pointer' }}
+        />
+        <FontAwesomeIcon
+          icon={faPrint}
+          title="Print"
+          id="icon3"
+          className="icons-style"
+          style={{
+            cursor: isCompleted ? 'pointer' : 'not-allowed',
+            color: isCompleted ? 'var(--primary-gray)' : '#ccc',
+            opacity: isCompleted ? 1 : 0.5
+          }}
+        />
+      </div>
+    );
+  };
 
   // Filter orders table
   const filters = () => (
-    <Form layout="inline" fluid className='filter-fields-pharmacey'>
+    <Form layout="inline" fluid className="filter-fields-pharmacey">
       <MyInput
         column
-        fieldType="select"
-        fieldName=""
-        fieldLabel="Order Status"
-        selectData={orderstatusLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        fieldType="text"
+        fieldName="prescriptionId"
+        fieldLabel="Prescription ID"
+        placeholder="Search"
         record={{}}
         setRecord={{}}
       />
       <MyInput
         column
-        width={250}
-        fieldType="select"
-        fieldName=""
-        fieldLabel="Medication Name"
-        selectData={[]}
-        selectDataLabel=""
-        selectDataValue=""
+        fieldType="text"
+        fieldName="patientName"
+        fieldLabel="Patient Name"
+        placeholder="Search Patient"
         record={{}}
         setRecord={{}}
+        disabled={true}
+        value={selectedPatientRelation.relativePatientObject?.fullName ?? ''}
+        rightAddon={<SearchIcon style={{ cursor: 'pointer' }} onClick={() => search('relation')} />}
       />
+      <PatientSearch
+        selectedPatientRelation={selectedPatientRelation}
+        setSelectedPatientRelation={setSelectedPatientRelation}
+        searchResultVisible={searchResultVisible}
+        setSearchResultVisible={setSearchResultVisible}
+        patientSearchTarget={patientSearchTarget}
+        setPatientSearchTarget={setPatientSearchTarget}
+      />
+
       <MyInput
         column
         fieldType="date"
@@ -322,76 +411,76 @@ const EPrepscriptions = () => {
       </MyButton>
     </Form>
   );
-
+  console.log('selectedPatientRelation', selectedPatientRelation);
   //Table columns
   const tableOrdersColumns = [
+    {
+      key: 'prescriptionId',
+      title: <Translate>Prescription ID</Translate>
+    },
     {
       key: 'patientName',
       title: <Translate>Patient Name</Translate>
     },
     {
-      key: 'MRN',
-      title: <Translate>MRN</Translate>
+      key: 'prescribedByAt',
+      title: <Translate>Prescribed By/At</Translate>,
+      render: (row: any) =>
+        row?.prescribedAt ? (
+          <>
+            {row?.prescribedBy}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.prescribedAt)}</span>
+          </>
+        ) : (
+          ' '
+        )
     },
     {
-      key: 'prescriber',
-      title: <Translate>Prescriber</Translate>
-    },
-    {
-      key: 'numberOfMedications',
-      title: <Translate>Number of Medications</Translate>
-    },
-    {
-      key: 'orderStatus',
-      title: <Translate>Order Status</Translate>
-    },
-    {
-      key: 'icons',
-      title: <Translate></Translate>,
-      flexGrow: 3,
-      render: () => iconsForActionsOrders()
-    }
-  ];
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      width: 120,
+      render: rowData => {
+        const status = rowData.status || 'New';
 
-  //Table columns
-  const tableMedicationsColumns = [
-    {
-      key: 'medication',
-      title: <Translate>Medication</Translate>
+        const getStatusConfig = status => {
+          switch (status) {
+            case 'New':
+              return {
+                backgroundColor: 'var(--light-orange)',
+                color: 'var(--primary-orange)',
+                contant: 'New'
+              };
+            case 'Completed':
+              return {
+                backgroundColor: 'var(--light-green)',
+                color: 'var(--primary-green)',
+                contant: 'Completed'
+              };
+            default:
+              return {
+                backgroundColor: 'var(--background-gray)',
+                color: 'var(--primary-gray)',
+                contant: 'Unknown'
+              };
+          }
+        };
+
+        const config = getStatusConfig(status);
+        return (
+          <MyBadgeStatus
+            backgroundColor={config.backgroundColor}
+            color={config.color}
+            contant={config.contant}
+          />
+        );
+      }
     },
     {
-      key: 'route',
-      title: <Translate>Route</Translate>
-    },
-    {
-      key: 'duration',
-      title: <Translate>Duration</Translate>
-    },
-    {
-      key: 'qtyToDispense',
-      title: <Translate>Qty to Dispense</Translate>
-    },
-    {
-      key: 'unit',
-      title: <Translate>Unit</Translate>
-    },
-    {
-      key: 'instructions',
-      title: <Translate>Instructions</Translate>
-    },
-    {
-      key: 'stockAvailable',
-      title: <Translate>Stock Available</Translate>
-    },
-    {
-      key: 'isValid',
-      title: <Translate>Status</Translate>
-    },
-    {
-      key: 'icons',
-      title: <Translate></Translate>,
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
       flexGrow: 3,
-      render: () => iconsForActionsMedications()
+      render: rowData => actionsForOrders(rowData)
     }
   ];
 
@@ -415,27 +504,32 @@ const EPrepscriptions = () => {
 
   return (
     <div className="container-internal-drug-order">
-      <div className="container-of-tables-int">
+      <div className="container-of-tables-int" style={{ width: '100%' }}>
         <MyTable
-          height={450}
           data={data}
           columns={tableOrdersColumns}
-          rowClassName={isSelectedOrder}
-          filters={filters()}
-          onRowClick={rowData => {
-            serOrder(rowData);
+          page={page}
+          rowsPerPage={rowsPerPage}
+          totalCount={data.length}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          onRowsPerPageChange={e => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
           }}
-        />
-
-        <MyTable
-          height={450}
-          data={order.medications ? order.medications : []}
-          columns={tableMedicationsColumns}
+          height={500}
+          filters={filters()}
         />
       </div>
       <div className="patient-side-internal-drug-order">
-        <PatientSide patient={{}} encounter={{}} />
+        <PatientSide patient={selectedPatientRelation?.relativePatientObject} encounter={{}} />
       </div>
+
+      {/* Medications Modal */}
+      <MedicationsModal
+        open={openMedicationsModal}
+        setOpen={setOpenMedicationsModal}
+        selectedPrescription={selectedPrescription}
+      />
     </div>
   );
 };

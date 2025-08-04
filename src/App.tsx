@@ -143,7 +143,7 @@ import MAR from './pages/encounter/mar';
 import ERList from './pages/encounter/ER-triage/ERList';
 import MorseFallScale from './pages/encounter/encounter-component/morse-fall-scale';
 import JohnsHopkinsTool from './pages/encounter/encounter-component/fall-risk-assessments';
-
+import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -424,6 +424,7 @@ const App = () => {
               <Route path="supplier-setup" element={<SupplierSetup />} />
               <Route path="operation-room-materials" element={<OperationRoomMaterials />} />
               <Route path="progress-notes" element={<ProgressNotes />} />
+              <Route path="department-stock" element={<DepartmentStock />} />
             </Route>
           </Route>
 
