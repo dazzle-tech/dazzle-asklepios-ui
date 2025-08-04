@@ -530,6 +530,7 @@ const EPrescriptions = () => {
         setOpen={setOpenMedicationsModal}
         selectedPrescription={selectedPrescription}
       />
+      
     </div>
   );
 };
