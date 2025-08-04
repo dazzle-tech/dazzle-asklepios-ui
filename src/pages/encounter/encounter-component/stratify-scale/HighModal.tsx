@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { useLocation } from 'react-router-dom';
-const ModerateHighModal = ({ open, setOpen, width, object, setObject, handleSave }) => {
+const HighModal = ({ open, setOpen, width, object, setObject, handleSave }) => {
   const [actionType, setActionType] = useState(null);
   const location = useLocation();
   const propsData = location.state;
@@ -30,7 +30,7 @@ const ModerateHighModal = ({ open, setOpen, width, object, setObject, handleSave
             <MyInput
               width="100%"
               fieldName="fallPreventionPlanTriggered"
-              fieldLabel="History of falling Within last 3 months"
+              fieldLabel="Fall Prevention Plan Triggered"
               fieldType="checkbox"
               record={object}
               setRecord={setObject}
@@ -117,6 +117,24 @@ const ModerateHighModal = ({ open, setOpen, width, object, setObject, handleSave
               </Col>
             </Row>
             <br />
+            <MyInput
+                  width="100%"
+                  fieldName="assessmentNotes"
+                  fieldLabel="Assessment Notes"
+                  fieldType="textarea"
+                  record={object}
+                  setRecord={setObject}
+                  disabled={object?.key}
+                />
+                 <MyInput
+                  width="100%"
+                  fieldName="nextAssessmentDue"
+                  fieldLabel="Next Assessment Due"
+                  fieldType="date"
+                  record={object}
+                  setRecord={setObject}
+                  disabled={object?.key}
+                />
             <MyButton
               onClick={handleAddNewAttachment}
               disabled={object?.key}
@@ -156,4 +174,4 @@ const ModerateHighModal = ({ open, setOpen, width, object, setObject, handleSave
     />
   );
 };
-export default ModerateHighModal;
+export default HighModal;

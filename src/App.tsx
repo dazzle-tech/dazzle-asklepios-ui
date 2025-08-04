@@ -144,6 +144,7 @@ import ERList from './pages/encounter/ER-triage/ERList';
 import MorseFallScale from './pages/encounter/encounter-component/morse-fall-scale';
 import JohnsHopkinsTool from './pages/encounter/encounter-component/fall-risk-assessments';
 import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
+import StratifyScale from './pages/encounter/encounter-component/stratify-scale';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -345,6 +346,7 @@ const App = () => {
                 <Route path="referral-request" element={<ReferralRequest />} />
                 <Route path="iv-fluid-order" element={<IVFluidOrder />} />
                 <Route path="morse-fall-scale" element={<MorseFallScale />} />
+                <Route path="stratify-scale" element={<StratifyScale />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />

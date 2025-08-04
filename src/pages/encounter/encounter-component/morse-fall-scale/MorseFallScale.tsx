@@ -8,7 +8,7 @@ import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import AddNewModal from './AddNewModal';
-import ModerateHighModal from './ModerateHighModal';
+import RiskLevelExtraForm from './RiskLevelExtraForm';
 import './styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
 const MorseFallScale = () => {
@@ -178,7 +178,7 @@ const MorseFallScale = () => {
         morseFallScale={morseFallScale}
         setMorseFallScale={setMorseFallScale}
       />
-      <ModerateHighModal
+      <RiskLevelExtraForm
         open={openModerateHighModal}
         setOpen={setOpenModerateHighModal}
         width={width}
