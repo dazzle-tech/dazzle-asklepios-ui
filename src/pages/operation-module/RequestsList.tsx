@@ -13,11 +13,11 @@ import { faPlay, faSquareXmark } from "@fortawesome/free-solid-svg-icons";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 
-const RequestList = ({patient ,setPatient,encounter,setEncounter}) => {
+const RequestList = ({patient ,setPatient,encounter,setEncounter ,setActiveTab,setOpen,request, setRequest}) => {
     const dispatch = useAppDispatch();
     const [showCancelled, setShowCancelled] = useState(true);
     
-    const [request, setRequest] = useState<any>({ ...newApOperationRequests });
+    
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
         toDate: null
@@ -224,9 +224,13 @@ const addOrUpdateFilter = (filters, newFilter) => {
                          onClick={isDisabled?undefined:async () => {
                             try {
                                 setRequest(rowData);
-                                await save({ ...request, operationStatusLkey: '3621681578985655',startedAt:Date.now() });
+                               const Response= await save({ ...request, operationStatusLkey: '3621681578985655',startedAt:Date.now() }).unwrap();
                                 dispatch(notify({ msg: 'Started Successfully', sev: "success" }));
-                                refetch();
+                                refetch();                           
+                                setActiveTab('2');
+                                setOpen(true);
+                                console.log("Response",Response);
+
                             }
                             catch (error) {
                                 dispatch(notify({ msg: 'Faild', sev: "error" }));

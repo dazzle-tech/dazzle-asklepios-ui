@@ -11,10 +11,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
 import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
 import StartedDetails from "./StartedDetails/StartedDetails";
-const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => {
+const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,setOpen,request, setRequest }) => {
     const dispatch = useAppDispatch();
-    const [open,setOpen]=useState(false)
-    const [request, setRequest] = useState<any>({ ...newApOperationRequests });
+    
+
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
         toDate: null
@@ -34,7 +34,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
 
         ],
     });
-   console.log("ListRequest",listRequest?.filters)
+  
     const isSelected = rowData => {
         if (rowData && request && rowData.key === request.key) {
             return 'selected-row';
@@ -43,6 +43,9 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
 
     //operation Api's
     const { data: operationrequestList, refetch, isLoading } = useGetOperationRequestsListQuery(listRequest);
+      useEffect(() => {
+    refetch(); 
+  }, []);
 
     useEffect(() => {
 
