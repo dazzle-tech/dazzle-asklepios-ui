@@ -109,7 +109,7 @@ import MedicationMatrix from './pages/setup/med-matrix-setup';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import Shifts from './pages/setup/shift-setup';
-import EPrepscriptions from './pages/pharmacy/ePrescriptions';
+import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescriptions';
 import MultidisciplinaryTeamNotes from './pages/encounter/encounter-component/multidisciplinary-team-notes';
 import ViewRound from './pages/encounter/encounter-component/doctor-round/NewRound/ViewRound';
 import ControlledMedications from './pages/pharmacy/controlled-medications';
@@ -318,7 +318,7 @@ const App = () => {
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
-                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
+                <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
                 <Route path="psychological-exam" element={<PsychologicalExam />} />
                 <Route path="vaccination" element={<VaccinationTab />} />
@@ -389,7 +389,7 @@ const App = () => {
               <Route path="inventory-transfer" element={<InventoryTransfer />} />
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
-              <Route path='inventory-product-setup' element={<ProductSetup />} />
+              <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="warehouse-setup" element={<WarehouseSetup />} />
               <Route path="warehouse-items-setup" element={<WarehouseItemsSetup />} />
