@@ -7,7 +7,7 @@ import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
-import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Tabs } from 'rsuite';
@@ -26,6 +26,7 @@ import Warning from '../encounter-pre-observations/warning';
 import PatientHistory from '../encounter-component/patient-history';
 import PreviousMeasurements from '../encounter-pre-observations/previous-measurements';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
+import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 
 const QuickVisit = ({ }) => {
     const dispatch = useAppDispatch();
@@ -38,7 +39,7 @@ const QuickVisit = ({ }) => {
     const [activeKey, setActiveKey] = useState<string | number>('1');
     const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
     const [completeEncounter] = useCompleteEncounterMutation();
-    const [dischargeInpatientEncounter] = useDischargeInpatientEncounterMutation();
+    const [openDischargeModal, setOpenDischargeModal] = useState(false);
     // Page header setup
     const divContent = (
         <div style={{ display: 'flex' }}>
@@ -51,10 +52,7 @@ const QuickVisit = ({ }) => {
 
     const handleCompleteEncounter = async () => {
         try {
-            if (localEncounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT") {
-                await dischargeInpatientEncounter(localEncounter).unwrap();
-                dispatch(notify({ msg: 'Inpatient Encounter Discharge Successfully', sev: 'success' }));
-            } else if (localEncounter) {
+            if (localEncounter) {
                 await completeEncounter(localEncounter).unwrap();
                 dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
             }
@@ -106,7 +104,8 @@ const QuickVisit = ({ }) => {
                                     {/* TODO update status to be a LOV value */}
                                     {!localEncounter.discharge && localEncounter.encounterStatusLkey !== "91109811181900" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                                        onClick={handleCompleteEncounter}
+                                        onClick={()=>localEncounter?.resourceTypeLvalue?.valueCode == "BRT_EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
+
                                         appearance="ghost"
                                     >
                                         <Translate>{localEncounter?.resourceTypeLvalue?.valueCode == "BRT_EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
@@ -114,7 +113,7 @@ const QuickVisit = ({ }) => {
                                     <Divider vertical />
                                     <MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
-                                        onClick={handleCompleteEncounter}
+                                        
                                     >
                                         <Translate>Print Visit Report </Translate>
                                     </MyButton>
@@ -186,6 +185,10 @@ const QuickVisit = ({ }) => {
                     <div className="right-box">
                         <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
                     </div>
+                    <EncounterDischarge
+                        open={openDischargeModal}
+                        setOpen={setOpenDischargeModal}
+                        encounter={propsData.encounter} />
                 </div>
             )}
         </>

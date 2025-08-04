@@ -232,6 +232,7 @@ const ERStartTriage = () => {
                     <MyButton
                         prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
                         onClick={() => { setOpenSendToModal(true); }}
+                        disabled={!emergencyTriage?.emergencyLevelLkey || !encounter?.emergencyLevelLkey}
                     >
                         <Translate>  Send to </Translate>
                     </MyButton>

@@ -10,7 +10,7 @@ import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
-import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounterService';
 import {
   faBedPulse, faCheckDouble, faClockRotateLeft, faFilePrescription, faFileWaveform,
   faHandDots, faNotesMedical, faPersonDotsFromLine, faPills, faStethoscope, faSyringe, faTooth, faTriangleExclamation, faUserDoctor, faVials
@@ -34,6 +34,7 @@ import AllergiesModal from './AllergiesModal';
 import WarningiesModal from './WarningiesModal';
 import { notify } from '@/utils/uiReducerActions';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
+import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 
 const Encounter = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -52,7 +53,7 @@ const Encounter = () => {
   const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
   const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
   const [selectedResources, setSelectedResources] = useState([]);
-  const [dischargeInpatientEncounter] = useDischargeInpatientEncounterMutation();
+  const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [edit, setEdit] = useState(false);
   const [fromPage, setFromPage] = useState(savedState);
 
@@ -150,10 +151,7 @@ const Encounter = () => {
 
   const handleCompleteEncounter = async () => {
     try {
-      if (propsData.encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT") {
-        await dischargeInpatientEncounter(propsData.encounter).unwrap();
-        dispatch(notify({ msg: 'Inpatient Encounter Discharge Successfully', sev: 'success' }));
-      } else if (propsData.encounter) {
+       if (propsData.encounter) {
         await completeEncounter(propsData.encounter).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
@@ -306,11 +304,17 @@ const Encounter = () => {
               {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleCompleteEncounter}
+                  onClick={()=>(propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT" ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_DAYCASE"  ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_PROC"     ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_EMERGENCY") ? setOpenDischargeModal(true) : handleCompleteEncounter()}
                   appearance="ghost"
                 >
                   <Translate>
-                    {propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT"
+                    {(propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT" ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_DAYCASE"  ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_PROC"     ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_EMERGENCY") 
                       ? "Discharge"
                       : "Complete Visit"}
                   </Translate>
@@ -401,6 +405,11 @@ const Encounter = () => {
         open={openAllargyModal}
         setOpen={setOpenAllargyModal}
         patient={propsData.patient}
+      />
+      <EncounterDischarge
+        open={openDischargeModal}
+        setOpen={setOpenDischargeModal}
+        encounter={propsData.encounter}
       />
     </div>
   );

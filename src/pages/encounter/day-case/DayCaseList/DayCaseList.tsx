@@ -47,7 +47,11 @@ const DayCaseList = () => {
                 value: ['5433343011954425', '2039548173192779']
                     .map(key => `(${key})`)
                     .join(' '),
-            },
+            }, {
+                fieldName: 'discharge',
+                operator: 'match',
+                value: "false"
+            }
         ],
     });
     // Fetch the encounter list using the current listRequest
@@ -102,7 +106,11 @@ const DayCaseList = () => {
                             .map(key => `(${key})`)
                             .join(' '),
 
-                    },
+                    }, {
+                        fieldName: 'discharge',
+                        operator: 'match',
+                        value: "false"
+                    }
                 ]
             });
         }
@@ -123,7 +131,7 @@ const DayCaseList = () => {
                     info: 'toEncounter',
                     fromPage: 'EncounterList',
                     patient: patientData,
-                    encounter: encounterData
+                    encounter: encounterData,
                 }
             });
         } else {
@@ -132,7 +140,7 @@ const DayCaseList = () => {
                     info: 'toEncounter',
                     fromPage: 'EncounterList',
                     patient: patientData,
-                    encounter: encounterData
+                    encounter: encounterData,
                 }
             });
         }

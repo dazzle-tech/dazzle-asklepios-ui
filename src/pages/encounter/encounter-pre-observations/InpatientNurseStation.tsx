@@ -11,7 +11,7 @@ import BlockIcon from '@rsuite/icons/Block';
 import Warning from './warning';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
-import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Tabs } from 'rsuite';
@@ -29,6 +29,8 @@ import GeneralAssessment from '../encounter-component/general-assessment';
 import MedicationReconciliation from '../encounter-component/MedicationReconciliation/MedicationReconciliation';
 import FunctionalAssessment from '../encounter-component/functional-assessment';
 import Repositioning from '../encounter-component/repositioning';
+import Encounter from '../encounter-screen';
+import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 const InpatientNurseStation = ({ }) => {
     const dispatch = useAppDispatch();
     const location = useLocation();
@@ -39,7 +41,7 @@ const InpatientNurseStation = ({ }) => {
     const [readOnly, setReadOnly] = useState(false);
     const [activeKey, setActiveKey] = useState<string | number>('1');
     const [completeEncounter] = useCompleteEncounterMutation();
-    const [dischargeInpatientEncounter] = useDischargeInpatientEncounterMutation();
+    const [openDischargeModal, setOpenDischargeModal] = useState(false);
     const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
     // Page header setup
     const divContent = (
@@ -53,10 +55,7 @@ const InpatientNurseStation = ({ }) => {
 
     const handleCompleteEncounter = async () => {
         try {
-            if (localEncounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT") {
-                await dischargeInpatientEncounter(localEncounter).unwrap();
-                dispatch(notify({ msg: 'Inpatient Encounter Discharge Successfully', sev: 'success' }));
-            } else if (localEncounter) {
+             if (localEncounter) {
                 await completeEncounter(localEncounter).unwrap();
                 dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
             }
@@ -110,7 +109,7 @@ const InpatientNurseStation = ({ }) => {
                                     {/* TODO update status to be a LOV value */}
                                     {!localEncounter.discharge && localEncounter.encounterStatusLkey !== "91109811181900" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                                        onClick={handleCompleteEncounter}
+                                        onClick={()=>localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
                                         appearance="ghost"
                                     >
                                         <Translate>{localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ? "Discharge" : "Complete Visit"}</Translate>
@@ -215,6 +214,10 @@ const InpatientNurseStation = ({ }) => {
                     <div className="right-box">
                         <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
                     </div>
+                    <EncounterDischarge
+                        open={openDischargeModal}
+                        setOpen={setOpenDischargeModal}
+                        encounter={propsData.encounter}/>
                 </div>
             )}
         </>
