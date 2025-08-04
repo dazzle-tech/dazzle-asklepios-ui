@@ -16,7 +16,7 @@ import SurgicalHistory from "@/pages/encounter/encounter-component/patient-histo
 import SurgicalPreparation from "./SurgicalPreparation";
 import IntraoperativeEventsTracking from "./IntraoperativeEventsTracking";
 import PostOperativeNote from "./PostOperativeNote";
-const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOperation }) => {
+const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOperation,refetch }) => {
        const authSlice = useAppSelector(state => state.auth);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
@@ -116,7 +116,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                         </Tabs.Tab>
 
                         <Tabs.Tab eventKey="2" title="Pre-Operative Time-out" >
-                            <OperativeTimeOut operation={operation}/>
+                            <OperativeTimeOut operation={operation} refetch={refetch}/>
                         </Tabs.Tab>
 
                         <Tabs.Tab 

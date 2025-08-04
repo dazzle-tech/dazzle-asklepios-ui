@@ -11,7 +11,7 @@ import { useGetUsersQuery } from "@/services/setupService";
 import { initialListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
 import MyButton from "@/components/MyButton/MyButton";
-const OperativeTimeOut = ({operation}) => {
+const OperativeTimeOut = ({operation ,refetch}) => {
     const dispatch = useAppDispatch();
     const [timeout, setTimeOut] = useState({ ...newApPreOperativeTimeout });
     const { data: userList } = useGetUsersQuery({ ...initialListRequest });
@@ -19,7 +19,8 @@ const OperativeTimeOut = ({operation}) => {
 
    const handleSave=async()=>{
     try{
-       await save({...timeout,operationRequestKey:operation?.key,timeoutStartTime:new Date(timeout.timeoutStartTime).getTime()});
+      const Response= await save({...timeout,operationRequestKey:operation?.key,timeoutStartTime:new Date(timeout.timeoutStartTime).getTime()});
+        refetch();
        dispatch(notify({msg:"Saved Successfly",sev:"success"}));
     }
     catch(error){

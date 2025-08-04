@@ -154,7 +154,7 @@ const PostOperativeNote = ({ operation }) => {
                                         fieldLabel="Final operation  Performed"
                                         record={textareaValue}
                                         setRecord={setTextareaValue}
-                                        readOnly
+                                        disabled={true}
                                        
                                     /></Col>
                             </Row>

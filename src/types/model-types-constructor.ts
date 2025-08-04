@@ -3361,7 +3361,6 @@ export const newApPreOperationChecklist:modelTypes.ApPreOperationChecklist = {
 export const newApPreOperativeTimeout:modelTypes.ApPreOperativeTimeout = { 
 	key:undefined,
 	operationRequestKey:undefined,
-	timeoutStartTime:null,
 	initiatedBy:'',
 	patientIdentityConfirmed:undefined,
 	surgicalSiteConfirmed:undefined,
@@ -3387,6 +3386,7 @@ export const newApPreOperativeTimeout:modelTypes.ApPreOperativeTimeout = {
 	deletedAt:undefined,
 	encounterKey:undefined,
 	patientKey:undefined,
+	timeoutStartTime:0,
 } 
 
 export const newApPreProcedureAssessment:modelTypes.ApPreProcedureAssessment = { 
@@ -3684,6 +3684,22 @@ export const newApProducts:modelTypes.ApProducts = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+} 
+
+export const newApProgressNotes:modelTypes.ApProgressNotes = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	jobRoleLkey:undefined,
+	progressNotes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	statusLkey:undefined,
+	cancellationReason:'',
 } 
 
 export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = { 

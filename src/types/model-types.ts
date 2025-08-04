@@ -3360,7 +3360,6 @@ export interface ApPreOperationChecklist {
 export interface ApPreOperativeTimeout { 
 	key:string;
 	operationRequestKey:string;
-	timeoutStartTime:Date;
 	initiatedBy:string;
 	patientIdentityConfirmed:boolean;
 	surgicalSiteConfirmed:boolean;
@@ -3386,6 +3385,7 @@ export interface ApPreOperativeTimeout {
 	deletedAt:number;
 	encounterKey:string;
 	patientKey:string;
+	timeoutStartTime:number;
 } 
 
 export interface ApPreProcedureAssessment { 
@@ -3683,6 +3683,22 @@ export interface ApProducts {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApProgressNotes { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	jobRoleLkey:string;
+	progressNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+	cancellationReason:string;
 } 
 
 export interface ApPsychologicalExam { 
