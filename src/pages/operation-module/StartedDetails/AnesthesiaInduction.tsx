@@ -13,7 +13,7 @@ import { Col, Divider, Form, Row, Text } from "rsuite";
 import IntraoperativeMonitoring from "./IntraoperativeMonitoring";
 import MyModal from "@/components/MyModal/MyModal";
 import DrugOrder from "@/pages/encounter/encounter-component/drug-order";
-const AnesthesiaInduction = ({ operation }) => {
+const AnesthesiaInduction = ({ operation,patient,encounter }) => {
     const dispatch = useAppDispatch();
     const [anesthesiaInduction, setAnesthesiaInduction] = useState({ ...newApOperationAnesthesiaInductionMonitoring })
     const [tag, setTag] = useState([]);
@@ -295,8 +295,7 @@ const AnesthesiaInduction = ({ operation }) => {
         open={open}
         setOpen={setOpen}
         title={"Drug Order"}
-        content={<></>}
-        />
+        content={<DrugOrder patient={patient} encounter={encounter} edit={false} />} />
     </Form>)
 }
 export default AnesthesiaInduction;

@@ -122,7 +122,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                         <Tabs.Tab 
                         disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
                         eventKey="3" title="Anesthesia Induction & Monitoring" >
-                            <AnesthesiaInduction  operation={operation}/>
+                            <AnesthesiaInduction  operation={operation} patient={patient} encounter={encounter}/>
                         </Tabs.Tab>
                         <Tabs.Tab
                         disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
