@@ -526,9 +526,9 @@ export const encounterService = createApi({
       keepUnusedDataFor: 5
     }),
 
-    dischargeInpatientEncounter: builder.mutation({
+    dischargeEncounter: builder.mutation({
       query: (encounter: ApEncounter) => ({
-        url: `/encounter/discharge-inpatient-encounter`,
+        url: `/encounter/discharge-encounter`,
         method: 'POST',
         body: encounter
       }),
@@ -946,7 +946,7 @@ export const {
   useGetComplaintSymptomsQuery,
   useSaveElectrocardiogramECGMutation,
   useGetElectrocardiogramECGsQuery,
-  useDischargeInpatientEncounterMutation,
+  useDischargeEncounterMutation,
   useAdmitToInpatientEncounterMutation,
   useGetWaitingListEncounterQuery,
   useSavePatientAdmissionMutation,

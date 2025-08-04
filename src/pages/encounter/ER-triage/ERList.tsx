@@ -108,7 +108,7 @@ const ERList = () => {
                     info: 'toEncounter',
                     fromPage: 'EncounterList',
                     patient: patientData,
-                    encounter: encounterData
+                    encounter: encounterData,
                 }
             });
         } else {
@@ -117,7 +117,7 @@ const ERList = () => {
                     info: 'toEncounter',
                     fromPage: 'EncounterList',
                     patient: patientData,
-                    encounter: encounterData
+                    encounter: encounterData,
                 }
             });
         }

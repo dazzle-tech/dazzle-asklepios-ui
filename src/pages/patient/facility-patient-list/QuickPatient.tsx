@@ -49,13 +49,13 @@ const QuickPatient = ({ open, setOpen }) => {
           ...localEncounter,
           patientKey: savedPatient.key,
           plannedStartDate: new Date(),
-          encounterStatusLkey: '91063195286200',
+          encounterStatusLkey: "8890456518264959",
           patientAge: calculateAgeFormat(savedPatient.dob),
           visitTypeLkey: '2041082245699228',
           resourceTypeLkey: '6743167799449277',
-           resourceKey: '7101086042442391',
+          resourceKey: '7101086042442391',
         });
-      dispatch(setRefetchEncounter(true));  
+        dispatch(setRefetchEncounter(true));
       }
 
       // 3. Update state and navigate
@@ -135,7 +135,13 @@ const QuickPatient = ({ open, setOpen }) => {
       </div>
     </Form>
   );
-
+  // Effects
+  useEffect(() => {
+    if (!open) {
+      setLocalPatient({ ...newApPatient });
+      setLocalEncounter({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
+    }
+  }, [open]);
   return (
     <MyModal
       open={open}

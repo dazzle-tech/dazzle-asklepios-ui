@@ -14,7 +14,7 @@ const RegistrationWizard = () => {
   const [open, setOpen] = useState(false);
   const dispatch = useAppDispatch();
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
- 
+
 
   // Effects
   useEffect(() => {
@@ -55,9 +55,9 @@ const RegistrationWizard = () => {
           Quick Patient
         </MyButton>
       </div>
-      <CreateNewPatient open={open} setOpen={setOpen}  />
+      <CreateNewPatient open={open} setOpen={setOpen} />
       <QuickPatient open={quickPatientModalOpen} setOpen={setQuickPatientModalOpen} />
-      
+
     </Panel>
   );
 };

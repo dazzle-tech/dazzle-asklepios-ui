@@ -8,6 +8,8 @@ import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
+import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
+
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEREncountersListQuery, useSaveEncounterChangesMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
@@ -81,6 +83,14 @@ const ERTriage = () => {
         } else return '';
     };
 
+    // Function to handle go to view triage
+    const handleGoToViewTriage = async (encounterData, patientData) => {
+        const targetPath = '/view-triage';
+        navigate(targetPath, {
+            state: { info: 'toViewTriage', patient: patientData, encounter: encounterData }
+        });
+    };
+
     // Function to handle manual search based on date filters
     const handleManualSearch = () => {
         setManualSearchTriggered(true);
@@ -137,7 +147,6 @@ const ERTriage = () => {
             }
         });
     };
-    console.log("encounterListResponse===>", encounterListResponse)
     //useEffect
     useEffect(() => {
         dispatch(setPageCode(''));
@@ -323,24 +332,44 @@ const ERTriage = () => {
             render: rowData => {
                 const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
                 const tooltipStart = <Tooltip>Start Triage</Tooltip>;
+                const tooltipTriage = <Tooltip>View Triage</Tooltip>;
                 const tooltipSendTo = <Tooltip>Send to</Tooltip>;
                 const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
-                        <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
-                            <div>
-                                <MyButton
-                                    size="small"
-                                    backgroundColor="black"
-                                    onClick={() => {
-                                        setLocalEncounter(rowData);
-                                        handleGoToVisit(rowData, rowData?.patientObject)
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faCirclePlay} />
-                                </MyButton>
-                            </div>
-                        </Whisper>
+                        {(rowData?.encounterStatusLkey === '91109811181900' || rowData?.encounterStatusLkey === '6550164111662337') ? (
+                            <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
+                                <div>
+                                    <MyButton
+                                        size="small"
+                                        onClick={() => {
+                                            const patientData = rowData?.patientObject;
+                                            setLocalEncounter(rowData);
+                                            handleGoToViewTriage(rowData, patientData);
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={faCommentMedical} />
+                                    </MyButton>
+                                </div>
+                            </Whisper>
+                        ) : (
+                            <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
+                                <div>
+                                    <MyButton
+                                        size="small"
+                                        backgroundColor="black"
+                                        onClick={() => {
+                                            setLocalEncounter(rowData);
+                                            handleGoToVisit(rowData, rowData?.patientObject);
+                                        }}
+                                        disabled={(rowData?.encounterStatusLkey !== "8890456518264959") && (rowData?.encounterStatusLkey !== "6742295599423814")}
+                                    >
+                                        <FontAwesomeIcon icon={faCirclePlay} />
+                                    </MyButton>
+                                </div>
+                            </Whisper>
+                        )}
+
                         <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
                             <div>
                                 <MyButton
@@ -359,6 +388,7 @@ const ERTriage = () => {
                                     size="small"
                                     backgroundColor="violet"
                                     onClick={() => { setLocalEncounter(rowData); setOpenSendToModal(true); }}
+                                    disabled={rowData?.encounterStatusLkey != '6742295599423814'}
                                 >
                                     <FontAwesomeIcon icon={faPaperPlane} />
                                 </MyButton>
