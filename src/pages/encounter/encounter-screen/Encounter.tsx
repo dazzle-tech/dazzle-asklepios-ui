@@ -226,7 +226,6 @@ const Encounter = () => {
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
     {key: 'medicalWarnings',label: 'Medical Warnings',icon: faTriangleExclamation,path: 'medical-warnings'},
     {key: 'diagnosticsResult',label: 'Diagnostics Test Result',icon: faFileWaveform,path: 'diagnostics-result' },
-    {key: 'diagnosticsResult',label: 'Diagnostics Test Result',icon: faFileWaveform,path: 'diagnostics-result'},
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
@@ -239,12 +238,7 @@ const Encounter = () => {
       icon: faComment,
       path: 'multidisciplinary-team-notes'
     },
-    {
-      key: 'carePlanAndGoals',
-      label: 'Care Plan & Goals',
-      icon: faNotesMedical,
-      path: 'care-plan-and-goals'
-    },
+
     {
       key: 'dischargePlanning',
       label: 'Discharge Planning',
@@ -264,43 +258,14 @@ const Encounter = () => {
       icon: faSquarePollHorizontal,
       path: 'intake-output-balance'
     },
-    {
-      key: 'referralRequest',
-      label: 'Referral Request',
-      icon: faUserDoctor,
-      path: 'referral-request'
-    },
-    {
-      key: 'multidisciplinaryTeamNotes',
-      label: 'Multidisciplinary Team Notes',
-      icon: faComment,
-      path: 'multidisciplinary-team-notes'
-    },
+  
     {
       key: 'carePlanAndGoals',
       label: 'Care Plan & Goals',
       icon: faNotesMedical,
       path: 'care-plan-and-goals'
     },
-    {
-      key: 'dischargePlanning',
-      label: 'Discharge Planning',
-      icon: faRightFromBracket,
-      path: 'discharge-planning'
-    },
-    {
-      key: 'bedsideProceduresRequest',
-      label: 'Bedside Procedures',
-      icon: faSuitcaseMedical,
-      path: 'bedside-procedures-requests'
-    },
-    { key: 'bloodOrder', label: 'Blood Order', icon: faDroplet, path: 'blood-order' },
-    {
-      key: 'intakeOutputBalance',
-      label: 'Intake Output Balance',
-      icon: faSquarePollHorizontal,
-      path: 'intake-output-balance'
-    },
+  
     {
       key: 'johnsHopkinsFallRiskAssessmentTool',
       label: 'Johns Hopkins Tool',
