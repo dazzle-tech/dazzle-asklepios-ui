@@ -1,7 +1,6 @@
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { faPersonFallingBurst } from '@fortawesome/free-solid-svg-icons';
 import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
