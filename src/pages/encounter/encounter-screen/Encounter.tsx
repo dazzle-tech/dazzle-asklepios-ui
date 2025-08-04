@@ -5,7 +5,6 @@ import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentMod
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { faComment } from '@fortawesome/free-solid-svg-icons';
-import { faEject } from '@fortawesome/free-solid-svg-icons';
 import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
