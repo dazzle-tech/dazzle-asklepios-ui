@@ -109,7 +109,7 @@ import MedicationMatrix from './pages/setup/med-matrix-setup';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import Shifts from './pages/setup/shift-setup';
-import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescriptions';
+import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescription';
 import MultidisciplinaryTeamNotes from './pages/encounter/encounter-component/multidisciplinary-team-notes';
 import ViewRound from './pages/encounter/encounter-component/doctor-round/NewRound/ViewRound';
 import ControlledMedications from './pages/pharmacy/controlled-medications';

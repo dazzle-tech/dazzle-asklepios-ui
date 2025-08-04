@@ -1,3 +1,3 @@
-import EPrescriptions from './EPrescriptions';
+import EPrescriptions from './EPrescription';
 
 export default EPrescriptions;
