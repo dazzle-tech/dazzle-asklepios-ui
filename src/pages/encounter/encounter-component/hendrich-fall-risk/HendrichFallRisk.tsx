@@ -8,14 +8,13 @@ import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import AddNewModal from './AddNewModal';
-// import './styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
 import RiskLevelExtraForm from '../morse-fall-scale/RiskLevelExtraForm';
-const StratifyScale = () => {
+const HendrichFallRisk = () => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   // open add new modal
   const [open, setOpen] = useState<boolean>(false);
-  const [stratifyScale, setStratifyScale] = useState({});
+  const [hendrichFallRisk, setHendrichFallRisk] = useState({});
   // open modal for moderate and high score
   const [openRiskLevelExtraFormModal, setOpenRiskLevelExtraFormModal] = useState<boolean>(false);
   // object for moderate/high modal
@@ -23,7 +22,7 @@ const StratifyScale = () => {
 
   // Class name of selected row
   const isSelected = rowData => {
-    if (rowData && stratifyScale && rowData.key === stratifyScale.key) {
+    if (rowData && hendrichFallRisk && rowData.key === hendrichFallRisk.key) {
       return 'selected-row';
     } else return '';
   };
@@ -33,34 +32,34 @@ const StratifyScale = () => {
     {
       key: '1',
       score: '3',
-      riskLevel: 'High',
-      createdAt: '2/9/2025',
+      riskLevel: 'Low',
+      createdAt: '2/10/2025',
       createdBy: 'Batool',
-      nextAssessmentDue: '10/9/2025'
+      nextAssessmentDue: '10/10/2025'
     },
     {
       key: '2',
       score: '1',
       riskLevel: 'Low',
-      createdAt: '3/9/2025',
+      createdAt: '3/10/2025',
       createdBy: 'Hanan',
-      nextAssessmentDue: '12/9/2025'
+      nextAssessmentDue: '12/10/2025'
     },
     {
       key: '3',
-      score: '0',
-      riskLevel: 'Low',
-      createdAt: '4/9/2025',
+      score: '6',
+      riskLevel: 'High',
+      createdAt: '4/10/2025',
       createdBy: 'Bushra',
-      nextAssessmentDue: '13/9/2025'
+      nextAssessmentDue: '13/10/2025'
     },
     {
       key: '4',
-      score: '4',
+      score: '7',
       riskLevel: 'High',
-      createdAt: '6/9/2025',
+      createdAt: '6/10/2025',
       createdBy: 'Walaa',
-      nextAssessmentDue: '17/9/2025'
+      nextAssessmentDue: '17/10/2025'
     }
   ];
 
@@ -73,11 +72,11 @@ const StratifyScale = () => {
         className="icons-style"
         icon={faListCheck}
         style={{
-          cursor: Number(rowData?.score) > 1 ? 'pointer' : 'not-allowed',
+          cursor: Number(rowData?.score) >= 5 ? 'pointer' : 'not-allowed',
           color: 'var(--primary-gray)'
         }}
         onClick={() => {
-          if (Number(rowData?.score) > 1) {
+          if (Number(rowData?.score) >= 5) {
             setOpenRiskLevelExtraFormModal(true);
             setObject({ key: rowData.key });
           }
@@ -167,7 +166,7 @@ const StratifyScale = () => {
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => {
-          setStratifyScale(rowData);
+          setHendrichFallRisk(rowData);
         }}
       />
       <AddNewModal
@@ -175,8 +174,8 @@ const StratifyScale = () => {
         setOpen={setOpen}
         width={width}
         setOpenRiskLevelExtraFormModal={setOpenRiskLevelExtraFormModal}
-        stratifyScale={stratifyScale}
-        setStratifyScale={setStratifyScale}
+        hendrichFallRisk={hendrichFallRisk}
+        setHendrichFallRisk={setHendrichFallRisk}
       />
       <RiskLevelExtraForm
         open={openRiskLevelExtraFormModal}
@@ -189,4 +188,4 @@ const StratifyScale = () => {
     </div>
   );
 };
-export default StratifyScale;
+export default HendrichFallRisk;
