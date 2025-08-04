@@ -25,9 +25,9 @@ import {
   faTooth,
   faTriangleExclamation,
   faUserDoctor,
-  faVials
+  faVials,
+  faPersonFallingBurst
 } from '@fortawesome/free-solid-svg-icons';
-import { faPersonFallingBurst } from '@fortawesome/free-solid-svg-icons';
 
 import { faBed } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -224,46 +224,15 @@ const Encounter = () => {
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
     { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
-    {
-      key: 'medicalWarnings',
-      label: 'Medical Warnings',
-      icon: faTriangleExclamation,
-      path: 'medical-warnings'
-    },
-    {
-      key: 'diagnosticsResult',
-      label: 'Diagnostics Test Result',
-      icon: faFileWaveform,
-      path: 'diagnostics-result'
-    },
-    {
-      key: 'medicalWarnings',
-      label: 'Medical Warnings',
-      icon: faTriangleExclamation,
-      path: 'medical-warnings'
-    },
-    {
-      key: 'diagnosticsResult',
-      label: 'Diagnostics Test Result',
-      icon: faFileWaveform,
-      path: 'diagnostics-result'
-    },
+    {key: 'medicalWarnings',label: 'Medical Warnings',icon: faTriangleExclamation,path: 'medical-warnings'},
+    {key: 'diagnosticsResult',label: 'Diagnostics Test Result',icon: faFileWaveform,path: 'diagnostics-result' },
+    {key: 'diagnosticsResult',label: 'Diagnostics Test Result',icon: faFileWaveform,path: 'diagnostics-result'},
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
-    {
-      key: 'diagnosticsOrder',
-      label: 'Diagnostics Order',
-      icon: faVials,
-      path: 'diagnostics-order'
-    },
+    { key: 'diagnosticsOrder',label: 'Diagnostics Order',icon: faVials,path: 'diagnostics-order'},
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
-    {
-      key: 'referralRequest',
-      label: 'Referral Request',
-      icon: faUserDoctor,
-      path: 'referral-request'
-    },
+    {key: 'referralRequest',label: 'Referral Request',icon: faUserDoctor,path: 'referral-request'},
     {
       key: 'multidisciplinaryTeamNotes',
       label: 'Multidisciplinary Team Notes',
@@ -359,14 +328,8 @@ const Encounter = () => {
       label: 'Operation Requests',
       icon: faBedPulse,
       path: 'operation-request'
-    },
-    {
-      key: 'operationRequests',
-      label: 'Operation Requests',
-      icon: faBedPulse,
-      path: 'operation-request'
-    },
-
+    }
+,
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },

@@ -66,7 +66,8 @@ const IntraoperativeEventsTracking = ({ operation, patient,encounter }) => {
 
 useEffect(() => {
     if (surgical?.object?.key != null) {
-        setSurgicalP({ ...surgical.object });
+        setSurgicalP({ ...surgical.object, timeOfIncision: surgical.object.timeOfIncision ? new Date(surgical.object.timeOfIncision) : null });
+
     } else {
         setSurgicalP({ ...newApOperationSurgicalPreparationIncision });
     }
@@ -81,7 +82,8 @@ useEffect(() => {
                 secondCountTime: new Date(intraoperative.secondCountTime).getTime(),
                 skinClosureTime: new Date(intraoperative.skinClosureTime).getTime(),
                 surgeryEndTime: new Date(intraoperative.surgeryEndTime).getTime(),
-                actualOperationPerformed:selectedKeys.join(",")
+                actualOperationPerformed:selectedKeys.join(","),
+                specimensTaken: tag.join(","),
 
 
             }).unwrap();
@@ -186,7 +188,7 @@ useEffect(() => {
                             <Row>
                                 <Col md={8}>
                                     <MyInput
-                                        // fieldType="time"
+                                        fieldType="time"
                                         disabled={true}
                                         fieldName="timeOfIncision"
                                         record={surgicalP}
@@ -221,9 +223,10 @@ useEffect(() => {
                                     />
                                 </Col>
                                 <Col md={8}>
-                                    <MyTagInput tags={tag} setTags={setTag} labelText="" />
+                                    <MyTagInput tags={tag} setTags={setTag} labelText="Specimens Taken" />
                                 </Col>
                                 <Col md={8}>
+                                <br/>
                                     <MyButton onClick={()=>setOpenOrderModel(true)}>Diagnostic Order </MyButton>
                                 </Col>
                             </Row>
@@ -252,7 +255,7 @@ useEffect(() => {
                                     <MyInput
                                         width="100%"
                                         fieldType="checkPicker"
-                                        showLabel={false}
+                                        fieldLabel="Operation Performed"
                                         plaplaceholder="Operations"
                                         fieldName="selectedKeys"
                                         record={{ selectedKeys }}
@@ -289,8 +292,15 @@ useEffect(() => {
                                 <Text>Intraoperative Events & Interventions</Text>
                             </div>
                             <Divider />
-
+                             
                             <Row>
+                                 <Col md={8}>
+                                    <MyInput
+                                        width="100%"
+                                        fieldType="checkbox"
+                                        fieldName="unexpectedEventOccurred"
+                                        record={intraoperative}
+                                        setRecord={setIntraoperative} /></Col>
                                 <Col md={8}>
                                     <MyInput
                                         width="100%"
@@ -304,13 +314,7 @@ useEffect(() => {
                                         fieldName="teamResponse"
                                         record={intraoperative}
                                         setRecord={setIntraoperative} /></Col>
-                                <Col md={8}>
-                                    <MyInput
-                                        width="100%"
-                                        fieldType="checkbox"
-                                        fieldName="unexpectedEventOccurred"
-                                        record={intraoperative}
-                                        setRecord={setIntraoperative} /></Col>
+                              
                             </Row>
                             <Row>
                                 <RadioGroup

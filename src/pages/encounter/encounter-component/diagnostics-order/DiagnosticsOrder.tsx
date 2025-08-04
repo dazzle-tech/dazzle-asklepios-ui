@@ -87,12 +87,12 @@ const DiagnosticsOrder = ({ patient: propPatient, encounter: propEncounter, edit
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: 'visit_key',
                 operator: 'match',
-                value: encounter.key
+                value: encounter?.key
             },
             {
                 fieldName: 'is_valid',
@@ -110,12 +110,12 @@ const DiagnosticsOrder = ({ patient: propPatient, encounter: propEncounter, edit
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: 'order_key',
                 operator: 'match',
-                value: orders.key || undefined
+                value: orders?.key || undefined
             },
             {
                 fieldName: 'is_valid',
@@ -211,12 +211,12 @@ const DiagnosticsOrder = ({ patient: propPatient, encounter: propEncounter, edit
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patient.key
+                    value: patient?.key
                 },
                 {
                     fieldName: 'order_key',
                     operator: 'match',
-                    value: orders.key || undefined
+                    value: orders?.key || undefined
                 },
                 {
                     fieldName: 'is_valid',
@@ -232,12 +232,12 @@ const DiagnosticsOrder = ({ patient: propPatient, encounter: propEncounter, edit
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: 'order_key',
                 operator: 'match',
-                value: orders.key || undefined
+                value: orders?.key || undefined
             },
             {
                 fieldName: 'is_valid',
