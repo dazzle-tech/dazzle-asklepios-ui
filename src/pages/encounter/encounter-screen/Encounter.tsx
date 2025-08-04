@@ -5,6 +5,7 @@ import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentMod
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { faComment } from '@fortawesome/free-solid-svg-icons';
+import { faEject } from '@fortawesome/free-solid-svg-icons';
 import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
@@ -216,7 +217,8 @@ const Encounter = () => {
     '/encounter/intake-output-balance': 'Intake Output Balance',
     '/encounter/referral-request': 'Referral Request',
     '/encounter/iv-fluid-order': 'IV Fluid Order',
-    '/encounter/morse-fall-scale': 'Morse Fall Scale (MFS)'
+    '/encounter/morse-fall-scale': 'Morse Fall Scale (MFS)',
+    '/encounter/stratify-scale': 'STRATIFY Scale',
   };
 
   const menuItems = [
@@ -312,7 +314,9 @@ const Encounter = () => {
       label: 'Morse Fall Scale (MFS)',
       icon: faPersonFallingBurst,
       path: 'morse-fall-scale'
-    }
+    },
+    { key: 'stratifyScale', label: 'STRATIFY Scale', icon: faPersonFallingBurst, path: 'stratify-scale' },
+
   ];
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (

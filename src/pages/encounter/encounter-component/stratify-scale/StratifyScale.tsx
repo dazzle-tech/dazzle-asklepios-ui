@@ -8,22 +8,22 @@ import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import AddNewModal from './AddNewModal';
-import RiskLevelExtraForm from './RiskLevelExtraForm';
-import './styles.less';
+// import './styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
-const MorseFallScale = () => {
+import RiskLevelExtraForm from '../morse-fall-scale/RiskLevelExtraForm';
+const StratifyScale = () => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   // open add new modal
   const [open, setOpen] = useState<boolean>(false);
-  const [morseFallScale, setMorseFallScale] = useState({});
+  const [stratifyScale, setStratifyScale] = useState({});
   // open modal for moderate and high score
-  const [openModerateHighModal, setOpenModerateHighModal] = useState<boolean>(false);
+  const [openRiskLevelExtraFormModal, setOpenRiskLevelExtraFormModal] = useState<boolean>(false);
   // object for moderate/high modal
   const [object, setObject] = useState({ key: null });
 
   // Class name of selected row
   const isSelected = rowData => {
-    if (rowData && morseFallScale && rowData.key === morseFallScale.key) {
+    if (rowData && stratifyScale && rowData.key === stratifyScale.key) {
       return 'selected-row';
     } else return '';
   };
@@ -32,35 +32,35 @@ const MorseFallScale = () => {
   const data = [
     {
       key: '1',
-      score: '40',
-      riskLevel: 'Moderate',
-      createdAt: '2/8/2025',
-      createdBy: 'Rawan',
-      nextAssessmentDue: '10/8/2025'
+      score: '3',
+      riskLevel: 'High',
+      createdAt: '2/9/2025',
+      createdBy: 'Batool',
+      nextAssessmentDue: '10/9/2025'
     },
     {
       key: '2',
-      score: '20',
+      score: '1',
       riskLevel: 'Low',
-      createdAt: '3/8/2025',
+      createdAt: '3/9/2025',
       createdBy: 'Hanan',
-      nextAssessmentDue: '12/8/2025'
+      nextAssessmentDue: '12/9/2025'
     },
     {
       key: '3',
-      score: '50',
-      riskLevel: 'High',
-      createdAt: '4/8/2025',
+      score: '0',
+      riskLevel: 'Low',
+      createdAt: '4/9/2025',
       createdBy: 'Bushra',
-      nextAssessmentDue: '13/8/2025'
+      nextAssessmentDue: '13/9/2025'
     },
     {
       key: '4',
       score: '40',
-      riskLevel: 'Moderate',
-      createdAt: '6/8/2025',
+      riskLevel: 'High',
+      createdAt: '6/9/2025',
       createdBy: 'Walaa',
-      nextAssessmentDue: '17/8/2025'
+      nextAssessmentDue: '17/9/2025'
     }
   ];
 
@@ -73,12 +73,12 @@ const MorseFallScale = () => {
         className="icons-style"
         icon={faListCheck}
         style={{
-          cursor: Number(rowData?.score) > 24 ? 'pointer' : 'not-allowed',
+          cursor: Number(rowData?.score) > 1 ? 'pointer' : 'not-allowed',
           color: 'var(--primary-gray)'
         }}
         onClick={() => {
-          if (Number(rowData?.score) > 24) {
-            setOpenModerateHighModal(true);
+          if (Number(rowData?.score) > 1) {
+            setOpenRiskLevelExtraFormModal(true);
             setObject({ key: rowData.key });
           }
         }}
@@ -167,20 +167,20 @@ const MorseFallScale = () => {
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => {
-          setMorseFallScale(rowData);
+          setStratifyScale(rowData);
         }}
       />
       <AddNewModal
         open={open}
         setOpen={setOpen}
         width={width}
-        setOpenModerateHighModal={setOpenModerateHighModal}
-        morseFallScale={morseFallScale}
-        setMorseFallScale={setMorseFallScale}
+        setOpenRiskLevelExtraFormModal={setOpenRiskLevelExtraFormModal}
+        stratifyScale={stratifyScale}
+        setStratifyScale={setStratifyScale}
       />
       <RiskLevelExtraForm
-        open={openModerateHighModal}
-        setOpen={setOpenModerateHighModal}
+        open={openRiskLevelExtraFormModal}
+        setOpen={setOpenRiskLevelExtraFormModal}
         width={width}
         object={object}
         setObject={setObject}
@@ -189,4 +189,4 @@ const MorseFallScale = () => {
     </div>
   );
 };
-export default MorseFallScale;
+export default StratifyScale;
