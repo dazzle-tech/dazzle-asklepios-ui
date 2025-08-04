@@ -1,3 +1,4 @@
+//Declares
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
@@ -9,6 +10,7 @@ import JhonsHopkinsToolSecondModal from './JhonsHopkinsToolSecondModal';
 import MyButton from '@/components/MyButton/MyButton';
 import './Style.less';
 
+//Table Data
 const sampleData = [
   {
     id: 1,
@@ -16,7 +18,7 @@ const sampleData = [
     riskLevel: 'High Risk',
     createdBy: 'Dr. Rami',
     createdAt: '2025-07-29 10:30 AM',
-    nextAssessment: '2025-08-15',
+    nextAssessment: '2025-08-15'
   },
   {
     id: 2,
@@ -24,7 +26,7 @@ const sampleData = [
     riskLevel: 'Moderate Risk',
     createdBy: 'Nurse Layla',
     createdAt: '2025-07-25 01:15 PM',
-    nextAssessment: '2025-08-10',
+    nextAssessment: '2025-08-10'
   },
   {
     id: 3,
@@ -32,22 +34,23 @@ const sampleData = [
     riskLevel: 'Low Risk',
     createdBy: 'Dr. Ahmad',
     createdAt: '2025-07-10 08:45 AM',
-    nextAssessment: '2025-09-01',
-  },
+    nextAssessment: '2025-09-01'
+  }
 ];
 
+//Columns Configure
 const columns: ColumnConfig[] = [
   {
     key: 'score',
     title: 'Score',
     dataKey: 'score',
-    width: 100,
+    width: 100
   },
   {
     key: 'riskLevel',
     title: 'Risk Level',
     dataKey: 'riskLevel',
-    width: 120,
+    width: 120
   },
   {
     key: 'createdByAt',
@@ -60,13 +63,13 @@ const columns: ColumnConfig[] = [
         <br />
         <span className="date-table-style">{row.createdAt}</span>
       </>
-    ),
+    )
   },
   {
     key: 'nextAssessment',
     title: 'Next Assessment Due',
     dataKey: 'nextAssessment',
-    width: 180,
+    width: 180
   },
   {
     key: 'viewPlan',
@@ -77,11 +80,11 @@ const columns: ColumnConfig[] = [
     render: () => (
       <FontAwesomeIcon
         icon={faEye}
-        style={{ cursor: 'pointer', color: '#007bff', fontSize: '16px' }}
+        style={{ cursor: 'pointer', fontSize: '16px' }}
         title="View Plan"
       />
-    ),
-  },
+    )
+  }
 ];
 
 const JohnsHopkinsTool = () => {
@@ -89,24 +92,34 @@ const JohnsHopkinsTool = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
+  //Modals Opening
   const [openModal, setOpenModal] = useState(false);
   const [secondOpen, setSecondOpen] = useState(false);
+  //Handle Modal Save
+  const handleFirstModalSave = ({
+    totalScore,
+    riskLevel
+  }: {
+    totalScore: number;
+    riskLevel: string;
+  }) => {
+    console.log('Saved assessment:', totalScore, riskLevel);
 
-  const handleFirstModalSave = () => {
-    setOpenModal(false);
-    setSecondOpen(true);
+    //If statment to open the Second Modal
+    if (riskLevel === 'Moderate Risk' || riskLevel === 'High Risk') {
+      setSecondOpen(true);
+    }
   };
 
+  //Table Data Sorting
   const sortedData = [...sampleData].sort((a, b) => {
     const aValue = a[sortColumn as keyof typeof a];
     const bValue = b[sortColumn as keyof typeof b];
     if (aValue === bValue) return 0;
-    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
   });
-
   const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-
+  //Table Filter Content
   const tablefilter = (
     <div className="bt-div">
       <MyButton>Cancel</MyButton>
@@ -134,13 +147,17 @@ const JohnsHopkinsTool = () => {
         rowsPerPage={rowsPerPage}
         totalCount={sampleData.length}
         onPageChange={(_, newPage) => setPage(newPage)}
-        onRowsPerPageChange={(e) => {
+        onRowsPerPageChange={e => {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
         }}
       />
 
-      <JohnsHopkinsToolModal open={openModal} setOpen={setOpenModal} onSave={handleFirstModalSave} />
+      <JohnsHopkinsToolModal
+        open={openModal}
+        setOpen={setOpenModal}
+        onSave={handleFirstModalSave}
+      />
 
       <JhonsHopkinsToolSecondModal open={secondOpen} setOpen={setSecondOpen} />
     </>

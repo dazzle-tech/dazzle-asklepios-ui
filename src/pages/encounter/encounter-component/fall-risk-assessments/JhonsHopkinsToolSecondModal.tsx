@@ -1,3 +1,4 @@
+//declares
 import React from 'react';
 import { useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
@@ -9,6 +10,7 @@ import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUpload
 import { faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
+//Modal Props
 const JhonsHopkinsToolSecondModal = ({
   open,
   setOpen
@@ -16,8 +18,10 @@ const JhonsHopkinsToolSecondModal = ({
   open: boolean;
   setOpen: (val: boolean) => void;
 }) => {
+  //open the attachment modal
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
 
+  //second modal content
   const ModalContent = (
     <>
       <Form fluid>
@@ -50,7 +54,8 @@ const JhonsHopkinsToolSecondModal = ({
                 onClick={() => {
                   setShowAttachmentModal(true);
                 }}
-              ><FontAwesomeIcon icon={faPaperclip} />
+              >
+                <FontAwesomeIcon icon={faPaperclip} />
                 Attachments
               </MyButton>
 
@@ -81,7 +86,6 @@ const JhonsHopkinsToolSecondModal = ({
         actionButtonLabel="Save"
         content={ModalContent}
       />
-
       <AttachmentModal
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
