@@ -60,12 +60,12 @@ const DrugOrder = (props) => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patient.key,
+                value: patient?.key,
             },
             {
                 fieldName: "visit_key",
                 operator: "match",
-                value: encounter.key,
+                value: encounter?.key,
             }
 
         ],
