@@ -293,7 +293,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
             }}
             
         />
-        <StartedDetails open={open} setOpen={setOpen} patient={patient} encounter={encounter} operation={request} setOperation={setRequest}/>
+        <StartedDetails open={open} setOpen={setOpen} patient={patient} encounter={encounter} operation={request} setOperation={setRequest} refetch={refetch}/>
     </>);
 }
 export default OngoingOperations;

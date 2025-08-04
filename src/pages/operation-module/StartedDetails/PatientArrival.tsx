@@ -76,7 +76,7 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
     }
     const handleSave=async()=>{
         try{
-           await save({...arraivel,operationRequestKey:operation?.key ,datetime:new Date(arraivel?.dateTime).getTime()}).unwrap();
+           await save({...arraivel,operationRequestKey:operation?.key ,dateTime:new Date(arraivel?.dateTime).getTime()}).unwrap();
            dispatch(notify({ msg: "Saved Successfly", sev: "success" }));
         }
         catch(error){
@@ -225,7 +225,7 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
             title={"Check List"}
             hideActionBtn={true}
 
-            content={<PreCheckList operation={operation} patient={patient} encounter={encounter} user={user} />}
+            content={<PreCheckList operation={operation} patient={patient} encounter={encounter} user={user} disabled={true} />}
         />
     </Form>)
 };

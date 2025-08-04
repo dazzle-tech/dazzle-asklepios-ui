@@ -6,8 +6,9 @@ import { newApPreOperationChecklist } from "@/types/model-types-constructor";
 import { useGetLatestChecklistByOperationKeyQuery, useSavePreOperationChecklistMutation } from "@/services/operationService";
 import { notify } from "@/utils/uiReducerActions";
 import MyButton from "@/components/MyButton/MyButton";
+import clsx from "clsx";
 
-const PreCheckList = ({ operation, patient, encounter, user }) => {
+const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=false }) => {
     const dispatch = useAppDispatch();
     const [checkList, setCheckList] = useState({
         ...newApPreOperationChecklist,
@@ -54,8 +55,10 @@ const PreCheckList = ({ operation, patient, encounter, user }) => {
     );
 
     return (
-        <Form fluid>
-            <Row gutter={15}>
+        <Form fluid  >
+            <Row gutter={15} className={clsx('', {
+                                            'disabled-panel': disabled
+                                          })}>
 
                 <Col xs={24} sm={24} md={12}>
                     <Row gutter={10}>
@@ -167,11 +170,11 @@ const PreCheckList = ({ operation, patient, encounter, user }) => {
                 </Col>
             </Row>
 
-            <div className='bt-div'>
+           {(!disabled )&& <div className='bt-div'>
                 <div className="bt-right">
                     <MyButton onClick={handelSave}>Save</MyButton>
 
-                </div></div>
+                </div></div>}
         </Form>
     );
 };
