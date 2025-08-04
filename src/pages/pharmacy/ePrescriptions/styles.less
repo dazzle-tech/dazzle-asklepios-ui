@@ -1,0 +1,135 @@
+.medications-modal {
+  padding-bottom: 80px;
+
+  .header-icon {
+    text-align: right;
+    padding-bottom: 10px;
+    
+    .icon {
+      cursor: pointer;
+      margin-right: 0 !important;
+    }
+  }
+
+  .payment-section {
+    padding-top: 10px;
+
+    .payment-type-form {
+      display: flex;
+      justify-content: flex-start;
+      padding-top: 10px;
+      gap: 10px;
+    }
+
+    .payment-method-form {
+      padding-top: 10px;
+
+      .payment-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+      }
+
+      .amount-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-top: 0;
+      }
+
+      .currency-section {
+        width: 180px;
+      }
+
+      .conditional-fields {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .due-amount-section {
+        column: true;
+        width: 180px;
+      }
+
+      .free-balance-section {
+        column: true;
+        width: 180px;
+      }
+    }
+  }
+
+  .table-container {
+    .medication-table {
+      height: 400px;
+    }
+  }
+}
+
+// Container for icons
+.container-of-icons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.icons-style {
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--primary-blue) !important;
+  }
+}
+
+// Payment method specific styles
+.payment-card-fields {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.payment-cheque-fields {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.payment-transfer-fields {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+// Form field styles
+.payment-field {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+.payment-field-small {
+  width: 150px;
+  flex-shrink: 0;
+}
+
+// Disabled fields
+.disabled-field {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+// Confirm button section
+.confirm-button-section {
+  bottom: 50px;
+  left: 20px;
+  z-index: 1000;
+}

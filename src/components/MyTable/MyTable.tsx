@@ -63,8 +63,7 @@ const MyTable: React.FC<MyTableProps> = ({
   rowsPerPage,
   totalCount,
   onPageChange,
-  onRowsPerPageChange,
-  ...props
+  onRowsPerPageChange
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
@@ -78,7 +77,7 @@ const MyTable: React.FC<MyTableProps> = ({
   const emptyTable = () => {
     return (
       <TableRow>
-        <TableCell       
+        <TableCell
           colSpan={visibleColumns.length + (expandableColumns.length > 0 ? 1 : 0)}
           align="center"
         >
@@ -91,7 +90,7 @@ const MyTable: React.FC<MyTableProps> = ({
   };
 
   return (
-    <Box style={{ ...((props?.noBorder) && { borderRadius: 'none',boxShadow: "none", border: "none" })}} className="my-table-wrapper">
+    <Box className="my-table-wrapper">
       {filters && <Box className="my-table-filters">{filters}</Box>}
       <TableContainer
         component={Paper}
@@ -119,10 +118,15 @@ const MyTable: React.FC<MyTableProps> = ({
                 }
 
                 return (
-                  <TableCell                   
+                  <TableCell
                     key={col.key}
                     align={col.align || 'left'}
-                    sx={{ whiteSpace: 'nowrap', cursor: isSortable ? 'pointer' : 'default' }}
+                    sx={{
+                      whiteSpace: 'nowrap',
+                      cursor: isSortable ? 'pointer' : 'default',
+                      width: col.width ? `${col.width}px` : 'auto',
+                      minWidth: col.width ? `${col.width}px` : 'auto'
+                    }}
                     onClick={isSortable ? () => onSortChange!(col.key, nextDirection) : undefined}
                   >
                     <Box
@@ -148,7 +152,6 @@ const MyTable: React.FC<MyTableProps> = ({
             {loading ? (
               <TableRow>
                 <TableCell
-                  
                   colSpan={visibleColumns.length + (expandableColumns.length > 0 ? 1 : 0)}
                   align="center"
                 >
@@ -172,10 +175,7 @@ const MyTable: React.FC<MyTableProps> = ({
                       key={index}
                     >
                       {expandableColumns.length > 0 && (
-                        <TableCell
-                          
-                          padding="checkbox"
-                        >
+                        <TableCell padding="checkbox">
                           <IconButton size="small" onClick={() => handleExpandClick(index)}>
                             {expandedRow === index ? (
                               <KeyboardArrowUpIcon />
@@ -187,10 +187,13 @@ const MyTable: React.FC<MyTableProps> = ({
                       )}
                       {visibleColumns.map(col => (
                         <TableCell
-                          
                           key={col.key}
                           align={col.align || 'left'}
                           className="even"
+                          sx={{
+                            width: col.width ? `${col.width}px` : 'auto',
+                            minWidth: col.width ? `${col.width}px` : 'auto'
+                          }}
                         >
                           {col.render ? col.render(row, index) : row[col.dataKey || col.key]}
                         </TableCell>
@@ -198,18 +201,13 @@ const MyTable: React.FC<MyTableProps> = ({
                     </TableRow>
                     {expandableColumns.length > 0 && expandedRow === index && (
                       <TableRow className="expanded-row">
-                        <TableCell
-                          
-                          colSpan={visibleColumns.length + 1}
-                          className="expanded-table"
-                        >
+                        <TableCell colSpan={visibleColumns.length + 1} className="expanded-table">
                           <Box>
                             <Table size="small">
                               <TableHead className="my-table-header">
                                 <TableRow>
                                   {expandableColumns.map(col => (
                                     <TableCell
-                                      
                                       key={col.key}
                                       align={col.align || 'left'}
                                       sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
@@ -222,11 +220,7 @@ const MyTable: React.FC<MyTableProps> = ({
                               <TableBody>
                                 <TableRow>
                                   {expandableColumns.map(col => (
-                                    <TableCell
-                                      
-                                      key={col.key}
-                                      align={col.align || 'left'}
-                                    >
+                                    <TableCell key={col.key} align={col.align || 'left'}>
                                       {col.render
                                         ? col.render(row, index)
                                         : row[col.dataKey || col.key]}
