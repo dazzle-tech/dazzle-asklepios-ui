@@ -232,12 +232,12 @@ const TransferProductList = ({
   };
 
   const handleApprovedQuantitySave = (key, value) => {
-  const updatedList = selectedRows.map(item => 
-    item.key === key ? { ...item, quentityApproved: value } : item
-  );
-  setSelectedRows(updatedList); // update state
-  setActiveRowKey(null); // close the input
-};
+    const updatedList = selectedRows.map(item =>
+      item.key === key ? { ...item, quentityApproved: value } : item
+    );
+    setSelectedRows(updatedList); // update state
+    setActiveRowKey(null); // close the input
+  };
 
 
   // handle deactivate transfer product
@@ -308,6 +308,7 @@ const TransferProductList = ({
       title: <Translate></Translate>,
       render: rowData => (
         <Checkbox
+          disabled={rowData.statusLkey !== '164797574082125'}
           checked={selectedRows.includes(rowData.key)}
           onChange={() => handleCheckboxChange(rowData.key)}
         />
@@ -369,12 +370,16 @@ const TransferProductList = ({
           <Input
             type="number"
             style={{ width: 100 }}
-            onChange={(value) =>
-              setTransferProduct({ ...transferProduct, quentityApproved: Number(value) })
-            }
-            onBlur={(e) => {
-              const updatedValue = Number(e.target.value);
-              handleApprovedQuantitySave(rowData.key, updatedValue);
+            // onChange={(value) =>
+            //   setTransferProduct({ ...transferProduct, quentityApproved: Number(value) })
+            // }
+            value={rowData.quentityApproved}
+            onChange={(value) => handleApprovedQuantitySave(rowData.key, Number(value))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const updatedValue = Number(e.target);
+                handleApprovedQuantitySave(rowData.key, updatedValue);
+              }
             }}
           />
         ) : (
@@ -402,6 +407,15 @@ const TransferProductList = ({
         </span>
       )
     },
+    {
+      key: 'status',
+      dataKey: 'statusLkey',
+      title: 'Status',
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
+      },
+    }
   ];
   const conjureFormContentOfMainModal = () => {
     return (
