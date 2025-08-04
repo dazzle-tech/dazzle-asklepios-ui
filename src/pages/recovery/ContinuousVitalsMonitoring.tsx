@@ -44,7 +44,7 @@ const ContinuousVitalsMonitoring= ({operation}) => {
 
       const handleCancle = async () => {
         try {
-          await save({...vitals,isvalid:false}).unwrap();
+          await save({...vitals,isValid:false}).unwrap();
           setPopupCancelOpen(false);
           refetch();
           dispatch(notify({msg: 'Deleted successfully', sev: 'success'}));

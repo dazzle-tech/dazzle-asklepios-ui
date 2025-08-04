@@ -1978,6 +1978,10 @@ export interface ApMedicalSheets {
 	hendrichFallRisk:boolean;
 	stratifyScale:boolean;
 	johnsHopkinsFallRiskAssessmentTool:boolean;
+	bradenScaleForPressureUlcer:boolean;
+	glasgowComaScale:boolean;
+	vteRiskAssessment:boolean;
+	progressNotes:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -2497,7 +2501,7 @@ export interface ApOperationRecoveryVitalsMonitoring {
 	updatedAt:number;
 	deletedBy:string;
 	deletedAt:number;
-	isvalid:boolean;
+	isValid:boolean;
 } 
 
 export interface ApOperationRequests { 

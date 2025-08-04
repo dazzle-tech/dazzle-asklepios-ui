@@ -1979,6 +1979,10 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	hendrichFallRisk:undefined,
 	stratifyScale:undefined,
 	johnsHopkinsFallRiskAssessmentTool:undefined,
+	bradenScaleForPressureUlcer:undefined,
+	glasgowComaScale:undefined,
+	vteRiskAssessment:undefined,
+	progressNotes:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
@@ -2498,7 +2502,7 @@ export const newApOperationRecoveryVitalsMonitoring:modelTypes.ApOperationRecove
 	updatedAt:undefined,
 	deletedBy:'',
 	deletedAt:undefined,
-	isvalid:undefined,
+	isValid:undefined,
 } 
 
 export const newApOperationRequests:modelTypes.ApOperationRequests = { 
