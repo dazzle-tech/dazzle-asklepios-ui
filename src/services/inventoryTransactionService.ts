@@ -190,7 +190,31 @@ export const inventoryService = createApi({
           uomGroup
         },
       }),
-    })
+    }),
+       saveInventoryTransferProductApproved: builder.mutation({
+          query: (TransferProductRecords: ApInventoryTransferProduct[]) => ({
+            url: `/transaction/save-inventory-transfer-product-approved`,
+            method: 'POST',
+            body: TransferProductRecords
+          }),
+          onQueryStarted: onQueryStarted,
+          transformResponse: (response: any) => {
+            return response.object;
+          }
+    
+        }),
+               saveInventoryTransferProductRejected: builder.mutation({
+          query: (TransferProductRecords: ApInventoryTransferProduct[]) => ({
+            url: `/transaction/save-inventory-transfer-product-rejected`,
+            method: 'POST',
+            body: TransferProductRecords
+          }),
+          onQueryStarted: onQueryStarted,
+          transformResponse: (response: any) => {
+            return response.object;
+          }
+    
+        }),
   })
 
 });
@@ -215,5 +239,7 @@ export const {
   useRemoveInventoryTransferProductMutation,
   useSaveInventoryTransferProductMutation,
   useGetQtyInBaseUomQuery,
-  useLazyGetQtyInBaseUomQuery
+  useLazyGetQtyInBaseUomQuery,
+  useSaveInventoryTransferProductApprovedMutation,
+  useSaveInventoryTransferProductRejectedMutation
 } = inventoryService;

@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Checkbox, Col, Form, Panel, Row } from 'rsuite';
+import { Checkbox, Col, Form, Input, Panel, Row, SelectPicker } from 'rsuite';
 import { FaUndo } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
@@ -9,8 +9,8 @@ import { useAppDispatch } from '@/hooks';
 import { FaSyringe } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { notify } from '@/utils/uiReducerActions';
-import { ApInventoryTransactionProduct, ApInventoryTransferProduct} from '@/types/model-types';
-import { newApInventoryTransactionProduct, newApInventoryTransferProduct} from '@/types/model-types-constructor';
+import { ApInventoryTransactionProduct, ApInventoryTransferProduct } from '@/types/model-types';
+import { newApInventoryTransactionProduct, newApInventoryTransferProduct } from '@/types/model-types-constructor';
 import './styles.less';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import {
@@ -24,11 +24,12 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import {  useGetInventoryTransferProductQuery, useRemoveInventoryTransferProductMutation, useSaveInventoryTransactionProductMutation } from '@/services/inventoryTransactionService';
+import { useGetInventoryTransferProductQuery, useRemoveInventoryTransferProductMutation, useSaveInventoryTransactionProductMutation, useSaveInventoryTransferProductApprovedMutation, useSaveInventoryTransferProductRejectedMutation } from '@/services/inventoryTransactionService';
 import { GrProductHunt } from 'react-icons/gr';
 import MyModal from '@/components/MyModal/MyModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faDownload, faX } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faDownload, faPenToSquare, faX } from '@fortawesome/free-solid-svg-icons';
+import CancellationModal from '@/components/CancellationModal';
 const TransferProductList = ({
 
   open,
@@ -39,6 +40,7 @@ const TransferProductList = ({
 }) => {
   const dispatch = useAppDispatch();
   const [selectedRows, setSelectedRows] = useState([]);
+  const [InventoryTransferProducts, setInventoryTransferProducts] = useState<ApInventoryTransferProduct[]>([]);
   const [transferProduct, setTransferProduct] = useState<ApInventoryTransferProduct>({ ...newApInventoryTransferProduct });
   const [openConfirmDeleteTransferProductModal, setOpenConfirmDeleteTransferProductModal] =
     useState<boolean>(false);
@@ -54,11 +56,14 @@ const TransferProductList = ({
 
   const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeAndParentQuery('PRODUCTS_TYPES');
   const [uomListRequest, setUomListRequest] = useState<ListRequest>({ ...initialListRequest });
-   const { data: warehouseListResponse } = useGetWarehouseQuery(listRequest);
+  const { data: warehouseListResponse } = useGetWarehouseQuery(listRequest);
   const {
     data: uomGroupsUnitsListResponse,
     refetch: refetchUomGroupsUnit,
   } = useGetUomGroupsUnitsQuery(uomListRequest);
+  const [saveInventoryTransferProductApproved, saveInventoryTransferProductApprovedMutation] = useSaveInventoryTransferProductApprovedMutation();
+  const [saveInventoryTransferProductRejected, saveInventoryTransferProductRejectedMutation] = useSaveInventoryTransferProductRejectedMutation();
+  const [activeRowKey, setActiveRowKey] = useState(null);
   const [transferProductListRequest, setTransferProductListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 15,
@@ -80,7 +85,7 @@ const TransferProductList = ({
 
   useEffect(() => {
     const updatedFilters = [
-         {
+      {
         fieldName: 'transfer_key',
         operator: 'match',
         value: transfer?.key
@@ -93,11 +98,12 @@ const TransferProductList = ({
     console.log(transferProductListResponseLoading);
   }, [transfer?.key]);
 
-   useEffect(() => {
+  useEffect(() => {
     transferProductRefetch();
   }, [refetch]);
 
 
+  const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [productsListRequest, setProductsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -157,7 +163,7 @@ const TransferProductList = ({
     };
   }, [location.pathname, dispatch]);
 
- // Handle  selection by checking the checkbox
+  // Handle  selection by checking the checkbox
   const handleCheckboxChange = key => {
     setSelectedRows(prev => {
       if (prev.includes(key)) {
@@ -168,7 +174,43 @@ const TransferProductList = ({
     });
   };
 
-  // handle click om edit  
+  // handle save tests(on selected list)
+  const handleSaveApproved = () => {
+    let testsClone = [...InventoryTransferProducts];
+    const objectsToSave = selectedRows.map(key => ({
+      ...newApInventoryTransferProduct,
+      key: key,
+      transfer_key: transfer.key
+    }));
+    testsClone.push(...objectsToSave);
+    saveInventoryTransferProductApproved(objectsToSave)
+      .unwrap()
+      .then(() => {
+        // newList.refetch();
+        dispatch(notify({ msg: 'The Inventory Transfer Products have been Approved successfully', sev: 'success' }));
+      });
+    setInventoryTransferProducts(testsClone);
+  };
+
+  // handle save tests(on selected list) Rejected
+  const handleSaveRejected = () => {
+    let testsClone = [...InventoryTransferProducts];
+    const objectsToSave = selectedRows.map(key => ({
+      ...newApInventoryTransferProduct,
+      key: key,
+      transfer_key: transfer.key
+    }));
+    testsClone.push(...objectsToSave);
+    saveInventoryTransferProductRejected(objectsToSave)
+      .unwrap()
+      .then(() => {
+        // newList.refetch();
+        dispatch(notify({ msg: 'The Inventory Transfer Products have been Rejected successfully', sev: 'success' }));
+      });
+    setInventoryTransferProducts(testsClone);
+  };
+
+  // handle click on edit
   const handleEdit = () => {
     setEdit_new(true);
     setOpenAddEditPopup(true);
@@ -188,6 +230,16 @@ const TransferProductList = ({
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+
+  const handleApprovedQuantitySave = (key, value) => {
+  const updatedList = selectedRows.map(item => 
+    item.key === key ? { ...item, quentityApproved: value } : item
+  );
+  setSelectedRows(updatedList); // update state
+  setActiveRowKey(null); // close the input
+};
+
+
   // handle deactivate transfer product
   const handleDeactivateTransferProduct = async data => {
     setOpenConfirmDeleteTransferProductModal(false);
@@ -251,7 +303,7 @@ const TransferProductList = ({
   }
   //Table columns
   const tableColumns = [
-        {
+    {
       key: 'test',
       title: <Translate></Translate>,
       render: rowData => (
@@ -275,47 +327,68 @@ const TransferProductList = ({
         </span>
       )
     },
-       {
-            key: 'fromWarehouse',
-            title: <Translate>From Warehouse</Translate>,
-            flexGrow: 4,
-            render: rowData => (
-                <span>
-                    {conjureValueBasedOnKeyFromList(
-                        warehouseListResponse?.object ?? [],
-                        rowData.transferObj.fromWarehouseKey,
-                        'warehouseName'
-                    )}
-                </span>
-            )
-        },
-        {
-            key: 'toWarehouse',
-            title: <Translate>To Warehouse</Translate>,
-            flexGrow: 4,
-            render: rowData => (
-                <span>
-                    {conjureValueBasedOnKeyFromList(
-                        warehouseListResponse?.object ?? [],
-                        rowData.transferObj.toWarehouseKey,
-                        'warehouseName'
-                    )}
-                </span>
-            )
-        },
+    {
+      key: 'fromWarehouse',
+      title: <Translate>From Warehouse</Translate>,
+      flexGrow: 4,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            warehouseListResponse?.object ?? [],
+            rowData.transferObj.fromWarehouseKey,
+            'warehouseName'
+          )}
+        </span>
+      )
+    },
+    {
+      key: 'toWarehouse',
+      title: <Translate>To Warehouse</Translate>,
+      flexGrow: 4,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            warehouseListResponse?.object ?? [],
+            rowData.transferObj.toWarehouseKey,
+            'warehouseName'
+          )}
+        </span>
+      )
+    },
     {
       key: 'quantity',
       title: <Translate>Requested Quantity</Translate>,
       flexGrow: 4,
       render: rowData => <span>{rowData.quentityRequested}</span>
     },
-     {
-      key: 'quantity',
+    {
+      key: "quentityApproved",
       title: <Translate>Approved Quantity</Translate>,
-      flexGrow: 4,
-      render: rowData => <span>{rowData.quentityApproved}</span>
+      render: (rowData) =>
+        activeRowKey === rowData.key ? (
+          <Input
+            type="number"
+            style={{ width: 100 }}
+            onChange={(value) =>
+              setTransferProduct({ ...transferProduct, quentityApproved: Number(value) })
+            }
+            onBlur={(e) => {
+              const updatedValue = Number(e.target.value);
+              handleApprovedQuantitySave(rowData.key, updatedValue);
+            }}
+          />
+        ) : (
+          <span>
+            <FontAwesomeIcon
+              icon={faPenToSquare}
+              onClick={() => setActiveRowKey(rowData.key)}
+              style={{ marginRight: "8px", cursor: "pointer" }}
+            />
+            {rowData.quentityApproved}
+          </span>
+        )
     },
-     {
+    {
       key: 'transUomKey',
       title: <Translate>Transfer UOM</Translate>,
       flexGrow: 4,
@@ -330,69 +403,83 @@ const TransferProductList = ({
       )
     },
   ];
-   const conjureFormContentOfMainModal = () => {
-         return (
-           <Panel>
-                  <div className='bt-right-group'>
-                    <div className='btns-group'>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCheck} />} ></MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faX} />} ></MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faDownload} />}></MyButton>
-                    </div>
-                </div>
-      <MyTable
-        height={450}
-        data={transferProductListResponseLoading?.object ?? []}
-        loading={transferProductIsFetching}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        onRowClick={rowData => {
-          setTransferProduct(rowData);
-        }}
-        sortColumn={transferProductListRequest.sortBy}
-        sortType={transferProductListRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setTransferProductListRequest({ ...transferProductListRequest, sortBy, sortType });
-        }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
-      <DeletionConfirmationModal
-        open={openConfirmDeleteTransferProductModal}
-        setOpen={setOpenConfirmDeleteTransferProductModal}
-        itemToDelete="Product"
-        actionButtonFunction={
-          stateOfDeleteTransferProductModal == 'deactivate'
-            ? () => handleDeactivateTransferProduct(transferProduct)
-            : handleReactivateTransferProduct
-        }
-        actionType={stateOfDeleteTransferProductModal}
-      />
+  const conjureFormContentOfMainModal = () => {
+    return (
+      <Panel>
+        <div className='bt-right-group'>
+          <div className='btns-group'>
+            <MyButton
+              title="Approve Selected"
+              prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
+              onClick={handleSaveApproved}
+            ></MyButton>
+            <MyButton title="Reject Selected" prefixIcon={() => <FontAwesomeIcon icon={faX} />} ></MyButton>
+            <MyButton title="Download" prefixIcon={() => <FontAwesomeIcon icon={faDownload} />}></MyButton>
+          </div>
+        </div>
+        <MyTable
+          height={450}
+          data={transferProductListResponseLoading?.object ?? []}
+          loading={transferProductIsFetching}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          onRowClick={rowData => {
+            setTransferProduct(rowData);
+          }}
+          sortColumn={transferProductListRequest.sortBy}
+          sortType={transferProductListRequest.sortType}
+          onSortChange={(sortBy, sortType) => {
+            if (sortBy) setTransferProductListRequest({ ...transferProductListRequest, sortBy, sortType });
+          }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+        {/* <CancellationModal
+          open={openRejectedModal}
+          setOpen={setOpenRejectedModal}
+          fieldName="rejectedReason"
+          fieldLabel="Rejected Reason"
+          title="Reject"
+          object={transferProduct}
+          setObject={setTransferProduct}
+          handleCancle={handleRejectedTest}
+        /> */}
+        <DeletionConfirmationModal
+          open={openConfirmDeleteTransferProductModal}
+          setOpen={setOpenConfirmDeleteTransferProductModal}
+          itemToDelete="Product"
+          actionButtonFunction={
+            stateOfDeleteTransferProductModal == 'deactivate'
+              ? () => handleDeactivateTransferProduct(transferProduct)
+              : handleReactivateTransferProduct
+          }
+          actionType={stateOfDeleteTransferProductModal}
+        />
 
-    </Panel>
-         );
+      </Panel>
+    );
 
-     }
+  }
 
   return (
-       <MyModal
-              actionButtonLabel={'Save' } 
-              actionButtonFunction={handleSave}
-              open={open}
-              setOpen={setOpen}
-              position="right"
-              title={'Approval Workflow'}
-              content={conjureFormContentOfMainModal}
-              steps={[
-                {
-                  title: 'Transfer Product',
-                  icon: <GrProductHunt />,
-                }
-              ]}
-            />
+    <MyModal
+      actionButtonLabel={'Save'}
+      actionButtonFunction={handleSave}
+      open={open}
+      setOpen={setOpen}
+      position="right"
+      title={'Approval Workflow'}
+      content={conjureFormContentOfMainModal}
+      steps={[
+        {
+          title: 'Transfer Product',
+          icon: <GrProductHunt />,
+        }
+      ]}
+    />
   );
 };
 
