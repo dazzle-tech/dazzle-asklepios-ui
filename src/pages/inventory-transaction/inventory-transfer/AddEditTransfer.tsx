@@ -78,7 +78,7 @@ const AddEditTransfer = ({ open, setOpen, transfer, setTransfer, refetch }) => {
                 value: undefined,
             },
             {
-                fieldName: 'inventory_trans_key',
+                fieldName: 'transfer_key',
                 operator: 'match',
                 value: transfer?.key
             }
@@ -217,7 +217,7 @@ const AddEditTransfer = ({ open, setOpen, transfer, setTransfer, refetch }) => {
                     value: undefined,
                 },
                 {
-                    fieldName: 'inventory_trans_key',
+                    fieldName: 'transfer_key',
                     operator: 'match',
                     value: transfer?.key
                 }
