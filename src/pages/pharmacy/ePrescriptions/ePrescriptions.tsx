@@ -23,7 +23,7 @@ import MedicationsModal from './MedicationsModal';
 import { newApPatientRelation } from '@/types/model-types-constructor';
 
 
-const EPrepscriptions = () => {
+const EPrescriptions = () => {
   const dispatch = useAppDispatch();
   const [page, setPage] = useState(0);
   const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
@@ -534,4 +534,4 @@ const EPrepscriptions = () => {
   );
 };
 
-export default EPrepscriptions;
+export default EPrescriptions;
