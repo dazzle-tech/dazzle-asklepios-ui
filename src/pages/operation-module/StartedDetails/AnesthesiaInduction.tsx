@@ -4,23 +4,33 @@ import MyTagInput from "@/components/MyTagInput/MyTagInput";
 import { useAppDispatch } from "@/hooks";
 import ActiveIngredient from "@/pages/encounter/encounter-component/drug-order/ActiveIngredient";
 import GenericAdministeredMedications from "@/pages/encounter/encounter-component/procedure/Post-ProcedureCare/AdministeredMedications ";
-import { useGetOperationInductionListQuery, useGetOperationPreMedicationListQuery, useSaveOperationAnesthesiaInductionMonitoringMutation, useSaveOperationInductionMutation, useSaveOperationPreMedicationMutation } from "@/services/operationService";
+import { useGetOperationAnesthesiaInductionMonitoringByOperationQuery, useGetOperationInductionListQuery, useGetOperationPreMedicationListQuery, useSaveOperationAnesthesiaInductionMonitoringMutation, useSaveOperationInductionMutation, useSaveOperationPreMedicationMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApOperationAnesthesiaInductionMonitoring, newApOperationInduction, newApOperationPreMedication } from "@/types/model-types-constructor";
 import { notify } from "@/utils/uiReducerActions";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 import IntraoperativeMonitoring from "./IntraoperativeMonitoring";
 import MyModal from "@/components/MyModal/MyModal";
 import DrugOrder from "@/pages/encounter/encounter-component/drug-order";
 const AnesthesiaInduction = ({ operation,patient,encounter }) => {
     const dispatch = useAppDispatch();
-    const [anesthesiaInduction, setAnesthesiaInduction] = useState({ ...newApOperationAnesthesiaInductionMonitoring })
+    const [anesthesiaInduction, setAnesthesiaInduction] = useState({ ...newApOperationAnesthesiaInductionMonitoring });
+    const { data: anesthesiaInductionMonitoring } = useGetOperationAnesthesiaInductionMonitoringByOperationQuery(operation?.key , {
+        skip: !operation?.key
+    });
     const [tag, setTag] = useState([]);
     const[open,setOpen]=useState(false);
     const { data: anesthTypesLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
     const { data: medadvirsedLov } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
     const [save] = useSaveOperationAnesthesiaInductionMonitoringMutation();
+
+    useEffect(() => {
+        if (anesthesiaInductionMonitoring) {
+            setAnesthesiaInduction({...anesthesiaInductionMonitoring.object ,inductionStartTime: new Date(anesthesiaInductionMonitoring.object.inductionStartTime)});
+            setTag(anesthesiaInductionMonitoring.monitorsConnected?.split(',') || []);
+        }
+    }, [anesthesiaInductionMonitoring]);
 
 
     const handelSave = async () => {

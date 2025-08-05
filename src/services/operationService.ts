@@ -335,6 +335,13 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
+        getOperationAnesthesiaInductionMonitoringByOperation: builder.query({
+            query: (operationKey: string) => ({
+                url: `/operation/operation-anesthesia-induction-monitoring-by-operation?operationKey=${operationKey}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
 
         // 🟡 POST save surgical preparation & incision
         saveSurgicalPreparationIncision: builder.mutation({
@@ -479,6 +486,9 @@ export const {
 
     useGetOperationAnesthesiaInductionMonitoringListQuery,
     useSaveOperationAnesthesiaInductionMonitoringMutation,
+    useGetOperationAnesthesiaInductionMonitoringByOperationQuery,
+
+
     useSaveSurgicalPreparationIncisionMutation,
     useGetSurgicalPreparationIncisionListQuery,
     useGetLatestSurgicalPreparationByOperationKeyQuery,
