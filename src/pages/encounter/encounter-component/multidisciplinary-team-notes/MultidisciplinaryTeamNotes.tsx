@@ -8,6 +8,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import PlusIcon from '@rsuite/icons/Plus';
 import './styles.less';
 import AddEditMdtNote from './AddEditMdtNote';
+import { formatDate, formatDateWithoutSeconds } from '@/utils';
+
 import CancellationModal from '@/components/CancellationModal';
 const MultidisciplinaryTeamNotes = () => {
   const [popupOpen, setPopupOpen] = useState(false);
@@ -23,65 +25,64 @@ const MultidisciplinaryTeamNotes = () => {
   };
 
   // dummy data
-   const data = [
+  const data = [
     {
       key: '1',
-      shift: 'shuft1',
-      role: 'role1',
-      name: 'name1',
-      note: 'note1',
-      createdAt: '01:01',
-      createdBy: 'Rawan',
-      deletedAt: '11:11',
-      deletedBy: 'Hanan',
-      updatedAt: '05:05',
-      updatedBy: 'Bushra',
-      cancelledReason: 'no reason'
+      shift: 'Morning',
+      role: 'Physiotherapist',
+      name: 'Dr. Sarah Johnson',
+      note: 'Mobility session completed. Improved left leg range of motion.',
+      createdAt: '2025-02-15 08:30',
+      createdBy: 'Dr. Sarah Johnson',
+      deletedAt: '',
+      deletedBy: '',
+      updatedAt: '2025-02-15 10:15',
+      updatedBy: 'Dr. Sarah Johnson',
+      cancelledReason: ''
     },
     {
       key: '2',
-      shift: 'shuft2',
-      role: 'role2',
-      name: 'name2',
-      note: 'note2',
-      createdAt: '02:02',
-      createdBy: 'Batool',
+      shift: 'Morning',
+      role: 'Nutritionist',
+      name: 'Ms. Emily Chen',
+      note: 'Diet plan modified for diabetes. Reduced carbs by 20%.',
+      createdAt: '2025-02-15 09:00',
+      createdBy: 'Ms. Emily Chen',
       deletedAt: '',
       deletedBy: '',
-      updatedAt: '06:06',
-      updatedBy: 'Hanan',
-      cancelledReason: 'test'
+      updatedAt: '2025-02-15 11:30',
+      updatedBy: 'Ms. Emily Chen',
+      cancelledReason: ''
     },
     {
       key: '3',
-      shift: 'shuft3',
-      role: 'role3',
-      name: 'name3',
-      note: 'note3',
-      createdAt: '03:03',
-      createdBy: 'Bushra',
-      deletedAt: '13:13',
-      deletedBy: 'Bushra',
-      updatedAt: '07:07',
-      updatedBy: 'Walaa',
-      cancelledReason: 'no reason'
+      shift: 'Afternoon',
+      role: 'Social Worker',
+      name: 'Mr. David Rodriguez',
+      note: 'Family meeting completed. Discharge planning arranged.',
+      createdAt: '2025-02-15 14:00',
+      createdBy: 'Mr. David Rodriguez',
+      deletedAt: '',
+      deletedBy: '',
+      updatedAt: '2025-02-15 16:45',
+      updatedBy: 'Mr. David Rodriguez',
+      cancelledReason: ''
     },
     {
       key: '4',
-      shift: 'shuft4',
-      role: 'role4',
-      name: 'name4',
-      note: 'note4',
-      createdAt: '04:04',
-      createdBy: 'Walaa',
-      deletedAt: '14:14',
-      deletedBy: 'Walaa',
-      updatedAt: '08:08',
-      updatedBy: 'Batool',
-      cancelledReason: 'test'
+      shift: 'Evening',
+      role: 'Occupational Therapist',
+      name: 'Ms. Lisa Thompson',
+      note: 'ADL assessment done. Patient needs dressing assistance.',
+      createdAt: '2025-02-15 18:00',
+      createdBy: 'Ms. Lisa Thompson',
+      deletedAt: '',
+      deletedBy: '',
+      updatedAt: '2025-02-15 19:30',
+      updatedBy: 'Ms. Lisa Thompson',
+      cancelledReason: ''
     }
   ];
-  
 
   // Handle click on Add New Button
   const handleNew = () => {
@@ -125,37 +126,47 @@ const MultidisciplinaryTeamNotes = () => {
       key: '',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
-      render: (rowData: any) => {
-        return (
+      render: (row: any) =>
+        row?.createdAt ? (
           <>
-            <span>{rowData.createdAt + '/' + rowData.createdBy}</span>
+            {row?.createdBy}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
           </>
-        );
-      }
+        ) : (
+          ' '
+        )
     },
     {
       key: '',
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
-      render: (rowData: any) => {
-        return (
+      render: (row: any) =>
+        row?.deletedAt ? (
           <>
-            <span>{rowData.deletedAt + '/' + rowData.deletedBy}</span>
+            {row?.deletedBy}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.deletedAt)}</span>
           </>
-        );
-      }
+        ) : (
+          ' '
+        )
     },
     {
       key: '',
       title: <Translate>Updated At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
+      render: (row: any) =>
+        row?.updatedAt ? (
           <>
-            <span>{rowData.updatedAt + '/' + rowData.createdBy}</span>
+            {row?.updatedBy}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.updatedAt)}</span>
           </>
-        );
-      }
+        ) : (
+          ' '
+        ),
+
+      expandable: true
     },
     {
       key: 'cancelledReason',
@@ -169,7 +180,7 @@ const MultidisciplinaryTeamNotes = () => {
       render: () => iconsForActions()
     }
   ];
-  
+
   // handle cancel
   const handleCancle = async () => {
     setOpenCancellationReasonModel(false);
@@ -196,10 +207,7 @@ const MultidisciplinaryTeamNotes = () => {
 
           <Checkbox>Show Cancelled</Checkbox>
         </div>
-        <MyButton
-          prefixIcon={() => <PlusIcon />}
-          onClick={handleNew}
-        >
+        <MyButton prefixIcon={() => <PlusIcon />} onClick={handleNew}>
           Add New
         </MyButton>
       </div>

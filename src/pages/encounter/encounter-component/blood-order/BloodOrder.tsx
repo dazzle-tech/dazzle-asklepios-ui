@@ -31,31 +31,31 @@ const BloodOrder = () => {
   const data = [
     {
       key: '1',
-      productType: 'type1',
-      amount: 20,
-      reason: 'reason1',
-      requestBy: 'Rawan',
-      requestAt: '20225-09-09',
+      productType: 'Packed Red Blood Cells',
+      amount: 450,
+      reason: 'Severe anemia due to blood loss',
+      requestBy: 'Dr. Rawan',
+      requestAt: '2025-02-15 10:30',
       previousReaction: true,
       status: 'new'
     },
     {
       key: '2',
-      productType: 'type2',
-      amount: 30,
-      reason: 'reason2',
+      productType: 'Fresh Frozen Plasma',
+      amount: 300,
+      reason: 'Coagulation disorder treatment',
       previousReaction: false,
-      requestBy: 'Batool',
-      requestAt: '20225-10-10',
+      requestBy: 'Dr. Batool',
+      requestAt: '2025-02-16 14:15',
       status: 'new'
     },
     {
       key: '3',
-      productType: 'type3',
-      amount: 40,
-      reason: 'reason3',
-      requestBy: 'Hanan',
-      requestAt: '20225-11-11',
+      productType: 'Platelets',
+      amount: 250,
+      reason: 'Thrombocytopenia management',
+      requestBy: 'Dr. Hanan',
+      requestAt: '2025-02-17 16:45',
       previousReaction: true,
       status: 'new'
     }
@@ -64,7 +64,7 @@ const BloodOrder = () => {
   // Handle click on Add New Button
   const handleNew = () => {
     setPopupOpen(true);
-    setBloodOreder({ });
+    setBloodOreder({});
   };
 
   //icons column ( Edite, Cancel, Details)
@@ -124,9 +124,20 @@ const BloodOrder = () => {
     {
       key: 'RequestByAt',
       title: <Translate>Request By\At</Translate>,
-      render: (rowData: any) => {
-        return <span>{rowData.requestBy + '/' + rowData.requestAt}</span>;
-      }
+      render: (rowData: any) =>
+        rowData?.requestAt ? (
+          <>
+            {rowData?.requestBy}
+            <br />
+            <span className="date-table-style">
+              {rowData?.requestAt.split(' ')[0]}
+              <br />
+              {rowData?.requestAt.split(' ')[1]}
+            </span>
+          </>
+        ) : (
+          ' '
+        )
     },
 
     {

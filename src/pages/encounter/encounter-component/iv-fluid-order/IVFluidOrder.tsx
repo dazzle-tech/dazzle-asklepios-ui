@@ -6,7 +6,7 @@ import PlusIcon from '@rsuite/icons/Plus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSprayCanSparkles } from '@fortawesome/free-solid-svg-icons';
 import AddEditFluidOrder from './AddEditFluidOrder';
-import "./styles.less";
+import './styles.less';
 import Additives from './additives';
 const IVFluidOrder = () => {
   const [fluidOrder, setFluidOrder] = useState({});
@@ -25,80 +25,80 @@ const IVFluidOrder = () => {
   const data = [
     {
       key: '1',
-      fluidType: 'type1',
-      volume: '100',
-      route: 'route1',
-      infusionRate: 'rate1',
+      fluidType: 'Normal Saline 0.9%',
+      volume: '1000',
+      route: 'Peripheral IV',
+      infusionRate: '125',
       frequency: 1,
       duration: 'Until Complete',
-      untilComplete : true,
-      device: 'device1',
-      indication: 'indication1',
-      notesToNurse: 'note1',
+      untilComplete: true,
+      device: 'IV Pump',
+      indication: 'Dehydration treatment',
+      notesToNurse: 'Monitor for fluid overload',
       priority: 'high',
       allergyChecked: 'yes',
-      startTime: '20:20',
-      estimatedEndTime: '05:05',
-      createdBy: 'Rawan',
-      createdAt: '19:19'
+      startTime: '08:30',
+      estimatedEndTime: '16:30',
+      createdBy: 'Dr. Sarah Johnson',
+      createdAt: '08:00'
     },
     {
       key: '2',
-      fluidType: 'type2',
-      volume: '200',
-      route: 'route2',
-      infusionRate: 'rate2',
-      frequency: 2,
-      duration: '3',
-       untilComplete : false,
-      device: 'device2',
-      indication: 'indication2',
-      notesToNurse: 'note2',
-      priority: 'low',
-      allergyChecked: 'no',
-      startTime: '21:21',
-      estimatedEndTime: '06:06',
-      createdBy: 'Rawan',
-      createdAt: '20:20'
+      fluidType: "Lactated Ringer's",
+      volume: '500',
+      route: 'Central Line',
+      infusionRate: '83',
+      frequency: 1,
+      duration: '6',
+      untilComplete: false,
+      device: 'IV Pump',
+      indication: 'Post-operative fluid replacement',
+      notesToNurse: 'Check potassium levels',
+      priority: 'medium',
+      allergyChecked: 'yes',
+      startTime: '14:00',
+      estimatedEndTime: '20:00',
+      createdBy: 'Dr. Michael Chen',
+      createdAt: '13:45'
     },
     {
       key: '3',
-      fluidType: 'type3',
-      volume: '300',
-      route: 'route3',
-      infusionRate: 'rate3',
-      frequency: 3,
+      fluidType: 'D5W',
+      volume: '250',
+      route: 'Peripheral IV',
+      infusionRate: '42',
+      frequency: 1,
       duration: 'Until Complete',
-       untilComplete : true,
-      device: 'device3',
-      indication: 'indication3',
-      notesToNurse: 'note3',
-      priority: 'high',
+      untilComplete: true,
+      device: 'IV Pump',
+      indication: 'Maintenance fluids',
+      notesToNurse: 'Monitor blood glucose',
+      priority: 'low',
       allergyChecked: 'yes',
-      startTime: '22:22',
-      estimatedEndTime: '07:07',
-      createdBy: 'Hanan',
-      createdAt: '21:21'
+      startTime: '22:00',
+      estimatedEndTime: '06:00',
+      createdBy: 'Dr. Emily Rodriguez',
+      createdAt: '21:30'
     },
     {
       key: '4',
-      fluidType: 'type4',
-      volume: '400',
-      route: 'route4',
-      infusionRate: 'rate4',
-      frequency: 4,
+      fluidType: 'Normal Saline 0.9%',
+      volume: '750',
+      route: 'Peripheral IV',
+      infusionRate: '150',
+      frequency: 1,
       duration: '5',
-       untilComplete : false,
-      device: 'device4',
-      indication: 'indication4',
-      notesToNurse: 'note4',
-      priority: 'low',
-      allergyChecked: 'no',
-      startTime: '23:23',
-      estimatedEndTime: '08:08',
-      createdBy: 'Bushra',
-      createdAt: '22:22'
-    },
+      untilComplete: false,
+      device: 'IV Pump',
+      indication: 'Blood pressure support',
+      notesToNurse: 'Monitor BP every 2 hours',
+      priority: 'high',
+      allergyChecked: 'yes',
+      startTime: '16:30',
+      estimatedEndTime: '21:30',
+      createdBy: 'Dr. David Thompson',
+      createdAt: '16:15'
+    }
   ];
 
   //icons column (Additives)
@@ -187,9 +187,9 @@ const IVFluidOrder = () => {
 
   const handleNew = () => {
     setOpenAddEditFluidOrderPopup(true);
-    setFluidOrder({untilCompleted: true});
+    setFluidOrder({ untilCompleted: true });
   };
- 
+
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -200,10 +200,7 @@ const IVFluidOrder = () => {
   return (
     <div>
       <div className="container-of-buttons-iv">
-        <MyButton
-          color="var(--deep-blue)"
-          width="90px"
-        >
+        <MyButton color="var(--deep-blue)" width="90px">
           Submit
         </MyButton>
         <MyButton
@@ -231,10 +228,7 @@ const IVFluidOrder = () => {
         fluidOrder={fluidOrder}
         setFluidOrder={setFluidOrder}
       />
-      <Additives 
-      open={openAdditivesPopup}
-      setOpen={setOpenAdditivesPopup}
-      />
+      <Additives open={openAdditivesPopup} setOpen={setOpenAdditivesPopup} />
     </div>
   );
 };

@@ -26,42 +26,42 @@ const CarePlanAndGoals = () => {
   const data = [
     {
       key: '1',
-      creationDate: '2025-02-02',
-      problem: 'problem1',
-      goal: 'goal1',
-      goalType: 'type1',
-      intervention: 'intervention1',
-      responsible: 'responsible1',
-      targetPlannedDate: '2025-06-06',
-      reassessmentPlannedDate: '2025-08-08',
-      evaluationNotes: 'note1',
-      status: 'Planned'
+      creationDate: '2025-02-15',
+      problem: 'Left leg fracture mobility',
+      goal: 'Independent ambulation with walker',
+      goalType: 'Short-term',
+      intervention: 'PT sessions 3x/week',
+      responsible: 'Dr. Sarah Johnson',
+      targetPlannedDate: '2025-03-01',
+      reassessmentPlannedDate: '2025-02-28',
+      evaluationNotes: 'Good progress with ROM exercises',
+      status: 'In Progress'
     },
     {
       key: '2',
-      creationDate: '2025-03-03',
-      problem: 'problem2',
-      goal: 'goal2',
-      goalType: 'type2',
-      intervention: 'intervention2',
-      responsible: 'responsible2',
-      targetPlannedDate: '2025-07-07',
-      reassessmentPlannedDate: '2025-09-09',
-      evaluationNotes: 'note2',
-      status: 'Reassess'
+      creationDate: '2025-02-15',
+      problem: 'Surgical site infection risk',
+      goal: 'Clean wound, no infection signs',
+      goalType: 'Short-term',
+      intervention: 'Daily wound care & antibiotics',
+      responsible: 'Nurse Emily Chen',
+      targetPlannedDate: '2025-02-25',
+      reassessmentPlannedDate: '2025-02-22',
+      evaluationNotes: 'Wound healing well',
+      status: 'On Track'
     },
     {
       key: '3',
-      creationDate: '2025-04-04',
-      problem: 'problem3',
-      goal: 'goal3',
-      goalType: 'type3',
-      intervention: 'intervention3',
-      responsible: 'responsible3',
-      targetPlannedDate: '2025-08-08',
-      reassessmentPlannedDate: '2025-10-10',
-      evaluationNotes: 'note3',
-      status: 'Complete '
+      creationDate: '2025-02-15',
+      problem: 'Post-surgery pain',
+      goal: 'Pain level ≤3/10 within 48h',
+      goalType: 'Short-term',
+      intervention: 'Scheduled pain meds',
+      responsible: 'Dr. Michael Rodriguez',
+      targetPlannedDate: '2025-02-17',
+      reassessmentPlannedDate: '2025-02-16',
+      evaluationNotes: 'Pain well controlled',
+      status: 'Completed'
     }
   ];
   // Icons column (start)

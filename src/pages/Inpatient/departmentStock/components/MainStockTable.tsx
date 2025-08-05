@@ -9,12 +9,23 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
 import { formatDateWithoutSeconds } from '@/utils';
 
+interface MainStockTableProps {
+  data: any[];
+  page: number;
+  rowsPerPage: number;
+  totalCount: number;
+  onPageChange: (event: unknown, newPage: number) => void;
+  onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  productsLovQueryResponse: any;
+  payPymentMethodLovQueryResponse: any;
+}
+
 /**
  * MainStockTable Component
  *
  * Main stock table with search filters, pagination, and action buttons
  */
-const MainStockTable = ({
+const MainStockTable: React.FC<MainStockTableProps> = ({
   data,
   page,
   rowsPerPage,
@@ -23,7 +34,7 @@ const MainStockTable = ({
   onRowsPerPageChange,
   productsLovQueryResponse,
   payPymentMethodLovQueryResponse
-}: any) => {
+}) => {
   /**
    * Actions column renderer for main table
    * Provides action buttons for each row: View Transactions, Adjust Quantity, Product Card
