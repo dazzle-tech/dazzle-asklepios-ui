@@ -1,5 +1,5 @@
 import { newApEncounter, newApOperationRequests, newApPatient } from "@/types/model-types-constructor";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Tabs } from "rsuite";
 import PatientSide from "../encounter/encounter-main-info-section/PatienSide";
 import CompletedOperations from "./CompletedOperations";
@@ -12,6 +12,11 @@ const Operation = () => {
    const [request, setRequest] = useState<any>({ ...newApOperationRequests });
    const [open,setOpen]=useState(false);
    const [activeTab, setActiveTab] = useState<string>('1');
+
+    const reqRef = useRef(null);
+     const refetchOnGoing = () => {
+       reqRef.current?.refetch();
+     };
    return (<div className='container'>
       <div className='left-box' >
          <Tabs appearance="subtle" activeKey={activeTab} onSelect={(key) => {
@@ -19,10 +24,10 @@ const Operation = () => {
          }}>
             <Tabs.Tab eventKey="1" title="Request List">
                <RequestList patient={patient} encounter={encounter} setPatient={setPatient} setEncounter={setEncounter} setActiveTab={setActiveTab}  
-               setOpen={setOpen} request={request} setRequest={setRequest}/>
+               setOpen={setOpen} request={request} setRequest={setRequest} refetchOnGoing={refetchOnGoing}/>
             </Tabs.Tab>
             <Tabs.Tab eventKey="2" title="Ongoing Operations" >
-               <OngoingOperations patient={patient} encounter={encounter} setPatient={setPatient} setEncounter={setEncounter} 
+               <OngoingOperations   ref={reqRef} patient={patient} encounter={encounter} setPatient={setPatient} setEncounter={setEncounter} 
                open={open} setOpen={setOpen} request={request} setRequest={setRequest} />
 
             </Tabs.Tab>

@@ -8,12 +8,42 @@ import { initialListRequest, ListRequest } from "@/types/types";
 import { formatDateWithoutSeconds } from "@/utils";
 import { faNotesMedical, faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useEffect, useState } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
 import StartedDetails from "./StartedDetails/StartedDetails";
-const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,setOpen,request, setRequest }) => {
+export type OngoingRef = {
+    refetch: () => void;
+};
+type OngoingProps = {
+    patient?: any;
+    setPatient?: (val: any) => void;
+    encounter?: any;
+    setEncounter?: (val: any) => void;
+    open?: boolean;
+    setOpen?: (val: boolean) => void;
+    request?: any;
+    setRequest?: (val: any) => void;
+
+};
+
+const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
+    patient,
+    setPatient,
+    encounter,
+    setEncounter,
+    open,
+    setOpen,
+    request,
+    setRequest,
+
+}, ref) => {
+    useImperativeHandle(ref, () => ({
+        refetch
+    }));
+
+
+
     const dispatch = useAppDispatch();
-    
 
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
@@ -34,7 +64,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
 
         ],
     });
-  
+
     const isSelected = rowData => {
         if (rowData && request && rowData.key === request.key) {
             return 'selected-row';
@@ -43,9 +73,9 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
 
     //operation Api's
     const { data: operationrequestList, refetch, isLoading } = useGetOperationRequestsListQuery(listRequest);
-      useEffect(() => {
-    refetch(); 
-  }, []);
+    useEffect(() => {
+        refetch();
+    }, []);
 
     useEffect(() => {
 
@@ -172,19 +202,19 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
             key: "actions",
             title: <Translate >Actions</Translate>,
             render: (rowData: any) => {
-               
+
 
                 // const isDisabled =request?.key!==rowData.key;
                 return <HStack spacing={10}>
                     <Whisper
                         placement="top"
                         trigger="hover"
-                        speaker={<Tooltip>{rowData.operationStatusLvalue.valueCode==="PROC_INPROGRESS"?"In Progress":"Start"}</Tooltip>}
+                        speaker={<Tooltip>{rowData.operationStatusLvalue.valueCode === "PROC_INPROGRESS" ? "In Progress" : "Start"}</Tooltip>}
                     >
-                        <FontAwesomeIcon icon={rowData.operationStatusLvalue.valueCode==="PROC_INPROGRESS"?faNotesMedical:faPlay}
-                        onClick={()=>setOpen(true)}
+                        <FontAwesomeIcon icon={rowData.operationStatusLvalue.valueCode === "PROC_INPROGRESS" ? faNotesMedical : faPlay}
+                            onClick={() => setOpen(true)}
                         // style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-                      
+
                         />
                     </Whisper>
                 </HStack>;
@@ -231,7 +261,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
             render: (rowData: any) => {
                 return (<>
                     <span>{rowData.deletedBy} </span>
-                    <br /> 
+                    <br />
                     <span className='date-table-style'>{formatDateWithoutSeconds(rowData.deletedAt)}</span>
                 </>)
             }
@@ -281,9 +311,9 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
                 setRequest(rowData)
 
             }}
-            
+
         />
-        <StartedDetails open={open} setOpen={setOpen} patient={patient} encounter={encounter} operation={request} setOperation={setRequest} refetch={refetch}/>
+        <StartedDetails open={open} setOpen={setOpen} patient={patient} encounter={encounter} operation={request} setOperation={setRequest} refetch={refetch} />
     </>);
-}
+});
 export default OngoingOperations;
