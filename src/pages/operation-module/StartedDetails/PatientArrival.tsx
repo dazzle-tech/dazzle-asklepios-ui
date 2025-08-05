@@ -3,7 +3,7 @@ import MyInput from "@/components/MyInput";
 import MyModal from "@/components/MyModal/MyModal";
 import { useAppDispatch } from "@/hooks";
 import PreCheckList from "@/pages/encounter/encounter-component/operation-request/PreCheckList";
-import { useDeleteOperationStaffMutation, useGetLatestChecklistByOperationKeyQuery, useGetOperationStaffListQuery, useSaveOperationPatientArrivalMutation, useSaveOperationStaffMutation, useSavePreOperationChecklistMutation } from '@/services/operationService';
+import { useDeleteOperationStaffMutation, useGetLatestChecklistByOperationKeyQuery, useGetOperationPatientArrivalByOperationQuery, useGetOperationStaffListQuery, useSaveOperationPatientArrivalMutation, useSaveOperationStaffMutation, useSavePreOperationChecklistMutation } from '@/services/operationService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetPractitionersQuery, useGetRoomListQuery, useGetUsersQuery } from "@/services/setupService";
 import { newApOperationPatientArrival, newApOperationStaff, newApPreOperationChecklist } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
@@ -11,16 +11,22 @@ import { notify } from "@/utils/uiReducerActions";
 import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 import StaffMember from "@/pages/encounter/encounter-component/procedure/StaffMember";
+import clsx from "clsx";
 const PatientArrival = ({ operation, patient, encounter, user }) => {
     const dispatch = useAppDispatch();
     const [openCheckLit, setOpenCheckList] = useState(false);
     const [checkList, setCheckList] = useState({ ...newApPreOperationChecklist });
     const [arraivel, setArrival] = useState({ ...newApOperationPatientArrival })
-
+    const { data: arrivalData } = useGetOperationPatientArrivalByOperationQuery(operation?.key , {
+        skip: !operation?.key
+    });
     const [saveCheckList] = useSavePreOperationChecklistMutation();
     const [save]=useSaveOperationPatientArrivalMutation();
     // get lists
-    const { data: checklists, refetch } = useGetLatestChecklistByOperationKeyQuery(operation?.key);
+    const { data: checklists, refetch } = useGetLatestChecklistByOperationKeyQuery(operation?.key , {
+        skip: !operation?.key
+    });
+
     const { data: ConsentFormLovQueryResponse } = useGetLovValuesByCodeQuery('CONSENT_FORM');
     const { data: practtionerList } = useGetPractitionersQuery({ ...initialListRequest });
   
@@ -55,7 +61,7 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
 
     useEffect(() => {
         if (checklists?.object?.key !== null) {
-            setCheckList({ ...checklists?.object, confirmTime: 0 });
+            setCheckList({ ...checklists?.object, confirmTime: checklists?.object?.confirmTime ? new Date(checklists?.object?.confirmTime) : null });
         }
         else {
             setCheckList({ ...newApPreOperationChecklist, confirmTime: 0 });
@@ -63,8 +69,18 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
         }
     }, [checklists]);
 
+    useEffect(() => {
+        if (arrivalData?.object) {
+            setArrival({ ...arrivalData?.object, dateTime: new Date(arrivalData?.object?.dateTime) });  
+        }
+        else {
+            setArrival({ ...newApOperationPatientArrival, dateTime: 0 });
+        }
+    }, [arrivalData]);
+
     const handleConfirm = async () => {
         try {
+          
             await saveCheckList({ ...checkList, isConfirm: true, confirmTime: new Date(checkList.confirmTime).getTime() }).unwrap();
             dispatch(notify({ msg: "Confermed ", sev: "success" }));
             refetch();
@@ -93,7 +109,9 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
                         </div>
                         <Divider />
 
-                        <Row>
+                        <Row gutter={15} className={clsx('', {
+                                                        'disabled-panel': checkList?.key == null 
+                                                      })}>
                             <Col md={3}>
                                 <br />
                                 <MyButton onClick={() => setOpenCheckList(true)}>pre-op checklist</MyButton></Col>
@@ -122,13 +140,10 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
 
                             <Col md={3}>
                                 <br />
-                                {!checkList?.isConfirm ? <MyButton onClick={handleConfirm}>Confirm</MyButton> : <MyButton appearance="ghost">Confiermed</MyButton>}
+                                {!checkList?.isConfirm ? <MyButton onClick={handleConfirm}>Confirm</MyButton> : <MyButton appearance="ghost"  >Confiermed</MyButton>}
                             </Col>
                         </Row>
-                        <Row>
-                            <Col md={12}></Col>
-                            <Col md={12}></Col>
-                        </Row>
+                     
 
                     </div></Col>
 
