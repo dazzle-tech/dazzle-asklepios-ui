@@ -280,7 +280,7 @@ const OperativeTimeOut = ({operation ,refetch}) => {
                                     /></Col>
                             </Row>
                             <Row>
-                                <Col md={12}>
+                                <Col md={8}>
                                     <MyInput
                                         width="100%"
                                         fieldType="check"
@@ -290,7 +290,7 @@ const OperativeTimeOut = ({operation ,refetch}) => {
                                         showLabel={false}
                                     />
                                 </Col>
-                                <Col md={12}>
+                                <Col md={8}>
                                     <MyInput
                                         width="100%"
                                         fieldType="check"

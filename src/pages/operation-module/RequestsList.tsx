@@ -13,7 +13,7 @@ import { faPlay, faSquareXmark } from "@fortawesome/free-solid-svg-icons";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 
-const RequestList = ({patient ,setPatient,encounter,setEncounter ,setActiveTab,setOpen,request, setRequest}) => {
+const RequestList = ({patient ,setPatient,encounter,setEncounter ,setActiveTab,setOpen,request, setRequest ,refetchOnGoing}) => {
     const dispatch = useAppDispatch();
     const [showCancelled, setShowCancelled] = useState(true);
     
@@ -226,7 +226,8 @@ const addOrUpdateFilter = (filters, newFilter) => {
                                 setRequest(rowData);
                                const Response= await save({ ...request, operationStatusLkey: '3621681578985655',startedAt:Date.now() }).unwrap();
                                 dispatch(notify({ msg: 'Started Successfully', sev: "success" }));
-                                refetch();                           
+                                refetch();   
+                                refetchOnGoing();                      
                                 setActiveTab('2');
                                 setOpen(true);
                                 console.log("Response",Response);
