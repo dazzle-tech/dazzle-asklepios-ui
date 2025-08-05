@@ -148,6 +148,7 @@ import StratifyScale from './pages/encounter/encounter-component/stratify-scale'
 import HendrichFallRisk from './pages/encounter/encounter-component/hendrich-fall-risk';
 import GlasgowComaScale from './pages/encounter/encounter-component/glasgow-coma-scale';
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
+import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -412,6 +413,7 @@ const App = () => {
               <Route path="cpt-setup" element={<CPTSetup />} />
               <Route path="loinc-setup" element={<LOINCSetup />} />
               <Route path="services-setup" element={<ServiceSetup />} />
+              <Route path="surgical-kits-setup" element={<SurgicalKitsSetup />} />
               <Route path="error-404" element={<Error404Page />} />
               <Route path="error-403" element={<Error403Page />} />
               <Route path="error-500" element={<Error500Page />} />
