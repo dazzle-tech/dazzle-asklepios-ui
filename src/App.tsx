@@ -311,6 +311,7 @@ const App = () => {
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="ER-department" element={<ERList />} />
               <Route path="encounter" element={<Encounter />}>
+              <Route path="progress-notes" element={<ProgressNotes />} />
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
