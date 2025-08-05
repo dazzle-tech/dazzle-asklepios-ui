@@ -238,6 +238,21 @@ const Encounter = () => {
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
     { key: 'diagnosticsOrder',label: 'Diagnostics Order',icon: faVials,path: 'diagnostics-order'},
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
+     {
+      key: 'operationRequests',
+      label: 'Operation Requests',
+      icon: faBedPulse,
+      path: 'operation-request'
+    }
+,
+
+    { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
+    {
+      key: 'patientHistory',
+      label: 'Patient History',
+      icon: faClockRotateLeft,
+      path: 'patient-history'
+    },
     {key: 'referralRequest',label: 'Referral Request',icon: faUserDoctor,path: 'referral-request'},
     {
       key: 'multidisciplinaryTeamNotes',
@@ -280,13 +295,7 @@ const Encounter = () => {
       path: 'johns-hopkins-tool'
     },
 
-    { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
-    {
-      key: 'patientHistory',
-      label: 'Patient History',
-      icon: faClockRotateLeft,
-      path: 'patient-history'
-    },
+    
     {
       key: 'medicationsRecord',
       label: 'Medications Record',
@@ -295,13 +304,7 @@ const Encounter = () => {
     },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
 
-    {
-      key: 'operationRequests',
-      label: 'Operation Requests',
-      icon: faBedPulse,
-      path: 'operation-request'
-    }
-,
+   
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
