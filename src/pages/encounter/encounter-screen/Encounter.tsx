@@ -11,6 +11,7 @@ import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import {
   faBedPulse,
   faCheckDouble,
@@ -220,6 +221,7 @@ const Encounter = () => {
     '/encounter/morse-fall-scale': 'Morse Fall Scale (MFS)',
     '/encounter/stratify-scale': 'STRATIFY Scale',
     '/encounter/hendrich-fall-risk': 'Hendrich II Fall Risk Model',
+    '/encounter/progress-notes': 'Progress Notes'
   };
 
   const menuItems = [
@@ -302,6 +304,7 @@ const Encounter = () => {
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
     { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
+    { key: 'progressNotes', label: 'Progress Notes', icon: faFileLines, path: 'progress-notes' },
     {
       key: 'psychologicalExam',
       label: 'Psychological Exam',
