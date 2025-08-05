@@ -114,7 +114,7 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
                                                       })}>
                             <Col md={3}>
                                 <br />
-                                <MyButton onClick={() => setOpenCheckList(true)}>pre-op checklist</MyButton></Col>
+                                <MyButton onClick={() => setOpenCheckList(true)}>Pre-Op Checklist</MyButton></Col>
                             <Col md={6}>
                                 <MyInput
                                     width="100%"
