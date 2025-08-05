@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import { Col, Form, Row } from "rsuite";
 const VitalSigns = ({ object, setObject }) => {
     const [map, setMap] = useState(null);
+    const { data: BPMeasurmentLov } = useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
     useEffect(() => {
         const diastolic = Number(object?.bloodPressureDiastolic);
         const systolic = Number(object?.bloodPressureSystolic);
@@ -46,6 +47,29 @@ const VitalSigns = ({ object, setObject }) => {
                     </div>
                 </Col>
             </Row>
+             <Row>
+                <Col md={12}>
+                    <MyInput
+                        width="100%"
+                        fieldType="select"
+                        fieldName="measurementSite"
+                        selectData={BPMeasurmentLov?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={object}
+                        setRecord={setObject} />
+                </Col>
+                <Col md={12}>
+                        <MyInput
+                            width="100%"
+                            fieldType="number"
+                            rightAddon=" % "
+                            fieldName="oxygenSaturation"
+                            record={object}
+                            setRecord={setObject} />
+                    </Col>
+
+            </Row>
             <Row>
                 <Col md={12}>
                     <MyInput
@@ -56,7 +80,7 @@ const VitalSigns = ({ object, setObject }) => {
                         rightAddonwidth={45}
                         record={object}
                         setRecord={setObject} /></Col>
-                
+
                 <Col md={12}>
                     <MyInput
                         width="100%"
@@ -66,23 +90,9 @@ const VitalSigns = ({ object, setObject }) => {
                         record={object}
                         setRecord={setObject} /></Col>
             </Row>
-            <Row>
-                <Col md={12}>
-                    <MyInput
-                        width="100%"
-                        fieldType="number"
-                        rightAddon=" % "
-                        fieldName="oxygenSaturation"
-                        record={object}
-                        setRecord={setObject} />
-                </Col>
-             
-                <Col md={12}>
-                  
-                </Col>
-            </Row>
-          
-            
+           
+
+
         </Form>
     </>)
 }
