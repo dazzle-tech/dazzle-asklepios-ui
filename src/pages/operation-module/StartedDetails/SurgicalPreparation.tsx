@@ -2,17 +2,20 @@ import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import { useAppDispatch } from "@/hooks";
 import GenericAdministeredMedications from "@/pages/encounter/encounter-component/procedure/Post-ProcedureCare/AdministeredMedications ";
-import { useGetAntimicrobialProphylaxisGivenListQuery, useSaveAntimicrobialProphylaxisGivenMutation, useSaveSurgicalPreparationIncisionMutation } from "@/services/operationService";
+import { useGetAntimicrobialProphylaxisGivenListQuery, useGetLatestSurgicalPreparationByOperationKeyQuery, useSaveAntimicrobialProphylaxisGivenMutation, useSaveSurgicalPreparationIncisionMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery, useGetUsersQuery } from "@/services/setupService";
 import { newApOperationAntimicrobialProphylaxisGiven, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 const SurgicalPreparation = ({ operation }) => {
     const dispatch = useAppDispatch();
     const [surgical, setSergical] = useState({ ...newApOperationSurgicalPreparationIncision });
-
+    console.log("surgical", surgical);
+    const {data:surgicalData}=useGetLatestSurgicalPreparationByOperationKeyQuery(operation.key ,{
+        skip: !operation?.key
+    });
     const { data: positionLovQueryResponse } = useGetLovValuesByCodeQuery('OPERATION_POSITION');
 
     const [save] = useSaveSurgicalPreparationIncisionMutation();
@@ -27,10 +30,25 @@ const SurgicalPreparation = ({ operation }) => {
             }
         ]
     });
-
+useEffect(() => {
+        if (surgicalData?.object) {
+            
+            console.log("surgicalData.object", surgicalData?.object);
+            console.log("surgicalData.siteDriedTime", surgicalData?.object?.siteDriedTime);
+            console.log("surgicalData.timeOfIncision", surgicalData?.object?.timeOfIncision);
+            console.log("surgicalData.skinOpenedTime", surgicalData?.object?.skinOpenedTime);
+            setSergical({   
+                ...surgicalData?.object,
+                siteDriedTime:surgicalData?.object.siteDriedTime? new Date(surgicalData?.object.siteDriedTime) : null,
+                timeOfIncision:surgicalData?.object.timeOfIncision ? new Date(surgicalData?.object.timeOfIncision) : null,
+                skinOpenedTime:surgicalData?.object.skinOpenedTime ? new Date(surgicalData?.object.skinOpenedTime) : null
+            });
+        }
+    }, [surgicalData]);
 
     const handleSave = async () => {
-        try {
+        try {   
+         
             await save({ ...surgical, operationRequestKey: operation.key
                 ,siteDriedTime:new Date(surgical.siteDriedTime).getTime(),
                 timeOfIncision:new Date(surgical.timeOfIncision).getTime(),
