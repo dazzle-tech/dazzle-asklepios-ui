@@ -2,7 +2,6 @@ import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
 import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
@@ -21,7 +20,6 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { fromCamelCaseToDBName } from '@/utils';
 import MedicationsModal from './MedicationsModal';
 import { newApPatientRelation } from '@/types/model-types-constructor';
-
 
 const EPrescriptions = () => {
   const dispatch = useAppDispatch();
@@ -530,7 +528,6 @@ const EPrescriptions = () => {
         setOpen={setOpenMedicationsModal}
         selectedPrescription={selectedPrescription}
       />
-      
     </div>
   );
 };
