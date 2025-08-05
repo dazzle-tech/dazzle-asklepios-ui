@@ -49,6 +49,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     heartRate: 0,
     temperature: 0,
     oxygenSaturation: 0,
+    measurementSite: ''
   });
   const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
