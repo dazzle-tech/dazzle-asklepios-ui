@@ -3,7 +3,7 @@ import MyInput from "@/components/MyInput";
 import { useAppDispatch } from "@/hooks";
 import StaffAssignment from "@/pages/encounter/encounter-component/procedure/StaffMember";
 import { useGetResourceTypeQuery } from "@/services/appointmentService";
-import { useDeleteOperationStaffMutation, useGetIntraoperativeEventsByOperationKeyQuery, useGetLatestSurgicalPreparationByOperationKeyQuery, useGetOperationListQuery, useGetOperationStaffListQuery, useSaveOperationRequestsMutation, useSaveOperationStaffMutation, useSavePostOpNotesHandoverMutation } from "@/services/operationService";
+import { useDeleteOperationStaffMutation, useGetIntraoperativeEventsByOperationKeyQuery, useGetLatestSurgicalPreparationByOperationKeyQuery, useGetOperationListQuery, useGetOperationStaffListQuery, useGetPostOpHandoverByOperationQuery, useSaveOperationRequestsMutation, useSaveOperationStaffMutation, useSavePostOpNotesHandoverMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApOperationIntraoperativeEvents, newApOperationPostOpNotesHandover, newApOperationStaff, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
@@ -13,7 +13,9 @@ import { Col, Divider, Form, Row, Text } from "rsuite";
 const PostOperativeNote = ({ operation }) => {
     const dispatch = useAppDispatch();
     const [operativeNote, setOperativeNote] = useState({ ...newApOperationPostOpNotesHandover });
-
+    const {data:operativeNoteData} = useGetPostOpHandoverByOperationQuery(operation?.key , {
+        skip: !operation?.key
+    });
     const [save] = useSavePostOpNotesHandoverMutation();
     const { data: inpatientDepartmentListResponse } = useGetResourceTypeQuery("4217389643435490");
     const { data: outcomelovqueryresponse } = useGetLovValuesByCodeQuery('PROC_OUTCOMES');
@@ -71,6 +73,17 @@ const PostOperativeNote = ({ operation }) => {
         refetch();
         refetchs()
     }, [operation]);
+
+    useEffect(() => {
+        if (operativeNoteData?.object?.key != null) {
+            setOperativeNote({ ...operativeNoteData.object,
+                handoverTime: new Date(operativeNoteData.object.handoverTime),
+                completedAt: new Date(operativeNoteData.object.completedAt),
+             });  
+        } else {
+            setOperativeNote({ ...newApOperationPostOpNotesHandover, operationRequestKey: operation?.key });
+        }
+    }, [operativeNoteData]);
     const hanelSave = async () => {
         try {
             await save({
