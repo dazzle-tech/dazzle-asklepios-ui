@@ -105,6 +105,7 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                                     fieldName="operationLevelLkey"
                                     record={request}
                                     setRecord={setRequest}
+                                    
                                 /></Col>
                             <Col md={12}>
                                 <MyInput
@@ -116,6 +117,7 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                                     fieldName="priorityLkey"
                                     record={request}
                                     setRecord={setRequest}
+                                    searchable={false}
                                 />
                             </Col>
                         </Row>
@@ -130,6 +132,7 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                                     fieldName="operationTypeLkey"
                                     record={request}
                                     setRecord={setRequest}
+                                    searchable={false}
                                 />
                             </Col>
                             <Col md={12}>
@@ -142,6 +145,7 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                                     fieldName="plannedAnesthesiaTypeLkey"
                                     record={request}
                                     setRecord={setRequest}
+                                    searchable={false}
                                 />
                             </Col>
                         </Row>
@@ -186,6 +190,7 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                                     fieldName="facilityKey"
                                     record={request}
                                     setRecord={setRequest}
+
                                 /></Col>
                             <Col md={12}>
                                 <MyInput
@@ -223,6 +228,7 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                                     fieldName="sideOfProcedureLkey"
                                     record={request}
                                     setRecord={setRequest}
+                                    searchable={false}
                                 />
                             </Col>
                         </Row>
