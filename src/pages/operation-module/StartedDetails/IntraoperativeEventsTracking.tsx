@@ -79,9 +79,9 @@ const IntraoperativeEventsTracking = ({ operation, patient,encounter }) => {
             skinClosureTime: intraoperativeData.object?.skinClosureTime ? new Date(intraoperativeData.object.skinClosureTime) : null,
             surgeryEndTime: intraoperativeData.object?.surgeryEndTime ? new Date(intraoperativeData.object.surgeryEndTime) : null,
         });
-        console.log("intraoperativeData.object?.actualOperationPerformed", intraoperativeData.object?.actualOperationPerformed);
-        setTag(intraoperativeData.object.specimensTaken ? intraoperativeData.object.specimensTaken.split(',') : []);
-        setSelectedKeys(intraoperativeData.object.actualOperationPerformed ? intraoperativeData.object?.actualOperationPerformed.split(',') : []);
+       
+        setTag(intraoperativeData.object?.specimensTaken ? intraoperativeData.object?.specimensTaken.split(',') : []);
+        setSelectedKeys(intraoperativeData.object?.actualOperationPerformed ? intraoperativeData.object?.actualOperationPerformed.split(',') : []);
         setInstruc(intraoperativeData.object?.surgicalComplications ? intraoperativeData.object?.surgicalComplications : null);
         setStatus(intraoperativeData.object?.eventOutcome ?? '');
         
