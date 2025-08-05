@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+    useGetOperativeTimeoutByOperationQuery,
     useGetPreOperativeTimeoutQuery,
     useSavePreOperativeTimeoutMutation
 } from '@/services/operationService';
@@ -14,8 +15,20 @@ import MyButton from "@/components/MyButton/MyButton";
 const OperativeTimeOut = ({operation ,refetch}) => {
     const dispatch = useAppDispatch();
     const [timeout, setTimeOut] = useState({ ...newApPreOperativeTimeout });
+    const { data: timeoutData } = useGetOperativeTimeoutByOperationQuery(operation?.key, {
+        skip: !operation?.key,
+        refetchOnMountOrArgChange: true
+    });
+    console.log("operation ................", operation?.key);
+    console.log("timeoutData ................", timeoutData);
     const { data: userList } = useGetUsersQuery({ ...initialListRequest });
     const [save] = useSavePreOperativeTimeoutMutation();
+
+    useEffect(() => {
+        if (timeoutData) {
+            setTimeOut({...timeoutData?.object, timeoutStartTime:timeout.timeoutStartTime? new Date(timeoutData?.object?.timeoutStartTime):null });
+        }   
+    }, [timeoutData]);
 
    const handleSave=async()=>{
     try{

@@ -266,7 +266,7 @@ const addOrUpdateFilter = (filters, newFilter) => {
         },
 
         {
-            key: "",
+            key: "createdAt",
             title: <Translate>Created At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
@@ -279,7 +279,7 @@ const addOrUpdateFilter = (filters, newFilter) => {
 
         },
         {
-            key: "",
+            key: "submitedAt",
             title: <Translate>Submited At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
@@ -293,7 +293,7 @@ const addOrUpdateFilter = (filters, newFilter) => {
         },
 
         {
-            key: "",
+            key: "deletedAt",
             title: <Translate>Cancelled At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {

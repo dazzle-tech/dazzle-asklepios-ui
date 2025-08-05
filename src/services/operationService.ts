@@ -311,7 +311,13 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
-
+        getOperativeTimeoutByOperation: builder.query({
+            query: (operationKey: string) => ({
+                url: `/operation/operative-timeout-by-operation?operationKey=${operationKey}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
         saveOperationAnesthesiaInductionMonitoring: builder.mutation({
             query: (body) => ({
                 url: `/operation/save-operation-anesthesia-induction-monitoring`,
@@ -469,6 +475,7 @@ export const {
 
     useGetPreOperativeTimeoutQuery,
     useSavePreOperativeTimeoutMutation,
+    useGetOperativeTimeoutByOperationQuery,
 
     useGetOperationAnesthesiaInductionMonitoringListQuery,
     useSaveOperationAnesthesiaInductionMonitoringMutation,

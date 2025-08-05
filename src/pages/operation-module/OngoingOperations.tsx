@@ -168,16 +168,6 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
                 return rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey;;
             }
         },
-
-
-        {
-            key: "actions",
-            title: <Translate >Stage</Translate>,
-            render: (rowData: any) => {
-
-                return "";
-            }
-        },
         {
             key: "actions",
             title: <Translate >Actions</Translate>,
@@ -208,7 +198,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
             }
         },
         {
-            key: "",
+            key: "createdAt",
             title: <Translate>Created At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
@@ -221,7 +211,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
 
         },
         {
-            key: "",
+            key: "submitedAt",
             title: <Translate>Submited At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
@@ -235,7 +225,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter ,open,
         },
 
         {
-            key: "",
+            key: "deletedAt",
             title: <Translate>Cancelled At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
