@@ -294,35 +294,40 @@ const DayCaseList = () => {
                 const tooltipBedAssessment = <Tooltip>Assign to Bed</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
-                        <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
-                            <div>
-                                <MyButton
-                                    size="small"
-                                    onClick={() => {
-                                        const patientData = rowData?.patientObject;
-                                        setLocalEncounter(rowData);
-                                        handleGoToVisit(rowData, patientData);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faUserDoctor} />
-                                </MyButton>
-                            </div>
-                        </Whisper>
-                        {rowData?.encounterStatusLkey === "5256965920133084" && <Whisper trigger="hover" placement="top" speaker={tooltipBedAssessment}>
-                            <div>
-                                <MyButton
-                                    size="small"
-                                    onClick={() => {
-                                        const patientData = rowData?.patientObject;
-                                        setLocalEncounter(rowData);
-                                        setOpenBedAssigment(true);
-                                    }}
-                                    backgroundColor="Black"
-                                >
-                                    <FontAwesomeIcon icon={faBed} />
-                                </MyButton>
-                            </div>
-                        </Whisper>}
+                        {rowData?.apRoom && (
+                            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+                                <div>
+                                    <MyButton
+                                        size="small"
+                                        onClick={() => {
+                                            const patientData = rowData?.patientObject;
+                                            setLocalEncounter(rowData);
+                                            handleGoToVisit(rowData, patientData);
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={faUserDoctor} />
+                                    </MyButton>
+                                </div>
+                            </Whisper>
+                        )}
+
+                        {rowData?.encounterStatusLkey === "5256965920133084" && (
+                            <Whisper trigger="hover" placement="top" speaker={tooltipBedAssessment}>
+                                <div>
+                                    <MyButton
+                                        size="small"
+                                        onClick={() => {
+                                            const patientData = rowData?.patientObject;
+                                            setLocalEncounter(rowData);
+                                            setOpenBedAssigment(true);
+                                        }}
+                                        backgroundColor="Black"
+                                    >
+                                        <FontAwesomeIcon icon={faBed} />
+                                    </MyButton>
+                                </div>
+                            </Whisper>
+                        )}
 
                         <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                             <div>
