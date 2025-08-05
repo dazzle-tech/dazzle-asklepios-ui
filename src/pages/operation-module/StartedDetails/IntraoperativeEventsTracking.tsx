@@ -7,7 +7,7 @@ import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
 import StaffAssignment from "@/pages/encounter/encounter-component/procedure/StaffMember";
 import MultiSelectAppender from "@/pages/medical-component/multi-select-appender/MultiSelectAppender";
-import { useDeleteOperationStaffMutation, useGetLatestSurgicalPreparationByOperationKeyQuery, useGetOperationListQuery, useGetOperationPatientArrivalByOperationQuery, useGetOperationStaffListQuery, useSaveIntraoperativeEventsMutation, useSaveOperationStaffMutation } from "@/services/operationService";
+import { useDeleteOperationStaffMutation, useGetIntraoperativeEventsByOperationKeyQuery, useGetLatestSurgicalPreparationByOperationKeyQuery, useGetOperationListQuery, useGetOperationPatientArrivalByOperationQuery, useGetOperationStaffListQuery, useSaveIntraoperativeEventsMutation, useSaveOperationStaffMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery, useGetPractitionersQuery, useGetUsersQuery } from "@/services/setupService";
 import { newApOperationIntraoperativeEvents, newApOperationStaff, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
@@ -18,6 +18,11 @@ import PatientOrder from '@/pages/encounter/encounter-component/diagnostics-orde
 const IntraoperativeEventsTracking = ({ operation, patient,encounter }) => {
     const dispatch = useAppDispatch();
     const [intraoperative, setIntraoperative] = useState({ ...newApOperationIntraoperativeEvents });
+    console.log("intraoperative", intraoperative);
+    const {data:intraoperativeData}=useGetIntraoperativeEventsByOperationKeyQuery(operation?.key, {
+        skip: !operation?.key,
+        refetchOnMountOrArgChange: true
+    });
     const { data: complicLovQueryResponse } = useGetLovValuesByCodeQuery('ROC_COMPLIC');
     const { data: severitylovqueryresponse } = useGetLovValuesByCodeQuery('SEVERITY');
     const { data: surgical, refetch } = useGetLatestSurgicalPreparationByOperationKeyQuery(operation?.key);
@@ -30,6 +35,7 @@ const IntraoperativeEventsTracking = ({ operation, patient,encounter }) => {
     const [status, setStatus] = useState<string>('');
     const { data: operations } = useGetOperationListQuery({ ...initialListRequest });
     const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+    console.log("selectedKeys", selectedKeys);
     const [instr, setInstruc] = useState(null);
     const [openOrderModel, setOpenOrderModel] = useState(false);
     const { data: userList } = useGetUsersQuery({
@@ -64,6 +70,27 @@ const IntraoperativeEventsTracking = ({ operation, patient,encounter }) => {
 
 }, [operation]);
 
+    useEffect(() => {
+    if (intraoperativeData) {
+        setIntraoperative({
+            ...intraoperativeData.object,
+            firstCountTime: intraoperativeData.object?.firstCountTime ? new Date(intraoperativeData.object.firstCountTime) : null,
+            secondCountTime: intraoperativeData.object?.secondCountTime ? new Date(intraoperativeData.object.secondCountTime) : null,
+            skinClosureTime: intraoperativeData.object?.skinClosureTime ? new Date(intraoperativeData.object.skinClosureTime) : null,
+            surgeryEndTime: intraoperativeData.object?.surgeryEndTime ? new Date(intraoperativeData.object.surgeryEndTime) : null,
+        });
+        console.log("intraoperativeData.object?.actualOperationPerformed", intraoperativeData.object?.actualOperationPerformed);
+        setTag(intraoperativeData.object.specimensTaken ? intraoperativeData.object.specimensTaken.split(',') : []);
+        setSelectedKeys(intraoperativeData.object.actualOperationPerformed ? intraoperativeData.object?.actualOperationPerformed.split(',') : []);
+        setInstruc(intraoperativeData.object?.surgicalComplications ? intraoperativeData.object?.surgicalComplications : null);
+        setStatus(intraoperativeData.object?.eventOutcome ?? '');
+        
+    } else {
+        setIntraoperative({ ...newApOperationIntraoperativeEvents });
+    }   
+}, [intraoperativeData]);
+
+
 useEffect(() => {
     if (surgical?.object?.key != null) {
         setSurgicalP({ ...surgical.object, timeOfIncision: surgical.object.timeOfIncision ? new Date(surgical.object.timeOfIncision) : null });
@@ -96,18 +123,18 @@ useEffect(() => {
     // Table Columns
     const MedicationsGivenColumns = [
         {
-            key: '',
+            key: '1',
             title: <Translate>dose</Translate>,
             render: (rowData: any) => ""
         },
         {
-            key: '',
+            key: '2',
             title: <Translate>route</Translate>,
             render: (rowData: any) => ''
         },
         ,
         {
-            key: "",
+            key: "3",
 
             title: <Translate>time</Translate>,
             flexGrow: 1,
@@ -116,7 +143,7 @@ useEffect(() => {
     ];
     const FluidsGivenColumns = [
         {
-            key: '',
+            key: '4',
             title: <Translate>Quantity</Translate>,
             render: (rowData: any) => ""
         }
@@ -124,18 +151,18 @@ useEffect(() => {
     ];
     const BloodProductsGivenColumns = [
         {
-            key: '',
+            key: '5',
             title: <Translate>Type</Translate>,
             render: (rowData: any) => ""
         },
         {
-            key: '',
+            key: '6',
             title: <Translate>units</Translate>,
             render: (rowData: any) => ''
         },
         ,
         {
-            key: "",
+            key: "7",
 
             title: <Translate>start time</Translate>,
             flexGrow: 1,
