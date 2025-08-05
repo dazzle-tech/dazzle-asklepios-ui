@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCapsules, faBottleDroplet } from '@fortawesome/free-solid-svg-icons';
+import { faCapsules, faBottleDroplet, faRepeat } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
@@ -12,22 +12,32 @@ import { formatDateWithoutSeconds } from '@/utils';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import './styles.less';
 
-interface MedicationsModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  selectedPrescription: any;
-}
-
-const MedicationsModal: React.FC<MedicationsModalProps> = ({
-  open,
-  setOpen,
-  selectedPrescription
-}) => {
+const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
   const [medicationChecks, setMedicationChecks] = useState({});
   const [paymentMethodSelected, setPaymentMethodSelected] = useState('');
+  const [localEncounter, setLocalEncounter] = useState({});
+  const [patientInsurance, setPatientInsurance] = useState({});
+  const [newApPatientInsurance] = useState({});
+
   const { data: paymentMethodLovQueryResponse } = useGetLovValuesByCodeQuery('PAY_METHOD');
   const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
   const { data: encounterPymentMethodLovQueryResponse } = useGetLovValuesByCodeQuery('PAY_TYPS');
+  const { data: InsurancePlanTypeLovQueryResponse } =
+    useGetLovValuesByCodeQuery('INSURANCE_PLAN_TYPE');
+
+  // Sample insurance data - replace with actual data from your API
+  const data = [
+    {
+      key: '1',
+      label: 'Fs Plan',
+      patientInsurance: { insurancePolicyNumber: 'POLyuk', groupNumber: 'GRPyuk' }
+    },
+    {
+      key: '2',
+      label: 'Sc Plan',
+      patientInsurance: { insurancePolicyNumber: 'POLrewf', groupNumber: 'GRPefwe' }
+    }
+  ];
 
   // Reset values when modal opens
   useEffect(() => {
@@ -63,7 +73,7 @@ const MedicationsModal: React.FC<MedicationsModalProps> = ({
       key: 'instructions',
       dataKey: 'instructions',
       title: <Translate>Instructions</Translate>,
-      width: 275
+      width: 260
     },
     {
       key: 'duration',
@@ -71,11 +81,11 @@ const MedicationsModal: React.FC<MedicationsModalProps> = ({
     },
     {
       key: 'qtyToDispense',
-      title: <Translate>Total to Dispense</Translate>
+      title: <Translate>Qty to Dis</Translate>
     },
     {
       key: 'warehouse',
-      title: <Translate>Select warehouse</Translate>,
+      title: <Translate>Warehouse</Translate>,
       render: rowData => (
         <Form>
           <MyInput
@@ -96,9 +106,9 @@ const MedicationsModal: React.FC<MedicationsModalProps> = ({
             fieldLabel=""
             selectDataLabel="label"
             selectDataValue="value"
-            width="100%"
+            width="120px"
             height={30}
-            placeholder="Select warehouse"
+            placeholder="Warehouse"
           />
         </Form>
       )
@@ -113,8 +123,7 @@ const MedicationsModal: React.FC<MedicationsModalProps> = ({
     },
     {
       key: 'priceCurrency',
-      title: <Translate>Price, Currency</Translate>,
-      expandable: true
+      title: <Translate>Price, Currency</Translate>
     },
     {
       key: 'DispenseBy/At',
@@ -188,8 +197,13 @@ const MedicationsModal: React.FC<MedicationsModalProps> = ({
         content={
           <div className="medications-modal">
             <div className="header-icon">
-              <MyButton >
+              <MyButton>
                 <FontAwesomeIcon icon={faCapsules} className="icon" />
+                <span className="button-text">Dispense</span>
+              </MyButton>
+              <MyButton>
+                <FontAwesomeIcon icon={faRepeat} className="icon" />
+                <span className="button-text">Dispense a Substitute</span>
               </MyButton>
             </div>
             <div className="table-container">
@@ -200,7 +214,11 @@ const MedicationsModal: React.FC<MedicationsModalProps> = ({
               />
             </div>
             <div className="payment-section">
-              <Form className="payment-type-form">
+              <label className="payment-label">
+                <strong>Payment Details</strong>
+              </label>
+
+              <Form fluid className="payment-type-form">
                 <MyInput
                   width={150}
                   fieldType="text"
@@ -219,10 +237,86 @@ const MedicationsModal: React.FC<MedicationsModalProps> = ({
                   selectData={encounterPymentMethodLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
-                  record={{}}
+                  record={localEncounter}
+                  setRecord={setLocalEncounter}
                   className="payment-field-small"
                 />
+                {(localEncounter as any)?.paymentTypeLkey === '330434908679093' && (
+                  <>
+                    <MyInput
+                      width={150}
+                      fieldLabel="Insurance Plan Type"
+                      fieldType="select"
+                      fieldName="insuranceKey"
+                      selectData={data}
+                      selectDataLabel="label"
+                      selectDataValue="key"
+                      record={localEncounter}
+                      setRecord={updated => {
+                        const selectedItem = data.find(item => item.key === updated.insuranceKey);
+                        if (selectedItem) {
+                          setPatientInsurance(selectedItem.patientInsurance || {});
+                        } else {
+                          setPatientInsurance({ ...newApPatientInsurance });
+                        }
+                        setLocalEncounter(updated);
+                      }}
+                      className="payment-field-small"
+                    />
+                    <MyInput
+                      width={180}
+                      disabled={true}
+                      fieldName="insurancePolicyNumber"
+                      record={patientInsurance}
+                      setRecord={setPatientInsurance}
+                      className="payment-field-small"
+                    />
+                    <MyInput
+                      width={150}
+                      disabled={true}
+                      fieldName="groupNumber"
+                      record={patientInsurance}
+                      setRecord={setPatientInsurance}
+                      className="payment-field-small"
+                    />
+                    <MyInput
+                      width={150}
+                      disabled={true}
+                      fieldType="select"
+                      fieldName="insurancePlanTypeLkey"
+                      selectData={InsurancePlanTypeLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={patientInsurance}
+                      setRecord={setPatientInsurance}
+                      className="payment-field-small"
+                    />
+                    <MyInput
+                      width={150}
+                      disabled={true}
+                      fieldName="authorizationNumbers"
+                      record={patientInsurance}
+                      setRecord={setPatientInsurance}
+                      className="payment-field-small"
+                    />
+                    <MyInput
+                      width={150}
+                      fieldType="date"
+                      disabled={true}
+                      fieldName="expirationDate"
+                      fieldLabel="Expiration Date"
+                      record={patientInsurance}
+                      setRecord={setPatientInsurance}
+                      className="payment-field-small"
+                    />
+                  </>
+                )}
               </Form>
+
+              <label className="payment-label">
+                <strong>Payment Method</strong>
+              </label>
+
               <Form layout="inline" fluid className="payment-method-form">
                 <div className="payment-row">
                   <MyInput
