@@ -1,2 +1,2 @@
-import DischargePlanning from "./DischargePlanning";
+import DischargePlanning from "./DischargePlan";
 export default DischargePlanning;
