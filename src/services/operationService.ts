@@ -432,6 +432,13 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
+        getPostOpHandoverByOperation: builder.query({
+            query: (operationKey: string) => ({
+                url: `/operation/post-op-handover-by-operation?operationKey=${operationKey}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
 
     })
 });
@@ -502,6 +509,6 @@ export const {
 
     useSavePostOpNotesHandoverMutation,
     useGetPostOpNotesHandoverListQuery,
-
+    useGetPostOpHandoverByOperationQuery
 } = operationService;
 
