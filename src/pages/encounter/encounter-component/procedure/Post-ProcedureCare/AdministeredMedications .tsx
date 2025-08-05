@@ -81,7 +81,7 @@ const GenericAdministeredMedications = ({
       key: "name",
       title: <Translate>Active Ingredient</Translate>,
       render: (rowData) =>{
-        console.log(newMedicationTemplate,"ROw",rowData.activeIngredientKey)
+  
          const name =activeIngredients?.object.find(item=>item.key===rowData.activeIngredientKey)?.name
          return name;
       }

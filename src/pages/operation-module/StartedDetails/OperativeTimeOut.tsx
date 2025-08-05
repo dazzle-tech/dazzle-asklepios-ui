@@ -19,14 +19,14 @@ const OperativeTimeOut = ({operation ,refetch}) => {
         skip: !operation?.key,
         refetchOnMountOrArgChange: true
     });
-    console.log("operation ................", operation?.key);
-    console.log("timeoutData ................", timeoutData);
+
     const { data: userList } = useGetUsersQuery({ ...initialListRequest });
     const [save] = useSavePreOperativeTimeoutMutation();
 
     useEffect(() => {
         if (timeoutData) {
-            setTimeOut({...timeoutData?.object, timeoutStartTime:timeout.timeoutStartTime? new Date(timeoutData?.object?.timeoutStartTime):null });
+            setTimeOut({...timeoutData?.object, 
+            timeoutStartTime:timeout.timeoutStartTime? new Date(timeoutData?.object?.timeoutStartTime):null });
         }   
     }, [timeoutData]);
 
