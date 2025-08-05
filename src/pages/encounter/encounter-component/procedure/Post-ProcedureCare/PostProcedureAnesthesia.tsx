@@ -74,11 +74,11 @@ const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ proc
     useImperativeHandle(ref, () => ({
              handleSave
           }));
-    return ( <div style={{ ...((props?.noBorder) && { borderRadius: 'none',boxShadow: "none" })}} className='container-form' ref={ref}>
-            <div style={{ ...((props?.noBorder) && { display: 'none'})}} className='title-div'>
+    return ( <div  className='container-form' ref={ref}>
+            <div  className='title-div'>
                 <Text>Post-Procedure Anesthesia</Text> 
             </div>
-            <Divider style={{ ...((props?.noBorder) && { display: 'none'})}} />
+            <Divider />
         <Row gutter={15} className="r">
             <Form fluid>
                 <Col md={12}>
@@ -91,6 +91,7 @@ const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ proc
                         fieldName={"oxygenSaturationLkey"}
                         record={anesthesia}
                         setRecord={setAnesthesia}
+                        searchable={false}
                     />
                      <MyInput
                         width="100%"
@@ -100,7 +101,9 @@ const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ proc
                         fieldType="select"
                         fieldName={"consciousnessLkey"}
                         record={anesthesia}
-                        setRecord={setAnesthesia}/>
+                        setRecord={setAnesthesia}
+                        searchable={false}
+                        />
 
                     <MyInput
                         width="100%"
@@ -110,7 +113,8 @@ const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ proc
                         fieldType="select"
                         fieldName={"circulationLkey"}
                         record={anesthesia}
-                        setRecord={setAnesthesia}/>
+                        setRecord={setAnesthesia}
+                        searchable={false}/>
 
                 </Col>
                 <Col md={12}>
@@ -122,7 +126,8 @@ const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ proc
                         fieldType="select"
                         fieldName={"respirationLkey"}
                         record={anesthesia}
-                        setRecord={setAnesthesia}/>
+                        setRecord={setAnesthesia}
+                        searchable={false}/>
 
                     <MyInput
                         width="100%"
@@ -132,7 +137,9 @@ const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ proc
                         fieldType="select"
                         fieldName={"activityLkey"}
                         record={anesthesia}
-                        setRecord={setAnesthesia}/>
+                        setRecord={setAnesthesia}
+                        searchable={false}
+                        />
                     <MyInput
                         width="100%"
                         fieldType="number"
