@@ -27,7 +27,7 @@ const AnesthesiaInduction = ({ operation,patient,encounter }) => {
 
     useEffect(() => {
         if (anesthesiaInductionMonitoring) {
-            setAnesthesiaInduction({...anesthesiaInductionMonitoring.object ,inductionStartTime: new Date(anesthesiaInductionMonitoring.object.inductionStartTime)});
+            setAnesthesiaInduction({...anesthesiaInductionMonitoring?.object ,inductionStartTime: new Date(anesthesiaInductionMonitoring.object?.inductionStartTime)});
             setTag(anesthesiaInductionMonitoring.monitorsConnected?.split(',') || []);
         }
     }, [anesthesiaInductionMonitoring]);

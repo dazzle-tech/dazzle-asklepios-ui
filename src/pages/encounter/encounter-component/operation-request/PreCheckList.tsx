@@ -8,25 +8,25 @@ import { notify } from "@/utils/uiReducerActions";
 import MyButton from "@/components/MyButton/MyButton";
 import clsx from "clsx";
 
-const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=false }) => {
+const PreCheckList = ({ operation, patient, encounter, user, disabled: disabled = false }) => {
     const dispatch = useAppDispatch();
     const [checkList, setCheckList] = useState({
         ...newApPreOperationChecklist,
-  
+
     });
-    
+
     const { data: checklists } = useGetLatestChecklistByOperationKeyQuery(operation?.key);
- 
+
     const [save] = useSavePreOperationChecklistMutation();
 
 
-  useEffect(() => {
-    if (checklists?.object) {
-        setCheckList(checklists.object);
-    } else {
-        setCheckList({ ...newApPreOperationChecklist });
-    }
-}, [checklists]);
+    useEffect(() => {
+        if (checklists?.object) {
+            setCheckList(checklists.object);
+        } else {
+            setCheckList({ ...newApPreOperationChecklist });
+        }
+    }, [checklists]);
     const handelSave = async () => {
         try {
             await save({ ...checkList, operationKey: operation?.object?.key, encounterKey: encounter?.key, patientKey: patient?.key, createdBy: user.key });
@@ -37,28 +37,41 @@ const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=f
 
         }
     }
-    const renderCheckboxes = (fields: string[]) => (
+    const renderCheckboxes = (fields: { fieldName: string; label: string }[]) => (
         <Row gutter={10}>
-            {fields.map((field) => (
-                <Col xs={24} sm={12} key={field} className="rows-gap">
-                    <MyInput
-                        showLabel={false}
-                        fieldType="check"
-                        fieldName={field}
-                        width="100%"
-                        record={checkList }
-                        setRecord={setCheckList}
-                    />
+            {fields.map(({ fieldName, label }) => (
+                <Col xs={24} sm={12} key={fieldName} className="rows-gap">
+                    {label ? (
+                        <MyInput
+                            showLabel={false}
+                            label={label}
+                            fieldType="check"
+                            fieldName={fieldName}
+                            width="100%"
+                            record={checkList}
+                            setRecord={setCheckList}
+                        />
+                    ) : (
+                        <MyInput
+                            showLabel={false}
+                            fieldType="check"
+                            fieldName={fieldName}
+                            width="100%"
+                            record={checkList}
+                            setRecord={setCheckList}
+                        />
+                    )}
                 </Col>
             ))}
         </Row>
     );
 
+
     return (
         <Form fluid  >
             <Row gutter={15} className={clsx('', {
-                                            'disabled-panel': disabled
-                                          })}>
+                'disabled-panel': disabled
+            })}>
 
                 <Col xs={24} sm={24} md={12}>
                     <Row gutter={10}>
@@ -70,11 +83,12 @@ const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=f
                                 </div>
                                 <Divider />
                                 {renderCheckboxes([
-                                    "patientIdentityVerified",
-                                    "consentSurgerySigned",
-                                    "consentAnesthesiaSigned",
-                                    "surgicalProcedureConfirmed",
+                                    { fieldName: "patientIdentityVerified", label: "Patient Identity Verifieddd" },
+                                    { fieldName: "consentSurgerySigned", label: "Surgery Consent Signed" },
+                                    { fieldName: "consentAnesthesiaSigned", label: "Anesthesia Consent Signed" },
+                                    { fieldName: "surgicalProcedureConfirmed", label: "Surgical Procedure Confirmed" },
                                 ])}
+
                             </div>
                         </Col>
 
@@ -86,15 +100,16 @@ const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=f
                                 </div>
                                 <Divider />
                                 {renderCheckboxes([
-                                    "siteOfSurgeryMarked",
-                                    "npoStatusConfirmed",
-                                    "preOpVitalsRecorded",
-                                    "patientBathed",
-                                    "jewelryRemoved",
-                                    "denturesRemovedOrNoted",
-                                    "prosthesisNotedOrRemoved",
-                                    "clothingReplaced",
+                                    { fieldName: "siteOfSurgeryMarked", label: "Site Of Surgery Marked" },
+                                    { fieldName: "npoStatusConfirmed", label: "NPO Status Confirmed" },
+                                    { fieldName: "preOpVitalsRecorded", label: "Pre-Op Vitals Recorded" },
+                                    { fieldName: "patientBathed", label: "Patient Bathed" },
+                                    { fieldName: "jewelryRemoved", label: "Jewelry Removed" },
+                                    { fieldName: "denturesRemovedOrNoted", label: "Dentures Removed or Noted" },
+                                    { fieldName: "prosthesisNotedOrRemoved", label: "Prosthesis Noted or Removed" },
+                                    { fieldName: "clothingReplaced", label: "Clothing Replaced" },
                                 ])}
+
                             </div>
                         </Col>
 
@@ -106,12 +121,13 @@ const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=f
                                 </div>
                                 <Divider />
                                 {renderCheckboxes([
-                                    "emrUpdated",
-                                    "labsImagingReviewed",
-                                    "consentFormsAvailable",
-                                    "personalBelongingsSecured",
-                                    "interpreterArranged",
+                                    { fieldName: "emrUpdated", label: "EMR Updated" },
+                                    { fieldName: "labsImagingReviewed", label: "Labs/Imaging Reviewed" },
+                                    { fieldName: "consentFormsAvailable", label: "Consent Forms Available" },
+                                    { fieldName: "personalBelongingsSecured", label: "Personal Belongings Secured" },
+                                    { fieldName: "interpreterArranged", label: "Interpreter Arranged" },
                                 ])}
+
                             </div>
                         </Col>
                     </Row>
@@ -127,11 +143,13 @@ const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=f
                                     <Text>Medications & Allergies</Text>
                                 </div>
                                 <Divider />
+
                                 {renderCheckboxes([
-                                    "allergiesReviewed",
-                                    "preOpMedsGiven",
-                                    "chronicMedsManaged",
-                                    "anticoagulantsManaged",
+                                    { fieldName: "allergiesReviewed", label: "Allergies Reviewed" },
+                                    { fieldName: "preOpMedsGiven", label: "Pre-Op Meds Given" },
+                                    { fieldName: "chronicMedsManaged", label: "Chronic Meds Managed" },
+                                    { fieldName: "anticoagulantsManaged", label: "Anticoagulants Managed" },
+
                                 ])}
                             </div>
                         </Col>
@@ -143,10 +161,12 @@ const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=f
                                     <Text>IV & Fluids</Text>
                                 </div>
                                 <Divider />
+
                                 {renderCheckboxes([
-                                    "ivAccessSecured",
-                                    "ivFluidsStarted",
-                                    "bloodProductsPrepared",
+                                    { fieldName: "ivAccessSecured", label: "IV AccessSecured" },
+                                    { fieldName: "ivFluidsStarted", label: "IV FluidsStarted" },
+                                    { fieldName: "bloodProductsPrepared", label: null }
+
                                 ])}
                             </div>
                         </Col>
@@ -158,11 +178,12 @@ const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=f
                                     <Text>Pre-Transfer Readiness</Text>
                                 </div>
                                 <Divider />
+                              
                                 {renderCheckboxes([
-                                    "voidedOrCatheterPresent",
-                                    "bedInLowestPosition",
-                                    "transferModeArranged",
-                                    "handoffToOrNursePrepared",
+                                    {fieldName:"voidedOrCatheterPresent",label:null},
+                                    {fieldName:"bedInLowestPosition",label:null},
+                                    {fieldName:"transferModeArranged",label:null},
+                                    {fieldName:"handoffToOrNursePrepared",label:null},
                                 ])}
                             </div>
                         </Col>
@@ -170,7 +191,7 @@ const PreCheckList = ({ operation, patient, encounter, user ,disabled:disabled=f
                 </Col>
             </Row>
 
-           {(!disabled )&& <div className='bt-div'>
+            {(!disabled) && <div className='bt-div'>
                 <div className="bt-right">
                     <MyButton onClick={handelSave}>Save</MyButton>
 
