@@ -15,13 +15,15 @@ const FullViewTable = ({ open, setOpen, list }) => {
       return rowData?.encounter?.plannedStartDate || "";
     }
   },
-  {
-    key: "platestbpSystolic",
-    title: <Translate>Bp Systolic</Translate>,
-    render: (rowData: any) => {
-      return rowData?.platestbpSystolic ? `${rowData.platestbpSystolic} mmHg` : "";
-    }
-  },
+{
+  key: "latestbp",
+  title: <Translate>BP</Translate>,
+  render: (rowData: any) => {
+    const systolic = rowData?.latestbpSystolic;
+    const diastolic = rowData?.latestbpDiastolic;
+
+    return systolic && diastolic ? `${systolic}/${diastolic} mmHg` : "";
+  }},
   {
     key: "latestheartrate",
     title: <Translate>Pulse</Translate>,
@@ -29,13 +31,13 @@ const FullViewTable = ({ open, setOpen, list }) => {
       return rowData?.latestheartrate ? `${rowData.latestheartrate} bpm` : "";
     }
   },
-  {
-    key: "latestrespiratoryrate",
-    title: <Translate>R.R</Translate>,
-    render: (rowData: any) => {
-      return rowData?.latestrespiratoryrate ? `${rowData.latestrespiratoryrate} bpm` : "";
-    }
-  },
+  // {
+  //   key: "latestrespiratoryrate",
+  //   title: <Translate>R.R</Translate>,
+  //   render: (rowData: any) => {
+  //     return rowData?.latestrespiratoryrate ? `${rowData.latestrespiratoryrate} bpm` : "";
+  //   }
+  // },
   {
     key: "latestoxygensaturation",
     title: <Translate>SpO2</Translate>,
