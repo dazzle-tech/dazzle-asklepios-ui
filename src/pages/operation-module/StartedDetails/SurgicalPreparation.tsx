@@ -12,7 +12,6 @@ import { Col, Divider, Form, Row, Text } from "rsuite";
 const SurgicalPreparation = ({ operation }) => {
     const dispatch = useAppDispatch();
     const [surgical, setSergical] = useState({ ...newApOperationSurgicalPreparationIncision });
-    console.log("surgical", surgical);
     const {data:surgicalData}=useGetLatestSurgicalPreparationByOperationKeyQuery(operation.key ,{
         skip: !operation?.key
     });
@@ -32,11 +31,7 @@ const SurgicalPreparation = ({ operation }) => {
     });
 useEffect(() => {
         if (surgicalData?.object) {
-            
-            console.log("surgicalData.object", surgicalData?.object);
-            console.log("surgicalData.siteDriedTime", surgicalData?.object?.siteDriedTime);
-            console.log("surgicalData.timeOfIncision", surgicalData?.object?.timeOfIncision);
-            console.log("surgicalData.skinOpenedTime", surgicalData?.object?.skinOpenedTime);
+
             setSergical({   
                 ...surgicalData?.object,
                 siteDriedTime:surgicalData?.object.siteDriedTime? new Date(surgicalData?.object.siteDriedTime) : null,
