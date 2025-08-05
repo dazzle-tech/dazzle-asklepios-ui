@@ -13,7 +13,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
     const dispatch = useAppDispatch();
-    const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...newApEncounter });
+    const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...newApEncounter, dischargeAt: (new Date()).getTime() });
     const [dischargeEncounter] = useDischargeEncounterMutation();
 
     // Fetch discharge type LOV
@@ -21,7 +21,7 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
     // Function to handle the discharge of the encounter
     const handleCompleteEncounter = async () => {
         try {
-            await dischargeEncounter({ ...localEncounter, dischargeAt: (new Date()).getTime() }).unwrap();
+            await dischargeEncounter({ ...localEncounter, dischargeAt: new Date(localEncounter.dischargeAt).getTime() }).unwrap();
             dispatch(notify({ msg: ' Encounter Discharge Successfully', sev: 'success' }));
             setOpen(false);
             if (refetch) {
@@ -51,6 +51,15 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
             <MyInput
                 column
                 width={300}
+                fieldLabel="Date Time"
+                fieldType="datetime"
+                fieldName="dischargeAt"
+                record={localEncounter}
+                setRecord={setLocalEncounter}
+                searchable={false} />
+            <MyInput
+                column
+                width={300}
                 fieldLabel="Discharge Type"
                 fieldType="textarea"
                 fieldName="diagnosis"
@@ -63,9 +72,13 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
     //Effects
     useEffect(() => {
         if (encounter) {
-            setLocalEncounter({ ...encounter });
+            setLocalEncounter({
+                ...encounter,
+                dischargeAt: encounter.dischargeAt ? new Date(encounter.dischargeAt).getTime() : new Date().getTime()
+            });
         }
     }, [encounter]);
+
 
     return (
         <MyModal
@@ -75,7 +88,7 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
             actionButtonFunction={handleCompleteEncounter}
             position='center'
             size='28vw'
-            bodyheight='60vh'
+            bodyheight='70vh'
             steps={[{
                 title: "Discharge Encounter",
                 icon: <FontAwesomeIcon icon={faSignOutAlt} />
