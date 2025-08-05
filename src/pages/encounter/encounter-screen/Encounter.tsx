@@ -5,7 +5,6 @@ import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentMod
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { faComment } from '@fortawesome/free-solid-svg-icons';
-import { faEject } from '@fortawesome/free-solid-svg-icons';
 import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
@@ -27,11 +26,10 @@ import {
   faTooth,
   faTriangleExclamation,
   faUserDoctor,
-  faVials,
-  faPersonFallingBurst
+  faPersonFallingBurst,
+   faG,
+  faVials
 } from '@fortawesome/free-solid-svg-icons';
-
-import { faBed } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BarChartHorizontalIcon from '@rsuite/icons/BarChartHorizontal';
 import React, { useEffect, useState } from 'react';
@@ -49,6 +47,7 @@ import {
   faEarListen,
   faEye,
   faHeartPulse,
+  faBed,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom';
@@ -221,11 +220,14 @@ const Encounter = () => {
     '/encounter/morse-fall-scale': 'Morse Fall Scale (MFS)',
     '/encounter/stratify-scale': 'STRATIFY Scale',
     '/encounter/hendrich-fall-risk': 'Hendrich II Fall Risk Model',
-    '/encounter/progress-notes': 'Progress Notes'
+    '/encounter/progress-notes': 'Progress Notes',
+    '/encounter/glasgow-coma-scale': 'Glasgow Coma Scale (GCS)',
+    '/encounter/pressure-ulce-risk-assessment': 'Pressure Ulcer Risk Assessment'
   };
 
   const menuItems = [
-    { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
+    { key: 'bradenScaleForPressureUlcer', label: 'Pressure Ulcer Risk Assessment', icon: faBed, path: 'pressure-ulce-risk-assessment' },
+    { key: 'glasgowComaScale', label: 'Glasgow Coma Scale', icon: faG, path: 'glasgow-coma-scale' },
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
     { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },

@@ -146,6 +146,8 @@ import JohnsHopkinsTool from './pages/encounter/encounter-component/fall-risk-as
 import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
 import StratifyScale from './pages/encounter/encounter-component/stratify-scale';
 import HendrichFallRisk from './pages/encounter/encounter-component/hendrich-fall-risk';
+import GlasgowComaScale from './pages/encounter/encounter-component/glasgow-coma-scale';
+import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -312,6 +314,8 @@ const App = () => {
               <Route path="ER-department" element={<ERList />} />
               <Route path="encounter" element={<Encounter />}>
               <Route path="progress-notes" element={<ProgressNotes />} />
+                <Route path="pressure-ulce-risk-assessment" element={<PressureUlcerRiskAssessment />} />
+                <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />

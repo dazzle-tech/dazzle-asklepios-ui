@@ -1,7 +1,8 @@
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import React, { useEffect, useState } from 'react';
-import { Col, Form, Row } from 'rsuite';
+import { Form } from 'rsuite';
+import './Style.less';
 
 type ScoreFieldConfig = {
   fieldName: string;
@@ -14,24 +15,30 @@ type ScoreCalculationProps = {
   setRecord: React.Dispatch<React.SetStateAction<any>>;
   fields: ScoreFieldConfig[];
   scoreFieldName?: string;
+  disabledAldrete?: boolean;
+  totalposition?: 'center' | 'start' | 'end';
+  width?: string | number;
+  name?: string;
 };
 
-const ScoreCalculation: React.FC<ScoreCalculationProps> = ({ record, setRecord, fields ,scoreFieldName}) => {
+const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
+  record,
+  setRecord,
+  fields,
+  scoreFieldName = 'aldreteScore',
+  disabledAldrete = false,
+  totalposition = 'start',
+  width = '100%',
+  name = 'Total Score'
+}) => {
   const [lovMap, setLovMap] = useState<Record<string, any[]>>({});
-  // This component calculates a score based on selected fields and their corresponding values from a list of values (lov)
-// Define the fields to be used in the score calculation
-  // Each field has a name, a code for the list of values (lovCode), and an optional label
-  // This allows for dynamic configuration of the score calculation fields
+
   const lovHooks = fields.map(field => ({
     code: field.lovCode,
-    hook: useGetLovValuesByCodeQuery(field.lovCode),
+    hook: useGetLovValuesByCodeQuery(field.lovCode)
   }));
 
-
-  // Create a map of list of values (lov) for each field code
-  // This map will be used to look up the values for each field when calculating the score
-  // The map is updated whenever the data for any of the lov codes changes
-
+  // Update LOV map when hooks change
   useEffect(() => {
     const map: Record<string, any[]> = {};
     lovHooks.forEach(({ code, hook }) => {
@@ -40,51 +47,59 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({ record, setRecord, 
       }
     });
     setLovMap(map);
-  }, [lovHooks.map(h => h.hook.data?.object).join('|')]);
+  }, [lovHooks.map(h => h.hook.data?.object)]); // stable dependencies
 
-  // Calculate the score based on the selected values for each field
-  // The score is the sum of the scores of the selected values for each field
+  // Calculate score
   useEffect(() => {
     let score = 0;
     fields.forEach(field => {
       const list = lovMap[field.lovCode];
       if (list) {
         const item = list.find(x => x.key === record?.[field.fieldName]);
-        if (item?.score) score += item.score;
+        if (item?.score) score += Number(item.score);
       }
     });
     setRecord(prev => ({ ...prev, [scoreFieldName]: score }));
-  }, [fields.map(f => record?.[f.fieldName]).join('|'), JSON.stringify(lovMap)]);
+  }, [fields.map(f => record?.[f.fieldName]).join('|'), lovMap]);
 
   return (
-    <Row gutter={15} className="rows-gap">
-      <Form fluid>
-        {fields.map((field, idx) => (
-          <Col md={12} key={idx}>
-            <MyInput
-              width="100%"
-              fieldType="select"
-              fieldName={field.fieldName}
-              fieldLabel={field.label}
-              selectData={lovMap[field.lovCode] ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={record}
-              setRecord={setRecord}
-            />
-          </Col>
-        ))}
-        <Col md={12}>
-          <MyInput
-            width="100%"
-            fieldType="number"
-            fieldName={scoreFieldName ?? 'aldreteScore'}
-            record={record}
-            setRecord={setRecord}
-          />
-        </Col>
-      </Form>
-    </Row>
+    <Form fluid layout="inline">
+      {fields.map((field, idx) => (
+        <MyInput
+          key={idx}
+          column
+          width={width}
+          fieldType="select"
+          fieldName={field.fieldName}
+          fieldLabel={field.label}
+          selectData={lovMap[field.lovCode] ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={record}
+          setRecord={setRecord}
+        />
+      ))}
+      <div
+        className={
+          totalposition === 'center'
+            ? 'input-center'
+            : totalposition === 'end'
+            ? 'input-end'
+            : 'input-start'
+        }
+      >
+        <MyInput
+          column
+          width={width}
+          fieldType="number"
+          fieldName={scoreFieldName}
+          fieldLabel={name}
+          record={record}
+          setRecord={setRecord}
+          disabled={disabledAldrete}
+        />
+      </div>
+    </Form>
   );
 };
 
