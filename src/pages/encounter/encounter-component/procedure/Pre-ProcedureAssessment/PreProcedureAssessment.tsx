@@ -166,8 +166,10 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                                             selectDataValue="key"
                                             fieldType="select"
                                             fieldName='asaScoreLkey'
+                                            fieldLabel="ASA Score"
                                             record={procedureAssessment}
                                             setRecord={setProocedureAssessment}
+                                            searchable={false}
                                         />
                                     </Col>
                                     <Col md={12}>
@@ -180,6 +182,7 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                                             fieldName='airwayGradeLkey'
                                             record={procedureAssessment}
                                             setRecord={setProocedureAssessment}
+                                            searchable={false}
                                         />
 
                                     </Col>

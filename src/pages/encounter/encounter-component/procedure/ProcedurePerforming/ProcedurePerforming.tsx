@@ -204,6 +204,7 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                                         fieldName='procedureOutcomeLkey'
                                         record={performing}
                                         setRecord={setPerforming}
+                                        searchable={false}
                                     />
                                 </Col>
 
@@ -252,6 +253,7 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                                         fieldName='complicationSeverityLkey'
                                         record={performing}
                                         setRecord={setPerforming}
+                                        searchable={false}
                                     />
                                 </Col>
                             </Row>

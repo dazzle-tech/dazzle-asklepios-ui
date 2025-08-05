@@ -51,7 +51,9 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                         selectDataValue="key"
                         fieldName="countStatusLkey"
                         record={vitals}
-                        setRecord={setVitals} />
+                        setRecord={setVitals} 
+                        searchable={false}
+                        />
                 </Col>
                 <Col md={2}></Col>
                 <Col md={11}>
@@ -73,7 +75,9 @@ const ProcedureVitals = forwardRef<VitalRef, VitalProps>(({ procedure, user }, r
                         selectDataValue="key"
                         fieldName="painScoreLkey"
                         record={vitals}
-                        setRecord={setVitals} />
+                        setRecord={setVitals} 
+                        searchable={false}
+                        />
                 </Col>
                 <Col md={2}></Col>
                 <Col md={11}>

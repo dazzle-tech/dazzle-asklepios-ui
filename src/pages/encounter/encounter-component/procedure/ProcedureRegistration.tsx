@@ -63,6 +63,7 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
                             fieldName='consentFormLkey'
                             record={proReg}
                             setRecord={setProReg}
+                            searchable={false}
                         />
                     </Col>
                     <Col md={5}>
@@ -86,6 +87,7 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
                             selectDataValue="key"
                             record={proReg}
                             setRecord={setProReg}
+                            searchable={false}
                         /></Col>
                     <Col md={5}>
                         <MyInput
@@ -98,6 +100,7 @@ const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
                             selectDataValue="key"
                             record={proReg}
                             setRecord={setProReg}
+                            searchable={false}
                         /></Col>
                     <Col md={4}>
                         {proUser?.fullName}
