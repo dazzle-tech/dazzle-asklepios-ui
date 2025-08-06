@@ -150,6 +150,7 @@ import GlasgowComaScale from './pages/encounter/encounter-component/glasgow-coma
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-assessment';
+import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -438,6 +439,7 @@ const App = () => {
               <Route path="operation-room-materials" element={<OperationRoomMaterials />} />
               <Route path="progress-notes" element={<ProgressNotes />} />
               <Route path="department-stock" element={<DepartmentStock />} />
+              <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
             </Route>
           </Route>
 
@@ -449,4 +451,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default App;
