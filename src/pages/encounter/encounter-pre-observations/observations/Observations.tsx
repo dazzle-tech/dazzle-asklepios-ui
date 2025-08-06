@@ -20,6 +20,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import clsx from 'clsx';
 import InpatientObservations from './InpatientObservations';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
+import { useGetAgeGroupValueQuery } from '@/services/patientService';
 export type ObservationsRef = {
   handleSave: () => void;
 };
@@ -91,6 +92,16 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     latestheadcircumference: null,
     latestpainlevelLkey: null
   });
+
+  // Fetch patient's age group based on their date of birth
+  const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
+    useGetAgeGroupValueQuery(
+      {
+        dob: patient?.dob ? new Date(patient.dob).toISOString() : null
+      },
+      { skip: !patient?.dob }
+    );
+
   useEffect(() => {
     console.log(`lastencounterop`, lastencounterop);
     if (lastencounterop) {
@@ -98,21 +109,21 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         ...lastencounterop
       });
       console.log(patientObservationSummary.latestbpSystolic)
-      
+
 
     }
   }, [lastencounterop])
-  useEffect(()=>{
+  useEffect(() => {
     setVital({
-        ...vital,
-        bloodPressureSystolic: patientObservationSummary.latestbpSystolic || 0,
-        bloodPressureDiastolic: patientObservationSummary.latestbpDiastolic || 0,
-        heartRate: patientObservationSummary.latestheartrate || 0,
-        temperature: patientObservationSummary.latesttemperature || 0,
-        oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0,
+      ...vital,
+      bloodPressureSystolic: patientObservationSummary.latestbpSystolic || 0,
+      bloodPressureDiastolic: patientObservationSummary.latestbpDiastolic || 0,
+      heartRate: patientObservationSummary.latestheartrate || 0,
+      temperature: patientObservationSummary.latesttemperature || 0,
+      oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0,
 
-      })
-  },[patientObservationSummary])
+    })
+  }, [patientObservationSummary])
   // Handle Save Observations Function
   const handleSave = async () => {
     try {
@@ -190,144 +201,320 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   return (
     <div ref={ref} className={clsx('basuc-div', { 'disabled-panel': edit })}>
-        <Form fluid>
-          {!(location.pathname == '/nurse-station') &&
-            <Row>
-              <Col md={23}></Col>
-              <Col md={1}>
-                <MyButton onClick={handleSave}>Save</MyButton>
-              </Col>
-            </Row>}
+      <Form fluid>
+        {!(location.pathname == '/nurse-station') &&
           <Row>
-            <Col md={12}>
+            <Col md={23}></Col>
+            <Col md={1}>
+              <MyButton onClick={handleSave}>Save</MyButton>
+            </Col>
+          </Row>}
+        <Row>
+          <Col md={12}>
+            <Row>
+              <Col md={24}>
+                <div className='container-form'>
+                  <div className='title-div'>
+                    <Text>Vital Signs</Text>
+
+                  </div>
+                  <Divider />
+                  <VitalSigns object={vital} setObject={setVital} />
+
+                  <Row className="rows-gap">
+                    <Col md={24}>
+                      <MyInput
+                        fieldLabel='Note'
+                        height='100px'
+                        width='100%'
+                        fieldName='latestnotes'
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType='textarea'
+                        record={patientObservationSummary}
+                        setRecord={setPatientObservationSummary}
+                      ></MyInput></Col>
+                  </Row>
+                </div>
+              </Col>
+
+            </Row>
+
+            {(patientAgeGroupResponse?.object?.valueCode === 'AG_INFANT' ||
+
+              patientAgeGroupResponse?.object?.valueCode === 'AG_NEONATE') &&
+              <Row>
+                <Col md={24}>
+                  <div className='container-form'>
+                    <div className='title-div'>
+                      <Text>Additional Measurements</Text>
+
+                    </div>
+                    <Divider />
+                    <Row className="rows-gap">
+                      <Col md={24}>
+                        <MyInput
+                          width='100%'
+                          fieldName="latesthearingtest"
+                          fieldLabel="Hearing Test"
+                         
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        /></Col>
+                    </Row>
+                    <Row>
+                      <Col md={8}>
+                        <MyInput
+                          width="100%"
+                          fieldType='checkbox'
+                          fieldName="latestDehydration"
+                          fieldLabel="Dehydration"
+                          checkedLabel="positive"
+                          unCheckedLabel="negative"
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                       <Col md={8}>
+                        <MyInput
+                          width="100%"
+                          fieldType='checkbox'
+                          fieldName="latestNasalFlaring"
+                          fieldLabel="Nasal Flaring"
+                          checkedLabel="positive"
+                          unCheckedLabel="negative"
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                       <Col md={8}>
+                        <MyInput
+                          width="100%"
+                          fieldType='checkbox'
+                          fieldName="latestResponseToLight"
+                          fieldLabel="Response to Light"
+                          checkedLabel="positive"
+                          unCheckedLabel="negative"
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col md={8}>
+                        <MyInput
+                          width="100%"
+                          fieldType='checkbox'
+                          fieldName="latestPupilResponse"
+                          fieldLabel="Pupil Response"
+                          checkedLabel="positive"
+                          unCheckedLabel="negative"
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                       <Col md={8}>
+                        <MyInput
+                          width="100%"
+                          fieldType='checkbox'
+                          fieldName="latestAbilityToFollowTarget"
+                          fieldLabel="Ability to Follow Target"
+                          checkedLabel="positive"
+                          unCheckedLabel="negative"
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                       <Col md={8}>
+                        <MyInput
+                          width="100%"
+                          fieldType='checkbox'
+                          fieldName="latestColorTesting"
+                          fieldLabel="Color Testing"
+                          checkedLabel="positive"
+                          unCheckedLabel="negative"
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                    </Row>
+
+
+
+                  </div></Col>
+
+              </Row>
+
+            }
+            {(patientAgeGroupResponse?.object?.valueCode === 'AG_GER') &&
+              <Row>
+                <Col md={24}>
+                  <div className='container-form'>
+                    <div className='title-div'>
+                      <Text>Additional Measurements</Text>
+
+                    </div>
+                    <Divider />
+                    <Row>
+                      <Col md={24}>
+                       <MyInput
+                          width="100%"
+                          fieldType='checkbox'
+                          fieldLabel="Full Risk"
+                          fieldName="latestFallRisk"
+                          
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                    </Row>
+                     <Row>
+                      <Col md={24}>
+                        <MyInput
+                          width='100%'
+                          fieldName="latestFallRiskDetails"
+                          fieldLabel="Details"
+                          fieldType='textarea'
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                    </Row>
+                     <Row>
+                      <Col md={24}>
+                        <MyInput
+                          width='100%'
+                          fieldName="latestActionToTake"
+                          fieldLabel="Action to Take"
+                          fieldType='textarea'
+                          record={patientObservationSummary}
+                          disabled={isEncounterStatusClosed || readOnly}
+                          setRecord={setPatientObservationSummary}
+                        />
+                      </Col>
+                    </Row>
+                    
+                    
+                    
+                    </div></Col>
+
+              </Row>
+
+            }
+          </Col>
+          <Col md={12}>
+            <Row>
               <div className='container-form'>
                 <div className='title-div'>
-                  <Text>Vital Signs</Text>
-
+                  <Text>Body Measurements</Text>
                 </div>
                 <Divider />
-                <VitalSigns object={vital} setObject={setVital} />
-
                 <Row className="rows-gap">
-                  <Col md={24}>
+                  <Col md={12}>
                     <MyInput
-                      fieldLabel='Note'
-                      height='100px'
                       width='100%'
-                      fieldName='latestnotes'
+                      fieldLabel='Weight'
+                      fieldName='latestweight'
+                      rightAddon="Kg"
                       disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='textarea'
+                      fieldType='number'
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
                     ></MyInput></Col>
+                  <Col md={12}>
+                    <div className='container-Column'>
+                      <MyLabel label="BMI" />
+                      <div>
+                        <FontAwesomeIcon icon={faPerson} className='my-icon' />
+                        <text>{bmi}</text>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+                <Row className="rows-gap">
+                  <Col md={12}>
+                    <MyInput
+                      width='100%'
+                      fieldLabel='Height'
+                      fieldName='latestheight'
+                      rightAddon="Cm"
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput></Col>
+                  <Col md={12}>
+                    <div className='container-Column'>
+                      <MyLabel label="BSA" />
+                      <div>
+                        <FontAwesomeIcon icon={faChildReaching} className='my-icon' />
+                        <text>{bsa}</text>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+                <Row className='rows-gap'>
+                  <Col md={12}>
+                    <MyInput
+                      width='100%'
+                      fieldLabel='Head circumference'
+                      rightAddon="Cm"
+                      rightAddonwidth={40}
+                      fieldName='latestheadcircumference'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary} />
+                  </Col>
+                  <Col md={12}></Col>
+                </Row>
+              </div></Row>
+            <Row>
+              <div className='container-form'>
+                <div className='title-div'>
+                  <Text>Pain Level</Text>
+                </div>
+                <Divider />
+                <Row>
+                  <Col md={24}>
+                    <MyInput
+                      disabled={isEncounterStatusClosed || readOnly}
+                      width='100%'
+                      fieldLabel="Pain Degree"
+                      fieldType="select"
+                      fieldName="latestpainlevelLkey"
+                      selectData={painDegreesLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={24}>
+                    <MyInput
+                      fieldType='textarea'
+                      width='100%'
+                      fieldLabel="Pain Description"
+                      fieldName='latestpaindescription'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary} />
+                  </Col>
                 </Row>
               </div>
-            </Col>
-            <Col md={12}>
-              <Row>
-                <div className='container-form'>
-                  <div className='title-div'>
-                    <Text>Body Measurements</Text>
-                  </div>
-                  <Divider />
-                  <Row className="rows-gap">
-                    <Col md={12}>
-                      <MyInput
-                        width='100%'
-                        fieldLabel='Weight'
-                        fieldName='latestweight'
-                        rightAddon="Kg"
-                        disabled={isEncounterStatusClosed || readOnly}
-                        fieldType='number'
-                        record={patientObservationSummary}
-                        setRecord={setPatientObservationSummary}
-                      ></MyInput></Col>
-                    <Col md={12}>
-                      <div className='container-Column'>
-                        <MyLabel label="BMI" />
-                        <div>
-                          <FontAwesomeIcon icon={faPerson} className='my-icon' />
-                          <text>{bmi}</text>
-                        </div>
-                      </div>
-                    </Col>
-                  </Row>
-                  <Row className="rows-gap">
-                    <Col md={12}>
-                      <MyInput
-                        width='100%'
-                        fieldLabel='Height'
-                        fieldName='latestheight'
-                        rightAddon="Cm"
-                        disabled={isEncounterStatusClosed || readOnly}
-                        fieldType='number'
-                        record={patientObservationSummary}
-                        setRecord={setPatientObservationSummary}
-                      ></MyInput></Col>
-                    <Col md={12}>
-                      <div className='container-Column'>
-                        <MyLabel label="BSA" />
-                        <div>
-                          <FontAwesomeIcon icon={faChildReaching} className='my-icon' />
-                          <text>{bsa}</text>
-                        </div>
-                      </div>
-                    </Col>
-                  </Row>
-                  <Row className='rows-gap'>
-                    <Col md={12}>
-                      <MyInput
-                        width='100%'
-                        fieldLabel='Head circumference'
-                        rightAddon="Cm"
-                        rightAddonwidth={40}
-                        fieldName='latestheadcircumference'
-                        disabled={isEncounterStatusClosed || readOnly}
-                        fieldType='number'
-                        record={patientObservationSummary}
-                        setRecord={setPatientObservationSummary} />
-                    </Col>
-                    <Col md={12}></Col>
-                  </Row>
-                </div></Row>
-              <Row>
-                <div className='container-form'>
-                  <div className='title-div'>
-                    <Text>Pain Level</Text>
-                  </div>
-                  <Divider />
-                  <Row>
-                    <Col md={24}>
-                      <MyInput
-                        disabled={isEncounterStatusClosed || readOnly}
-                        width='100%'
-                        fieldLabel="Pain Degree"
-                        fieldType="select"
-                        fieldName="latestpainlevelLkey"
-                        selectData={painDegreesLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={patientObservationSummary}
-                        setRecord={setPatientObservationSummary}
-                      />
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={24}>
-                      <MyInput
-                        fieldType='textarea'
-                        width='100%'
-                        fieldLabel="Pain Description"
-                        fieldName='latestpaindescription'
-                        record={patientObservationSummary}
-                        setRecord={setPatientObservationSummary} />
-                    </Col>
-                  </Row>
-                </div>
-              </Row>
-            </Col>
-          </Row>
-        </Form>
+            </Row>
+          </Col>
+        </Row>
+      </Form>
     </div>
   );
 });
