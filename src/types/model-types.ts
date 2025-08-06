@@ -3036,6 +3036,26 @@ export interface ApPatientObservationSummary {
 	platestpaindescription:string;
 	latestpainlevel:number;
 	platestpainlevel:number;
+	platesthearingtest:string;
+	latesthearingtest:string;
+	latestDehydration:boolean;
+	platestDehydration:boolean;
+	latestNasalFlaring:boolean;
+	platestNasalFlaring:boolean;
+	latestResponseToLight:boolean;
+	platestResponseToLight:boolean;
+	latestPupilResponse:boolean;
+	platestPupilResponse:boolean;
+	latestAbilityToFollowTarget:boolean;
+	platestAbilityToFollowTarget:boolean;
+	latestColorTesting:boolean;
+	platestColorTesting:boolean;
+	latestFallRisk:boolean;
+	platestFallRisk:boolean;
+	latestFallRiskDetails:string;
+	platestFallRiskDetails:string;
+	latestActionToTake:string;
+	platestActionToTake:string;
 } 
 
 export interface ApPatientPlan { 
@@ -3764,7 +3784,7 @@ export interface ApResourceAvailabilitySlice {
 	resourceKey:string;
 	facilityKey:string;
 	departmentKey:string;
-	dayOfWeek:string;
+	dayOfWeekLkey:string;
 	startTimeMinutes:string;
 	endTimeMinutes:string;
 	sliceDurationMinutes:string;
