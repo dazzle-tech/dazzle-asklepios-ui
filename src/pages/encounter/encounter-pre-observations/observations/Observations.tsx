@@ -50,7 +50,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     heartRate: 0,
     temperature: 0,
     oxygenSaturation: 0,
-    measurementSite: ''
+    measurementSiteLkey: '',
+    respiratoryRate: 0,
   });
   const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
@@ -103,13 +104,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     );
 
   useEffect(() => {
-    console.log(`lastencounterop`, lastencounterop);
+   
     if (lastencounterop) {
       setPatientObservationSummary({
         ...lastencounterop
       });
-      console.log(patientObservationSummary.latestbpSystolic)
-
 
     }
   }, [lastencounterop])
@@ -121,9 +120,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       heartRate: patientObservationSummary.latestheartrate || 0,
       temperature: patientObservationSummary.latesttemperature || 0,
       oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0,
+      // measurementSiteLkey: patientObservationSummary.measurementSiteLkey || '',
+      respiratoryRate: patientObservationSummary.latestrespiratoryrate || 0
+    });
+  }, [patientObservationSummary]);
 
-    })
-  }, [patientObservationSummary])
+   
+ 
   // Handle Save Observations Function
   const handleSave = async () => {
     try {
@@ -140,6 +143,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         latestheartrate: vital?.heartRate,
         latestoxygensaturation: vital?.oxygenSaturation,
         latesttemperature: vital?.temperature,
+        latestrespiratoryrate: vital?.respiratoryRate,
         prevRecordKey: lastObservationSummary?.key || null,
         plastDate: lastObservationSummary?.lastDate || null,
         platesttemperature: lastObservationSummary?.latesttemperature || null,

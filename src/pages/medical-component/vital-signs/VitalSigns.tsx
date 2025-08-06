@@ -48,26 +48,18 @@ const VitalSigns = ({ object, setObject }) => {
                 </Col>
             </Row>
              <Row>
-                <Col md={12}>
+                <Col md={24}>
                     <MyInput
                         width="100%"
                         fieldType="select"
-                        fieldName="measurementSite"
+                        fieldName="measurementSiteLkey"
                         selectData={BPMeasurmentLov?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
                         record={object}
                         setRecord={setObject} />
                 </Col>
-                <Col md={12}>
-                        <MyInput
-                            width="100%"
-                            fieldType="number"
-                            rightAddon=" % "
-                            fieldName="oxygenSaturation"
-                            record={object}
-                            setRecord={setObject} />
-                    </Col>
+            
 
             </Row>
             <Row>
@@ -90,7 +82,30 @@ const VitalSigns = ({ object, setObject }) => {
                         record={object}
                         setRecord={setObject} /></Col>
             </Row>
-           
+                <Row>
+               
+                <Col md={12}>
+                        <MyInput
+                            width="100%"
+                            fieldType="number"
+                            rightAddon=" % "
+                            fieldName="oxygenSaturation"
+                            record={object}
+                            setRecord={setObject} />
+                    </Col>
+                     <Col md={12}>
+                        <MyInput
+                            width="100%"
+                            fieldType="number"
+                            rightAddon="bpm"
+                            rightAddonwidth={45}
+                            fieldName="respiratoryRate"
+                            fieldLabel="R.R"
+                            record={object}
+                            setRecord={setObject} />
+                    </Col>
+
+            </Row>
 
 
         </Form>
