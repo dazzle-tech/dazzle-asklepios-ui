@@ -13,11 +13,11 @@ import { faPlay, faSquareXmark } from "@fortawesome/free-solid-svg-icons";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 
-const RequestList = ({patient ,setPatient,encounter,setEncounter ,setActiveTab,setOpen,request, setRequest ,refetchOnGoing}) => {
+const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTab, setOpen, request, setRequest, refetchOnGoing }) => {
     const dispatch = useAppDispatch();
     const [showCancelled, setShowCancelled] = useState(true);
-    
-    
+
+
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
         toDate: null
@@ -26,13 +26,13 @@ const RequestList = ({patient ,setPatient,encounter,setEncounter ,setActiveTab,s
     const [save, saveMutation] = useSaveOperationRequestsMutation();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
-      
+
         filters: [
 
             {
                 fieldName: "operation_status_lkey",
                 operator: "match",
-                value:showCancelled?"3621653475992516": "3621690096636149"
+                value: showCancelled ? "3621653475992516" : "3621690096636149"
             }
 
 
@@ -97,10 +97,10 @@ const RequestList = ({patient ,setPatient,encounter,setEncounter ,setActiveTab,s
 
             updatedFilters = addOrUpdateFilter(updatedFilters,
                 {
-                fieldName: "operation_status_lkey",
-                operator:  "match",
-                value:showCancelled?"3621653475992516": "3621690096636149"
-            });
+                    fieldName: "operation_status_lkey",
+                    operator: "match",
+                    value: showCancelled ? "3621653475992516" : "3621690096636149"
+                });
 
             return {
                 ...prev,
@@ -110,16 +110,16 @@ const RequestList = ({patient ,setPatient,encounter,setEncounter ,setActiveTab,s
     }, [showCancelled]);
 
     // Update the listRequest filters when record changes
-const addOrUpdateFilter = (filters, newFilter) => {
-    const index = filters.findIndex(f => f.fieldName === newFilter.fieldName);
-    if (index > -1) {
-        // Replace the existing filter
-        return filters.map((f, i) => i === index ? newFilter : f);
-    } else {
-        // Add new filter
-        return [...filters, newFilter];
-    }
-};
+    const addOrUpdateFilter = (filters, newFilter) => {
+        const index = filters.findIndex(f => f.fieldName === newFilter.fieldName);
+        if (index > -1) {
+            // Replace the existing filter
+            return filters.map((f, i) => i === index ? newFilter : f);
+        } else {
+            // Add new filter
+            return [...filters, newFilter];
+        }
+    };
 
     //table 
     const columns = [
@@ -162,16 +162,16 @@ const addOrUpdateFilter = (filters, newFilter) => {
             key: "diagnosisKey",
             title: <Translate>Pre-op Diagnosis</Translate>,
             render: (rowData: any) => {
-                return rowData?.diagnosis?.icdCode;
+                return rowData?.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description;
             }
         },
         {
             key: "oparetionKey",
             title: <Translate>oparation name</Translate>,
             render: (rowData: any) => {
-                return null;
+                return rowData?.operation?.name;
             }
-        },
+        }, ,
         {
             key: "operationTypeLkey",
             title: <Translate>operation type</Translate>,
@@ -200,7 +200,7 @@ const addOrUpdateFilter = (filters, newFilter) => {
                 return rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey;;
             }
         },
-      
+
         {
             key: "operationStatusLkey",
             title: <Translate>Status</Translate>,
@@ -212,7 +212,7 @@ const addOrUpdateFilter = (filters, newFilter) => {
             key: "actions",
             title: <Translate >Actions</Translate>,
             render: (rowData: any) => {
-                const isDisabled =request?.key!==rowData.key;
+                const isDisabled = request?.key !== rowData.key;
                 return <HStack spacing={10}>
                     <Whisper
                         placement="top"
@@ -220,23 +220,23 @@ const addOrUpdateFilter = (filters, newFilter) => {
                         speaker={<Tooltip>Start</Tooltip>}
                     >
                         <FontAwesomeIcon icon={faPlay}
-                        style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-                         onClick={isDisabled?undefined:async () => {
-                            try {
-                                setRequest(rowData);
-                               const Response= await save({ ...request, operationStatusLkey: '3621681578985655',startedAt:Date.now() }).unwrap();
-                                dispatch(notify({ msg: 'Started Successfully', sev: "success" }));
-                                refetch();   
-                                refetchOnGoing();                      
-                                setActiveTab('2');
-                                setOpen(true);
-                                console.log("Response",Response);
+                            style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
+                            onClick={isDisabled ? undefined : async () => {
+                                try {
+                                    setRequest(rowData);
+                                    const Response = await save({ ...request, operationStatusLkey: '3621681578985655', startedAt: Date.now() }).unwrap();
+                                    dispatch(notify({ msg: 'Started Successfully', sev: "success" }));
+                                    refetch();
+                                    refetchOnGoing();
+                                    setActiveTab('2');
+                                    setOpen(true);
+                                    console.log("Response", Response);
 
-                            }
-                            catch (error) {
-                                dispatch(notify({ msg: 'Faild', sev: "error" }));
-                            }
-                        }} />
+                                }
+                                catch (error) {
+                                    dispatch(notify({ msg: 'Faild', sev: "error" }));
+                                }
+                            }} />
                     </Whisper>
 
                     <Whisper
@@ -344,21 +344,21 @@ const addOrUpdateFilter = (filters, newFilter) => {
     );
     return (
 
-            <Row>
-                <Col md={24}>
-                    <MyTable
-                        filters={filters()}
-                        columns={columns}
-                        data={operationrequestList?.object || []}
-                        rowClassName={isSelected}
-                        loading={isLoading}
-                        onRowClick={rowData => {
-                            setRequest(rowData)
+        <Row>
+            <Col md={24}>
+                <MyTable
+                    filters={filters()}
+                    columns={columns}
+                    data={operationrequestList?.object || []}
+                    rowClassName={isSelected}
+                    loading={isLoading}
+                    onRowClick={rowData => {
+                        setRequest(rowData)
 
-                        }}
-                    />
-                </Col>
-            </Row>
-      );
+                    }}
+                />
+            </Col>
+        </Row>
+    );
 }
 export default RequestList;
