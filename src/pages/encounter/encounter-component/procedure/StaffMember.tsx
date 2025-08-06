@@ -22,9 +22,8 @@ type StaffAssignmentProps = {
   deleteMutation: any;
   newStaffObj: any;
   filterFieldName: string;
-  disabled?: boolean
-  width?:any
-
+  disabled?: boolean;
+  width?: any;
 };
 
 const StaffAssignment: React.FC<StaffAssignmentProps> = ({
@@ -35,49 +34,49 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
   deleteMutation,
   newStaffObj,
   filterFieldName,
-  width="100%",
-  disabled=false,
-
+  width = "100%",
+  disabled = false,
 }) => {
   const dispatch = useAppDispatch();
   const [activeRowKey, setActiveRowKey] = useState(null);
   const [staff, setStaff] = useState({ ...newStaffObj, [filterFieldName]: parentKey });
-  const [selectedUserList, setSelectedUserList] = useState<any>([]);
+  const [selectedUserList, setSelectedUserList] = useState<any>({ key: [] });
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const { data: userList } = useGetUsersQuery({ ...initialListRequest });
+
   const toSnakeCase = (str: string) =>
     str.replace(/([A-Z])/g, '_$1').toLowerCase();
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    filters: [
-      {
-        fieldName: toSnakeCase(filterFieldName),
-        operator: "match",
-        value: parentKey
-      }
-    ]
+    filters: [{
+      fieldName: toSnakeCase(filterFieldName),
+      operator: "match",
+      value: parentKey
+    }]
   });
+
   const { data: staffList, refetch } = getQuery(listRequest, { skip: !parentKey });
   const [saveStaff] = saveMutation();
   const [deleteStaff] = deleteMutation();
 
-  const isSelected = (rowData) => (rowData?.key === staff?.key ? "selected-row" : "");
   useEffect(() => {
     setListRequest(prev => ({
       ...prev,
-      filters: [
-        {
-          fieldName: toSnakeCase(filterFieldName),
-          operator: "match",
-          value: parentKey
-        }
-      ]
+      filters: [{
+        fieldName: toSnakeCase(filterFieldName),
+        operator: "match",
+        value: parentKey
+      }]
     }));
   }, [filterFieldName, parentKey]);
+
+  const isSelected = (rowData) => (rowData?.key === staff?.key ? "selected-row" : "");
+
   const handleSave = async () => {
     const selectedKeys = selectedUserList?.key;
-    if (!Array.isArray(selectedKeys)) return;
+    if (!Array.isArray(selectedKeys) || selectedKeys.length === 0) return;
 
     try {
       const promises = selectedKeys.map((key) => {
@@ -86,7 +85,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
           return saveStaff({
             ...newStaffObj,
             [filterFieldName]: parentKey,
-            userKey: user?.key
+            userKey: user.key,
           });
         }
         return null;
@@ -95,7 +94,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
       await Promise.all(promises.filter(Boolean));
       refetch();
       dispatch(notify({ msg: "Saved successfully", sev: "success" }));
-      setSelectedUserList([]);
+      setSelectedUserList({ key: [] }); // ✅ تفريغ بطريقة صحيحة
     } catch (error) {
       dispatch(notify({ msg: "Failed to save staff", sev: "error" }));
     }
@@ -105,7 +104,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
     {
       key: "name",
       title: <Translate>Name</Translate>,
-      render: (rowData) => rowData.user?.username
+      render: (rowData) => rowData.user?.username,
     },
     {
       key: "responsibility",
@@ -135,7 +134,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
             />
             {rowData.responsibility}
           </>
-        )
+        ),
     },
     {
       key: "delete",
@@ -148,22 +147,32 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
             setStaff(rowData);
           }}
         />
-      )
-    }
+      ),
+    },
   ];
 
+  const availableUsers = userList?.object?.filter(
+    (user) => !staffList?.object?.some((staff) => staff.user?.key === user.key)
+  ) ?? [];
+
   return (
-    <Panel header={label} collapsible defaultExpanded  className={clsx('panel-border', {
-                            'disabled-panel':disabled
-                          })}>
+    <Panel
+      header={label}
+      collapsible
+      defaultExpanded
+      className={clsx("panel-border", {
+        "disabled-panel": disabled,
+      })}
+    >
       <Row className="rows-gap">
         <Col md={10}>
           <Form fluid>
             <MyInput
               width="100%"
+              menuMaxHeight={200}
               placeholder="Staff"
               showLabel={false}
-              selectData={userList?.object ?? []}
+              selectData={availableUsers}
               fieldType="multyPicker"
               selectDataLabel="username"
               selectDataValue="key"
@@ -175,7 +184,9 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
           </Form>
         </Col>
         <Col md={2}>
-          <MyButton onClick={handleSave} disabled={!parentKey || disabled}>Save</MyButton>
+          <MyButton onClick={handleSave} disabled={!parentKey || disabled}>
+            Save
+          </MyButton>
         </Col>
       </Row>
       <Row>
@@ -185,6 +196,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
             columns={columns}
             onRowClick={(rowData) => setStaff(rowData)}
             rowClassName={isSelected}
+            height={300}
           />
         </Col>
       </Row>
@@ -198,6 +210,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
             await deleteStaff(staff.key).unwrap();
             dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
             refetch();
+            setConfirmDeleteOpen(false);
           } catch (error) {
             dispatch(notify({ msg: "Delete failed", sev: "error" }));
           }
