@@ -50,7 +50,8 @@ const InventoryTransaction = () => {
                 fieldName: 'deleted_at',
                 operator: 'isNull',
                 value: undefined,
-            },
+            }
+
         ],
     });
 
@@ -95,28 +96,9 @@ const InventoryTransaction = () => {
         refetch: refetchUomGroupsUnit,
     } = useGetUomGroupsUnitsQuery(uomListRequest);
 
-      const calculateCost = (totalQuantity, unitCost) => {
+    const calculateCost = (totalQuantity, unitCost) => {
         return totalQuantity * unitCost;
     };
-    // table columns
-    const tableColumns = [
-        { key: 'index', title: '#', render: (rowData, rowIndex) => rowIndex + 1 },
-        { key: 'transactionId', title: 'TRANSACTION ID', dataKey: 'transactionId' },
-        { key: 'transactionType', title: 'Transaction Type', dataKey: 'transactionType' },
-        { key: 'Performed', title: 'Performed By/At', dataKey: 'createdBy' },
-        { key: 'Warehouse', title: 'Warehouse', dataKey: 'Warehouse' },
-        { key: 'ProductCode', title: 'Product Code', dataKey: 'ProductCode' },
-        { key: 'ProductName', title: 'PRODUCT NAME', render: rowData => rowData.productNameLvalue ? rowData.productNameLvalue.lovDisplayVale : rowData.productNameLkey },
-        { key: 'Quantity', title: 'QUANTITY', dataKey: 'Quantity' },
-        { key: 'Base UOM', title: 'BASE UOM', dataKey: 'baseUom' },
-        { key: 'Lot/Serial', title: 'LOT/SERIAL', dataKey: 'lotSerial' },
-        { key: 'ExpiryDate', title: 'EXPIRY DATE', dataKey: 'expiryDate' },
-        { key: 'CostperUnit', title: 'COST PER UNIT', dataKey: 'costPerUnit' },
-        { key: 'TotalCost', title: 'TOTAL COST', dataKey: 'totalCost' },
-        { key: 'AverageCostAfter', title: 'Average Cost After', dataKey: 'AverageCostAfter' },
-        { key: 'Notes', title: 'Notes', dataKey: 'notes' },
-        { key: 'LinkedDocument', title: 'Linked Document', render: () => <span>Actions</span> }
-    ];
 
     const columns = [
         { key: 'index', title: '#', render: (rowData, rowIndex) => rowIndex + 1 },
@@ -148,7 +130,7 @@ const InventoryTransaction = () => {
                 </span>
             )
         },
-                {
+        {
             key: 'transReason',
             title: <Translate>Transaction Reason</Translate>,
             flexGrow: 4,
@@ -219,7 +201,7 @@ const InventoryTransaction = () => {
                 </span>
             )
         },
-          {
+        {
             key: 'productUOM',
             title: <Translate>Product Transaction UOM</Translate>,
             flexGrow: 4,
@@ -236,33 +218,33 @@ const InventoryTransaction = () => {
         { key: 'newCost', title: 'COST PER UNIT', dataKey: 'newCost' },
         { key: 'expiryDate', title: 'EXPIRY DATE', dataKey: 'expiryDate' },
         { key: 'lotserialnumber', title: 'LOT/SERIAL Number', dataKey: 'lotserialnumber' },
-        
-        { 
-            key: 'AverageCostAfter', 
-            title: 'Average Cost After', 
+
+        {
+            key: 'AverageCostAfter',
+            title: 'Average Cost After',
             flexGrow: 4,
             render: rowData => (
                 <span>
-                    { calculateCost(rowData.newQuentity, rowData.newCost).toFixed(2) }
-                      
+                    {calculateCost(rowData.newQuentity, rowData.newCost).toFixed(2)}
+
                 </span>
             )
         },
-          { 
-         key: 'createdAt',
-         title: 'Performed By/At', 
-          flexGrow: 4,
-          render: (row: any) =>
-                         row?.createdAt ? (
-                             <>
-                                 <br/>
-                                 <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
-                             </>
-                         ) : (
-                             ' '
-                         ),
-                        },
-                        
+        {
+            key: 'createdAt',
+            title: 'Performed By/At',
+            flexGrow: 4,
+            render: (row: any) =>
+                row?.createdAt ? (
+                    <>
+                        <br />
+                        <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
+                    </>
+                ) : (
+                    ' '
+                ),
+        },
+
         {
             key: 'isvalid',
             title: <Translate>Status</Translate>,
@@ -311,16 +293,36 @@ const InventoryTransaction = () => {
 
     };
     useEffect(() => {
-            return () => {
-                dispatch(setPageCode(''));
-                dispatch(setDivContent('  '));
-            };
-        }, [location.pathname, dispatch]);
+        return () => {
+            dispatch(setPageCode(''));
+            dispatch(setDivContent('  '));
+        };
+    }, [location.pathname, dispatch]);
 
     // Effects
     useEffect(() => {
         handleManualSearch();
     }, []);
+
+    // useEffect(() => {
+    //     setTransactionProductListRequest(prev => ({
+    //         ...prev,
+    //         filters: [
+    //             {
+    //                 fieldName: 'deleted_at',
+    //                 operator: 'isNull',
+    //                 value: undefined,
+    //             },
+    //             {
+    //                 fieldName: 'productKey',
+    //                 operator: 'match',
+    //                 value: productKey ? productKey : undefined,
+    //             }
+    //         ]
+    //     }));
+
+    // }, [productKey]);
+
     useEffect(() => {
         setListRequest((prevState) => ({
             ...prevState,
@@ -367,12 +369,13 @@ const InventoryTransaction = () => {
     dispatch(setDivContent(divContentHTML));
     return (
         <div className='container-div'>
-            <div className='field-btn-div'>
-                <Form layout='inline' fluid>
-                    <MyInput
-                        column
-                        fieldLabel="From Date"
-                        fieldType="date"
+            {/* {productKey === null && ( */}
+                <div className='field-btn-div'>
+                    <Form layout='inline' fluid>
+                        <MyInput
+                            column
+                            fieldLabel="From Date"
+                            fieldType="date"
                         fieldName="fromDate"
                         record={dateFilter}
                         setRecord={setDateFilter}
@@ -442,6 +445,7 @@ const InventoryTransaction = () => {
                     </div>
                 </div>
             </div>
+            {/* )} */}
             <MyTable
                 data={inventoryTransProductListResponse?.object ?? []}
                 columns={columns}
