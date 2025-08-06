@@ -1,6 +1,14 @@
 import React from 'react';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import { formatDateWithoutSeconds } from '@/utils';
+
+interface SidePanelsProps {
+  mostUsedProductsData: any[];
+  recentlyExpiredStockData: any[];
+  incomingTransfersData: any[];
+  productNearExpiryData: any[];
+}
 
 /**
  * SidePanels Component
@@ -11,12 +19,12 @@ import Translate from '@/components/Translate';
  * - Incoming Transfers
  * - Product Near Expiry
  */
-const SidePanels = ({
+const SidePanels: React.FC<SidePanelsProps> = ({
   mostUsedProductsData,
   recentlyExpiredStockData,
   incomingTransfersData,
   productNearExpiryData
-}: any) => {
+}) => {
   // Column definitions for side panel tables
   const mostUsedProductsColumns = [
     {

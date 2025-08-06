@@ -7,7 +7,6 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useState } from 'react';
 //Component Props
 
-
 export const sampleData = [
   {
     id: 1,

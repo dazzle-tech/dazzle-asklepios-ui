@@ -22,33 +22,33 @@ const ReferralRequest = () => {
     {
       key: '1',
       referralType: 'Internal',
-      department: 'department1',
-      referralReason: 'reason1',
-      notes: 'notes1'
+      department: 'Emergency Department',
+      referralReason: 'Specialist Consultation',
+      notes: 'Referred for further evaluation and treatment'
     },
     {
       key: '2',
       referralType: 'external',
-      department: '',
-      referralReason: 'reason2',
-      notes: 'notes2'
+      department: 'Internal Medicine',
+      referralReason: 'Diagnostic Testing',
+      notes: 'Patient referred externally for advanced diagnostic evaluation'
     },
     {
       key: '3',
       referralType: 'Internal',
-      department: 'department3',
-      referralReason: 'reason3',
-      notes: 'notes3'
+      department: 'General Surgery',
+      referralReason: 'Surgical Intervention',
+      notes: 'Referred internally for evaluation and possible surgical procedure'
     },
     {
       key: '4',
       referralType: 'external',
-      department: '',
-      referralReason: 'reason3',
-      notes: 'notes3'
+      department: 'Neurology',
+      referralReason: 'Second Opinion',
+      notes: 'Referral requested for expert evaluation of complex neurological condition.'
     }
   ];
-  
+
   //table columns
   const tableColumns = [
     {
@@ -83,7 +83,12 @@ const ReferralRequest = () => {
   return (
     <div>
       <div className="container-of-add-new-button">
-        <MyButton color="var(--deep-blue)" prefixIcon={() => <PlusIcon />} onClick={handleNew} width="109px">
+        <MyButton
+          color="var(--deep-blue)"
+          prefixIcon={() => <PlusIcon />}
+          onClick={handleNew}
+          width="109px"
+        >
           Add New
         </MyButton>
       </div>

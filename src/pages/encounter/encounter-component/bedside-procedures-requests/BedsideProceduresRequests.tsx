@@ -8,6 +8,8 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import PlusIcon from '@rsuite/icons/Plus';
 import CancellationModal from '@/components/CancellationModal';
+import { formatDate, formatDateWithoutSeconds } from '@/utils';
+
 import AddEditBedsideProcedureRequest from './AddEditBedsideProcedureRequest';
 const BedsideProceduresRequests = () => {
   const [popupOpen, setPopupOpen] = useState(false);
@@ -26,28 +28,28 @@ const BedsideProceduresRequests = () => {
   const data = [
     {
       key: '1',
-      procedureName: 'name1',
+      procedureName: 'Blood Test',
       requestedBy: 'Rawan',
-      requestedAt: '2025-02-02',
-      executionDateTime: '555678934567',
+      requestedAt: '2025-02-02 8:30',
+      executionDateTime: '2025-02-02 10:30',
       executedBy: 'Bushra',
       status: 'Requested'
     },
     {
       key: '2',
-      procedureName: 'name2',
+      procedureName: 'X-Ray Chest',
       requestedBy: 'Walaa',
-      requestedAt: '2025-03-03',
-      executionDateTime: '555678937776',
+      requestedAt: '2025-03-03 12:15',
+      executionDateTime: '2025-03-03 14:15',
       executedBy: 'Batool',
       status: 'Completed'
     },
     {
       key: '3',
-      procedureName: 'name3',
+      procedureName: 'ECG',
       requestedBy: 'Hanan',
-      requestedAt: '2025-03-03',
-      executionDateTime: '555678937777',
+      requestedAt: '2025-03-03 13:45',
+      executionDateTime: '2025-03-03 16:45',
       executedBy: 'Rawan',
       status: 'New'
     }
@@ -79,13 +81,34 @@ const BedsideProceduresRequests = () => {
     {
       key: 'requestedByAt',
       title: <Translate>Requested By\At</Translate>,
-      render: (rowData: any) => {
-        return <span>{rowData.requestedBy + '/' + rowData.requestedAt}</span>;
-      }
+      render: (rowData: any) =>
+        rowData?.requestedAt ? (
+          <>
+            {rowData?.requestedBy}
+            <br />
+            <span className="date-table-style">
+              {rowData?.requestedAt.split(' ')[0]}
+              <br />
+              {rowData?.requestedAt.split(' ')[1]}
+            </span>
+          </>
+        ) : (
+          ' '
+        )
     },
     {
       key: 'executionDateTime',
-      title: <Translate>Execution Date Time</Translate>
+      title: <Translate>Execution Date Time</Translate>,
+      render: (rowData: any) =>
+        rowData?.executionDateTime ? (
+          <>
+            {rowData?.executionDateTime.split(' ')[0]}
+            <br />
+            <span className="date-table-style">{rowData?.executionDateTime.split(' ')[1]}</span>
+          </>
+        ) : (
+          ' '
+        )
     },
     {
       key: 'executedBy',

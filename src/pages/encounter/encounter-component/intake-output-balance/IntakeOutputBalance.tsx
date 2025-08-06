@@ -17,20 +17,20 @@ const IntakeOutputBalance = () => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [totalIntake] = useState(0);
   const [totalOutput] = useState(0);
-  const [recordFilterBalance, setRecordFilterBalance] = useState({fromDate: "", toDate: ""});
-  const [recordFilterIntake, setRecordFilterIntake] = useState({date: ""});
-   const [recordFilterOutput, setRecordFilterOutput] = useState({date: ""});
-   const [balance, setBalance] = useState({});
-   const [intake, setIntake] = useState({});
-   const [output, setOutput] = useState({});
-  
+  const [recordFilterBalance, setRecordFilterBalance] = useState({ fromDate: '', toDate: '' });
+  const [recordFilterIntake, setRecordFilterIntake] = useState({ date: '' });
+  const [recordFilterOutput, setRecordFilterOutput] = useState({ date: '' });
+  const [balance, setBalance] = useState({});
+  const [intake, setIntake] = useState({});
+  const [output, setOutput] = useState({});
+
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && balance && rowData.key === balance.key) {
       return 'selected-row';
     } else return '';
   };
-   // class name for selected row
+  // class name for selected row
   const isSelectedIntake = rowData => {
     if (rowData && intake && rowData.key === intake.key) {
       return 'selected-row';
@@ -47,27 +47,27 @@ const IntakeOutputBalance = () => {
   const data = [
     {
       key: '1',
-      date: '2025-03-03',
-      totalIntake: '5000',
-      totalOutput: '1000'
+      date: '2025-02-15',
+      totalIntake: 2500,
+      totalOutput: 1800
     },
     {
       key: '2',
-      date: '2025-04-04',
-      totalIntake: '4000',
-      totalOutput: '3000'
+      date: '2025-02-16',
+      totalIntake: 2800,
+      totalOutput: 2200
     },
     {
       key: '3',
-      date: '2025-05-05',
-      totalIntake: '5000',
-      totalOutput: '6000'
+      date: '2025-02-17',
+      totalIntake: 3200,
+      totalOutput: 2900
     },
     {
       key: '4',
-      date: '2025-06-06',
-      totalIntake: '4000',
-      totalOutput: '6000'
+      date: '2025-02-18',
+      totalIntake: 2400,
+      totalOutput: 2600
     }
   ];
 
@@ -75,35 +75,35 @@ const IntakeOutputBalance = () => {
   const intakeData = [
     {
       key: '1',
-      date: '2025-03-03',
-      time: '03:03',
-      intakeType: 'type1',
-      route: 'route1',
-      volume: '100'
+      date: '2025-02-15',
+      time: '08:30',
+      intakeType: 'Oral Fluids',
+      route: 'Oral',
+      volume: 500
     },
     {
       key: '2',
-      date: '2025-04-04',
-      time: '04:04',
-      intakeType: 'type2',
-      route: 'route2',
-      volume: '200'
+      date: '2025-02-15',
+      time: '12:15',
+      intakeType: 'IV Fluids',
+      route: 'Intravenous',
+      volume: 1000
     },
     {
       key: '3',
-      date: '2025-05-05',
-      time: '05:05',
-      intakeType: 'type3',
-      route: 'route3',
-      volume: '300'
+      date: '2025-02-15',
+      time: '16:45',
+      intakeType: 'Oral Fluids',
+      route: 'Oral',
+      volume: 300
     },
     {
       key: '4',
-      date: '2025-06-06',
-      time: '06:06',
-      intakeType: 'type4',
-      route: 'route4',
-      volume: '400'
+      date: '2025-02-15',
+      time: '20:30',
+      intakeType: 'IV Fluids',
+      route: 'Intravenous',
+      volume: 700
     }
   ];
 
@@ -111,31 +111,31 @@ const IntakeOutputBalance = () => {
   const outputData = [
     {
       key: '1',
-      date: '2025-03-03',
-      time: '03:03',
-      outputType: 'type1',
-      volume: '100'
+      date: '2025-02-15',
+      time: '09:15',
+      outputType: 'Urine',
+      volume: 800
     },
     {
       key: '2',
-      date: '2025-04-04',
-      time: '04:04',
-      outputType: 'type2',
-      volume: '200'
+      date: '2025-02-15',
+      time: '13:30',
+      outputType: 'Urine',
+      volume: 600
     },
     {
       key: '3',
-      date: '2025-05-05',
-      time: '05:05',
-      outputType: 'type3',
-      volume: '300'
+      date: '2025-02-15',
+      time: '17:45',
+      outputType: 'Urine',
+      volume: 400
     },
     {
       key: '4',
-      date: '2025-06-06',
-      time: '06:06',
-      outputType: 'type4',
-      volume: '400'
+      date: '2025-02-15',
+      time: '22:00',
+      outputType: 'Urine',
+      volume: 300
     }
   ];
 
@@ -232,8 +232,20 @@ const IntakeOutputBalance = () => {
   // Filter form rendered above the table
   const filters = () => (
     <Form layout="inline" fluid>
-      <MyInput column fieldName="fromDate" fieldType="date" record={recordFilterBalance} setRecord={setRecordFilterBalance} />
-      <MyInput column fieldName="toDate" fieldType="date" record={recordFilterBalance} setRecord={setRecordFilterBalance} />
+      <MyInput
+        column
+        fieldName="fromDate"
+        fieldType="date"
+        record={recordFilterBalance}
+        setRecord={setRecordFilterBalance}
+      />
+      <MyInput
+        column
+        fieldName="toDate"
+        fieldType="date"
+        record={recordFilterBalance}
+        setRecord={setRecordFilterBalance}
+      />
     </Form>
   );
 
@@ -262,23 +274,23 @@ const IntakeOutputBalance = () => {
                 setBalance(rowData);
               }}
             />
-            <br/>
+            <br />
             <FlexboxGrid>
-            <FlexboxGrid.Item className='chart' as={Col} colspan={24} lg={8} md={12} sm={24}>
-              <Panel bordered header={<Translate>Total Balance Change per Date</Translate>}>
-                <DynamicLineChart
-                  maxValue={7000}
-                  title='Balance Change'
-                  chartData={[
-                    { x: '2025-09-19', y: 1450 },
-                    { x: '2025-09-20', y: -300 },
-                    { x: '2025-09-21', y: 1200 },
-                    { x: '2025-09-22', y: -500 },
-                    { x: '2025-09-23', y: 750 }
-                  ]}
-                />
-              </Panel>
-            </FlexboxGrid.Item>
+              <FlexboxGrid.Item className="chart" as={Col} colspan={24} lg={8} md={12} sm={24}>
+                <Panel bordered header={<Translate>Total Balance Change per Date</Translate>}>
+                  <DynamicLineChart
+                    maxValue={7000}
+                    title="Balance Change"
+                    chartData={[
+                      { x: '2025-09-19', y: 1450 },
+                      { x: '2025-09-20', y: -300 },
+                      { x: '2025-09-21', y: 1200 },
+                      { x: '2025-09-22', y: -500 },
+                      { x: '2025-09-23', y: 750 }
+                    ]}
+                  />
+                </Panel>
+              </FlexboxGrid.Item>
             </FlexboxGrid>
           </div>
         </Row>
@@ -292,7 +304,13 @@ const IntakeOutputBalance = () => {
             <Divider />
             <div className="container-of-add-new-button"></div>
             <Form fluid layout="inline" className="container-of-header-intake">
-              <MyInput fieldName="date" fieldType="date" record={recordFilterIntake} setRecord={setRecordFilterIntake} showLabel={false} />
+              <MyInput
+                fieldName="date"
+                fieldType="date"
+                record={recordFilterIntake}
+                setRecord={setRecordFilterIntake}
+                showLabel={false}
+              />
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
@@ -328,7 +346,13 @@ const IntakeOutputBalance = () => {
             <Divider />
             <div className="container-of-add-new-button"></div>
             <Form fluid layout="inline" className="container-of-header-intake">
-              <MyInput fieldName="date" fieldType="date" record={recordFilterOutput} setRecord={setRecordFilterOutput} showLabel={false} />
+              <MyInput
+                fieldName="date"
+                fieldType="date"
+                record={recordFilterOutput}
+                setRecord={setRecordFilterOutput}
+                showLabel={false}
+              />
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
