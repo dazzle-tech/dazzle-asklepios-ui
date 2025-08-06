@@ -128,21 +128,21 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       key: "facilityKey",
       title: <Translate>facility</Translate>,
       render: (rowData: any) => {
-        return null;
+        return rowData?.facility?.facilityName;
       }
     },
     {
       key: "departmentKey",
       title: <Translate>department</Translate>,
       render: (rowData: any) => {
-        return rowData?.departmentKey;
+        return rowData?.department?.name;
       }
     },
     {
       key: "oparetionKey",
       title: <Translate>oparation name</Translate>,
       render: (rowData: any) => {
-        return null;
+        return rowData?.operation?.name;
       }
     },
     {
@@ -177,7 +177,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       key: "diagnosisKey",
       title: <Translate>Pre-op Diagnosis</Translate>,
       render: (rowData: any) => {
-        return null;
+        return rowData?.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description;
       }
     },
     {
