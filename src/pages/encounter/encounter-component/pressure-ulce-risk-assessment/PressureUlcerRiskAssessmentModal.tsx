@@ -18,12 +18,12 @@ const PressureUlcerRiskAssessmentModal = ({ open, setOpen, onSave }) => {
   const { data: frictionShearLovData } = useGetLovValuesByCodeQuery('BRADEN_FRIC_SHEAR');
   // Map LOV codes to their data arrays for easy access
   // Extract the object arrays or default to empty arrays
-  const sensoryLov = sensoryLovData.object || [];
-  const moistureLov = moistureLovData.object || [];
-  const activityLov = activityLovData.object || [];
-  const mobilityLov = mobilityLovData.object || [];
-  const nutritionLov = nutritionLovData.object || [];
-  const frictionShearLov = frictionShearLovData.object || [];
+  const sensoryLov = sensoryLovData?.object || [];
+  const moistureLov = moistureLovData?.object || [];
+  const activityLov = activityLovData?.object || [];
+  const mobilityLov = mobilityLovData?.object || [];
+  const nutritionLov = nutritionLovData?.object || [];
+  const frictionShearLov = frictionShearLovData?.object || [];
   const fields = React.useMemo(
     () => [
       { fieldName: 'sensoryPerception', lovCode: 'BRADEN_SENSORY', label: 'Sensory Perception' },
