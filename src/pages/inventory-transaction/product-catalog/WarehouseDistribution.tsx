@@ -35,6 +35,10 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaClock, FaHourglass, FaUser } from 'react-icons/fa6';
 import ProductDetails from './ProductDetails';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faRecycle } from '@fortawesome/free-solid-svg-icons';
+import InventoryTransaction from '../inventory-transaction';
+import MyModal from '@/components/MyModal/MyModal';
 const WarehouseDistribution = ({ selectedProduct }) => {
   const dispatch = useAppDispatch();
   const [warehouseProduct, setWarehouseProduct] = useState<ApWarehouseProduct>({ ...newApWarehouseProduct });
@@ -44,6 +48,7 @@ const WarehouseDistribution = ({ selectedProduct }) => {
   const [removeWarehouseProduct, removeWarehouseProductMutation] = useRemoveWarehouseProductsMutation();
   const [stateOfDeleteWarehouseModal, setStateOfDeleteWarehouseModal] = useState<string>('delete');
   const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
+  const [open, setOpen] = useState(false);
   const [edit_new, setEdit_new] = useState(false);
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -78,7 +83,7 @@ const WarehouseDistribution = ({ selectedProduct }) => {
 
   useEffect(() => {
     const updatedFilters = [
-     {
+      {
         fieldName: 'product_key',
         operator: 'match',
         value: selectedProduct?.key
@@ -107,11 +112,17 @@ const WarehouseDistribution = ({ selectedProduct }) => {
     isFetching: productListIsFetching
   } = useGetProductQuery(productsListRequest);
 
+
+    const [transactionListRequest, setTransactionListRequest] = useState<ListRequest>({
+           ...initialListRequest 
+          });
+   
+   const { data: warehouseListResponse } = useGetWarehouseQuery(transactionListRequest);
   // Pagination values
   const pageIndex = warehouseProductListRequest.pageNumber - 1;
   const rowsPerPage = warehouseProductListRequest.pageSize;
   const totalCount = warehouseProductListResponseLoading?.extraNumeric ?? 0;
- 
+
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && warehouseProduct && warehouseProduct.key === rowData.key) {
@@ -136,11 +147,20 @@ const WarehouseDistribution = ({ selectedProduct }) => {
 
   //Table columns
   const tableColumns = [
-      {
-          key: 'warehouseName',
-          title: <Translate>Warehouse Name</Translate>,
-          flexGrow: 4,
-        },
+    {
+      key: 'warehouseName',
+      title: <Translate>Warehouse Name</Translate>,
+      flexGrow: 4,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            warehouseListResponse?.object ?? [],
+            rowData.warehouseKey,
+            'warehouseName'
+          )}
+        </span>
+      )
+    },
 
     {
       key: 'quantity',
@@ -148,25 +168,25 @@ const WarehouseDistribution = ({ selectedProduct }) => {
       flexGrow: 4,
       render: rowData => <span>{rowData.quantity}</span>
     },
-     {
+    {
       key: 'quantity',
       title: <Translate>Reserved Qty</Translate>,
       flexGrow: 4,
-      render: rowData => <span>{rowData.quantity}</span>
+      render: rowData => <span></span>
     },
-     {
+    {
       key: 'quantity',
       title: <Translate> Available Qty</Translate>,
       flexGrow: 4,
       render: rowData => <span>{rowData.quantity}</span>
     },
-     {
+    {
       key: 'createdAt',
       title: <Translate> Last Movement Date</Translate>,
       flexGrow: 4,
       render: rowData => <span>{formatDateWithoutSeconds(rowData.createdAt)}</span>
     },
-     {
+    {
       key: 'avgCost',
       title: <Translate>Avarge Cost</Translate>,
       flexGrow: 4,
@@ -176,7 +196,12 @@ const WarehouseDistribution = ({ selectedProduct }) => {
       key: 'status',
       title: <Translate>View Transaction</Translate>,
       flexGrow: 4,
-     }
+      render: rowData => (
+        <MyButton appearance="subtle" color="#5B5B5B" width="20px" height="20px" onClick={() => setOpen(true)}>
+          <FontAwesomeIcon icon={faEye} />
+        </MyButton>
+      )
+    }
   ];
   return (
     <Panel>
@@ -200,6 +225,18 @@ const WarehouseDistribution = ({ selectedProduct }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+          <MyModal
+                  open={open}
+                  setOpen={setOpen}
+                  title="Transaction Product"
+                  size="sm"
+                  bodyheight="65vh"
+                  content={() => <InventoryTransaction />}
+                  hideCancel={false}
+                  hideBack={true}
+                  hideActionBtn={true}
+                  steps={[{ title: "Transaction Product", icon: <FontAwesomeIcon icon={faRecycle }/>}]}
+              />
     </Panel>
   );
 };
