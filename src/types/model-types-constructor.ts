@@ -1598,6 +1598,9 @@ export const newApGenericMedication:modelTypes.ApGenericMedication = {
 	code:'',
 	roaLkey:undefined,
 	marketingAuthorizationHolder:'',
+	costCategoryLkey:undefined,
+	uomGroupKey:undefined,
+	uomGroupUnitKey:undefined,
 } 
 
 export const newApGenericMedicationActiveIngredient:modelTypes.ApGenericMedicationActiveIngredient = { 
@@ -2542,6 +2545,7 @@ export const newApOperationRequests:modelTypes.ApOperationRequests = {
 	increaseByMinutes:0,
 	monitorSlot:0,
 	recoveryStatusLkey:undefined,
+	cancellationReason:'',
 } 
 
 export const newApOperationSetup:modelTypes.ApOperationSetup = { 
@@ -3057,6 +3061,10 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	platestFallRiskDetails:'',
 	latestActionToTake:'',
 	platestActionToTake:'',
+	latestFunctionalStatus:'',
+	platestFunctionalStatus:'',
+	latestCognitiveCheck:'',
+	platestCognitiveCheck:'',
 } 
 
 export const newApPatientPlan:modelTypes.ApPatientPlan = { 
