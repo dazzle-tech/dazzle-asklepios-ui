@@ -1597,6 +1597,9 @@ export interface ApGenericMedication {
 	code:string;
 	roaLkey:string;
 	marketingAuthorizationHolder:string;
+	costCategoryLkey:string;
+	uomGroupKey:string;
+	uomGroupUnitKey:string;
 } 
 
 export interface ApGenericMedicationActiveIngredient { 
@@ -2541,6 +2544,7 @@ export interface ApOperationRequests {
 	increaseByMinutes:number;
 	monitorSlot:number;
 	recoveryStatusLkey:string;
+	cancellationReason:string;
 } 
 
 export interface ApOperationSetup { 
@@ -3056,6 +3060,10 @@ export interface ApPatientObservationSummary {
 	platestFallRiskDetails:string;
 	latestActionToTake:string;
 	platestActionToTake:string;
+	latestFunctionalStatus:string;
+	platestFunctionalStatus:string;
+	latestCognitiveCheck:string;
+	platestCognitiveCheck:string;
 } 
 
 export interface ApPatientPlan { 

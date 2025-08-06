@@ -21,6 +21,7 @@ import clsx from 'clsx';
 import InpatientObservations from './InpatientObservations';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import { useGetAgeGroupValueQuery } from '@/services/patientService';
+import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 export type ObservationsRef = {
   handleSave: () => void;
 };
@@ -41,7 +42,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const dispatch = useAppDispatch();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
-  const [localEncounter, setLocalEncounter] = useState<any>({ ...encounter })
+  const [localEncounter, setLocalEncounter] = useState<any>({ ...encounter });
+ 
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
   const [vital, setVital] = useState({
@@ -54,6 +56,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     respiratoryRate: 0,
   });
   const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
+  const[saveencounter]=useSaveEncounterChangesMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
 
@@ -161,6 +164,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         platestbmi: lastObservationSummary?.latestbmi,
         page: lastObservationSummary?.age,
       }).unwrap();
+      if(encounter.chiefComplaint !==localEncounter.chiefComplaint){
+        console.log("true")
+        await saveencounter(localEncounter).unwrap()
+      }
       setTimeout(() => {
         window.location.reload()
       }, 500);
@@ -242,6 +249,58 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
               </Col>
 
             </Row>
+            <Row>
+              <Col md={24}>
+                <div className='container-form'>
+                  <div className='title-div'>
+                    <Text> Patient Observations & Complaints</Text>
+
+                  </div>
+                  <Divider />
+                  <Row>
+                    <Col md={24}>
+                      <MyInput
+                        fieldLabel='Functional Status'
+                        width='100%'
+                        fieldName='latestFunctionalStatus'
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType='textarea'
+                        record={patientObservationSummary }
+                        setRecord={setPatientObservationSummary}/></Col>
+
+                  </Row>
+                 
+                    <Row>
+                    <Col md={24}>
+                      <MyInput
+                        fieldLabel='Cognitive Check'
+                        width='100%'
+                        fieldName='latestCognitiveCheck'
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType='textarea'
+                        record={patientObservationSummary }
+                        setRecord={setPatientObservationSummary}/></Col>
+
+                  </Row>
+
+                    <Row>
+                    <Col md={24}>
+                      <MyInput
+                        
+                        width='100%'
+                        fieldName='chiefComplaint'
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType='textarea'
+                        record={localEncounter}
+                        setRecord={setLocalEncounter}/></Col>
+
+                  </Row>
+                  
+
+                  
+                  
+                  </div> </Col></Row>
+
 
             {(patientAgeGroupResponse?.object?.valueCode === 'AG_INFANT' ||
 

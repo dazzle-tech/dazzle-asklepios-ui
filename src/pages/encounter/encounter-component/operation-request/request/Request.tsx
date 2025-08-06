@@ -12,11 +12,13 @@ import React, { useEffect, useState } from "react";
 import { MdModeEdit } from "react-icons/md";
 import { Checkbox, Row } from "rsuite";
 import Details from "./Details";
+import CancellationModal from "@/components/CancellationModal";
+import { set } from "lodash";
 const Request = ({ patient, encounter, user, refetchrequest }) => {
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
   const [request, setRequest] = useState<any>({ ...newApOperationRequests, encounterKey: encounter?.key, patientKey: patient?.key });
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -90,13 +92,13 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
 
   const handleCancel = async () => {
     try {
-      const Response=await save({
+      const Response = await save({
         ...request, statusLkey: '3621690096636149', cancelledBy: user?.key,
         cancelledAt: Date.now(),
       });
 
       dispatch(notify({ msg: 'Cancelled Successfully', sev: "success" }));
-      setConfirmDeleteOpen(false);
+      setOpenCancelModal(false);
       refetch();
       refetchrequest();
     }
@@ -108,11 +110,13 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
 
   const handleSubmit = async () => {
     try {
-     const Response= await save({ ...request, statusLkey: '6134761379970516' ,submitedBy: user?.key,
-        submitedAt: Date.now(),operationStatusLkey:'3621653475992516'});
+      const Response = await save({
+        ...request, statusLkey: '6134761379970516', submitedBy: user?.key,
+        submitedAt: Date.now(), operationStatusLkey: '3621653475992516'
+      });
       dispatch(notify({ msg: 'Submited Successfully', sev: "success" }));
-      
-      setConfirmDeleteOpen(false);
+
+
       refetch();
       refetchrequest();
     }
@@ -122,7 +126,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
   }
 
 
-//table 
+  //table 
   const columns = [
     {
       key: "facilityKey",
@@ -177,7 +181,8 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       key: "diagnosisKey",
       title: <Translate>Pre-op Diagnosis</Translate>,
       render: (rowData: any) => {
-        return rowData?.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description;
+        return rowData?.diagnosis?
+        rowData.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description:"";
       }
     },
     {
@@ -205,10 +210,10 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         />)
       }
     }
- 
+
     ,
     {
-      key: "",
+      key: "createdAt",
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
@@ -221,7 +226,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
 
     },
     {
-      key: "",
+      key: "submitedAt",
       title: <Translate>Submited At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
@@ -235,17 +240,26 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
     },
 
     {
-      key: "",
+      key: "cancelledBy",
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
         return (<>
-          <span>{rowData.deletedBy}</span>
+          <span>{rowData.cancelledBy}</span>
           <br />
-          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.deletedAt)}</span>
+          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.cancelledAt)}</span>
         </>)
       }
     },
+    {
+      key: "cancellationReason",
+      title: <Translate>Cancelled Reason</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return rowData.cancellationReason || '-';
+      }
+    }
+
   ];
   return (<>
     <div className='bt-div'>
@@ -263,7 +277,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         }}>Add Request</MyButton>
         <MyButton disabled={request?.statusLvalue?.valueCode != 'PROC_REQ'} onClick={handleSubmit} >Submit</MyButton>
         <MyButton disabled={request?.statusLvalue?.valueCode != 'PROC_REQ'}
-          onClick={() => { setConfirmDeleteOpen(true) }} >Cancel</MyButton>
+          onClick={() => { setOpenCancelModal(true) }} >Cancel</MyButton>
       </div>
 
     </div>
@@ -280,18 +294,21 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       />
 
     </Row>
-    <Details open={open} setOpen={setOpen} 
-    user={user} 
-    request={request} setRequest={setRequest}
-     refetch={refetch} refetchrequest={refetchrequest}
+    <Details open={open} setOpen={setOpen}
+      user={user}
+      request={request} setRequest={setRequest}
+      refetch={refetch} refetchrequest={refetchrequest}
       encounter={encounter} patient={patient} />
-    <DeletionConfirmationModal
-      open={confirmDeleteOpen}
-      setOpen={setConfirmDeleteOpen}
-      itemToDelete="note"
-      actionButtonFunction={handleCancel}
-      actionType="delete"
-    />
+    <CancellationModal
+      open={openCancelModal}
+      setOpen={setOpenCancelModal}
+      object={request}
+      setObject={setRequest}
+      handleCancle={handleCancel}
+      fieldName="cancellationReason"
+      fieldLabel={'Cancelled Reason'}
+      title={'Cancellation'}
+    ></CancellationModal>
   </>)
 }
 export default Request;

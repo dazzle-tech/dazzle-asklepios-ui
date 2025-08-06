@@ -12,11 +12,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faSquareXmark } from "@fortawesome/free-solid-svg-icons";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
+import CancellationModal from "@/components/CancellationModal";
+import { set } from "lodash";
 
 const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTab, setOpen, request, setRequest, refetchOnGoing }) => {
     const dispatch = useAppDispatch();
     const [showCancelled, setShowCancelled] = useState(true);
-
+    const [openCancelModal, setOpenCancelModal] = useState(false);
 
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
@@ -120,7 +122,15 @@ const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTa
             return [...filters, newFilter];
         }
     };
-
+   const handleCancel = async () => {
+        try {
+          
+            await save({ ...request, operationStatusLkey: '3621690096636149' }).unwrap();
+            dispatch(notify({ msg: 'Cancelled Successfully', sev: "success" }));
+            refetch();
+        } catch (error) {
+            dispatch(notify({ msg: 'Failed', sev: "error" }));
+        }}
     //table 
     const columns = [
         {
@@ -249,15 +259,11 @@ const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTa
                             icon={faSquareXmark} onClick={
                                 isDisabled
                                     ? undefined
-                                    : async () => {
-                                        try {
+                                    : () => {
+                                      
                                             setRequest(rowData);
-                                            await save({ ...request, operationStatusLkey: '3621690096636149' });
-                                            dispatch(notify({ msg: 'Cancelled Successfully', sev: "success" }));
-                                            refetch();
-                                        } catch (error) {
-                                            dispatch(notify({ msg: 'Failed', sev: "error" }));
-                                        }
+                                            setOpenCancelModal(true);
+                                          
                                     }
                             } />
                     </Whisper>
@@ -305,6 +311,14 @@ const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTa
                 </>)
             }
         },
+        {
+            key: "cancellationReason",
+            title: <Translate>Cancelled Reason</Translate>,
+            expandable: true,
+            render: (rowData: any) => {
+                return rowData.cancellationReason || '-';
+            }
+        }
     ];
 
     const filters = () => (
@@ -358,6 +372,16 @@ const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTa
                     }}
                 />
             </Col>
+           <CancellationModal
+        open={openCancelModal}
+        setOpen={setOpenCancelModal}
+        object={request}
+        setObject={setRequest}
+        handleCancle={handleCancel}
+        fieldName="cancellationReason"
+        fieldLabel={'Cancelled Reason'}
+        title={'Cancellation'}
+      ></CancellationModal>
         </Row>
     );
 }
