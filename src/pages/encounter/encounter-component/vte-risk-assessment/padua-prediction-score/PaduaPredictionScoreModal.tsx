@@ -4,7 +4,7 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import './Style.less';
+import './style.less';
 
 const PaduaPredictionScoreModal = ({ open, setOpen, onSave }) => {
   const [record, setRecord] = useState({
