@@ -9,7 +9,6 @@ import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
-import { GiBarefoot } from 'react-icons/gi';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -49,7 +48,9 @@ import {
   faEye,
   faHeartPulse,
   faBed,
-  faUserPlus
+  faUserPlus,
+  faBraille,
+  faShoePrints
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom';
 import AllergiesModal from './AllergiesModal';
@@ -229,7 +230,7 @@ const Encounter = () => {
   };
 
   const menuItems = [
-    { key: 'vteRiskAssessment', label: 'VTE Risk Assessment', icon: GiBarefoot, path: 'vte-risk-assessment' },
+    { key: 'vteRiskAssessment', label: 'VTE Risk Assessment', icon: faBraille, path: 'vte-risk-assessment' },
     { key: 'bradenScaleForPressureUlcer', label: 'Pressure Ulcer Risk Assessment', icon: faBed, path: 'pressure-ulce-risk-assessment' },
     { key: 'glasgowComaScale', label: 'Glasgow Coma Scale', icon: faG, path: 'glasgow-coma-scale' },
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },

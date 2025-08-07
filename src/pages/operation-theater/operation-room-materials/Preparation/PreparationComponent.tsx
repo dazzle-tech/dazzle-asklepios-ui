@@ -145,7 +145,7 @@ const Preparation = () => {
   //Table Filters(Header)
   const filterstable = (
     <Form fluid>
-      <h5 className="requested-procedures-table-header">Requested Procedures</h5>
+      <h5 className="requested-procedures-table-header">Requested Operation</h5>
       <div className="from-to-input-position">
         <MyInput
           width={'100%'}
