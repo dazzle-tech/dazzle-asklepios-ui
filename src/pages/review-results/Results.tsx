@@ -21,6 +21,8 @@ const Results = ({ setEncounter, setPatient, user }) => {
     const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [showReview, setShowReview] = useState(true);
+    const [showAbnormal, setShowAbnormal] = useState(false);
+
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
     const [dateFilter, setDateFilter] = useState({
         fromDate: null,
@@ -149,20 +151,43 @@ const Results = ({ setEncounter, setPatient, user }) => {
             );
         }
     }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
- useEffect(() => {
+
+    useEffect(() => {
 
 
-    setListResultResponse(prev => ({
-        ...prev,
-        filters: prev.filters.map(filter =>
-            filter.fieldName === "review_at"
-                ? { ...filter, operator: showReview ? "match" : "notMatch" }
-                : filter
-        ),
-    }));
+        setListResultResponse(prev => ({
+            ...prev,
+            filters: prev.filters.map(filter =>
+                filter.fieldName === "review_at"
+                    ? { ...filter, operator: showReview ? "match" : "notMatch" }
+                    : filter
+            ),
+        }));
 
-    resultFetch();
-}, [showReview]);
+        resultFetch();
+    }, [showReview]);
+    
+    useEffect(() => {
+        setListResultResponse(prev => {
+            let updatedFilters = prev.filters.filter(f => f.fieldName !== "marker");
+
+            if (showAbnormal) {
+                updatedFilters.push({
+                    fieldName: "marker",
+                    operator: "notMatch",
+                    value: "6731498382453316"
+                });
+            }
+
+            return {
+                ...prev,
+                filters: updatedFilters
+            };
+        });
+
+        resultFetch();
+    }, [showAbnormal]);
+
     const joinValuesFromArray = (keys) => {
 
         return keys
@@ -191,7 +216,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 return rowData.test?.order?.patient?.fullName
             }
         },
-       
+
         {
             key: "approvedAt",
             title: <Translate>Result Date</Translate>,
@@ -449,14 +474,23 @@ const Results = ({ setEncounter, setPatient, user }) => {
                     record={dateOrderFilter}
                     setRecord={setDateOrderFilter}
                 />
-               
+
                 <Checkbox
-                style={{marginTop:"20px"}}
+                    style={{ marginTop: "20px" }}
                     checked={!showReview}
                     onChange={() => {
                         setShowReview(!showReview);
                     }}>
                     Show Review Result
+                </Checkbox>
+
+                <Checkbox
+
+                    checked={showAbnormal}
+                    onChange={() => {
+                        setShowAbnormal(!showAbnormal);
+                    }}>
+                    Show Abnormal Result
                 </Checkbox>
             </Form>
         );
