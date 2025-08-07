@@ -7,12 +7,13 @@ import { useGetDiagnosticOrderTestResultQuery, useGetOrderTestResultNotesByResul
 import { useGetDiagnosticsTestLaboratoryListQuery, useGetLovAllValuesQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsResult, newApDiagnosticOrderTestsResultNotes, newApDiagnosticTestLaboratory } from "@/types/model-types-constructor";
 import { initialListRequest, initialListRequestAllValues, ListRequest } from "@/types/types";
-import { addFilterToListRequest,formatDateWithoutSeconds } from '@/utils';
+import { addFilterToListRequest, formatDateWithoutSeconds } from '@/utils';
 import { notify } from "@/utils/uiReducerActions";
 import { faArrowDown, faArrowUp, faCircleExclamation, faComment, faPrint, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { set } from "lodash";
 import React, { useEffect, useState } from "react";
-import { Form, HStack, Tooltip, Whisper } from "rsuite";
+import { Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
 const Result = ({ patient, user }) => {
     const dispatch = useAppDispatch();
     const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
@@ -22,6 +23,7 @@ const Result = ({ patient, user }) => {
         fromDate: new Date(),
         toDate: new Date()
     });
+    const [showAbnormal, setShowAbnormal] = useState(false);
     const [listResultResponse, setListResultResponse] = useState<ListRequest>({
         ...initialListRequest,
         sortBy: "createdAt",
@@ -40,9 +42,11 @@ const Result = ({ patient, user }) => {
         ],
     });
 
+
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
     const { data: resultsList, refetch: resultFetch, isLoading: resultLoding, isFetching: featchingTest } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
+
     const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
     const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
     const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
@@ -63,51 +67,98 @@ const Result = ({ patient, user }) => {
     }, [result]);
 
 
- useEffect(() => {
-  setListResultResponse(prev => ({
-    ...prev,
-    filters: [
-      {
-        fieldName: "patient_key",
-        operator: "match",
-        value: patient?.key,
-      },
-      {
-        fieldName: "review_at",
-        operator: "notMatch",
-        value: 0,
-      },
-    ],
-  }));
-}, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
-useEffect(() => {
-  if (!resultLoding && resultsList?.object?.length) {
-    const fromDate = dateOrderFilter.fromDate
-      ? new Date(dateOrderFilter.fromDate)
-      : null;
-    const toDate = dateOrderFilter.toDate
-      ? new Date(dateOrderFilter.toDate)
-      : null;
+    useEffect(() => {
+        setListResultResponse(prev => ({
+            ...prev,
+            filters: [
+                {
+                    fieldName: "patient_key",
+                    operator: "match",
+                    value: patient?.key,
+                },
+                {
+                    fieldName: "review_at",
+                    operator: "notMatch",
+                    value: 0,
+                },
+            ],
+        }));
+    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+    useEffect(() => {
+        if (!resultLoding && resultsList?.object?.length) {
+            const fromDate = dateOrderFilter.fromDate
+                ? new Date(dateOrderFilter.fromDate)
+                : null;
+            const toDate = dateOrderFilter.toDate
+                ? new Date(dateOrderFilter.toDate)
+                : null;
 
-    if (fromDate) fromDate.setHours(0, 0, 0, 0);
-    if (toDate) toDate.setHours(23, 59, 59, 999);
+            if (fromDate) fromDate.setHours(0, 0, 0, 0);
+            if (toDate) toDate.setHours(23, 59, 59, 999);
 
-    const filtered = resultsList.object.filter(item => {
-      const createdAt = new Date(item.test?.order?.createdAt);
-      return (
-        (!fromDate || createdAt >= fromDate) &&
-        (!toDate || createdAt <= toDate)
-      );
-    });
+            const filtered = resultsList.object.filter(item => {
+                const createdAt = new Date(item.test?.order?.createdAt);
+                return (
+                    (!fromDate || createdAt >= fromDate) &&
+                    (!toDate || createdAt <= toDate)
+                );
+            });
 
-    const value = filtered.map(order => `(${order.key})`).join(" ") || '("")';
+            const value = filtered.map(order => `(${order.key})`).join(" ") || '("")';
 
-    setListResultResponse(prev =>
-      addFilterToListRequest("key", "in", value, prev)
-    );
-  }
-}, [dateOrderFilter, resultLoding, resultsList]);
+            setListResultResponse(prev =>
+                addFilterToListRequest("key", "in", value, prev)
+            );
+        }
+    }, [dateOrderFilter, resultLoding, resultsList]);
 
+
+    useEffect(() => {
+        if (!showAbnormal) {
+            const updatedFilters=
+             [
+            {
+                fieldName: "patient_key",
+                operator: 'match',
+                value: patient?.key,
+            },
+            {
+                fieldName: "review_at",
+                operator: 'notMatch',
+                value: 0,
+            }
+        ];
+         setListResultResponse(prev => ({
+            ...prev,
+            filters:updatedFilters
+        }));
+        }
+       
+      
+        setListResultResponse(prev => {
+            let updatedFilters = prev.filters.filter(f => f.fieldName !== "marker");
+
+            if (showAbnormal) {
+                updatedFilters.push({
+                    fieldName: "marker",
+                    operator: "notMatch",
+                    value: "6731498382453316"
+                });
+            }
+
+            return {
+                ...prev,
+                filters: updatedFilters
+            };
+        });
+
+        resultFetch();
+
+
+    }, [showAbnormal]);
+    useEffect(() => {
+        resultFetch();
+    }, [listResultResponse.filters]);
     const joinValuesFromArray = (keys) => {
 
         return keys
@@ -383,6 +434,24 @@ useEffect(() => {
                     record={dateOrderFilter}
                     setRecord={setDateOrderFilter}
                 />
+
+                <Checkbox
+                    style={{ marginTop: "20px" }}
+                    checked={showAbnormal}
+                    onChange={() => {
+                        if (showAbnormal) {
+                           
+                           const updatedFilters = listResultResponse.filters.filter(f => f.fieldName !== "marker");
+                            setListResultResponse({
+                                ...listResultResponse,
+                                filters: updatedFilters
+                            });
+                        }
+
+                        setShowAbnormal(!showAbnormal);
+                    }}>
+                    Show Abnormal Result
+                </Checkbox>
             </Form>
         );
     };
