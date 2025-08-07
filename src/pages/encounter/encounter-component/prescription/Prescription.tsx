@@ -37,12 +37,12 @@ import './styles.less';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 const { Column, HeaderCell, Cell } = Table;
-const Prescription = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
-    const location = useLocation();
-    const state = location.state || {};
-    const patient = propPatient || state.patient;
-    const encounter = propEncounter || state.encounter;
-    const edit = propEdit ?? state.edit;
+const Prescription = (props) => {
+   const location = useLocation();
+   
+     const patient = props.patient || location.state?.patient;
+     const encounter = props.encounter || location.state?.encounter;
+     const edit = props.edit ?? location.state?.edit ?? false;
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [openToAdd, setOpenToAdd] = useState(true);

@@ -45,9 +45,12 @@ const handleDownload = attachment => {
   a.click();
   window.URL.revokeObjectURL(url);
 };
-const Consultation = () => {
-  const location = useLocation();
-  const { patient, encounter, edit } = location.state || {};
+const Consultation = (props) => {
+const location = useLocation();
+
+  const patient = props.patient || location.state?.patient;
+  const encounter = props.encounter || location.state?.encounter;
+  const edit = props.edit ?? location.state?.edit ?? false;
   const dispatch = useAppDispatch();
   const [selectedRows, setSelectedRows] = useState([]);
   const [showCanceled, setShowCanceled] = useState(true);

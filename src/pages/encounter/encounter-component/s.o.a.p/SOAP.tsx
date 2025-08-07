@@ -42,13 +42,13 @@ import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 
 
-const SOAP = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
+const SOAP = (props) => {
   const dispatch = useAppDispatch();
-  const location = useLocation();
-  const state = location.state || {};
-  const patient = propPatient || state.patient;
-  const encounter = propEncounter || state.encounter;
-  const edit = propEdit ?? state.edit;
+ const location = useLocation();
+ 
+   const patient = props.patient || location.state?.patient;
+   const encounter = props.encounter || location.state?.encounter;
+   const edit = props.edit ?? location.state?.edit ?? false;
   const [localEncounter, setLocalEncounter] = useState({ ...encounter });
 
   const { data: planLovQueryResponse } = useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');

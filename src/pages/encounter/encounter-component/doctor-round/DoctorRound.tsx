@@ -4,6 +4,7 @@ import NewRound from './NewRound/NewRound';
 import { useLocation } from 'react-router-dom';
 import NurseNotes from './NurseNotes/NurseNotes';
 import PreviousRoundsHistory from './PreviousRoundsHistory';
+import Orders from './Orders';
 
 const DoctorRound = () => {
     const location = useLocation();
@@ -19,7 +20,10 @@ const DoctorRound = () => {
                     setIsConfirmedRound={setIsConfirmedRound}/>
             </Tabs.Tab>
             <Tabs.Tab eventKey="2" title="Orders">
-
+                <Orders
+                    patient={patient}
+                    encounter={encounter}
+                    edit={edit} />
             </Tabs.Tab>
             <Tabs.Tab eventKey="3" title="Nurse Notes">
                 <NurseNotes

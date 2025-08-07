@@ -30,12 +30,12 @@ import DetailsModal from './DetailsModal';
 import { formatDateWithoutSeconds } from '@/utils';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
-const Allergies = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
-  const location = useLocation();
-  const state = location.state || {};
-  const patient = propPatient || state.patient;
-  const encounter = propEncounter || state.encounter;
-  const edit = propEdit ?? state.edit; 
+const Allergies = (props) => {
+const location = useLocation();
+
+  const patient = props.patient || location.state?.patient;
+  const encounter = props.encounter || location.state?.encounter;
+  const edit = props.edit ?? location.state?.edit ?? false;
   const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
