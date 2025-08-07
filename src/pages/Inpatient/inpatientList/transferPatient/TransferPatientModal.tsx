@@ -23,7 +23,6 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
     const [bedCount, setBedCount] = useState({ count: 0 });
     const [saveTransferPatient] = useSaveTransferPatientMutation();
     const dispatch = useAppDispatch();
-
     // State to manage the list request used for fetching practitioners
     const [physicanListRequest, setPhysicanListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -44,12 +43,13 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
     // Fetch the list of practitioners (physicians) based on the request
     const { data: practitionerListResponse } = useGetPractitionersQuery(physicanListRequest);
     // Fetch the bed count for the selected department key
-    const { data: bedCountResponse } = useFetchBedCountByDepartmentKeyQuery(
+    const { data: bedCountResponse, isFetching } = useFetchBedCountByDepartmentKeyQuery(
         { department_key: transferPatient?.toInpatientDepartmentKey },
         {
             skip: !transferPatient?.toInpatientDepartmentKey
         }
     );
+
 
     // Fetch LOV data for various fields
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
@@ -62,15 +62,20 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
                 <MyInput
                     width={200}
                     column
-                    fieldType='select'
-                    fieldLabel="Transfer To  Ward"
+                    fieldType="select"
+                    fieldLabel="Transfer To Ward"
                     fieldName="toInpatientDepartmentKey"
-                    selectData={inpatientDepartmentListResponse?.data?.object ?? []}
+                    selectData={
+                        inpatientDepartmentListResponse?.data?.object
+                            ?.filter((item) => item.key !== localEncounter?.resourceObject?.key)
+                        ?? []
+                    }
                     selectDataLabel="name"
                     selectDataValue="key"
                     record={transferPatient}
                     setRecord={setTransferPatient}
                 />
+
                 <MyInput
                     width={200}
                     column
@@ -268,12 +273,12 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
                     patientKey: localPatient.key,
                     encounterKey: encounter.key,
                     fromInpatientDepartmentKey: encounter.resourceObject?.key,
-                     statusLkey: "91063195286200" 
+                    statusLkey: "91063195286200"
                 }).unwrap();
 
                 dispatch(notify({ msg: 'Transfer Patient Successfully', sev: 'success' }));
                 //TODO convert key to code
-                setTransferPatient({ ...newApTransferPatient, statusLkey: "91063195286200"  });
+                setTransferPatient({ ...newApTransferPatient, statusLkey: "91063195286200" });
                 setOpen(false);
             }
             await refetchInpatientList();
@@ -306,6 +311,17 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
             handleClearField();
         }
     }, [open]);
+    useEffect(() => {
+        if (!isFetching && bedCountResponse !== undefined) {
+            setBedCount({ count: bedCountResponse });
+
+            if (transferPatient?.toInpatientDepartmentKey && bedCountResponse === 0) {
+                dispatch(notify({ msg: 'No Available Beds', sev: 'warning' }));
+            }
+        }
+    }, [isFetching, bedCountResponse, transferPatient?.toInpatientDepartmentKey]);
+
+
     return (
         <AdvancedModal
             open={open}
