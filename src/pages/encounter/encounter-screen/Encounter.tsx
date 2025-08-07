@@ -339,6 +339,7 @@ const Encounter = () => {
     },
     { key: 'stratifyScale', label: 'STRATIFY Scale', icon: faPersonFallingBurst, path: 'stratify-scale' },
     { key: 'hendrichFallRisk', label: 'Hendrich II Fall Risk Model', icon: faPersonFallingBurst, path: 'hendrich-fall-risk' },
+    { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
 
   ];
   const [currentHeader, setCurrentHeader] = useState();
