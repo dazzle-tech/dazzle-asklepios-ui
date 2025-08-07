@@ -44,6 +44,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
     const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
+    console.log("genericMedicationListResponse", genericMedicationListResponse?.object);
     const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ORDER_ADMIN_NSTRUCTIONS');
     const { data: orderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MEDCATION_ORDER_TYPE');
     const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
@@ -298,7 +299,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
                     Order Related Tests
                 </MyButton>
             </div>}
-          
+
             rightContent={
                 <Form fluid>
                     <Row gutter={20}
@@ -328,25 +329,27 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
                                     </InputGroup>
                                     {searchKeyword && (
                                         <Dropdown.Menu className="dropdown-menuresult">
-                                            {genericMedicationListResponse && genericMedicationListResponse?.object?.map(Generic => (
+                                            {genericMedicationListResponse?.object?.map(Generic => (
                                                 <Dropdown.Item
                                                     key={Generic.key}
                                                     eventKey={Generic.key}
                                                     onClick={() => handleItemClick(Generic)}
-
                                                 >
-                                                    <span >
-                                                        {[Generic.genericName,
-                                                        Generic.dosageFormLvalue?.lovDisplayVale,
-                                                        Generic.manufacturerLvalue?.lovDisplayVale,
-                                                        Generic.roaLvalue?.lovDisplayVale]
-                                                            .filter(Boolean)
-                                                            .join(', ')}
-                                                    </span>
-                                                    {Generic.activeIngredients}
+                                                    <div style={{ lineHeight: '1.4' }}>
+                                                        <div style={{ fontWeight: 'bold' }}>
+                                                            {Generic.genericName} {Generic.dosageFormLvalue?.lovDisplayVale && `(${Generic.dosageFormLvalue?.lovDisplayVale})`}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.85em', color: '#555' }}>
+                                                            {Generic.manufacturerLvalue?.lovDisplayVale} {Generic.roaLvalue?.lovDisplayVale && `| ${Generic.roaLvalue?.lovDisplayVale}`}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.8em', color: '#888' }}>
+                                                            {Generic.activeIngredients}
+                                                        </div>
+                                                    </div>
                                                 </Dropdown.Item>
                                             ))}
                                         </Dropdown.Menu>
+
                                     )}
 
 
@@ -598,7 +601,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
                                     /></Col>
                             </Row>
                             <Row className="rows-gap">
-                             
+
                                 <Col md={24}>
                                     <Input as="textarea" onChange={(e) => setInstruc(e.target.value)}
                                         value={instr}
