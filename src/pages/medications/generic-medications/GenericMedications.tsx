@@ -261,7 +261,11 @@ const GenericMedications = () => {
     {
       key: 'code',
       title: <Translate>Code</Translate>,
-      flexGrow: 4
+      flexGrow: 4,
+      isLink: true,
+      onLinkClick: (row) => {
+        console.log('Clicked', row.code);
+      }
     },
     {
       key: 'genericName',

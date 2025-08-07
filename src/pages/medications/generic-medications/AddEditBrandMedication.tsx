@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery, useGetUomGroupsQuery, useGetUomGroupsUnitsQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
@@ -26,12 +26,15 @@ import ChildModal from '@/components/ChildModal';
 import {
   newApBrandMedicationSubstitutes,
   newApGenericMedication,
-  newApGenericMedicationActiveIngredient
+  newApGenericMedicationActiveIngredient,
+  newApUomGroups
 } from '@/types/model-types-constructor';
-import { ApGenericMedication, ApGenericMedicationActiveIngredient } from '@/types/model-types';
+import { ApGenericMedication, ApGenericMedicationActiveIngredient, ApUomGroups } from '@/types/model-types';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
-import { isEmpty } from 'lodash';
+import { isEmpty, set } from 'lodash';
+import { FaUnity } from 'react-icons/fa6';
+import AddEditUom from '@/pages/setup/uom-group/AddEditUom';
 const AddEditBrandMedication = ({
   open,
   setOpen,
@@ -69,9 +72,13 @@ const AddEditBrandMedication = ({
     ]
   });
   const [brand, setBrand] = useState<ApGenericMedication>({ ...newApGenericMedication });
+  const [uomGroupOpen, setUomGroupOpen] = useState(false);
+  const [uomGroup, setUomGroup] = useState<ApUomGroups>({ ...newApUomGroups });
   const [genericActive, setGenericActive] = useState<ApGenericMedicationActiveIngredient>({
     ...newApGenericMedicationActiveIngredient
   });
+  const [childStep, setChildStep] = useState<number>(-1);
+  const [width, setWidth] = useState<number>(window.innerWidth);
   // Fetch generic Medication  list response
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery('');
@@ -103,6 +110,57 @@ const AddEditBrandMedication = ({
   const { data: genericMedicationActiveIngredientListResponseData } =
     useGetGenericMedicationActiveIngredientQuery(listRequest);
 
+  const [UOMListRequest, setUOMListRequest] = useState<ListRequest>({
+    ...initialListRequest
+
+  });
+  const {
+    data: uomGroupsListResponse,
+    refetch: refetchUomGroups,
+    isFetching
+  } = useGetUomGroupsQuery(UOMListRequest);
+  const [unitListRequest, setUnitListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+      ,
+      {
+        fieldName: 'uom_group_key',
+        operator: 'match',
+        value: genericMedication?.uomGroupKey
+
+      }
+    ]
+  });
+  useEffect(() => {
+    setUnitListRequest(
+      {
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          },
+          {
+            fieldName: 'uom_group_key',
+            operator: 'match',
+            value: genericMedication?.uomGroupKey
+          }
+
+        ],
+      }
+    );
+  }, [genericMedication?.uomGroupKey]);
+
+  const {
+    data: uomGroupsUnitsListResponse,
+    refetch: refetchUomGroupsUnit,
+  } = useGetUomGroupsUnitsQuery(unitListRequest);
   // Effects
   // to display genericName, dosageForm, manufacturer, roaLvalue, activeIngredients on add substitutes
   useEffect(() => {
@@ -370,78 +428,78 @@ const AddEditBrandMedication = ({
       case 0:
         return (
           <Form fluid>
-              <Row>
+            <Row>
               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="code"
-                record={genericMedication}
-                setRecord={setGenericMedication}
-              />
+                <MyInput
+                  width="100%"
+                  fieldName="code"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                />
               </Col>
               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldLabel="Brand Name"
-                fieldName="genericName"
-                record={genericMedication}
-                setRecord={setGenericMedication}
-              />
+                <MyInput
+                  width="100%"
+                  fieldLabel="Brand Name"
+                  fieldName="genericName"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                />
               </Col>
-              </Row>
+            </Row>
             <br />
             <Row>
               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="manufacturerLkey"
-                fieldType="select"
-                selectData={GenericMedicationLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={genericMedication}
-                setRecord={setGenericMedication}
-                menuMaxHeight={250}
-              />
+                <MyInput
+                  width="100%"
+                  fieldName="manufacturerLkey"
+                  fieldType="select"
+                  selectData={GenericMedicationLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                  menuMaxHeight={250}
+                />
               </Col>
               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="dosageFormLkey"
-                fieldType="select"
-                selectData={doseageFormLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={genericMedication}
-                setRecord={setGenericMedication}
-                menuMaxHeight={250}
-              />
+                <MyInput
+                  width="100%"
+                  fieldName="dosageFormLkey"
+                  fieldType="select"
+                  selectData={doseageFormLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                  menuMaxHeight={250}
+                />
               </Col>
-              </Row>
+            </Row>
             <br />
-               <Row>
-                <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldLabel="Rout"
-                selectData={medRoutLovQueryResponse?.object ?? []}
-                fieldType="checkPicker"
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName="roaList"
-                record={genericMedication}
-                setRecord={setGenericMedication}
-              />
+            <Row>
+              <Col md={12}>
+                <MyInput
+                  width="100%"
+                  fieldLabel="Rout"
+                  selectData={medRoutLovQueryResponse?.object ?? []}
+                  fieldType="checkPicker"
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldName="roaList"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                />
               </Col>
               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="marketingAuthorizationHolder"
-                record={genericMedication}
-                setRecord={setGenericMedication}
-              />
+                <MyInput
+                  width="100%"
+                  fieldName="marketingAuthorizationHolder"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                />
               </Col>
-              </Row>
+            </Row>
             <br />
             <MyInput
               width="100%"
@@ -459,48 +517,89 @@ const AddEditBrandMedication = ({
             />
             <Row>
               <Col md={12}>
-              <MyInput
-                width="100%"
-                fieldName="expiresAfterOpening"
-                fieldType="checkbox"
-                record={genericMedication}
-                setRecord={setGenericMedication}
-              />
-              </Col>
-              {genericMedication?.expiresAfterOpening && (
-                <Col md={12}>
                 <MyInput
                   width="100%"
-                  fieldName="expiresAfterOpeningValue"
-                  fieldType="text"
+                  fieldName="expiresAfterOpening"
+                  fieldType="checkbox"
                   record={genericMedication}
                   setRecord={setGenericMedication}
                 />
+              </Col>
+              {genericMedication?.expiresAfterOpening && (
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    fieldName="expiresAfterOpeningValue"
+                    fieldType="text"
+                    record={genericMedication}
+                    setRecord={setGenericMedication}
+                  />
                 </Col>
               )}
             </Row>
             <br />
             <Row>
               <Col md={12}>
-            <MyInput
-              fieldName="singlePatientUse"
-              fieldType="checkbox"
-              record={genericMedication}
-              setRecord={setGenericMedication}
-            />
-            </Col>
-            <Col md={12}>
-            <MyInput
-              fieldName="highCostMedication"
-              fieldType="checkbox"
-              record={genericMedication}
-              setRecord={setGenericMedication}
-            />
-            </Col>
+                <MyInput
+                  fieldName="singlePatientUse"
+                  fieldType="checkbox"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                />
+              </Col>
+              <Col md={12}>
+                <MyInput
+                  fieldName="highCostMedication"
+                  fieldType="checkbox"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                />
+              </Col>
             </Row>
           </Form>
         );
       case 1:
+        return (
+          <Form fluid>
+            <MyInput
+              width="100%"
+              fieldLabel="UOM Group"
+              fieldName="uomGroupKey"
+              fieldType="select"
+              selectData={uomGroupsListResponse?.object ?? []}
+              selectDataLabel="name"
+              selectDataValue="key"
+              record={genericMedication}
+              setRecord={setGenericMedication}
+              searchable={true}
+            />
+            <MyInput
+              width="100%"
+              fieldLabel="Base UOM"
+              fieldName="baseUomKey"
+              fieldType="select"
+              selectData={uomGroupsUnitsListResponse?.object ?? []}
+              selectDataLabel="units"
+              selectDataValue="key"
+              record={genericMedication}
+              setRecord={setGenericMedication}
+            />
+              <div className="container-of-add-new-button">
+                    <MyButton
+                      prefixIcon={() => <AddOutlineIcon />}
+                      color="var(--deep-blue)"
+                      onClick={() => {
+                        setUomGroupOpen(true);
+                        setChildStep(1);
+                      }}
+                      width="109px"
+                    >
+                      Add New UOM
+                    </MyButton>
+                  </div>
+          </Form>
+        );
+      case 2:
         return (
           <Form>
             <div className="container-of-add-new-button">
@@ -509,6 +608,7 @@ const AddEditBrandMedication = ({
                 color="var(--deep-blue)"
                 onClick={() => {
                   setOpenAddEditActiveIngredientsPopup(true);
+                   setChildStep(0);
                   setGenericActive({
                     ...newApGenericMedicationActiveIngredient
                   });
@@ -529,7 +629,7 @@ const AddEditBrandMedication = ({
             />
           </Form>
         );
-      case 2:
+      case 3:
         return (
           <div>
             <div className="container-of-header-brand-medication">
@@ -573,7 +673,7 @@ const AddEditBrandMedication = ({
     }
   };
   // child modal content
-  const conjureFormChildContent = (stepNumber = 0) => {
+  const conjureFormChildContent = (stepNumber) => {
     switch (stepNumber) {
       case 0:
         return (
@@ -612,16 +712,20 @@ const AddEditBrandMedication = ({
             />
           </Form>
         );
-    }
+      case 1:
+        return (  
+             <AddEditUom open={uomGroupOpen} setOpen={setUomGroupOpen} uom={uomGroup} setUom={setUomGroup} width={width} />
+        );
+      }
   };
   return (
     <ChildModal
       open={open}
       setOpen={setOpen}
-      showChild={openAddEditActiveIngredientsPopup}
-      setShowChild={setOpenAddEditActiveIngredientsPopup}
+      showChild={ childStep == 1 ?  uomGroupOpen : openAddEditActiveIngredientsPopup}
+      setShowChild={childStep == 1 ? setUomGroupOpen : setOpenAddEditActiveIngredientsPopup}
+      childTitle={childStep == 1 ? "New/Edit UOM" : "New/Edit Active Ingredients"}
       title={genericMedication?.key ? 'Edit Brand Medication' : 'New Brand Medication'}
-      childTitle="New Active Ingredients"
       mainContent={conjureFormContent}
       childContent={conjureFormChildContent}
       actionButtonLabel={genericMedication?.key ? 'Save' : 'Create'}
@@ -633,6 +737,10 @@ const AddEditBrandMedication = ({
           icon: <MdOutlineMedicationLiquid />,
           disabledNext: !genericMedication?.key,
           footer: <MyButton onClick={handleSave}>Save</MyButton>
+        },
+        {
+          title: 'UOM',
+          icon: <FaUnity />
         },
         {
           title: 'Active Ingredient',
