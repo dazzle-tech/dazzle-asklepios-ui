@@ -151,6 +151,7 @@ import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/p
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-assessment';
 import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary';
+import MedicationSchedule from './pages/setup/medication-schedule-setup';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -316,8 +317,11 @@ const App = () => {
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="ER-department" element={<ERList />} />
               <Route path="encounter" element={<Encounter />}>
-              <Route path="progress-notes" element={<ProgressNotes />} />
-                <Route path="pressure-ulce-risk-assessment" element={<PressureUlcerRiskAssessment />} />
+                <Route path="progress-notes" element={<ProgressNotes />} />
+                <Route
+                  path="pressure-ulce-risk-assessment"
+                  element={<PressureUlcerRiskAssessment />}
+                />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="drug-order" element={<DrugOrder />} />
@@ -440,6 +444,7 @@ const App = () => {
               <Route path="progress-notes" element={<ProgressNotes />} />
               <Route path="department-stock" element={<DepartmentStock />} />
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
+              <Route path="medication-schedule" element={<MedicationSchedule />} />
             </Route>
           </Route>
 
