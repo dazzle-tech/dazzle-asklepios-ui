@@ -36,7 +36,7 @@ import React, { useEffect, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
-import { Divider, Drawer, List, Panel, Text } from 'rsuite';
+import { Col, Divider, Drawer, Form, List, Panel, Row, Text } from 'rsuite';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import './styles.less';
 import BackButton from '@/components/BackButton/BackButton';
@@ -58,6 +58,8 @@ import WarningiesModal from './WarningiesModal';
 import { notify } from '@/utils/uiReducerActions';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import MyInput from '@/components/MyInput';
+import { set } from 'lodash';
 
 const Encounter = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -67,6 +69,7 @@ const Encounter = () => {
   const propsData = location.state;
   const savedState = sessionStorage.getItem('encounterPageSource');
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
+  const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
@@ -360,6 +363,21 @@ const Encounter = () => {
           <div className="container-bt">
             <div className="left">
               <BackButton onClick={handleGoBack} />
+              <Form fluid >
+
+                <MyInput
+                  width="100%"
+                  placeholder="Search screens..."
+                  fieldName={'term'}
+                  record={searchTerm}
+                  setRecord={setSearchTerm}
+                  showLabel={false}
+                  enterClick={()=>setIsDrawerOpen(true)}
+                  
+                />
+
+              </Form>
+
             </div>
             <div className="right">
               <MyButton
@@ -448,6 +466,21 @@ const Encounter = () => {
               <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
             </Drawer.Header>
             <Drawer.Body className="drawer-body">
+              <Form fluid>
+                <Row >
+                  <Col md={24} >
+                    <MyInput
+                      width="100%"
+                      placeholder="Search screens..."
+                      fieldName={'term'}
+                      record={searchTerm}
+                      setRecord={setSearchTerm}
+                      showLabel={false}
+                    /></Col>
+                </Row>
+
+              </Form>
+
               <List hover className="drawer-list-style">
                 <List.Item
                   className="drawer-item return-button"
@@ -461,33 +494,38 @@ const Encounter = () => {
                   <Translate>Dashboard</Translate>
                 </List.Item>
 
-                {menuItems.map(({ key, label, icon, path }) =>
-                  medicalSheet?.object?.[key] ? (
-                    <List.Item
-                      key={key}
-                      className="drawer-item"
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        navigate(path, {
-                          state: {
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
-                          }
-                        });
-                      }}
-                    >
-                      <Link
-                        to={path}
-                        state={{ patient: propsData.patient, encounter: propsData.encounter, edit }}
-                        style={{ color: 'inherit', textDecoration: 'none' }}
+                {menuItems
+                  .filter(({ label }) =>
+                    label.toLowerCase().includes(searchTerm.term.toLowerCase())
+                  )
+                  .map(({ key, label, icon, path }) =>
+                    medicalSheet?.object?.[key] ? (
+                      <List.Item
+                        key={key}
+                        className="drawer-item"
+                        onClick={() => {
+                          setIsDrawerOpen(false);
+                          navigate(path, {
+                            state: {
+                              patient: propsData.patient,
+                              encounter: propsData.encounter,
+                              edit
+                            }
+                          });
+                        }}
                       >
-                        <FontAwesomeIcon icon={icon} className="icon" />
-                        <Translate> {label} </Translate>
-                      </Link>
-                    </List.Item>
-                  ) : null
-                )}
+                        <Link
+                          to={path}
+                          state={{ patient: propsData.patient, encounter: propsData.encounter, edit }}
+                          style={{ color: 'inherit', textDecoration: 'none' }}
+                        >
+                          <FontAwesomeIcon icon={icon} className="icon" />
+                          <Translate> {label} </Translate>
+                        </Link>
+                      </List.Item>
+                    ) : null
+                  )}
+
               </List>
             </Drawer.Body>
           </Drawer>
