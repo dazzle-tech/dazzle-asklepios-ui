@@ -60,6 +60,7 @@ import AdmitToInpatientModal from './AdmitToInpatientModal';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 import MyInput from '@/components/MyInput';
 import { set } from 'lodash';
+import { FaSearch } from 'react-icons/fa';
 
 const Encounter = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -374,6 +375,7 @@ const Encounter = () => {
                   setRecord={setSearchTerm}
                   showLabel={false}
                   enterClick={()=>setIsDrawerOpen(true)}
+                  rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
                   
                 />
 
@@ -477,6 +479,7 @@ const Encounter = () => {
                       record={searchTerm}
                       setRecord={setSearchTerm}
                       showLabel={false}
+                      rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
                     /></Col>
                 </Row>
 
