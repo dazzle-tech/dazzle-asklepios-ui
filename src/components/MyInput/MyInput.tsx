@@ -28,14 +28,14 @@ const CustomDateTimePicker = React.forwardRef(
     <DatePicker
       {...props}
       oneTap
-      showMeridian
-      format="MM/dd/yyyy hh:mm aa"
+      format="yyyy-MM-dd HH:mm"
       cleanable={false}
       block
       ref={ref}
     />
   )
 );
+
 
 const handleEnterFocusNext = (e) => {
   if (e.key === 'Enter') {
