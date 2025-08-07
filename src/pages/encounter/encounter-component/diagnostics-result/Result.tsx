@@ -17,6 +17,7 @@ import { Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
 const Result = ({ patient, user }) => {
     const dispatch = useAppDispatch();
     const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
+
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
     const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
     const [dateOrderFilter, setDateOrderFilter] = useState({
@@ -115,26 +116,26 @@ const Result = ({ patient, user }) => {
 
     useEffect(() => {
         if (!showAbnormal) {
-            const updatedFilters=
-             [
-            {
-                fieldName: "patient_key",
-                operator: 'match',
-                value: patient?.key,
-            },
-            {
-                fieldName: "review_at",
-                operator: 'notMatch',
-                value: 0,
-            }
-        ];
-         setListResultResponse(prev => ({
-            ...prev,
-            filters:updatedFilters
-        }));
+            const updatedFilters =
+                [
+                    {
+                        fieldName: "patient_key",
+                        operator: 'match',
+                        value: patient?.key,
+                    },
+                    {
+                        fieldName: "review_at",
+                        operator: 'notMatch',
+                        value: 0,
+                    }
+                ];
+            setListResultResponse(prev => ({
+                ...prev,
+                filters: updatedFilters
+            }));
         }
-       
-      
+
+
         setListResultResponse(prev => {
             let updatedFilters = prev.filters.filter(f => f.fieldName !== "marker");
 
@@ -330,7 +331,10 @@ const Result = ({ patient, user }) => {
                     <HStack spacing={10}>
                         <FontAwesomeIcon
                             icon={faComment}
-                            style={{ fontSize: "1em" }}
+                            style={{
+                                fontSize: "1em",
+                                color: rowData.hasComments ? "#007bff" : "gray" 
+                            }}
                             onClick={() => setOpenNoteResultModal(true)}
                         />
                     </HStack>
@@ -440,8 +444,8 @@ const Result = ({ patient, user }) => {
                     checked={showAbnormal}
                     onChange={() => {
                         if (showAbnormal) {
-                           
-                           const updatedFilters = listResultResponse.filters.filter(f => f.fieldName !== "marker");
+
+                            const updatedFilters = listResultResponse.filters.filter(f => f.fieldName !== "marker");
                             setListResultResponse({
                                 ...listResultResponse,
                                 filters: updatedFilters

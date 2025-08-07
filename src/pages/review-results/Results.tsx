@@ -166,7 +166,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
 
         resultFetch();
     }, [showReview]);
-    
+
     useEffect(() => {
         setListResultResponse(prev => {
             let updatedFilters = prev.filters.filter(f => f.fieldName !== "marker");
@@ -356,7 +356,10 @@ const Results = ({ setEncounter, setPatient, user }) => {
                     <HStack spacing={10}>
                         <FontAwesomeIcon
                             icon={faComment}
-                            style={{ fontSize: "1em" }}
+                            style={{
+                                fontSize: "1em",
+                                color: rowData.hasComments ? "#007bff" : "gray"
+                            }}
                             onClick={() => setOpenNoteResultModal(true)}
                         />
                     </HStack>

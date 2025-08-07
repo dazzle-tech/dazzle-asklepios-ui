@@ -179,7 +179,10 @@ const Reports = ({ patient, user }) => {
                 <HStack spacing={10}>
                     <FontAwesomeIcon
                         icon={faComment}
-                        style={{ fontSize: '1em' }}
+                         style={{
+                        fontSize: "1em",
+                        color: rowData.hasComments ? "#007bff" : "gray" 
+                    }}
                         onClick={() => setOpenNoteResultModal(true)}
                     />
                 </HStack>
