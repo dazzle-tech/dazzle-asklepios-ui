@@ -211,7 +211,7 @@ const Encounter = () => {
     '/encounter/prescription': 'Prescription ',
     '/encounter/diagnostics-order': 'Diagnostics Order ',
     '/encounter/consultation': 'Consultation',
-    '/encounter/Medication': 'Medication',
+    '/encounter/medication': 'Medication',
     '/encounter/procedures': 'Procedures',
     '/encounter/patient-history': 'Patient History',
     '/encounter/medications-record': 'medications Record ',
@@ -267,7 +267,7 @@ const Encounter = () => {
     },
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
-    { key: 'Medication', label: 'Medication', icon: faPills, path: 'Medication' },
+    { key: 'drugOrder', label: 'Medication', icon: faPills, path: 'medication' },
     {
       key: 'diagnosticsOrder',
       label: 'Diagnostics Order',
@@ -609,4 +609,4 @@ const Encounter = () => {
   );
 };
 
-export default Encounter;
+export default Encounter;
