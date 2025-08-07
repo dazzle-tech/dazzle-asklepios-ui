@@ -28,6 +28,8 @@ export interface ColumnConfig {
   dataKey?: string;
   render?: (rowData: any, rowIndex?: number) => ReactNode;
   expandable?: boolean;
+  isLink?: boolean;
+  onLinkClick?: (rowData: any) => void;
 }
 
 interface MyTableProps {
@@ -136,8 +138,8 @@ const MyTable: React.FC<MyTableProps> = ({
                         col.align === 'center'
                           ? 'center'
                           : col.align === 'right'
-                          ? 'flex-end'
-                          : 'flex-start'
+                            ? 'flex-end'
+                            : 'flex-start'
                       }
                     >
                       {col.title}
@@ -195,7 +197,22 @@ const MyTable: React.FC<MyTableProps> = ({
                             minWidth: col.width ? `${col.width}px` : 'auto'
                           }}
                         >
-                          {col.render ? col.render(row, index) : row[col.dataKey || col.key]}
+                          {col.render ? (
+                            col.render(row, index)
+                          ) : col.isLink ? (
+                            <span
+                              className="table-link"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                col.onLinkClick?.(row);
+                              }}
+                            >
+                              {row[col.dataKey || col.key]}
+                            </span>
+                          ) : (
+                            row[col.dataKey || col.key]
+                          )}
+
                         </TableCell>
                       ))}
                     </TableRow>
