@@ -15,12 +15,13 @@ import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import divSlice from './reducers/divSlice';
 import { labService } from './services/labService';
-import {radService}from '@/services/radService';
+import { radService } from '@/services/radService';
 import { procedureService } from './services/procedureService';
-import {operationService} from './services/operationService';
+import { operationService } from './services/operationService';
 import { inventoryService } from './services/inventoryTransactionService';
-import refetchReducer from './reducers/refetchEncounterState'; 
-import{recoveryService} from './services/RecoveryService';
+import refetchReducer from './reducers/refetchEncounterState';
+import { recoveryService } from './services/RecoveryService';
+import refetchPatientSideInfo from './reducers/refetchPatientSide';
 
 export const store = configureStore({
   reducer: {
@@ -36,9 +37,9 @@ export const store = configureStore({
     [patientSlice.name]: patientSlice.reducer,
     [patientService.reducerPath]: patientService.reducer,
 
-     //setup
+    //setup
     [setupService.reducerPath]: setupService.reducer,
-    
+
     //inventory 
     [inventoryService.reducerPath]: inventoryService.reducer,
 
@@ -63,21 +64,24 @@ export const store = configureStore({
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
     //;ab module
-    [labService.reducerPath]:labService.reducer,
+    [labService.reducerPath]: labService.reducer,
     //operation
-    [operationService.reducerPath]:operationService.reducer,
-    [radService.reducerPath]:radService.reducer,
+    [operationService.reducerPath]: operationService.reducer,
+    [radService.reducerPath]: radService.reducer,
     // div slice 
-    [divSlice.name]:divSlice.reducer,
+    [divSlice.name]: divSlice.reducer,
 
     //refetch Encounters
-     refetch: refetchReducer,
+    refetch: refetchReducer,
+    //refetch Patient Side Information
+    refetchPatientSide: refetchPatientSideInfo,
+
     //procedure 
-    [procedureService.reducerPath]:procedureService.reducer,
+    [procedureService.reducerPath]: procedureService.reducer,
 
     //recovery
-    [recoveryService.reducerPath]:recoveryService.reducer
-  
+    [recoveryService.reducerPath]: recoveryService.reducer
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -99,9 +103,9 @@ export const store = configureStore({
       procedureService.middleware,
       operationService.middleware,
       recoveryService.middleware
-  
+
     ])
-    
+
 });
 
 

@@ -106,7 +106,7 @@ const ERList = () => {
             navigate(targetPath, {
                 state: {
                     info: 'toEncounter',
-                    fromPage: 'EncounterList',
+                    fromPage: 'ER_Department',
                     patient: patientData,
                     encounter: encounterData,
                 }
@@ -115,7 +115,7 @@ const ERList = () => {
             navigate(targetPath, {
                 state: {
                     info: 'toEncounter',
-                    fromPage: 'EncounterList',
+                    fromPage: 'ER_Department',
                     patient: patientData,
                     encounter: encounterData,
                 }

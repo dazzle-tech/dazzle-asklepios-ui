@@ -6,7 +6,7 @@ import { forwardRef, useImperativeHandle } from 'react';
 import './styles.less';
 import { Text, Form } from 'rsuite';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChildReaching, faHeartPulse, faPerson } from '@fortawesome/free-solid-svg-icons';
+import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useGetObservationSummariesQuery, useSaveObservationSummaryMutation } from '@/services/observationService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -18,10 +18,10 @@ import MyLabel from '@/components/MyLabel';
 import { useLocation } from 'react-router-dom';
 import MyButton from '@/components/MyButton/MyButton';
 import clsx from 'clsx';
-import InpatientObservations from './InpatientObservations';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import { useGetAgeGroupValueQuery } from '@/services/patientService';
 import { useSaveEncounterChangesMutation } from '@/services/encounterService';
+import { setRefetchPatientSide } from '@/reducers/refetchPatientSide';
 export type ObservationsRef = {
   handleSave: () => void;
 };
@@ -96,7 +96,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     latestheadcircumference: null,
     latestpainlevelLkey: null
   });
-
   // Fetch patient's age group based on their date of birth
   const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
     useGetAgeGroupValueQuery(
@@ -128,8 +127,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     });
   }, [patientObservationSummary]);
 
-   
- 
   // Handle Save Observations Function
   const handleSave = async () => {
     try {
@@ -168,9 +165,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         console.log("true")
         await saveencounter(localEncounter).unwrap()
       }
-      setTimeout(() => {
-        window.location.reload()
-      }, 500);
+      dispatch(setRefetchPatientSide(true));
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
       console.error('Error while saving observation summary:', error);
@@ -185,7 +180,27 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     });
   }
 
+  // Effects
+  useEffect(() => {
+    console.log(`lastencounterop`, lastencounterop);
+    if (lastencounterop) {
+      setPatientObservationSummary({
+        ...lastencounterop
+      });
+      console.log(patientObservationSummary.latestbpSystolic)
+    }
+  }, [lastencounterop])
+  useEffect(() => {
+    setVital({
+      ...vital,
+      bloodPressureSystolic: patientObservationSummary.latestbpSystolic || 0,
+      bloodPressureDiastolic: patientObservationSummary.latestbpDiastolic || 0,
+      heartRate: patientObservationSummary.latestheartrate || 0,
+      temperature: patientObservationSummary.latesttemperature || 0,
+      oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0,
 
+    })
+  }, [patientObservationSummary])
   useEffect(() => {
     if (saveObservationsMutation && saveObservationsMutation.status === 'fulfilled') {
       setPatientObservationSummary(saveObservationsMutation.data);
@@ -472,6 +487,28 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
               </Row>
 
             }
+            <div className='container-form'>
+              <div className='title-div'>
+                <Text>Vital Signs</Text>
+
+              </div>
+              <Divider />
+              <VitalSigns object={vital} setObject={setVital} />
+
+              <Row className="rows-gap">
+                <Col md={24}>
+                  <MyInput
+                    fieldLabel='Note'
+                    height='100px'
+                    width='100%'
+                    fieldName='latestnotes'
+                    disabled={isEncounterStatusClosed || readOnly}
+                    fieldType='textarea'
+                    record={patientObservationSummary}
+                    setRecord={setPatientObservationSummary}
+                  ></MyInput></Col>
+              </Row>
+            </div>
           </Col>
           <Col md={12}>
             <Row>

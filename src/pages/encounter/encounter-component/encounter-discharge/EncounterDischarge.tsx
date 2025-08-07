@@ -60,7 +60,7 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
             <MyInput
                 column
                 width={300}
-                fieldLabel="Discharge Type"
+                fieldLabel="Discharge Diagnosis"
                 fieldType="textarea"
                 fieldName="diagnosis"
                 record={localEncounter}

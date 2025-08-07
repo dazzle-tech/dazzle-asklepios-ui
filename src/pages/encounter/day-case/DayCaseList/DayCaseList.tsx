@@ -129,7 +129,7 @@ const DayCaseList = () => {
             navigate(targetPath, {
                 state: {
                     info: 'toEncounter',
-                    fromPage: 'EncounterList',
+                    fromPage: 'DayCaseList',
                     patient: patientData,
                     encounter: encounterData,
                 }
@@ -138,7 +138,7 @@ const DayCaseList = () => {
             navigate(targetPath, {
                 state: {
                     info: 'toEncounter',
-                    fromPage: 'EncounterList',
+                    fromPage: 'DayCaseList',
                     patient: patientData,
                     encounter: encounterData,
                 }

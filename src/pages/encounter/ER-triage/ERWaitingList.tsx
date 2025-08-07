@@ -132,7 +132,7 @@ const ERWaitingList = () => {
   const handleGoToViewTriage = async (encounterData, patientData) => {
     const targetPath = '/view-triage';
     navigate(targetPath, {
-      state: { info: 'toViewTriage', patient: patientData, encounter: encounterData }
+      state: {from:'ER_Waiting_List', info: 'toViewTriage', patient: patientData, encounter: encounterData }
     });
   };
 

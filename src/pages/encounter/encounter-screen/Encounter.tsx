@@ -28,7 +28,7 @@ import {
   faTriangleExclamation,
   faUserDoctor,
   faPersonFallingBurst,
-   faG,
+  faG,
   faVials
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -163,7 +163,12 @@ const Encounter = () => {
       });
     } else if (localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT') {
       navigate('/inpatient-encounters-list');
-    } else {
+    } else if (propsData?.fromPage === 'DayCaseList') {
+      navigate('/day-case-list');
+    } else if (propsData?.fromPage === 'ER_Department') {
+      navigate('/ER-department');
+    }
+    else {
       navigate('/encounter-list');
     }
   };
@@ -235,20 +240,20 @@ const Encounter = () => {
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
     { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
-    {key: 'medicalWarnings',label: 'Medical Warnings',icon: faTriangleExclamation,path: 'medical-warnings'},
-    {key: 'diagnosticsResult',label: 'Diagnostics Test Result',icon: faFileWaveform,path: 'diagnostics-result' },
+    { key: 'medicalWarnings', label: 'Medical Warnings', icon: faTriangleExclamation, path: 'medical-warnings' },
+    { key: 'diagnosticsResult', label: 'Diagnostics Test Result', icon: faFileWaveform, path: 'diagnostics-result' },
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
-    { key: 'diagnosticsOrder',label: 'Diagnostics Order',icon: faVials,path: 'diagnostics-order'},
+    { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
-     {
+    {
       key: 'operationRequests',
       label: 'Operation Requests',
       icon: faBedPulse,
       path: 'operation-request'
     }
-,
+    ,
 
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     {
@@ -257,7 +262,7 @@ const Encounter = () => {
       icon: faClockRotateLeft,
       path: 'patient-history'
     },
-    {key: 'referralRequest',label: 'Referral Request',icon: faUserDoctor,path: 'referral-request'},
+    { key: 'referralRequest', label: 'Referral Request', icon: faUserDoctor, path: 'referral-request' },
     {
       key: 'multidisciplinaryTeamNotes',
       label: 'Multidisciplinary Team Notes',
@@ -284,14 +289,14 @@ const Encounter = () => {
       icon: faSquarePollHorizontal,
       path: 'intake-output-balance'
     },
-  
+
     {
       key: 'carePlanAndGoals',
       label: 'Care Plan & Goals',
       icon: faNotesMedical,
       path: 'care-plan-and-goals'
     },
-  
+
     {
       key: 'johnsHopkinsFallRiskAssessmentTool',
       label: 'Johns Hopkins Tool',
@@ -299,7 +304,7 @@ const Encounter = () => {
       path: 'johns-hopkins-tool'
     },
 
-    
+
     {
       key: 'medicationsRecord',
       label: 'Medications Record',
@@ -308,7 +313,7 @@ const Encounter = () => {
     },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
 
-   
+
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
@@ -411,9 +416,9 @@ const Encounter = () => {
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={() =>
                     propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
                       ? setOpenDischargeModal(true)
                       : handleCompleteEncounter()
                   }
@@ -421,9 +426,9 @@ const Encounter = () => {
                 >
                   <Translate>
                     {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
                       ? 'Discharge'
                       : 'Complete Visit'}
                   </Translate>

@@ -55,7 +55,7 @@ const InpatientNurseStation = ({ }) => {
 
     const handleCompleteEncounter = async () => {
         try {
-             if (localEncounter) {
+            if (localEncounter) {
                 await completeEncounter(localEncounter).unwrap();
                 dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
             }
@@ -109,7 +109,7 @@ const InpatientNurseStation = ({ }) => {
                                     {/* TODO update status to be a LOV value */}
                                     {!localEncounter.discharge && localEncounter.encounterStatusLkey !== "91109811181900" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                                        onClick={()=>localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
+                                        onClick={() => localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
                                         appearance="ghost"
                                     >
                                         <Translate>{localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ? "Discharge" : "Complete Visit"}</Translate>
@@ -169,12 +169,12 @@ const InpatientNurseStation = ({ }) => {
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="7" title="Physical Examination">
-                                     <ReviewOfSystems 
-                                       edit={propsData.edit}
+                                    <ReviewOfSystems
+                                        edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
-                                 <Tabs.Tab eventKey="8" title="Pain Assessment">
+                                <Tabs.Tab eventKey="8" title="Pain Assessment">
                                     <PainAssessment
                                         edit={propsData.edit}
                                         patient={propsData.patient}
@@ -187,19 +187,19 @@ const InpatientNurseStation = ({ }) => {
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="10" title="Functional Assessment">
-                                  <FunctionalAssessment
+                                    <FunctionalAssessment
                                         edit={propsData.edit}
                                         patient={propsData.patient}
-                                        encounter={propsData.encounter} />  
+                                        encounter={propsData.encounter} />
                                 </Tabs.Tab>
-                                    <Tabs.Tab eventKey="11" title="Repositioning">
-                                  <Repositioning
+                                <Tabs.Tab eventKey="11" title="Repositioning">
+                                    <Repositioning
                                         edit={propsData.edit}
                                         patient={propsData.patient}
-                                        encounter={propsData.encounter} />  
+                                        encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="12" title="Medication Reconciliation">
-                                     <MedicationReconciliation
+                                    <MedicationReconciliation
                                         edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter} />
@@ -207,7 +207,7 @@ const InpatientNurseStation = ({ }) => {
                                 <Tabs.Tab eventKey="13" title="Physician Order Summary">
 
                                 </Tabs.Tab>
-                        
+
                             </Tabs>
                         </Panel>
                     </div>
@@ -217,7 +217,7 @@ const InpatientNurseStation = ({ }) => {
                     <EncounterDischarge
                         open={openDischargeModal}
                         setOpen={setOpenDischargeModal}
-                        encounter={propsData.encounter}/>
+                        encounter={propsData.encounter} />
                 </div>
             )}
         </>
