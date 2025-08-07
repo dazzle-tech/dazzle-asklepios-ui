@@ -20,7 +20,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid>
+          <Form fluid className="compact-form">
             <Row>
               <Col md={12}>
                 <MyInput
@@ -46,7 +46,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 />
               </Col>
             </Row>
-            <br />
+
             <Row>
               <Col md={12}>
                 <MyInput
@@ -66,25 +66,27 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   width="100%"
                   fieldType="number"
                   rightAddon="mL/hr"
+                  rightAddonwidth={70}
                   fieldName="infusionRate"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                 />
               </Col>
             </Row>
-            <br />
-            <MyInput
-              width="100%"
-              selectData={frequencyLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldType="select"
-              fieldName="frequency"
-              record={fluidOrder}
-              setRecord={setFluidOrder}
-              menuMaxHeight={200}
-            />
+
             <Row>
+              <Col md={12}>
+                <MyInput
+                  width="100%"
+                  selectData={frequencyLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldType="select"
+                  fieldName="frequency"
+                  record={fluidOrder}
+                  setRecord={setFluidOrder}
+                />
+              </Col>
               <Col md={12}>
                 <MyInput
                   width="100%"
@@ -94,6 +96,9 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   setRecord={setFluidOrder}
                 />
               </Col>
+            </Row>
+
+            <Row>
               <Col md={12}>
                 <MyInput
                   disabled={fluidOrder?.untilCompleted}
@@ -104,14 +109,16 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   setRecord={setFluidOrder}
                 />
               </Col>
+              <Col md={12}>
+                <MyInput
+                  width="100%"
+                  fieldName="concentration"
+                  record={fluidOrder}
+                  setRecord={setFluidOrder}
+                />
+              </Col>
             </Row>
-            <br />
-            <MyInput
-              width="100%"
-              fieldName="concentration"
-              record={fluidOrder}
-              setRecord={setFluidOrder}
-            />
+
             <Row>
               <Col md={12}>
                 <MyInput
@@ -133,26 +140,22 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 />
               </Col>
             </Row>
-            <br />
-            <MyInput
-              width="100%"
-              selectData={infusionDeviceLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldType="select"
-              fieldName="infusionDevice"
-              record={fluidOrder}
-              setRecord={setFluidOrder}
-              menuMaxHeight={200}
-            />
-            <MyInput
-              width="100%"
-              fieldName="notesToNurse"
-              fieldType="textarea"
-              record={fluidOrder}
-              setRecord={setFluidOrder}
-            />
+
             <Row>
+              <Col md={12}>
+                <MyInput
+                  width="100%"
+                  selectData={infusionDeviceLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldType="select"
+                  fieldName="infusionDevice"
+                  record={fluidOrder}
+                  setRecord={setFluidOrder}
+                  menuMaxHeight={200}
+                />
+              </Col>
+
               <Col md={12}>
                 <MyInput
                   width="100%"
@@ -164,6 +167,18 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                   menuMaxHeight={200}
+                />
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={12}>
+                <MyInput
+                  width="100%"
+                  fieldName="notesToNurse"
+                  fieldType="textarea"
+                  record={fluidOrder}
+                  setRecord={setFluidOrder}
                 />
               </Col>
               <Col md={12}>
