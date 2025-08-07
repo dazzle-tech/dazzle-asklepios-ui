@@ -19,9 +19,9 @@ const GlasgowComaScaleModal = ({ open, setOpen, onSave }) => {
   const { data: eyeLovData } = useGetLovValuesByCodeQuery('GCS_EYE');
   const { data: verbalLovData } = useGetLovValuesByCodeQuery('GCS_VERBAL');
   const { data: motorLovData } = useGetLovValuesByCodeQuery('GCS_MOTOR');
-  const eyeLov = eyeLovData.object || [];
-  const verbalLov = verbalLovData.object || [];
-  const motorLov = motorLovData.object || [];
+  const eyeLov = eyeLovData?.object || [];
+  const verbalLov = verbalLovData?.object || [];
+  const motorLov = motorLovData?.object || [];
 
   // Get the numeric score from a list of values (LOV) by matching the ID
   const getScoreById = (lovList, id) => {
@@ -99,7 +99,7 @@ const GlasgowComaScaleModal = ({ open, setOpen, onSave }) => {
             backgroundColor={riskInfo.backgroundColor}
             color={riskInfo.color}
             contant={riskInfo.label}
-          />{' '}
+          />
         </div>
       </div>
     </>

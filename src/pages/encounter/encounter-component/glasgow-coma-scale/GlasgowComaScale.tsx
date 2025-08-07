@@ -85,7 +85,7 @@ const GlasgowComaScale = () => {
     const aVal = a[sortColumn];
     const bVal = b[sortColumn];
     if (aVal === bVal) return 0;
-    return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+    return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
   });
 
   // Pagination slice
