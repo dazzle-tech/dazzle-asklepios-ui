@@ -66,6 +66,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   width="100%"
                   fieldType="number"
                   rightAddon="mL/hr"
+                  rightAddonwidth={70}
                   fieldName="infusionRate"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
