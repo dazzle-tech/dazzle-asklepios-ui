@@ -63,12 +63,12 @@ const handleDownload = attachment => {
     a.click();
     window.URL.revokeObjectURL(url);
 };
-const DiagnosticsOrder = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
-    const location = useLocation();
-    const state = location.state || {};
-    const patient = propPatient || state.patient;
-    const encounter = propEncounter || state.encounter;
-    const edit = propEdit ?? state.edit;
+const DiagnosticsOrder = (props) => {
+  const location = useLocation();
+  
+    const patient = props.patient || location.state?.patient;
+    const encounter = props.encounter || location.state?.encounter;
+    const edit = props.edit ?? location.state?.edit ?? false;
     const dispatch = useAppDispatch();
     const [showCanceled, setShowCanceled] = useState(true);
     const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });

@@ -22,13 +22,12 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-const Warning = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
-  const location = useLocation();
-  const state = location.state || {};
-
-  const patient = propPatient || state.patient;
-  const encounter = propEncounter || state.encounter;
-  const edit = propEdit ?? state.edit;
+const Warning = (props) => {
+ const location = useLocation();
+ 
+   const patient = props.patient || location.state?.patient;
+   const encounter = props.encounter || location.state?.encounter;
+   const edit = props.edit ?? location.state?.edit ?? false;
 
   const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
   const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();

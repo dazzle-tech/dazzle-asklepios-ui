@@ -7,9 +7,12 @@ import { useGetRequestedOperationQuery } from "@/services/operationService";
 import AnesthesiaCarePlan from "./AnesthesiaCarePlan";
 import PreCheckList from "./PreCheckList";
 
-const OperationRequest = () => {
-   const location = useLocation();
-   const { patient, encounter, edit } = location.state || {};
+const OperationRequest = (props) => {
+ const location = useLocation();
+ 
+   const patient = props.patient || location.state?.patient;
+   const encounter = props.encounter || location.state?.encounter;
+   const edit = props.edit ?? location.state?.edit ?? false;
    const authSlice = useAppSelector(state => state.auth);
    const {
       data: requestedOperation,
