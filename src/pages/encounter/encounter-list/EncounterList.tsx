@@ -71,6 +71,10 @@ const EncounterList = () => {
       return 'selected-row';
     } else return '';
   };
+useEffect(() => {
+  handleManualSearch();
+}, [listRequest,dateFilter.fromDate, dateFilter.toDate]);
+
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
     if (dateFilter.fromDate && dateFilter.toDate) {
@@ -406,11 +410,11 @@ const EncounterList = () => {
           record={dateFilter}
           setRecord={setDateFilter}
         />
-        <div className="search-btn">
+        {/* <div className="search-btn">
           <MyButton onClick={handleManualSearch}>
             <icons.Search />
           </MyButton>
-        </div>
+        </div> */}
       </Form>
     );
   };
