@@ -30,7 +30,6 @@ const ViewTriage = () => {
     const [isHiddenFields, setIsHiddenFields] = useState(false);
     const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
     const [refetchPatientObservations, setRefetchPatientObservations] = useState(false);
-    const [openSendToModal, setOpenSendToModal] = useState(false);
     const [encounter, setEncounter] = useState<ApEncounter>({ ...propsData.encounter });
     const YES_KEY = '1476229927081534';
     const NO_KEY = '1476240934233400';
@@ -79,6 +78,15 @@ const ViewTriage = () => {
     dispatch(setPageCode('ER_View_Triage'));
     dispatch(setDivContent(divContentHTML));
 
+
+    // handle Go Back Button
+    const handleGoBack = () => {
+        if (propsData?.from === 'ER_Triage') {
+            navigate('/ER-triage');
+        } else if (propsData?.from === 'ER_Waiting_List') {
+            navigate('/ER-waiting-list');
+        }
+    }
     // Effects
     useEffect(() => {
         if (saveTriageMutation && saveTriageMutation.status === 'fulfilled') {
@@ -167,9 +175,7 @@ const ViewTriage = () => {
             <div className="left-box">
                 <div className='bt-field-div'>
                     <BackButton
-                        onClick={() => {
-                            navigate('/ER-waiting-list');
-                        }}
+                        onClick={handleGoBack}
                     />
                     <div className='bt-right'>
                         <Form fluid layout="inline">
