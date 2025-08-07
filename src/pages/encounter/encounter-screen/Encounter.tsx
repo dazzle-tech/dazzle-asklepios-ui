@@ -172,8 +172,7 @@ const Encounter = () => {
       navigate('/day-case-list');
     } else if (propsData?.fromPage === 'ER_Department') {
       navigate('/ER-department');
-    }
-    else {
+    } else {
       navigate('/encounter-list');
     }
   };
@@ -212,7 +211,7 @@ const Encounter = () => {
     '/encounter/prescription': 'Prescription ',
     '/encounter/diagnostics-order': 'Diagnostics Order ',
     '/encounter/consultation': 'Consultation',
-    '/encounter/drug-order': 'Drug Order ',
+    '/encounter/Medication': 'Medication',
     '/encounter/procedures': 'Procedures',
     '/encounter/patient-history': 'Patient History',
     '/encounter/medications-record': 'medications Record ',
@@ -235,31 +234,53 @@ const Encounter = () => {
     '/encounter/glasgow-coma-scale': 'Glasgow Coma Scale (GCS)',
     '/encounter/pressure-ulce-risk-assessment': 'Pressure Ulcer Risk Assessment',
     '/encounter/vte-risk-assessment': 'VTE Risk Assessment'
-
   };
 
   const menuItems = [
-    { key: 'vteRiskAssessment', label: 'VTE Risk Assessment', icon: faBraille, path: 'vte-risk-assessment' },
-    { key: 'bradenScaleForPressureUlcer', label: 'Pressure Ulcer Risk Assessment', icon: faBed, path: 'pressure-ulce-risk-assessment' },
+    {
+      key: 'vteRiskAssessment',
+      label: 'VTE Risk Assessment',
+      icon: faBraille,
+      path: 'vte-risk-assessment'
+    },
+    {
+      key: 'bradenScaleForPressureUlcer',
+      label: 'Pressure Ulcer Risk Assessment',
+      icon: faBed,
+      path: 'pressure-ulce-risk-assessment'
+    },
     { key: 'glasgowComaScale', label: 'Glasgow Coma Scale', icon: faG, path: 'glasgow-coma-scale' },
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
     { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
-    { key: 'medicalWarnings', label: 'Medical Warnings', icon: faTriangleExclamation, path: 'medical-warnings' },
-    { key: 'diagnosticsResult', label: 'Diagnostics Test Result', icon: faFileWaveform, path: 'diagnostics-result' },
+    {
+      key: 'medicalWarnings',
+      label: 'Medical Warnings',
+      icon: faTriangleExclamation,
+      path: 'medical-warnings'
+    },
+    {
+      key: 'diagnosticsResult',
+      label: 'Diagnostics Test Result',
+      icon: faFileWaveform,
+      path: 'diagnostics-result'
+    },
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
-    { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
-    { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
+    { key: 'Medication', label: 'Medication', icon: faPills, path: 'Medication' },
+    {
+      key: 'diagnosticsOrder',
+      label: 'Diagnostics Order',
+      icon: faVials,
+      path: 'diagnostics-order'
+    },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
     {
       key: 'operationRequests',
       label: 'Operation Requests',
       icon: faBedPulse,
       path: 'operation-request'
-    }
-    ,
-
+    },
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     {
       key: 'patientHistory',
@@ -267,7 +288,12 @@ const Encounter = () => {
       icon: faClockRotateLeft,
       path: 'patient-history'
     },
-    { key: 'referralRequest', label: 'Referral Request', icon: faUserDoctor, path: 'referral-request' },
+    {
+      key: 'referralRequest',
+      label: 'Referral Request',
+      icon: faUserDoctor,
+      path: 'referral-request'
+    },
     {
       key: 'multidisciplinaryTeamNotes',
       label: 'Multidisciplinary Team Notes',
@@ -309,7 +335,6 @@ const Encounter = () => {
       path: 'johns-hopkins-tool'
     },
 
-
     {
       key: 'medicationsRecord',
       label: 'Medications Record',
@@ -317,7 +342,6 @@ const Encounter = () => {
       path: 'medications-record'
     },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
-
 
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
@@ -338,10 +362,19 @@ const Encounter = () => {
       icon: faPersonFallingBurst,
       path: 'morse-fall-scale'
     },
-    { key: 'stratifyScale', label: 'STRATIFY Scale', icon: faPersonFallingBurst, path: 'stratify-scale' },
-    { key: 'hendrichFallRisk', label: 'Hendrich II Fall Risk Model', icon: faPersonFallingBurst, path: 'hendrich-fall-risk' },
-    { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
-
+    {
+      key: 'stratifyScale',
+      label: 'STRATIFY Scale',
+      icon: faPersonFallingBurst,
+      path: 'stratify-scale'
+    },
+    {
+      key: 'hendrichFallRisk',
+      label: 'Hendrich II Fall Risk Model',
+      icon: faPersonFallingBurst,
+      path: 'hendrich-fall-risk'
+    },
+    { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' }
   ];
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (
@@ -365,8 +398,7 @@ const Encounter = () => {
           <div className="container-bt">
             <div className="left">
               <BackButton onClick={handleGoBack} />
-              <Form fluid >
-
+              <Form fluid>
                 <MyInput
                   width="100%"
                   placeholder="Search screens..."
@@ -374,13 +406,10 @@ const Encounter = () => {
                   record={searchTerm}
                   setRecord={setSearchTerm}
                   showLabel={false}
-                  enterClick={()=>setIsDrawerOpen(true)}
+                  enterClick={() => setIsDrawerOpen(true)}
                   rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                  
                 />
-
               </Form>
-
             </div>
             <div className="right">
               <MyButton
@@ -438,9 +467,9 @@ const Encounter = () => {
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={() =>
                     propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
                       ? setOpenDischargeModal(true)
                       : handleCompleteEncounter()
                   }
@@ -448,9 +477,9 @@ const Encounter = () => {
                 >
                   <Translate>
                     {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
                       ? 'Discharge'
                       : 'Complete Visit'}
                   </Translate>
@@ -470,8 +499,8 @@ const Encounter = () => {
             </Drawer.Header>
             <Drawer.Body className="drawer-body">
               <Form fluid>
-                <Row >
-                  <Col md={24} >
+                <Row>
+                  <Col md={24}>
                     <MyInput
                       width="100%"
                       placeholder="Search screens..."
@@ -480,9 +509,9 @@ const Encounter = () => {
                       setRecord={setSearchTerm}
                       showLabel={false}
                       rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                    /></Col>
+                    />
+                  </Col>
                 </Row>
-
               </Form>
 
               <List hover className="drawer-list-style">
@@ -520,7 +549,11 @@ const Encounter = () => {
                       >
                         <Link
                           to={path}
-                          state={{ patient: propsData.patient, encounter: propsData.encounter, edit }}
+                          state={{
+                            patient: propsData.patient,
+                            encounter: propsData.encounter,
+                            edit
+                          }}
                           style={{ color: 'inherit', textDecoration: 'none' }}
                         >
                           <FontAwesomeIcon icon={icon} className="icon" />
@@ -529,7 +562,6 @@ const Encounter = () => {
                       </List.Item>
                     ) : null
                   )}
-
               </List>
             </Drawer.Body>
           </Drawer>
