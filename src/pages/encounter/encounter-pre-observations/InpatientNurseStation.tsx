@@ -32,7 +32,6 @@ import Repositioning from '../encounter-component/repositioning';
 import Encounter from '../encounter-screen';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 import PhysicianOrderSummary from '../encounter-component/physician-order-summary';
-
 const InpatientNurseStation = ({ }) => {
     const dispatch = useAppDispatch();
     const location = useLocation();
