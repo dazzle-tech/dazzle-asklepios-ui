@@ -11,6 +11,8 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faNutritionix } from '@fortawesome/free-brands-svg-icons';
+
 import {
   faBedPulse,
   faCheckDouble,
@@ -233,7 +235,8 @@ const Encounter = () => {
     '/encounter/progress-notes': 'Progress Notes',
     '/encounter/glasgow-coma-scale': 'Glasgow Coma Scale (GCS)',
     '/encounter/pressure-ulce-risk-assessment': 'Pressure Ulcer Risk Assessment',
-    '/encounter/vte-risk-assessment': 'VTE Risk Assessment'
+    '/encounter/vte-risk-assessment': 'VTE Risk Assessment',
+    '/encounter/nutrition-state-asssessment': 'Nutrition State',
   };
 
   const menuItems = [
@@ -374,7 +377,9 @@ const Encounter = () => {
       icon: faPersonFallingBurst,
       path: 'hendrich-fall-risk'
     },
-    { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' }
+    { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
+     { key: 'nutritionStateAssessment', label: 'Nutrition State', icon: faNutritionix, path: 'nutrition-state-asssessment' },
+
   ];
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (

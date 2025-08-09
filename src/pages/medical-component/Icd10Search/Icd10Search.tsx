@@ -41,7 +41,7 @@ const Icd10Search = ({ object, setOpject, fieldName, ...props }) => {
     return (
         <>
             <Row> 
-                <Text>Diagnosis</Text>
+                <Text>{props?.label ? props?.label : "Diagnosis"}</Text>
                 <Col md={24}>
                     <div style={{ position: 'relative' }}>
                         <InputGroup inside>
