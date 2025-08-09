@@ -2,17 +2,13 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import React from 'react';
-import { Col, Divider, Row, Text } from 'rsuite';
+import { Col, Row, Text } from 'rsuite';
 const NutritionInterventionPlan = ({ object, setObject }) => {
   // Fetch fluid intake types Lov Response
   const { data: fluidIntakeTypesLovQueryResponse } =
     useGetLovValuesByCodeQuery('FLUID_INTAKE_TYPES');
   return (
-    <div className="container-form">
-      <div className="title-div">
-        <Text>Nutrition Intervention Plan</Text>
-      </div>
-      <Divider />
+    <div>
       <Row>
         <MyInput
           width="100%"

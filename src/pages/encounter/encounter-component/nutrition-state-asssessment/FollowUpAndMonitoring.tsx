@@ -1,17 +1,13 @@
 import MyInput from '@/components/MyInput';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import React, { useState } from 'react';
-import { Col, Divider, Row, Text } from 'rsuite';
+import { Col, Row } from 'rsuite';
 const FollowUpAndMonitoring = ({ object, setObject }) => {
   // list of monitoring indicators
   const [monitoringIndicators, setMonitoringIndicators] = useState([]);
 
   return (
-    <div className="container-form">
-      <div className="title-div">
-        <Text>Follow-up and Monitoring</Text>
-      </div>
-      <Divider />
+    <div>
       <Row>
         <Col md={12}>
           <MyInput

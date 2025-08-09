@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Col, Form, Row } from 'rsuite';
+import { Col, Form, Row, Text } from 'rsuite';
 import AnthropometricData from './AnthropometricData';
 import ClinicalAndFunctionalAssessment from './ClinicalAndFunctionalAssessment';
 import DietaryHistoryOrIntake from './DietaryHistoryOrIntake';
@@ -7,6 +7,7 @@ import NutritionDiagnosis from './NutritionDiagnosis';
 import NutritionInterventionPlan from './NutritionInterventionPlan';
 import FollowUpAndMonitoring from './FollowUpAndMonitoring';
 import Biochemical from './Biochemical';
+import SectionContainer from '@/components/SectionsoContainer';
 const NutritionStateAsssessment = () => {
   const [object, setObject] = useState({});
    return (
@@ -14,27 +15,27 @@ const NutritionStateAsssessment = () => {
           <Form fluid>
             <Col md={12}>
               <Row>
-                <AnthropometricData />
+                <SectionContainer title={<Text>Anthropometric Data</Text> } content={<AnthropometricData object={object} setObject={setObject}/>} />
               </Row>
                <Row>
-                <Biochemical/>
+                 <SectionContainer title={<Text>Biochemical</Text> } content={<Biochemical/>} />
               </Row>
               <Row>
-                <ClinicalAndFunctionalAssessment object={object} setObject={setObject} />
+                <SectionContainer title={<Text>Clinical & Functional Assessment</Text> } content={<ClinicalAndFunctionalAssessment object={object} setObject={setObject} />} />
               </Row>
             </Col>
             <Col md={12}>
               <Row>
-                <DietaryHistoryOrIntake object={object} setObject={setObject} />
+                <SectionContainer title={<Text>Dietary History / Intake</Text> } content={<DietaryHistoryOrIntake object={object} setObject={setObject} />} />
               </Row>
               <Row>
-                <NutritionDiagnosis object={object} setObject={setObject}/>
+                 <SectionContainer title={<Text>Nutrition Diagnosis</Text> } content={<NutritionDiagnosis object={object} setObject={setObject} />} />
               </Row>
               <Row>
-                <NutritionInterventionPlan object={object} setObject={setObject}/>
+                <SectionContainer title={<Text>Nutrition Intervention Plan</Text> } content={<NutritionInterventionPlan object={object} setObject={setObject} />} />
               </Row>
               <Row>
-                <FollowUpAndMonitoring object={object} setObject={setObject}/>
+                <SectionContainer title={<Text>Follow-up and Monitoring</Text> } content={<FollowUpAndMonitoring object={object} setObject={setObject} />} />
               </Row>
              
             </Col>

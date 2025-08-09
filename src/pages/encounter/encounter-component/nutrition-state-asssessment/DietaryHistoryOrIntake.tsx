@@ -4,11 +4,11 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Col, Divider, Row, Text } from 'rsuite';
+import { Col, Row } from 'rsuite';
 const DietaryHistoryOrIntake = ({ object, setObject }) => {
    const location = useLocation();
   const { patient } = location.state || {};
-  const [listRequest, setListRequest] = useState<ListRequest>({
+  const [listRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -19,24 +19,21 @@ const DietaryHistoryOrIntake = ({ object, setObject }) => {
       {
         fieldName: 'allergy_type_lkey',
         operator: 'match',
-        value: '3196709905099521'
+        value: '7957051243851240'
       }
     ]
   });
   // Fetch allergies list response
-  const { data: allergiesListResponse } = useGetAllergiesQuery({
-    listRequest
-  });
+  const { data: allergiesListResponse } = useGetAllergiesQuery(
+    listRequest);
+  console.log("list");
+  console.log(allergiesListResponse);
 
    // Fetch fluid intake Types lov response 
   const { data: fluidIntakeTypesLovQueryResponse } = useGetLovValuesByCodeQuery('FLUID_INTAKE_TYPES');
 
   return (
-    <div className="container-form">
-      <div className="title-div">
-        <Text>Dietary History / Intake</Text>
-      </div>
-      <Divider />
+    <div>
       <Row>
         <Col md={12}>
           <MyInput
@@ -73,14 +70,13 @@ const DietaryHistoryOrIntake = ({ object, setObject }) => {
           />
         </Col>
       </Row>
-      {/* // laaaaaaaaaaaaaaaaaaaaaaaaaaaaaaater */}
       <Row>
         <MyInput
           fieldType="select"
           fieldLabel="Food Allergies / Intolerance"
           fieldName="foodAllergies"
           selectData={allergiesListResponse?.object ?? []}
-          selectDataLabel="string"
+          selectDataLabel="allergenKey"
           selectDataValue="key"
           width="100%"
           record={object}

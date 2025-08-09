@@ -1,7 +1,6 @@
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import React, { useState } from 'react';
-import { Divider, Text } from 'rsuite';
 const Biochemical = () => {
   const [test, setTest] = useState({});
 
@@ -36,11 +35,7 @@ const Biochemical = () => {
   ];
 
   return (
-    <div className="container-form">
-      <div className="title-div">
-        <Text>Biochemical</Text>
-      </div>
-      <Divider />
+    <div>
       <MyTable
         height={450}
         data={data}

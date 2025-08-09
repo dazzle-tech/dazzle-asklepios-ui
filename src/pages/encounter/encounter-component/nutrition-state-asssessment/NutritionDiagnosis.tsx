@@ -1,15 +1,11 @@
 
 import MyInput from '@/components/MyInput';
 import React from 'react';
-import { Col, Divider, Row, Text } from 'rsuite';
+import { Col, Row } from 'rsuite';
 const NutritionDiagnosis = ({ object, setObject }) => {
 
   return (
-    <div className="container-form">
-      <div className="title-div">
-        <Text>Nutrition Diagnosis</Text>
-      </div>
-      <Divider />
+    <div>
       <Row>
         <Col md={12}>
           <MyInput

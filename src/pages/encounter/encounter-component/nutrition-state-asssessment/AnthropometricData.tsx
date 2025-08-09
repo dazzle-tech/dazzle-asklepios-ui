@@ -2,14 +2,10 @@ import DynamicLineChart from '@/components/Charts/DynamicLineChart/DynamicLineCh
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import React from 'react';
-import { Col, Divider, FlexboxGrid, Panel, Row, Text } from 'rsuite';
-const AnthropometricData = () => {
+import { Col, FlexboxGrid, Panel, Row } from 'rsuite';
+const AnthropometricData = (object, setObject) => {
   return (
-    <div className="container-form">
-      <div className="title-div">
-        <Text>Anthropometric Data</Text>
-      </div>
-      <Divider />
+    <div >
       <FlexboxGrid>
         <FlexboxGrid.Item className="chart" as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel bordered header={<Translate>Patient Weight Change</Translate>}>
@@ -32,8 +28,8 @@ const AnthropometricData = () => {
           <MyInput
             width="100%"
             fieldName="height"
-            record=""
-            setRecord=""
+            record={object}
+            setRecord={setObject}
             rightAddon="cm"
             fieldType="number"
           />
@@ -42,8 +38,8 @@ const AnthropometricData = () => {
           <MyInput
             width="100%"
             fieldName="width"
-            record=""
-            setRecord=""
+            record={object}
+            setRecord={setObject}
             rightAddon="kg"
             fieldType="number"
           />
@@ -53,8 +49,8 @@ const AnthropometricData = () => {
             width="100%"
             fieldLabel="BMI"
             fieldName="bmi"
-            record=""
-            setRecord=""
+            record={object}
+            setRecord={setObject}
             readonly
             fieldType="number"
           />
@@ -65,8 +61,8 @@ const AnthropometricData = () => {
           <MyInput
             width="100%"
             fieldName="lastWeight "
-            record=""
-            setRecord=""
+            record={object}
+            setRecord={setObject}
             rightAddon="kg"
             fieldType="number"
           />
@@ -75,8 +71,8 @@ const AnthropometricData = () => {
           <MyInput
             width="100%"
             fieldName="weightChange"
-            record=""
-            setRecord=""
+            record={object}
+            setRecord={setObject}
             rightAddon="%"
             fieldType="number"
             readonly
@@ -87,8 +83,8 @@ const AnthropometricData = () => {
             width="100%"
             fieldLabel="MUAC"
             fieldName="muac"
-            record=""
-            setRecord=""
+            record={object}
+            setRecord={setObject}
             fieldType="number"
           />
         </Col>

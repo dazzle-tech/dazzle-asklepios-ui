@@ -2,15 +2,11 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
 import React from 'react';
-import { Col, Divider, Radio, RadioGroup, Row, Text } from 'rsuite';
+import { Col, Radio, RadioGroup, Row, Text } from 'rsuite';
 import "./styles.less";
 const ClinicalAndFunctionalAssessment = ({ object, setObject }) => {
   return (
-    <div className="container-form">
-      <div className="title-div">
-        <Text>Clinical & Functional Assessment</Text>
-      </div>
-      <Divider />
+    <div>
       <Text>Appetite Status</Text>
       <RadioGroup inline>
         <Radio value="good">Good</Radio>
