@@ -152,6 +152,8 @@ import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-assessment';
 import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary';
 import MedicationSchedule from './pages/setup/medication-schedule-setup';
+import NutritionStateAsssessment from './pages/encounter/encounter-component/nutrition-state-asssessment';
+
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -362,6 +364,7 @@ const App = () => {
                 <Route path="morse-fall-scale" element={<MorseFallScale />} />
                 <Route path="stratify-scale" element={<StratifyScale />} />
                 <Route path="hendrich-fall-risk" element={<HendrichFallRisk />} />
+                <Route path="nutrition-state-asssessment" element={<NutritionStateAsssessment />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
