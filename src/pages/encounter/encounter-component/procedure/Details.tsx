@@ -226,6 +226,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                     prefixIcon={() => <CheckIcon />}>
                     Order Related Tests
                 </MyButton>
+                <MyButton 
+                appearance='ghost'
+                >
+                    Devices & Implants
+                </MyButton>
             </div>}
             rightContent={<>
                 <Row gutter={20}
