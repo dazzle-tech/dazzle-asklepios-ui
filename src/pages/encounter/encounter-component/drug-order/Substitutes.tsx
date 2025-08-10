@@ -8,7 +8,7 @@ import { useGetLinkedBrandQuery } from "@/services/medicationsSetupService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import MyModal from "@/components/MyModal/MyModal";
 import { faRightLeft } from "@fortawesome/free-solid-svg-icons";
-const Substitues = ({ open, setOpen, selectedGeneric }) => {
+const Substitues = ({ open, setOpen, selectedGeneric, setSelectedGeneric }) => {
     const { data: lisOfLinkedBrand } = useGetLinkedBrandQuery(selectedGeneric?.key, { skip: selectedGeneric?.key == null });
     const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const tableColumns = [
@@ -143,6 +143,7 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
             size="md"
             title={<Translate>Substitutes</Translate>}
             steps={[{ title: "Substitutes", icon: <FontAwesomeIcon icon={faRightLeft} /> }]}
+
             position="right"
             hideActionBtn
             hideCancel
@@ -150,6 +151,10 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
                 <MyTable
                     data={paginatedData ?? []}
                     columns={tableColumns}
+                    onRowClick={rowData => {
+
+                        setSelectedGeneric(rowData);
+                    }}
                     page={pageIndex}
                     rowsPerPage={rowsPerPage}
                     totalCount={totalCount}

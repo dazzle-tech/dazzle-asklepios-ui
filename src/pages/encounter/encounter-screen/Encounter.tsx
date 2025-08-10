@@ -11,7 +11,8 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { faNutritionix } from '@fortawesome/free-brands-svg-icons';
+
+import { faLeaf } from '@fortawesome/free-solid-svg-icons';
 
 import {
   faBedPulse,
@@ -378,7 +379,7 @@ const Encounter = () => {
       path: 'hendrich-fall-risk'
     },
     { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
-     { key: 'nutritionStateAssessment', label: 'Nutrition State', icon: faNutritionix, path: 'nutrition-state-asssessment' },
+     { key: 'nutritionStateAssessment', label: 'Nutrition State', icon:faLeaf, path: 'nutrition-state-asssessment' },
 
   ];
   const [currentHeader, setCurrentHeader] = useState();
