@@ -19,7 +19,7 @@ import { useGetCustomeInstructionsQuery, useSavePrescriptionMedicationMutation }
 import { newApPrescriptionMedications } from "@/types/model-types-constructor";
 import { faRightLeft } from "@fortawesome/free-solid-svg-icons";
 import Instructions from "./Instructions";
-import Substitues from "./Substitued";
+import Substitues from "../drug-order/Substitutes";
 import clsx from "clsx";
 import DiagnosticsOrder from '../diagnostics-order';
 import CheckIcon from '@rsuite/icons/Check';
@@ -677,7 +677,7 @@ const DetailsModal = ({ edit, open, setOpen, prescriptionMedication, setPrescrip
                     </Col>
                 </Row>}
         />
-        <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric} />
+        <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric} setSelectedGeneric={setSelectedGeneric} />
         <MyModal
             open={openOrderModel}
             setOpen={setOpenOrderModel}
