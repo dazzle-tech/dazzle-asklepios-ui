@@ -34,7 +34,6 @@ const Rad = () => {
   const dispatch = useAppDispatch();
   const [currentStep, setCurrentStep] = useState('6055029972709625');
   const [encounter, setEncounter] = useState({ ...newApEncounter ,discharge:false});
-  const [showFilterInput, setShowFilterInput] = useState(false);
   const [patient, setPatient] = useState({ ...newApPatient });
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
@@ -47,23 +46,6 @@ const Rad = () => {
     const refetchReport = () => {
     ReportRef.current?.reportFetch();
   };
-
-  const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
-    ...initialListRequest,
- 
-    filters: [
-      {
-        fieldName: 'order_key',
-        operator: 'match',
-        value: order?.key ?? undefined
-      },
-      {
-        fieldName: 'order_type_lkey',
-        operator: 'match',
-        value: '862828331135792'
-      }
-    ]
-  });
 
   const [listReportResponse, setListReportResponse] = useState<ListRequest>({
     ...initialListRequest,
@@ -95,22 +77,7 @@ const Rad = () => {
   useEffect(() => {
     setPatient(order.patient);
     setEncounter(order.encounter);
-    const updatedFilters = [
-      {
-        fieldName: 'order_key',
-        operator: 'match',
-        value: order?.key ?? undefined
-      },
-      {
-        fieldName: 'order_type_lkey',
-        operator: 'match',
-        value: '862828331135792'
-      }
-    ];
-    setListOrdersTestResponse(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
+    
   }, [order]);
 
   useEffect(() => {

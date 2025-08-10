@@ -326,8 +326,7 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
     },
     ,
     {
-      key: '',
-      dataKey: '',
+      key: 'action',
       title: <Translate>ACTION</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {

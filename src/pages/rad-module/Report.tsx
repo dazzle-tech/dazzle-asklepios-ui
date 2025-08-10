@@ -16,6 +16,28 @@ import { HStack, Tooltip, Whisper } from "rsuite";
 import { forwardRef, useImperativeHandle } from 'react';
 import AddReportModal from "./AddReportModal";
 import { formatDateWithoutSeconds } from '@/utils';
+import { useGetPatientAttachmentsListQuery } from "@/services/attachmentService";
+import { FaFileArrowDown } from "react-icons/fa6";
+
+const handleDownload = attachment => {
+  const byteCharacters = atob(attachment.fileContent);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: attachment.contentType });
+
+  // Create a temporary  element and trigger the download
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = attachment.fileName;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
 type props = {
     report: any,
     setReport: any,
@@ -60,6 +82,26 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
     });
     const { data: prevResultsList, refetch: prevResultFetch } =
         useGetDiagnosticOrderTestRadReportListQuery({ ...listPrevResultResponse });
+
+   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
+      ...initialListRequest,
+      filters: [
+              {
+                  fieldName: 'deleted_at',
+                  operator: 'isNull',
+                  value: undefined
+              }
+          
+              ,
+              {
+                  fieldName:'attachment_type',
+                  operator: "match",
+                  value:"RADIOLOGY_REPORT"
+              }
+          ]
+    });
+  
+    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
 
     const isSelected = rowData => {
         if (rowData && report && rowData.key === report.key) {
@@ -113,6 +155,24 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
             reportFetch();
         }, [saveReportMutation.isSuccess]);
     // save note when write it in chatModal
+
+  useEffect(() => {
+    console.log("iam in report ref",attachmentRefetch)
+  if (attachmentRefetch) {
+    const updatedFilters = [
+      {
+        fieldName: 'order_test_key',
+        operator: 'match',
+        value: test?.key || undefined
+      }
+    ];
+    setListReportResponse((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilters,
+    }));
+  }
+}, [attachmentRefetch]);
+
     const handleSendResultMessage = async value => {
         try {
             await saveReportNote({
@@ -204,16 +264,6 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
         }
         ,
         {
-            key: "",
-
-            title: <Translate>EXTERNEL STATUS</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return null;
-            }
-
-        },
-        {
             key: "statusLkey",
             dataKey: "statusLkey",
             title: <Translate>REPORT SATUTS</Translate>,
@@ -226,40 +276,52 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
 
         },
         {
-            key: "",
-            title: <Translate>EXTERNEL LAB NAME</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return null;
-            }
-
-        },
-        {
             key: "patientArrived",
             title: <Translate>ATTACHMENT</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return null;
-            }
+              render: (rowData: any) => {
+                            const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
+                                item => item.referenceObjectKey === rowData.key
+                            );
+                            const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
+            
+                            return (
+                                <HStack spacing={2}>
+                                    {lastAttachment && (
+                                        <FaFileArrowDown
+                                            size={20}
+                                            fill="var(--primary-gray)"
+                                            onClick={() => handleDownload(lastAttachment)}
+                                            style={{ cursor: 'pointer' }}
+                                        />
+                                    )}
+            
+                                  
+                                </HStack>
+                            );
+                        }
 
         },
         ,
         {
-            key: " ",
+            key: "by/at ",
 
             title: <Translate>ATTACHED BY/DATE</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-
-                return null;
-
-            }
+               render: (rowData: any) => {
+                            const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
+                                item => item.referenceObjectKey === rowData.key
+                            );
+                            const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
+            
+                            return  lastAttachment?.key ? <>{lastAttachment?.createdBy} <br /><span className='date-table-style'>{lastAttachment?.createdAt ? formatDateWithoutSeconds(lastAttachment?.createdAt) :" "}</span></> : ' '
+                            ;
+                        }
         }
         ,
         ,
         {
-            key: "",
-            dataKey: "",
+            key: "action",
             title: <Translate>ACTION</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
@@ -464,6 +526,7 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
             setReport={setReport}
             saveReport={saveReport}
             saveTest={saveTest}
+            attachmentRefetch={attachmentRefetch}
         />
     </div>
     );
