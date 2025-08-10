@@ -671,7 +671,6 @@ const Prescription = props => {
           </div>
         </div>
         <div className="bt-right">
-          {/* زر استدعاء الفيفوريت */}
           <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
           <MyButton
             disabled={
@@ -750,7 +749,6 @@ const Prescription = props => {
         title={'Cancellation'}
       ></CancellationModal>
 
-      {/* مودال الفيفوريت */}
       <MyModal
         open={openFavoritesModal}
         setOpen={setOpenFavoritesModal}
