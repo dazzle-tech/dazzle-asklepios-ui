@@ -59,7 +59,7 @@ const DrugOrder = props => {
   const [adminInstructions, setAdminInstructions] = useState('');
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
-
+  const [isFavorite, setIsFavorite] = useState(true);
   const addToFavorites = rowData => {
     const alreadyExists = favoriteMedications.some(
       item => item.genericMedicationsKey === rowData.genericMedicationsKey
@@ -140,7 +140,7 @@ const DrugOrder = props => {
       }
     ]
   });
-  const { data: orderMedications, refetch: medicRefetch } =
+  const { data: orderMedications, refetch: medicRefetch ,isFetching: fetchingOrderMed} =
     useGetDrugOrderMedicationQuery(listRequest);
   const filteredorders =
     orders?.object?.filter(item => item.statusLkey === '1804482322306061') ?? [];
@@ -702,6 +702,7 @@ const DrugOrder = props => {
         <MyTable
           columns={tableColumns}
           data={orderMedications?.object || []}
+          loading={fetchingOrderMed}
           onRowClick={rowData => {
             setOrderMedication(rowData);
             setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
@@ -743,6 +744,7 @@ const DrugOrder = props => {
           encounter={encounter}
           medicRefetch={medicRefetch}
           openToAdd={openToAdd}
+          isFavorite={isFavorite}
         ></DetailsModal>
 
         <AddEditFluidOrder
