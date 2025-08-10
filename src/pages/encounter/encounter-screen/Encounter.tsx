@@ -11,8 +11,8 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { faNutritionix } from '@fortawesome/free-brands-svg-icons';
 
+import { faLeaf } from '@fortawesome/free-solid-svg-icons';
 
 import {
   faBedPulse,
@@ -214,7 +214,7 @@ const Encounter = () => {
     '/encounter/prescription': 'Prescription ',
     '/encounter/diagnostics-order': 'Diagnostics Order ',
     '/encounter/consultation': 'Consultation',
-    '/encounter/medication': 'Medication',
+    '/encounter/medication-order': 'Medication Order',
     '/encounter/procedures': 'Procedures',
     '/encounter/patient-history': 'Patient History',
     '/encounter/medications-record': 'medications Record ',
@@ -271,7 +271,7 @@ const Encounter = () => {
     },
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
-    { key: 'drugOrder', label: 'Medication', icon: faPills, path: 'medication' },
+    { key: 'drugOrder', label: 'Medication Order', icon: faPills, path: 'medication-order' },
     {
       key: 'diagnosticsOrder',
       label: 'Diagnostics Order',
@@ -379,7 +379,7 @@ const Encounter = () => {
       path: 'hendrich-fall-risk'
     },
     { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
-     { key: 'nutritionStateAssessment', label: 'Nutrition State', icon: faNutritionix, path: 'nutrition-state-asssessment' },
+     { key: 'nutritionStateAssessment', label: 'Nutrition State', icon:faLeaf, path: 'nutrition-state-asssessment' },
 
   ];
   const [currentHeader, setCurrentHeader] = useState();
