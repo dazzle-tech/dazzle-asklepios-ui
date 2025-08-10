@@ -145,9 +145,6 @@ const FunctionalAssessmentSummary = ({ patient, encounter }) => {
                     <div className='medical-dashboard-title-div'>
                         Functional Assessment
                     </div>
-                    <div className='bt-right'>
-                        <Text onClick={() => setOpen(true)} className="clickable-link">Full view</Text>
-                    </div>
                 </div>
                 <Divider className="divider-line" />
                 <div className='medical-dashboard-table-div'>

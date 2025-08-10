@@ -7,196 +7,62 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 
-
 const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) => {
+    // Local state to store the current functional assessment data
     const [functionalAssessment, setFunctionalAssessment] = useState<ApFunctionalAssessment>({ ...newApFunctionalAssessment });
 
+    // List of fields to display in the form
+    // Each field contains: label (title), name (key in the object), and optionally unChecked/checked labels
+    const fields = [
+        { label: "Mobility / Ambulation", name: "mobilityAmbulation", unCheckedLabel: "Independent", checkedLabel: "Needs assistance" },
+        { label: "Transferring (Bed ↔ Wheelchair)", name: "transferringBedChair", unCheckedLabel: "Independent", checkedLabel: "Needs assistance" },
+        { label: "Stair Climbing Ability", name: "stairClimbingAbility", unCheckedLabel: "Independent", checkedLabel: "Needs assistance" },
+        { label: "Feeding (Eating ability)", name: "feeding", unCheckedLabel: "Independent", checkedLabel: "Needs assistance" },
+        { label: "Toileting Ability", name: "toiletingAbility", unCheckedLabel: "Independent", checkedLabel: "Needs assistance" },
+        { label: "Dressing Ability", name: "dressingAbility", unCheckedLabel: "Independent", checkedLabel: "Needs assistance" },
+        { label: "Bathing Ability", name: "bathingAbility", unCheckedLabel: "Independent", checkedLabel: "Needs assistance" },
+        { label: "Grooming Ability", name: "groomingAbility", unCheckedLabel: "Independent", checkedLabel: "Needs assistance" },
+        { label: "Walking Distance", name: "walkingDistance", unCheckedLabel: "Unlimited", checkedLabel: "Limited" },
+        { label: "Balance (Standing/Sitting)", name: "balance", unCheckedLabel: "Stable", checkedLabel: "Unable" },
+        { label: "Urinary Continence", name: "urinaryContinence" },
+        { label: "Bowel Continence", name: "bowelContinence" },
+        { label: "Use of Assistive Devices", name: "useOfAssistiveDevices" },
+        { label: "Need for Assistance in ADLs", name: "needForAssistance" },
+        { label: "Fall History", name: "fallHistory" },
+        { label: "Pain during Movement", name: "painDuringMovement" },
+        { label: "Need for Rehab/PT Referral", name: "needForRehab" },
+    ];
+
+
+    // Modal content
+    // Only display fields that have a truthy value (checked)
+    const content = (
+        <Form fluid layout='inline' disabled>
+            {fields
+                .filter(field => functionalAssessment[field.name])
+                .map((field, idx) => (
+                    <MyInput
+                        key={idx}
+                        column
+                        width={200}
+                        fieldLable={field.label}
+                        fieldName={field.name}
+                        fieldType="checkbox"
+                        record={functionalAssessment}
+                        setRecord={setFunctionalAssessment}
+                        disabled={true}
+                        unCheckedLabel={field.unCheckedLabel}
+                        checkedLabel={field.checkedLabel}
+                    />
+                ))}
+        </Form>
+    );
 
     // Effects
     useEffect(() => {
         setFunctionalAssessment({ ...functionalAssessmentObj });
     }, [functionalAssessmentObj]);
 
-
-    // Modal Content 
-    const content = (
-            <Form fluid layout='inline' disabled={true} >
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Mobility / Ambulation"
-                    fieldName="mobilityAmbulation"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Independent"
-                    checkedLabel=" Needs assistance" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Transferring (Bed ↔ Wheelchair)"
-                    fieldName="transferringBedChair"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Independent"
-                    checkedLabel=" Needs assistance" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Stair Climbing Ability"
-                    fieldName="stairClimbingAbility"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Independent"
-                    checkedLabel=" Needs assistance" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Feeding (Eating ability)"
-                    fieldName="feeding"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Independent"
-                    checkedLabel=" Needs assistance" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Toileting Ability"
-                    fieldName="toiletingAbility"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Independent"
-                    checkedLabel=" Needs assistance" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Dressing Ability"
-                    fieldName="dressingAbility"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Independent"
-                    checkedLabel=" Needs assistance" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Bathing Ability"
-                    fieldName="bathingAbility"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Independent"
-                    checkedLabel=" Needs assistance" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Grooming Ability"
-                    fieldName="groomingAbility"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Independent"
-                    checkedLabel=" Needs assistance" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Walking Distance"
-                    fieldName="walkingDistance"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Unlimited"
-                    checkedLabel="Limited" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Balance (Standing/Sitting)"
-                    fieldName="balance"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true}
-                    unCheckedLabel="Stable"
-                    checkedLabel="Unable" />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Urinary Continence"
-                    fieldName="urinaryContinence"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true} />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Bowel Continence"
-                    fieldName="bowelContinence"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true} />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Use of Assistive Devices"
-                    fieldName="useOfAssistiveDevices"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true} />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Need for Assistance in ADLs"
-                    fieldName="needForAssistance"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true} />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Fall History"
-                    fieldName="fallHistory"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true} />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Pain during Movement"
-                    fieldName="painDuringMovement"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true} />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLable="Need for Rehab/PT Referral"
-                    fieldName="needForRehab"
-                    fieldType="checkbox"
-                    record={functionalAssessment}
-                    setRecord={setFunctionalAssessment}
-                    disabled={true} />
-            </Form>
-       
-    )
     return (
         <MyModal
             open={open}
@@ -207,10 +73,11 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
             steps={[{
                 title: "Functional Assessment",
                 icon: <FontAwesomeIcon icon={faClipboardList} />,
-            },]}
+            }]}
             content={content}
             hideActionBtn={true}
-        ></MyModal>
+        />
     );
 };
+
 export default ViewFunctionalAssessment;
