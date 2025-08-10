@@ -704,7 +704,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
                 </Form>
             }
         ></AdvancedModal>
-        <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric}></Substitues>
+        <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric} setSelectedGeneric={setSelectedGeneric}></Substitues>
         <MyModal
             open={openOrderModel}
             setOpen={setOpenOrderModel}
