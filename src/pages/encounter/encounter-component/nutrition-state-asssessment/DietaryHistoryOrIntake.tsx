@@ -1,13 +1,17 @@
 import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
 import { useGetAllergiesQuery } from '@/services/observationService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetAllergensQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Col, Row } from 'rsuite';
+import "./styles.less";
 const DietaryHistoryOrIntake = ({ object, setObject }) => {
-   const location = useLocation();
+  const location = useLocation();
   const { patient } = location.state || {};
+  const [allerges, setAllerges] = useState({});
   const [listRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -24,13 +28,59 @@ const DietaryHistoryOrIntake = ({ object, setObject }) => {
     ]
   });
   // Fetch allergies list response
-  const { data: allergiesListResponse } = useGetAllergiesQuery(
-    listRequest);
-  console.log("list");
-  console.log(allergiesListResponse);
+  const { data: allergiesListResponse } = useGetAllergiesQuery(listRequest);
 
-   // Fetch fluid intake Types lov response 
-  const { data: fluidIntakeTypesLovQueryResponse } = useGetLovValuesByCodeQuery('FLUID_INTAKE_TYPES');
+  // Fetch fluid intake Types lov response
+  const { data: fluidIntakeTypesLovQueryResponse } =
+    useGetLovValuesByCodeQuery('FLUID_INTAKE_TYPES');
+  // Fetch allergens List response
+  const { data: allergensListToGetName } = useGetAllergensQuery({
+    ...initialListRequest
+  });
+
+  // class name for selected row
+  const isSelected = rowData => {
+    if (rowData && allerges && rowData.key === allerges.key) {
+      return 'selected-row';
+    } else return '';
+  };
+
+  // table columns
+  const tableColumns = [
+    {
+      key: 'allergyTypeLvalue',
+      dataKey: 'allergyTypeLvalue',
+      title: <Translate>Allergy Type</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => rowData.allergyTypeLvalue?.lovDisplayVale
+    },
+    {
+      key: 'allergenKey',
+      dataKey: 'allergenKey',
+      title: <Translate>Allergen</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => {
+        if (!allergensListToGetName?.object) return 'Loading...';
+        const found = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
+        return found?.allergenName || 'No Name';
+      }
+    },
+    {
+      key: 'severityLvalue',
+      dataKey: 'severityLvalue',
+      title: <Translate>Severity</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
+    },
+    {
+      key: 'onsetDate',
+      dataKey: 'onsetDate',
+      title: <Translate>Onset Date Time</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) =>
+        rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleDateString('en-GB') : 'Undefined'
+    }
+  ];
 
   return (
     <div>
@@ -70,17 +120,17 @@ const DietaryHistoryOrIntake = ({ object, setObject }) => {
           />
         </Col>
       </Row>
-      <Row>
-        <MyInput
-          fieldType="select"
-          fieldLabel="Food Allergies / Intolerance"
-          fieldName="foodAllergies"
-          selectData={allergiesListResponse?.object ?? []}
-          selectDataLabel="allergenKey"
-          selectDataValue="key"
-          width="100%"
-          record={object}
-          setRecord={setObject}
+      <Row className='table-container-nutrition'>
+        <MyTable
+          height={300}
+          columns={tableColumns}
+          data={allergiesListResponse?.object || []}
+          onRowClick={rowData => {
+            setAllerges(rowData);
+          }}
+          rowClassName={isSelected}
+          sortColumn={listRequest.sortBy}
+          sortType={listRequest.sortType}
         />
       </Row>
       <Row>
