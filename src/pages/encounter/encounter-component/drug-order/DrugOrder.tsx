@@ -11,7 +11,8 @@ import {
   useSaveDrugOrderMutation
 } from '@/services/encounterService';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
-import { FaPills } from 'react-icons/fa';
+import { FaPills, FaSyringe } from 'react-icons/fa';
+import { faSyringe } from '@fortawesome/free-solid-svg-icons';
 import { newApDrugOrder, newApDrugOrderMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
@@ -21,18 +22,22 @@ import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
-import { Checkbox, Divider, SelectPicker, Table } from 'rsuite';
+import { Checkbox, Divider, SelectPicker } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import AddEditFluidOrder from '@/pages/encounter/encounter-component/iv-fluid-order/AddEditFluidOrder';
-import { Text, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import MyModal from '@/components/MyModal/MyModal';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const DrugOrder = props => {
   const location = useLocation();
-
+  const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
+    'MED_ORDER_ADMIN_NSTRUCTIONS'
+  );
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
@@ -50,9 +55,51 @@ const DrugOrder = props => {
   const [openDetailsModel, setOpenDetailsModel] = useState(false);
   const [openAddEditFluidOrderPopup, setOpenAddEditFluidOrderPopup] = useState<boolean>(false);
   const [fluidOrder, setFluidOrder] = useState({});
-
+  const [favoriteMedications, setFavoriteMedications] = useState([]);
+  const [adminInstructions, setAdminInstructions] = useState('');
   const [width, setWidth] = useState<number>(window.innerWidth);
+  const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(true);
+  const addToFavorites = rowData => {
+    const alreadyExists = favoriteMedications.some(
+      item => item.genericMedicationsKey === rowData.genericMedicationsKey
+    );
 
+    if (alreadyExists) {
+      setFavoriteMedications(prev =>
+        prev.filter(item => item.genericMedicationsKey !== rowData.genericMedicationsKey)
+      );
+      const genericMedication = genericMedicationListResponse?.object?.find(
+        item => item.key === rowData.genericMedicationsKey
+      );
+      const medicationName = genericMedication ? genericMedication.genericName : 'Medication';
+      dispatch(
+        notify({
+          msg: `${medicationName} removed from favorites`,
+          type: 'info'
+        })
+      );
+    } else {
+      const genericMedication = genericMedicationListResponse?.object?.find(
+        item => item.key === rowData.genericMedicationsKey
+      );
+
+      const medicationToAdd = {
+        ...rowData,
+        genericName: genericMedication ? genericMedication.genericName : 'Unnamed Medication',
+        administrationInstructions: rowData.administrationInstructions,
+        parametersToMonitor: rowData.parametersToMonitor || rowData.parametersToMonitorKey
+      };
+
+      setFavoriteMedications(prev => [...prev, medicationToAdd]);
+      dispatch(
+        notify({
+          msg: `${medicationToAdd.genericName} added to favorites`,
+          type: 'success'
+        })
+      );
+    }
+  };
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
 
@@ -93,7 +140,7 @@ const DrugOrder = props => {
       }
     ]
   });
-  const { data: orderMedications, refetch: medicRefetch } =
+  const { data: orderMedications, refetch: medicRefetch ,isFetching: fetchingOrderMed} =
     useGetDrugOrderMedicationQuery(listRequest);
   const filteredorders =
     orders?.object?.filter(item => item.statusLkey === '1804482322306061') ?? [];
@@ -388,6 +435,9 @@ const DrugOrder = props => {
       flexGrow: 1,
       render: rowData => {
         const drugOrderTypeValue = rowData?.drugOrderTypeLvalue?.lovDisplayVale;
+        const isInFavorites = favoriteMedications.some(
+          item => item.genericMedicationsKey === rowData.genericMedicationsKey
+        );
         return (
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <MdModeEdit
@@ -399,13 +449,24 @@ const DrugOrder = props => {
                 setOpenDetailsModel(true);
               }}
             />
+
+            <FontAwesomeIcon
+              icon={faStar}
+              onClick={() => addToFavorites(rowData)}
+              className={isInFavorites ? 'font-awsy' : 'font-aws'}
+              title={isInFavorites ? 'Remove from favorites' : 'Add to favorites'}
+              style={{
+                cursor: 'pointer',
+                color: isInFavorites ? '#ffc107' : '#6c757d'
+              }}
+            />
             {drugOrderTypeValue === 'Continuous' && (
-                <FaPills
-                  title="Use Diluent"
-                  size={20}
-                  className="font-aws"
-                  onClick={() => setOpenAddEditFluidOrderPopup(true)}
-                />
+              <FaSyringe
+                title="Use Diluent"
+                size={24}
+                className="font-aws"
+                onClick={() => setOpenAddEditFluidOrderPopup(true)}
+              />
             )}
           </div>
         );
@@ -489,6 +550,34 @@ const DrugOrder = props => {
       pageNumber: 1 // reset to first page
     });
   };
+  const handleRecall = rowData => {
+    const genericMedication = genericMedicationListResponse?.object?.find(
+      item => item.key === rowData.genericMedicationsKey
+    );
+
+    setOrderMedication({
+      ...newApDrugOrderMedications,
+      ...rowData,
+      drugOrderKey: drugKey,
+      genericName: genericMedication?.genericName || '',
+      dose: rowData.dose || null,
+      doseUnitLkey: rowData.doseUnitLkey || null,
+      frequency: rowData.frequency || null,
+      roaLkey: rowData.roaLkey || null,
+      chronicMedication: rowData.chronicMedication || false,
+      priorityLkey: rowData.priorityLkey || null,
+      durationTypeLkey: rowData.durationTypeLkey || null,
+      indicationUseLkey: rowData.indicationUseLkey || null,
+      pharmacyDepartmentKey: rowData.pharmacyDepartmentKey || null
+    });
+
+    setSelectedGeneric(genericMedication || null);
+    setOpenFavoritesModal(false);
+    setOpenDetailsModel(true);
+    setOpenToAdd(true);
+  };
+
+  console.log(orderMedications);
   return (
     <>
       <div className="bt-div">
@@ -499,7 +588,7 @@ const DrugOrder = props => {
             labelKey="drugorderId"
             valueKey="key"
             placeholder="orders"
-            //   value={selectedDiagnose.diagnoseCode}
+            // value={selectedDiagnose.diagnoseCode}
             onChange={e => {
               setDrugKey(e);
             }}
@@ -573,6 +662,7 @@ const DrugOrder = props => {
           </div>
 
           <div className="bt-right">
+            <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
             <MyButton
               disabled={
                 !edit
@@ -612,6 +702,7 @@ const DrugOrder = props => {
         <MyTable
           columns={tableColumns}
           data={orderMedications?.object || []}
+          loading={fetchingOrderMed}
           onRowClick={rowData => {
             setOrderMedication(rowData);
             setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
@@ -653,13 +744,111 @@ const DrugOrder = props => {
           encounter={encounter}
           medicRefetch={medicRefetch}
           openToAdd={openToAdd}
+          isFavorite={isFavorite}
         ></DetailsModal>
+
         <AddEditFluidOrder
           open={openAddEditFluidOrderPopup}
           setOpen={setOpenAddEditFluidOrderPopup}
           width={width}
           fluidOrder={fluidOrder}
           setFluidOrder={setFluidOrder}
+        />
+        <MyModal
+          open={openFavoritesModal}
+          setOpen={setOpenFavoritesModal}
+          title="Favorite Medications"
+          size="lg"
+          content={
+            <div>
+              <MyTable
+                columns={[
+                  {
+                    key: 'medicationName',
+                    dataKey: 'genericMedicationsKey',
+                    title: 'Medication Name',
+                    render: (rowData: any) => {
+                      return (
+                        genericMedicationListResponse?.object?.find(
+                          item => item.key === rowData.genericMedicationsKey
+                        )?.genericName || 'Unknown Medication'
+                      );
+                    }
+                  },
+                  {
+                    key: 'instruction',
+                    dataKey: '',
+                    title: 'Instruction',
+                    render: (rowData: any) => {
+                      return joinValuesFromArray([
+                        rowData.dose,
+                        rowData.doseUnitLvalue?.lovDisplayVale,
+                        rowData.drugOrderTypeLkey == '2937757567806213'
+                          ? 'STAT'
+                          : 'every ' + rowData.frequency + ' hours',
+                        rowData.roaLvalue?.lovDisplayVale
+                      ]);
+                    }
+                  },
+                  {
+                    key: 'administrationInstruction',
+                    dataKey: 'administrationInstructions',
+                    title: 'Administration Instruction',
+                    render: (rowData: any) => {
+                      if (rowData.administrationInstructions?.lovDisplayVale) {
+                        return rowData.administrationInstructions.lovDisplayVale;
+                      } else if (rowData.administrationInstructions) {
+                        const instruction =
+                          administrationInstructionsLovQueryResponse?.object?.find(
+                            item => item.key === rowData.administrationInstructions
+                          );
+                        return instruction?.lovDisplayVale || rowData.administrationInstructions;
+                      }
+                      return 'No instruction';
+                    }
+                  },
+                  {
+                    key: 'parametersToMonitor',
+                    dataKey: 'parametersToMonitorKey',
+                    title: 'Parameters To Monitor',
+                    render: (rowData: any) => {
+                      if (rowData.parametersToMonitor) {
+                        return rowData.parametersToMonitor;
+                      } else if (rowData.parametersToMonitorValue?.lovDisplayVale) {
+                        return rowData.parametersToMonitorValue.lovDisplayVale;
+                      } else if (rowData.parametersToMonitorKey) {
+                        return rowData.parametersToMonitorKey;
+                      }
+                      return 'No parameters specified';
+                    }
+                  },
+                  {
+                    key: 'actions',
+                    title: 'Actions',
+                    render: (rowData: any) => {
+                      return (
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <MyButton size="xs" onClick={() => handleRecall(rowData)}>
+                            Recall
+                          </MyButton>
+                          <FontAwesomeIcon
+                            icon={faStar}
+                            onClick={() => addToFavorites(rowData)}
+                            style={{
+                              cursor: 'pointer',
+                              color: '#ffc107'
+                            }}
+                            title="Remove from favorites"
+                          />
+                        </div>
+                      );
+                    }
+                  }
+                ]}
+                data={favoriteMedications || []}
+              />
+            </div>
+          }
         />
       </div>
     </>
