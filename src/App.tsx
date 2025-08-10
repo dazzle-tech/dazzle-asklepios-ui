@@ -326,7 +326,7 @@ const App = () => {
                 />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
-                <Route path="medication" element={<DrugOrder />} />
+                <Route path="medication-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
