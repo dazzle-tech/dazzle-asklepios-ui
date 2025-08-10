@@ -140,8 +140,11 @@ const DrugOrder = props => {
       }
     ]
   });
-  const { data: orderMedications, refetch: medicRefetch ,isFetching: fetchingOrderMed} =
-    useGetDrugOrderMedicationQuery(listRequest);
+  const {
+    data: orderMedications,
+    refetch: medicRefetch,
+    isFetching: fetchingOrderMed
+  } = useGetDrugOrderMedicationQuery(listRequest);
   const filteredorders =
     orders?.object?.filter(item => item.statusLkey === '1804482322306061') ?? [];
 
@@ -455,10 +458,6 @@ const DrugOrder = props => {
               onClick={() => addToFavorites(rowData)}
               className={isInFavorites ? 'font-awsy' : 'font-aws'}
               title={isInFavorites ? 'Remove from favorites' : 'Add to favorites'}
-              style={{
-                cursor: 'pointer',
-                color: isInFavorites ? '#ffc107' : '#6c757d'
-              }}
             />
             {drugOrderTypeValue === 'Continuous' && (
               <FaSyringe
