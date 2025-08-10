@@ -303,12 +303,12 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
             rightContent={
                 <Form fluid>
                     <Row gutter={20}
-                        className={clsx({
-                            'disabled-panel':
-                                edit ||
-                                (orderMedication?.key &&
-                                    orderMedication?.statusLvalue?.valueCode !== 'DIAG_ORDER_STAT_NEW'),
-                        })}
+                        // className={clsx({
+                        //     'disabled-panel':
+                        //         edit ||
+                        //         (orderMedication?.key &&
+                        //             orderMedication?.statusLvalue?.valueCode !== 'DIAG_ORDER_STAT_NEW'),
+                        // })}
 
                     >
                         <Col md={12}>
