@@ -2,7 +2,7 @@ import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
-import { Col, Form, Panel, Row, Text, Tooltip, Whisper } from 'rsuite';
+import { Button, ButtonGroup, Col, Form, Panel, Row, Text, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPills } from '@fortawesome/free-solid-svg-icons';
@@ -12,7 +12,6 @@ import { faCircleStop } from '@fortawesome/free-solid-svg-icons';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyCard from '@/components/MyCard';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -25,19 +24,10 @@ const MAR = () => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [medication, setMedication] = useState({ status: '' });
   const [openActionModal, setOpenActionModal] = useState<boolean>(false);
+  const [record, setRecord] = useState({ filter: '', value: '' });
 
   // Fetch mar Dose Status Lov list response
   const { data: marDoseStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MAR_DOSE_STATUS');
-
-  // Page Header Setup
-  const divContent = (
-    <div className="page-title">
-      <h5>MAR</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('MAR'));
-  dispatch(setDivContent(divContentHTML));
 
   // class name for selected row
   const isSelected = rowData => {
@@ -46,6 +36,12 @@ const MAR = () => {
     } else return '';
   };
 
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Status', value: 'status' },
+    { label: 'Medication Name', value: 'name' }
+  ];
+
   // array of actions icons
   const icons = [
     {
@@ -53,12 +49,12 @@ const MAR = () => {
       title: 'Action',
       icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>Action</Tooltip>}>
-        <FontAwesomeIcon
-          icon={faPills}
-          title="Action"
-          onClick={() => setOpenActionModal(true)}
-          className="icons-style"
-        />
+          <FontAwesomeIcon
+            icon={faPills}
+            title="Action"
+            onClick={() => setOpenActionModal(true)}
+            className="icons-style"
+          />
         </Whisper>
       )
     },
@@ -66,14 +62,14 @@ const MAR = () => {
       key: '8632641360936162',
       title: 'On Hold',
       icon: (
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>On Hold</Tooltip>}>
-        <FontAwesomeIcon
-          icon={faCirclePause}
-          title="On Hold"
-          color="var(--primary-orange)"
-          className="icons-style"
-        />
-      </Whisper>
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>On Hold</Tooltip>}>
+          <FontAwesomeIcon
+            icon={faCirclePause}
+            title="On Hold"
+            color="var(--primary-orange)"
+            className="icons-style"
+          />
+        </Whisper>
       )
     },
     {
@@ -81,12 +77,12 @@ const MAR = () => {
       title: 'Administered',
       icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>Administered</Tooltip>}>
-        <FontAwesomeIcon
-          icon={faCircleCheck}
-          title="Administered"
-          color="var(--primary-green)"
-          className="icons-style"
-        />
+          <FontAwesomeIcon
+            icon={faCircleCheck}
+            title="Administered"
+            color="var(--primary-green)"
+            className="icons-style"
+          />
         </Whisper>
       )
     },
@@ -94,35 +90,36 @@ const MAR = () => {
       key: '8632633074146151',
       title: 'DC',
       icon: (
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>D\C</Tooltip>}>
-        <FontAwesomeIcon
-          icon={faCircleStop}
-          title="D\C"
-          color="var(--primary-pink)"
-          className="icons-style"
-        />
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>D\C</Tooltip>}>
+          <FontAwesomeIcon
+            icon={faCircleStop}
+            title="D\C"
+            color="var(--primary-pink)"
+            className="icons-style"
+          />
         </Whisper>
       )
     },
     {
       key: '8632651909869906',
       title: 'Missed',
-      icon: 
+      icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>Missed</Tooltip>}>
-      <FontAwesomeIcon icon={faClock} title="Missed" className="icons-style" />
-      </Whisper>
+          <FontAwesomeIcon icon={faClock} title="Missed" className="icons-style" />
+        </Whisper>
+      )
     },
     {
       key: '8632666911581391',
       title: 'Cancelled',
       icon: (
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Cancelled</Tooltip>}>
-        <FontAwesomeIcon
-          icon={faBan}
-          title="Cancelled"
-          color="var(--gray-dark)"
-          className="icons-style"
-        />
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Cancelled</Tooltip>}>
+          <FontAwesomeIcon
+            icon={faBan}
+            title="Cancelled"
+            color="var(--gray-dark)"
+            className="icons-style"
+          />
         </Whisper>
       )
     },
@@ -130,16 +127,54 @@ const MAR = () => {
       key: '8632772055422992',
       title: 'DiscardedReturned',
       icon: (
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Discarded\Returned</Tooltip>}>
-        <FontAwesomeIcon
-          icon={faTrash}
-          title="Discarded\Returned"
-          color="var(--primary-purple)"
-          className="icons-style"
-        />
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Discarded\Returned</Tooltip>}>
+          <FontAwesomeIcon
+            icon={faTrash}
+            title="Discarded\Returned"
+            color="var(--primary-purple)"
+            className="icons-style"
+          />
         </Whisper>
       )
     }
+  ];
+
+  const tableData = [
+    {
+      type: 'Missed Doses',
+      doses: [
+        { name: 'Anaflam 50mg', time: '10:00', color: '#d9534f' },
+        { name: 'Another Med', time: '11:30', color: '#d9534f' },
+        { name: 'Another Med', time: '11:30', color: '#d9534f' }
+      ]
+    },
+    {
+      type: 'Due Doses',
+      doses: [
+        { name: 'Ibuprofen 400mg', time: '14:00', color: '#f0ad4e' },
+        { name: 'AzlCare 250mg', time: '14:00', color: '#f0ad4e' }
+      ]
+    }
+  ];
+
+  const maxDoses = Math.max(...tableData.map(row => row.doses.length));
+
+  const columns = [
+    {
+      key: 'type',
+      title: '',
+      render: (rowData: any) => <strong>{rowData.type}</strong>
+    },
+    ...Array.from({ length: maxDoses }, (_, colIndex) => ({
+      key: `dose${colIndex}`,
+      title: 'Dose',
+      render: (rowData: any) => {
+        const dose = rowData.doses[colIndex];
+        return dose ? (
+          <MyBadgeStatus color={dose.color} contant={dose.name + ' ' + dose.time} />
+        ) : null;
+      }
+    }))
   ];
 
   // dummy data
@@ -186,7 +221,7 @@ const MAR = () => {
           hour: '12:00',
           status: '8632633074146151'
         },
-         {
+        {
           date: '1/8/2025',
           hour: '06:00',
           status: '1'
@@ -213,7 +248,7 @@ const MAR = () => {
           hour: '6:00',
           status: '1'
         },
-         {
+        {
           date: '3/8/2025',
           hour: '00:00',
           status: '1'
@@ -225,21 +260,21 @@ const MAR = () => {
           hour: '06:00',
           status: '1'
         },
-         {
+        {
           date: '3/8/2025',
           hour: '12:00',
           status: '1'
         },
-         {
+        {
           date: '3/8/2025',
           hour: '06:00',
           status: '1'
         },
-         {
+        {
           date: '4/8/2025',
           hour: '00:00',
           status: '1'
-        },
+        }
       ],
       day5: [
         {
@@ -308,7 +343,7 @@ const MAR = () => {
           date: '3/8/2025',
           hour: '20:00',
           status: '8632772055422992'
-        },
+        }
       ],
       day4: [
         {
@@ -327,8 +362,7 @@ const MAR = () => {
           date: '5/8/2025',
           hour: '08:00',
           status: '1'
-        }
-        ,
+        },
         {
           date: '5/8/2025',
           hour: '20:00',
@@ -339,38 +373,82 @@ const MAR = () => {
   ];
   // filter Table
   const filters = () => (
-    <Form layout="inline" fluid className='container-of-filters-mar' >
-      <MyInput
-       column
-        width={150}
-        fieldName="startDate"
-        fieldType="date"
-        record={medication}
-        setRecord={setMedication}
-      />
-      <MyInput column fieldName="endDate" fieldType="date" record={medication} setRecord={setMedication} />
-      <MyInput
-      column
-        fieldType="select"
-        fieldName="status"
-        selectData={marDoseStatusLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={medication}
-        setRecord={setMedication}
-      />
-      <MyInput
-      column
-        fieldName=""
-        fieldLabel="Show Cancelled"
-        showLabel={false}
-        fieldType="check"
-        record={medication}
-        setRecord={setMedication}
-      />
+    <Form layout="inline" fluid className="container-of-filters-mar">
+      <div className="container-of-filters-fields-mar">
+        <MyInput
+          column
+          width={150}
+          fieldName="startDate"
+          fieldType="date"
+          record={medication}
+          setRecord={setMedication}
+        />
+        <MyInput
+          column
+          fieldName="endDate"
+          fieldType="date"
+          record={medication}
+          setRecord={setMedication}
+        />
+        <MyInput
+          column
+          selectDataValue="value"
+          selectDataLabel="label"
+          selectData={filterFields}
+          fieldName="filter"
+          fieldType="select"
+          record={record}
+          setRecord={updatedRecord => {
+            setRecord({
+              ...record,
+              filter: updatedRecord.filter,
+              value: ''
+            });
+          }}
+          placeholder="Select Filter"
+          searchable={false}
+        />
+        {record['filter'] == 'status' && (
+          <MyInput
+            column
+            fieldType="select"
+            fieldName="status"
+            selectData={marDoseStatusLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={medication}
+            setRecord={setMedication}
+          />
+        )}
+        {record['filter'] == 'name' && (
+          <MyInput
+            column
+            fieldLabel="Medication Name"
+            fieldName="name"
+            record={medication}
+            setRecord={setMedication}
+          />
+        )}
+        <MyInput
+          column
+          fieldName=""
+          fieldLabel="Show Cancelled"
+          showLabel={false}
+          fieldType="check"
+          record={medication}
+          setRecord={setMedication}
+        />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'end' }}>
+        <ButtonGroup size="md">
+          <Button>STAT</Button>
+          <Button>PRN</Button>
+          <Button>Scheduled</Button>
+          <Button>Continuous</Button>
+        </ButtonGroup>
+      </div>
     </Form>
   );
-  
 
   // Table Columns
   const tableColumns = [
@@ -384,7 +462,7 @@ const MAR = () => {
           key="009"
           margin="5px"
           leftArrow={false}
-          title={<Text>{rowData.name + ' ' + rowData.dose}</Text>}
+          title={<strong>{rowData.name + ' ' + rowData.dose}</strong>}
           contant={
             <>
               <Text>{rowData.rout}</Text>
@@ -393,7 +471,6 @@ const MAR = () => {
               <Text>{rowData.type}</Text>
             </>
           }
-          showMore={true}
         />
       )
     },
@@ -404,13 +481,13 @@ const MAR = () => {
         <div className="container-of-day-doses-mar">
           {rowData.day1.map((item, index) => (
             <Row key={index}>
-              <Col md={9}>
+              <Col md={12}>
                 <Text>{item.date}</Text>
               </Col>
-              <Col md={8}>
+              <Col md={10}>
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
-              <Col md={7}>
+              <Col md={2}>
                 <>{icons.find(obj => obj.key === item.status).icon}</>
               </Col>
             </Row>
@@ -425,13 +502,13 @@ const MAR = () => {
         <div className="container-of-day-doses-mar">
           {rowData.day2.map((item, index) => (
             <Row key={index}>
-              <Col md={9}>
+              <Col md={12}>
                 <Text>{item.date}</Text>
               </Col>
-              <Col md={8}>
+              <Col md={10}>
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
-              <Col md={7}>
+              <Col md={2}>
                 <>{icons.find(obj => obj.key === item.status).icon}</>
               </Col>
             </Row>
@@ -446,13 +523,13 @@ const MAR = () => {
         <div className="container-of-day-doses-mar">
           {rowData.day3.map((item, index) => (
             <Row key={index}>
-              <Col md={9}>
+              <Col md={12}>
                 <Text>{item.date}</Text>
               </Col>
-              <Col md={8}>
+              <Col md={10}>
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
-              <Col md={7}>
+              <Col md={2}>
                 <>{icons.find(obj => obj.key === item.status).icon}</>
               </Col>
             </Row>
@@ -467,13 +544,13 @@ const MAR = () => {
         <div className="container-of-day-doses-mar">
           {rowData.day4.map((item, index) => (
             <Row key={index}>
-              <Col md={9}>
+              <Col md={12}>
                 <Text>{item.date}</Text>
               </Col>
-              <Col md={8}>
+              <Col md={10}>
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
-              <Col md={7}>
+              <Col md={2}>
                 <>{icons.find(obj => obj.key === item.status).icon}</>
               </Col>
             </Row>
@@ -488,13 +565,13 @@ const MAR = () => {
         <div className="container-of-day-doses-mar">
           {rowData.day5.map((item, index) => (
             <Row key={index}>
-              <Col md={9}>
+              <Col md={12}>
                 <Text>{item.date}</Text>
               </Col>
-              <Col md={8}>
+              <Col md={10}>
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
-              <Col md={7}>
+              <Col md={2}>
                 <>{icons.find(obj => obj.key === item.status).icon}</>
               </Col>
             </Row>
@@ -520,9 +597,9 @@ const MAR = () => {
   return (
     <Panel>
       <br />
-      <div className="container-of-icons-keys-mar">
+      <div className="container-of-icons-keys-mar1">
         {icons.map((item, index) => (
-          <div key={index} className="container-of-icon-and-key">
+          <div key={index} className="container-of-icon-and-key1">
             <>{item.icon}</>
             <Text>{item.title}</Text>
           </div>
@@ -539,6 +616,9 @@ const MAR = () => {
           setMedication(rowData);
         }}
       />
+      <br/>
+      <MyTable height={200} data={tableData} columns={columns} />
+
       <ActionModal
         open={openActionModal}
         setOpen={setOpenActionModal}
