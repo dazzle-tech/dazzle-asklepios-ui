@@ -10,7 +10,7 @@ import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetInpatientEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
+import { useGetInpatientEncountersQuery, useStartEncounterMutation, useCancelEncounterMutation } from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -28,6 +28,9 @@ import './styles.less'
 import MyInput from "@/components/MyInput";
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import TransferPatientModal from './transferPatient/TransferPatientModal';
+import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
 
 const InpatientList = () => {
     const location = useLocation();
@@ -41,6 +44,7 @@ const InpatientList = () => {
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('In_Patient_Encounters'));
     dispatch(setDivContent(divContentHTML));
+    const [open, setOpen] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
     const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
@@ -50,6 +54,7 @@ const InpatientList = () => {
     const [departmentFilter, setDepartmentFilter] = useState({ key: '' });
     const [switchDepartment, setSwitchDepartment] = useState(false);
     const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
+    const [cancelEncounter] = useCancelEncounterMutation();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -60,8 +65,10 @@ const InpatientList = () => {
             },
             {
                 fieldName: 'encounter_status_lkey',
-                operator: 'notMatch',
-                value: '5256965920133084'
+                operator: 'in',
+                value: ['91063195286200', '91084250213000']
+                    .map(key => `(${key})`)
+                    .join(' '),
             }, {
                 fieldName: 'discharge',
                 operator: 'match',
@@ -127,10 +134,24 @@ const InpatientList = () => {
         const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
         if (localPatient.privatePatient) {
             navigate(targetPath, {
-                state: { info: 'toNurse', patient: patientData, encounter: encounterData  }
+                state: { info: 'toNurse', patient: patientData, encounter: encounterData }
             });
         } else {
             navigate(targetPath, { state: { patient: patientData, encounter: encounterData, edit: encounterData.encounterStatusLvalue.valueCode == "CLOSED" } });
+        }
+    };
+    // handle cancel encounter function
+    const handleCancelEncounter = async () => {
+        try {
+            if (encounter) {
+                await cancelEncounter(encounter).unwrap();
+                refetchEncounter();
+                dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+                setOpen(false);
+            }
+        } catch (error) {
+            console.error("Encounter completion error:", error);
+            dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
         }
     };
     const filters = () => (
@@ -393,6 +414,18 @@ const InpatientList = () => {
                                 </MyButton>
                             </div>
                         </Whisper>
+                        {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    onClick={() => {
+                                        setLocalEncounter(rowData);
+                                        setOpen(true);
+                                    }}>
+                                    <FontAwesomeIcon icon={faRectangleXmark} />
+                                </MyButton>
+                            </div>
+                        </Whisper>}
                     </Form>
                 );
             },
@@ -472,6 +505,14 @@ const InpatientList = () => {
                 localEncounter={encounter}
                 refetchInpatientList={refetchEncounter}
             />
+            <DeletionConfirmationModal
+                open={open}
+                setOpen={setOpen}
+                actionButtonFunction={handleCancelEncounter}
+                actionType="Deactivate"
+                confirmationQuestion="Do you want to cancel this Encounter ?"
+                actionButtonLabel='Cancel'
+                cancelButtonLabel='Close' />
         </Panel>
     );
 };

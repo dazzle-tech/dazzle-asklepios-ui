@@ -9,10 +9,11 @@ import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
+import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 // import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEREncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
+import { useGetEREncountersQuery, useCancelEncounterMutation } from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -24,10 +25,15 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds } from "@/utils";
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import BedAssignmentModal from '../day-case/DayCaseList/BedAssignmentModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
+
 const ERWaitingList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [open, setOpen] = useState(false);
+  const [cancelEncounter] = useCancelEncounterMutation();
   const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
@@ -69,7 +75,6 @@ const ERWaitingList = () => {
     fromDate: new Date(),
     toDate: new Date()
   });
-  console.log("encounterListResponse===>", encounterListResponse);
   //Functions
   const isSelected = rowData => {
     if (rowData && encounter && rowData.key === encounter.key) {
@@ -117,8 +122,21 @@ const ERWaitingList = () => {
       });
     }
   };
+  // handle cancel encounter function
+  const handleCancelEncounter = async () => {
+    try {
+      if (encounter) {
+        await cancelEncounter(encounter).unwrap();
+        refetchEncounter();
+        dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+        setOpen(false);
+      }
+    } catch (error) {
+      console.error("Encounter completion error:", error);
+      dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+    }
+  };
   const handleGoToQuickVisit = async (encounterData, patientData) => {
-
     const targetPath = '/quick-visit';
     navigate(targetPath, {
       state: {
@@ -132,7 +150,7 @@ const ERWaitingList = () => {
   const handleGoToViewTriage = async (encounterData, patientData) => {
     const targetPath = '/view-triage';
     navigate(targetPath, {
-      state: {from:'ER_Waiting_List', info: 'toViewTriage', patient: patientData, encounter: encounterData }
+      state: { from: 'ER_Waiting_List', info: 'toViewTriage', patient: patientData, encounter: encounterData }
     });
   };
 
@@ -237,6 +255,8 @@ const ERWaitingList = () => {
         const tooltipAssignBed = <Tooltip>Assign Bed</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipQuickVisit = <Tooltip>Quick Visit</Tooltip>;
+        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
@@ -289,6 +309,18 @@ const ERWaitingList = () => {
 
                 >
                   <FontAwesomeIcon icon={faFileWaveform} />
+                </MyButton>
+              </div>
+            </Whisper>
+            <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+              <div>
+                <MyButton
+                  size="small"
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setOpen(true);
+                  }}>
+                  <FontAwesomeIcon icon={faRectangleXmark} />
                 </MyButton>
               </div>
             </Whisper>
@@ -377,6 +409,14 @@ const ERWaitingList = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+      <DeletionConfirmationModal
+        open={open}
+        setOpen={setOpen}
+        actionButtonFunction={handleCancelEncounter}
+        actionType="Deactivate"
+        confirmationQuestion="Do you want to cancel this Encounter ?"
+        actionButtonLabel='Cancel'
+        cancelButtonLabel='Close' />
     </Panel>
   );
 };

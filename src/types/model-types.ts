@@ -1984,6 +1984,15 @@ export interface ApMedicalSheets {
 	glasgowComaScale:boolean;
 	vteRiskAssessment:boolean;
 	progressNotes:boolean;
+	medicationAdministrationRecord :boolean;
+	ivFluidAdministration:boolean;
+	dietaryRequest:boolean;
+	pediatric:boolean;
+	gynecology:boolean;
+	speechTherapy:boolean;
+	rehabilitationPlan:boolean;
+	occupationalTherapy:boolean;
+	physiotherapyPlan:boolean;
 } 
 
 export interface ApMedicationCategories { 

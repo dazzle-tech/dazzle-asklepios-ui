@@ -8,9 +8,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRepeat } from '@fortawesome/free-solid-svg-icons';
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
+import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEmergencyEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
+import { useGetEmergencyEncountersQuery, useStartEncounterMutation, useCancelEncounterMutation } from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -26,13 +27,15 @@ import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import './styles.less'
 import MyInput from "@/components/MyInput";
-import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
 
 const ERList = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const [open, setOpen] = useState(false);
     const divContent = (
         <div style={{ display: 'flex' }}>
             <h5>ER Department</h5>
@@ -41,6 +44,7 @@ const ERList = () => {
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('ER_Patient_Encounters'));
     dispatch(setDivContent(divContentHTML));
+    const [cancelEncounter] = useCancelEncounterMutation();
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
     const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
@@ -122,6 +126,20 @@ const ERList = () => {
             });
         }
         sessionStorage.setItem("encounterPageSource", "EncounterList");
+    };
+    // handle cancel encounter function
+    const handleCancelEncounter = async () => {
+        try {
+            if (encounter) {
+                await cancelEncounter(encounter).unwrap();
+                refetchEncounter();
+                dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+                setOpen(false);
+            }
+        } catch (error) {
+            console.error("Encounter completion error:", error);
+            dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+        }
     };
     // Function to search for patients based on the search keyword
     const filters = () => (
@@ -313,7 +331,8 @@ const ERList = () => {
                 const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
                 const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
                 const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
-                const toolTransferPatient = <Tooltip>Transfer Patient</Tooltip>;
+                const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
@@ -352,6 +371,18 @@ const ERList = () => {
                                 </MyButton>
                             </div>
                         </Whisper>
+                        {(rowData?.encounterStatusLvalue?.valueCode === 'NEW') && <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    onClick={() => {
+                                        setLocalEncounter(rowData);
+                                        setOpen(true);
+                                    }}>
+                                    <FontAwesomeIcon icon={faRectangleXmark} />
+                                </MyButton>
+                            </div>
+                        </Whisper>}
                     </Form>
                 );
             },
@@ -431,6 +462,14 @@ const ERList = () => {
                 localEncounter={encounter}
                 refetchInpatientList={refetchEncounter}
             />
+            <DeletionConfirmationModal
+                open={open}
+                setOpen={setOpen}
+                actionButtonFunction={handleCancelEncounter}
+                actionType="Deactivate"
+                confirmationQuestion="Do you want to cancel this Encounter ?"
+                actionButtonLabel='Cancel'
+                cancelButtonLabel='Close' />
         </Panel>
     );
 };

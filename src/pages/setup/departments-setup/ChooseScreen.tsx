@@ -274,15 +274,15 @@ const ChooseDepartment = ({
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                    <MyInput
-                      fieldType="check"
-                      fieldName={'bradenScaleForPressureUlcer'}
-                      showLabel={false}
-                      record={showScreen}
-                      setRecord={setShowScreen}
-                    />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'bradenScaleForPressureUlcer'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
 
-                  
+
                   <MyInput
                     fieldType="check"
                     fieldName={'glasgowComaScale'}
@@ -305,8 +305,27 @@ const ChooseDepartment = ({
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-
-
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'medicationAdministrationRecord'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'ivFluidAdministration'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'dietaryRequest'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
                 </div>
               </div>
               <div className="container-of-specific-sheets">
@@ -365,6 +384,48 @@ const ChooseDepartment = ({
                   <MyInput
                     fieldType="check"
                     fieldName={'pregnancyFollowUp'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'pediatric'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'gynecology'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'speechTherapy'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'rehabilitationPlan'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'occupationalTherapy'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                  />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'physiotherapyPlan'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}

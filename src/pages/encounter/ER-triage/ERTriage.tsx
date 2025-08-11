@@ -9,9 +9,8 @@ import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
-
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEREncountersListQuery, useSaveEncounterChangesMutation } from '@/services/encounterService';
+import { useGetEREncountersListQuery, useSaveEncounterChangesMutation, useCancelEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -27,13 +26,19 @@ import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom';
 import SendToModal from './SendToModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
+
 const ERTriage = () => {
     const location = useLocation();
     const dispatch = useDispatch();
+    const [cancelEncounter] = useCancelEncounterMutation();
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
     const [emergencyLevel, setEmergencyLevel] = useState({ key: '' });
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
     const [openSendToModal, setOpenSendToModal] = useState(false);
+    const [open, setOpen] = useState(false);
+
     const [startEncounter] = useSaveEncounterChangesMutation();
     const navigate = useNavigate();
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -87,7 +92,7 @@ const ERTriage = () => {
     const handleGoToViewTriage = async (encounterData, patientData) => {
         const targetPath = '/view-triage';
         navigate(targetPath, {
-            state: {from:'ER_Triage', info: 'toViewTriage', patient: patientData, encounter: encounterData }
+            state: { from: 'ER_Triage', info: 'toViewTriage', patient: patientData, encounter: encounterData }
         });
     };
 
@@ -125,6 +130,20 @@ const ERTriage = () => {
                     }
                 ]
             });
+        }
+    };
+    // handle cancel encounter function
+    const handleCancelEncounter = async () => {
+        try {
+            if (encounter) {
+                await cancelEncounter(encounter).unwrap();
+                refetchEncounter();
+                dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+                setOpen(false);
+            }
+        } catch (error) {
+            console.error("Encounter completion error:", error);
+            dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
         }
     };
     const handleGoToVisit = async (encounterData, patientData) => {
@@ -394,14 +413,20 @@ const ERTriage = () => {
                                 </MyButton>
                             </div>
                         </Whisper>
-                        <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                        {(rowData?.encounterStatusLvalue?.valueCode === 'WAITING_TRIAGE' || rowData?.encounterStatusLvalue?.valueCode === 'NEW' || rowData?.encounterStatusLvalue?.valueCode === 'SENT_TO_ER' || rowData?.encounterStatusLvalue?.valueCode === 'WAITING_LIST') &&
+                         <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                             <div>
-                                <MyButton size="small">
+                                <MyButton
+                                    size="small"
+                                    onClick={() => {
+                                        setLocalEncounter(rowData);
+                                        setOpen(true);
+                                    }}>
                                     <FontAwesomeIcon icon={faRectangleXmark} />
                                 </MyButton>
                             </div>
-                        </Whisper>
-                    </Form>
+                        </Whisper>}             
+                     </Form>
                 );
             },
             expandable: false
@@ -499,6 +524,14 @@ const ERTriage = () => {
                 triage={encounter?.emergencyTriage}
                 refetch={refetchEncounter}
             />
+            <DeletionConfirmationModal
+                open={open}
+                setOpen={setOpen}
+                actionButtonFunction={handleCancelEncounter}
+                actionType="Deactivate"
+                confirmationQuestion="Do you want to cancel this Encounter ?"
+                actionButtonLabel='Cancel'
+                cancelButtonLabel='Close' />
         </Panel>
     );
 };
