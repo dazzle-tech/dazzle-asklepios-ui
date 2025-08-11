@@ -5,7 +5,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { faPills } from '@fortawesome/free-solid-svg-icons';
-
+import { faComments, faBarcode, faBatteryEmpty } from '@fortawesome/free-solid-svg-icons';
+import { TbUrgent } from 'react-icons/tb';
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -15,9 +16,23 @@ import MyNestedTable from '@/components/MyNestedTable';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-
+import ChatModal from '@/components/ChatModal/ChatModal';
 const InternalDrugOrder = () => {
   const dispatch = useAppDispatch();
+  const [openChat, setOpenChat] = useState(false);
+
+  const [messages, setMessages] = useState([]);
+
+  const handleSendMessage = msg => {
+    if (!msg?.trim()) return;
+
+    const newMsg = {
+      message: msg,
+      createdAt: new Date().toISOString(),
+      senderName: 'Me'
+    };
+    setMessages(prev => [...prev, newMsg]);
+  };
 
   // dummy data
   const data = [
@@ -483,19 +498,27 @@ const InternalDrugOrder = () => {
     },
     {
       key: 'actions',
-      title: <Translate> </Translate>,
-      render: () => {
-        const tooltipNurse = <Tooltip>Clinical Check</Tooltip>;
+      title: <Translate>Actions</Translate>,
+      render: rowData => {
         const tooltipDoctor = <Tooltip>MAR</Tooltip>;
+        const tooltipNurse = <Tooltip>Clinical Check</Tooltip>;
+        const tooltipComments = <Tooltip>Comments</Tooltip>;
+        const tooltipPrintLabel = <Tooltip>Print Label</Tooltip>;
+        const tooltipUnavailable = <Tooltip>Unavailable</Tooltip>;
+        const tooltipStat = <Tooltip>STAT</Tooltip>;
+
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+            {/* Comments */}
+            <Whisper trigger="hover" placement="top" speaker={tooltipComments}>
               <div>
-                <MyButton size="small">
-                  <FontAwesomeIcon icon={faUserCheck} />
+                <MyButton size="small" onClick={() => setOpenChat(true)}>
+                  <FontAwesomeIcon icon={faComments} />
                 </MyButton>
               </div>
             </Whisper>
+
+            {/* Clinical Check */}
             <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
               <div>
                 <MyButton
@@ -506,6 +529,47 @@ const InternalDrugOrder = () => {
                 </MyButton>
               </div>
             </Whisper>
+
+            {/* MAR */}
+            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+              <div>
+                <MyButton size="small">
+                  <FontAwesomeIcon icon={faUserCheck} />
+                </MyButton>
+              </div>
+            </Whisper>
+
+            {/* Print Label */}
+            <Whisper trigger="hover" placement="top" speaker={tooltipPrintLabel}>
+              <div>
+                <MyButton
+                  size="small"
+                  style={{ backgroundColor: 'var(--primary-gray)', color: 'white' }}
+                >
+                  <FontAwesomeIcon icon={faBarcode} />
+                </MyButton>
+              </div>
+            </Whisper>
+
+            {/* Unavailable */}
+            <Whisper trigger="hover" placement="top" speaker={tooltipUnavailable}>
+              <div>
+                <MyButton size="small">
+                  <FontAwesomeIcon icon={faBatteryEmpty} />
+                </MyButton>
+              </div>
+            </Whisper>
+
+            {/* STAT */}
+            {rowData?.isCritical && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipStat}>
+                <div>
+                  <MyButton size="small">
+                    <TbUrgent size={16} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
           </Form>
         );
       },
@@ -550,6 +614,14 @@ const InternalDrugOrder = () => {
           filters={filters()}
         />
       </div>
+      <ChatModal
+        title="Comment"
+        open={openChat}
+        setOpen={setOpenChat}
+        handleSendMessage={handleSendMessage}
+        list={messages}
+        fieldShowName="message"
+      />
     </div>
   );
 };
