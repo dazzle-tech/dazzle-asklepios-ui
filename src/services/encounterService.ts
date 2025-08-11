@@ -879,7 +879,7 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-        getEmergencyEncounters: builder.query({
+    getEmergencyEncounters: builder.query({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/emergency-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
@@ -906,6 +906,17 @@ export const encounterService = createApi({
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
+    }),
+    cancelEncounter: builder.mutation({
+      query: (encounter: ApEncounter) => ({
+        url: `/encounter/cancel-encounter`,
+        method: 'POST',
+        body: encounter
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
     }),
   }),
 });
@@ -1005,5 +1016,6 @@ export const {
   useGetEREncountersListQuery,
   useGetEmergencyEncountersQuery,
   useGetProgressNotesListQuery,
-  useSaveProgressNotesMutation
+  useSaveProgressNotesMutation,
+  useCancelEncounterMutation
 } = encounterService;

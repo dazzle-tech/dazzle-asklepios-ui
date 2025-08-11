@@ -324,6 +324,7 @@ const InpatientList = () => {
                 const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
                 const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
                 const toolTransferPatient = <Tooltip>Transfer Patient</Tooltip>;
+                const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
