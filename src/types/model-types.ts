@@ -1984,7 +1984,6 @@ export interface ApMedicalSheets {
 	glasgowComaScale:boolean;
 	vteRiskAssessment:boolean;
 	progressNotes:boolean;
-	medicationAdministrationRecord :boolean;
 	ivFluidAdministration:boolean;
 	dietaryRequest:boolean;
 	pediatric:boolean;
@@ -1993,6 +1992,7 @@ export interface ApMedicalSheets {
 	rehabilitationPlan:boolean;
 	occupationalTherapy:boolean;
 	physiotherapyPlan:boolean;
+	medicationAdministrationRecord:boolean;
 } 
 
 export interface ApMedicationCategories { 
