@@ -1985,7 +1985,6 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	glasgowComaScale:undefined,
 	vteRiskAssessment:undefined,
 	progressNotes:undefined,
-	medicationAdministrationRecord :undefined,
 	ivFluidAdministration:undefined,
 	dietaryRequest:undefined,
 	pediatric:undefined,
@@ -1994,6 +1993,7 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	rehabilitationPlan:undefined,
 	occupationalTherapy:undefined,
 	physiotherapyPlan:undefined,
+	medicationAdministrationRecord:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
