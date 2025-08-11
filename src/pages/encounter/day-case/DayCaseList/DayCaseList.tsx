@@ -426,14 +426,13 @@ const DayCaseList = () => {
                     record={dateFilter}
                     setRecord={setDateFilter}
                 />
-                <div className="search-btn">
-                    <MyButton onClick={handleManualSearch}>
-                        <icons.Search />
-                    </MyButton>
-                </div>
             </Form>
         );
     };
+    // Effects 
+    useEffect(() => {
+    handleManualSearch();
+}, [dateFilter])
     return (
         <Panel>
             <BedAssignmentModal
