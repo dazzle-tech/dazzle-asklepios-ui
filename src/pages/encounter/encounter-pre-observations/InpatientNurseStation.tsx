@@ -32,6 +32,7 @@ import Repositioning from '../encounter-component/repositioning';
 import Encounter from '../encounter-screen';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 import PhysicianOrderSummary from '../encounter-component/physician-order-summary';
+import WoundCareDocumentation from '../encounter-component/wound-care-documentation';
 const InpatientNurseStation = ({ }) => {
     const dispatch = useAppDispatch();
     const location = useLocation();
@@ -207,6 +208,10 @@ const InpatientNurseStation = ({ }) => {
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="13" title="Physician Order Summary">
                                     <PhysicianOrderSummary />
+                                </Tabs.Tab>
+
+                                <Tabs.Tab eventKey="14" title="Wound Care Documentation">
+                                    <WoundCareDocumentation />
                                 </Tabs.Tab>
 
                             </Tabs>
