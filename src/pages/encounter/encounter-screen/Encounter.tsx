@@ -253,6 +253,13 @@ const Encounter = () => {
       icon: faBed,
       path: 'pressure-ulce-risk-assessment'
     },
+    '/encounter/pregnancy-follow-up': 'Pregnancy Follow-up',
+  };
+
+  const menuItems = [
+    { key: 'pregnancyFollowUp', label: 'Pregnancy Follow-up', icon: faBed, path: 'pregnancy-follow-up' },
+    { key: 'vteRiskAssessment', label: 'VTE Risk Assessment', icon: faBraille, path: 'vte-risk-assessment' },
+    { key: 'bradenScaleForPressureUlcer', label: 'Pressure Ulcer Risk Assessment', icon: faBed, path: 'pressure-ulce-risk-assessment' },
     { key: 'glasgowComaScale', label: 'Glasgow Coma Scale', icon: faG, path: 'glasgow-coma-scale' },
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
     { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },

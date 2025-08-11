@@ -105,6 +105,7 @@ import Questionnaire from './pages/questionnaire-setup/Questionnaire';
 import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
 import Operation from './pages/operation-module';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
+import VisitDurationSetup from './pages/setup/visit-duration-setup';
 import MedicationMatrix from './pages/setup/med-matrix-setup';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
@@ -153,6 +154,7 @@ import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-as
 import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary';
 import MedicationSchedule from './pages/setup/medication-schedule-setup';
 import NutritionStateAsssessment from './pages/encounter/encounter-component/nutrition-state-asssessment';
+import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
 
 
 const App = () => {
@@ -327,6 +329,8 @@ const App = () => {
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrder />} />
+                <Route path="pregnancy-follow-up" element={<PregnancyFollowup />} />
+                <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
@@ -381,6 +385,7 @@ const App = () => {
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
+              <Route path="visit-duration-setup" element={<VisitDurationSetup />} />
               <Route path="modules-setup" element={<Modules />} />
               <Route path="shift-setup" element={<Shifts />} />
               <Route
