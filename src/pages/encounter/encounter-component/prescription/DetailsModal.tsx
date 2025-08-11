@@ -81,7 +81,7 @@ const DetailsModal = ({ edit, open, setOpen, prescriptionMedication, setPrescrip
             setSelectedOption(prescriptionMedication?.instructionsTypeLkey);
 
             setInstruc(prescriptionMedication.administrationInstructions);
-            setTags(prescriptionMedication?.parametersToMonitor.split(","))
+            setTags(prescriptionMedication?.parametersToMonitor.split(","));
             if (prescriptionMedication?.instructionsTypeLkey === "3010606785535008") {
 
                 const instruc = customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === prescriptionMedication.key)
@@ -592,6 +592,7 @@ const DetailsModal = ({ edit, open, setOpen, prescriptionMedication, setPrescrip
                             </Col>
 
                         </Row>
+                        
                         <Row className="rows-gap">
                             <Col md={24}>
                                 <MyTagInput tags={tags} setTags={setTags} />
