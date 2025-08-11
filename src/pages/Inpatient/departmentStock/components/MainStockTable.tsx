@@ -259,7 +259,7 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      width: 100,
+      width: 120,
       render: rowData => {
         const status = rowData.status || 'Normal';
 
