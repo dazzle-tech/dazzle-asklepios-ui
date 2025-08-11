@@ -53,7 +53,6 @@ import {
   faBed,
   faUserPlus,
   faBraille,
-  faShoePrints
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom';
 import AllergiesModal from './AllergiesModal';
@@ -240,21 +239,6 @@ const Encounter = () => {
     '/encounter/nutrition-state-asssessment': 'Nutrition State',
   };
 
-  const menuItems = [
-    {
-      key: 'vteRiskAssessment',
-      label: 'VTE Risk Assessment',
-      icon: faBraille,
-      path: 'vte-risk-assessment'
-    },
-    {
-      key: 'bradenScaleForPressureUlcer',
-      label: 'Pressure Ulcer Risk Assessment',
-      icon: faBed,
-      path: 'pressure-ulce-risk-assessment'
-    },
-    '/encounter/pregnancy-follow-up': 'Pregnancy Follow-up',
-  };
 
   const menuItems = [
     { key: 'pregnancyFollowUp', label: 'Pregnancy Follow-up', icon: faBed, path: 'pregnancy-follow-up' },
