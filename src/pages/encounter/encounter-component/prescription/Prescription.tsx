@@ -111,7 +111,7 @@ const Prescription = props => {
         ...rowData,
         genericName: genericMedication ? genericMedication.genericName : 'Unnamed Medication',
         administrationInstructions: rowData.administrationInstructions || null,
-        parametersToMonitor: rowData.parametersToMonitor || rowData.parametersToMonitorKey || null
+        parametersToMonitor: rowData.parametersToMonitor || ""
       };
 
       setFavoriteMedications(prev => [...prev, medicationToAdd]);
@@ -847,7 +847,7 @@ const Prescription = props => {
                 }
               ]}
               onRowClick={rowData => {
-                setPrescriptionMedications(rowData);
+                setPrescriptionMedications({...rowData,parametersToMonitor:""});
               }}
               data={favoriteMedications}
             />
