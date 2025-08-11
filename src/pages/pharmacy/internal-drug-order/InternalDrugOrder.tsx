@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
-import { Form, Tooltip, Whisper } from 'rsuite';
+import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
@@ -17,6 +17,12 @@ import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import ChatModal from '@/components/ChatModal/ChatModal';
+import MyModal from '@/components/MyModal/MyModal';
+import { faDroplet } from '@fortawesome/free-solid-svg-icons';
+import { Tabs } from 'rsuite';
+import Warning from '@/pages/encounter/encounter-pre-observations/warning/Warning';
+import Allergies from '@/pages/encounter/encounter-pre-observations/AllergiesNurse/Allergies';
+
 const InternalDrugOrder = () => {
   const dispatch = useAppDispatch();
   const [openChat, setOpenChat] = useState(false);
@@ -33,6 +39,7 @@ const InternalDrugOrder = () => {
     };
     setMessages(prev => [...prev, newMsg]);
   };
+  const [open, setOpen] = useState(false);
 
   // dummy data
   const data = [
@@ -321,6 +328,7 @@ const InternalDrugOrder = () => {
       ]
     }
   ];
+  const [activeKey, setActiveKey] = useState<string | number>('1');
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -500,8 +508,8 @@ const InternalDrugOrder = () => {
       key: 'actions',
       title: <Translate>Actions</Translate>,
       render: rowData => {
-        const tooltipDoctor = <Tooltip>MAR</Tooltip>;
-        const tooltipNurse = <Tooltip>Clinical Check</Tooltip>;
+        const tooltipDoctor = <Tooltip>Clinical Check</Tooltip>;
+        const tooltipNurse = <Tooltip>MAR</Tooltip>;
         const tooltipComments = <Tooltip>Comments</Tooltip>;
         const tooltipPrintLabel = <Tooltip>Print Label</Tooltip>;
         const tooltipUnavailable = <Tooltip>Unavailable</Tooltip>;
@@ -518,7 +526,7 @@ const InternalDrugOrder = () => {
               </div>
             </Whisper>
 
-            {/* Clinical Check */}
+            {/* MAR */}
             <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
               <div>
                 <MyButton
@@ -530,10 +538,10 @@ const InternalDrugOrder = () => {
               </div>
             </Whisper>
 
-            {/* MAR */}
+            {/* Clinical Check */}
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
               <div>
-                <MyButton size="small">
+                <MyButton size="small" onClick={() => setOpen(true)}>
                   <FontAwesomeIcon icon={faUserCheck} />
                 </MyButton>
               </div>
@@ -621,6 +629,31 @@ const InternalDrugOrder = () => {
         handleSendMessage={handleSendMessage}
         list={messages}
         fieldShowName="message"
+      />
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title={'Clinical Checks'}
+        position="center"
+        content={
+          <div>
+            <Tabs activeKey={activeKey} onSelect={setActiveKey}>
+              <Tabs.Tab eventKey="1" title="Diagnosis">
+                {/* <Diagnosis /> */}
+              </Tabs.Tab>
+              <Tabs.Tab eventKey="2" title="Allergies">
+                {/* <Allergies /> */}
+              </Tabs.Tab>
+              <Tabs.Tab eventKey="3" title="Medical Warnings">
+                {/* <Warning /> */}
+              </Tabs.Tab>
+              <Tabs.Tab eventKey="4" title="Diagnostics Results">
+                {/* <DiagnosticsResults /> */}
+              </Tabs.Tab>
+            </Tabs>
+          </div>
+        }
+        steps={[{ title: 'Clinical Checks', icon: <FontAwesomeIcon icon={faUserCheck} /> }]}
       />
     </div>
   );

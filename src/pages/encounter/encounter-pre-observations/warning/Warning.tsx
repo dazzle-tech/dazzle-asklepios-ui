@@ -44,7 +44,7 @@ const Warning = (props) => {
       {
         fieldName: 'patient_key',
         operator: 'match',
-        value: patient.key
+        value: patient?.key
       },
       {
         fieldName: 'status_lkey',
@@ -75,7 +75,7 @@ const Warning = (props) => {
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patient.key
+          value: patient?.key
         },
         {
           fieldName: 'status_lkey',
@@ -97,7 +97,7 @@ const Warning = (props) => {
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patient.key
+          value: patient?.key
         },
         {
           fieldName: 'status_lkey',
@@ -119,7 +119,7 @@ const Warning = (props) => {
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patient.key
+          value: patient?.key
         },
         {
           fieldName: 'status_lkey',

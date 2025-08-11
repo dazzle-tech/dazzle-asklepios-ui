@@ -48,7 +48,7 @@ const location = useLocation();
       {
         fieldName: 'patient_key',
         operator: 'match',
-        value: patient.key
+        value: patient?.key
       },
       {
         fieldName: 'status_lkey',
@@ -87,7 +87,7 @@ const location = useLocation();
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patient.key
+          value: patient?.key
         },
         {
           fieldName: 'status_lkey',
@@ -109,7 +109,7 @@ const location = useLocation();
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patient.key
+          value: patient?.key
         },
         {
           fieldName: 'status_lkey',
@@ -139,7 +139,7 @@ const location = useLocation();
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patient.key
+          value: patient?.key
         },
         {
           fieldName: 'status_lkey',
@@ -161,7 +161,7 @@ const location = useLocation();
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patient.key
+          value: patient?.key
         },
         {
           fieldName: 'status_lkey',
