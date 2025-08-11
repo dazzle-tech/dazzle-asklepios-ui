@@ -18,7 +18,7 @@ const actionConfig = {
     color: 'var(--primary-pink)',
     icon: faTrash
   },
-    accept: {
+  accept: {
     text: 'Accept',
     color: 'var(--primary-blue)',
     icon: faCircleCheck
@@ -46,7 +46,9 @@ const DeletionConfirmationModal = ({
   itemToDelete = '',
   actionButtonFunction = null,
   actionType = 'delete', // delete | deactivate | reactivate | confirm
-  confirmationQuestion = '' 
+  confirmationQuestion = '',
+  actionButtonLabel = '',
+  cancelButtonLabel = 'Cancel'
 }) => {
   const config = actionConfig[actionType] || actionConfig.delete;
 
@@ -71,10 +73,10 @@ const DeletionConfirmationModal = ({
       </Modal.Body>
       <Modal.Footer className="footer-delete-modal">
         <MyButton appearance="subtle" color="var(--dark-blue-gray)" onClick={() => setOpen(false)}>
-          Cancel
+          {cancelButtonLabel}
         </MyButton>
         <MyButton backgroundColor={config.color} onClick={actionButtonFunction}>
-          {config.text}
+          {actionButtonLabel || config.text}
         </MyButton>
       </Modal.Footer>
     </Modal>

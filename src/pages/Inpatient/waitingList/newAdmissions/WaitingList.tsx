@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetWaitingListEncounterQuery } from '@/services/encounterService';
+import { useGetWaitingListEncounterQuery, useCancelEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -20,6 +20,8 @@ import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import PatientAdmission from './PatientAdmission';
+import { notify } from '@/utils/uiReducerActions';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 const WaitingList = () => {
     const location = useLocation();
@@ -32,11 +34,13 @@ const WaitingList = () => {
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Waiting_Patient_Encounters'));
     dispatch(setDivContent(divContentHTML));
-    const[patientAdmissionModal,setPatientAdmissionModal] = useState(false);
+    const [patientAdmissionModal, setPatientAdmissionModal] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
-    const [admitInPatient,setAdmitInPatient]=useState<any>({...newApAdmitOutpatientInpatient});
+    const [open, setOpen] = useState(false);
+    const [cancelEncounter] = useCancelEncounterMutation();
+    const [admitInPatient, setAdmitInPatient] = useState<any>({ ...newApAdmitOutpatientInpatient });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -50,9 +54,9 @@ const WaitingList = () => {
                 value: "false"
             },
             {
-               fieldName: 'resource_type_lkey',
+                fieldName: 'resource_type_lkey',
                 operator: 'match',
-                value: "4217389643435490" 
+                value: "4217389643435490"
             }
         ]
     });
@@ -68,6 +72,20 @@ const WaitingList = () => {
         if (rowData && encounter && rowData.key === encounter.key) {
             return 'selected-row';
         } else return '';
+    };
+    // Cancel Encounter
+    const handleCancelEncounter = async () => {
+        try {
+            if (encounter) {
+                await cancelEncounter(encounter).unwrap();
+                refetchEncounter();
+                dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+                setOpen(false);
+            }
+        } catch (error) {
+            console.error("Encounter completion error:", error);
+            dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+        }
     };
     //useEffect
     useEffect(() => {
@@ -157,7 +175,12 @@ const WaitingList = () => {
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                             <div>
-                                <MyButton size="small">
+                                <MyButton
+                                    size="small"
+                                    onClick={() => {
+                                        setLocalEncounter(rowData);
+                                        setOpen(true);
+                                    }}>
                                     <FontAwesomeIcon icon={faRectangleXmark} />
                                 </MyButton>
                             </div>
@@ -167,7 +190,7 @@ const WaitingList = () => {
                                 <MyButton
                                     size="small"
                                     backgroundColor="black"
-                                    onClick={()=>{setPatientAdmissionModal(true);setAdmitInPatient({...rowData?.admitRecord })}}
+                                    onClick={() => { setPatientAdmissionModal(true); setAdmitInPatient({ ...rowData?.admitRecord }) }}
                                 >
                                     <FontAwesomeIcon icon={faBedPulse} />
                                 </MyButton>
@@ -222,7 +245,7 @@ const WaitingList = () => {
                 data={encounterListResponse?.object ?? []}
                 columns={tableColumns}
                 rowClassName={isSelected}
-                loading={isLoading || (manualSearchTriggered && isFetching)}
+                loading={isLoading || (manualSearchTriggered && isFetching) || isFetching}
                 onRowClick={rowData => {
                     setLocalEncounter(rowData);
                     setLocalPatient(rowData.patientObject);
@@ -239,9 +262,17 @@ const WaitingList = () => {
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
             <PatientAdmission
-             open={patientAdmissionModal}
-             setOpen={setPatientAdmissionModal}
-             admitToInpatientObject={admitInPatient}/>
+                open={patientAdmissionModal}
+                setOpen={setPatientAdmissionModal}
+                admitToInpatientObject={admitInPatient} />
+            <DeletionConfirmationModal
+                open={open}
+                setOpen={setOpen}
+                actionButtonFunction={handleCancelEncounter}
+                actionType="Deactivate"
+                confirmationQuestion="Do you want to cancel this Encounter ?"
+                actionButtonLabel='Cancel'
+                cancelButtonLabel='Close' />
         </Panel>
     );
 };

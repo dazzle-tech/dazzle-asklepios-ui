@@ -6,14 +6,12 @@ import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
-import { Badge, Form, Panel, Table, Pagination, Tooltip, Whisper } from 'rsuite';
+import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
-import * as icons from '@rsuite/icons';
-// import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
+import { useCancelEncounterMutation, useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -23,6 +21,8 @@ import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
+import { notify } from '@/utils/uiReducerActions';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 const EncounterList = () => {
   const location = useLocation();
@@ -37,9 +37,10 @@ const EncounterList = () => {
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent(divContentHTML));
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
-
+  const [open, setOpen] = useState(false);
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [startEncounter] = useStartEncounterMutation();
+  const [cancelEncounter] = useCancelEncounterMutation();
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true,
@@ -51,7 +52,13 @@ const EncounterList = () => {
           .map(key => `(${key})`)
           .join(' '),
       },
-
+      {
+        fieldName: 'encounter_status_lkey',
+        operator: 'in',
+        value: ['91063195286200', '91084250213000']
+          .map(key => `(${key})`)
+          .join(' '),
+      },
     ]
   });
   const {
@@ -71,9 +78,9 @@ const EncounterList = () => {
       return 'selected-row';
     } else return '';
   };
-useEffect(() => {
-  handleManualSearch();
-}, [listRequest,dateFilter.fromDate, dateFilter.toDate]);
+  useEffect(() => {
+    handleManualSearch();
+  }, [listRequest, dateFilter.fromDate, dateFilter.toDate]);
 
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
@@ -105,6 +112,12 @@ useEffect(() => {
             fieldName: 'resource_type_lkey',
             operator: 'in',
             value: ['2039534205961578', '2039620472612029', '2039516279378421']
+              .map(key => `(${key})`)
+              .join(' '),
+          }, {
+            fieldName: 'encounter_status_lkey',
+            operator: 'in',
+            value: ['91063195286200', '91084250213000']
               .map(key => `(${key})`)
               .join(' '),
           },
@@ -156,7 +169,19 @@ useEffect(() => {
       navigate(targetPath, { state: { patient: patientData, encounter: encounterData, edit: encounterData.encounterStatusLvalue.valueCode == "CLOSED" } });
     }
   };
-
+  const handleCancelEncounter = async () => {
+    try {
+      if (encounter) {
+        await cancelEncounter(encounter).unwrap();
+        refetchEncounter();
+        dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+        setOpen(false);
+      }
+    } catch (error) {
+      console.error("Encounter completion error:", error);
+      dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+    }
+  };
   //useEffect
   useEffect(() => {
     dispatch(setPageCode(''));
@@ -350,13 +375,19 @@ useEffect(() => {
                 </MyButton>
               </div>
             </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+            {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
               <div>
-                <MyButton size="small">
+                <MyButton
+                  size="small"
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setOpen(true);
+                  }}>
                   <FontAwesomeIcon icon={faRectangleXmark} />
                 </MyButton>
               </div>
-            </Whisper>
+            </Whisper>}
+
           </Form>
         );
       },
@@ -410,11 +441,6 @@ useEffect(() => {
           record={dateFilter}
           setRecord={setDateFilter}
         />
-        {/* <div className="search-btn">
-          <MyButton onClick={handleManualSearch}>
-            <icons.Search />
-          </MyButton>
-        </div> */}
       </Form>
     );
   };
@@ -441,6 +467,14 @@ useEffect(() => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+      <DeletionConfirmationModal
+        open={open}
+        setOpen={setOpen}
+        actionButtonFunction={handleCancelEncounter}
+        actionType="Deactivate"
+        confirmationQuestion="Do you want to cancel this Encounter ?"
+        actionButtonLabel='Cancel'
+        cancelButtonLabel='Close' />
     </Panel>
   );
 };
