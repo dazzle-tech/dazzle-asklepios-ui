@@ -1239,7 +1239,6 @@ export interface ApDrugOrderMedications {
 export interface ApDuplicationCandidateSetup { 
 	key:string;
 	role:string;
-	dateOfBirth:boolean;
 	dob:boolean;
 	lastName:boolean;
 	documentNo:boolean;
@@ -3792,6 +3791,7 @@ export interface ApResourceAvailabilitySlice {
 	resourceKey:string;
 	facilityKey:string;
 	departmentKey:string;
+	date:Date;
 	dayOfWeekLkey:string;
 	startTimeMinutes:string;
 	endTimeMinutes:string;

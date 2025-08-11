@@ -3,7 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApPatient, ApPatientAllergies,ApUser, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings ,ApPatientPreferredHealthProfessional } from '@/types/model-types';
+import { ApPatient, ApPatientAllergies, ApUser, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings, ApPatientPreferredHealthProfessional } from '@/types/model-types';
 
 export const patientService = createApi({
   reducerPath: 'patientApi',
@@ -27,18 +27,18 @@ export const patientService = createApi({
         return response.object;
       }
     }),
- getPatientById: builder.query({
-  query: (patientId: string) => ({
-    url: `/pas/get-patient-by-id`,
-    params: {
-      key: patientId,
-    }
- 
-  }),
-  transformResponse: (response: any) => {
-    return response.object;
-  }
-}),
+    getPatientById: builder.query({
+      query: (patientId: string) => ({
+        url: `/pas/get-patient-by-id`,
+        params: {
+          key: patientId,
+        }
+
+      }),
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
     getPatientAllergies: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/pas/patient-allergy-list?${fromListRequestToQueryParams(listRequest)}`
@@ -123,7 +123,7 @@ export const patientService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-     
+
     savePatientRelation: builder.mutation({
       query: (request: ApPatientRelation) => ({
         url: `/pas/save-patient-relation`,
@@ -184,7 +184,7 @@ export const patientService = createApi({
         return response.object;
       }
     })
-    
+
     ,
     deletePatientRelation: builder.mutation({
       query: (data: { key: string }) => ({
@@ -279,24 +279,24 @@ export const patientService = createApi({
     }),
     updatePatientAdministrativeWarnings: builder.mutation({
       query: (patientAdministrativeWarnings: ApPatientAdministrativeWarnings) => ({
-        url: `/pas/update-patient-administrative-warning`, 
+        url: `/pas/update-patient-administrative-warning`,
         method: 'POST',
         body: patientAdministrativeWarnings,
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.object;   
+        return response.object;
       }
     }),
     deletePatientAdministrativeWarnings: builder.mutation({
       query: (patientAdministrativeWarnings: ApPatientAdministrativeWarnings) => ({
-        url: `/pas/delete-patient-administrative-warning`, 
+        url: `/pas/delete-patient-administrative-warning`,
         method: 'POST',
         body: patientAdministrativeWarnings,
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.object;   
+        return response.object;
       }
     }),
     getAgeGroupValue: builder.query({
@@ -310,19 +310,19 @@ export const patientService = createApi({
       keepUnusedDataFor: 5
     }),
     saveUserAccessLoginPrivatePatient: builder.mutation({
-      query: (data: { user:ApUser , reason: string ,patientKey:string }) => ({
+      query: (data: { user: ApUser, reason: string, patientKey: string }) => ({
         url: `/pas/user-access-private-patient`,
         method: 'POST',
-        body: data.user, 
+        body: data.user,
         headers: {
-          reason : data.reason,
-          patientKey:data.patientKey
+          reason: data.reason,
+          patientKey: data.patientKey
         },
       }),
       transformResponse: (response) => {
         return response;
       },
-    }), 
+    }),
     savePatientPreferredHealthProfessional: builder.mutation({
       query: (patientPH: ApPatientPreferredHealthProfessional) => ({
         url: `/pas/save-patient-preferred-health`,
@@ -332,7 +332,7 @@ export const patientService = createApi({
       transformResponse: (response) => {
         return response;
       },
-    }), 
+    }),
     getPatientPreferredHealthProfessional: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/pas/patient-preferred-health-list?${fromListRequestToQueryParams(listRequest)}`,
@@ -342,17 +342,24 @@ export const patientService = createApi({
     }),
     deletePatientPreferredHealthProfessional: builder.mutation({
       query: (patientPH: ApPatientPreferredHealthProfessional) => ({
-        url: `/pas/remove-patient-preferred-health`, 
+        url: `/pas/remove-patient-preferred-health`,
         method: 'POST',
         body: patientPH,
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.object;   
+        return response.object;
       }
     }),
+    PatientListByRoleCandidate: builder.mutation({
+      query: (requestBody) => ({
+        url: '/pas/patient-list-by-role-candidate',
+        method: 'POST',
+        body: requestBody,
+      }),
+    }),
   }),
-    
+
 });
 
 export const {
@@ -386,5 +393,6 @@ export const {
   useSaveUserAccessLoginPrivatePatientMutation,
   useSavePatientPreferredHealthProfessionalMutation,
   useGetPatientPreferredHealthProfessionalQuery,
-  useDeletePatientPreferredHealthProfessionalMutation
+  useDeletePatientPreferredHealthProfessionalMutation,
+  usePatientListByRoleCandidateMutation
 } = patientService;
