@@ -4,6 +4,12 @@ FROM node:18 AS build
 # Set the working directory
 WORKDIR /app
 
+# Helpful on Alpine
+RUN apk add --no-cache libc6-compat
+
+# Increase Node/V8 heap for build tools (documented via NODE_OPTIONS / --max-old-space-size)
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
 
