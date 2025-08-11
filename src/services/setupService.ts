@@ -1123,6 +1123,10 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+  getCandidatesByDepartmentKey: builder.query({
+      query: (departmentKey) => `/setup/duplication-candidate-by-department?departmentKey=${departmentKey}`,
+    }),
+
     getCptList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/cpt-list?${fromListRequestToQueryParams(listRequest)}`
@@ -1609,5 +1613,6 @@ export const {
   useGetWarehouseContainProductsQuery,
   useGetWarehouseProductsDetailsQuery,
   useSaveWarehouseProductsDetailsMutation,
-  useRemoveWarehouseProductsDetailsMutation
+  useRemoveWarehouseProductsDetailsMutation,
+  useLazyGetCandidatesByDepartmentKeyQuery
 } = setupService;

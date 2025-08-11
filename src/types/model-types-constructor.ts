@@ -1240,7 +1240,6 @@ export const newApDrugOrderMedications:modelTypes.ApDrugOrderMedications = {
 export const newApDuplicationCandidateSetup:modelTypes.ApDuplicationCandidateSetup = { 
 	key:undefined,
 	role:'',
-	dateOfBirth:undefined,
 	dob:undefined,
 	lastName:undefined,
 	documentNo:undefined,
@@ -3793,6 +3792,7 @@ export const newApResourceAvailabilitySlice:modelTypes.ApResourceAvailabilitySli
 	resourceKey:undefined,
 	facilityKey:undefined,
 	departmentKey:undefined,
+	date:null,
 	dayOfWeekLkey:undefined,
 	startTimeMinutes:'',
 	endTimeMinutes:'',
