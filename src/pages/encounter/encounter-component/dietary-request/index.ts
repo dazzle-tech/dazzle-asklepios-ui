@@ -1,2 +1,2 @@
-import DietaryRequest from './dietaryRequest';
-export default DietaryRequest;
+import DietaryRequests from './DietaryRequests';
+export default DietaryRequests;

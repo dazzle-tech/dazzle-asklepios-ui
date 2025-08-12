@@ -155,7 +155,7 @@ import PhysicianOrderSummary from './pages/encounter/encounter-component/physici
 import MedicationSchedule from './pages/setup/medication-schedule-setup';
 import NutritionStateAsssessment from './pages/encounter/encounter-component/nutrition-state-asssessment';
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
-import DietaryRequest from './pages/encounter/encounter-component/dietary-request/dietaryRequest';
+import DietaryRequest from './pages/encounter/encounter-component/dietary-request/DietaryRequests';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);

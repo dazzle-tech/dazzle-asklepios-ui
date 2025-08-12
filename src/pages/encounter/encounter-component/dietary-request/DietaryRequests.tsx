@@ -77,8 +77,7 @@ const sampleRequests = [
   }
 ];
 
-const DietaryRequest = () => {
-    
+const DietaryRequests = () => {
   const [requests, setRequests] = useState(sampleRequests);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
@@ -789,4 +788,4 @@ const DietaryRequest = () => {
   );
 };
 
-export default DietaryRequest;
+export default DietaryRequests;
