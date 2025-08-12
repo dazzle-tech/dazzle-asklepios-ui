@@ -157,6 +157,7 @@ import NutritionStateAsssessment from './pages/encounter/encounter-component/nut
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
 import DietaryRequest from './pages/encounter/encounter-component/dietary-request/DietaryRequests';
 import ReportResultTemplate from './pages/setup/report-result-template';
+import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products/ServiceAndProducts';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -372,7 +373,7 @@ const App = () => {
                 <Route path="hendrich-fall-risk" element={<HendrichFallRisk />} />
                 <Route path="nutrition-state-asssessment" element={<NutritionStateAsssessment />} />
                 <Route path="dietary-request" element={<DietaryRequest />} />
-                 <Route path="medication-administration-record" element={<MAR />} />
+                <Route path="medication-administration-record" element={<MAR />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
@@ -456,6 +457,7 @@ const App = () => {
               <Route path="department-stock" element={<DepartmentStock />} />
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
+              <Route path="service-and-products" element={<ServiceAndProducts />} />
             </Route>
           </Route>
 

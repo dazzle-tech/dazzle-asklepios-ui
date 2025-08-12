@@ -5,9 +5,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { useGetAllergiesQuery, useSaveAllergiesMutation } from '@/services/observationService';
-import {
-  useGetAllergensQuery
-} from '@/services/setupService';
+import { useGetAllergensQuery } from '@/services/setupService';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -21,17 +19,13 @@ import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
 import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
-import {
-  Checkbox,
-  IconButton,
-  Table
-} from 'rsuite';
+import { Checkbox, IconButton, Table } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import { formatDateWithoutSeconds } from '@/utils';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
-const Allergies = (props) => {
-const location = useLocation();
+const Allergies = props => {
+  const location = useLocation();
 
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
@@ -41,7 +35,7 @@ const location = useLocation();
   const [editing, setEditing] = useState(false);
   const [showPrev, setShowPrev] = useState(true);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
-  const [openToAdd,setOpenToAdd]=useState(true);
+  const [openToAdd, setOpenToAdd] = useState(true);
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -58,7 +52,11 @@ const location = useLocation();
     ]
   });
 
-  const { data: allergiesListResponse, refetch: fetchallerges, isLoading } = useGetAllergiesQuery({
+  const {
+    data: allergiesListResponse,
+    refetch: fetchallerges,
+    isLoading
+  } = useGetAllergiesQuery({
     ...listRequest
   });
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
@@ -66,8 +64,6 @@ const location = useLocation();
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
 
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
-
-
 
   const { data: allergensListToGetName } = useGetAllergensQuery({
     ...initialListRequest
@@ -123,9 +119,8 @@ const location = useLocation();
       }));
     }
   }, [showPrev]);
-  //Effect when do save allergy , refetch allergies 
+  //Effect when do save allergy , refetch allergies
   useEffect(() => {
-
     fetchallerges();
   }, [saveAllergiesMutation]);
 
@@ -176,8 +171,6 @@ const location = useLocation();
     }
   }, [showCanceled]);
 
-
-
   const handleClear = () => {
     setAllerges({
       ...newApVisitAllergies,
@@ -191,10 +184,7 @@ const location = useLocation();
       criticalityLkey: null,
       typeOfPropensityLkey: null
     });
-
   };
-
-
 
   const OpenCancellationReasonModel = () => {
     setOpenCancellationReasonModel(true);
@@ -225,9 +215,7 @@ const location = useLocation();
       dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
 
       fetchallerges()
-        .then(() => {
-
-        })
+        .then(() => {})
         .catch(error => {
           console.error('Refetch failed:', error);
         });
@@ -274,9 +262,7 @@ const location = useLocation();
       dispatch(notify('Undo Resolved Successfully'));
       setShowPrev(false);
       await fetchallerges()
-        .then(() => {
-
-        })
+        .then(() => {})
         .catch(error => {
           console.error('Refetch failed:', error);
         });
@@ -290,35 +276,33 @@ const location = useLocation();
   };
   const tableColumns = [
     {
-      key: "allergyTypeLvalue",
-      dataKey: "allergyTypeLvalue",
+      key: 'allergyTypeLvalue',
+      dataKey: 'allergyTypeLvalue',
       title: <Translate>Allergy Type</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.allergyTypeLvalue?.lovDisplayVale
     },
     {
-      key: "allergenKey",
-      dataKey: "allergenKey",
+      key: 'allergenKey',
+      dataKey: 'allergenKey',
       title: <Translate>Allergen</Translate>,
       flexGrow: 2,
       render: (rowData: any) => {
-        if (!allergensListToGetName?.object) return "Loading...";
-        const found = allergensListToGetName.object.find(
-          (item) => item.key === rowData.allergenKey
-        );
-        return found?.allergenName || "No Name";
+        if (!allergensListToGetName?.object) return 'Loading...';
+        const found = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
+        return found?.allergenName || 'No Name';
       }
     },
     {
-      key: "severityLvalue",
-      dataKey: "severityLvalue",
+      key: 'severityLvalue',
+      dataKey: 'severityLvalue',
       title: <Translate>Severity</Translate>,
       flexGrow: 1,
       render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
     },
     {
-      key: "criticalityLkey",
-      dataKey: "criticalityLkey",
+      key: 'criticalityLkey',
+      dataKey: 'criticalityLkey',
       title: <Translate>Certainty type</Translate>,
       flexGrow: 2,
       render: (rowData: any) =>
@@ -327,47 +311,44 @@ const location = useLocation();
           : rowData.criticalityLkey
     },
     {
-      key: "onsetLvalue",
-      dataKey: "onsetLvalue",
+      key: 'onsetLvalue',
+      dataKey: 'onsetLvalue',
       title: <Translate>Onset</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.onsetLvalue?.lovDisplayVale
     },
     {
-      key: "onsetDate",
-      dataKey: "onsetDate",
+      key: 'onsetDate',
+      dataKey: 'onsetDate',
       title: <Translate>Onset Date Time</Translate>,
       flexGrow: 2,
       render: (rowData: any) =>
-        rowData.onsetDate
-          ? new Date(rowData.onsetDate).toLocaleDateString("en-GB")
-          : "Undefined"
-    },    
+        rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleDateString('en-GB') : 'Undefined'
+    },
     {
-      key: "treatmentStrategyLvalue",
-      dataKey: "treatmentStrategyLvalue",
+      key: 'treatmentStrategyLvalue',
+      dataKey: 'treatmentStrategyLvalue',
       title: <Translate>Treatment Strategy</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.treatmentStrategyLvalue?.lovDisplayVale
     },
     {
-      key: "sourceOfInformationLvalue",
-      dataKey: "sourceOfInformationLvalue",
+      key: 'sourceOfInformationLvalue',
+      dataKey: 'sourceOfInformationLvalue',
       title: <Translate>Source of information</Translate>,
       flexGrow: 2,
-      render: (rowData: any) =>
-        rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
+      render: (rowData: any) => rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient'
     },
     {
-      key: "reactionDescription",
-      dataKey: "reactionDescription",
+      key: 'reactionDescription',
+      dataKey: 'reactionDescription',
       title: <Translate>Reaction Description</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.reactionDescription
     },
     {
-      key: "typeOfPropensityLkey",
-      dataKey: "typeOfPropensityLkey",
+      key: 'typeOfPropensityLkey',
+      dataKey: 'typeOfPropensityLkey',
       title: <Translate>Type Of Propensity</Translate>,
       flexGrow: 2,
       render: (rowData: any) =>
@@ -376,109 +357,118 @@ const location = useLocation();
           : rowData.typeOfPropensityLkey
     },
     {
-      key: "statusLvalue",
-      dataKey: "statusLvalue",
+      key: 'statusLvalue',
+      dataKey: 'statusLvalue',
       title: <Translate>Status</Translate>,
       flexGrow: 1,
       render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale
     },
     {
-      key: "#",
-      dataKey: "",
+      key: '#',
+      dataKey: '',
       title: <Translate>Edit</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return <MdModeEdit
-          title="Edit"
-          size={24}
-          fill="var(--primary-gray)"
-          onClick={() => {setOpenDetailsModal(true)
-            setOpenToAdd(false)
-          }}
-        />
+        return (
+          <MdModeEdit
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setOpenDetailsModal(true);
+              setOpenToAdd(false);
+            }}
+          />
+        );
       }
     },
     {
-      key: "notes",
-      dataKey: "notes",
+      key: 'notes',
+      dataKey: 'notes',
       title: <Translate>Notes</Translate>,
       expandable: true
-    }
-    ,
+    },
     {
-      key: "certainty",
-      dataKey: "certainty",
+      key: 'certainty',
+      dataKey: 'certainty',
       title: <Translate>Certainty</Translate>,
       expandable: true
-    }
-    ,
+    },
     {
-      key: "cancellationReason",
-      dataKey: "cancellationReason",
+      key: 'cancellationReason',
+      dataKey: 'cancellationReason',
       title: <Translate>Cancellation Reason</Translate>,
       expandable: true
-    }
-    ,
+    },
     {
-      key: "",
+      key: '',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.createdBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.createdBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
     {
-      key: "",
+      key: '',
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.updatedBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.updatedBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
 
     {
-      key: "",
+      key: '',
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.deletedBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.deletedBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
     {
-      key: "",
+      key: '',
       title: <Translate>Resolved At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
         if (rowData.statusLkey != '9766169155908512') {
-          return (<>
-
-            <span>{rowData.resolvedBy}</span>
-            <br />
-            <span className='date-table-style'>{rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}</span>
-          </>)
-        }
-        else {
+          return (
+            <>
+              <span>{rowData.resolvedBy}</span>
+              <br />
+              <span className="date-table-style">
+                {rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}
+              </span>
+            </>
+          );
+        } else {
           return null;
         }
       }
-
-    },
-
+    }
   ];
   const pageIndex = listRequest.pageNumber - 1;
 
@@ -497,7 +487,6 @@ const location = useLocation();
 
   // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-
     setListRequest({
       ...listRequest,
       pageSize: parseInt(event.target.value, 10),
@@ -506,26 +495,30 @@ const location = useLocation();
   };
   return (
     <div>
-
       {/* buttons actions section */}
-      <div className='bt-div'>
+      <div className="bt-div">
         <MyButton
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
-          disabled={!edit?allerges?.key == null ? true : false:true}
-        >Cancel</MyButton>
+          disabled={!edit ? (allerges?.key == null ? true : false) : true}
+        >
+          Cancel
+        </MyButton>
 
         <MyButton
-          disabled={!edit?allerges?.statusLkey != '9766169155908512' ? true : false:true}
+          disabled={!edit ? (allerges?.statusLkey != '9766169155908512' ? true : false) : true}
           prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
           onClick={OpenConfirmResolvedModel}
         >
-          Resolved</MyButton>
+          Resolved
+        </MyButton>
         <MyButton
           prefixIcon={() => <ReloadIcon />}
-          disabled={!edit?allerges?.statusLkey != '9766179572884232' ? true : false:true}
+          disabled={!edit ? (allerges?.statusLkey != '9766179572884232' ? true : false) : true}
           onClick={OpenConfirmUndoResolvedModel}
-        >Undo Resolved</MyButton>
+        >
+          Undo Resolved
+        </MyButton>
 
         <Checkbox
           checked={!showCanceled}
@@ -543,16 +536,18 @@ const location = useLocation();
         >
           Show Previous Allergies
         </Checkbox>
-        <div className='bt-right'>
+        <div className="bt-right">
           <MyButton
             disabled={edit}
             prefixIcon={() => <PlusIcon />}
             onClick={() => {
               handleClear();
-              setOpenDetailsModal(true)
-              setOpenToAdd(true)
+              setOpenDetailsModal(true);
+              setOpenToAdd(true);
             }}
-          >Add Allergy</MyButton>
+          >
+            Add Allergy
+          </MyButton>
         </div>
       </div>
       <MyTable
@@ -561,7 +556,7 @@ const location = useLocation();
         onRowClick={rowData => {
           setAllerges(rowData);
           setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
-          setOpenToAdd(false)
+          setOpenToAdd(false);
         }}
         rowClassName={isSelected}
         sortColumn={listRequest.sortBy}
@@ -575,9 +570,7 @@ const location = useLocation();
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={isLoading}
-
       />
-
 
       {/* modal for cancell the allergy and write the reason */}
       <CancellationModal
@@ -595,37 +588,39 @@ const location = useLocation();
         open={openConfirmResolvedModel}
         setOpen={setOpenConfirmResolvedModel}
         actionButtonFunction={handleResolved}
-        actionButtonLabel='Yes'
+        actionButtonLabel="Yes"
         title="Resolve"
-        bodyheight='30vh'
-       steps={[{ title: "Is this allergy resolved?", icon: <FontAwesomeIcon icon={faCheck }/>}]}
+        bodyheight="30vh"
+        steps={[{ title: 'Is this allergy resolved?', icon: <FontAwesomeIcon icon={faCheck} /> }]}
         content={<></>}
-
       ></MyModal>
 
       <MyModal
         open={openConfirmUndoResolvedModel}
         setOpen={setOpenConfirmUndoResolvedModel}
         actionButtonFunction={handleUndoResolved}
-        actionButtonLabel='Yes'
+        actionButtonLabel="Yes"
         title="Undo Resolve"
-        bodyheight='30vh'
-        steps={[{ title: "Is this allergy active?", icon: <FontAwesomeIcon icon={faArrowRotateRight }/>}]}
+        bodyheight="30vh"
+        steps={[
+          { title: 'Is this allergy active?', icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }
+        ]}
         content={<></>}
-
       ></MyModal>
 
       {/*modal for add details for allergy and save it */}
       <DetailsModal
-        open={openDetailsModal} setOpen={setOpenDetailsModal}
-        allerges={allerges} setAllerges={setAllerges}
+        open={openDetailsModal}
+        setOpen={setOpenDetailsModal}
+        allerges={allerges}
+        setAllerges={setAllerges}
         handleClear={handleClear}
-        edit={edit} 
+        edit={edit}
         patient={patient}
         encounter={encounter}
         fetchallerges={fetchallerges}
-        openToAdd={openToAdd} />
-
+        openToAdd={openToAdd}
+      />
     </div>
   );
 };
