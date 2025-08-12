@@ -78,6 +78,7 @@ const sampleRequests = [
 ];
 
 const DietaryRequest = () => {
+    
   const [requests, setRequests] = useState(sampleRequests);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
