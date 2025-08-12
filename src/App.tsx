@@ -156,6 +156,7 @@ import MedicationSchedule from './pages/setup/medication-schedule-setup';
 import NutritionStateAsssessment from './pages/encounter/encounter-component/nutrition-state-asssessment';
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
 import DietaryRequest from './pages/encounter/encounter-component/dietary-request/DietaryRequests';
+import ReportResultTemplate from './pages/setup/report-result-template';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -318,6 +319,7 @@ const App = () => {
               <Route path="ER-waiting-list" element={<ERWaitingList />} />
               <Route path="view-triage" element={<ViewTriage />} />
               <Route path="quick-visit" element={<QuickVisit />} />
+              <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="ER-department" element={<ERList />} />
               <Route path="encounter" element={<Encounter />}>

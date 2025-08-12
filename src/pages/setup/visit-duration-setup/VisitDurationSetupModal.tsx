@@ -4,14 +4,14 @@ import { faEye } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService'; // Hook to get LOV values
 import './style.less';
 
-// Props interface for the modal
 interface VisitDurationSetupModalProps {
-  open: boolean;// Modal visibility
-  setOpen: (open: boolean) => void; // Function to toggle modal
-  mode: 'add' | 'edit';// Determines whether we are adding or editing
-  record?: any;// The record to edit (optional)
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  mode: 'add' | 'edit';
+  record?: any;
 }
 
 const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
@@ -20,26 +20,19 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
   mode,
   record: initialRecord
 }) => {
-  // State to hold form values
   const [formRecord, setFormRecord] = useState<any>({});
 
-  // Visit Type options (dropdown)
-  const visitTypeLov = [
-    { label: 'Outpatient', value: 'Outpatient' },
-    { label: 'Inpatient', value: 'Inpatient' },
-    { label: 'Emergency', value: 'Emergency' }
-  ];
+  // Get visit type LOV options
+  const { data: visitTypeLovData } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
+  const visitTypeOptions = visitTypeLovData?.object || [];
 
-  // Resource Type options (dropdown)
-  const resourceTypeLov = [
-    { label: 'Doctor', value: 'Doctor' },
-    { label: 'Nurse', value: 'Nurse' },
-    { label: 'Therapist', value: 'Therapist' }
-  ];
+  // Get resource type LOV options
+  const { data: resourceTypeLovData } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+  const resourceTypeOptions = resourceTypeLovData?.object || [];
 
-  // Resource options mapped by resource type
+  // Static resource list for each type (can be dynamic later)
   const resourcesByType: Record<string, { label: string; value: string }[]> = {
-    Doctor: [
+    Practitioner: [
       { label: 'Dr. Ahmad', value: 'Dr. Ahmad' },
       { label: 'Dr. Farouk', value: 'Dr. Farouk' }
     ],
@@ -50,15 +43,14 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
     Therapist: [{ label: 'Therapist Ali', value: 'Therapist Ali' }]
   };
 
-  // Compute resource options based on selected resource type
+  // Get resources list based on selected resource type
   const resourceOptions = formRecord.resourceType
     ? resourcesByType[formRecord.resourceType] || []
     : [];
 
-  // Reset or populate form depending on mode (add or edit)
+  // Fill form in edit mode, reset in add mode
   useEffect(() => {
     if (mode === 'edit' && initialRecord) {
-      // Populate form with existing values
       setFormRecord({
         visitType: initialRecord.visitType || '',
         duration: initialRecord.duration || '',
@@ -68,7 +60,6 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
         status: initialRecord.status || 'Active'
       });
     } else {
-      // Reset form for "add" mode
       setFormRecord({});
     }
   }, [mode, initialRecord]);
@@ -79,25 +70,22 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
       setOpen={setOpen}
       title="Visit Duration Setup"
       steps={[
-        {
-          title: 'Visit Duration Setup',
-          icon: <FontAwesomeIcon icon={faEye} />
-        }
+        { title: 'Visit Duration Setup', icon: <FontAwesomeIcon icon={faEye} /> }
       ]}
       size="33vw"
       position="right"
       actionButtonLabel="Save"
       content={
         <Form fluid layout="vertical" className="visit-duration-modal-form">
-          {/* Top section: Visit Type & Duration */}
+          {/* Visit Type & Duration fields */}
           <div className="top-row">
             <MyInput
-              width={'13vw'}
+              width="13vw"
               fieldName="visitType"
               fieldType="select"
-              selectData={visitTypeLov}
-              selectDataLabel="label"
-              selectDataValue="value"
+              selectData={visitTypeOptions}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="valueCode"
               record={formRecord}
               setRecord={setFormRecord}
               fieldLabel="Visit Type"
@@ -105,7 +93,7 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
             />
 
             <MyInput
-              width={'10vw'}
+              width="10vw"
               fieldName="duration"
               fieldType="number"
               record={formRecord}
@@ -117,10 +105,10 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
             />
           </div>
 
-          {/* Middle section: Resource Specific (checkbox) */}
+          {/* Checkbox for resource-specific */}
           <div className="middle-row">
             <MyInput
-              width={'13vw'}
+              width="13vw"
               fieldName="resourceSpecific"
               fieldType="check"
               record={formRecord}
@@ -130,16 +118,16 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
             />
           </div>
 
-          {/* Bottom section: Conditional rendering based on resourceSpecific */}
+          {/* Resource type & resource fields (only if resource specific) */}
           {formRecord.resourceSpecific && (
             <div className="bottom-row">
               <MyInput
-                width={'13vw'}
+                width="13vw"
                 fieldName="resourceType"
                 fieldType="select"
-                selectData={resourceTypeLov}
-                selectDataLabel="label"
-                selectDataValue="value"
+                selectData={resourceTypeOptions}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="valueCode"
                 record={formRecord}
                 setRecord={setFormRecord}
                 fieldLabel="Resource Type"
@@ -147,7 +135,7 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
               />
 
               <MyInput
-                width={'13vw'}
+                width="13vw"
                 fieldName="resource"
                 fieldType="select"
                 selectData={resourceOptions}
