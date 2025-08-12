@@ -9,16 +9,17 @@ import { faStar } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { useGetProductQuery } from '@/services/setupService';
+import { useGetProductQuery, useGetServicesQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetServicesQuery } from '@/services/setupService';
 
+// Local fallback service list
 const servicesList = [
   { id: 'srv1', name: 'General Consultation', baseUOM: 'Hour' },
   { id: 'srv2', name: 'Physiotherapy Session', baseUOM: 'Session' },
   { id: 'srv3', name: 'Dental Cleaning', baseUOM: 'Visit' }
 ];
 
+// Local fallback product list
 const productsList = [
   { id: 'prd1', name: 'Vitamin D Supplement', baseUOM: 'Tablet' },
   { id: 'prd2', name: 'COVID-19 Vaccine', baseUOM: 'Dose' },
@@ -26,43 +27,31 @@ const productsList = [
 ];
 
 const ServiceAndProductsTab = ({ edit: propEdit }) => {
+  // List request params for API
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 100
   });
 
+  // Fetch products & services from API
   const { data: productListResponse } = useGetProductQuery(listRequest);
   const { data: serviceListResponse } = useGetServicesQuery(listRequest);
 
-  console.log('productListResponse==>', productListResponse);
+  // Table data
   const [data, setData] = useState([
-    {
-      id: 1,
-      category: 'Product',
-      name: 'Central Line',
-      type: 'Consumable',
-      quantity: 30
-    },
-    {
-      id: 2,
-      category: 'Product',
-      name: 'Syringe',
-      type: 'Consumable',
-      quantity: 5
-    },
-    {
-      id: 3,
-      category: 'Service',
-      name: 'ER Fees',
-      type: 'Consultation',
-      quantity: 10
-    }
+    { id: 1, category: 'Product', name: 'Central Line', type: 'Consumable', quantity: 30 },
+    { id: 2, category: 'Product', name: 'Syringe', type: 'Consumable', quantity: 5 },
+    { id: 3, category: 'Service', name: 'ER Fees', type: 'Consultation', quantity: 10 }
   ]);
+
   const location = useLocation();
   const state = location.state || {};
   const edit = propEdit ?? state.edit;
-  //
+
+  // Modal state
   const [popupOpen, setPopupOpen] = useState(false);
+
+  // Form state for modal
   const [formData, setFormData] = useState({
     category: '',
     itemId: '',
@@ -70,84 +59,68 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     productKey: '',
     serviceKey: ''
   });
+
+  // Base unit of measurement for selected item
   const [baseUOM, setBaseUOM] = useState('');
 
+  // Remove row from table
   const handleDelete = id => {
     setData(prev => prev.filter(item => item.id !== id));
   };
 
+  // Open modal for adding new entry
   const handleAddNewService = () => {
     setFormData({ category: '', itemId: '', quantity: '' });
     setBaseUOM('');
     setPopupOpen(true);
   };
 
+  // Save new service or product to table
   const handleSave = () => {
-    const { category, itemId, quantity } = formData;
+    // read form values
+    const { category, serviceKey, productKey, quantity } = formData;
 
-    // التحقق من أن الحقول الأساسية موجودة
-    if (!category || !itemId || !quantity) {
-      alert('Please fill all required fields.');
-      return;
+    // choose appropriate source list (API response preferred, fallback to local)
+    const servicesSource = serviceListResponse?.object ?? servicesList;
+    const productsSource = productListResponse?.object ?? productsList;
+
+    // try to find selected item (support both API objects with 'key' and local ones with 'id')
+    let selectedItem = null;
+    if (category === 'Service') {
+      selectedItem = servicesSource.find(it => String(it.key ?? it.id) === String(serviceKey));
+    } else if (category === 'Product') {
+      selectedItem = productsSource.find(it => String(it.key ?? it.id) === String(productKey));
     }
 
-    // التحقق من أن الكمية صحيحة
-    if (Number(quantity) <= 0) {
-      alert('Quantity must be greater than 0.');
-      return;
-    }
+    // derive values (graceful fallback if selectedItem not found)
+    const name =
+      selectedItem?.name || (category === 'Service' ? serviceKey : productKey) || 'Unnamed Item';
+    const type = selectedItem?.baseUOM || selectedItem?.uom || '';
+    const qty = quantity ? Number(quantity) : 1;
 
-    // اختيار القائمة المناسبة
-    const selectedList = category === 'Service' ? servicesList : productsList;
-    const selectedItem = selectedList.find(i => i.id === itemId);
-
-    if (!selectedItem) {
-      alert(`${category} not found.`);
-      return;
-    }
-
-    // التحقق من عدم التكرار
-    const isDuplicate = data.some(d => d.category === category && d.name === selectedItem.name);
-    if (isDuplicate) {
-      alert(`${selectedItem.name} already exists in the list.`);
-      return;
-    }
-
-    // إنشاء العنصر الجديد
+    // build new row and append to table data
     const newItem = {
       id: Date.now(),
-      category,
-      name: selectedItem.name,
-      type: selectedItem.baseUOM,
-      quantity: Number(quantity)
+      category: category || 'Product', // default to Product if empty
+      name,
+      type,
+      quantity: qty
     };
 
-    // الإضافة للقائمة
     setData(prev => [...prev, newItem]);
 
-    // إغلاق البوب أب وتصفية البيانات
+    // reset modal form and close
     setPopupOpen(false);
     setFormData({ category: '', itemId: '', quantity: '', productKey: '', serviceKey: '' });
     setBaseUOM('');
   };
 
+  // Table columns
   const columns = [
-    {
-      key: 'category',
-      title: 'Category '
-    },
-    {
-      key: 'name',
-      title: 'Name'
-    },
-    {
-      key: 'type',
-      title: 'Type'
-    },
-    {
-      key: 'quantity',
-      title: 'Quantity'
-    },
+    { key: 'category', title: 'Category ' },
+    { key: 'name', title: 'Name' },
+    { key: 'type', title: 'Type' },
+    { key: 'quantity', title: 'Quantity' },
     {
       key: '',
       title: '',
@@ -161,8 +134,10 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       )
     }
   ];
+
   return (
     <div>
+      {/* Add button */}
       <div className="bt-div">
         <div className="bt-right">
           <MyButton prefixIcon={() => <PlusIcon />} disabled={edit} onClick={handleAddNewService}>
@@ -170,8 +145,11 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
           </MyButton>
         </div>
       </div>
+
+      {/* Table */}
       <MyTable data={data} columns={columns} />
 
+      {/* Modal for adding service/product */}
       <MyModal
         open={popupOpen}
         setOpen={setPopupOpen}
@@ -184,6 +162,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         steps={[{ title: 'New Service or Product', icon: <FontAwesomeIcon icon={faStar} /> }]}
         content={() => (
           <Form>
+            {/* Category selection */}
             <MyInput
               fieldName="category"
               fieldType="select"
@@ -200,6 +179,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
               width={150}
             />
 
+            {/* Service selection */}
             {formData.category === 'Service' && (
               <MyInput
                 fieldName="serviceKey"
@@ -215,6 +195,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
               />
             )}
 
+            {/* Product selection & quantity */}
             {formData.category === 'Product' && (
               <>
                 <MyInput
@@ -240,6 +221,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
                   width={150}
                 />
 
+                {/* Base UOM (read-only) */}
                 <MyInput
                   fieldName="baseUOM"
                   fieldType="text"
