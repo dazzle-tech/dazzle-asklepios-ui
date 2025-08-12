@@ -52,7 +52,7 @@ import {
   faHeartPulse,
   faBed,
   faUserPlus,
-  faBraille,
+  faBraille
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom';
 import AllergiesModal from './AllergiesModal';
@@ -237,13 +237,28 @@ const Encounter = () => {
     '/encounter/pressure-ulce-risk-assessment': 'Pressure Ulcer Risk Assessment',
     '/encounter/vte-risk-assessment': 'VTE Risk Assessment',
     '/encounter/nutrition-state-asssessment': 'Nutrition State',
+    '/encounter/dietary-request': 'Dietary Request'
   };
 
-
   const menuItems = [
-    { key: 'pregnancyFollowUp', label: 'Pregnancy Follow-up', icon: faBed, path: 'pregnancy-follow-up' },
-    { key: 'vteRiskAssessment', label: 'VTE Risk Assessment', icon: faBraille, path: 'vte-risk-assessment' },
-    { key: 'bradenScaleForPressureUlcer', label: 'Pressure Ulcer Risk Assessment', icon: faBed, path: 'pressure-ulce-risk-assessment' },
+    {
+      key: 'pregnancyFollowUp',
+      label: 'Pregnancy Follow-up',
+      icon: faBed,
+      path: 'pregnancy-follow-up'
+    },
+    {
+      key: 'vteRiskAssessment',
+      label: 'VTE Risk Assessment',
+      icon: faBraille,
+      path: 'vte-risk-assessment'
+    },
+    {
+      key: 'bradenScaleForPressureUlcer',
+      label: 'Pressure Ulcer Risk Assessment',
+      icon: faBed,
+      path: 'pressure-ulce-risk-assessment'
+    },
     { key: 'glasgowComaScale', label: 'Glasgow Coma Scale', icon: faG, path: 'glasgow-coma-scale' },
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
     { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },
@@ -370,8 +385,18 @@ const Encounter = () => {
       path: 'hendrich-fall-risk'
     },
     { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
-     { key: 'nutritionStateAssessment', label: 'Nutrition State', icon:faLeaf, path: 'nutrition-state-asssessment' },
-
+    {
+      key: 'nutritionStateAssessment',
+      label: 'Nutrition State',
+      icon: faLeaf,
+      path: 'nutrition-state-asssessment'
+    },
+    {
+      key: 'dietaryRequest',
+      label: 'Dietary Request',
+      icon: faLeaf,
+      path: 'dietary-request'
+    }
   ];
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (
@@ -606,4 +631,4 @@ const Encounter = () => {
   );
 };
 
-export default Encounter;
+export default Encounter;
