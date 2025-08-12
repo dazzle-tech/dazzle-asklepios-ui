@@ -42,6 +42,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const dispatch = useAppDispatch();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
+  const { data: numbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
   const [localEncounter, setLocalEncounter] = useState<any>({ ...encounter });
  
   const [bmi, setBmi] = useState('');
@@ -389,11 +390,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
             <Row>
               <div className='container-form'>
                 <div className='title-div'>
-                  <Text>Pain Level</Text>
+                  <Text>Pain Assessment</Text>
                 </div>
                 <Divider />
                 <Row>
-                  <Col md={24}>
+                  <Col md={12}>
                     <MyInput
                       disabled={isEncounterStatusClosed || readOnly}
                       width='100%'
@@ -405,6 +406,21 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                       selectDataValue="key"
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
+                    />
+                  </Col>
+                  <Col md={12}>
+                    <MyInput
+                      disabled={isEncounterStatusClosed || readOnly}
+                      width='100%'
+                      fieldLabel="Pain Score"
+                      fieldType="select"
+                      fieldName=""
+                      selectData={numbersLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                      menuMaxHeight={150}
                     />
                   </Col>
                 </Row>
