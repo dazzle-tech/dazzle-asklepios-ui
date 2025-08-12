@@ -3,22 +3,34 @@
     flex-direction: column;
     gap: 10px 
 }
-.container-of-icons-keys-mar{
+.container-of-icons-keys-mar1{
     display: flex;
-     justify-content: space-between;
+    //  justify-content: space-between;
+    gap: 20px;
       
      @media (max-width: 800px) {
         flex-direction: column;
+        gap: 5px;
      }
 }
-.container-of-icon-and-key{
+.container-of-icon-and-key1{
     display: flex;
      gap: 10px;
       align-items: center
 }
 .container-of-filters-mar{
      display: flex; 
-     align-items: center;
+    //  align-items: center;
+     justify-content: space-between;
+     @media (max-width: 700px) {
+        flex-direction: column;
+        align-items: stretch
+     }
+}
+.container-of-filters-fields-mar{
+    display: flex;
+    align-items: end;
+    gap: 5px;
      @media (max-width: 700px) {
         flex-direction: column;
         align-items: stretch

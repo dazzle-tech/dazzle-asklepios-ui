@@ -63,6 +63,7 @@ import EncounterDischarge from '../encounter-component/encounter-discharge/Encou
 import MyInput from '@/components/MyInput';
 import { set } from 'lodash';
 import { FaSearch } from 'react-icons/fa';
+import { faCapsules } from '@fortawesome/free-solid-svg-icons';
 
 const Encounter = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -237,7 +238,8 @@ const Encounter = () => {
     '/encounter/pressure-ulce-risk-assessment': 'Pressure Ulcer Risk Assessment',
     '/encounter/vte-risk-assessment': 'VTE Risk Assessment',
     '/encounter/nutrition-state-asssessment': 'Nutrition State',
-    '/encounter/dietary-request': 'Dietary Request'
+    '/encounter/dietary-request': 'Dietary Request',
+    '/encounter/medication-administration-record': 'MAR',
   };
 
   const menuItems = [
@@ -385,6 +387,7 @@ const Encounter = () => {
       path: 'hendrich-fall-risk'
     },
     { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
+
     {
       key: 'nutritionStateAssessment',
       label: 'Nutrition State',
@@ -396,7 +399,8 @@ const Encounter = () => {
       label: 'Dietary Request',
       icon: faLeaf,
       path: 'dietary-request'
-    }
+    },
+      { key: 'medicationAdministrationRecord', label: 'MAR', icon:faCapsules, path: 'medication-administration-record' },
   ];
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (

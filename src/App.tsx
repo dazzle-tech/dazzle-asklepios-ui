@@ -140,7 +140,7 @@ import ProgressNotes from './pages/encounter/encounter-component/progress-notes/
 import InventoryTransfer from './pages/inventory-transaction/inventory-transfer';
 import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
-import MAR from './pages/encounter/mar';
+import MAR from './pages/encounter/encounter-component/mar';
 import ERList from './pages/encounter/ER-triage/ERList';
 import MorseFallScale from './pages/encounter/encounter-component/morse-fall-scale';
 import JohnsHopkinsTool from './pages/encounter/encounter-component/fall-risk-assessments';
@@ -370,6 +370,7 @@ const App = () => {
                 <Route path="hendrich-fall-risk" element={<HendrichFallRisk />} />
                 <Route path="nutrition-state-asssessment" element={<NutritionStateAsssessment />} />
                 <Route path="dietary-request" element={<DietaryRequest />} />
+                 <Route path="medication-administration-record" element={<MAR />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
@@ -437,7 +438,6 @@ const App = () => {
               <Route path="playground" element={<Playground />} />
               <Route path="schedual-screen" element={<ScheduleScreen />} />
               <Route path="patient-EMR" element={<PatientEMR />} />
-              <Route path="mar" element={<MAR />} />
               <Route path="lab-module" element={<Lab />} />
               <Route path="rad-module" element={<Rad />} />
               <Route path="operation-module" element={<Operation />} />
