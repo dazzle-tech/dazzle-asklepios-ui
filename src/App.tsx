@@ -155,7 +155,7 @@ import PhysicianOrderSummary from './pages/encounter/encounter-component/physici
 import MedicationSchedule from './pages/setup/medication-schedule-setup';
 import NutritionStateAsssessment from './pages/encounter/encounter-component/nutrition-state-asssessment';
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
-
+import DietaryRequest from './pages/encounter/encounter-component/dietary-request/DietaryRequests';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -369,6 +369,7 @@ const App = () => {
                 <Route path="stratify-scale" element={<StratifyScale />} />
                 <Route path="hendrich-fall-risk" element={<HendrichFallRisk />} />
                 <Route path="nutrition-state-asssessment" element={<NutritionStateAsssessment />} />
+                <Route path="dietary-request" element={<DietaryRequest />} />
                  <Route path="medication-administration-record" element={<MAR />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
@@ -464,4 +465,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default App;

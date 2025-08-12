@@ -1,0 +1,45 @@
+.fields-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.fields-container > * {
+  display: inline-block;
+  vertical-align: top;
+  width: 44%;
+  margin-right: 4%;
+  margin-left: 1%;
+
+  margin-bottom: 16px;
+}
+
+.fields-container > *:nth-child(2n) {
+  margin-right: 0;
+}
+
+/* كل زوجين من الحقول يبدأوا بسطر جديد */
+.fields-container > *:nth-child(2n + 1) {
+  clear: left;
+}
+
+.two {
+  display: flex;
+  gap: 0;
+}
+
+.two > * {
+  margin: 0;
+  margin-left: 1px;
+}
+.sec {
+  margin-top: 22px;
+}
+
+.div-button {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+}
+.margin-top{
+    margin-top: 20px;
+}
