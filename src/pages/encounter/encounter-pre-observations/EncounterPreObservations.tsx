@@ -11,11 +11,12 @@ import BlockIcon from '@rsuite/icons/Block';
 import Warning from './warning';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
-import { useCompleteEncounterMutation} from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Tabs } from 'rsuite';
 import VaccinationTab from './vaccination-tab';
+import ServiceAndProductsTab from './Service&Products/ServiceAndProducts';
 import Observations from './observations/Observations';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -25,7 +26,7 @@ import PatientHistory from '../encounter-component/patient-history';
 import { notify } from '@/utils/uiReducerActions';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
-const EncounterPreObservations = ({ }) => {
+const EncounterPreObservations = ({}) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = location.state;
@@ -36,7 +37,7 @@ const EncounterPreObservations = ({ }) => {
   const [activeKey, setActiveKey] = useState<string | number>('1');
   const [completeEncounter] = useCompleteEncounterMutation();
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
-  
+
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
   const divContent = (
@@ -50,21 +51,19 @@ const EncounterPreObservations = ({ }) => {
 
   const handleCompleteEncounter = async () => {
     try {
-       if (localEncounter) {
+      if (localEncounter) {
         await completeEncounter(localEncounter).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
       setReadOnly(true);
     } catch (error) {
-      console.error("Encounter completion error:", error);
+      console.error('Encounter completion error:', error);
       dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
     }
   };
 
-
   // Effects
   useEffect(() => {
-
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
@@ -93,8 +92,8 @@ const EncounterPreObservations = ({ }) => {
               <div className="left-buttons-container">
                 <BackButton
                   onClick={() => {
-                    if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT") {
-                      navigate('/inpatient-encounters-list')
+                    if (localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT') {
+                      navigate('/inpatient-encounters-list');
                     } else {
                       navigate('/encounter-list');
                     }
@@ -102,13 +101,24 @@ const EncounterPreObservations = ({ }) => {
                 />
                 <div className="left-buttons-contant">
                   {/* TODO update status to be a LOV value */}
-                  {!localEncounter.discharge && localEncounter.encounterStatusLkey !== "91109811181900" && (<MyButton
-                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                    onClick={()=>localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
-                    appearance="ghost"
-                  >
-                    <Translate>{localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ? "Discharge" : "Complete Visit"}</Translate>
-                  </MyButton>)}
+                  {!localEncounter.discharge &&
+                    localEncounter.encounterStatusLkey !== '91109811181900' && (
+                      <MyButton
+                        prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                        onClick={() =>
+                          localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT'
+                            ? setOpenDischargeModal(true)
+                            : handleCompleteEncounter()
+                        }
+                        appearance="ghost"
+                      >
+                        <Translate>
+                          {localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT'
+                            ? 'Discharge'
+                            : 'Complete Visit'}
+                        </Translate>
+                      </MyButton>
+                    )}
                   {activeKey == '1' && <Divider vertical />}
                   {activeKey == '1' && (
                     <MyButton
@@ -153,23 +163,25 @@ const EncounterPreObservations = ({ }) => {
                   <PatientHistory />
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="5" title="Previous Measurements">
-                  <PreviousMeasurements
-                    patient={propsData.patient}
-                  />
+                  <PreviousMeasurements patient={propsData.patient} />
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="6" title="Attachments">
                   <PatientAttachment
                     localPatient={propsData?.patient}
                     setRefetchAttachmentList={setRefetchAttachmentList}
-                    refetchAttachmentList={refetchAttachmentList} />
+                    refetchAttachmentList={refetchAttachmentList}
+                  />
                 </Tabs.Tab>
-                    <Tabs.Tab eventKey="7" title="Vaccination">
+                <Tabs.Tab eventKey="7" title="Vaccination">
                   <VaccinationTab
                     edit={propsData.edit}
                     disabled={isEncounterStatusClosed || readOnly}
                     patient={propsData.patient}
                     encounter={propsData.encounter}
                   />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="8" title="Service & Products">
+                  <ServiceAndProductsTab edit={propsData.edit} />
                 </Tabs.Tab>
               </Tabs>
             </Panel>
@@ -180,7 +192,8 @@ const EncounterPreObservations = ({ }) => {
           <EncounterDischarge
             open={openDischargeModal}
             setOpen={setOpenDischargeModal}
-            encounter={propsData.encounter}/>
+            encounter={propsData.encounter}
+          />
         </div>
       )}
     </>
