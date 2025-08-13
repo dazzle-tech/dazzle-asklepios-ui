@@ -12,7 +12,7 @@ import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 import StaffMember from "@/pages/encounter/encounter-component/procedure/StaffMember";
 import clsx from "clsx";
-const PatientArrival = ({ operation, patient, encounter, user }) => {
+const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
     const dispatch = useAppDispatch();
     const [openCheckLit, setOpenCheckList] = useState(false);
     const [checkList, setCheckList] = useState({ ...newApPreOperationChecklist });
@@ -99,7 +99,9 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
 
         }
     }
-    return (<Form fluid>
+    return (<Form fluid className={clsx('', {
+                                                        'disabled-panel': !editable
+                                                      })}>
         <Row gutter={15}>
             <Row>
                 <Col md={24} >

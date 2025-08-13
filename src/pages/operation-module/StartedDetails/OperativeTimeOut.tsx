@@ -12,7 +12,8 @@ import { useGetUsersQuery } from "@/services/setupService";
 import { initialListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
 import MyButton from "@/components/MyButton/MyButton";
-const OperativeTimeOut = ({operation ,refetch}) => {
+import clsx from "clsx";
+const OperativeTimeOut = ({operation ,refetch ,editable}) => {
     const dispatch = useAppDispatch();
     const [timeout, setTimeOut] = useState({ ...newApPreOperativeTimeout });
     const { data: timeoutData } = useGetOperativeTimeoutByOperationQuery(operation?.key, {
@@ -41,7 +42,9 @@ const OperativeTimeOut = ({operation ,refetch}) => {
          
     }
    }
-    return (<Form fluid>
+    return (<Form fluid className={clsx('', {
+                                                            'disabled-panel': !editable
+                                                          })}>
         <Row gutter={15}>
             <Col md={12}>
                 <Row>

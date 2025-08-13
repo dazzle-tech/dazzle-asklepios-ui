@@ -157,7 +157,7 @@ import NutritionStateAsssessment from './pages/encounter/encounter-component/nut
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
 import DietaryRequest from './pages/encounter/encounter-component/dietary-request/DietaryRequests';
 import ReportResultTemplate from './pages/setup/report-result-template';
-import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products/ServiceAndProducts';
+import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);

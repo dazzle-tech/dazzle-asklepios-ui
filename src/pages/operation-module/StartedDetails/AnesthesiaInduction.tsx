@@ -13,7 +13,8 @@ import { Col, Divider, Form, Row, Text } from "rsuite";
 import IntraoperativeMonitoring from "./IntraoperativeMonitoring";
 import MyModal from "@/components/MyModal/MyModal";
 import DrugOrder from "@/pages/encounter/encounter-component/drug-order";
-const AnesthesiaInduction = ({ operation,patient,encounter }) => {
+import clsx from "clsx";
+const AnesthesiaInduction = ({ operation,patient,encounter ,editable}) => {
     const dispatch = useAppDispatch();
     const [anesthesiaInduction, setAnesthesiaInduction] = useState({ ...newApOperationAnesthesiaInductionMonitoring });
     const { data: anesthesiaInductionMonitoring } = useGetOperationAnesthesiaInductionMonitoringByOperationQuery(operation?.key , {
@@ -49,7 +50,9 @@ const AnesthesiaInduction = ({ operation,patient,encounter }) => {
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean).join(', ');
     };
-    return (<Form fluid >
+    return (<Form fluid  className={clsx('', {
+                                                            'disabled-panel': !editable
+                                                          })}>
         <Row>
             <Col md={12}>
                 <Row>
@@ -234,7 +237,7 @@ const AnesthesiaInduction = ({ operation,patient,encounter }) => {
                     </div>
                     <Divider />
 
-                 <IntraoperativeMonitoring operation={operation}/>
+                 <IntraoperativeMonitoring operation={operation} editable={editable}/>
                 </div>
             </Col>
         </Row>
