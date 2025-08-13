@@ -30,6 +30,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   selectDataValue=""
                   fieldType="select"
                   fieldName="fluidType"
+                  fieldLabel="Fluid Type"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                   menuMaxHeight={200}
@@ -41,6 +42,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   fieldType="number"
                   rightAddon="ml"
                   fieldName="volume"
+                  fieldLabel="Volume"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                 />
@@ -56,9 +58,11 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="route"
+                  fieldLabel="Route"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                   menuMaxHeight={200}
+                  searchable={false}
                 />
               </Col>
               <Col md={12}>
@@ -68,6 +72,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   rightAddon="mL/hr"
                   rightAddonwidth={70}
                   fieldName="infusionRate"
+                  fieldLabel="InfusionRate"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                 />
@@ -83,8 +88,10 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="frequency"
+                  fieldLabel="Frequency"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
+                  searchable={false}
                 />
               </Col>
               <Col md={12}>
@@ -92,6 +99,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   width="100%"
                   fieldType="checkbox"
                   fieldName="untilCompleted"
+                  fieldLabel="Until Completed"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                 />
@@ -104,6 +112,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   disabled={fluidOrder?.untilCompleted}
                   width="100%"
                   fieldName="duration"
+                  fieldLabel="Duration"
                   fieldType="number"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
@@ -113,6 +122,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   fieldName="concentration"
+                  fieldLabel="Concentration"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                 />
@@ -124,6 +134,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   fieldName="startTime"
+                  fieldLabel="Start Time"
                   fieldType="date"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
@@ -133,6 +144,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   fieldName="estimatedEndTime"
+                  fieldLabel="Estimated EndTime"
                   fieldType="date"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
@@ -150,9 +162,11 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="infusionDevice"
+                  fieldLabel="Infusion Device"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                   menuMaxHeight={200}
+                  searchable={false}
                 />
               </Col>
 
@@ -164,9 +178,11 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                   selectDataValue="key"
                   fieldType="select"
                   fieldName="priority"
+                  fieldLabel="Priority"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
                   menuMaxHeight={200}
+                  searchable={false}
                 />
               </Col>
             </Row>
@@ -176,6 +192,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   fieldName="notesToNurse"
+                  fieldLabel="Notes To Nurse"
                   fieldType="textarea"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
@@ -185,6 +202,7 @@ const AddEditFluidOrder = ({ open, setOpen, width, fluidOrder, setFluidOrder }) 
                 <MyInput
                   width="100%"
                   fieldName="allergiesChecked"
+                  fieldLabel="Allergies Checked"
                   fieldType="checkbox"
                   record={fluidOrder}
                   setRecord={setFluidOrder}
