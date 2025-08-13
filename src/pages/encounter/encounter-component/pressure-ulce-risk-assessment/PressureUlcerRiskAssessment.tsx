@@ -62,6 +62,8 @@ const PressureUlcerRiskAssessment = () => {
   // Pagination states
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  //select row
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
 
   // Modal visibility state
   const [modalOpen, setModalOpen] = useState(false);
@@ -113,6 +115,11 @@ const PressureUlcerRiskAssessment = () => {
     </Form>
   );
 
+  //select row
+  const isSelectedRow = rowData => {
+    return rowData.id === selectedRowId ? 'selected-row' : '';
+  };
+
   return (
     <div>
       <MyTable
@@ -121,6 +128,10 @@ const PressureUlcerRiskAssessment = () => {
         loading={false}
         filters={filters}
         sortColumn={sortColumn}
+        rowClassName={isSelectedRow}
+        onRowClick={rowData => {
+          setSelectedRowId(rowData.id);
+        }}
         sortType={sortType}
         onSortChange={(col, type) => {
           setSortColumn(col);

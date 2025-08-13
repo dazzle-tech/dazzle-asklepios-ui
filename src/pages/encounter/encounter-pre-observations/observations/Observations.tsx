@@ -5,10 +5,13 @@ import MyInput from '@/components/MyInput';
 import { forwardRef, useImperativeHandle } from 'react';
 import './styles.less';
 import { Text, Form } from 'rsuite';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
-import { useGetObservationSummariesQuery, useSaveObservationSummaryMutation } from '@/services/observationService';
+import {
+  useGetObservationSummariesQuery,
+  useSaveObservationSummaryMutation
+} from '@/services/observationService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { newApPatientObservationSummary } from '@/types/model-types-constructor';
@@ -29,10 +32,11 @@ type ObservationsProps = {
   patient?: any;
   encounter?: any;
   edit?: boolean;
-};//edit
+}; //edit
 const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
   useImperativeHandle(ref, () => ({
-    handleSave, handleClear
+    handleSave,
+    handleClear
   }));
   const location = useLocation();
   const state = location.state || {};
@@ -40,11 +44,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const encounter = props.encounter || state.encounter;
   const edit = props.edit ?? state.edit;
   const dispatch = useAppDispatch();
-  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
+  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient });
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const { data: numbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
   const [localEncounter, setLocalEncounter] = useState<any>({ ...encounter });
- 
+
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
   const [vital, setVital] = useState({
@@ -54,10 +58,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     temperature: 0,
     oxygenSaturation: 0,
     measurementSiteLkey: '',
-    respiratoryRate: 0,
+    respiratoryRate: 0
   });
   const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
-  const[saveencounter]=useSaveEncounterChangesMutation();
+  const [saveencounter] = useSaveEncounterChangesMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
 
@@ -77,26 +81,34 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     });
 
   // Fetch observation summaries using the useGetObservationSummariesQuery hook
-  const { data: getObservationSummaries } = useGetObservationSummariesQuery({ ...patientLastVisitObservationsListRequest });
+  const { data: getObservationSummaries } = useGetObservationSummariesQuery({
+    ...patientLastVisitObservationsListRequest
+  });
+  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
   // Get the last observation summary if available, otherwise set it to null
-  const lastObservationSummary = getObservationSummaries?.object?.length > 0 ? getObservationSummaries.object[0] : null;
-  const lastencounterop = getObservationSummaries?.object?.length > 0 ? getObservationSummaries?.object?.findLast(item => item.visitKey === encounter?.key) : null;
+  const lastObservationSummary =
+    getObservationSummaries?.object?.length > 0 ? getObservationSummaries.object[0] : null;
+  const lastencounterop =
+    getObservationSummaries?.object?.length > 0
+      ? getObservationSummaries?.object?.findLast(item => item.visitKey === encounter?.key)
+      : null;
 
-  const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({
-    ...newApPatientObservationSummary,
-    latesttemperature: null,
-    latestbpSystolic: null,
-    latestbpDiastolic: null,
-    latestheartrate: null,
-    latestrespiratoryrate: null,
-    latestoxygensaturation: null,
-    latestglucoselevel: null,
-    latestweight: null,
-    latestheight: null,
-    latestheadcircumference: null,
-    latestpainlevelLkey: null
-  });
+  const [patientObservationSummary, setPatientObservationSummary] =
+    useState<ApPatientObservationSummary>({
+      ...newApPatientObservationSummary,
+      latesttemperature: null,
+      latestbpSystolic: null,
+      latestbpDiastolic: null,
+      latestheartrate: null,
+      latestrespiratoryrate: null,
+      latestoxygensaturation: null,
+      latestglucoselevel: null,
+      latestweight: null,
+      latestheight: null,
+      latestheadcircumference: null,
+      latestpainlevelLkey: null
+    });
   // Fetch patient's age group based on their date of birth
   const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
     useGetAgeGroupValueQuery(
@@ -107,14 +119,12 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     );
 
   useEffect(() => {
-   
     if (lastencounterop) {
       setPatientObservationSummary({
         ...lastencounterop
       });
-
     }
-  }, [lastencounterop])
+  }, [lastencounterop]);
   useEffect(() => {
     setVital({
       ...vital,
@@ -153,18 +163,22 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         platestheartrate: lastObservationSummary?.latestheartrate || null,
         platestrespiratoryrate: lastObservationSummary?.latestrespiratoryrate || null,
         platestoxygensaturation: lastObservationSummary?.latestoxygensaturation || null,
-        platestweight: lastObservationSummary?.latestweight || lastObservationSummary?.platestweight,
-        platestheight: lastObservationSummary?.latestheight || lastObservationSummary?.platestheight,
-        platestheadcircumference: lastObservationSummary?.latestheadcircumference || lastObservationSummary?.platestheadcircumference,
+        platestweight:
+          lastObservationSummary?.latestweight || lastObservationSummary?.platestweight,
+        platestheight:
+          lastObservationSummary?.latestheight || lastObservationSummary?.platestheight,
+        platestheadcircumference:
+          lastObservationSummary?.latestheadcircumference ||
+          lastObservationSummary?.platestheadcircumference,
         platestnotes: lastObservationSummary?.latestnotes || '',
         platestpaindescription: lastObservationSummary?.latestpaindescription || '',
         platestpainlevelLkey: lastObservationSummary?.latestpainlevelLkey || '',
         platestbmi: lastObservationSummary?.latestbmi,
-        page: lastObservationSummary?.age,
+        page: lastObservationSummary?.age
       }).unwrap();
-      if(encounter.chiefComplaint !==localEncounter.chiefComplaint){
-        console.log("true")
-        await saveencounter(localEncounter).unwrap()
+      if (encounter.chiefComplaint !== localEncounter.chiefComplaint) {
+        console.log('true');
+        await saveencounter(localEncounter).unwrap();
       }
       dispatch(setRefetchPatientSide(true));
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
@@ -173,13 +187,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       dispatch(notify({ msg: 'Error occurred while saving', sev: 'error' }));
     }
   };
-  // Handle Clear Fields 
+  // Handle Clear Fields
   const handleClear = () => {
     setPatientObservationSummary({
       ...newApPatientObservationSummary,
       latestpainlevelLkey: null
     });
-  }
+  };
 
   // Effects
   useEffect(() => {
@@ -188,9 +202,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       setPatientObservationSummary({
         ...lastencounterop
       });
-      console.log(patientObservationSummary.latestbpSystolic)
+      console.log(patientObservationSummary.latestbpSystolic);
     }
-  }, [lastencounterop])
+  }, [lastencounterop]);
   useEffect(() => {
     setVital({
       ...vital,
@@ -198,10 +212,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       bloodPressureDiastolic: patientObservationSummary.latestbpDiastolic || 0,
       heartRate: patientObservationSummary.latestheartrate || 0,
       temperature: patientObservationSummary.latesttemperature || 0,
-      oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0,
-
-    })
-  }, [patientObservationSummary])
+      oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0
+    });
+  }, [patientObservationSummary]);
   useEffect(() => {
     if (saveObservationsMutation && saveObservationsMutation.status === 'fulfilled') {
       setPatientObservationSummary(saveObservationsMutation.data);
@@ -216,7 +229,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   useEffect(() => {
     const { latestweight, latestheight } = patientObservationSummary;
     if (latestweight && latestheight) {
-      const calculatedBmi = (latestweight / ((latestheight / 100) ** 2)).toFixed(2);
+      const calculatedBmi = (latestweight / (latestheight / 100) ** 2).toFixed(2);
       const calculatedBsa = Math.sqrt((latestweight * latestheight) / 3600).toFixed(2);
       setBmi(calculatedBmi);
       setBsa(calculatedBsa);
@@ -229,21 +242,21 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   return (
     <div ref={ref} className={clsx('basuc-div', { 'disabled-panel': edit })}>
       <Form fluid>
-        {!(location.pathname == '/nurse-station') &&
+        {!(location.pathname == '/nurse-station') && (
           <Row>
             <Col md={23}></Col>
             <Col md={1}>
               <MyButton onClick={handleSave}>Save</MyButton>
             </Col>
-          </Row>}
+          </Row>
+        )}
         <Row>
           <Col md={12}>
             <Row>
               <Col md={24}>
-                <div className='container-form'>
-                  <div className='title-div'>
+                <div className="container-form">
+                  <div className="title-div">
                     <Text>Vital Signs</Text>
-
                   </div>
                   <Divider />
                   <VitalSigns object={vital} setObject={setVital} />
@@ -251,99 +264,111 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   <Row className="rows-gap">
                     <Col md={24}>
                       <MyInput
-                        fieldLabel='Note'
-                        height='100px'
-                        width='100%'
-                        fieldName='latestnotes'
+                        fieldLabel="Note"
+                        height="100px"
+                        width="100%"
+                        fieldName="latestnotes"
                         disabled={isEncounterStatusClosed || readOnly}
-                        fieldType='textarea'
+                        fieldType="textarea"
                         record={patientObservationSummary}
                         setRecord={setPatientObservationSummary}
-                      ></MyInput></Col>
+                      ></MyInput>
+                    </Col>
                   </Row>
                 </div>
               </Col>
-
             </Row>
             <Row>
               <Col md={24}>
-                <div className='container-form'>
-                  <div className='title-div'>
+                <div className="container-form">
+                  <div className="title-div">
                     <Text> Patient Observations & Complaints</Text>
-
                   </div>
                   <Divider />
                   <Row>
                     <Col md={24}>
                       <MyInput
-                        fieldLabel='Functional Status'
-                        width='100%'
-                        fieldName='latestFunctionalStatus'
+                        fieldLabel="Functional Status"
+                        width="100%"
+                        fieldName="latestFunctionalStatus"
                         disabled={isEncounterStatusClosed || readOnly}
-                        fieldType='textarea'
-                        record={patientObservationSummary }
-                        setRecord={setPatientObservationSummary}/></Col>
-
-                  </Row>
-                 
-                    <Row>
-                    <Col md={24}>
-                      <MyInput
-                        fieldLabel='Cognitive Check'
-                        width='100%'
-                        fieldName='latestCognitiveCheck'
-                        disabled={isEncounterStatusClosed || readOnly}
-                        fieldType='textarea'
-                        record={patientObservationSummary }
-                        setRecord={setPatientObservationSummary}/></Col>
-
+                        fieldType="textarea"
+                        record={patientObservationSummary}
+                        setRecord={setPatientObservationSummary}
+                      />
+                    </Col>
                   </Row>
 
-                    <Row>
+                  <Row>
                     <Col md={24}>
                       <MyInput
-                        
-                        width='100%'
-                        fieldName='chiefComplaint'
+                        fieldLabel="Cognitive Check"
+                        width="100%"
+                        fieldName="latestCognitiveCheck"
                         disabled={isEncounterStatusClosed || readOnly}
-                        fieldType='textarea'
+                        fieldType="textarea"
+                        record={patientObservationSummary}
+                        setRecord={setPatientObservationSummary}
+                      />
+                    </Col>
+                  </Row>
+
+                  <Row>
+                    <Col md={24}>
+                      <MyInput
+                        width="100%"
+                        fieldName="chiefComplaint"
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType="textarea"
                         record={localEncounter}
-                        setRecord={setLocalEncounter}/></Col>
-
+                        setRecord={setLocalEncounter}
+                      />
+                    </Col>
                   </Row>
-                  
-
-                  
-                  
-                  </div> </Col></Row>
-
-
-          
+                  <Row>
+                    <Col md={24}>
+                      <MyInput
+                        width={'100%'}
+                        fieldLabel="Priority"
+                        fieldType="select"
+                        fieldName="encounterPriorityLkey"
+                        selectData={encounterPriorityLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={localEncounter}
+                        setRecord={setLocalEncounter}
+                        disabled={isEncounterStatusClosed || readOnly}
+                        searchable={false}
+                      /></Col></Row>
+                </div>{' '}
+              </Col>
+            </Row>
           </Col>
           <Col md={12}>
             <Row>
-              <div className='container-form'>
-                <div className='title-div'>
+              <div className="container-form">
+                <div className="title-div">
                   <Text>Body Measurements</Text>
                 </div>
                 <Divider />
                 <Row className="rows-gap">
                   <Col md={12}>
                     <MyInput
-                      width='100%'
-                      fieldLabel='Weight'
-                      fieldName='latestweight'
+                      width="100%"
+                      fieldLabel="Weight"
+                      fieldName="latestweight"
                       rightAddon="Kg"
                       disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
+                      fieldType="number"
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
-                    ></MyInput></Col>
+                    ></MyInput>
+                  </Col>
                   <Col md={12}>
-                    <div className='container-Column'>
+                    <div className="container-Column">
                       <MyLabel label="BMI" />
                       <div>
-                        <FontAwesomeIcon icon={faPerson} className='my-icon' />
+                        <FontAwesomeIcon icon={faPerson} className="my-icon" />
                         <text>{bmi}</text>
                       </div>
                     </div>
@@ -352,44 +377,47 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                 <Row className="rows-gap">
                   <Col md={12}>
                     <MyInput
-                      width='100%'
-                      fieldLabel='Height'
-                      fieldName='latestheight'
+                      width="100%"
+                      fieldLabel="Height"
+                      fieldName="latestheight"
                       rightAddon="Cm"
                       disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
+                      fieldType="number"
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
-                    ></MyInput></Col>
+                    ></MyInput>
+                  </Col>
                   <Col md={12}>
-                    <div className='container-Column'>
+                    <div className="container-Column">
                       <MyLabel label="BSA" />
                       <div>
-                        <FontAwesomeIcon icon={faChildReaching} className='my-icon' />
+                        <FontAwesomeIcon icon={faChildReaching} className="my-icon" />
                         <text>{bsa}</text>
                       </div>
                     </div>
                   </Col>
                 </Row>
-                <Row className='rows-gap'>
+                <Row className="rows-gap">
                   <Col md={12}>
                     <MyInput
-                      width='100%'
-                      fieldLabel='Head circumference'
+                      width="100%"
+                      fieldLabel="Head circumference"
                       rightAddon="Cm"
                       rightAddonwidth={40}
-                      fieldName='latestheadcircumference'
+                      fieldName="latestheadcircumference"
                       disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
+                      fieldType="number"
                       record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary} />
+                      setRecord={setPatientObservationSummary}
+                    />
                   </Col>
                   <Col md={12}></Col>
                 </Row>
-              </div></Row>
+              </div>
+            </Row>
             <Row>
-              <div className='container-form'>
-                <div className='title-div'>
+              <div className="container-form">
+                <div className="title-div">
                   <Text>Pain Assessment</Text>
                 </div>
                 <Divider />
@@ -397,7 +425,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   <Col md={12}>
                     <MyInput
                       disabled={isEncounterStatusClosed || readOnly}
-                      width='100%'
+                      width="100%"
                       fieldLabel="Pain Degree"
                       fieldType="select"
                       fieldName="latestpainlevelLkey"
@@ -411,7 +439,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   <Col md={12}>
                     <MyInput
                       disabled={isEncounterStatusClosed || readOnly}
-                      width='100%'
+                      width="100%"
                       fieldLabel="Pain Score"
                       fieldType="select"
                       fieldName=""
@@ -427,45 +455,44 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                 <Row>
                   <Col md={24}>
                     <MyInput
-                      fieldType='textarea'
-                      width='100%'
+                      fieldType="textarea"
+                      width="100%"
                       fieldLabel="Pain Description"
-                      fieldName='latestpaindescription'
+                      fieldName="latestpaindescription"
                       record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary} />
+                      setRecord={setPatientObservationSummary}
+                    />
                   </Col>
                 </Row>
               </div>
             </Row>
 
-              {(patientAgeGroupResponse?.object?.valueCode === 'AG_INFANT' ||
-
-              patientAgeGroupResponse?.object?.valueCode === 'AG_NEONATE') &&
+            {(patientAgeGroupResponse?.object?.valueCode === 'AG_INFANT' ||
+              patientAgeGroupResponse?.object?.valueCode === 'AG_NEONATE') && (
               <Row>
                 <Col md={24}>
-                  <div className='container-form'>
-                    <div className='title-div'>
+                  <div className="container-form">
+                    <div className="title-div">
                       <Text>Additional Measurements</Text>
-
                     </div>
                     <Divider />
                     <Row className="rows-gap">
                       <Col md={24}>
                         <MyInput
-                          width='100%'
+                          width="100%"
                           fieldName="latesthearingtest"
                           fieldLabel="Hearing Test"
-                         
                           record={patientObservationSummary}
                           disabled={isEncounterStatusClosed || readOnly}
                           setRecord={setPatientObservationSummary}
-                        /></Col>
+                        />
+                      </Col>
                     </Row>
                     <Row>
                       <Col md={8}>
                         <MyInput
                           width="100%"
-                          fieldType='checkbox'
+                          fieldType="checkbox"
                           fieldName="latestDehydration"
                           fieldLabel="Dehydration"
                           checkedLabel="positive"
@@ -475,10 +502,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           setRecord={setPatientObservationSummary}
                         />
                       </Col>
-                       <Col md={8}>
+                      <Col md={8}>
                         <MyInput
                           width="100%"
-                          fieldType='checkbox'
+                          fieldType="checkbox"
                           fieldName="latestNasalFlaring"
                           fieldLabel="Nasal Flaring"
                           checkedLabel="positive"
@@ -488,10 +515,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           setRecord={setPatientObservationSummary}
                         />
                       </Col>
-                       <Col md={8}>
+                      <Col md={8}>
                         <MyInput
                           width="100%"
-                          fieldType='checkbox'
+                          fieldType="checkbox"
                           fieldName="latestResponseToLight"
                           fieldLabel="Response to Light"
                           checkedLabel="positive"
@@ -506,7 +533,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                       <Col md={8}>
                         <MyInput
                           width="100%"
-                          fieldType='checkbox'
+                          fieldType="checkbox"
                           fieldName="latestPupilResponse"
                           fieldLabel="Pupil Response"
                           checkedLabel="positive"
@@ -516,10 +543,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           setRecord={setPatientObservationSummary}
                         />
                       </Col>
-                       <Col md={8}>
+                      <Col md={8}>
                         <MyInput
                           width="100%"
-                          fieldType='checkbox'
+                          fieldType="checkbox"
                           fieldName="latestAbilityToFollowTarget"
                           fieldLabel="Ability to Follow Target"
                           checkedLabel="positive"
@@ -529,10 +556,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           setRecord={setPatientObservationSummary}
                         />
                       </Col>
-                       <Col md={8}>
+                      <Col md={8}>
                         <MyInput
                           width="100%"
-                          fieldType='checkbox'
+                          fieldType="checkbox"
                           fieldName="latestColorTesting"
                           fieldLabel="Color Testing"
                           checkedLabel="positive"
@@ -543,72 +570,61 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                         />
                       </Col>
                     </Row>
-
-
-
-                  </div></Col>
-
+                  </div>
+                </Col>
               </Row>
-
-            }
-            {(patientAgeGroupResponse?.object?.valueCode === 'AG_GER') &&
+            )}
+            {patientAgeGroupResponse?.object?.valueCode === 'AG_GER' && (
               <Row>
                 <Col md={24}>
-                  <div className='container-form'>
-                    <div className='title-div'>
+                  <div className="container-form">
+                    <div className="title-div">
                       <Text>Additional Measurements</Text>
-
                     </div>
                     <Divider />
                     <Row>
                       <Col md={24}>
-                       <MyInput
+                        <MyInput
                           width="100%"
-                          fieldType='checkbox'
+                          fieldType="checkbox"
                           fieldLabel="Full Risk"
                           fieldName="latestFallRisk"
-                          
                           record={patientObservationSummary}
                           disabled={isEncounterStatusClosed || readOnly}
                           setRecord={setPatientObservationSummary}
                         />
                       </Col>
                     </Row>
-                     <Row>
+                    <Row>
                       <Col md={24}>
                         <MyInput
-                          width='100%'
+                          width="100%"
                           fieldName="latestFallRiskDetails"
                           fieldLabel="Details"
-                          fieldType='textarea'
+                          fieldType="textarea"
                           record={patientObservationSummary}
                           disabled={isEncounterStatusClosed || readOnly}
                           setRecord={setPatientObservationSummary}
                         />
                       </Col>
                     </Row>
-                     <Row>
+                    <Row>
                       <Col md={24}>
                         <MyInput
-                          width='100%'
+                          width="100%"
                           fieldName="latestActionToTake"
                           fieldLabel="Action to Take"
-                          fieldType='textarea'
+                          fieldType="textarea"
                           record={patientObservationSummary}
                           disabled={isEncounterStatusClosed || readOnly}
                           setRecord={setPatientObservationSummary}
                         />
                       </Col>
                     </Row>
-                    
-                    
-                    
-                    </div></Col>
-
+                  </div>
+                </Col>
               </Row>
-
-            }
-          
+            )}
           </Col>
         </Row>
       </Form>

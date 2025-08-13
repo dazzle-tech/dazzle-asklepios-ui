@@ -92,6 +92,9 @@ const JohnsHopkinsTool = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  //select row
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
+
   //Modals Opening
   const [openModal, setOpenModal] = useState(false);
   const [secondOpen, setSecondOpen] = useState(false);
@@ -130,6 +133,11 @@ const JohnsHopkinsTool = () => {
     </div>
   );
 
+  //select row
+  const isSelectedRow = rowData => {
+    return rowData.id === selectedRowId ? 'selected-row' : '';
+  };
+
   return (
     <>
       <MyTable
@@ -138,6 +146,9 @@ const JohnsHopkinsTool = () => {
         loading={false}
         filters={tablefilter}
         sortColumn={sortColumn}
+        rowClassName={isSelectedRow}
+        onRowClick={(rowData) => {
+        setSelectedRowId(rowData.id);}}
         sortType={sortType}
         onSortChange={(col, type) => {
           setSortColumn(col);
