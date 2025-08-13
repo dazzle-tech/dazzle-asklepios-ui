@@ -79,8 +79,7 @@ const PreObservation=({patient})=>{
                             data={getObservationSummaries?.object ?? []}
                             columns={columns}
                             height={250}
-                            onRowClick={(rowData) => {
-                            }}
+                           
                         />
                     </div>
                 </div>

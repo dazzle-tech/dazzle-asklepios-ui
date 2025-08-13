@@ -5,7 +5,7 @@ import Translate from "@/components/Translate";
 import { useGetUsersQuery } from "@/services/setupService";
 import { initialListRequest, ListRequest } from "@/types/types";
 import React, { useState, useEffect } from "react";
-import { Col, Form, Input, Panel, Row } from "rsuite";
+import { Col, Form, Input, Panel, Row, Text } from "rsuite";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
@@ -13,6 +13,7 @@ import { IoPersonRemove } from "react-icons/io5";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import clsx from "clsx";
+import SectionContainer from "@/components/SectionsoContainer";
 
 type StaffAssignmentProps = {
   parentKey: string;
@@ -155,15 +156,19 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
     (user) => !staffList?.object?.some((staff) => staff.user?.key === user.key)
   ) ?? [];
 
-  return (
-    <Panel
-      header={label}
-      collapsible
-      defaultExpanded
-      className={clsx("panel-border", {
+  const content = () => {
+     return (
+    // <Panel
+    //   header={label}
+    //   collapsible
+    //   defaultExpanded
+    //   className={clsx("panel-border", {
+    //     "disabled-panel": disabled,
+    //   })}
+    // >
+    <div className={clsx("panel-border", {
         "disabled-panel": disabled,
-      })}
-    >
+      })}>
       <Row className="rows-gap">
         <Col md={10}>
           <Form fluid>
@@ -196,7 +201,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
             columns={columns}
             onRowClick={(rowData) => setStaff(rowData)}
             rowClassName={isSelected}
-            height={300}
+            height={280}
           />
         </Col>
       </Row>
@@ -217,7 +222,80 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
         }}
         actionType="delete"
       />
-    </Panel>
+      </div>
+    // </Panel>
+  );
+  };
+
+  return (
+    // <Panel
+    //   header={label}
+    //   collapsible
+    //   defaultExpanded
+    //   className={clsx("panel-border", {
+    //     "disabled-panel": disabled,
+    //   })}
+    // >
+    // <div>
+    //   <Row className="rows-gap">
+    //     <Col md={10}>
+    //       <Form fluid>
+    //         <MyInput
+    //           width="100%"
+    //           menuMaxHeight={200}
+    //           placeholder="Staff"
+    //           showLabel={false}
+    //           selectData={availableUsers}
+    //           fieldType="multyPicker"
+    //           selectDataLabel="username"
+    //           selectDataValue="key"
+    //           fieldName="key"
+    //           record={selectedUserList}
+    //           setRecord={setSelectedUserList}
+    //           disabled={!parentKey || disabled}
+    //         />
+    //       </Form>
+    //     </Col>
+    //     <Col md={2}>
+    //       <MyButton onClick={handleSave} disabled={!parentKey || disabled}>
+    //         Save
+    //       </MyButton>
+    //     </Col>
+    //   </Row>
+    //   <Row>
+    //     <Col md={24}>
+    //       <MyTable
+    //         data={staffList?.object || []}
+    //         columns={columns}
+    //         onRowClick={(rowData) => setStaff(rowData)}
+    //         rowClassName={isSelected}
+    //         height={300}
+    //       />
+    //     </Col>
+    //   </Row>
+
+    //   <DeletionConfirmationModal
+    //     open={confirmDeleteOpen}
+    //     setOpen={setConfirmDeleteOpen}
+    //     itemToDelete="Staff"
+    //     actionButtonFunction={async () => {
+    //       try {
+    //         await deleteStaff(staff.key).unwrap();
+    //         dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
+    //         refetch();
+    //         setConfirmDeleteOpen(false);
+    //       } catch (error) {
+    //         dispatch(notify({ msg: "Delete failed", sev: "error" }));
+    //       }
+    //     }}
+    //     actionType="delete"
+    //   />
+    //   </div>
+    // </Panel>
+     <SectionContainer
+          title={<Text>{label}</Text>}
+          content={content()}
+        />
   );
 };
 

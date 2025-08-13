@@ -25,7 +25,7 @@ import { newApLovValues } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
 import Summary from './Summery';
-const ReviewOfSystems = ({edit, patient, encounter }) => {
+const ReviewOfSystems = ({edit, patient, encounter, ...props }) => {
 
   const [openModel, setOpenModel] = useState(false);
   const dispatch = useAppDispatch();
@@ -199,14 +199,16 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
             pageIndex * rowsPerPage,
             pageIndex * rowsPerPage + rowsPerPage
         );
+      
   return (
     <>
       <Panel>
         <Grid fluid>
        
           <div className='top-div'>
-
+           <div style={{ ...((props?.noTitle) && { display: "none" })}}>
            <Translate>Physical Examination & Findings</Translate>
+           </div>
             <div className='bt-right'
             >
                <MyButton
