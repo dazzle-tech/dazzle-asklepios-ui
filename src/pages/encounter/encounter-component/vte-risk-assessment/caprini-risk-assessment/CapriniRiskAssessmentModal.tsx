@@ -3,6 +3,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faListOl } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import './style.less';
 
@@ -117,7 +119,7 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
       open={open}
       setOpen={setOpen}
       title="Caprini Risk Assessment"
-      steps={[{ title: 'Assessment' }]}
+      steps={[{ title: 'Assessment',icon:<FontAwesomeIcon icon={faListOl} /> }]}
       size="37vw"
       position="right"
       actionButtonLabel="Save"
@@ -127,6 +129,8 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
           <div className="padua-score-modal-content">
 
             {/* 1 Point Risk Factors */}
+            <div className='caprini-risk-assessment-modal-inputs'>
+            <div className='caprini-risk-assessment-modal-input-positon-top'>
             <MyInput
               width="100%"
               fieldType="checkPicker"
@@ -138,9 +142,10 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               selectDataLabel="lovDisplayVale"
               selectDataValue="valueCode"
               searchable
-            />
+            /></div>
 
             {/* 2 Point Risk Factors */}
+            <div className='caprini-risk-assessment-modal-input-positon-top'>
             <MyInput
               width="100%"
               fieldType="checkPicker"
@@ -152,9 +157,10 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               selectDataLabel="lovDisplayVale"
               selectDataValue="valueCode"
               searchable
-            />
+            /></div>
 
             {/* 3 Point Risk Factors */}
+            <div className='caprini-risk-assessment-modal-input-positon-top'>
             <MyInput
               width="100%"
               fieldType="checkPicker"
@@ -166,9 +172,10 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               selectDataLabel="lovDisplayVale"
               selectDataValue="valueCode"
               searchable
-            />
+            /></div>
 
             {/* 5 Point Risk Factors */}
+            <div className='caprini-risk-assessment-modal-input-positon-top'>
             <MyInput
               width="100%"
               fieldType="checkPicker"
@@ -180,9 +187,10 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               selectDataLabel="lovDisplayVale"
               selectDataValue="valueCode"
               searchable
-            />
+            /></div>
 
             {/* Total Score - Read Only */}
+            <div className='caprini-risk-assessment-modal-input-positon-top'>
             <MyInput
               width="100%"
               fieldType="number"
@@ -191,9 +199,10 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
               record={record}
               setRecord={setRecord}
               readOnly
-            />
+            /></div></div>
 
             {/* Show Risk Level Badge */}
+            <div className='caprini-risk-assessment-modal-my-badge-status'>
             <MyBadgeStatus
               backgroundColor={riskInfo.backgroundColor}
               color={riskInfo.color}
@@ -206,8 +215,9 @@ const CapriniRiskAssessmentModal = ({ open, setOpen, onSave }) => {
                 backgroundColor="#e0f7ff"
                 color="#007bff"
                 contant={recommendedAction}
-              />
+              /> 
             )}
+          </div>
           </div>
         </Form>
       }

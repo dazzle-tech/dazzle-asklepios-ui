@@ -4,6 +4,8 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faListOl } from '@fortawesome/free-solid-svg-icons';
 import './style.less';
 
 const PaduaPredictionScoreModal = ({ open, setOpen, onSave }) => {
@@ -108,7 +110,7 @@ const PaduaPredictionScoreModal = ({ open, setOpen, onSave }) => {
       open={open}
       setOpen={setOpen}
       title="Padua Prediction Score"
-      steps={[{ title: 'Assessment' }]}
+      steps={[{ title: 'Assessment',icon:<FontAwesomeIcon icon={faListOl} /> }]}
       size="37vw"
       position="right"
       actionButtonLabel="Save"

@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import { Form, Row } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-
+import './Style.less';
 //dropdownlist values/Score
 const selectDataMap = {
   fallHistory: [
@@ -113,7 +115,8 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
   //Modal Content
   const ModalContent = (
     <Form fluid>
-      <Row>
+        <div className='jhons-hopkins-tool-input-main-container'>
+        <div className='jhons-hopkins-tool-input-coulmns'>
         <MyInput
           width="100%"
           fieldType="select"
@@ -124,6 +127,7 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
           selectDataValue="label"
           record={{ fallHistory: record.fallHistory?.label || '' }}
           setRecord={updated => handleSelectChange('fallHistory', updated.fallHistory)}
+          searchable={false}
         />
         <MyInput
           width="100%"
@@ -135,6 +139,7 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
           selectDataValue="label"
           record={{ sedatives: record.sedatives?.label || '' }}
           setRecord={updated => handleSelectChange('sedatives', updated.sedatives)}
+          searchable={false}
         />
         <MyInput
           width="100%"
@@ -146,8 +151,8 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
           selectDataValue="label"
           record={{ elimination: record.elimination?.label || '' }}
           setRecord={updated => handleSelectChange('elimination', updated.elimination)}
+          searchable={false}
         />
-        <div className="input-row">
           <MyInput
             width="100%"
             fieldType="select"
@@ -158,9 +163,10 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
             selectDataValue="label"
             record={{ equipment: record.equipment?.label || '' }}
             setRecord={updated => handleSelectChange('equipment', updated.equipment)}
-          />
+          /></div>      
+        <div className="jhons-hopkins-tool-input-row">
           <MyInput
-            width="100%"
+            width="8vw"
             fieldType="select"
             fieldLabel="Mobility"
             fieldName="mobility"
@@ -169,11 +175,10 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
             selectDataValue="label"
             record={{ mobility: record.mobility?.label || '' }}
             setRecord={updated => handleSelectChange('mobility', updated.mobility)}
+            searchable={false}
           />
-        </div>
-        <div className="input-row">
           <MyInput
-            width="100%"
+            width="8vw"
             fieldType="select"
             fieldLabel="Cognition"
             fieldName="cognition"
@@ -182,9 +187,10 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
             selectDataValue="label"
             record={{ cognition: record.cognition?.label || '' }}
             setRecord={updated => handleSelectChange('cognition', updated.cognition)}
+            searchable={false}
           />
           <MyInput
-            width="100%"
+            width="8vw"
             fieldType="select"
             fieldLabel="Age"
             fieldName="age"
@@ -193,9 +199,9 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
             selectDataValue="label"
             record={{ age: record.age?.label || '' }}
             setRecord={updated => handleSelectChange('age', updated.age)}
-          />
-        </div>
-        <div className="input-row">
+            searchable={false}
+          /></div>
+          <div className='jhons-hopkins-tool-modal-total-score'>
           <MyInput
             width="100%"
             fieldType="text"
@@ -204,18 +210,16 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
             record={{ totalScore: totalScore.toString() }}
             setRecord={''}
             disabled={true}
-          />
-          <div className="badge-wrapper">
-            <div className="badge-wrapper-sizing-position">
+          /></div>
+<div className='jhons-hopkins-tool-modal-my-badge-status'>
               <MyBadgeStatus
                 backgroundColor={riskInfo.backgroundColor}
                 color={riskInfo.color}
                 contant={riskInfo.label}
-              />
-            </div>
-          </div>
-        </div>{' '}
-      </Row>
+              /></div>
+              
+              </div>
+{' '}
     </Form>
   );
 
@@ -224,8 +228,8 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
       open={open}
       setOpen={setOpen}
       title="Johns Hopkins Fall Risk Assessment"
-      steps={[{ title: 'Assessment' }]}
-      size="30vw"
+      steps={[{ title: 'Assessment',icon:<FontAwesomeIcon icon={faListCheck}/>}]}
+      size="33vw"
       position="right"
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}

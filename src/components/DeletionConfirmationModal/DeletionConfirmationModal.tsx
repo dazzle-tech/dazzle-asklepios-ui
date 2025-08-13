@@ -28,6 +28,11 @@ const actionConfig = {
     color: 'var(--primary-pink)',
     icon: faCircleXmark
   },
+    reject: {
+    text: 'Reject',
+    color: 'var(--primary-pink)',
+    icon: faCircleXmark
+  },
   reactivate: {
     text: 'Reactivate',
     color: 'var(--primary-blue)',

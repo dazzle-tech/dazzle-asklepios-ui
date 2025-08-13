@@ -1,0 +1,296 @@
+// Import required modules
+import React, { useState } from 'react';
+import { Panel } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { Form } from 'rsuite';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faCirclePlay,
+  faCircleXmark,
+  faFileWaveform,
+  faLandMineOn
+} from '@fortawesome/free-solid-svg-icons';
+import ReactDOMServer from 'react-dom/server';
+import { useDispatch } from 'react-redux';
+import { setPageCode, setDivContent } from '@/reducers/divSlice';
+
+// Define request type
+type TeleconsultationRequest = {
+  id: number;
+  patientName: string;
+  mrn: string;
+  gender: 'Male' | 'Female' | 'Other';
+  age: number;
+  reason: string;
+  requestedBy: string;
+  requestedAt: string;
+  priority: 'Low' | 'Medium' | 'Urgent';
+  status: 'Pending' | 'Accepted' | 'Rejected';
+};
+
+// Sample data
+const sampleRequests: TeleconsultationRequest[] = [
+  {
+    id: 1,
+    patientName: 'John Doe',
+    mrn: 'MRN001',
+    gender: 'Male',
+    age: 35,
+    reason: 'Chest pain',
+    requestedBy: 'Dr. Smith',
+    requestedAt: '2025-08-11 10:30',
+    priority: 'Urgent',
+    status: 'Pending'
+  },
+    {
+    id: 2,
+    patientName: 'Ahmad Naser',
+    mrn: 'MRN003',
+    gender: 'Male',
+    age: 42,
+    reason: 'Severe abdominal pain',
+    requestedBy: 'Dr. Rami Khalil',
+    requestedAt: '2025-08-12 08:45',
+    priority: 'Urgent',
+    status: 'Pending'
+  },
+  {
+    id: 3,
+    patientName: 'Jane Smith',
+    mrn: 'MRN002',
+    gender: 'Female',
+    age: 29,
+    reason: 'Headache',
+    requestedBy: 'Dr. Johnson',
+    requestedAt: '2025-08-11 09:15',
+    priority: 'Medium',
+    status: 'Pending'
+  },
+  {
+    id: 4,
+    patientName: 'Lina Youssef',
+    mrn: 'MRN004',
+    gender: 'Female',
+    age: 37,
+    reason: 'Blurred vision and dizziness',
+    requestedBy: 'Dr. Sara Mansour',
+    requestedAt: '2025-08-12 10:20',
+    priority: 'Low',
+    status: 'Pending'
+  }
+];
+
+const TeleconsultationRequests = () => {
+  const dispatch = useDispatch();
+  const [requests, setRequests] = useState<TeleconsultationRequest[]>(sampleRequests);
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [record, setRecord] = useState({});
+  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
+  const [pendingAction, setPendingAction] = useState<'accept' | 'reject' | null>(null);
+  const [sortColumn, setSortColumn] = useState('patientName');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleStatusChange = (id: number, newStatus: 'Accepted' | 'Rejected') => {
+    setRequests(prev => prev.map(req => (req.id === id ? { ...req, status: newStatus } : req)));
+  };
+
+  const filterstable = (
+    <Form fluid>
+      <div className="from-to-input-position">
+        <MyInput
+          width={'100%'}
+          fieldLabel="Request From"
+          fieldType="date"
+          fieldName="key0"
+          record={record}
+          setRecord={setRecord}
+        />
+        <MyInput
+          width={'100%'}
+          fieldLabel="To"
+          fieldType="date"
+          fieldName="key1"
+          record={record}
+          setRecord={setRecord}
+        />
+      </div>
+    </Form>
+  );
+
+  const handleConfirmAction = () => {
+    if (selectedRequestId !== null && pendingAction) {
+      setRequests(prev =>
+        prev.map(req =>
+          req.id === selectedRequestId
+            ? { ...req, status: pendingAction === 'accept' ? 'Accepted' : 'Rejected' }
+            : req
+        )
+      );
+    }
+    setOpenConfirmModal(false);
+    setSelectedRequestId(null);
+    setPendingAction(null);
+  };
+
+  const columns = [
+    {
+      key: 'priorityIcon',
+      title: '',
+      width: 50,
+      align: 'center',
+      render: (row: TeleconsultationRequest) =>
+        row.priority.toLowerCase() === 'urgent' || row.priority.toLowerCase() === 'Urgent' ? (
+          <FontAwesomeIcon
+            icon={faLandMineOn}
+            style={{ color: 'red', fontSize: '18px' }}
+            title="Urgent Priority"
+          />
+        ) : null
+    },
+    {
+      key: 'patient',
+      title: 'Patient Name',
+      dataKey: 'patientName',
+      width: 200
+    },
+    { key: 'mrn', title: 'MRN', dataKey: 'mrn', width: 80 },
+    { key: 'gender', title: 'Gender', dataKey: 'gender', width: 80 },
+    { key: 'age', title: 'Age', dataKey: 'age', width: 60 },
+    { key: 'reason', title: 'Reason', dataKey: 'reason', width: 180 },
+    {
+      key: 'requestedBy',
+      title: 'Requested By / At',
+      width: 160,
+      render: (row: TeleconsultationRequest) => (
+        <>
+          <div>{row.requestedBy}</div>
+          <div style={{ fontSize: '12px', color: '#888' }}>{row.requestedAt}</div>
+        </>
+      )
+    },
+    { key: 'priority', title: 'Priority', dataKey: 'priority', width: 100 },
+    {
+      key: 'status',
+      title: 'Status',
+      dataKey: 'status',
+      width: 100,
+      render: (row: any) => (
+      <MyBadgeStatus
+  backgroundColor={
+    row.status === 'Pending'
+      ? 'var(--light-gray)'
+      : row.status === 'Accepted'
+      ? 'var(--light-green)'
+      : 'var(--light-pink)'
+  }
+  color={
+    row.status === 'Pending'
+      ? 'var(--primary-gray)'
+      : row.status === 'Accepted'
+      ? 'var(--primary-green)'
+      : 'var(--primary-pink)'
+  }
+  contant={row.status}
+/>
+
+      )
+    },
+    {
+      key: 'actions',
+      title: 'Actions',
+      width: 120,
+      align: 'center',
+      render: (rowData: TeleconsultationRequest) => (
+        <div className="actions-icons">
+          <FontAwesomeIcon
+            icon={faCirclePlay}
+            title="Start Teleconsultation"
+            className="action-icon start-icon"
+            onClick={() => {
+              setSelectedRequestId(rowData.id);
+              setPendingAction('accept');
+              setOpenConfirmModal(true);
+            }}
+          />
+
+          <FontAwesomeIcon
+            icon={faCircleXmark}
+            title="Reject Request"
+            className="action-icon reject-icon"
+            onClick={() => {
+              setSelectedRequestId(rowData.id);
+              setPendingAction('reject');
+              setOpenConfirmModal(true);
+            }}
+          />
+
+          <FontAwesomeIcon
+            icon={faFileWaveform}
+            title="View EMR File"
+            className="action-icon emr-icon"
+            onClick={() => handleViewEMR(rowData)}
+          />
+        </div>
+      )
+    }
+  ];
+
+  const sortedData = [...requests].sort((a, b) => {
+    const aValue = a[sortColumn as keyof TeleconsultationRequest];
+    const bValue = b[sortColumn as keyof TeleconsultationRequest];
+
+    if (aValue === bValue) return 0;
+    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
+  });
+
+  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+
+  const divContent = (
+    <div className="page-title">
+      <h5>Tele Consultation Screen</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('tele_consultation_screen'));
+  dispatch(setDivContent(divContentHTML));
+
+  return (
+    <Panel>
+      <MyTable
+        data={paginatedData}
+        columns={columns}
+        loading={false}
+        filters={filterstable}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={requests.length}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={(col, type) => {
+          setSortColumn(col);
+          setSortType(type);
+        }}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        onRowsPerPageChange={e => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
+      />
+
+      <DeletionConfirmationModal
+        open={openConfirmModal}
+        setOpen={setOpenConfirmModal}
+        itemToDelete={pendingAction === 'accept' ? 'Accept' : 'Reject'}
+        actionType={pendingAction === 'accept' ? 'accept' : 'reject'}
+        actionButtonFunction={handleConfirmAction}
+      />
+    </Panel>
+  );
+};
+
+export default TeleconsultationRequests;

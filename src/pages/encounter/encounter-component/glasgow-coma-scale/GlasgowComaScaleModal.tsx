@@ -4,6 +4,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import ScoreCalculation from '@/pages/medical-component/score-calculation';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faG } from '@fortawesome/free-solid-svg-icons';
 import './Style.less';
 
 const GlasgowComaScaleModal = ({ open, setOpen, onSave }) => {
@@ -122,7 +124,7 @@ const GlasgowComaScaleModal = ({ open, setOpen, onSave }) => {
       open={open}
       setOpen={setOpen}
       title="Glasgow Coma Scale Assessment"
-      steps={[{ title: 'Assessment' }]}
+      steps={[{ title: 'Assessment',icon:<FontAwesomeIcon icon={faG}/> }]}
       size="30vw"
       position="right"
       actionButtonLabel="Save"
