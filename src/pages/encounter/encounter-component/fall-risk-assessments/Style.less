@@ -1,62 +1,40 @@
-.full-inputs-jhons-hopkins-tool {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
-  padding: 1rem;
+.jhons-hopkins-tool-input-coulmns{display: flex;
+flex-direction: column;
 }
 
-.input-section-jhons-hopkins {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: transform 0.3s ease;
-}
-
-.input-section-jhons-hopkins:hover {
-  transform: scale(1.01);
-}
-
-.myinput-label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.myinput-container select {
-  border-radius: 8px !important;
-  border: 1px solid #ddd !important;
-  padding: 8px !important;
-  font-size: 14px;
-  background-color: #fff !important;
-}
-
-.first-two-inputs-handle-position{display: flex;
+.jhons-hopkins-tool-input-row{display: flex;
 flex-direction: row;
-gap: 3vw;
-}
+box-sizing: border-box;
+flex-wrap: wrap;
+gap:1vw;}
 
-.input-row {
-  display: flex;
-  gap: 16px; // مسافة بين العناصر
-  margin-bottom: 16px;
+.jhons-hopkins-tool-input-main-container{display: flex;
+flex-direction: column;
+gap: 1vw;}
 
-  > * {
-    flex: 1; // خلي كل input ياخذ نصف المساحة
-  }
-}
+.jhons-hopkins-tool-modal-total-score{position: relative;
+bottom: 1.5vw;}
 
-.badge-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 30px;
-  padding-bottom: 2.3vw;
-  transform: scale(1.3);
-  transform-origin: left center;
-}
+.jhons-hopkins-tool-modal-my-badge-status{position: relative;
+bottom: 0.5vw;}
 
-.badge-wrapper-sizing-position{width: 150px;}
+//^^^^FirstModal
+
+.jhons-hopkins-tool-second-modal-checkboxes-positions{display: flex;
+flex-direction: column;
+box-sizing: border-box;}
+
+.jhons-hopkins-tool-second-modal-checkboxes-positions-main-container{display: flex;
+flex-direction: row;}
+
+.jhons-hopkins-tool-second-modal-input-button-position{display: flex;
+flex-direction: row;
+box-sizing: border-box;
+flex-wrap: wrap;}
+
+.my-button-for-attachment-modal{width: 100%;
+height: 2vw;}
+
+.jhons-hopkins-tool-second-modal-main-container{display: flex;
+flex-direction: column;
+gap: 1vw;}

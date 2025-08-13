@@ -128,7 +128,7 @@ const columns = [
   //Table Filters(Header)
   const filterstable = (
     <Form fluid>
-      <h5 className="requested-procedures-table-header">Requested Opearation</h5>
+      <h5 className="requested-procedures-table-header">Requested Operation</h5>
       <div className="from-to-input-position">
         <MyInput
           width={'100%'}

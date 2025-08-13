@@ -7,8 +7,10 @@ import MyInput from '@/components/MyInput';
 import { Checkbox } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import './Style.less';
 
 //Modal Props
 const JhonsHopkinsToolSecondModal = ({
@@ -23,55 +25,48 @@ const JhonsHopkinsToolSecondModal = ({
 
   //second modal content
   const ModalContent = (
-    <>
-      <Form fluid>
-        <Row>
-          <div className="full-inputs-jhons-hopkins-tool">
-            <div className="input-section-jhons-hopkins">
-              <Checkbox>Fall-risk wristband applied</Checkbox>
+<Form fluid>
+  <div className='jhons-hopkins-tool-second-modal-main-container'>
+  <div className='jhons-hopkins-tool-second-modal-checkboxes-positions-main-container'>
+  <div className='jhons-hopkins-tool-second-modal-checkboxes-positions'>
+          <Checkbox>Fall-risk wristband applied</Checkbox>
+          <Checkbox>Bed in low position</Checkbox>
+          <Checkbox>Bed alarms enabled</Checkbox></div>
+            <div className='jhons-hopkins-tool-second-modal-checkboxes-positions'>
+          <Checkbox>2-hour rounding</Checkbox>
+          <Checkbox>Non-skid footwear</Checkbox>
+          <Checkbox>Assistive device provided</Checkbox></div></div>
+<div className='jhons-hopkins-tool-second-modal-input-position'>
+        <MyInput
+          width={'100%'}
+          column
+          fieldLabel=""
+          placeholder="Assessment Notes"
+          fieldName="text"
+          record={''}
+          disabled={false}
+          className="search-input"
+          /></div>
 
-              <Checkbox>Bed in low position</Checkbox>
+        <MyButton
+          className="my-button-for-attachment-modal"
+          onClick={() => {
+            setShowAttachmentModal(true);
+          }}
+        >
+          <FontAwesomeIcon icon={faPaperclip} />
+          Attachments
+        </MyButton>
 
-              <Checkbox>Bed alarms enabled</Checkbox>
-              <Checkbox>2-hour rounding</Checkbox>
-
-              <Checkbox>Non-skid footwear</Checkbox>
-
-              <Checkbox>Assistive device provided</Checkbox>
-            </div>
-
-            <div className="input-section-jhons-hopkins">
-              <MyInput
-                width={200}
-                column
-                fieldLabel="Assessment Notes"
-                fieldName="text"
-                record={''}
-                disabled={false}
-                className="search-input"
-              />
-              <MyButton
-                onClick={() => {
-                  setShowAttachmentModal(true);
-                }}
-              >
-                <FontAwesomeIcon icon={faPaperclip} />
-                Attachments
-              </MyButton>
-
-              <MyInput
-                width={'100%'}
-                fieldLabel="Next Assessment Due"
-                fieldType="date"
-                fieldName="key0"
-                record={''}
-                setRecord={''}
-              />
-            </div>
-          </div>
-        </Row>
-      </Form>
-    </>
+        <MyInput
+          width={'100%'}
+          fieldLabel="Next Assessment Due"
+          fieldType="date"
+          fieldName="key0"
+          record={''}
+          setRecord={''}
+        /></div>
+</Form>
   );
 
   return (
@@ -80,7 +75,7 @@ const JhonsHopkinsToolSecondModal = ({
         open={open}
         setOpen={setOpen}
         title="Second Modal"
-        steps={[{ title: 'Fall Prevention Plan Triggered' }]}
+        steps={[{ title: 'Fall Prevention Plan Triggered',icon:<FontAwesomeIcon icon={faListCheck}/> }]}
         size="30vw"
         position="right"
         actionButtonLabel="Save"

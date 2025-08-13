@@ -158,7 +158,7 @@ import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-f
 import DietaryRequest from './pages/encounter/encounter-component/dietary-request/DietaryRequests';
 import ReportResultTemplate from './pages/setup/report-result-template';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products/ServiceAndProducts';
-
+import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -313,6 +313,7 @@ const App = () => {
               <Route path="patient-profile" element={<PatientProfileCopy />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
+              <Route path="tele-consultation-screen" element={<TeleconsultationScreen />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
               <Route path="ER-start-triage" element={<ERStartTriage />} />
