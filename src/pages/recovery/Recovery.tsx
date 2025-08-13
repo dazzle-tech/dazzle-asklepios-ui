@@ -16,13 +16,16 @@ import React, { useEffect, useState } from 'react';
 import { Badge, Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import PatientSide from '../encounter/encounter-main-info-section/PatienSide';
 import { FaPrint, FaSun } from 'react-icons/fa6';
-import { title } from 'process';
-import { render } from 'react-dom';
+
 import RecoveryRoomFunctionalities from './RecoveryRoomFunctionalities';
 import MyModal from '@/components/MyModal/MyModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import StartedDetails from '../operation-module/StartedDetails/StartedDetails';
 const Recovery = () => {
   const [openRecoveryRoomFunctionalities, setOpenRecoveryRoomFunctionalities] =
     useState<boolean>(false);
+    const [open,setOpen]=useState(false)
   const [request, setRequest] = useState<any>({ ...newApOperationRequests });
   const [patient, setPatient] = useState({ ...newApPatient });
   const [encounter, setEncounter] = useState({ ...newApEncounter });
@@ -30,7 +33,7 @@ const Recovery = () => {
     fromDate: new Date(),
     toDate: null
   });
-  const [save, saveMutation] = useSaveOperationRequestsMutation();
+ 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
 
@@ -140,14 +143,14 @@ const Recovery = () => {
       key: 'diagnosisKey',
       title: <Translate>Pre-op Diagnosis</Translate>,
       render: (rowData: any) => {
-        return rowData?.diagnosis?.icdCode;
+        return rowData?.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description;
       }
     },
     {
       key: 'oparetionKey',
       title: <Translate>oparation name</Translate>,
       render: (rowData: any) => {
-        return null;
+        return rowData?.operation?.name;
       }
     },
     {
@@ -214,6 +217,17 @@ const Recovery = () => {
                   fontSize: '1em',
                   marginRight: 10
                 }}
+              />
+            </Whisper>
+            <Whisper
+              placement="top"
+              trigger="hover"
+              speaker={<Tooltip>{"View"}</Tooltip>}
+            >
+              <FontAwesomeIcon icon={faEye}
+                onClick={() => setOpen(true)}
+              // style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
+
               />
             </Whisper>
           </HStack>
@@ -323,6 +337,9 @@ const Recovery = () => {
         size="full"
         content={<RecoveryRoomFunctionalities encounter={encounter} patient={patient} operation={request} />}
       ></MyModal>
+      <StartedDetails open={open} setOpen={setOpen} 
+      operation={request} setOperation={setRequest} 
+      patient={patient}encounter={encounter} refetch={refetch} editable={false}/>
     </div>
   );
 };

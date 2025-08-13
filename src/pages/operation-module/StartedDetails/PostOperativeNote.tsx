@@ -8,9 +8,10 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApOperationIntraoperativeEvents, newApOperationPostOpNotesHandover, newApOperationStaff, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
+import clsx from "clsx";
 import React, { useState, useEffect, useMemo } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
-const PostOperativeNote = ({ operation }) => {
+const PostOperativeNote = ({ operation ,editable}) => {
     const dispatch = useAppDispatch();
     const [operativeNote, setOperativeNote] = useState({ ...newApOperationPostOpNotesHandover });
     const {data:operativeNoteData} = useGetPostOpHandoverByOperationQuery(operation?.key , {
@@ -98,7 +99,9 @@ const PostOperativeNote = ({ operation }) => {
             dispatch(notify({ msg: " Fiald to Save ", sev: "error" }));
         }
     }
-    return (<Form fluid>
+    return (<Form fluid className={clsx('', {
+                                                            'disabled-panel': !editable
+                                                          })}>
         <Row gutter={15}>
             <Col md={12}>
                 <Row>

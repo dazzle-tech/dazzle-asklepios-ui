@@ -5,10 +5,14 @@ import { useGetOperationRequestsListQuery, useSaveOperationRequestsMutation } fr
 import { newApOperationRequests } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
 import { formatDateWithoutSeconds } from "@/utils";
+import { faEye } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
-import { Badge, Form, Tooltip, Whisper } from "rsuite";
-const CompletedOperations = ({ patient, setPatient, encounter, setEncounter }) => {
-    const [request, setRequest] = useState<any>({ ...newApOperationRequests });
+import { FaStreetView } from "react-icons/fa";
+import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
+const CompletedOperations = ({ patient, setPatient, encounter, setEncounter ,open,
+    setOpen,request, setRequest }) => {
+  
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
         toDate: null
@@ -126,14 +130,14 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter }) =
             key: "diagnosisKey",
             title: <Translate>Pre-op Diagnosis</Translate>,
             render: (rowData: any) => {
-                return rowData?.diagnosis?.icdCode;
+               return rowData?.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description;
             }
         },
         {
             key: "oparetionKey",
             title: <Translate>oparation name</Translate>,
             render: (rowData: any) => {
-                return null;
+             return rowData?.operation?.name;
             }
         },
         {
@@ -172,8 +176,30 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter }) =
                 return rowData.operationStatusLvalue ? rowData.operationStatusLvalue?.lovDisplayVale : rowData.operationStatusLkey;
             }
         },
+          {
+                    key: "actions",
+                    title: <Translate >Actions</Translate>,
+                    render: (rowData: any) => {
+        
+        
+                        // const isDisabled =request?.key!==rowData.key;
+                        return <HStack spacing={10}>
+                            <Whisper
+                                placement="top"
+                                trigger="hover"
+                                speaker={<Tooltip>{ "View"}</Tooltip>}
+                            >
+                                <FontAwesomeIcon icon={faEye}
+                                    onClick={() => setOpen(true)}
+                                // style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
+        
+                                />
+                            </Whisper>
+                        </HStack>;
+                    }
+                },
         {
-            key: "",
+            key: "createdAt",
             title: <Translate>Created At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
@@ -186,7 +212,7 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter }) =
 
         },
         {
-            key: "",
+            key: "submitedAt",
             title: <Translate>Submited At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
@@ -199,18 +225,27 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter }) =
 
         },
 
+      
         {
-            key: "",
+            key: "cancelledAt",
             title: <Translate>Cancelled At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
                 return (<>
-                    <span>{rowData.deletedBy} </span>
+                    <span>{rowData.cancelledBy}</span>
                     <br />
-                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.deletedAt)}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.cancelledAt)}</span>
                 </>)
             }
         },
+        {
+            key: "cancellationReason",
+            title: <Translate>Cancelled Reason</Translate>,
+            expandable: true,
+            render: (rowData: any) => {
+                return rowData.cancellationReason || '-';
+            }
+        }
     ];
 
     const addOrUpdateFilter = (filters, newFilter) => {

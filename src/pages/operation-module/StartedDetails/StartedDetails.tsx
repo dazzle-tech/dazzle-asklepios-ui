@@ -16,7 +16,8 @@ import SurgicalHistory from "@/pages/encounter/encounter-component/patient-histo
 import SurgicalPreparation from "./SurgicalPreparation";
 import IntraoperativeEventsTracking from "./IntraoperativeEventsTracking";
 import PostOperativeNote from "./PostOperativeNote";
-const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOperation,refetch }) => {
+const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOperation,refetch ,editable}) => {
+  
        const authSlice = useAppSelector(state => state.auth);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
@@ -112,32 +113,32 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                       style={{ flexGrow: 1, maxHeight: 500, height: '100%' }}
                     >
                         <Tabs.Tab eventKey="1" title="Patient Arrival & Registration" >
-                            <PatientArrival operation={operation} patient={patient} encounter={encounter} user={authSlice.user}/>
+                            <PatientArrival operation={operation} patient={patient} encounter={encounter} user={authSlice.user} editable={editable}/>
                         </Tabs.Tab>
 
                         <Tabs.Tab eventKey="2" title="Pre-Operative Time-out" >
-                            <OperativeTimeOut operation={operation} refetch={refetch}/>
+                            <OperativeTimeOut operation={operation} refetch={refetch} editable={editable}/>
                         </Tabs.Tab>
 
                         <Tabs.Tab 
                         disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
                         eventKey="3" title="Anesthesia Induction & Monitoring" >
-                            <AnesthesiaInduction  operation={operation} patient={patient} encounter={encounter}/>
+                            <AnesthesiaInduction  operation={operation} patient={patient} encounter={encounter} editable={editable}/>
                         </Tabs.Tab>
                         <Tabs.Tab
                         disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
                          eventKey="4" title="Surgical Preparation & Incision" >
-                          <SurgicalPreparation operation={operation}/>
+                          <SurgicalPreparation operation={operation} editable={editable}/>
                         </Tabs.Tab>
                         <Tabs.Tab 
                         disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
                         eventKey="5" title="Intraoperative & Events Tracking" >
-                           <IntraoperativeEventsTracking operation={operation} patient={patient} encounter={encounter}/>
+                           <IntraoperativeEventsTracking operation={operation} patient={patient} encounter={encounter} editable={editable}/>
                         </Tabs.Tab>
                         <Tabs.Tab 
                         disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
                         eventKey="6" title="Post-Operative Notes & Handover" >
-                          <PostOperativeNote operation={operation}  />
+                          <PostOperativeNote operation={operation} editable={editable} />
                         </Tabs.Tab>
 
                     </Tabs>

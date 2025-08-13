@@ -7,12 +7,13 @@ import { useGetLovValuesByCodeQuery, useGetUsersQuery } from "@/services/setupSe
 import { newApOperationAntimicrobialProphylaxisGiven, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
+import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
-const SurgicalPreparation = ({ operation }) => {
+const SurgicalPreparation = ({ operation, editable }) => {
     const dispatch = useAppDispatch();
     const [surgical, setSergical] = useState({ ...newApOperationSurgicalPreparationIncision });
-    const {data:surgicalData}=useGetLatestSurgicalPreparationByOperationKeyQuery(operation.key ,{
+    const { data: surgicalData } = useGetLatestSurgicalPreparationByOperationKeyQuery(operation.key, {
         skip: !operation?.key
     });
     const { data: positionLovQueryResponse } = useGetLovValuesByCodeQuery('OPERATION_POSITION');
@@ -29,33 +30,36 @@ const SurgicalPreparation = ({ operation }) => {
             }
         ]
     });
-useEffect(() => {
+    useEffect(() => {
         if (surgicalData?.object) {
 
-            setSergical({   
+            setSergical({
                 ...surgicalData?.object,
-                siteDriedTime:surgicalData?.object.siteDriedTime? new Date(surgicalData?.object.siteDriedTime) : null,
-                timeOfIncision:surgicalData?.object.timeOfIncision ? new Date(surgicalData?.object.timeOfIncision) : null,
-                skinOpenedTime:surgicalData?.object.skinOpenedTime ? new Date(surgicalData?.object.skinOpenedTime) : null
+                siteDriedTime: surgicalData?.object.siteDriedTime ? new Date(surgicalData?.object.siteDriedTime) : null,
+                timeOfIncision: surgicalData?.object.timeOfIncision ? new Date(surgicalData?.object.timeOfIncision) : null,
+                skinOpenedTime: surgicalData?.object.skinOpenedTime ? new Date(surgicalData?.object.skinOpenedTime) : null
             });
         }
     }, [surgicalData]);
 
     const handleSave = async () => {
-        try {   
-         
-            await save({ ...surgical, operationRequestKey: operation.key
-                ,siteDriedTime:new Date(surgical.siteDriedTime).getTime(),
-                timeOfIncision:new Date(surgical.timeOfIncision).getTime(),
-                skinOpenedTime:new Date(surgical.skinOpenedTime).getTime()
-             }).unwrap();
+        try {
+
+            await save({
+                ...surgical, operationRequestKey: operation.key
+                , siteDriedTime: new Date(surgical.siteDriedTime).getTime(),
+                timeOfIncision: new Date(surgical.timeOfIncision).getTime(),
+                skinOpenedTime: new Date(surgical.skinOpenedTime).getTime()
+            }).unwrap();
             dispatch(notify({ msg: "Saved Successfly", sev: "success" }));
         }
         catch (error) {
             dispatch(notify({ msg: "Faild to Save", sev: "error" }));
         }
     }
-    return (<Form fluid>
+    return (<Form fluid className={clsx('', {
+        'disabled-panel': !editable
+    })}>
         <Row gutter={15}>
             <Col md={12}>
                 <Row>
@@ -266,10 +270,10 @@ useEffect(() => {
 
                 </Row></Col>
         </Row>
-             <div className='bt-div'>
+        <div className='bt-div'>
             <div className="bt-right">
                 <MyButton onClick={handleSave}>Save</MyButton>
-              
+
             </div></div>
     </Form>);
 }

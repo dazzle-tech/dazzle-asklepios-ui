@@ -10,14 +10,18 @@ import { formatDateWithoutSeconds } from "@/utils";
 import { notify } from "@/utils/uiReducerActions";
 import React, { useEffect, useState } from "react";
 import { MdModeEdit } from "react-icons/md";
-import { Checkbox, Row } from "rsuite";
+import { Checkbox, HStack, Row, Tooltip, Whisper } from "rsuite";
 import Details from "./Details";
 import CancellationModal from "@/components/CancellationModal";
 import { set } from "lodash";
+import StartedDetails from "@/pages/operation-module/StartedDetails/StartedDetails";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye } from "@fortawesome/free-solid-svg-icons";
 const Request = ({ patient, encounter, user, refetchrequest }) => {
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openView, setOpenView] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [request, setRequest] = useState<any>({ ...newApOperationRequests, encounterKey: encounter?.key, patientKey: patient?.key });
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -181,8 +185,8 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       key: "diagnosisKey",
       title: <Translate>Pre-op Diagnosis</Translate>,
       render: (rowData: any) => {
-        return rowData?.diagnosis?
-        rowData.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description:"";
+        return rowData?.diagnosis ?
+          rowData.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description : "";
       }
     },
     {
@@ -210,8 +214,29 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         />)
       }
     }
-
     ,
+    {
+      key: "actions",
+      title: <Translate >Actions</Translate>,
+      render: (rowData: any) => {
+
+
+        const isDisabled =request?.key!==rowData.key || rowData.operationStatusLvalue.valueCode !== "PROC_COMPLETED" ;
+        return <HStack spacing={10}>
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip> View</Tooltip>}
+          >
+            <FontAwesomeIcon icon={faEye}
+              onClick={() => setOpenView(true)}
+            style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
+
+            />
+          </Whisper>
+        </HStack>;
+      }
+    },
     {
       key: "createdAt",
       title: <Translate>Created At/By</Translate>,
@@ -309,6 +334,9 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       fieldLabel={'Cancelled Reason'}
       title={'Cancellation'}
     ></CancellationModal>
+    <StartedDetails open={openView} setOpen={setOpenView}
+      operation={request} setOperation={setRequest}
+      patient={patient} encounter={encounter} refetch={refetch} editable={false}/>
   </>)
 }
 export default Request;

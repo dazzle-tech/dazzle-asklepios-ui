@@ -7,9 +7,10 @@ import { useGetIntraoperativeMonitoringListQuery, useGetOperationAnesthesiaInduc
 import { newApOperationIntraoperativeMonitoring, newApOperationRequests } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
 import { CheckOutline } from "@rsuite/icons";
+import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { Col, Form, Row, Text } from "rsuite";
-const IntraoperativeMonitoring = ({ operation }) => {
+const IntraoperativeMonitoring = ({ operation ,editable }) => {
     const [operationReq, setOperationReq] = useState({ ...newApOperationRequests });
     const [open, setOpen] = useState(false);
     const [monitor, setMonitor] = useState({ ...newApOperationIntraoperativeMonitoring });
@@ -118,7 +119,9 @@ const IntraoperativeMonitoring = ({ operation }) => {
         }
     ];
 
-    return (<Form fluid >
+    return (<Form fluid  className={clsx('', {
+                                                            'disabled-panel': !editable
+                                                          })}>
         <div className="bt-div">
             <Row>
                 <Col md={10}>

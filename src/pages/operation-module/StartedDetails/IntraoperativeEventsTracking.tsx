@@ -15,10 +15,11 @@ import { notify } from "@/utils/uiReducerActions";
 import React, { useEffect, useMemo, useState } from "react";
 import { Col, Divider, Form, Radio, RadioGroup, Row, Text } from "rsuite";
 import PatientOrder from '@/pages/encounter/encounter-component/diagnostics-order';
-const IntraoperativeEventsTracking = ({ operation, patient,encounter }) => {
+import clsx from "clsx";
+const IntraoperativeEventsTracking = ({ operation, patient,encounter ,editable}) => {
     const dispatch = useAppDispatch();
     const [intraoperative, setIntraoperative] = useState({ ...newApOperationIntraoperativeEvents });
-    console.log("intraoperative", intraoperative);
+    
     const {data:intraoperativeData}=useGetIntraoperativeEventsByOperationKeyQuery(operation?.key, {
         skip: !operation?.key,
         refetchOnMountOrArgChange: true
@@ -35,7 +36,7 @@ const IntraoperativeEventsTracking = ({ operation, patient,encounter }) => {
     const [status, setStatus] = useState<string>('');
     const { data: operations } = useGetOperationListQuery({ ...initialListRequest });
     const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-    console.log("selectedKeys", selectedKeys);
+  
     const [instr, setInstruc] = useState(null);
     const [openOrderModel, setOpenOrderModel] = useState(false);
     const { data: userList } = useGetUsersQuery({
@@ -175,7 +176,9 @@ useEffect(() => {
 
 
 
-    return (<Form fluid>
+    return (<Form fluid className={clsx('', {
+                                                            'disabled-panel': !editable
+                                                          })}>
         <Row gutter={15}>
             <Col md={12}>
                 <Row>

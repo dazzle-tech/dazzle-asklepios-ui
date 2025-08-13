@@ -313,7 +313,10 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
             }}
 
         />
-        <StartedDetails open={open} setOpen={setOpen} patient={patient} encounter={encounter} operation={request} setOperation={setRequest} refetch={refetch} />
+        <StartedDetails open={open} setOpen={setOpen} 
+        patient={patient} encounter={encounter}
+         operation={request} setOperation={setRequest}
+          refetch={refetch}  editable={true}/>
     </>);
 });
 export default OngoingOperations;

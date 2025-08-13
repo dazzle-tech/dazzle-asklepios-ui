@@ -32,7 +32,7 @@ const Operation = () => {
 
             </Tabs.Tab>
             <Tabs.Tab eventKey="3" title="Completed Operations">
-               <CompletedOperations patient={patient} encounter={encounter} setPatient={setPatient} setEncounter={setEncounter} />
+               <CompletedOperations patient={patient} encounter={encounter} setPatient={setPatient} setEncounter={setEncounter} open={open} setOpen={setOpen} request={request} setRequest={setRequest}/>
 
             </Tabs.Tab>
 
