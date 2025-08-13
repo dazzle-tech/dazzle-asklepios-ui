@@ -1,0 +1,49 @@
+.container-of-speech-to-text {
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+  .rs-form-control-label{
+    margin-bottom: 0px !important;
+  }
+}
+.container-of-header-speech-to-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: '#f9f9f9';
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+  width: 100%;
+}
+.container-of-button-speech-to-text {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  padding: 6px 10px;
+  border-top: 1px solid #eee;
+  background-color: #fafafa;
+  width: '100%';
+}
+
+.icons-style.recording {
+  color: #e74c3c;
+}
+
+.pulse-ring {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #e74c3c;
+  animation: pulse 1s infinite;
+  z-index: 100;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 0.3; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
