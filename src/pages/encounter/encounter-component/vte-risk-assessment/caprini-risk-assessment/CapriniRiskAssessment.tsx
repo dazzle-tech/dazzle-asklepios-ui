@@ -81,6 +81,10 @@ const CapriniRiskAssessment = () => {
   const [sortColumn, setSortColumn] = useState('totalScore');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
+  //select row
+    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
+
+
   // State for pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -133,6 +137,10 @@ const CapriniRiskAssessment = () => {
       </div>
     </Form>
   );
+//select row
+  const isSelectedRow = rowData => {
+    return rowData.id === selectedRowId ? 'selected-row' : '';
+  };
 
   return (
     <div>
@@ -141,6 +149,12 @@ const CapriniRiskAssessment = () => {
         columns={columns}
         loading={false}
         filters={filters}
+//select row
+        rowClassName={isSelectedRow}
+        onRowClick={(rowData) => {
+          setSelectedRowId(rowData.id);
+        }}
+
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={(col, type) => {

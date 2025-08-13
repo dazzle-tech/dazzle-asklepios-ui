@@ -73,7 +73,8 @@ const GlasgowComaScale = () => {
   // Pagination states
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
+//select row
+    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   // Modal open state
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -122,6 +123,10 @@ const GlasgowComaScale = () => {
       </div>
     </Form>
   );
+//select row
+  const isSelectedRow = rowData => {
+    return rowData.id === selectedRowId ? 'selected-row' : '';
+  };
 
   return (
     <div>
@@ -131,6 +136,9 @@ const GlasgowComaScale = () => {
         loading={false}
         filters={filters}
         sortColumn={sortColumn}
+        rowClassName={isSelectedRow}
+        onRowClick={(rowData) => {
+        setSelectedRowId(rowData.id);}}
         sortType={sortType}
         onSortChange={(col, type) => {
           setSortColumn(col);

@@ -68,6 +68,9 @@ const columns: ColumnConfig[] = [
 const PaduaPredictionScore = () => {
   const [sortColumn, setSortColumn] = useState('totalScore');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  
+  //select row
+    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -111,7 +114,10 @@ const PaduaPredictionScore = () => {
       </div>
     </Form>
   );
-
+//select row
+  const isSelectedRow = rowData => {
+    return rowData.id === selectedRowId ? 'selected-row' : '';
+  };
   return (
     <div>
       <MyTable
@@ -120,6 +126,11 @@ const PaduaPredictionScore = () => {
         loading={false}
         filters={filters}
         sortColumn={sortColumn}
+        //select row
+        rowClassName={isSelectedRow}
+        onRowClick={(rowData) => {
+          setSelectedRowId(rowData.id);
+        }}
         sortType={sortType}
         onSortChange={(col, type) => {
           setSortColumn(col);

@@ -41,6 +41,8 @@ const CurrentVisit = () => {
   const [records, setRecords] = useState(sampleData);
   // State to control the Add/Edit modal visibility
   const [modalOpen, setModalOpen] = useState(false);
+  //select row
+    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   // State to control the confirmation modal for deleting/cancelling a visit
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
   // Holds the id of the selected record to cancel
@@ -134,6 +136,10 @@ const CurrentVisit = () => {
       </div>
     </Form>
   );
+//select row
+  const isSelectedRow = rowData => {
+    return rowData.id === selectedRowId ? 'selected-row' : '';
+  };
 
   return (
     <Panel>
@@ -145,6 +151,9 @@ const CurrentVisit = () => {
         page={0}
         rowsPerPage={20}
         filters={filters}
+        rowClassName={isSelectedRow}
+        onRowClick={(rowData) => {
+        setSelectedRowId(rowData.id);}}
         totalCount={displayedRecords.length}
         onPageChange={() => {}}
         onRowsPerPageChange={() => {}}
