@@ -119,7 +119,7 @@ const PressureUlcerRiskAssessmentModal = ({ open, setOpen, onSave }) => {
           name="Braden Score"
           disabledAldrete={true}
           totalposition="center"
-          width={'14.42vw'}
+          
         />
       </div>
       <div className="badge-box">
