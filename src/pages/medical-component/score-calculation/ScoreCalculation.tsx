@@ -1,7 +1,7 @@
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
+import React, { useEffect, useRef, useState } from 'react';
+import { Col, Form, Row } from 'rsuite';
 import './Style.less';
 
 type ScoreFieldConfig = {
@@ -17,8 +17,8 @@ type ScoreCalculationProps = {
   scoreFieldName?: string;
   disabledAldrete?: boolean;
   totalposition?: 'center' | 'start' | 'end';
-  width?: string | number;
   name?: string;
+  fieldsPerRow?: number; 
 };
 
 const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
@@ -28,15 +28,18 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
   scoreFieldName = 'aldreteScore',
   disabledAldrete = false,
   totalposition = 'start',
-  width = '100%',
-  name = 'Total Score'
+  name = 'Total Score',
+  fieldsPerRow = 2 
 }) => {
+  
   const [lovMap, setLovMap] = useState<Record<string, any[]>>({});
 
   const lovHooks = fields.map(field => ({
     code: field.lovCode,
     hook: useGetLovValuesByCodeQuery(field.lovCode)
   }));
+  const colRef = useRef<HTMLDivElement>(null); 
+  const [colWidthPx, setColWidthPx] = useState<number>(0);
 
   // Update LOV map when hooks change
   useEffect(() => {
@@ -62,23 +65,41 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
     setRecord(prev => ({ ...prev, [scoreFieldName]: score }));
   }, [fields.map(f => record?.[f.fieldName]).join('|'), lovMap]);
 
+    useEffect(() => {
+    if (colRef.current) {
+      setColWidthPx(colRef.current.getBoundingClientRect().width);
+    }
+  }, []);
+
   return (
-    <Form fluid layout="inline">
-      {fields.map((field, idx) => (
-        <MyInput
-          key={idx}
-          column
-          width={width}
-          fieldType="select"
-          fieldName={field.fieldName}
-          fieldLabel={field.label}
-          selectData={lovMap[field.lovCode] ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-      ))}
+    <Form fluid >
+
+      {Array.from({ length: Math.ceil(fields.length / fieldsPerRow) }).map((_, rowIndex) => (
+    <Row gutter={15} key={rowIndex} style={{ marginBottom: 10 }} >
+      {fields
+        .slice(rowIndex * fieldsPerRow, rowIndex * fieldsPerRow + fieldsPerRow)
+        .map((field, idx) => (
+          <Col
+            ref={rowIndex === 0 && idx === 0 ? colRef : undefined}
+            md={Math.floor(24 / fieldsPerRow)}
+            key={field.fieldName}
+          >
+            <MyInput
+              width="100%"
+              fieldType="select"
+              fieldName={field.fieldName}
+              fieldLabel={field.label}
+              selectData={lovMap[field.lovCode] ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={record}
+              setRecord={setRecord}
+            />
+          </Col>
+        ))}
+    </Row>
+  ))}
+    
       <div
         className={
           totalposition === 'center'
@@ -88,9 +109,10 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
             : 'input-start'
         }
       >
-        <MyInput
-          column
-          width={width}
+      <Col md={Math.floor(24 / fieldsPerRow)}>
+      <MyInput
+       
+          width="100%"
           fieldType="number"
           fieldName={scoreFieldName}
           fieldLabel={name}
@@ -98,6 +120,8 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
           setRecord={setRecord}
           disabled={disabledAldrete}
         />
+      </Col>
+        
       </div>
     </Form>
   );

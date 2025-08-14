@@ -93,7 +93,8 @@ const GlasgowComaScaleModal = ({ open, setOpen, onSave }) => {
             fields={fields}
             name="Glasgow Score"
             disabledAldrete={true}
-            width={'26.1vw'}
+       
+            fieldsPerRow={1}
           />
         </div>
         <div className="badge-box">

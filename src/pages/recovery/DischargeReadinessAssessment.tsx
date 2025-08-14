@@ -19,6 +19,7 @@ const DischargeReadinessAssessment = ({ operation }) => {
       data: data ? data : newApOperationDischargeReadiness,
     }),
   });
+  console.log("Redin",readinessAssessment)
   // Mutation hook to save the discharge readiness assessment
   const [save] = useSaveDischargeReadinessMutation();
 
@@ -56,8 +57,9 @@ const DischargeReadinessAssessment = ({ operation }) => {
           { fieldName: "oxygenSaturationLkey", lovCode: "ALDRETE_OXSAT", label: "Oxygen Saturation" },
           { fieldName: "consciousnessLkey", lovCode: "ALDRETE_CONSC", label: "Consciousness" },
           { fieldName: "circulationLkey", lovCode: "ALDRETE_CIRCU", label: "Circulation" },
-          { fieldName: "respirationLkeyrespirationLkey", lovCode: "ALDRETE_RESPIR", label: "Respiration" },
+          { fieldName: "respirationLkey", lovCode: "ALDRETE_RESPIR", label: "Respiration" },
           { fieldName: "activityLkey", lovCode: "ALDRETE_ACTIVITY", label: "Activity" },
+       
         ]} ></ScoreCalculation>
       <Row>
         <Col md={12}>
