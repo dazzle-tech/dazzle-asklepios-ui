@@ -35,6 +35,7 @@ const AnesthesiaInduction = ({ operation,patient,encounter ,editable}) => {
 
 
     const handelSave = async () => {
+        console.log(joinValuesFromArray(tag))
         try {
             await save({
                 ...anesthesiaInduction

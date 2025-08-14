@@ -31,6 +31,7 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
   name = 'Total Score',
   fieldsPerRow = 2 
 }) => {
+  
   const [lovMap, setLovMap] = useState<Record<string, any[]>>({});
 
   const lovHooks = fields.map(field => ({
@@ -72,8 +73,9 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
 
   return (
     <Form fluid >
+
       {Array.from({ length: Math.ceil(fields.length / fieldsPerRow) }).map((_, rowIndex) => (
-    <Row gutter={15} key={rowIndex} style={{ marginBottom: 10 }}>
+    <Row gutter={15} key={rowIndex} style={{ marginBottom: 10 }} >
       {fields
         .slice(rowIndex * fieldsPerRow, rowIndex * fieldsPerRow + fieldsPerRow)
         .map((field, idx) => (
