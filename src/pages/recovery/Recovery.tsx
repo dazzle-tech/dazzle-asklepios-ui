@@ -22,13 +22,21 @@ import MyModal from '@/components/MyModal/MyModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import StartedDetails from '../operation-module/StartedDetails/StartedDetails';
+import { useGetEncounterByIdQuery } from '@/services/encounterService';
+import { useGetPatientByIdQuery } from '@/services/patientService';
 const Recovery = () => {
   const [openRecoveryRoomFunctionalities, setOpenRecoveryRoomFunctionalities] =
     useState<boolean>(false);
     const [open,setOpen]=useState(false)
   const [request, setRequest] = useState<any>({ ...newApOperationRequests });
+  const { data: patientData } = useGetPatientByIdQuery(request?.patientKey, { skip: !request?.patientKey });
+  console.log("Patient Data",patientData)
   const [patient, setPatient] = useState({ ...newApPatient });
+  console.log("patient",patient)
+  const { data: encounterData, isLoading: isEncounterLoading } = useGetEncounterByIdQuery(request.encounterKey, { skip: !request.encounterKey });
+  console.log("Encounter Data",encounterData)
   const [encounter, setEncounter] = useState({ ...newApEncounter });
+  console.log("Encounter",encounter)
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: null
@@ -59,11 +67,17 @@ const Recovery = () => {
     isLoading
   } = useGetOperationRequestsListQuery(listRequest);
 
-  useEffect(() => {
-    setPatient(request?.patient);
-    setEncounter(request?.encounter);
-  }, [request]);
 
+  useEffect(()=>{
+    if(encounterData){
+      setEncounter(encounterData)
+    }
+  },[encounterData]);
+  useEffect(()=>{
+    if(patientData){
+      setPatient(patientData)
+    }
+  },[patientData])
   useEffect(() => {
     let updatedFilters = [...listRequest.filters];
 

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Col, Form, Row } from 'rsuite';
-import PatientSide from '../lab-module/PatienSide';
 import AnesthesiaRecovery from './AnesthesiaRecovery';
 import ArrivalRecoveryRoom from './ArrivalRecoveryRoom';
 import ContinuousVitalsMonitoring from './ContinuousVitalsMonitoring';
@@ -8,6 +7,7 @@ import DischargeReadinessAssessment from './DischargeReadinessAssessment';
 import DischargeToWard from './DischargeToWard';
 import NursingCare from './NursingCareInterventions';
 import './styles.less';
+import PatientSide from '../encounter/encounter-main-info-section/PatienSide';
 const RecoveryRoomFunctionalities = ({ patient, encounter, operation }) => {
   return (
     <div className="container">
