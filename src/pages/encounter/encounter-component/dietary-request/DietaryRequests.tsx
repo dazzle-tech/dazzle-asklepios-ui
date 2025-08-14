@@ -134,6 +134,7 @@ const DietaryRequests = () => {
         required
         width={250}
         disabled={modalMode === 'view'}
+        searchable={false}
       />
 
       <MyInput
@@ -221,6 +222,7 @@ const DietaryRequests = () => {
               required
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
             <MyInput
               fieldLabel="Portion Size"
@@ -234,6 +236,7 @@ const DietaryRequests = () => {
               required
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
           </>
         );
@@ -252,6 +255,7 @@ const DietaryRequests = () => {
               required
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
             <MyInput
               fieldLabel="Calorie Target"
@@ -357,6 +361,7 @@ const DietaryRequests = () => {
               required
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
             <MyInput
               fieldLabel="Rate"
@@ -451,6 +456,7 @@ const DietaryRequests = () => {
               required
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
           </>
         );
@@ -477,6 +483,7 @@ const DietaryRequests = () => {
               setRecord={setForm}
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
             <MyInput
               fieldLabel="Portion Size"
@@ -489,6 +496,7 @@ const DietaryRequests = () => {
               setRecord={setForm}
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
           </>
         );
@@ -507,6 +515,7 @@ const DietaryRequests = () => {
               setRecord={setForm}
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
             <MyInput
               fieldLabel="Calorie Target"
@@ -610,6 +619,7 @@ const DietaryRequests = () => {
               setRecord={setForm}
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
             <MyInput
               fieldLabel="Rate"
@@ -698,6 +708,7 @@ const DietaryRequests = () => {
               setRecord={setForm}
               width={250}
               disabled={isDisabled}
+              searchable={false}
             />
           </>
         );
