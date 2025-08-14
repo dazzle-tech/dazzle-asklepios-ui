@@ -221,7 +221,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       render: (rowData: any) => {
 
 
-        const isDisabled =request?.key!==rowData.key || rowData.operationStatusLvalue.valueCode !== "PROC_COMPLETED" ;
+        const isDisabled =request?.key!==rowData.key || rowData.operationStatusLvalue?.valueCode !== "PROC_COMPLETED" ;
         return <HStack spacing={10}>
           <Whisper
             placement="top"
