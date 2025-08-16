@@ -1723,6 +1723,11 @@ export const newApInventoryTransaction:modelTypes.ApInventoryTransaction = {
 	isValid:undefined,
 	transId:'',
 	docNum:0,
+	vendor:'',
+	serialNum:'',
+	approvedBy:'',
+	invoiceNum:'',
+	approvalStatus:'',
 } 
 
 export const newApInventoryTransactionAttachment:modelTypes.ApInventoryTransactionAttachment = { 
@@ -1763,6 +1768,10 @@ export const newApInventoryTransactionProduct:modelTypes.ApInventoryTransactionP
 	notes:'',
 	transUomKey:undefined,
 	newQuentityBaseUom:0,
+	totalCost:0,
+	newAvgCost:0,
+	oldAvgCost:0,
+	statusLkey:undefined,
 } 
 
 export const newApInventoryTransfer:modelTypes.ApInventoryTransfer = { 
@@ -3163,6 +3172,31 @@ export const newApPatientSecondaryDocuments:modelTypes.ApPatientSecondaryDocumen
 	isValid:undefined,
 } 
 
+export const newApPatientTemporaryDischarge:modelTypes.ApPatientTemporaryDischarge = { 
+	key:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
+	reasonForTemporaryDischarge:'',
+	typeLkey:undefined,
+	expectedReturnAt:0,
+	consentTaken:undefined,
+	billingApprovalStatusLkey:undefined,
+	returnAt:0,
+	bedRetained:undefined,
+	comments:'',
+	roomKey:undefined,
+	bedKey:undefined,
+	notes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	fromRoom:'',
+	fromBed:'',
+} 
+
 export const newApPhysicalExamArea:modelTypes.ApPhysicalExamArea = { 
 	key:undefined,
 	patientKey:undefined,
@@ -3801,8 +3835,7 @@ export const newApResourceAvailabilitySlice:modelTypes.ApResourceAvailabilitySli
 	resourceKey:undefined,
 	facilityKey:undefined,
 	departmentKey:undefined,
-	date:null,
-	dayOfWeekLkey:undefined,
+	dayOfWeek:'',
 	startTimeMinutes:'',
 	endTimeMinutes:'',
 	sliceDurationMinutes:'',
