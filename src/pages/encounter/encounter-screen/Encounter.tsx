@@ -31,7 +31,8 @@ import {
   faUserDoctor,
   faPersonFallingBurst,
   faG,
-  faVials
+  faVials,
+  faPersonWalking
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BarChartHorizontalIcon from '@rsuite/icons/BarChartHorizontal';
@@ -240,6 +241,7 @@ const Encounter = () => {
     '/encounter/nutrition-state-asssessment': 'Nutrition State',
     '/encounter/dietary-request': 'Dietary Request',
     '/encounter/medication-administration-record': 'MAR',
+    '/encounter/physiotherapy-plan': 'Physiotherapy Plan'
   };
 
   const menuItems = [
@@ -400,7 +402,18 @@ const Encounter = () => {
       icon: faLeaf,
       path: 'dietary-request'
     },
-      { key: 'medicationAdministrationRecord', label: 'MAR', icon:faCapsules, path: 'medication-administration-record' },
+    {
+      key: 'medicationAdministrationRecord',
+      label: 'MAR',
+      icon: faCapsules,
+      path: 'medication-administration-record'
+    },
+    {
+      key: 'physiotherapyPlan',
+      label: 'Physiotherapy Plan',
+      icon: faPersonWalking,
+      path: 'physiotherapy-plan'
+    }
   ];
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (

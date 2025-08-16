@@ -159,6 +159,7 @@ import DietaryRequest from './pages/encounter/encounter-component/dietary-reques
 import ReportResultTemplate from './pages/setup/report-result-template';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
+import PhysiotherapyPlan from './pages/encounter/encounter-component/physiotherapy-plan';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -375,6 +376,7 @@ const App = () => {
                 <Route path="nutrition-state-asssessment" element={<NutritionStateAsssessment />} />
                 <Route path="dietary-request" element={<DietaryRequest />} />
                 <Route path="medication-administration-record" element={<MAR />} />
+                <Route path="physiotherapy-plan" element={<PhysiotherapyPlan />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
