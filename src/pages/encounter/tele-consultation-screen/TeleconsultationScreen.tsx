@@ -6,6 +6,7 @@ import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { Form } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCirclePlay,
@@ -85,6 +86,7 @@ const sampleRequests: TeleconsultationRequest[] = [
 
 const TeleconsultationRequests = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<TeleconsultationRequest[]>(sampleRequests);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [record, setRecord] = useState({});
@@ -98,6 +100,16 @@ const TeleconsultationRequests = () => {
   const handleStatusChange = (id: number, newStatus: 'Accepted' | 'Rejected') => {
     setRequests(prev => prev.map(req => (req.id === id ? { ...req, status: newStatus } : req)));
   };
+
+const handleViewEMR = (rowData) => {
+  navigate('/start-tele-consultation', {
+    state: {
+      patient: rowData.patient,
+      encounter: rowData.encounter,
+      fromPage: 'some-page-id'
+    }
+  });
+};
 
   const filterstable = (
     <Form fluid>
@@ -229,12 +241,13 @@ const TeleconsultationRequests = () => {
             }}
           />
 
-          <FontAwesomeIcon
-            icon={faFileWaveform}
-            title="View EMR File"
-            className="action-icon emr-icon"
-            onClick={() => handleViewEMR(rowData)}
-          />
+<FontAwesomeIcon
+  icon={faFileWaveform}
+  title="View EMR File"
+  className="action-icon emr-icon"
+  onClick={() => handleViewEMR(rowData)}
+/>
+
         </div>
       )
     }

@@ -160,6 +160,8 @@ import ReportResultTemplate from './pages/setup/report-result-template';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 import PhysiotherapyPlan from './pages/encounter/encounter-component/physiotherapy-plan';
+import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -315,6 +317,7 @@ const App = () => {
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="tele-consultation-screen" element={<TeleconsultationScreen />} />
+              <Route path="start-tele-consultation" element={<StartTeleConsultation />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
               <Route path="ER-start-triage" element={<ERStartTriage />} />
