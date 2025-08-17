@@ -6,6 +6,7 @@ import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { Form } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import CancellationModal from '@/components/CancellationModal';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -29,7 +30,7 @@ type TeleconsultationRequest = {
   requestedBy: string;
   requestedAt: string;
   priority: 'Low' | 'Medium' | 'Urgent';
-  status: 'Pending' | 'Accepted' | 'Rejected';
+  status: 'Pending' | 'Confirmed' | 'Rejected';
 };
 
 // Sample data
@@ -46,7 +47,7 @@ const sampleRequests: TeleconsultationRequest[] = [
     priority: 'Urgent',
     status: 'Pending'
   },
-    {
+  {
     id: 2,
     patientName: 'Ahmad Naser',
     mrn: 'MRN003',
@@ -83,33 +84,68 @@ const sampleRequests: TeleconsultationRequest[] = [
     status: 'Pending'
   }
 ];
-
+  // State variables
 const TeleconsultationRequests = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<TeleconsultationRequest[]>(sampleRequests);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [cancelObject, setCancelObject] = useState<any>({});
   const [record, setRecord] = useState({});
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
-  const [pendingAction, setPendingAction] = useState<'accept' | 'reject' | null>(null);
+  const [pendingAction, setPendingAction] = useState<'confirm' | 'reject' | null>(null);
+  const [customConfirmMessage, setCustomConfirmMessage] = useState('');
   const [sortColumn, setSortColumn] = useState('patientName');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  const handleStatusChange = (id: number, newStatus: 'Accepted' | 'Rejected') => {
-    setRequests(prev => prev.map(req => (req.id === id ? { ...req, status: newStatus } : req)));
-  };
-
-const handleViewEMR = (rowData) => {
-  navigate('/start-tele-consultation', {
-    state: {
-      patient: rowData.patient,
-      encounter: rowData.encounter,
-      fromPage: 'some-page-id'
+  const handleConfirmAction = () => {
+    if (selectedRequestId !== null && pendingAction) {
+      setRequests(prev =>
+        prev.map(req =>
+          req.id === selectedRequestId
+            ? { ...req, status: pendingAction === 'confirm' ? 'Confirmed' : 'Rejected' }
+            : req
+        )
+      );
+      // Navigate to the consultation screen if confirmed
+      if (pendingAction === 'confirm') {
+        const confirmedRequest = requests.find(req => req.id === selectedRequestId);
+        if (confirmedRequest) {
+          navigate('/start-tele-consultation', {
+            state: {
+              patient: confirmedRequest.patientName,
+              encounter: confirmedRequest,
+              fromPage: 'teleconsultation-requests'
+            }
+          });
+        }
+      }
     }
-  });
-};
+
+// Reset modal state
+    setOpenConfirmModal(false);
+    setSelectedRequestId(null);
+    setPendingAction(null);
+  };
+  // Handle cancellation (rejection) with reason
+  const handleCancleReject = () => {
+    if (selectedRequestId !== null) {
+      setRequests(prev =>
+        prev.map(req =>
+          req.id === selectedRequestId
+            ? { ...req, status: 'Rejected', reason: cancelObject?.reason || '' }
+            : req
+        )
+      );
+    }
+
+    // Close modal and reset
+    setOpenCancelModal(false);
+    setSelectedRequestId(null);
+    setCancelObject({});
+  };
 
   const filterstable = (
     <Form fluid>
@@ -134,21 +170,6 @@ const handleViewEMR = (rowData) => {
     </Form>
   );
 
-  const handleConfirmAction = () => {
-    if (selectedRequestId !== null && pendingAction) {
-      setRequests(prev =>
-        prev.map(req =>
-          req.id === selectedRequestId
-            ? { ...req, status: pendingAction === 'accept' ? 'Accepted' : 'Rejected' }
-            : req
-        )
-      );
-    }
-    setOpenConfirmModal(false);
-    setSelectedRequestId(null);
-    setPendingAction(null);
-  };
-
   const columns = [
     {
       key: 'priorityIcon',
@@ -156,7 +177,7 @@ const handleViewEMR = (rowData) => {
       width: 50,
       align: 'center',
       render: (row: TeleconsultationRequest) =>
-        row.priority.toLowerCase() === 'urgent' || row.priority.toLowerCase() === 'Urgent' ? (
+        row.priority.toLowerCase() === 'urgent' ? (
           <FontAwesomeIcon
             icon={faLandMineOn}
             style={{ color: 'red', fontSize: '18px' }}
@@ -191,25 +212,24 @@ const handleViewEMR = (rowData) => {
       title: 'Status',
       dataKey: 'status',
       width: 100,
-      render: (row: any) => (
-      <MyBadgeStatus
-  backgroundColor={
-    row.status === 'Pending'
-      ? 'var(--light-gray)'
-      : row.status === 'Accepted'
-      ? 'var(--light-green)'
-      : 'var(--light-pink)'
-  }
-  color={
-    row.status === 'Pending'
-      ? 'var(--primary-gray)'
-      : row.status === 'Accepted'
-      ? 'var(--primary-green)'
-      : 'var(--primary-pink)'
-  }
-  contant={row.status}
-/>
-
+      render: (row: TeleconsultationRequest) => (
+        <MyBadgeStatus
+          backgroundColor={
+            row.status === 'Pending'
+              ? 'var(--light-gray)'
+              : row.status === 'Confirmed'
+              ? 'var(--light-green)'
+              : 'var(--light-pink)'
+          }
+          color={
+            row.status === 'Pending'
+              ? 'var(--primary-gray)'
+              : row.status === 'Confirmed'
+              ? 'var(--primary-green)'
+              : 'var(--primary-pink)'
+          }
+          contant={row.status}
+        />
       )
     },
     {
@@ -225,7 +245,8 @@ const handleViewEMR = (rowData) => {
             className="action-icon start-icon"
             onClick={() => {
               setSelectedRequestId(rowData.id);
-              setPendingAction('accept');
+              setPendingAction('confirm');
+              setCustomConfirmMessage(`Start The Call With ${rowData.patientName}?`);
               setOpenConfirmModal(true);
             }}
           />
@@ -236,18 +257,20 @@ const handleViewEMR = (rowData) => {
             className="action-icon reject-icon"
             onClick={() => {
               setSelectedRequestId(rowData.id);
-              setPendingAction('reject');
-              setOpenConfirmModal(true);
+              setCancelObject({
+                ...rowData,
+                statusLkey: '',
+                reason: ''
+              });
+              setOpenCancelModal(true);
             }}
           />
 
-<FontAwesomeIcon
-  icon={faFileWaveform}
-  title="View EMR File"
-  className="action-icon emr-icon"
-  onClick={() => handleViewEMR(rowData)}
-/>
-
+          <FontAwesomeIcon
+            icon={faFileWaveform}
+            title="View EMR File"
+            className="action-icon emr-icon"
+          />
         </div>
       )
     }
@@ -295,12 +318,24 @@ const handleViewEMR = (rowData) => {
         }}
       />
 
+      <CancellationModal
+        open={openCancelModal}
+        setOpen={setOpenCancelModal}
+        handleCancle={handleCancleReject}
+        object={cancelObject}
+        setObject={setCancelObject}
+        fieldLabel="Please specify the reason for rejection"
+        title="Reject Request"
+        fieldName="reason"
+      />
+
       <DeletionConfirmationModal
         open={openConfirmModal}
         setOpen={setOpenConfirmModal}
-        itemToDelete={pendingAction === 'accept' ? 'Accept' : 'Reject'}
-        actionType={pendingAction === 'accept' ? 'accept' : 'reject'}
+        itemToDelete={pendingAction === 'confirm' ? 'Confirm' : 'Reject'}
+        actionType={pendingAction === 'confirm' ? 'confirm' : 'reject'}
         actionButtonFunction={handleConfirmAction}
+        confirmationQuestion={customConfirmMessage}
       />
     </Panel>
   );

@@ -141,4 +141,4 @@ const Prescriptions = ({ patient, genericMedicationListResponse, customeInstruct
             <PrescriptionDetails customeInstructions={customeInstructions} genericMedicationListResponse={genericMedicationListResponse} prescription={prescription} />}
     </>)
 }
-export default Prescriptions
+export default Prescriptions;
