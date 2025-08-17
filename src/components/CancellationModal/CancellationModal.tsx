@@ -10,7 +10,7 @@ const CancellationModal = ({
     handleCancle,
     object,
     setObject,
-    fieldLabel=null,
+    fieldLabel = null,
     title,
     fieldName="",
     statusField="statusLkey",
