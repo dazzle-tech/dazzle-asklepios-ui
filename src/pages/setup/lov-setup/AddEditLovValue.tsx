@@ -36,6 +36,7 @@ const AddEditLovValue = ({
                   record={lovValue}
                   setRecord={setLovValue}
                   width="100%"
+                  disabled={lovValue?.key}
                 />
               </div>
               <div className='container-of-my-input-lov'>
