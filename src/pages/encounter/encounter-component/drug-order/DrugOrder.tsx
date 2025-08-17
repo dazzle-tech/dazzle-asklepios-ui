@@ -599,7 +599,16 @@ const DrugOrder = props => {
             'disabled-panel': edit
           })}
         >
-          <MyButton prefixIcon={() => <PlusIcon />} onClick={handleSaveOrder} disabled={isdraft}>
+          <MyButton
+            prefixIcon={() => <PlusIcon />}
+            onClick={() => {
+              handleSaveOrder;
+              setOpenDetailsModel(true);
+              handleCleare();
+              setOpenToAdd(true);
+            }}
+            disabled={isdraft}
+          >
             New Order
           </MyButton>
           <MyButton
@@ -614,35 +623,6 @@ const DrugOrder = props => {
           >
             Submit Order
           </MyButton>
-          {!isdraft && (
-            <MyButton
-              onClick={saveDraft}
-              prefixIcon={() => <DocPassIcon />}
-              disabled={
-                drugKey
-                  ? orders?.object?.find(order => order.key === drugKey)?.statusLkey ===
-                    '1804482322306061'
-                  : true
-              }
-            >
-              Save draft
-            </MyButton>
-          )}
-          {isdraft && (
-            <MyButton
-              appearance="ghost"
-              onClick={cancleDraft}
-              prefixIcon={() => <DocPassIcon />}
-              disabled={
-                drugKey
-                  ? orders?.object?.find(order => order.key === drugKey)?.statusLkey ===
-                    '1804482322306061'
-                  : true
-              }
-            >
-              Cancle draft
-            </MyButton>
-          )}
         </div>
       </div>
 
@@ -663,14 +643,6 @@ const DrugOrder = props => {
           <div className="bt-right">
             <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
             <MyButton
-              disabled={
-                !edit
-                  ? drugKey
-                    ? orders?.object?.find(order => order.key === drugKey)?.statusLkey ===
-                      '1804482322306061'
-                    : true
-                  : true
-              }
               prefixIcon={() => <PlusIcon />}
               onClick={() => {
                 setOpenDetailsModel(true);
