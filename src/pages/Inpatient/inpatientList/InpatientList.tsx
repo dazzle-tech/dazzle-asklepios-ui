@@ -35,6 +35,10 @@ import TransferPatientModal from './transferPatient/TransferPatientModal';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
+import { faPersonWalkingArrowRight } from '@fortawesome/free-solid-svg-icons';
+import TemporaryDischarge from './temporaryDischarge/TemporaryDischarge';
+import { faPersonWalkingArrowLoopLeft } from '@fortawesome/free-solid-svg-icons';
+import ReturnFromTemporary from './temporaryDischarge/ReturnFromTemporary';
 
 const InpatientList = () => {
   const location = useLocation();
@@ -51,6 +55,7 @@ const InpatientList = () => {
   const [open, setOpen] = useState(false);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
+  const [openTemporaryDischargeModal, setOpenTemporaryDischargeModal] = useState(false);
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [openChangeBedModal, setOpenChangeBedModal] = useState(false);
@@ -59,6 +64,7 @@ const InpatientList = () => {
   const [switchDepartment, setSwitchDepartment] = useState(false);
   const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
   const [cancelEncounter] = useCancelEncounterMutation();
+  const [openReturnFromTemporaryModal, setOpenReturnFromTemporaryModal] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -70,7 +76,7 @@ const InpatientList = () => {
       {
         fieldName: 'encounter_status_lkey',
         operator: 'in',
-        value: ['91063195286200', '91084250213000'].map(key => `(${key})`).join(' ')
+        value: ['91063195286200', '91084250213000','6130571996160318'].map(key => `(${key})`).join(' ')
       },
       {
         fieldName: 'discharge',
@@ -366,6 +372,9 @@ const InpatientList = () => {
         const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
         const toolTransferPatient = <Tooltip>Transfer Patient</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+        const tooltipDischarge = <Tooltip>Temporary Discharge</Tooltip>;
+        const tooltipReturnFromDischarge = <Tooltip>Return from Temporary DC</Tooltip>;
+
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
@@ -444,6 +453,40 @@ const InpatientList = () => {
                     }}
                   >
                     <FontAwesomeIcon icon={faRectangleXmark} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
+            {rowData?.encounterStatusLvalue?.valueCode === 'ONGOING' && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipDischarge}>
+                <div>
+                  <MyButton
+                    size="small"
+                    onClick={() => {
+                      const patientData = rowData.patientObject;
+                      setLocalEncounter(rowData);
+                      setLocalPatient(patientData);
+                      setOpenTemporaryDischargeModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faPersonWalkingArrowRight} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
+            {rowData?.encounterStatusLvalue?.valueCode === 'TEMP_DC' && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipDischarge}>
+                <div>
+                  <MyButton
+                    size="small"
+                    onClick={() => {
+                      const patientData = rowData.patientObject;
+                      setLocalEncounter(rowData);
+                      setLocalPatient(patientData);
+                      setOpenReturnFromTemporaryModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faPersonWalkingArrowLoopLeft} />
                   </MyButton>
                 </div>
               </Whisper>
@@ -538,6 +581,21 @@ const InpatientList = () => {
         confirmationQuestion="Do you want to cancel this Encounter ?"
         actionButtonLabel="Cancel"
         cancelButtonLabel="Close"
+      />
+      <TemporaryDischarge
+        open={openTemporaryDischargeModal}
+        setOpen={setOpenTemporaryDischargeModal}
+        localEncounter={encounter}
+        refetchInpatientList={refetchEncounter}
+        localPatient={localPatient}
+      />
+      <ReturnFromTemporary
+        open={openReturnFromTemporaryModal}
+        setOpen={setOpenReturnFromTemporaryModal}
+        localEncounter={encounter}
+        refetchInpatientList={refetchEncounter}
+        localPatient={localPatient}
+        departmentKey={encounter?.resourceObject?.key}
       />
     </Panel>
   );

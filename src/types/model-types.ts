@@ -1722,6 +1722,11 @@ export interface ApInventoryTransaction {
 	isValid:boolean;
 	transId:string;
 	docNum:number;
+	vendor:string;
+	serialNum:string;
+	approvedBy:string;
+	invoiceNum:string;
+	approvalStatus:string;
 } 
 
 export interface ApInventoryTransactionAttachment { 
@@ -1762,6 +1767,10 @@ export interface ApInventoryTransactionProduct {
 	notes:string;
 	transUomKey:string;
 	newQuentityBaseUom:number;
+	totalCost:number;
+	newAvgCost:number;
+	oldAvgCost:number;
+	statusLkey:string;
 } 
 
 export interface ApInventoryTransfer { 
@@ -3162,6 +3171,31 @@ export interface ApPatientSecondaryDocuments {
 	isValid:boolean;
 } 
 
+export interface ApPatientTemporaryDischarge { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	reasonForTemporaryDischarge:string;
+	typeLkey:string;
+	expectedReturnAt:number;
+	consentTaken:boolean;
+	billingApprovalStatusLkey:string;
+	returnAt:number;
+	bedRetained:boolean;
+	comments:string;
+	roomKey:string;
+	bedKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	fromRoom:string;
+	fromBed:string;
+} 
+
 export interface ApPhysicalExamArea { 
 	key:string;
 	patientKey:string;
@@ -3800,8 +3834,7 @@ export interface ApResourceAvailabilitySlice {
 	resourceKey:string;
 	facilityKey:string;
 	departmentKey:string;
-	date:Date;
-	dayOfWeekLkey:string;
+	dayOfWeek:string;
 	startTimeMinutes:string;
 	endTimeMinutes:string;
 	sliceDurationMinutes:string;

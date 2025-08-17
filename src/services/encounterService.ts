@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes, ApPatient } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -12,7 +12,7 @@ import {
   ApEncounter, ApPatientDiagnose,
   ApPatientEncounterOrder,
   ApPatientPlan, ApPrescription,
-  ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies, ApPsychologicalExam, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsSamples
+  ApPrescriptionMedications, ApProcedure, ApPatientTemporaryDischarge, ApReviewOfSystem, ApVisitAllergies, ApPsychologicalExam, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsSamples
 } from '@/types/model-types';
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -918,6 +918,31 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    patientTemporaryDischarge: builder.mutation({
+      query: (patientTemporaryDischarge: ApPatientTemporaryDischarge) => ({
+        url: `/encounter/patient-temporary-discharge`,
+        method: 'POST',
+        body: patientTemporaryDischarge
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    returnTemporaryDischarge: builder.mutation({
+      query: ({ patientTemporaryDischarge, department_key }: { patientTemporaryDischarge: ApPatientTemporaryDischarge, department_key: string }) => ({
+        url: `/encounter/return-from-temporary-discharge`,
+        method: 'POST',
+        body: patientTemporaryDischarge,
+        headers: {
+          department_key: department_key
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   }),
 });
 
@@ -1017,5 +1042,7 @@ export const {
   useGetEmergencyEncountersQuery,
   useGetProgressNotesListQuery,
   useSaveProgressNotesMutation,
-  useCancelEncounterMutation
+  useCancelEncounterMutation,
+  usePatientTemporaryDischargeMutation,
+  useReturnTemporaryDischargeMutation
 } = encounterService;
