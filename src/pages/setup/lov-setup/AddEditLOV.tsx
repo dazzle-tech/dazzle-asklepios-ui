@@ -13,7 +13,7 @@ const AddEditLov = ({ open, setOpen, width, lov, setLov, handleSave, lovListResp
           <Form fluid>
             <div className= 'container-of-two-fields-lov'>
               <div className='container-of-my-input-lov' >
-                <MyInput fieldName="lovCode" record={lov} setRecord={setLov} width="100%" />
+                <MyInput fieldName="lovCode" record={lov} setRecord={setLov} width="100%" disabled={lov?.key} />
               </div>
               <div className='container-of-my-input-lov'>
                 <MyInput fieldName="lovName" record={lov} setRecord={setLov} width="100%" />
