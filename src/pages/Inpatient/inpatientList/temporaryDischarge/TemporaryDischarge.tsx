@@ -17,43 +17,42 @@ import { notify } from '@/utils/uiReducerActions';
 const TemporaryDischarge = ({ open, setOpen, localEncounter, refetchInpatientList, localPatient }) => {
     const [patientTemporaryDischarge, setPatientTemporaryDischarge] = useState<ApPatientTemporaryDischarge>({ ...newApPatientTemporaryDischarge });
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-    const [actionType, setActionType] = useState(null);
-    const [selectedAttachment, setSelectedAttachment] = useState(null);
-    const [dischargeTemporary]=usePatientTemporaryDischargeMutation();
-    const { data: typeLovQueryResponse } = useGetLovValuesByCodeQuery('TEMP_DC_TYPES');
+    const [dischargeTemporary] = usePatientTemporaryDischargeMutation();
     const dispatch = useAppDispatch();
+    // Fetch LOV values for temporary discharge types
+    const { data: typeLovQueryResponse } = useGetLovValuesByCodeQuery('TEMP_DC_TYPES');
+
     // Handle Add New Attachment Open Modal
     const handleAddNewAttachment = () => {
-        handleClearAttachment();
-        setSelectedAttachment(null);
         setAttachmentsModalOpen(true);
     }
-    // Handle Clear Attachment Modal
-    const handleClearAttachment = () => {
-        setActionType(null);
-    };
 
     // Function to handle saving the patient temporary discharge data
     const handleSave = async () => {
         try {
 
             await dischargeTemporary({
-                        ...patientTemporaryDischarge,
-                        patientKey: localPatient.key,
-                        encounterKey: localEncounter.key,
-                        expectedReturnAt : patientTemporaryDischarge?.expectedReturnAt ? new Date(patientTemporaryDischarge?.expectedReturnAt).getTime() : null
-                    }).unwrap();
+                ...patientTemporaryDischarge,
+                patientKey: localPatient.key,
+                encounterKey: localEncounter.key,
+                expectedReturnAt: patientTemporaryDischarge?.expectedReturnAt
+                    ? new Date(patientTemporaryDischarge.expectedReturnAt).getTime()
+                    : null,
+                fromBed: patientTemporaryDischarge?.bedRetained ? null : localEncounter?.apBed?.key,
+                fromRoom: patientTemporaryDischarge?.bedRetained ? null : localEncounter?.apRoom?.key
 
-                    dispatch(notify({ msg: 'Billing Approval Sent', sev: 'success' }));
-                    setPatientTemporaryDischarge({ ...newApPatientTemporaryDischarge});
-                    setOpen(false);
-              
-                await refetchInpatientList();
-            } catch (error) {
-                console.error("Error saving patient temporary discharge:", error);
-                dispatch(notify({ msg: 'Failed to Save Patient Temporary Discharge', sev: 'error' }));
-            }
-        };
+            }).unwrap();
+
+            dispatch(notify({ msg: 'Billing Approval Sent', sev: 'success' }));
+            setPatientTemporaryDischarge({ ...newApPatientTemporaryDischarge });
+            setOpen(false);
+
+            await refetchInpatientList();
+        } catch (error) {
+            console.error("Error saving patient temporary discharge:", error);
+            dispatch(notify({ msg: 'Failed to Save Patient Temporary Discharge', sev: 'error' }));
+        }
+    };
     // modal content
     const modalContent = (
         <>
@@ -130,13 +129,12 @@ const TemporaryDischarge = ({ open, setOpen, localEncounter, refetchInpatientLis
                 </MyButton></Form></>
     );
 
- // Effects 
-     useEffect(() => {
-         if (!open) {
-             handleClearAttachment();
-             setPatientTemporaryDischarge({ ...newApPatientTemporaryDischarge });
-         }
-     }, [open]);
+    // Effects 
+    useEffect(() => {
+        if (!open) {
+            setPatientTemporaryDischarge({ ...newApPatientTemporaryDischarge });
+        }
+    }, [open]);
     return (
         <>
             <MyModal
@@ -152,8 +150,13 @@ const TemporaryDischarge = ({ open, setOpen, localEncounter, refetchInpatientLis
                 content={modalContent}
                 actionButtonLabel='Discharge'
             />
-            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={refetchInpatientList} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} attatchmentType="PATIENT_PROFILE_ATTACHMENT" patientKey={localPatient?.key} />
-
+            <AttachmentModal
+                isOpen={attachmentsModalOpen}
+                setIsOpen={setAttachmentsModalOpen}
+                attachmentSource={localPatient}
+                attatchmentType="PATIENT_PROFILE_ATTACHMENT"
+                patientKey={localPatient?.key}
+            />
         </>);
 }
 export default TemporaryDischarge;

@@ -12,7 +12,7 @@ import {
   ApEncounter, ApPatientDiagnose,
   ApPatientEncounterOrder,
   ApPatientPlan, ApPrescription,
-  ApPrescriptionMedications, ApProcedure,ApPatientTemporaryDischarge, ApReviewOfSystem, ApVisitAllergies, ApPsychologicalExam, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsSamples
+  ApPrescriptionMedications, ApProcedure, ApPatientTemporaryDischarge, ApReviewOfSystem, ApVisitAllergies, ApPsychologicalExam, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsSamples
 } from '@/types/model-types';
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -929,6 +929,20 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    returnTemporaryDischarge: builder.mutation({
+      query: ({ patientTemporaryDischarge, department_key }: { patientTemporaryDischarge: ApPatientTemporaryDischarge, department_key: string }) => ({
+        url: `/encounter/return-from-temporary-discharge`,
+        method: 'POST',
+        body: patientTemporaryDischarge,
+        headers: {
+          department_key: department_key
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   }),
 });
 
@@ -1029,5 +1043,6 @@ export const {
   useGetProgressNotesListQuery,
   useSaveProgressNotesMutation,
   useCancelEncounterMutation,
-  usePatientTemporaryDischargeMutation
+  usePatientTemporaryDischargeMutation,
+  useReturnTemporaryDischargeMutation
 } = encounterService;

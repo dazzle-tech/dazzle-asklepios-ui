@@ -595,6 +595,7 @@ const InpatientList = () => {
         localEncounter={encounter}
         refetchInpatientList={refetchEncounter}
         localPatient={localPatient}
+        departmentKey={encounter?.resourceObject?.key}
       />
     </Panel>
   );

@@ -2,32 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import { newApPatientTemporaryDischarge, newApEncounter } from '@/types/model-types-constructor';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newApPatientTemporaryDischarge } from '@/types/model-types-constructor';
 import { Form } from 'rsuite';
 import { ApPatientTemporaryDischarge } from '@/types/model-types';
-import { faPersonWalkingArrowRight } from '@fortawesome/free-solid-svg-icons';
-import MyButton from '@/components/MyButton/MyButton';
-import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
-import { faPaperclip } from '@fortawesome/free-solid-svg-icons';
+import { faPersonWalkingArrowLoopLeft } from '@fortawesome/free-solid-svg-icons';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetRoomListQuery } from '@/services/setupService';
 import { useGetBedListQuery } from '@/services/setupService';
-
-const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientList, localPatient }) => {
-    const [encounter, setEncounter] = useState<any>({ ...newApEncounter });
+import { useReturnTemporaryDischargeMutation } from '@/services/encounterService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientList, localPatient, departmentKey }) => {
     const [patientTemporaryDischarge, setPatientTemporaryDischarge] = useState<ApPatientTemporaryDischarge>({ ...newApPatientTemporaryDischarge });
-    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-    const [actionType, setActionType] = useState(null);
-    const [selectedAttachment, setSelectedAttachment] = useState(null);
-
+    const [patientReturnTemporaryDischarge] = useReturnTemporaryDischargeMutation();
+    const dispatch = useAppDispatch();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
                 fieldName: 'department_key',
                 operator: 'match',
-                value: "520693372143529"
+                value: departmentKey
             }],
         pageSize: 100,
     });
@@ -48,23 +43,44 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
         ]
     });
 
+
     // Fetch Room list response
     const { data: roomListResponseLoading, refetch, isFetching } = useGetRoomListQuery(listRequest);
     const { data: fetchBedsListQueryResponce } = useGetBedListQuery(bedListRequest, { skip: !patientTemporaryDischarge?.roomKey });
 
-    const { data: typeLovQueryResponse } = useGetLovValuesByCodeQuery('TEMP_DC_TYPES');
-
-    // Handle Add New Attachment Open Modal
-    const handleAddNewAttachment = () => {
-        handleClearAttachment();
-        setSelectedAttachment(null);
-        setAttachmentsModalOpen(true);
-    }
-    // Handle Clear Attachment Modal
-    const handleClearAttachment = () => {
-        setActionType(null);
+    // handle save patient return from temporary discharge
+    const handleSave = async () => {
+        try {
+            await patientReturnTemporaryDischarge({
+                patientTemporaryDischarge: {
+                    ...patientTemporaryDischarge,
+                    patientKey: localPatient.key,
+                    encounterKey: localEncounter.key,
+                    returnAt: patientTemporaryDischarge?.returnAt
+                        ? new Date(patientTemporaryDischarge.returnAt).getTime()
+                        : null
+                },
+                department_key: departmentKey
+            }).unwrap();
+            dispatch(
+                notify({
+                    msg: 'Patient successfully returned from temporary discharge',
+                    sev: 'success'
+                })
+            );
+            setPatientTemporaryDischarge({ ...newApPatientTemporaryDischarge });
+            setOpen(false);
+            await refetchInpatientList();
+        } catch (error) {
+            console.error("Error saving patient temporary discharge:", error);
+            dispatch(
+                notify({
+                    msg: 'Failed to save patient temporary discharge',
+                    sev: 'error'
+                })
+            );
+        }
     };
-
 
     // modal content
     const modalContent = (
@@ -104,8 +120,9 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
                     selectDataValue="key"
                     record={patientTemporaryDischarge}
                     setRecord={setPatientTemporaryDischarge}
-                    width={190}
+                    width={200}
                     searchable={false}
+                    disabled={localEncounter?.apRoom}
                 />
                 <MyInput
                     require
@@ -119,7 +136,8 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
                     record={patientTemporaryDischarge}
                     setRecord={setPatientTemporaryDischarge}
                     searchable={false}
-                    width={190}
+                    width={200}
+                    disabled={localEncounter?.apBed}
                 />
                 <MyInput
                     column
@@ -128,28 +146,44 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
                     fieldName="notes"
                     record={patientTemporaryDischarge}
                     setRecord={setPatientTemporaryDischarge}
-                    width={200}
+                    width={400}
                 />
             </Form>
-            </>
+        </>
     );
+
+    // Effects 
+    useEffect(() => {
+        if (patientTemporaryDischarge.roomKey) {
+            setBedListRequest(prev => ({
+                ...prev,
+                filters: [
+                    { fieldName: 'room_key', operator: 'match', value: patientTemporaryDischarge.roomKey },
+                    { fieldName: 'status_lkey', operator: 'match', value: "5258243122289092" }
+                ]
+            }));
+        }
+    }, [patientTemporaryDischarge.roomKey]);
+    useEffect(() => {
+        if (!open) {
+            setPatientTemporaryDischarge({ ...newApPatientTemporaryDischarge });
+        }
+    }, [open]);
     return (
         <>
             <MyModal
                 open={open}
                 setOpen={setOpen}
-                title="Temporary Discharge"
+                title="Return from Temporary Discharge"
                 steps={[{
-                    title: "Temporary Discharge", icon: <FontAwesomeIcon icon={faPersonWalkingArrowRight} />
+                    title: "Return from Temporary Discharge", icon: <FontAwesomeIcon icon={faPersonWalkingArrowLoopLeft} />
                 }]}
                 size="33vw"
                 position='right'
-                actionButtonFunction={null}
+                actionButtonFunction={handleSave}
                 content={modalContent}
-                actionButtonLabel='Discharge'
+                actionButtonLabel='Save'
             />
-            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={refetchInpatientList} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} attatchmentType="PATIENT_PROFILE_ATTACHMENT" patientKey={localPatient?.key} />
-
         </>);
 }
 export default ReturnFromTemporary;
