@@ -11,17 +11,17 @@ import { notify } from "@/utils/uiReducerActions";
 import clsx from "clsx";
 import React, { useState, useEffect, useMemo } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
-const PostOperativeNote = ({ operation ,editable}) => {
+const PostOperativeNote = ({ operation, editable, refetch }) => {
     const dispatch = useAppDispatch();
     const [operativeNote, setOperativeNote] = useState({ ...newApOperationPostOpNotesHandover });
-    const {data:operativeNoteData} = useGetPostOpHandoverByOperationQuery(operation?.key , {
+    const { data: operativeNoteData } = useGetPostOpHandoverByOperationQuery(operation?.key, {
         skip: !operation?.key
     });
     const [save] = useSavePostOpNotesHandoverMutation();
     const { data: inpatientDepartmentListResponse } = useGetResourceTypeQuery("4217389643435490");
     const { data: outcomelovqueryresponse } = useGetLovValuesByCodeQuery('PROC_OUTCOMES');
     const { data: statuslovqueryresponse } = useGetLovValuesByCodeQuery('PATIENT_STATUS');
-    const { data: event, refetch } = useGetIntraoperativeEventsByOperationKeyQuery(operation?.key);
+    const { data: event, refetch: eventFetch } = useGetIntraoperativeEventsByOperationKeyQuery(operation?.key);
     const [eventTrak, setEventTrak] = useState({ ...newApOperationIntraoperativeEvents });
 
     //for operations
@@ -71,16 +71,18 @@ const PostOperativeNote = ({ operation ,editable}) => {
     }, [selectedNames]);
 
     useEffect(() => {
-        refetch();
+        eventFetch();
+
         refetchs()
     }, [operation]);
 
     useEffect(() => {
         if (operativeNoteData?.object?.key != null) {
-            setOperativeNote({ ...operativeNoteData.object,
+            setOperativeNote({
+                ...operativeNoteData.object,
                 handoverTime: new Date(operativeNoteData.object.handoverTime),
                 completedAt: new Date(operativeNoteData.object.completedAt),
-             });  
+            });
         } else {
             setOperativeNote({ ...newApOperationPostOpNotesHandover, operationRequestKey: operation?.key });
         }
@@ -89,19 +91,25 @@ const PostOperativeNote = ({ operation ,editable}) => {
         try {
             await save({
                 ...operativeNote,
-                operationRequestKey:operation?.key,
+                operationRequestKey: operation?.key,
                 handoverTime: new Date(operativeNote.handoverTime).getTime,
                 completedAt: new Date(operativeNote.completedAt).getTime()
             }).unwrap();
             dispatch(notify({ msg: "Saved Successfly", sev: "success" }));
+            refetch();
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000); 
+
+
         }
         catch (error) {
             dispatch(notify({ msg: " Fiald to Save ", sev: "error" }));
         }
     }
     return (<Form fluid className={clsx('', {
-                                                            'disabled-panel': !editable
-                                                          })}>
+        'disabled-panel': !editable
+    })}>
         <Row gutter={15}>
             <Col md={12}>
                 <Row>
@@ -171,7 +179,7 @@ const PostOperativeNote = ({ operation ,editable}) => {
                                         record={textareaValue}
                                         setRecord={setTextareaValue}
                                         disabled={true}
-                                       
+
                                     /></Col>
                             </Row>
 
@@ -371,7 +379,7 @@ const PostOperativeNote = ({ operation ,editable}) => {
             <div
                 className="bt-right"
             >
-             
+
                 <MyButton onClick={hanelSave}>Save</MyButton>
             </div>
         </div>

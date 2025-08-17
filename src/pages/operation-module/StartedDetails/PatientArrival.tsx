@@ -21,7 +21,7 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
         skip: !operation?.key
     });
     const [saveCheckList] = useSavePreOperationChecklistMutation();
-    const [save]=useSaveOperationPatientArrivalMutation();
+    const [save,saveMutation]=useSaveOperationPatientArrivalMutation();
     // get lists
     const { data: checklists, refetch } = useGetLatestChecklistByOperationKeyQuery(operation?.key , {
         skip: !operation?.key
@@ -59,6 +59,7 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
 
 
 
+    //Effects
     useEffect(() => {
         if (checklists?.object?.key !== null) {
             setCheckList({ ...checklists?.object, confirmTime: checklists?.object?.confirmTime ? new Date(checklists?.object?.confirmTime) : null });
@@ -69,6 +70,7 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
         }
     }, [checklists]);
 
+
     useEffect(() => {
         if (arrivalData?.object) {
             setArrival({ ...arrivalData?.object, dateTime: new Date(arrivalData?.object?.dateTime) });  
@@ -77,6 +79,21 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
             setArrival({ ...newApOperationPatientArrival, dateTime: 0 });
         }
     }, [arrivalData]);
+
+    useEffect(()=>{
+  
+    if(saveMutation.isSuccess){
+   
+        setArrival(saveMutation?.data?.object)
+    }
+    },[saveMutation])
+
+
+
+
+
+
+
 
     const handleConfirm = async () => {
         try {

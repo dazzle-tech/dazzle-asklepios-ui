@@ -10,13 +10,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
 import { FaStreetView } from "react-icons/fa";
 import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
-const CompletedOperations = ({ patient, setPatient, encounter, setEncounter ,open,
-    setOpen,request, setRequest }) => {
+import StartedDetails from "./StartedDetails/StartedDetails";
+const CompletedOperations = ({ patient, setPatient, encounter, setEncounter 
+ ,request, setRequest }) => {
   
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
         toDate: null
     });
+    const [open,setOpen]=useState(false);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -293,6 +295,10 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter ,ope
 
             }}
             
-        /></>)
+        />
+            <StartedDetails open={open} setOpen={setOpen} 
+              operation={request} setOperation={setRequest} 
+              patient={patient}encounter={encounter} refetch={refetch} editable={false}/>
+        </>)
 }
 export default CompletedOperations;

@@ -1,12 +1,15 @@
 import { newApEncounter, newApOperationRequests, newApPatient } from "@/types/model-types-constructor";
-import React, { useRef, useState } from "react";
-import { Tabs } from "rsuite";
+import React, { useEffect, useRef, useState } from "react";
+import { Tabs, Text } from "rsuite";
 import PatientSide from "../encounter/encounter-main-info-section/PatienSide";
 import CompletedOperations from "./CompletedOperations";
 import OngoingOperations from "./OngoingOperations";
 import RequestList from "./RequestsList";
-
+import { setDivContent, setPageCode } from "@/reducers/divSlice";
+import { useAppDispatch } from "@/hooks";
+import ReactDOMServer from 'react-dom/server';
 const Operation = () => {
+   const dispatch=useAppDispatch();
    const [patient, setPatient] = useState({ ...newApPatient });
    const [encounter, setEncounter] = useState({ ...newApEncounter });
    const [request, setRequest] = useState<any>({ ...newApOperationRequests });
@@ -16,7 +19,18 @@ const Operation = () => {
     const reqRef = useRef(null);
      const refetchOnGoing = () => {
        reqRef.current?.refetch();
-     };
+     }
+       const divContent = (
+         <div style={{ display: 'flex' }}>
+           <Text className="title-font-style">Operations</Text>
+         </div>
+       );
+       const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+       useEffect(() => {
+
+         dispatch(setPageCode('Operation_Module'));
+         dispatch(setDivContent(divContentHTML));
+       }, []);
    return (<div className='container'>
       <div className='left-box' >
          <Tabs appearance="subtle" activeKey={activeTab} onSelect={(key) => {
