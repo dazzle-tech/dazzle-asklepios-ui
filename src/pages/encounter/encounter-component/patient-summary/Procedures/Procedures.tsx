@@ -39,15 +39,6 @@ const Procedures=({patient})=>{
              flexGrow: 1,
        
            },
-           {
-             key: "scheduledDateTime",
-             dataKey: "scheduledDateTime",
-             title: <Translate>SCHEDULED DATE TIME</Translate>,
-             flexGrow: 1,
-             render: (rowData: any) => {
-               return rowData.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
-             }
-           },
     ]
     return (
        <div className='medical-dashboard-main-container'>

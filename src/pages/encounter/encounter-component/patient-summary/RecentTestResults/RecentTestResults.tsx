@@ -18,13 +18,13 @@ const RecentTestResults = ({ patient }) => {
             render: (rowData: any) => <Text>h</Text>
         },
         {
-            key: 'orderTime',
-            title: 'ORDER TIME',
+            key: 'resultvalue',
+            title: 'Result Value',
             render: (rowData: any) => <Text>h</Text>
         },
         {
-            key: 'resultTime',
-            title: 'RESULT TIME',
+            key: 'marker',
+            title: 'Marker',
             render: (rowData: any) => <Text>h</Text>
         }
     ];
@@ -36,7 +36,7 @@ const RecentTestResults = ({ patient }) => {
                         Recent Test Results
                     </div>
                     <div className='bt-right'>
-                       <Text  className="clickable-link">Full view</Text>
+                       <Text className="clickable-link">Full view</Text>
                     </div>
                 </div>
                 <Divider className="divider-line" />
