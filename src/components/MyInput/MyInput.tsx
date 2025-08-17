@@ -257,6 +257,7 @@ const MyInput = ({
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
+            min={0}
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={InputNumber}
             onChange={handleValueChange}

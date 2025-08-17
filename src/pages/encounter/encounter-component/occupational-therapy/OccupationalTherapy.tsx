@@ -1,0 +1,1154 @@
+import Translate from '@/components/Translate';
+import React, { useState, useEffect } from 'react';
+import { Form, Panel, Slider, Divider, Checkbox, Row, Col } from 'rsuite';
+import MyNestedTable from '@/components/MyNestedTable';
+import Section from '@/components/Section';
+import {
+  faEye,
+  faFilePdf,
+  faClipboardList,
+  faBullseye,
+  faPaperclip,
+  faFileAlt,
+  faCalendarDays
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import MyButton from '@/components/MyButton/MyButton';
+import PlusIcon from '@rsuite/icons/Plus';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import AttachmentModal from '@/components/AttachmentUploadModal';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import AddProgressNotes from '@/components/ProgressNotes';
+import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
+import './styles.less';
+import { useLocation } from 'react-router-dom';
+import { newApFunctionalAssessment } from '@/types/model-types-constructor';
+import { ApFunctionalAssessment } from '@/types/model-types';
+import GeneralAssessmentSummary from '@/pages/encounter/encounter-component/nursing-reports-summary/GeneralAssessmentSummary';
+import FunctionalAssessmentSummary from '@/pages/encounter/encounter-component/nursing-reports-summary/FunctionalAssessmentSummary';
+import MyLabel from '@/components/MyLabel';
+import MyTagInput from '@/components/MyTagInput/MyTagInput';
+
+const OccupationalTherapy = ({ patient, encounter }) => {
+  // State initialization
+  const location = useLocation();
+  const propsData = location.state;
+  const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
+
+  const [width, setWidth] = useState(window.innerWidth); // window width
+  const [initiatePlanModalOpen, setInitiatePlanModalOpen] = useState(false); // modal open/close
+  const [attachmentModalOpen, setAttachmentModalOpen] = useState(false); // attachment modal state
+  const [selectedPlan, setSelectedPlan] = useState({}); // selected physiotherapy plan
+  const [showCanceled, setShowCanceled] = useState(true); // toggle canceled plans
+  const [progressNotes, setProgressNotes] = useState([]);
+  const [generalAssessmentOpen, setGeneralAssessmentOpen] = useState(false);
+  const [functionalAssessmentOpen, setFunctionalAssessmentOpen] = useState(false);
+  const [isDisabledField, setIsDisabledField] = useState(false);
+  const [generalAssessment, setGeneralAssessment] = useState({});
+  const [tags, setTags] = useState([]);
+
+  const [functionalAssessment, setFunctionalAssessment] = useState<ApFunctionalAssessment>({
+    ...newApFunctionalAssessment
+  });
+
+  // Physiotherapy plan form data
+  const [planData, setPlanData] = useState({
+    shortTermGoals: '',
+    longTermGoals: '',
+    expectedOutcome: '',
+    goalTargetDate: '',
+    interventionType: '',
+    frequency: '',
+    timeUnit: '',
+    durationPerSession: '',
+    totalPlanDuration: '',
+    environmentalRecommendations: '',
+    assistiveDevicesRequired: false,
+    assistiveDevicesText: '',
+    precautions: '',
+    progressNotes: '',
+    painLevel: 0,
+    functionalImprovement: '',
+    nextReviewDate: ''
+  });
+
+  // Dummy occupational referrals
+  const referralsData = [
+    {
+      id: 1,
+      referredBy: 'Dr. Tariq',
+      referredAt: '2024-01-15 10:30',
+      department: 'Rehabilitation',
+      reason: 'Post-stroke occupational therapy',
+      notes: 'Patient needs help regaining independence in daily activities',
+      status: 'Requested'
+    },
+    {
+      id: 2,
+      referredBy: 'Dr. Yousef',
+      referredAt: '2024-01-14 14:20',
+      department: 'Orthopedics',
+      reason: 'Hand function training',
+      notes: 'Focus on improving fine motor skills after hand surgery',
+      status: 'Confirmed'
+    }
+  ];
+
+  // Dummy occupational therapy plans
+  const plansData = [
+    {
+      id: 1,
+      interventionType: 'ADL Training',
+      totalPlanDuration: '8 weeks',
+      status: 'Active',
+      initiatedBy: 'Dr. Wilson',
+      initiatedAt: '2024-01-10 09:00',
+      followUps: [
+        {
+          id: 1,
+          followUpBy: 'Therapist Mosa',
+          followUpAt: '2024-01-17 11:00',
+          progressNote: 'Patient improving in dressing and grooming tasks',
+          painLevel: 2,
+          functionalImprovement: 'Range of Motion',
+          nextReviewDate: '2024-01-24'
+        },
+        {
+          id: 2,
+          followUpBy: 'Therapist Mohammad',
+          followUpAt: '2024-01-20 14:30',
+          progressNote: 'Patient reports more independence in feeding',
+          painLevel: 2,
+          functionalImprovement: 'High',
+          nextReviewDate: '2024-01-27'
+        }
+      ]
+    },
+    {
+      id: 2,
+      interventionType: 'Cognitive Rehabilitation',
+      totalPlanDuration: '6 weeks',
+      status: 'Completed',
+      initiatedBy: 'Dr. Brown',
+      initiatedAt: '2024-01-05 10:15',
+      followUps: [
+        {
+          id: 1,
+          followUpBy: 'Therapist Ali',
+          followUpAt: '2024-01-12 09:45',
+          progressNote: 'Patient shows progress in memory recall tasks',
+          painLevel: 1,
+          functionalImprovement: 'Flexibility',
+          nextReviewDate: '2024-01-19'
+        }
+      ]
+    }
+  ];
+
+  const getTrackColor = (value: number): string => {
+    if (value === 0) return 'transparent';
+    if (value >= 1 && value <= 3) return '#28a745';
+    if (value >= 4 && value <= 7) return 'orange';
+    return 'red';
+  };
+
+  // Fetch LOV data for various fields
+  const { data: positionStatusLovQueryResponse } = useGetLovValuesByCodeQuery('POSITION_STATUS');
+  const { data: bodyMovementLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_MOVEMENT');
+  const { data: levelOfConscLovQueryResponse } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
+  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const { data: speechAssLovQueryResponse } = useGetLovValuesByCodeQuery('SPEECH_ASSESSMENT');
+  const { data: moodLovQueryResponse } = useGetLovValuesByCodeQuery('MOOD_BEHAVIOR');
+
+  // Fetch LOV (List of Values) from backend
+  const { data: statusTableLovQueryResponse, isLoading: statusTableLoading } =
+    useGetLovValuesByCodeQuery('DIAG_ORD_STATUS');
+  const { data: interventionTypeLovQueryResponse, isLoading: interventionTypeLoading } =
+    useGetLovValuesByCodeQuery('OT_INTEVENTION_TYPES');
+  const { data: frequencyLovQueryResponse, isLoading: frequencyLoading } =
+    useGetLovValuesByCodeQuery('TIME_UNITS');
+  const { data: functionalImprovementLovQueryResponse, isLoading: mobilityLoading } =
+    useGetLovValuesByCodeQuery('LOW_MOD_HIGH');
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Icons for actions column
+  const iconsForActions = rowData => (
+    <div className="container-of-icons">
+      <FontAwesomeIcon
+        title="View"
+        icon={faEye}
+        color="var(--primary-gray)"
+        className="icons-style"
+      />
+      <FontAwesomeIcon
+        icon={faCalendarDays}
+        className="icons-style"
+        color="var(--primary-gray)"
+        title="Follow-up"
+      />
+    </div>
+  );
+
+  // Columns for referrals table
+  const referralColumns = [
+    {
+      key: 'referredByAt',
+      title: <Translate>Referred By/At</Translate>,
+      render: rowData => (
+        <>
+          {rowData?.referredBy}
+          <br />
+          <span className="date-table-style">
+            {rowData?.referredAt?.split(' ')[0]}
+            <br />
+            {rowData?.referredAt?.split(' ')[1]}
+          </span>
+        </>
+      )
+    },
+    { key: 'department', title: <Translate>Department</Translate> },
+    { key: 'reason', title: <Translate>Reason</Translate> },
+    { key: 'notes', title: <Translate>Notes</Translate> },
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      render: rowData => (
+        <span
+          className={`status-badge ${rowData.status === 'Confirmed' ? 'confirmed' : 'requested'}`}
+        >
+          <Translate>{rowData.status}</Translate>
+        </span>
+      )
+    }
+  ];
+
+  // Columns for main Occupational plans table
+  const planColumns = [
+    { key: 'interventionType', title: <Translate>Intervention Type</Translate> },
+    { key: 'totalPlanDuration', title: <Translate>Total Plan Duration</Translate> },
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      render: rowData => (
+        <span className={`status-badge ${rowData.status?.toLowerCase()}`}>
+          <Translate>{rowData.status}</Translate>
+        </span>
+      )
+    },
+    {
+      key: 'initiatedByAt',
+      title: <Translate>Initiated By/At</Translate>,
+      render: rowData => (
+        <>
+          {rowData?.initiatedBy}
+          <br />
+          <span className="date-table-style">
+            {rowData?.initiatedAt?.split(' ')[0]}
+            <br />
+            {rowData?.initiatedAt?.split(' ')[1]}
+          </span>
+        </>
+      )
+    },
+    {
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      flexGrow: 4,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+
+  // Columns for nested follow-up table
+  const followUpColumns = [
+    {
+      key: 'followUpByAt',
+      title: <Translate>Follow-up By/At</Translate>,
+      render: followUp => (
+        <>
+          {followUp?.followUpBy}
+          <br />
+          <span className="date-table-style">
+            {followUp?.followUpAt?.split(' ')[0]}
+            <br />
+            {followUp?.followUpAt?.split(' ')[1]}
+          </span>
+        </>
+      )
+    },
+    { key: 'progressNote', title: <Translate>Progress Note</Translate> },
+    {
+      key: 'painLevel',
+      title: <Translate>Pain Level</Translate>,
+      render: followUp => `${followUp.painLevel}/10`
+    },
+    { key: 'functionalImprovement', title: <Translate>Functional Improvement</Translate> },
+    { key: 'nextReviewDate', title: <Translate>Next Review Date</Translate> }
+  ];
+
+  // Return nested table configuration for each plan
+  const getNestedTable = rowData =>
+    rowData.followUps?.length > 0 ? { columns: followUpColumns, data: rowData.followUps } : null;
+
+  // Modal content for initiating plan (Step 0)
+  const initiatePlanContent = activeStep => {
+    if (statusTableLoading || interventionTypeLoading || frequencyLoading || mobilityLoading) {
+      return (
+        <div className="center-class">
+          <Translate>Loading...</Translate>
+        </div>
+      );
+    }
+
+    if (activeStep === 0) {
+      return (
+        <div className="plan-form-container">
+          <Form fluid>
+            {/* Sections for treatment goals and physiotherapy plan details */}
+            <div className="section-column">
+              {/* Treatment Goals */}
+              <Section
+                title={
+                  <>
+                    <FontAwesomeIcon icon={faBullseye} className="font-small" />
+                    <p className="font-small">Treatment Goals</p>
+                  </>
+                }
+                content={
+                  <>
+                    <div className="goals-container">
+                      <MyInput
+                        fieldName="shortTermGoals"
+                        fieldType="textarea"
+                        fieldLabel="Short-term Goals"
+                        record={planData}
+                        setRecord={setPlanData}
+                        width={270}
+                      />
+                      <MyInput
+                        fieldName="longTermGoals"
+                        fieldType="textarea"
+                        fieldLabel="Long-term Goals"
+                        record={planData}
+                        setRecord={setPlanData}
+                        width={270}
+                      />
+                      <MyInput
+                        fieldName="expectedOutcome"
+                        fieldType="textarea"
+                        fieldLabel="Expected Outcome"
+                        record={planData}
+                        setRecord={setPlanData}
+                        width={270}
+                      />
+                      <MyInput
+                        fieldName="goalTargetDate"
+                        fieldType="date"
+                        fieldLabel="Goal Target Date"
+                        record={planData}
+                        setRecord={setPlanData}
+                        width={270}
+                      />
+                    </div>
+                  </>
+                }
+              />
+              {/* Physiotherapy Plan Details */}
+              <Section
+                title={
+                  <>
+                    <FontAwesomeIcon icon={faClipboardList} className="font-small" />
+                    <p className="font-small">Physiotherapy Plan Details</p>
+                  </>
+                }
+                content={
+                  <>
+                    {/* Therapy type, frequency, time unit */}
+                    <div className="goals-container">
+                      <MyInput
+                        fieldName="interventionType"
+                        fieldType="select"
+                        fieldLabel="Intervention Type"
+                        record={planData}
+                        setRecord={setPlanData}
+                        selectData={interventionTypeLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        width={200}
+                        searchable={false}
+                      />
+                      <div className="flex-class">
+                        <MyInput
+                          fieldName="frequencyNumber"
+                          fieldType="number"
+                          fieldLabel="Session Frequency"
+                          record={planData}
+                          setRecord={setPlanData}
+                          width={120}
+                        />
+                        <div className="margin-class">
+                          <MyInput
+                            fieldName="frequency"
+                            fieldType="select"
+                            fieldLabel=""
+                            record={planData}
+                            setRecord={setPlanData}
+                            selectData={frequencyLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            width={120}
+                            searchable={false}
+                          />
+                        </div>
+                      </div>
+                      {/* <MyInput
+                        fieldName="timeUnit"
+                        fieldType="select"
+                        fieldLabel="Environmental Recommendations"
+                        record={planData}
+                        setRecord={setPlanData}
+                        selectData={statusTableLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        width={120}
+                        searchable={false}
+                      /> */}
+                      {/* Duration, exercises, assistive devices, precautions */}
+                      <MyInput
+                        fieldName="durationPerSession"
+                        fieldType="number"
+                        fieldLabel="Duration per Session"
+                        record={planData}
+                        setRecord={setPlanData}
+                        width={200}
+                        rightAddon={'min'}
+                        rightAddonwidth={50}
+                      />
+                      <div className="flex-class">
+                        <MyInput
+                          fieldName="totalPlanDuration"
+                          fieldType="number"
+                          fieldLabel="Total Plan Duration"
+                          record={planData}
+                          setRecord={setPlanData}
+                          width={120}
+                          searchable={false}
+                        />
+                        <div className="margin-class">
+                          <MyInput
+                            fieldName="totalPlanDuration"
+                            fieldType="select"
+                            fieldLabel=""
+                            record={planData}
+                            setRecord={setPlanData}
+                            selectData={frequencyLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            width={120}
+                            searchable={false}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="goals-container">
+                      <MyInput
+                        fieldName="environmentalRecommendations"
+                        fieldType="textarea"
+                        fieldLabel="Environmental Recommendations"
+                        record={planData}
+                        setRecord={setPlanData}
+                        rows={4}
+                        width={550}
+                      />
+                      <MyInput
+                        fieldName="precautions"
+                        fieldType="textarea"
+                        fieldLabel="Precautions"
+                        record={planData}
+                        setRecord={setPlanData}
+                        rows={3}
+                        width={550}
+                      />
+                      <MyInput
+                        fieldName="assistiveDevicesRequired"
+                        fieldType="checkbox"
+                        fieldLabel="Assistive Devices Required"
+                        record={planData}
+                        setRecord={setPlanData}
+                      />
+                      {planData.assistiveDevicesRequired && (
+                        <MyInput
+                          fieldName="assistiveDevicesText"
+                          fieldType="text"
+                          fieldLabel="Specify Devices"
+                          record={planData}
+                          setRecord={setPlanData}
+                          width={400}
+                        />
+                      )}
+                    </div>
+                  </>
+                }
+              />
+            </div>
+
+            {/* Sections for progress notes and attachments */}
+            <div className="section-column">
+              <Section
+                title={
+                  <>
+                    <FontAwesomeIcon icon={faFileAlt} className="font-small" />{' '}
+                    <p className="font-small">Progress Notes</p>
+                  </>
+                }
+                content={
+                  <div className="notes">
+                    <div className="flex2-class">
+                      <AddProgressNotes
+                        progressNotes={progressNotes}
+                        setProgressNotes={setProgressNotes}
+                        currentChart={{ key: 'physio-plan' }}
+                        dispatch={action => {
+                          console.log(action);
+                        }}
+                      />
+                    </div>
+                    <div className="form-row">
+                      {/* Pain level slider */}
+                      <div className="pain-level-container">
+                        <label>
+                          <Translate>Pain Level (1-10)</Translate>
+                        </label>
+
+                        <div className="slider-class">
+                          <Slider
+                            value={planData.painLevel}
+                            onChange={value => setPlanData(prev => ({ ...prev, painLevel: value }))}
+                            min={0}
+                            max={10}
+                            step={1}
+                            progress
+                          />
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '52%',
+                              left: 0,
+                              height: '7px',
+                              width: `${(planData.painLevel / 10) * 100}%`,
+                              backgroundColor: getTrackColor(planData.painLevel),
+                              transform: 'translateY(-50%)',
+                              zIndex: 1,
+                              transition: 'background-color 0.2s ease',
+                              borderRadius: '4px'
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="margin2-class">
+                        <MyInput
+                          fieldName="functionalImprovement"
+                          fieldType="select"
+                          fieldLabel="Functional Improvement"
+                          record={planData}
+                          setRecord={setPlanData}
+                          selectData={functionalImprovementLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          width={200}
+                          searchable={false}
+                        />
+                      </div>
+                      <MyInput
+                        fieldName="nextReviewDate"
+                        fieldType="date"
+                        fieldLabel="Next Review Date"
+                        record={planData}
+                        setRecord={setPlanData}
+                        width={200}
+                      />
+                    </div>
+                  </div>
+                }
+              />
+
+              {/* Attachments section */}
+              <Section
+                title={
+                  <div>
+                    <FontAwesomeIcon icon={faPaperclip} className="font-small" />
+                    <p className="font-small">Attachments</p>
+                  </div>
+                }
+                content={
+                  <PatientAttachment
+                    localPatient={propsData?.patient}
+                    setRefetchAttachmentList={setRefetchAttachmentList}
+                    refetchAttachmentList={refetchAttachmentList}
+                  />
+                }
+              />
+            </div>
+          </Form>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  // Handle saving draft
+  const handleSaveDraft = () => {
+    console.log('Saving draft...', planData);
+    setInitiatePlanModalOpen(false);
+  };
+
+  // Handle submitting plan
+  const handleSubmitPlan = () => {
+    console.log('Submitting plan...', planData);
+    setInitiatePlanModalOpen(false);
+  };
+
+  // Handle exporting PDF
+  const handleExportPDF = () => {
+    console.log('Exporting PDF...');
+  };
+
+  return (
+    <div className="physiotherapy-container">
+      {/* Referrals section */}
+      <Panel className="section-panel">
+        <div className="section-header">
+          <div className="section-header">
+            <MyLabel className="section-title" label={<h6>Occupational Referrals</h6>} />
+          </div>
+        </div>
+        <MyNestedTable data={referralsData} columns={referralColumns} />
+      </Panel>
+      <Divider />
+      {/* Nursing Reports Summary section */}
+      <div
+        className="section-header"
+        style={{ justifyContent: 'space-between', alignItems: 'center' }}
+      >
+        <MyLabel className="section-title" label={<h6>Nursing Reports Summary</h6>} />
+        <div className="section-buttons">
+          <MyButton onClick={() => setGeneralAssessmentOpen(true)}>
+            Fill General Assessment
+          </MyButton>
+          <MyButton onClick={() => setFunctionalAssessmentOpen(true)}>
+            Fill Functional Assessment
+          </MyButton>
+        </div>
+      </div>
+
+      <Row gutter={18}>
+        <Col xs={12}>
+          <GeneralAssessmentSummary patient={patient} encounter={encounter} />
+        </Col>
+        <Col xs={12}>
+          <FunctionalAssessmentSummary patient={patient} encounter={encounter} />
+        </Col>
+      </Row>
+      <Divider />
+      {/* Occupational Therapy Plans section */}
+      <Panel className="section-panel">
+        <div className="section-header">
+          <MyLabel className="section-title" label={<h6>Occupational Plans</h6>} />
+        </div>
+        <div className="section-header">
+          {/* Toggle canceled plans */}
+          <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+            Show Cancelled
+          </Checkbox>
+          <div className="section-buttons">
+            <MyButton
+              prefixIcon={() => <PlusIcon />}
+              onClick={() => setInitiatePlanModalOpen(true)}
+            >
+              Initiate Plan
+            </MyButton>
+            <MyButton disabled>Cancel</MyButton>
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faFilePdf} />}
+              onClick={handleExportPDF}
+              appearance="ghost"
+            >
+              Export PDF
+            </MyButton>
+          </div>
+        </div>
+
+        <MyNestedTable
+          data={plansData}
+          columns={planColumns}
+          getNestedTable={getNestedTable}
+          onRowClick={rowData => setSelectedPlan(rowData)}
+        />
+      </Panel>
+      {/* Modal for initiating plan */}
+      <MyModal
+        open={initiatePlanModalOpen}
+        setOpen={setInitiatePlanModalOpen}
+        title="Initiate Physiotherapy Plan"
+        size="80vw"
+        bodyheight="75vh"
+        content={initiatePlanContent}
+        steps={[{ title: 'Treatment Plan', icon: <FontAwesomeIcon icon={faBullseye} /> }]}
+        footerButtons={
+          <div className="modal-footer-buttons">
+            <MyButton appearance="subtle" onClick={handleSaveDraft}>
+              Save Draft
+            </MyButton>
+            <MyButton onClick={handleSubmitPlan}>Submit Plan</MyButton>
+          </div>
+        }
+      />
+      {/* Attachment upload modal */}
+      <AttachmentModal
+        isOpen={attachmentModalOpen}
+        setIsOpen={setAttachmentModalOpen}
+        attachmentSource={{ key: 'physiotherapy-plan' }}
+        attatchmentType="PHYSIOTHERAPY"
+        patientKey="patient-123"
+        onSuccess={() => console.log('Attachment uploaded successfully')}
+      />
+      {/* Modal for General Assessment */}
+      <MyModal
+        open={generalAssessmentOpen}
+        setOpen={setGeneralAssessmentOpen}
+        title="Fill General Assessment"
+        size="32vw"
+        bodyheight="80vh"
+        position="right"
+        content={() => (
+          <div>
+            <Form fluid layout="inline">
+              <MyInput
+                column
+                width={200}
+                fieldLabel="Position Status"
+                fieldType="select"
+                fieldName="positionStatusLkey"
+                selectData={positionStatusLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+                searchable={false}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLabel="Body Movements"
+                fieldType="select"
+                fieldName="bodyMovementsLkey"
+                selectData={bodyMovementLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+                searchable={false}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLabel="Level of Consciousness"
+                fieldType="select"
+                fieldName="levelOfConsciousnessLkey"
+                selectData={levelOfConscLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+                searchable={false}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLabel="Facial Expression"
+                fieldType="select"
+                fieldName="facialExpressionLkey"
+                selectData={levelOfConscLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+                searchable={false}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLabel="Speech"
+                fieldType="select"
+                fieldName="speechLkey"
+                selectData={speechAssLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+                searchable={false}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLabel="Mood/Behavior"
+                fieldType="select"
+                fieldName="moodBehaviorLkey"
+                selectData={moodLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+                searchable={false}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLable="Memory Remote"
+                fieldName="memoryRemote"
+                fieldType="checkbox"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLable="Memory Recent"
+                fieldName="memoryRecent"
+                fieldType="checkbox"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLable="Signs of Agitation"
+                fieldName="signsOfAgitation"
+                fieldType="checkbox"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLable="Signs of Depression"
+                fieldName="signsOfDepression"
+                fieldType="checkbox"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLable="Signs of Suicidal Ideation"
+                fieldName="signsOfSuicidalIdeation"
+                fieldType="checkbox"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLable="Signs of Substance Use"
+                fieldName="signsOfSubstanceUse"
+                fieldType="checkbox"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+              />
+
+              <MyLabel className="label-size" label={<h6>Supporting Members</h6>} />
+
+              <MyInput
+                column
+                width={200}
+                fieldLable="Living Condition"
+                fieldName="livingCondition"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+              />
+              <MyInput
+                column
+                width={200}
+                fieldLable="Patient Need Help"
+                fieldName="patientNeedHelp"
+                fieldType="checkbox"
+                record={generalAssessment}
+                setRecord={setGeneralAssessment}
+                disabled={isDisabledField}
+              />
+
+              <div className="repositioning-container">
+                <MyTagInput
+                  tags={tags}
+                  setTags={setTags}
+                  labelText="Supporting Members"
+                  width="200px"
+                  fontSize="13px"
+                />
+
+                <MyInput
+                  column
+                  width={200}
+                  fieldLabel="Family Location"
+                  fieldType="select"
+                  fieldName="familyLocationLkey"
+                  selectData={countryLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={generalAssessment}
+                  setRecord={setGeneralAssessment}
+                  disabled={isDisabledField}
+                  searchable={false}
+                />
+              </div>
+            </Form>
+          </div>
+        )}
+        actionButtonFunction={() => {
+          setGeneralAssessmentOpen(false);
+        }}
+        steps={[
+          {
+            title: 'General Assessment',
+            icon: <FontAwesomeIcon icon={faClipboardList} />
+          }
+        ]}
+      />
+
+      {/* Modal for Functional Assessment */}
+      <MyModal
+        open={functionalAssessmentOpen}
+        setOpen={setFunctionalAssessmentOpen}
+        title="Fill Functional Assessment"
+        size="32vw"
+        bodyheight="80vh"
+        position="right"
+        content={() => (
+          <Form fluid layout="inline">
+            <MyInput
+              column
+              width={200}
+              fieldLable="Mobility / Ambulation"
+              fieldName="mobilityAmbulation"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Independent"
+              checkedLabel=" Needs assistance"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Transferring (Bed ↔ Wheelchair)"
+              fieldName="transferringBedChair"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Independent"
+              checkedLabel=" Needs assistance"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Stair Climbing Ability"
+              fieldName="stairClimbingAbility"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Independent"
+              checkedLabel=" Needs assistance"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Feeding (Eating ability)"
+              fieldName="feeding"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Independent"
+              checkedLabel=" Needs assistance"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Toileting Ability"
+              fieldName="toiletingAbility"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Independent"
+              checkedLabel=" Needs assistance"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Dressing Ability"
+              fieldName="dressingAbility"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Independent"
+              checkedLabel=" Needs assistance"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Bathing Ability"
+              fieldName="bathingAbility"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Independent"
+              checkedLabel=" Needs assistance"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Grooming Ability"
+              fieldName="groomingAbility"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Independent"
+              checkedLabel=" Needs assistance"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Walking Distance"
+              fieldName="walkingDistance"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Unlimited"
+              checkedLabel="Limited"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Balance (Standing/Sitting)"
+              fieldName="balance"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+              unCheckedLabel="Stable"
+              checkedLabel="Unable"
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Urinary Continence"
+              fieldName="urinaryContinence"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Bowel Continence"
+              fieldName="bowelContinence"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Use of Assistive Devices"
+              fieldName="useOfAssistiveDevices"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Need for Assistance in ADLs"
+              fieldName="needForAssistance"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Fall History"
+              fieldName="fallHistory"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Pain during Movement"
+              fieldName="painDuringMovement"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+            />
+            <MyInput
+              column
+              width={200}
+              fieldLable="Need for Rehab/PT Referral"
+              fieldName="needForRehab"
+              fieldType="checkbox"
+              record={functionalAssessment}
+              setRecord={setFunctionalAssessment}
+              disabled={isDisabledField}
+            />
+          </Form>
+        )}
+        actionButtonFunction={() => {
+          setFunctionalAssessmentOpen(false);
+        }}
+        steps={[
+          {
+            title: 'Functional Assessment',
+            icon: <FontAwesomeIcon icon={faClipboardList} />
+          }
+        ]}
+      />
+    </div>
+  );
+};
+
+export default OccupationalTherapy;

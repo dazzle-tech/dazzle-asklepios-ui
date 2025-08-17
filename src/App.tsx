@@ -161,6 +161,7 @@ import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Ser
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 import PhysiotherapyPlan from './pages/encounter/encounter-component/physiotherapy-plan';
 import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
+import OccupationalTherapy from './pages/encounter/encounter-component/occupational-therapy';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -380,6 +381,7 @@ const App = () => {
                 <Route path="dietary-request" element={<DietaryRequest />} />
                 <Route path="medication-administration-record" element={<MAR />} />
                 <Route path="physiotherapy-plan" element={<PhysiotherapyPlan />} />
+                <Route path="occupational-therapy" element={<OccupationalTherapy />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
