@@ -12,7 +12,7 @@ import MyInput from "@/components/MyInput";
 import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { on } from "rsuite/esm/DOMHelper";
+ // import { on } from "rsuite/esm/DOMHelper";
 
 interface AttachmentModalProps {
     attachmentSource: { key: string };
@@ -27,7 +27,7 @@ interface AttachmentModalProps {
     requestedPatientAttacment?: string | null;
     refecthData?: () => void | null;
     patientKey: string;
-    onSuccess?: () => void;
+  // onSuccess?: () => void;
 }
 
 
@@ -44,7 +44,7 @@ const AttachmentModal = ({
     refecthData,
     attatchmentType,
     patientKey,
-    onSuccess,
+   // onSuccess,
 }: AttachmentModalProps) => {
     const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
@@ -56,7 +56,6 @@ const AttachmentModal = ({
     const [newAttachmentType, setNewAttachmentType] = useState<string | null>(null);
     const [Update] = useUpdateAttachmentDetailsMutation();
     const [upload] = useUploadMutation();
- 
     const [uploadedAttachmentOpject, setUploadedAttachmentOpject] = useState({
         formData: null as FormData | null,
         type: null as string | null,
@@ -97,24 +96,24 @@ const AttachmentModal = ({
         }
     };
     // Handle Update Attachment Details
-    const handleUpdateAttachmentDetails = () => {
-        Update({
-            key: selectedPatientAttacment.key,
-            attachmentDetails: newAttachmentDetails,
-            updatedBy: authSlice.user.key,
-            accessType: selectedAttachType.accessTypeLkey,
-            file: uploadedAttachmentOpject?.formData ?? undefined,
-        })
-            .unwrap()
-            .then(() => {
-                handleFinishUploading();
-                dispatch(notify({ msg: 'Attachment Updated Successfully', sev: 'success' }));
-            })
-            .catch((error) => {
-                dispatch(notify({ msg: 'Failed to Update attachment', sev: 'error' }));
-                console.error(error);
-            });
-    };
+   const handleUpdateAttachmentDetails = () => {
+    Update({
+        key: selectedPatientAttacment.key,
+        attachmentDetails: newAttachmentDetails,
+        updatedBy: authSlice.user.key,
+        accessType: selectedAttachType.accessTypeLkey,
+        file: uploadedAttachmentOpject?.formData ?? undefined,
+    })
+    .unwrap()
+    .then(() => {
+        handleFinishUploading();
+        dispatch(notify({ msg: 'Attachment Updated Successfully', sev: 'success' }));
+    })
+    .catch((error) => {
+        dispatch(notify({ msg: 'Failed to Update attachment', sev: 'error' }));
+        console.error(error);
+    });
+};
 
 
     // Handle Finish Uploading 
@@ -128,9 +127,10 @@ const AttachmentModal = ({
         setActionType(null);
         refecthData();
         setRequestedPatientAttacment(null);
+        setSelectedAttachType(null);
     };
     // Handle Upload Attachment
-    const handleUploadAction = async() => {
+    const handleUploadAction = () => {
         if (actionType === 'view') {
             handleUpdateAttachmentDetails();
         } else {
@@ -147,24 +147,22 @@ const AttachmentModal = ({
                     patientKey: patientKey
                 })
                     .unwrap();
-               await refecthData();
-               await onSuccess();
+            //    await refecthData();
+            //    await onSuccess();
                 handleFinishUploading();
-
+                 dispatch(notify({ msg: 'Attachment Uploaded Successfully', sev: 'success' }));
+                 setIsOpen(false);
             }
             catch (error) {
-
+                dispatch(notify({ msg: 'Failed to Upload Attachment', sev: 'error' }));
             }
-
-
-
         }
     };
     // Attachment Modal Content
     const content = () => (
         <>
             <div
-                className="upload-file-container"
+            className="upload-file-container"
             >
                 <input
                     type="file"
@@ -246,9 +244,9 @@ const AttachmentModal = ({
             size="sm"
             bodyheight="65vh"
             content={content}
-            hideCancel={false}
+           
             hideBack={true}
-            steps={[{ title: "Attachments", icon: <FontAwesomeIcon icon={faPaperclip} /> }]}
+            steps={[{ title: "Attachments", icon: <FontAwesomeIcon icon={faPaperclip }/>}]}
             actionButtonLabel="Save"
             actionButtonFunction={() => handleUploadAction()}
             isDisabledActionBtn={actionType ? false : !uploadedAttachmentOpject?.formData}
