@@ -28,7 +28,7 @@ const CustomDateTimePicker = React.forwardRef(
     <DatePicker
       {...props}
       oneTap
-      format="yyyy-MM-dd HH:mm"
+      format="dd-MM-yyyy HH:mm"
       cleanable={false}
       block
       ref={ref}
