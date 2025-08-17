@@ -788,7 +788,7 @@ const DietaryRequests = () => {
         setOpen={setModalOpen}
         title={modalMode === 'add' ? 'New Dietary Request' : 'View Dietary Request'}
         content={
-          <Form fluid className="fields-container">
+          <Form fluid className="fields-containers">
             {renderBasicFields()}
             {renderConditionalFields()}
             {renderConditionalField()}
