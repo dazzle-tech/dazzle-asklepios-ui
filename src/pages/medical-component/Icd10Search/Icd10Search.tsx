@@ -44,14 +44,15 @@ const Icd10Search = ({ object, setOpject, fieldName, ...props }) => {
                 <Text>{props?.label ? props?.label : "Diagnosis"}</Text>
                 <Col md={24}>
                     <div style={{ position: 'relative' }}>
-                        <InputGroup inside>
+                        <InputGroup style={{height: "32px"}} inside>
                             <Input
                                 placeholder="Search ICD-10"
                                 value={searchKeyword}
                                 onChange={handleSearch}
                                 disabled={props?.disabled ? props?.disabled : false}
+                               
                             />
-                            <InputGroup.Button>
+                            <InputGroup.Button style={{height: '32px'}}>
                                 <SearchIcon />
                             </InputGroup.Button>
                         </InputGroup>
@@ -84,7 +85,7 @@ const Icd10Search = ({ object, setOpject, fieldName, ...props }) => {
             </Row>
             <Row>
                 <Col md={24}>
-                    <InputGroup>
+                    <InputGroup style={{height: "32px"}}>
                         <Input
                             disabled
                             value={selectedItem ? `${selectedItem.icdCode}, ${selectedItem.description}` : ''}
