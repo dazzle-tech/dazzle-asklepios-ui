@@ -92,6 +92,17 @@ export const inventoryService = createApi({
         body: transaction,
       }),
     }),
+      saveInventoryTransactionProductList: builder.mutation({
+      query: (products: any) => ({
+        url: `/transaction/save-inventory-transaction-product-list`,
+        method: 'POST',
+        body: products
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
     saveInventoryTransactionProduct: builder.mutation({
       query: (transaction: ApInventoryTransactionProduct) => ({
         url: `/transaction/save-inventory-transaction-product`,
@@ -230,6 +241,7 @@ export const {
   useGetInventoryTransactionsProductQuery,
   useRemoveInventoryTransactionProductMutation,
   useSaveInventoryTransactionProductMutation,
+  useSaveInventoryTransactionProductListMutation,
   useConfirmTransProductStockInMutation,
   useConfirmTransProductStockOutMutation,
   useGetInventoryTransferQuery,

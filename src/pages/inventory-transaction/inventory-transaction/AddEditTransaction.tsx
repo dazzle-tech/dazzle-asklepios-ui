@@ -11,7 +11,7 @@ import {
 } from '@/services/setupService';
 import SearchIcon from '@rsuite/icons/Search';
 import MyInput from '@/components/MyInput';
-import { Dropdown, Form } from 'rsuite';
+import { Divider, Dropdown, Form, Nav, Navbar, Panel, Stack, Uploader, VStack } from 'rsuite';
 import './styles.less';
 import ChildModal from '@/components/ChildModal';
 import Translate from '@/components/Translate';
@@ -20,27 +20,33 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { MdVaccines } from 'react-icons/md';
 import { MdMedication } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
+import { FaCalendarAlt, FaInfoCircle, FaUndo } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyButton from '@/components/MyButton/MyButton';
-import { ApInventoryTransactionProduct, ApVaccineBrands } from '@/types/model-types';
-import { newApInventoryTransactionProduct, newApVaccineBrands } from '@/types/model-types-constructor';
+import { ApInventoryTransactionProduct, ApVaccineBrands, ApWarehouse } from '@/types/model-types';
+import { newApInventoryTransactionProduct, newApVaccineBrands, newApWarehouse } from '@/types/model-types-constructor';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyModal from '@/components/MyModal/MyModal';
-import { FaBabyCarriage, FaInbox, FaProductHunt } from 'react-icons/fa6';
-import {  useConfirmTransProductStockInMutation, useConfirmTransProductStockOutMutation, useGetInventoryTransactionsProductQuery, useSaveInventoryTransactionMutation, useSaveInventoryTransactionProductMutation } from '@/services/inventoryTransactionService';
+import { FaBabyCarriage, FaChartPie, FaInbox, FaPaperclip, FaProductHunt, FaUsb, FaUser, FaWarehouse } from 'react-icons/fa6';
+import { useConfirmTransProductStockInMutation, useConfirmTransProductStockOutMutation, useGetInventoryTransactionsProductQuery, useSaveInventoryTransactionMutation, useSaveInventoryTransactionProductMutation } from '@/services/inventoryTransactionService';
 import { create, set } from 'lodash';
 import authSlice from '@/reducers/authSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faIdCard, faInbox, faList, faListCheck, faPaperclip } from '@fortawesome/free-solid-svg-icons';
+import { faIdCard, faInbox, faList, faListCheck, faPaperclip, faPlus } from '@fortawesome/free-solid-svg-icons';
 import InventoryAttachment from './InventoryAttachment';
 import ProductListIn from './ProductListIn';
 import AddEditProductIn from './AddEditProductIn';
 import ProductListOut from './ProductListOut';
 import AddEditProductOut from './AddEditProductOut';
+import AdvancedModal from '@/components/AdvancedModal';
+import DynamicPieChart from '@/components/Charts/DynamicPieChart/DynamicPieChart';
+import StockIn from './StockIn';
+import AddEditWarehouse from '@/pages/setup/warehouse-setup/AddEditWarehouse';
+import { Plus } from '@rsuite/icons';
+import StockOut from './StockOut';
 
 const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetch, refetchAttachmentList }) => {
     const dispatch = useAppDispatch();
@@ -72,7 +78,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
     });
 
 
-      const [transProductListRequest, setTransProductListRequest] = useState<ListRequest>({
+    const [transProductListRequest, setTransProductListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
@@ -88,27 +94,30 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
         ],
     });
 
-     const { data: transProductListResponse , refetch: refetchTransProductList } = useGetInventoryTransactionsProductQuery(transProductListRequest);
+    const { data: transProductListResponse, refetch: refetchTransProductList } = useGetInventoryTransactionsProductQuery(transProductListRequest);
 
 
-     const [saveTransactionProduct, saveTransactionProductMutation] = useSaveInventoryTransactionProductMutation();
-     const [confirmProductStockIn, confirmProductStockInMutation] = useConfirmTransProductStockInMutation();
-     const [confirmProductStockOut, confirmProductStockOutMutation] = useConfirmTransProductStockOutMutation();
+    const [saveTransactionProduct, saveTransactionProductMutation] = useSaveInventoryTransactionProductMutation();
+    const [confirmProductStockIn, confirmProductStockInMutation] = useConfirmTransProductStockInMutation();
+    const [confirmProductStockOut, confirmProductStockOutMutation] = useConfirmTransProductStockOutMutation();
 
     const [transProduct, setTransProduct] = useState<ApInventoryTransactionProduct>({ ...newApInventoryTransactionProduct });
 
     const now = new Date();
 
     const [generateCode, setGenerateCode] = useState();
-      const [recordOfWarehouseCode, setRecordOfWarehouseCode] = useState({transId:  '' });
-      // Generate code for transaction
-      const generateFiveDigitCode = () => {
+    const [recordOfWarehouseCode, setRecordOfWarehouseCode] = useState({ transId: '' });
+    // Generate code for transaction
+    const generateFiveDigitCode = () => {
         const code = Math.floor(10000 + Math.random() * 90000);
-        setTransaction({...transaction, transId: code})
-      };
+        setTransaction({ ...transaction, transId: code })
+    };
 
+    const [openAddEditWarehousePopup, setOpenAddEditWarehousePopup] = useState(false);
     const { data: warehouseListResponse } = useGetWarehouseQuery(warehouseListRequest);
 
+    const [edit_new, setEdit_new] = useState(false);
+    const [warehouse, setWarehouse] = useState<ApWarehouse>({ ...newApWarehouse });
 
     const { data: transTypeListResponse } = useGetLovValuesByCodeQuery('STOCK_TRANSACTION_TYPES');
 
@@ -119,30 +128,39 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
     const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
 
     const handleSave = () => {
-    saveTransaction({
-        ...transaction,
-        createdBy: authSlice.user.key,
-        createdAt: null
-    }).unwrap().then((result) => {
-        setTransaction(result);
-        console.log(result);
-        refetch();
-        setOpenNextDocument(true);
-        dispatch(
-            notify({
-                msg: 'The transaction Added/Edited successfully ',
-                sev: 'success'
-            })
-        );
-    }).catch((e) => {
-        if (e.status === 422) {
-            console.log("Validation error: Unprocessable Entity", e);
-        } else {
-            console.log("An unexpected error occurred", e);
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-        }
-    });
-};
+         if (!transaction.transTypeLkey || !transaction.warehouseKey || !transaction.transReasonLkey.trim()) {
+              dispatch(
+                notify({
+                  msg: 'Please fill Transaction Type, Warehouse and Transaction Reason. ',
+                  sev: 'error'
+                })
+              );
+              return;
+            }
+        saveTransaction({
+            ...transaction,
+            createdBy: authSlice.user.key,
+            createdAt: null
+        }).unwrap().then((result) => {
+            setTransaction(result);
+            console.log(result);
+            refetch();
+            setOpenNextDocument(true);
+            dispatch(
+                notify({
+                    msg: 'The transaction Added/Edited successfully ',
+                    sev: 'success'
+                })
+            );
+        }).catch((e) => {
+            if (e.status === 422) {
+                console.log("Validation error: Unprocessable Entity", e);
+            } else {
+                console.log("An unexpected error occurred", e);
+                dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
+            }
+        });
+    };
     // const handleSave = () => {
     //     const response = saveTransaction({
     //         ...transaction,
@@ -186,40 +204,51 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
         // setPatientInsurance({ ...newApPatientInsurance });
     };
 
+    useEffect(() => {
+        if (transaction?.transTypeLkey === "6509266518641689") //Stock Out
+        {
+            setActiveKey('StockOut')
+        } else if (transaction?.transTypeLkey === "6509244814441399") //Stock In
+        {
+            setActiveKey('StockIn')
+        } else {
+            setActiveKey('')
+        }
+    }, [transaction?.transTypeLkey]);
 
     useEffect(() => {
         setTransaction({ ...transaction, createdBy: authSlice.user.username, createdAt: now.toString() });
         setOpenNextDocument(false);
     }, [transaction?.key]);
 
-        useEffect(() => {
-            setTransProductListRequest(prev => ({
-                ...prev,
-                filters: [
-                    {
-                        fieldName: 'deleted_at',
-                        operator: 'isNull',
-                        value: undefined,
-                    },
-                     {
-                fieldName: 'inventory_trans_key',
-                operator: 'match',
-                value: transaction?.key
-            }
-                ]
-            }));
-        }, [transProduct?.productKey]);
+    useEffect(() => {
+        setTransProductListRequest(prev => ({
+            ...prev,
+            filters: [
+                {
+                    fieldName: 'deleted_at',
+                    operator: 'isNull',
+                    value: undefined,
+                },
+                {
+                    fieldName: 'inventory_trans_key',
+                    operator: 'match',
+                    value: transaction?.key
+                }
+            ]
+        }));
+    }, [transProduct?.productKey]);
 
-        
-  useEffect(() => {
-    if (transaction?.transId){
-      setRecordOfWarehouseCode({ transId: transaction.transId });
-      return;
-    }
-    generateFiveDigitCode();
-    setRecordOfWarehouseCode({ transId: transaction?.transI ?? generateCode });
-       console.log(recordOfWarehouseCode);
-  }, [transaction?.transId?.length]);
+
+    useEffect(() => {
+        if (transaction?.transId) {
+            setRecordOfWarehouseCode({ transId: transaction.transId });
+            return;
+        }
+        generateFiveDigitCode();
+        setRecordOfWarehouseCode({ transId: transaction?.transI ?? generateCode });
+        console.log(recordOfWarehouseCode);
+    }, [transaction?.transId?.length]);
 
     // Main modal content
     const conjureFormContent = stepNumber => {
@@ -227,16 +256,16 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
             case 0:
                 return (
                     <Form fluid>
-                         <div className='container-of-three-fields' >
+                        <div className='container-of-three-fields' >
 
                             <MyInput
-                            fieldLabel="transaction ID"
-                                      fieldName="transId"
-                                      record={recordOfWarehouseCode}
-                                      setRecord={setRecordOfWarehouseCode}
-                                      disabled={true}
-                                    />
-                         </div>
+                                fieldLabel="transaction ID"
+                                fieldName="transId"
+                                record={recordOfWarehouseCode}
+                                setRecord={setRecordOfWarehouseCode}
+                                disabled={true}
+                            />
+                        </div>
                         <div className='container-of-three-fields' >
                             <div className='container-of-field' >
                                 <MyInput
@@ -313,7 +342,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                             />
 
                         </div>
-                        <br/>
+                        <br />
                         <div className="container-of-add-new-button">
                             <MyButton
                                 prefixIcon={() => <AddOutlineIcon />}
@@ -342,148 +371,403 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
         }
     };
 
-      const childInContent = (
+    const childInContent = (
         <Form fluid>
-        <ProductListIn open={openChildModal} setOpen={setOpenChildModal} showSubChildModal={showSubChildModal} setShowSubChildModal={setShowSubChildModal} refetch={refetchTransProductList} transaction={transaction} setTransaction={setTransaction}/>
+            <ProductListIn open={openChildModal} setOpen={setOpenChildModal} showSubChildModal={showSubChildModal} setShowSubChildModal={setShowSubChildModal} refetch={refetchTransProductList} transaction={transaction} setTransaction={setTransaction} />
         </Form>
-      );
-    
-      const childOutContent = (
+    );
+
+    const childOutContent = (
         <Form fluid>
-        <ProductListOut open={openChildModal} setOpen={setOpenChildModal} showSubChildModal={showSubChildModal} setShowSubChildModal={setShowSubChildModal} refetch={refetchTransProductList} transaction={transaction} setTransaction={setTransaction}/>
+            <ProductListOut open={openChildModal} setOpen={setOpenChildModal} showSubChildModal={showSubChildModal} setShowSubChildModal={setShowSubChildModal} refetch={refetchTransProductList} transaction={transaction} setTransaction={setTransaction} />
         </Form>
-      );
+    );
 
-      const subChildContentIn =  () => {
-          return (
-      <AddEditProductIn
-              open={showSubChildModal}
-              setOpen={setShowSubChildModal}
-              transProduct={transProduct}
-              setTransProduct={setTransProduct}
-              transaction={transaction}
-              setTransaction={setTransaction}   
-              refetch={refetch}
+    const subChildContentIn = () => {
+        return (
+            <AddEditProductIn
+                open={showSubChildModal}
+                setOpen={setShowSubChildModal}
+                transProduct={transProduct}
+                setTransProduct={setTransProduct}
+                transaction={transaction}
+                setTransaction={setTransaction}
+                refetch={refetch}
             />
-          );
-        };
-         const subChildContentOut =  () => {
-          return (
-      <AddEditProductOut
-              open={showSubChildModal}
-              setOpen={setShowSubChildModal}
-              transProduct={transProduct}
-              setTransProduct={setTransProduct}
-              transaction={transaction}
-              setTransaction={setTransaction}   
-              refetch={refetch}
+        );
+    };
+    const subChildContentOut = () => {
+        return (
+            <AddEditProductOut
+                open={showSubChildModal}
+                setOpen={setShowSubChildModal}
+                transProduct={transProduct}
+                setTransProduct={setTransProduct}
+                transaction={transaction}
+                setTransaction={setTransaction}
+                refetch={refetch}
             />
-          );
-        };
-          const handleSavesubchild = () => {
-                const response = saveTransactionProduct({
-                    ...transProduct,
-                    inventoryTransactionKey: transaction.key,
-                }).unwrap().then((result) => {
-                    console.log(result)
-                    setTransProduct(result);
-                    refetch();
-                    refetchTransProductList();
-                    setTransProduct({ ...newApInventoryTransactionProduct, productKey: null});
-                    dispatch(
-                        notify({
-                            msg: 'The Inventory Transaction Product Added/Edited successfully ',
-                            sev: 'success'
-                        })
-                    );
-                }).catch((e) => {
-        
-                    if (e.status === 422) {
-                        console.log("Validation error: Unprocessable Entity", e);
-        
-                    } else {
-                        console.log("An unexpected error occurred", e);
-                        dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-                    }
-                });;
-        
-            };
-
-             const handleSavechildIn = () => {
-                setOpenChildModal(false);
-                confirmProductStockIn({
-                  key: transaction?.key
+        );
+    };
+    const handleSavesubchild = () => {
+        const response = saveTransactionProduct({
+            ...transProduct,
+            inventoryTransactionKey: transaction.key,
+        }).unwrap().then((result) => {
+            console.log(result)
+            setTransProduct(result);
+            refetch();
+            refetchTransProductList();
+            setTransProduct({ ...newApInventoryTransactionProduct, productKey: null });
+            dispatch(
+                notify({
+                    msg: 'The Inventory Transaction Product Added/Edited successfully ',
+                    sev: 'success'
                 })
-                  .unwrap()
-                  .then(() => {
-                    dispatch(
-                      notify({
+            );
+        }).catch((e) => {
+
+            if (e.status === 422) {
+                console.log("Validation error: Unprocessable Entity", e);
+
+            } else {
+                console.log("An unexpected error occurred", e);
+                dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
+            }
+        });;
+
+    };
+
+    const handleSavechildIn = () => {
+        setOpenChildModal(false);
+        confirmProductStockIn({
+            key: transaction?.key
+        })
+            .unwrap()
+            .then(() => {
+                dispatch(
+                    notify({
                         msg: 'The product was successfully Added to stock',
                         sev: 'success'
-                      })
-                    );
-                  }).catch(() => {
-                      dispatch(
-                      notify({
+                    })
+                );
+            }).catch(() => {
+                dispatch(
+                    notify({
                         msg: 'Fail',
                         sev: 'error'
-                      })
-                    );
-                  });
-              };
-              
-              const handleSavechildOut = () => {
-                setOpenChildModal(false);
-                confirmProductStockOut({
-                  key: transaction?.key
-                })
-                  .unwrap()
-                  .then(() => {
-                    dispatch(
-                      notify({
+                    })
+                );
+            });
+    };
+
+    const handleSavechildOut = () => {
+        setOpenChildModal(false);
+        confirmProductStockOut({
+            key: transaction?.key
+        })
+            .unwrap()
+            .then(() => {
+                dispatch(
+                    notify({
                         msg: 'The product was successfully Added to stock',
                         sev: 'success'
-                      })
-                    );
-                  }).catch(() => {
-                      dispatch(
-                      notify({
+                    })
+                );
+            }).catch(() => {
+                dispatch(
+                    notify({
                         msg: 'Fail',
                         sev: 'error'
-                      })
-                    );
-                  });
-              };
+                    })
+                );
+            });
+    };
+
+    const [activeKey, setActiveKey] = useState('');
+    // Attachments
+    const [attachments, setAttachments] = useState<File[]>([]);
+    const handleUploadChange = (fileList: File[]) => {
+        setAttachments(fileList);
+    };
+
+
+
+    const topContent = () => {
+
+        return (
+            <>
+                <Panel
+                    header="Transaction Information"
+                    bordered
+                    style={{ marginBottom: 20, backgroundColor: "white", padding: 20, borderRadius: 6, height: 350, overflowY: "auto" }}
+                >
+
+                    <div className="table-buttons-right">
+                        <AddEditWarehouse
+                            open={openAddEditWarehousePopup}
+                            setOpen={setOpenAddEditWarehousePopup}
+                            warehouse={warehouse}
+                            setWarehouse={setWarehouse}
+                            edit_new={edit_new}
+                            setEdit_new={setEdit_new}
+                            refetch={refetch}
+                        />
+                    </div>
+                    <Form fluid>
+
+                        <div className='container-of-three-fields' >
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled={transaction?.key}
+                                    fieldLabel="Transaction Type"
+                                    fieldName="transTypeLkey"
+                                    fieldType="select"
+                                    selectData={transTypeListResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={transaction}
+                                    setRecord={setTransaction}
+                                />
+                            </div>
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                     disabled={transaction?.key}
+                                    fieldLabel="Warehouse"
+                                    fieldName="warehouseKey"
+                                    fieldType="select"
+                                    selectData={warehouseListResponse?.object ?? []}
+                                    selectDataLabel="warehouseName"
+                                    selectDataValue="key"
+                                    rightAddon={<Plus />}
+                                    record={transaction}
+                                    setRecord={setTransaction}
+
+                                />
+                            </div>
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled={openNextDocument}
+                                    fieldLabel="Transaction Reason"
+                                    fieldName="transReasonLkey"
+                                    fieldType="select"
+                                    selectData={
+                                        !transaction.transTypeLkey
+                                            ? []
+                                            : transaction.transTypeLkey === '6509244814441399'
+                                                ? transReasonInListResponse?.object ?? []
+                                                : transReasonOutListResponse?.object ?? []
+                                    }
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={transaction}
+                                    setRecord={setTransaction}
+
+                                />
+                            </div>
+                        </div>
+                        <div className='container-of-three-fields' >
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled={transaction?.key}
+                                    fieldLabel="Reference Doc Num."
+                                    fieldName="docNum"
+                                    record={transaction}
+                                    setRecord={setTransaction}
+                                />
+                            </div>
+                            <div className='container-of-field' >
+
+                                <MyInput width="100%" fieldLabel="Approved By" disabled fieldName="updateBy" record={transaction} setRecord={setTransaction} />
+                            </div>
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled={openNextDocument}
+                                    fieldLabel="Approval Status "
+                                    fieldName="docNum"
+                                    record={transaction}
+                                    setRecord={setTransaction}
+                                />
+                            </div>
+
+                        </div>
+                        <div className='container-of-three-fields' >
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled={openNextDocument}
+                                    fieldLabel="Vender"
+                                    fieldName="remarks"
+                                    hight="50%"
+                                    record={transaction}
+                                    setRecord={setTransaction}
+                                />
+                            </div>
+
+                            <div className='container-of-field' >
+
+                                <MyInput width="100%" fieldLabel="Serial Number" disabled fieldName="serialNumber" record={transaction} setRecord={setTransaction} />
+                            </div>
+                            <div className='container-of-field' >
+
+                                <MyInput width="100%" fieldLabel="Invoice Number" disabled fieldName="InvoiceNumber" record={transaction} setRecord={setTransaction} />
+                            </div>
+
+                        </div>
+                        <div className='container-of-three-fields' >
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled={openNextDocument}
+                                    fieldLabel="Remarks"
+                                    fieldName="remarks"
+                                    fieldType="textarea"
+                                    hight="50%"
+                                    record={transaction}
+                                    setRecord={setTransaction}
+                                />
+                            </div>
+
+                            <div className="table-buttons-right">
+                                <MyButton appearance="primary" onClick={handleSave} disabled={transaction?.key}>
+                                    Save Transaction
+                                </MyButton>
+                                <MyButton
+                                    appearance="ghost"
+                                    title="Add New Warehouse"
+                                    disabled={transaction?.key}
+                                    onClick={() => setOpenAddEditWarehousePopup(true)}
+                                >
+                                    <FontAwesomeIcon icon={faPlus} /> Add New Warehouse
+                                </MyButton>
+
+                            </div>
+                        </div>
+                    </Form>
+                </Panel>
+            </>
+        );
+    }
+
+    const rightContent = () => {
+        return (
+            <div>
+                {topContent()}
+                <Nav
+                    appearance="tabs"
+                    activeKey={activeKey}
+                    onSelect={setActiveKey}
+                >
+                   {(transaction?.transTypeLkey && transaction.transTypeLkey !== '6509266518641689') && <Nav.Item eventKey="StockIn" disabled={!transaction?.transTypeLkey || transaction.transTypeLkey !== '6509244814441399'} >Stock In</Nav.Item>} 
+                  {(transaction?.transTypeLkey && transaction.transTypeLkey !== '6509244814441399') && <Nav.Item eventKey="StockOut" disabled={!transaction?.transTypeLkey || transaction.transTypeLkey !== '6509266518641689'}>Stock Out</Nav.Item>}  
+
+                </Nav>
+
+                <div style={{ marginTop: 20 }}>
+                    <div>
+
+                    </div>
+                    {activeKey === 'StockIn' && <div> <StockIn transProduct={transProduct} setTransProduct={setTransProduct} transaction={transaction} setTransaction={setTransaction} refetch={refetch} /> </div>}
+                    {activeKey === 'StockOut' && <div> <StockOut transProduct={transProduct} setTransProduct={setTransProduct} transaction={transaction} setTransaction={setTransaction} refetch={refetch} /></div>}
+                  
+                </div>
+            </div>
+
+
+        );
+    }
+
+    const leftContent = () => {
+
+        return (
+            <>
+                {/* Transaction Details */}
+                <Stack alignItems="center" spacing={8}>
+                    <FaInfoCircle color="#2264E5" />
+                    <h4 style={{ margin: 0, fontWeight: '600', fontSize: '1.1rem', color: '#333' }}>
+                        Transaction Details
+                    </h4>
+                </Stack>
+                <Divider style={{ margin: '10px 0' }} />
+                <p><b>Transaction ID:</b> {transaction.transId}</p>
+                <p><b>Performed By:</b> <FaUser style={{ marginRight: 5, color: '#666' }} /> {authSlice.user.username}</p>
+                <p><b>Date & Time:</b> <FaCalendarAlt style={{ marginRight: 5, color: '#666' }} /> {new Date().toLocaleString()}</p>
+
+                {/* Attachments */}
+                <Divider style={{ margin: '20px 0' }} />
+                <Stack alignItems="center" spacing={8}>
+                    <FaPaperclip color="#FF6384" />
+                    <h5 style={{ margin: 0, fontWeight: '600', color: '#444' }}>Attachments</h5>
+                </Stack>
+                <Uploader
+                    action=""
+                    autoUpload={false}
+                    multiple
+                    fileListVisible
+                    onChange={handleUploadChange}
+                    listType="picture-text"
+                    style={{ marginTop: 10 }}
+                />
+                <Stack style={{ marginTop: 10 }}>
+                    {attachments.map((file, idx) => (
+                        <div key={idx} style={{ fontSize: '0.9rem', color: '#555' }}>
+                            {file.name}
+                        </div>
+                    ))}
+                </Stack>
+
+                {/* Warehouse Details Section - Conditional */}
+                {transaction?.warehouseKey !== null && (
+                    <>
+                        <Divider style={{ margin: "20px 0" }} />
+                        <Stack alignItems="center" spacing={8}>
+                            <FaWarehouse color="#c7be0eff" />
+                            <h4
+                                style={{
+                                    margin: 0,
+                                    fontWeight: "600",
+                                    fontSize: "1.1rem",
+                                    color: "#333",
+                                }}
+                            >
+                                Warehouse Details
+                            </h4>
+                        </Stack>
+                        <Divider style={{ margin: "10px 0" }} />
+                        <p>
+                            <b>Warehouse Key:</b> {transaction.warehouseKey}
+                        </p>
+                        <p>
+                            <b>Warehouse Name:</b> {"N/A"}
+                        </p>
+                    </>
+                )}
+
+            </>
+        );
+    }
 
     return (
 
-        <ChildModal
+
+        <AdvancedModal
             open={open}
             setOpen={setOpen}
-            showChild={openChildModal}
-            setShowChild={setOpenChildModal}
-            showSubChild={showSubChildModal}
-            setShowSubChild={setShowSubChildModal}
-            title={transaction?.key ? 'Edit Transaction' : 'New Transaction'}
-            mainStep={[
-                { title: 'Transaction Info', icon: <FontAwesomeIcon icon={faInbox} />, disabledNext: !transaction?.key && !openNextDocument, footer: <MyButton onClick={handleSave}>Save</MyButton> },
-                { title: 'Attachments', icon: <FontAwesomeIcon icon={faPaperclip} />, footer: <MyButton onClick={handleSave} >Save</MyButton> },
-            ]}
+            size="80vw"
+            leftWidth="20%"
+            rightWidth="80%"
+            leftTitle={"Transaction Details"}
+            actionButtonFunction={() => setOpen(false)}
+            rightTitle="Add/Edit Transaction"
+            rightContent={rightContent()}
+            leftContent={leftContent()}
+        ></AdvancedModal>
 
-            mainContent={conjureFormContent}
-            childTitle="Product transaction"
-            childContent={transaction.transTypeLkey === '6509244814441399' ?  childInContent : childOutContent }
-            subChildTitle="Add Product Details"
-            subChildContent={transaction.transTypeLkey === '6509244814441399' ? subChildContentIn : subChildContentOut}
-            actionSubChildButtonFunction={handleSavesubchild}
-            childStep={[{ title: "Product transaction", icon: <FontAwesomeIcon icon={faList} /> }]}
-            subChildStep={[{ title: "Add Product Details", icon: <FontAwesomeIcon icon={faListCheck} /> }]}
-            mainSize="xs"
-            childSize="sm"
-            subChildSize="xs"
-            actionChildButtonLabel="Confirm"
-             actionChildButtonFunction={transaction.transTypeLkey === '6509244814441399' ?  handleSavechildIn : handleSavechildOut}
-        />
     );
 };
 export default AddEditTransaction;
