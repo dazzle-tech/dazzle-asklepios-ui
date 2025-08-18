@@ -943,6 +943,16 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+     getDayCaseEncounters: builder.query({
+      query: ({ listRequest, department_key }) => ({
+        url: `/encounter/day-case-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
+        headers: {
+          department_key: department_key
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   }),
 });
 
@@ -1044,5 +1054,6 @@ export const {
   useSaveProgressNotesMutation,
   useCancelEncounterMutation,
   usePatientTemporaryDischargeMutation,
-  useReturnTemporaryDischargeMutation
+  useReturnTemporaryDischargeMutation,
+  useGetDayCaseEncountersQuery
 } = encounterService;

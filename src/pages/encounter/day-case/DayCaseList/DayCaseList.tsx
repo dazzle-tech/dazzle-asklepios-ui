@@ -8,10 +8,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
-import * as icons from '@rsuite/icons';
-import { addFilterToListRequest, formatDate } from '@/utils';
+import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEncountersQuery, useStartEncounterMutation, useCancelEncounterMutation } from '@/services/encounterService';
+import { useGetDayCaseEncountersQuery, useStartEncounterMutation, useCancelEncounterMutation } from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -24,6 +23,10 @@ import { faBed } from "@fortawesome/free-solid-svg-icons";
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { faRepeat } from '@fortawesome/free-solid-svg-icons';
+import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
+import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
+import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 
 const DayCaseList = () => {
     const location = useLocation();
@@ -39,10 +42,14 @@ const DayCaseList = () => {
     dispatch(setPageCode('P_DayCaseEncounters'));
     const [cancelEncounter] = useCancelEncounterMutation();
     dispatch(setDivContent(divContentHTML));
+    const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
     const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
     const [startEncounter] = useStartEncounterMutation();
+    const [departmentFilter, setDepartmentFilter] = useState({ key: '' });
+    const [openChangeBedModal, setOpenChangeBedModal] = useState(false);
+    const [switchDepartment, setSwitchDepartment] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -67,17 +74,23 @@ const DayCaseList = () => {
             }
         ],
     });
+
+    // Fetch department list response
+    const departmentListResponse = useGetResourceTypeQuery('5433343011954425');
+
     // Fetch the encounter list using the current listRequest
     const {
         data: encounterListResponse,
         isFetching,
         refetch: refetchEncounter,
         isLoading
-    } = useGetEncountersQuery(listRequest);
-    // State to manage date filtering (fromDate and toDate)
-    const [dateFilter, setDateFilter] = useState({
-        fromDate: new Date(),
-        toDate: new Date()
+    } = useGetDayCaseEncountersQuery({
+        listRequest,
+        department_key: switchDepartment
+            ? departmentFilter?.key != null
+                ? departmentFilter?.key
+                : ''
+            : ''
     });
     // Function to check if a row in the list is the currently selected encounter
     const isSelected = rowData => {
@@ -85,55 +98,7 @@ const DayCaseList = () => {
             return 'selected-row';
         } else return '';
     };
-    // Function to manually trigger search by date range
-    const handleManualSearch = () => {
-        setManualSearchTriggered(true);
-        if (dateFilter.fromDate && dateFilter.toDate) {
-            const formattedFromDate = formatDate(dateFilter.fromDate);
-            const formattedToDate = formatDate(dateFilter.toDate);
-            setListRequest(
-                addFilterToListRequest(
-                    'planned_start_date',
-                    'between',
-                    formattedFromDate + '_' + formattedToDate,
-                    listRequest
-                )
-            );
-        } else if (dateFilter.fromDate) {
-            const formattedFromDate = formatDate(dateFilter.fromDate);
-            setListRequest(
-                addFilterToListRequest('planned_start_date', 'gte', formattedFromDate, listRequest)
-            );
-        } else if (dateFilter.toDate) {
-            const formattedToDate = formatDate(dateFilter.toDate);
-            setListRequest(
-                addFilterToListRequest('planned_start_date', 'lte', formattedToDate, listRequest)
-            );
-        } else {
-            setListRequest({
-                ...listRequest, filters: [
-                    {
-                        fieldName: 'resource_type_lkey',
-                        operator: 'in',
-                        value: ['5433343011954425', '2039548173192779']
-                            .map(key => `(${key})`)
-                            .join(' '),
 
-                    }, {
-                        fieldName: 'encounter_status_lkey',
-                        operator: 'in',
-                        value: ['91063195286200', '91084250213000', '5256965920133084']
-                            .map(key => `(${key})`)
-                            .join(' '),
-                    }, {
-                        fieldName: 'discharge',
-                        operator: 'match',
-                        value: "false"
-                    }
-                ]
-            });
-        }
-    };
     // handle cancel encounter function
     const handleCancelEncounter = async () => {
         try {
@@ -179,32 +144,6 @@ const DayCaseList = () => {
         }
         sessionStorage.setItem("encounterPageSource", "EncounterList");
     };
-
-    //Effects
-    useEffect(() => {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent(' '));
-    }, [location.pathname, dispatch, isLoading]);
-    useEffect(() => {
-        if (!isFetching && manualSearchTriggered) {
-            setManualSearchTriggered(false);
-        }
-    }, [isFetching, manualSearchTriggered]);
-    useEffect(() => {
-        // init list
-        handleManualSearch();
-    }, []);
-    useEffect(() => {
-        if (isLoading || (manualSearchTriggered && isFetching)) {
-            dispatch(showSystemLoader());
-        } else if ((isFetching && isLoading)) {
-            dispatch(hideSystemLoader());
-        }
-
-        return () => {
-            dispatch(hideSystemLoader());
-        };
-    }, [isLoading, isFetching, dispatch]);
 
     // table columns 
     const tableColumns = [
@@ -325,6 +264,7 @@ const DayCaseList = () => {
                 const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
                 const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
                 const tooltipBedAssessment = <Tooltip>Assign to Bed</Tooltip>;
+                const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         {rowData?.apRoom && (
@@ -373,6 +313,19 @@ const DayCaseList = () => {
                                 </MyButton>
                             </div>
                         </Whisper>}
+                        <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    backgroundColor="gray"
+                                    onClick={() => {
+                                        setOpenChangeBedModal(true);
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faBed} />
+                                </MyButton>
+                            </div>
+                        </Whisper>
                     </Form>
                 );
             },
@@ -404,37 +357,79 @@ const DayCaseList = () => {
             pageNumber: 1 // reset to first page
         });
     };
+    // filters
+    const filters = () => (
+        <Form layout="inline" fluid>
+            <div className="switch-dep-dev ">
+                {' '}
+                <MyInput
+                    require
+                    column
+                    fieldLabel="Select Department"
+                    fieldType="select"
+                    fieldName="key"
+                    selectData={departmentListResponse?.data?.object ?? []}
+                    selectDataLabel="name"
+                    selectDataValue="key"
+                    record={departmentFilter}
+                    setRecord={value => {
+                        setDepartmentFilter(value);
+                        setSwitchDepartment(false);
+                    }}
+                    searchable={false}
+                    width={200}
+                />
+                <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                        setSwitchDepartment(true);
+                    }}
+                    prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
+                >
+                    Switch Department
+                </MyButton>
+            </div>
+        </Form>
+    );
 
-    const filters = () => {
-        return (
-            <Form layout="inline" fluid className="date-filter-form">
-                <MyInput
-                    column
-                    width={180}
-                    fieldType="date"
-                    fieldLabel="From Date"
-                    fieldName="fromDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                />
-                <MyInput
-                    width={180}
-                    column
-                    fieldType="date"
-                    fieldLabel="To Date"
-                    fieldName="toDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                />
-            </Form>
-        );
-    };
     // Effects 
+    // useEffect(() => {
+    //     if (isFetching) {
+    //         refetchEncounter();
+    //     }
+    // }, [departmentFilter, isFetching]);
     useEffect(() => {
-    handleManualSearch();
-}, [dateFilter])
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(' '));
+    }, [location.pathname, dispatch, isLoading]);
+    useEffect(() => {
+        if (!isFetching && manualSearchTriggered) {
+            setManualSearchTriggered(false);
+        }
+    }, [isFetching, manualSearchTriggered]);
+    useEffect(() => {
+        if (isLoading || (manualSearchTriggered && isFetching)) {
+            dispatch(showSystemLoader());
+        } else if ((isFetching && isLoading)) {
+            dispatch(hideSystemLoader());
+        }
+        return () => {
+            dispatch(hideSystemLoader());
+        };
+    }, [isLoading, isFetching, dispatch]);
+
     return (
         <Panel>
+            <div className="inpatient-list-btns">
+                <MyButton
+                    onClick={() => setOpenBedManagementModal(true)}
+                    disabled={!departmentFilter?.key}
+                    prefixIcon={() => <FontAwesomeIcon icon={faBedPulse} />}
+                >
+                    Bed Management
+                </MyButton>
+            </div>
             <BedAssignmentModal
                 refetchEncounter={refetchEncounter}
                 open={openBedAssigmentModal}
@@ -447,7 +442,7 @@ const DayCaseList = () => {
                 data={encounterListResponse?.object ?? []}
                 columns={tableColumns}
                 rowClassName={isSelected}
-                loading={isLoading || (manualSearchTriggered && isFetching)}
+                loading={isLoading || (manualSearchTriggered && isFetching) || isFetching}
                 onRowClick={rowData => {
                     setLocalEncounter(rowData);
                 }}
@@ -470,6 +465,17 @@ const DayCaseList = () => {
                 confirmationQuestion="Do you want to cancel this Encounter ?"
                 actionButtonLabel='Cancel'
                 cancelButtonLabel='Close' />
+            <BedManagementModal
+                open={openBedManagementModal}
+                setOpen={setOpenBedManagementModal}
+                departmentKey={departmentFilter?.key}
+            />
+            <ChangeBedModal
+                open={openChangeBedModal}
+                setOpen={setOpenChangeBedModal}
+                localEncounter={encounter}
+                refetchInpatientList={refetchEncounter}
+            />
         </Panel>
     );
 };

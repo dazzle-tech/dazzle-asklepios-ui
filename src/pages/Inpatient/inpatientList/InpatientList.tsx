@@ -475,7 +475,7 @@ const InpatientList = () => {
               </Whisper>
             )}
             {rowData?.encounterStatusLvalue?.valueCode === 'TEMP_DC' && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipDischarge}>
+              <Whisper trigger="hover" placement="top" speaker={tooltipReturnFromDischarge}>
                 <div>
                   <MyButton
                     size="small"
