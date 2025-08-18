@@ -45,9 +45,7 @@ const NutritionInterventionPlan = ({ object, setObject }) => {
       </Row>
       <Row>
         <Row>
-          <Text>Nutrition Prescription:</Text>
-        </Row>
-        <Row>
+          <Text className='title-nutrition-state'>Nutrition Prescription:</Text>
           <Col md={8}>
             <MyInput
               width="100%"
@@ -81,12 +79,10 @@ const NutritionInterventionPlan = ({ object, setObject }) => {
         </Row>
       </Row>
       <Row>
-        <Col md={12}>
-          <Text>Create Diet Order:</Text>
-        </Col>
-        <Col md={12}>
-          <MyButton>Create</MyButton>
-        </Col>
+        <br/>
+        <div className='container-of-add-new-button'>
+          <MyButton>Create Diet Order</MyButton>
+          </div>
       </Row>
     </div>
   );

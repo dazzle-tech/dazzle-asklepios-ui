@@ -5,7 +5,8 @@ import React from 'react';
 import { Col, FlexboxGrid, Panel, Row } from 'rsuite';
 const AnthropometricData = (object, setObject) => {
   return (
-    <div >
+    <Row gutter={120}>
+      <Row>
       <FlexboxGrid>
         <FlexboxGrid.Item className="chart" as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel bordered header={<Translate>Patient Weight Change</Translate>}>
@@ -23,6 +24,7 @@ const AnthropometricData = (object, setObject) => {
           </Panel>
         </FlexboxGrid.Item>
       </FlexboxGrid>
+      </Row>
       <Row>
         <Col md={8}>
           <MyInput
@@ -90,7 +92,7 @@ const AnthropometricData = (object, setObject) => {
           />
         </Col>
       </Row>
-    </div>
+    </Row>
   );
 };
 export default AnthropometricData;
