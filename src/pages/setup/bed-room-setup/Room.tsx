@@ -33,11 +33,10 @@ const Room = () => {
     const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
       const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
     const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-    const [listRequest, setListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        pageSize: 15
-    });
+const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, filters: [] });
+
     // Fetch Room list response
+    
     const {
         data: roomListResponseLoading,
         refetch,

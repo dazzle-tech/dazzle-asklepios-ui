@@ -171,12 +171,6 @@ return (
           validationResult={validationResult}
           setRefetchAttachmentList={setRefetchAttachmentList}
         />
-            <div className='header-buttons-patient-profile'>
-
-        <MyButton>Print Patient Label</MyButton>
-                <MyButton>Scan Document</MyButton>
-
-            </div>
 
         <ProfileTabs
           localPatient={localPatient}
