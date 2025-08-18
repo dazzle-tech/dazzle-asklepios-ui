@@ -27,7 +27,7 @@ const DischargePlanning = () => {
                 </div>
                 <Divider />
                 <Row>
-                  <Col md={12}>
+                  <Col md={8}>
                     <MyInput
                       width="100%"
                       fieldType="date"
@@ -36,18 +36,17 @@ const DischargePlanning = () => {
                       setRecord=""
                     />
                   </Col>
-                  <Col md={12}>
+                  <Col md={8}>
                     <MyInput
                       width="100%"
                       disabled
                       fieldName="Estimated Length of Stay (LOS)"
+                      fieldLabel="Estimated LOS"
                       record=""
                       setRecord=""
                     />
                   </Col>
-                </Row>
-                <Row>
-                  <Col md={12}>
+                  <Col md={8}>
                     <MyInput
                       width="100%"
                       selectData={readinessStatusLovQueryResponse?.object ?? []}
@@ -117,8 +116,10 @@ const DischargePlanning = () => {
                   </Col>
                 </Row>
                 <Row>
-                  <Col md={12}>
+                  <Col md={24}>
+                     <div className='container-ofiicd10-search-discharge-planning'>
                     <Icd10Search object="" setOpject="" fieldName="diagnosisKey" />
+                    </div>
                   </Col>
                 </Row>
               </div>
