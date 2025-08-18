@@ -166,10 +166,10 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
     //     "disabled-panel": disabled,
     //   })}
     // >
-    <div className={clsx("panel-border", {
+    <div className={clsx({
         "disabled-panel": disabled,
       })}>
-      <Row className="rows-gap">
+      <Row className="rows-gap" >
         <Col md={10}>
           <Form fluid>
             <MyInput
