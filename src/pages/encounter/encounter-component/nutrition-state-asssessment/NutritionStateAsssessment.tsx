@@ -8,10 +8,11 @@ import NutritionInterventionPlan from './NutritionInterventionPlan';
 import FollowUpAndMonitoring from './FollowUpAndMonitoring';
 import Biochemical from './Biochemical';
 import SectionContainer from '@/components/SectionsoContainer';
+import "./styles.less";
 const NutritionStateAsssessment = () => {
   const [object, setObject] = useState({});
    return (
-        <Row gutter={15} className="d">
+        <Row gutter={15} className="d nutrition-state">
           <Form fluid>
             <Col md={12}>
               <Row>

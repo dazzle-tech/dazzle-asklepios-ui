@@ -7,12 +7,14 @@ import "./styles.less";
 const ClinicalAndFunctionalAssessment = ({ object, setObject }) => {
   return (
     <div>
+      <Row>
       <Text>Appetite Status</Text>
       <RadioGroup inline>
         <Radio value="good">Good</Radio>
         <Radio value="reduced">Reduced</Radio>
         <Radio value="npo">NPO</Radio>
       </RadioGroup>
+      </Row>
       <Row>
         <Col md={12}>
           <MyInput
@@ -62,8 +64,11 @@ const ClinicalAndFunctionalAssessment = ({ object, setObject }) => {
           />
         </div>
       </Row>
+      <br/>
       <Row>
+        <div className='container-of-add-new-button'>
       <MyButton>Pressure Ulcers</MyButton>
+      </div>
       </Row>
     </div>
   );
