@@ -13,11 +13,11 @@ const AnthropometricData = (object, setObject) => {
               maxValue={70}
               title="Patient Weight Change"
               chartData={[
-                { x: '2025-09-19', y: 10 },
-                { x: '2025-09-20', y: 20 },
-                { x: '2025-09-21', y: 30 },
-                { x: '2025-09-22', y: 50 },
-                { x: '2025-09-23', y: 60 }
+                { x: '2025-03-02', y: 10 },
+                { x: '2025-04-02', y: 20 },
+                { x: '2025-05-02', y: 30 },
+                { x: '2025-06-02', y: 50 },
+                { x: '2025-07-02', y: 60 }
               ]}
             />
           </Panel>
@@ -51,7 +51,7 @@ const AnthropometricData = (object, setObject) => {
             fieldName="bmi"
             record={object}
             setRecord={setObject}
-            readonly
+            disabled
             fieldType="number"
           />
         </Col>
@@ -75,7 +75,7 @@ const AnthropometricData = (object, setObject) => {
             setRecord={setObject}
             rightAddon="%"
             fieldType="number"
-            readonly
+            disabled
           />
         </Col>
         <Col md={8}>
@@ -86,6 +86,7 @@ const AnthropometricData = (object, setObject) => {
             record={object}
             setRecord={setObject}
             fieldType="number"
+            disabled
           />
         </Col>
       </Row>
