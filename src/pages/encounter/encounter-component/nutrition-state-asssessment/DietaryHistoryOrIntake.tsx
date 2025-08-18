@@ -108,6 +108,7 @@ const DietaryHistoryOrIntake = ({ object, setObject }) => {
             width="100%"
             record={object}
             setRecord={setObject}
+            searchable={false}
           />
         </Col>
         <Col md={12}>

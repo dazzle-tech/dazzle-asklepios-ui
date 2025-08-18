@@ -30,6 +30,7 @@ const NutritionInterventionPlan = ({ object, setObject }) => {
             selectDataValue="key"
             record={object}
             setRecord={setObject}
+            searchable={false}
           />
         </Col>
         <Col md={12}>
