@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { ApInventoryTransaction, ApPatient, ApPatientInsurance } from '@/types/model-types';
+import { ApInventoryTransaction, ApInventoryTransactionProduct, ApPatient, ApPatientInsurance } from '@/types/model-types';
 import { useGetLovValuesByCodeQuery, useGetProductQuery, useGetUomGroupsUnitsQuery, useGetWarehouseQuery } from '@/services/setupService';
 import MyTable from '@/components/MyTable';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList } from '@/utils';
 import './styles.less'
-import { newApInventoryTransaction, newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
-import { faFileExport, faMagnifyingGlass, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { newApInventoryTransaction, newApInventoryTransactionProduct, newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
+import { faEdit, faFileExport, faMagnifyingGlass, faPlus, faWarehouse } from '@fortawesome/free-solid-svg-icons';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
@@ -20,14 +20,19 @@ import AddEditTransaction from './AddEditTransaction';
 import { useGetInventoryTransactionsAttachmentQuery, useGetInventoryTransactionsProductQuery, useGetInventoryTransactionsQuery } from '@/services/inventoryTransactionService';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyModal from '@/components/MyModal/MyModal';
+import ModalProductCard from '../product-catalog/ModalProductCard';
+import InfoCardList from '@/components/InfoCardList';
 const InventoryTransaction = () => {
 
     const dispatch = useAppDispatch();
     const [open, setOpen] = useState(false);
-    const [searchPatient, setSearchPatient] = useState<ApPatient>({ ...newApPatient });
+    const [searchTrans, setSearchTrans] = useState<ApInventoryTransactionProduct>({ ...newApInventoryTransactionProduct });
     const [inventoryTransaction, setInventoryTransaction] = useState<ApInventoryTransaction>({ ...newApInventoryTransaction });
     const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
-    const [dateFilter, setDateFilter] = useState({ fromDate: '', toDate: '' });
+
+
     // Fetch LOV data for various fields
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: documentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
@@ -67,7 +72,7 @@ const InventoryTransaction = () => {
 
     const { data: inventoryTransAttachmentListResponse, refetch: refetchTransAttachment } = useGetInventoryTransactionsAttachmentQuery(transactionListRequest);
 
-    const { data: inventoryTransProductListResponse, refetch: refetchTransProduct } = useGetInventoryTransactionsProductQuery(transactionProductListRequest);
+    const { data: inventoryTransProductListResponse, refetch: refetchTransProduct, isLoading, isFetching } = useGetInventoryTransactionsProductQuery(transactionProductListRequest);
 
     // Initialize list request with default filters
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, filters: [] });
@@ -100,8 +105,176 @@ const InventoryTransaction = () => {
         return totalQuantity * unitCost;
     };
 
+    // Pagination values
+    const pageIndex = transactionProductListRequest.pageNumber - 1;
+    const rowsPerPage = transactionProductListRequest.pageSize;
+    const totalCount = inventoryTransProductListResponse?.extraNumeric ?? 0;
+    const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+
+    // Available fields for filtering
+    const filterFields = [
+        { label: 'Resource Type', value: 'resourceTypeLkey' },
+        { label: 'Resource Name', value: 'resourceName' },
+        { label: 'Status', value: 'isValid' },
+        { label: 'Creation Date', value: 'createdAt' },
+        { label: 'createdBy', value: 'Created By' }
+    ];
+
+    // Handle page change in navigation
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setTransactionProductListRequest({ ...transactionProductListRequest, pageNumber: newPage + 1 });
+    };
+    // Handle change rows per page in navigation
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setTransactionProductListRequest({
+            ...transactionProductListRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1
+        });
+    };
+
+      // Setting the encounter based on the selected row data
+        const [dateFilter, setDateFilter] = useState({
+            fromDate: new Date(),
+            toDate: new Date()
+        });
+        // Setting the confirm date filter for transfer transactions
+        const [confirmDateFilter, setConfirmDateFilter] = useState({
+            fromDate: new Date(),
+            toDate: new Date()
+        });
+        // Function to update filters in the list request
+        const updateFilter = (fieldName: string, operator: string, value?: string | number) => {
+            setListRequest(prev => {
+                const newFilters = prev.filters.filter(f => f.fieldName !== fieldName);
+                if (value !== undefined && value !== null && value !== '') {
+                    newFilters.push({ fieldName, operator, value: String(value) });
+                }
+                return { ...prev, filters: newFilters, pageNumber: 1 };
+            });
+        };
+
+        useEffect(() => {
+            if (dateFilter.fromDate && dateFilter.toDate) {
+                const from = new Date(dateFilter.fromDate);
+                const to = new Date(dateFilter.toDate);
+                from.setHours(0, 0, 0, 0);
+                to.setHours(23, 59, 59, 999);
+                updateFilter('created_at', 'between', `${from.getTime()}_${to.getTime()}`);
+            } else {
+                updateFilter('created_at', 'between', undefined);
+            }
+        }, [dateFilter]);
+
+    const [openDetailsModal, setOpenDetailsModal] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+    const [detailsType, setDetailsType] = useState<'product' | 'warehouse' | null>(null);
+
+    const dataDetails = () => {
+
+        return (
+            <div >
+                <MyModal
+                    hideActionBtn
+                    title={detailsType === 'product' ? 'Product Details' : 'Warehouse Details'}
+                    open={openDetailsModal}
+                    setOpen={setOpenDetailsModal}
+                    size="xs"
+                    bodyheight="30vh"
+                    steps={[{ title: detailsType === 'product' ? 'Product Details' : 'Warehouse Details', icon: <FontAwesomeIcon icon={faWarehouse} /> }]}
+                    content={
+                        <>
+                            {detailsType === 'product' && selectedItem && (
+                                <div>
+                                            <InfoCardList
+                                                list={[selectedItem]}
+                                                fields={[
+                                                    'name',
+                                                    'code',
+                                                    'typeLkey',
+                                                    'barecode',
+                                                    'inventoryTypeLkey',
+                                                ]}
+                                                titleField="name"
+                                                fieldLabels={{
+                                                    name: 'Product Name',
+                                                    code: 'Code',
+                                                    typeLkey: 'Type',
+                                                    barecode: 'Barcode',
+                                                    inventoryTypeLkey: 'Inventory Type',
+                                                }}
+                                             
+                                            />
+                                    {/* <p><b>Code:</b> {selectedItem.code}</p>
+                                    <p><b>Name:</b> {selectedItem.name}</p>
+                                    <p><b>Description:</b> {selectedItem.barcode}</p> */}
+
+                                </div>
+                            )}
+
+                            {detailsType === 'warehouse' && selectedItem && (
+                                <div>
+                                       <InfoCardList
+                                                list={[selectedItem]}
+                                                fields={[
+                                                    'warehouseId',
+                                                    'warehouseName',
+                                                    'location',
+                                                    'Capacity',
+                                                    'departmenKey',
+                                                ]}
+                                                titleField="warehouseName"
+                                                fieldLabels={{
+                                                    warehouseName: 'Warehouse Name',
+                                                    warehouseId: 'Code',
+                                                    location: 'Location',
+                                                    Capacity: 'Capacity',
+                                                    departmenKey: 'Department',
+                                                }}
+                                             
+                                            />
+
+                                </div>
+                            )}
+                        </>
+
+                    }
+                ></MyModal>
+            </div>
+        );
+    }
+    const actionsForItems = rowData => {
+        const handleViewTransactions = () => {
+            console.log('View transactions for:', rowData.name);
+            // TODO: Implement view transactions logic
+        };
+
+
+        return (
+            <div className="container-of-actions">
+                <FontAwesomeIcon
+                    icon={faEdit}
+                    title="Edit Transaction"
+                    className="action-icon"
+                    onClick={() => {
+                        setOpen(true);
+                        setInventoryTransaction(rowData?.transactionObj);
+                    }}
+                />
+            </div>
+        );
+    };
+
+
     const columns = [
-        { key: 'index', title: '#', render: (rowData, rowIndex) => rowIndex + 1 },
+        {
+            key: 'index', title: '#',
+            render: (rowData, rowIndex) => {
+                const page = transactionProductListRequest.pageNumber; // your current page (1-based)
+                const pageSize = transactionProductListRequest.pageSize; // number of rows per page
+                return (page - 1) * pageSize + (rowIndex + 1);
+            }
+        },
         {
             key: 'transactionId',
             title: <Translate>Transaction ID</Translate>,
@@ -149,7 +322,16 @@ const InventoryTransaction = () => {
             title: <Translate>Warehouse Name</Translate>,
             flexGrow: 4,
             render: rowData => (
-                <span>
+                <span
+                    className="table-link"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedItem(rowData.warehouseObj);
+                        setDetailsType('warehouse');
+                        setOpenDetailsModal(true);
+                     
+                    }}
+                >
                     {conjureValueBasedOnKeyFromList(
                         warehouseListResponse?.object ?? [],
                         rowData.warehouseObj?.key,
@@ -163,7 +345,16 @@ const InventoryTransaction = () => {
             title: <Translate>Product Name</Translate>,
             flexGrow: 4,
             render: rowData => (
-                <span>
+                <span
+                    className="table-link"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedItem(rowData.productObj);
+                        setDetailsType('product');
+                        setOpenDetailsModal(true);
+                      
+                    }}
+                >
                     {conjureValueBasedOnKeyFromList(
                         productListResponseLoading?.object ?? [],
                         rowData.productObj?.key,
@@ -220,8 +411,8 @@ const InventoryTransaction = () => {
         { key: 'lotserialnumber', title: 'LOT/SERIAL Number', dataKey: 'lotserialnumber' },
 
         {
-            key: 'AverageCostAfter',
-            title: 'Average Cost After',
+            key: 'totalCost',
+            title: 'Total cost',
             flexGrow: 4,
             render: rowData => (
                 <span>
@@ -230,6 +421,76 @@ const InventoryTransaction = () => {
                 </span>
             )
         },
+        {
+            key: 'oldAvgCost',
+            title: 'Avg cost Befor',
+            dataKey: 'oldAvgCost'
+        },
+        {
+            key: 'newAvgCost',
+            title: 'Avg cost After',
+            dataKey: 'newAvgCost'
+        },
+        { key: 'notes', title: 'Note', dataKey: 'notes' },
+        {
+            key: 'statusLkey',
+            title: <Translate>Status</Translate>,
+            width: 100,
+            render: rowData => {
+                const status = rowData?.statusLkey || '164797574082125';
+
+                const getStatusConfig = status => {
+                    switch (status) {
+                        case '164797574082125':
+                            return {
+                                backgroundColor: 'var(--light-green)',
+                                color: 'var(--primary-green)',
+                                contant: 'New'
+                            };
+                        case '5959341154465084': //Requested
+                            return {
+                                backgroundColor: 'var(--light-blue)',
+                                color: 'var(--primary-blue)',
+                                contant: 'Requested'
+                            };
+                        case '1804482322306061':
+                            return {
+                                backgroundColor: 'var(--light-orange)',
+                                color: 'var(--primary-orange)',
+                                contant: 'Submitted'
+                            };
+                        // case 'Out of Stock':
+                        //   return {
+                        //     backgroundColor: 'var(--light-red)',
+                        //     color: 'var(--primary-red)',
+                        //     contant: 'Out of Stock'
+                        //   };
+                        // case 'Reserved':
+                        //   return {
+                        //     backgroundColor: 'var(--light-purple)',
+                        //     color: 'var(--primary-purple)',
+                        //     contant: 'Reserved'
+                        //   };
+                        default:
+                            return {
+                                backgroundColor: 'var(--background-gray)',
+                                color: 'var(--primary-gray)',
+                                contant: 'Unknown'
+                            };
+                    }
+                };
+
+                const config = getStatusConfig(status);
+                return (
+                    <MyBadgeStatus
+                        backgroundColor={config.backgroundColor}
+                        color={config.color}
+                        contant={config.contant}
+                    />
+                );
+            }
+        },
+
         {
             key: 'createdAt',
             title: 'Performed By/At',
@@ -244,13 +505,15 @@ const InventoryTransaction = () => {
                     ' '
                 ),
         },
-
         {
-            key: 'isvalid',
-            title: <Translate>Status</Translate>,
-            flexGrow: 4,
-            render: rowData => (rowData.isvalid ? 'InValid' : 'Valid')
+            key: 'actions',
+            title: <Translate>Actions</Translate>,
+            width: 120,
+            render: rowData => actionsForItems(rowData)
         }
+
+
+
     ];
     // handle manual search from date to date 
     const handleManualSearch = () => {
@@ -279,19 +542,7 @@ const InventoryTransaction = () => {
             setListRequest({ ...listRequest, filters: [] });
         }
     };
-    // handle search of dob
-    const handleDOFSearch = () => {
-        const dob = searchPatient?.dob;
-        setListRequest(
-            addFilterToListRequest(
-                'dob',
-                'match',
-                dob,
-                listRequest
-            )
-        );
-
-    };
+   
     useEffect(() => {
         return () => {
             dispatch(setPageCode(''));
@@ -333,30 +584,17 @@ const InventoryTransaction = () => {
                             filter.fieldName
                         )
                 ),
-                searchPatient.genderLkey && {
-                    fieldName: 'gender_lkey',
+                searchTrans.inventoryTransKey && {
+                    fieldName: 'inventory_trans_key',
                     operator: 'match',
-                    value: searchPatient.genderLkey,
-                },
-                searchPatient.documentTypeLkey && {
-                    fieldName: 'document_type_lkey',
-                    operator: 'match',
-                    value: searchPatient.documentTypeLkey,
-                },
-                insurancePatient.insuranceProviderLkey && {
-                    fieldName: 'insurance_provider_lkey',
-                    operator: 'match',
-                    value: insurancePatient.insuranceProviderLkey,
+                    value:  searchTrans.inventoryTransKey ,
                 },
             ].filter(Boolean),
         }));
-    }, [searchPatient.genderLkey, searchPatient.documentTypeLkey, insurancePatient.insuranceProviderLkey]);
+    }, [ searchTrans.inventoryTransKey]);
     useEffect(() => {
         handleManualSearch();
     }, [dateFilter]);
-    useEffect(() => {
-        handleDOFSearch();
-    }, [searchPatient?.dob]);
 
     const divContent = (
         <div style={{ display: 'flex' }}>
@@ -370,12 +608,12 @@ const InventoryTransaction = () => {
     return (
         <div className='container-div'>
             {/* {productKey === null && ( */}
-                <div className='field-btn-div'>
-                    <Form layout='inline' fluid>
-                        <MyInput
-                            column
-                            fieldLabel="From Date"
-                            fieldType="date"
+            <div className='field-btn-div'>
+                <Form layout='inline' fluid>
+                    <MyInput
+                        column
+                        fieldLabel="From Date"
+                        fieldType="date"
                         fieldName="fromDate"
                         record={dateFilter}
                         setRecord={setDateFilter}
@@ -392,8 +630,8 @@ const InventoryTransaction = () => {
                         column
                         fieldLabel="Transaction ID"
                         fieldName="transactionId"
-                        record={searchPatient}
-                        setRecord={setSearchPatient}
+                        record={searchTrans}
+                        setRecord={setSearchTrans}
                     />
                     <MyInput
                         column
@@ -403,15 +641,15 @@ const InventoryTransaction = () => {
                         selectData={[]}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        record={searchPatient}
-                        setRecord={setSearchPatient}
+                        record={searchTrans}
+                        setRecord={setSearchTrans}
                     />
                     <MyInput
                         column
                         fieldLabel="code"
                         fieldName="transactionId"
-                        record={searchPatient}
-                        setRecord={setSearchPatient}
+                        record={searchTrans}
+                        setRecord={setSearchTrans}
                     />
                     <MyInput
                         column
@@ -421,8 +659,8 @@ const InventoryTransaction = () => {
                         selectData={[]}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        record={searchPatient}
-                        setRecord={setSearchPatient}
+                        record={searchTrans}
+                        setRecord={setSearchTrans}
                     />
                     <MyInput
                         column
@@ -432,15 +670,15 @@ const InventoryTransaction = () => {
                         selectData={[]}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        record={insurancePatient}
-                        setRecord={setInsurancePatient}
+                        record={searchTrans}
+                        setRecord={setSearchTrans}
                     />
                 </Form>
                 <div className='bt-right-group'>
                     <div className='btns-group'>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />} ></MyButton>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} >Clear</MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => setOpen(true)}>Add Transaction</MyButton>
+                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => { setOpen(true), setInventoryTransaction({ ...newApInventoryTransaction }) }}>Add Transaction</MyButton>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileExport} />} >Export to Xsl</MyButton>
                     </div>
                 </div>
@@ -449,13 +687,20 @@ const InventoryTransaction = () => {
             <MyTable
                 data={inventoryTransProductListResponse?.object ?? []}
                 columns={columns}
-                height={800}
-                loading={false}
+                height={1000}
+                loading={isLoading || isFetching}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             />
             <AddEditTransaction open={open} setOpen={setOpen} transaction={inventoryTransaction} setTransaction={setInventoryTransaction} refetch={refetchTransProduct} refetchAttachmentList={refetchTransAttachment} />
+             {dataDetails()}
+             
         </div>
 
     );
 };
 
-export default InventoryTransaction;
+export default InventoryTransaction;                        
