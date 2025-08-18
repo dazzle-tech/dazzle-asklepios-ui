@@ -22,7 +22,7 @@ import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
-import { Checkbox, Divider, SelectPicker } from 'rsuite';
+import { Checkbox, Divider, Form, SelectPicker } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
@@ -32,7 +32,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
+import MyInput from '@/components/MyInput';
+import UrgencyButton from './UrgencyButton';
 const DrugOrder = props => {
   const location = useLocation();
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
@@ -199,7 +200,6 @@ const DrugOrder = props => {
         ...orders?.object?.find(order => order.key === drugKey),
         saveDraft: true
       }).then(() => {
-        dispatch(notify({ msg: 'Saved Draft successfully', type: 'success' }));
         setIsDraft(true);
       });
     } catch (error) {
@@ -593,14 +593,58 @@ const DrugOrder = props => {
             }}
           />
         </div>
-
+        <div className="icon-style">
+          <FaPills size={18} />
+        </div>
+        <div>
+          <div className="prescripton-word-style">Order</div>
+          <div className="prescripton-number-style">
+            {orders?.object?.find(order => order.key === drugKey)?.drugorderId || '_'}
+          </div>
+        </div>
         <div
           className={clsx('bt-right', {
             'disabled-panel': edit
           })}
         >
-          <MyButton prefixIcon={() => <PlusIcon />} onClick={handleSaveOrder} disabled={isdraft}>
-            New Order
+          <Form fluid>
+            <MyInput
+              fieldName=""
+              fieldType="select"
+              selectData={[]}
+              placeholder="Pharmacy"
+              selectDataLabel="label"
+              selectDataValue="key"
+              record={{}}
+              setRecord={''}
+            />
+          </Form>
+          <UrgencyButton />
+          <MyButton>Validate With</MyButton>
+          <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
+          <MyButton
+            prefixIcon={() => <PlusIcon />}
+            onClick={async () => {
+              try {
+                await saveDraft();
+
+                await handleSaveOrder();
+
+                handleCleare();
+                setOpenDetailsModel(true);
+              } catch (error) {
+                dispatch(notify({ msg: 'Failed to complete actions', type: 'error' }));
+              }
+            }}
+          >
+            Add Medication
+          </MyButton>
+          <MyButton
+            prefixIcon={() => <BlockIcon />}
+            onClick={() => setOpenCancellationReasonModel(true)}
+            disabled={orderMedication.statusLvalue?.lovDisplayVale !== 'New'}
+          >
+            <Translate>Cancel</Translate>
           </MyButton>
           <MyButton
             prefixIcon={() => <CheckIcon />}
@@ -612,37 +656,8 @@ const DrugOrder = props => {
                 : true
             }
           >
-            Submit Order
+            Sign & Submit Order
           </MyButton>
-          {!isdraft && (
-            <MyButton
-              onClick={saveDraft}
-              prefixIcon={() => <DocPassIcon />}
-              disabled={
-                drugKey
-                  ? orders?.object?.find(order => order.key === drugKey)?.statusLkey ===
-                    '1804482322306061'
-                  : true
-              }
-            >
-              Save draft
-            </MyButton>
-          )}
-          {isdraft && (
-            <MyButton
-              appearance="ghost"
-              onClick={cancleDraft}
-              prefixIcon={() => <DocPassIcon />}
-              disabled={
-                drugKey
-                  ? orders?.object?.find(order => order.key === drugKey)?.statusLkey ===
-                    '1804482322306061'
-                  : true
-              }
-            >
-              Cancle draft
-            </MyButton>
-          )}
         </div>
       </div>
 
@@ -650,44 +665,7 @@ const DrugOrder = props => {
 
       <div className="mid-container-p ">
         <div className="bt-div">
-          <div className="icon-style">
-            <FaPills size={18} />
-          </div>
-          <div>
-            <div className="prescripton-word-style">Order</div>
-            <div className="prescripton-number-style">
-              {orders?.object?.find(order => order.key === drugKey)?.drugorderId || '_'}
-            </div>
-          </div>
-
           <div className="bt-right">
-            <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
-            <MyButton
-              disabled={
-                !edit
-                  ? drugKey
-                    ? orders?.object?.find(order => order.key === drugKey)?.statusLkey ===
-                      '1804482322306061'
-                    : true
-                  : true
-              }
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => {
-                setOpenDetailsModel(true);
-                handleCleare();
-                setOpenToAdd(true);
-              }}
-            >
-              Add Medication
-            </MyButton>
-            <MyButton
-              prefixIcon={() => <BlockIcon />}
-              onClick={() => setOpenCancellationReasonModel(true)}
-              disabled={orderMedication.statusLvalue?.lovDisplayVale !== 'New'}
-            >
-              <Translate> Cancle</Translate>
-            </MyButton>
-
             <Checkbox
               checked={!showCanceled}
               onChange={() => {
