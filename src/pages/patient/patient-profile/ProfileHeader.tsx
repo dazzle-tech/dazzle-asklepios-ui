@@ -5,21 +5,21 @@ import { faBroom, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { calculateAgeFormat } from '@/utils';
 import { useFetchAttachmentQuery, useUploadMutation } from '@/services/attachmentService';
-import { AvatarGroup, Avatar, Whisper, Tooltip, Form, Stack, } from 'rsuite';
+import { AvatarGroup, Avatar, Whisper, Tooltip, Form, Stack } from 'rsuite';
 import { Icon } from '@rsuite/icons';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import MyButton from '@/components/MyButton/MyButton';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import { useAppDispatch } from '@/hooks';
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 interface ProfileHeaderProps {
   localPatient: ApPatient;
   handleSave: () => void;
   handleClear: () => void;
   setVisitHistoryModel: (value: boolean) => void;
-  validationResult: any
+  validationResult: any;
   setQuickAppointmentModel: (value: boolean) => void;
   setRefetchAttachmentList: (value: boolean) => void;
 }
@@ -30,7 +30,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setVisitHistoryModel,
   setQuickAppointmentModel,
   setRefetchAttachmentList,
-  validationResult }) => {
+  validationResult
+}) => {
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
@@ -64,7 +65,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         formData: formData,
         type: 'PATIENT_PROFILE_PICTURE',
         refKey: localPatient?.key,
-        details: "Profile Picture",
+        details: 'Profile Picture',
         accessType: '',
         createdBy: authSlice.user.key,
         patientKey: localPatient?.key
@@ -79,9 +80,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
   // Handle quick appointment
   const handleNewVisit = () => {
-
     setQuickAppointmentModel(true);
-
   };
   // Effects for patient image
   React.useEffect(() => {
@@ -104,11 +103,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   return (
     <Stack>
       <Stack.Item grow={1}>
-        <Form
-          layout="inline"
-          fluid
-          className='profile-header'
-        >
+        <Form layout="inline" fluid className="profile-header">
           <AvatarGroup spacing={6} className="avatar-card-parent">
             <input
               type="file"
@@ -128,29 +123,27 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
               }
               alt={localPatient?.fullName}
-              className='avatar-image'
+              className="avatar-image"
             />
-            <div className='avatar-container'>
-              <span className='patient-name'>
+            <div className="avatar-container">
+              <span className="patient-name">
                 {localPatient?.firstName} {localPatient?.lastName}
               </span>
-              <div className='patient-info'>
+              <div className="patient-info">
                 {localPatient.key != undefined && <FaUser />}
                 {
-                  genderLovQueryResponse?.object?.find(
-                    (item) => item.key === localPatient.genderLkey
-                  )?.lovDisplayVale
+                  genderLovQueryResponse?.object?.find(item => item.key === localPatient.genderLkey)
+                    ?.lovDisplayVale
                 }
                 {localPatient.key !== undefined && calculateAgeFormat(localPatient.dob) && ','}
-                {localPatient.dob && `${calculateAgeFormat(localPatient.dob)} old`}              </div>
-              <span className='patient-mrn'>
+                {localPatient.dob && `${calculateAgeFormat(localPatient.dob)} old`}{' '}
+              </div>
+              <span className="patient-mrn">
                 {localPatient.key != undefined && `# `}
                 {localPatient?.patientMrn}
               </span>
             </div>
-            <div
-              className='status-icons-container'
-            >
+            <div className="status-icons-container">
               {localPatient.key && (
                 <Whisper
                   placement="top"
@@ -162,15 +155,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </Tooltip>
                   }
                 >
-                  <div
-                    className='status-icon'
-                  >
-                    {!localPatient.verified && (
-                      <Icon color="red" as={VscUnverified} />
-                    )}
-                    {localPatient.verified && (
-                      <Icon color="green" as={VscVerified} />
-                    )}
+                  <div className="status-icon">
+                    {!localPatient.verified && <Icon color="red" as={VscUnverified} />}
+                    {localPatient.verified && <Icon color="green" as={VscVerified} />}
                   </div>
                 </Whisper>
               )}
@@ -181,45 +168,42 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   trigger="hover"
                   speaker={
                     <Tooltip>
-                      {localPatient.incompletePatient
-                        ? 'Incomplete Patient'
-                        : 'Complete Patient'}
+                      {localPatient.incompletePatient ? 'Incomplete Patient' : 'Complete Patient'}
                     </Tooltip>
                   }
                 >
-                  <div
-                    className='status-icon'
-                  >
-                    {localPatient.incompletePatient && (
-                      <Icon color="red" as={VscUnverified} />
-                    )}
-                    {!localPatient.incompletePatient && (
-                      <Icon color="green" as={VscVerified} />
-                    )}
+                  <div className="status-icon">
+                    {localPatient.incompletePatient && <Icon color="red" as={VscUnverified} />}
+                    {!localPatient.incompletePatient && <Icon color="green" as={VscVerified} />}
                   </div>
                 </Whisper>
               )}
             </div>
           </AvatarGroup>
-          <Form fluid layout='inline'>
+          <Form fluid layout="inline">
+                        <MyButton>Print Patient Label</MyButton>
+            <MyButton>Scan Document</MyButton>
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               onClick={handleSave}
-            >Save</MyButton>
-            <MyButton
-              prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-              onClick={handleClear}
-            >Clear</MyButton>
+            >
+              Save
+            </MyButton>
+            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
+              Clear
+            </MyButton>
+
+
             <MyButton
               appearance="ghost"
               disabled={localPatient.key === undefined}
               onClick={() => setVisitHistoryModel(true)}
-            >Visit History</MyButton>
-            <MyButton
-              appearance="ghost"
-              disabled={!localPatient.key}
-              onClick={handleNewVisit}
-            >Quick Appointment</MyButton>
+            >
+              Visit History
+            </MyButton>
+            <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
+              Quick Appointment
+            </MyButton>
             <AdministrativeWarningsModal
               localPatient={localPatient}
               validationResult={validationResult}

@@ -7,11 +7,13 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import SearchIcon from '@rsuite/icons/Search';
+import { Checkbox } from 'rsuite';
 import { faPeopleRoof } from '@fortawesome/free-solid-svg-icons';
 import { useSavePatientRelationMutation } from '@/services/patientService';
 import { useAppDispatch } from '@/hooks';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import PatientSearch from './PatientSearch';
+import './style.less';
 const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation, setSelectedPatientRelation, refetch }) => {
     const [patientSearchTarget, setPatientSearchTarget] = useState('primary'); // primary, relation, etc..
     const [searchResultVisible, setSearchResultVisible] = useState(false);
@@ -45,6 +47,8 @@ const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation,
         }
     }, [savePatientRelationMutation]);
     //MyModal Content
+const [isNextOfKin, setIsNextOfKin] = useState(false);
+
     const modalContent = (
         <Form fluid className='patient-realition-container'>
             <MyInput
@@ -84,8 +88,42 @@ const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation,
                     </InputGroup.Button>
                 </InputGroup>
             </Form.Group>
+            <Form.Group>
+                <div className='check-box-next-of-kim-position'>
+  <Checkbox
+    checked={isNextOfKin}
+    onChange={(_, checked) => setIsNextOfKin(checked)}
+  >
+    Next of Kin
+  </Checkbox></div>
+</Form.Group>
+
+{isNextOfKin && (
+  <>
+    <MyInput
+      width={300}
+      fieldLabel="Email"
+      fieldType="text"
+      fieldName="email"
+      record={selectedPatientRelation}
+      setRecord={setSelectedPatientRelation}
+      required
+    />
+    <MyInput
+      width={300}
+      fieldLabel="Phone Number"
+      fieldType="text"
+      fieldName="phone"
+      record={selectedPatientRelation}
+      setRecord={setSelectedPatientRelation}
+      required
+    />
+  </>
+)}
+
         </Form>
     );
+
     return (
         <>
             <PatientSearch selectedPatientRelation={selectedPatientRelation} setSelectedPatientRelation={setSelectedPatientRelation} searchResultVisible={searchResultVisible} setSearchResultVisible={setSearchResultVisible} patientSearchTarget={patientSearchTarget} setPatientSearchTarget={setPatientSearchTarget} />
