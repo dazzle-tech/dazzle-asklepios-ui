@@ -19,6 +19,7 @@ import { usePatientListByRoleCandidateMutation, useSavePatientMutation } from '@
 import clsx from 'clsx';
 import { useLazyGetCandidatesByDepartmentKeyQuery } from '@/services/setupService';
 import PatientDuplicate from './patientsDuplicate';
+import MyButton from '@/components/MyButton/MyButton';
 
 const { getHeight } = DOMHelper;
 
@@ -160,7 +161,8 @@ return (
           expanded: expand
         })}
       >
-        <ProfileHeader
+
+                <ProfileHeader
           localPatient={localPatient}
           handleSave={handleSave}
           handleClear={handleClear}
@@ -169,6 +171,12 @@ return (
           validationResult={validationResult}
           setRefetchAttachmentList={setRefetchAttachmentList}
         />
+            <div className='header-buttons-patient-profile'>
+
+        <MyButton>Print Patient Label</MyButton>
+                <MyButton>Scan Document</MyButton>
+
+            </div>
 
         <ProfileTabs
           localPatient={localPatient}
