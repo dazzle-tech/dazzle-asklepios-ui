@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ApPatient } from '@/types/model-types';
 import { Form, ButtonToolbar, Button } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import PostalCodeModal from './postal-code-details/PostalCodeModal';
 import { Icon } from '@rsuite/icons';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery, useGetLovValuesByCodeAndParentQuery } from '@/services/setupService';
@@ -15,6 +18,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
+  
 }) => {
   // Fetch LOV data for various fields
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
@@ -23,6 +27,9 @@ const AddressTab: React.FC<AddressTabProps> = ({
     parentValueKey: localPatient.countryLkey
   });
 
+  const [showModal, setShowModal] = useState(false);
+
+  
   return (
     <Form layout="inline" fluid>
       <div>
@@ -84,14 +91,29 @@ const AddressTab: React.FC<AddressTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
       />
-      <MyInput
-        vr={validationResult}
-        column
+  <MyInput
         fieldLabel="Postal/ZIP code"
         fieldName="postalCode"
         record={localPatient}
         setRecord={setLocalPatient}
+        rightAddon={
+          <span onClick={() => setShowModal(true)} style={{ cursor: 'pointer' }}>
+            <FontAwesomeIcon icon={faSearch} />
+          </span>
+        }
       />
+
+         <PostalCodeModal
+        open={showModal}
+        setOpen={setShowModal}
+        onSelect={(selectedPostalCode) => {
+          setLocalPatient((prev) => ({
+            ...prev,
+            postalCode: selectedPostalCode
+          }));
+        }}
+      />
+
       <MyInput
         vr={validationResult}
         column
