@@ -17,7 +17,7 @@ import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import { faFileCsv } from '@fortawesome/free-solid-svg-icons';
+import { faFileCsv,faPrint } from '@fortawesome/free-solid-svg-icons';
 import ReactDOMServer from 'react-dom/server';
 import MyButton from '@/components/MyButton/MyButton';
 const FacilityPatientList = () => {
@@ -324,6 +324,9 @@ const FacilityPatientList = () => {
             <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>Clear</MyButton>
             <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileCsv} />}>
               Export to Xsl
+            </MyButton>
+            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}>
+              Print Card
             </MyButton>
           </div>
         </div>

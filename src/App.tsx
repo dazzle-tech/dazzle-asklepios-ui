@@ -132,6 +132,7 @@ import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/Purcha
 import PurchasingRequisition from './pages/purchasing-requisition/PurchasingRequisition';
 import ListOfRequisition from './pages/list-of-requisition';
 import ERWaitingList from './pages/encounter/ER-triage/ERWaitingList';
+import ERDashboards from './pages/encounter/ER-triage/Er-dashboard/ERDashboard';
 import ViewTriage from './pages/encounter/ER-triage/ViewTriage';
 import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
@@ -323,6 +324,7 @@ const App = () => {
               <Route path="information-desk" element={<FacilityPatientList />} />
               <Route path="ER-start-triage" element={<ERStartTriage />} />
               <Route path="ER-triage" element={<ERTriage />} />
+              <Route path="ER-dashboard" element={<ERDashboards />} />
               <Route path="ER-waiting-list" element={<ERWaitingList />} />
               <Route path="view-triage" element={<ViewTriage />} />
               <Route path="quick-visit" element={<QuickVisit />} />
