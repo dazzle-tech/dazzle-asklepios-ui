@@ -85,6 +85,7 @@ const AddEditBrandMedication = ({
   // Fetch Generic Medication Lov  list response
   const { data: GenericMedicationLovQueryResponse } =
     useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
+  const { data: categoryCostLovQueryResponse } = useGetLovValuesByCodeQuery('MED_COST_CATEGORIES');
   // Fetch doseage Form Lov  list response
   const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
   // Fetch med Rout Lov  list response
@@ -556,6 +557,23 @@ const AddEditBrandMedication = ({
                 />
               </Col>
             </Row>
+              <Row>
+              <Col md={12}>
+                   <MyInput
+                  width="100%"
+                  fieldName="costCategoryLkey"
+                  fieldType="select"
+                  selectData={categoryCostLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={genericMedication}
+                  setRecord={setGenericMedication}
+                  menuMaxHeight={250}
+                />
+              </Col>
+              <Col md={12}>
+              </Col>
+            </Row>
           </Form>
         );
       case 1:
@@ -590,7 +608,6 @@ const AddEditBrandMedication = ({
                       color="var(--deep-blue)"
                       onClick={() => {
                         setUomGroupOpen(true);
-                        setChildStep(1);
                       }}
                       width="109px"
                     >
@@ -712,19 +729,16 @@ const AddEditBrandMedication = ({
             />
           </Form>
         );
-      case 1:
-        return (  
-             <AddEditUom open={uomGroupOpen} setOpen={setUomGroupOpen} uom={uomGroup} setUom={setUomGroup} width={width} />
-        );
       }
   };
   return (
+    <>
     <ChildModal
       open={open}
       setOpen={setOpen}
-      showChild={ childStep == 1 ?  uomGroupOpen : openAddEditActiveIngredientsPopup}
-      setShowChild={childStep == 1 ? setUomGroupOpen : setOpenAddEditActiveIngredientsPopup}
-      childTitle={childStep == 1 ? "New/Edit UOM" : "New/Edit Active Ingredients"}
+      showChild={openAddEditActiveIngredientsPopup}
+      setShowChild={ setOpenAddEditActiveIngredientsPopup}
+      childTitle={"New/Edit Active Ingredients"}
       title={genericMedication?.key ? 'Edit Brand Medication' : 'New Brand Medication'}
       mainContent={conjureFormContent}
       childContent={conjureFormChildContent}
@@ -753,6 +767,9 @@ const AddEditBrandMedication = ({
       ]}
       mainSize="sm"
     />
+      <AddEditUom open={uomGroupOpen} setOpen={setUomGroupOpen} uom={uomGroup} setUom={setUomGroup} width={width} />
+    </>
+    
   );
 };
 export default AddEditBrandMedication;
