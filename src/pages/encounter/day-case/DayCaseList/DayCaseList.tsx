@@ -418,6 +418,16 @@ const DayCaseList = () => {
             dispatch(hideSystemLoader());
         };
     }, [isLoading, isFetching, dispatch]);
+    useEffect(() => {
+        const divContent = (
+            <div style={{ display: 'flex' }}>
+                <h5> DayCase List</h5>
+            </div>
+        );
+        const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+        dispatch(setPageCode('P_DayCaseEncounters'));
+        dispatch(setDivContent(divContentHTML));
+    }, [dispatch]);
 
     return (
         <Panel>
