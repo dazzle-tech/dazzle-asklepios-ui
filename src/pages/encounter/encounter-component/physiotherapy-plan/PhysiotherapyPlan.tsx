@@ -643,6 +643,7 @@ const Physiotherapy = () => {
         title="Initiate Physiotherapy Plan"
         size="80vw"
         bodyheight="75vh"
+        hideActionBtn={true}
         content={initiatePlanContent}
         steps={[{ title: 'Treatment Plan', icon: <FontAwesomeIcon icon={faBullseye} /> }]}
         footerButtons={
