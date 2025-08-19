@@ -224,6 +224,11 @@
   border-bottom: none;
 }
 
+
+.tests-table tr:hover {
+  background-color: #f5f5f5;
+}
+
 .tests-container {
   position: fixed;
   bottom: 0;
@@ -239,6 +244,39 @@
 
 .main-content {
   margin-bottom: 200px;
+}
+
+.tests-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+
+.tests-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  padding: 15px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.main-content {
+  margin-bottom: 200px;
+}
+
+.tests-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .tests-table {
@@ -295,4 +333,44 @@
   border: 1px solid #ccc;
   padding: 10px;
   border-radius: 6px;
+}
+
+.medication-form-row {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: flex-start; /* يخليهم على نفس الخط */
+  flex-wrap: wrap; /* ينزلوا سطر جديد لو الشاشة صغيرة */
+}
+
+.search-wrapper {
+  margin-top: 22px;
+  min-width: 150px;
+}
+.button-wrapper {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+}
+.medication-form-flex {
+  gap: 12px; /* مسافة بين الحقول */
+}
+
+.input-search-p .rs-input-group.rs-input-group-inside {
+  width: 150px !important;
+}
+.medication-form-row .rs-col {
+  padding: 0;
+}
+.button-wrapper-p {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+}
+.margin-n {
+  margin-bottom: 8px !important;
+}
+.font-style-s{
+  
 }
