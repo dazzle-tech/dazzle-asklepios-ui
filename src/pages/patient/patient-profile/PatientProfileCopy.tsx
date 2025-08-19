@@ -54,20 +54,30 @@ const PatientProfile = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
   // Handle save patient
-const handleSave = async () => {
-  try {
-    
-    const { data: candidateData } = await trigger(authSlice.user.departmentKey);
+  const handleSave = async () => {
+    try {
 
-    if (localPatient.key == undefined) {
-      const Response = await patientListByRoleCandidate({
-        patient: localPatient,
-        role: candidateData?.object // بدل candidate?.object
-      }).unwrap();
+      const { data: candidateData } = await trigger(authSlice.user.departmentKey);
 
-      if (Response.extraNumeric > 0) {
-        setPatientList(Response?.object);
-        setOpenPatientsDuplicateModal(true);
+      if (localPatient.key == undefined) {
+        const Response = await patientListByRoleCandidate({
+          patient: localPatient,
+          role: candidateData?.object // بدل candidate?.object
+        }).unwrap();
+
+        if (Response.extraNumeric > 0) {
+          setPatientList(Response?.object);
+          setOpenPatientsDuplicateModal(true);
+        } else {
+          await savePatient({
+            ...localPatient,
+            incompletePatient: false,
+            unknownPatient: false
+          }).unwrap();
+
+          setRefetchData(true);
+          dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+        }
       } else {
         await savePatient({
           ...localPatient,
@@ -78,150 +88,150 @@ const handleSave = async () => {
         setRefetchData(true);
         dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
       }
-    } else {
-      await savePatient({
-        ...localPatient,
-        incompletePatient: false,
-        unknownPatient: false
-      }).unwrap();
-
-      setRefetchData(true);
-      dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+    } catch (error) {
+      console.log(error);
     }
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-
-// Handle clear patient data
-const handleClear = () => {
-  setLocalPatient({
-    ...newApPatient,
-    documentCountryLkey: null,
-    documentTypeLkey: null,
-    specialCourtesyLkey: null,
-    genderLkey: null,
-    maritalStatusLkey: null,
-    nationalityLkey: null,
-    primaryLanguageLkey: null,
-    religionLkey: null,
-    ethnicityLkey: null,
-    occupationLkey: null,
-    emergencyContactRelationLkey: null,
-    countryLkey: null,
-    stateProvinceRegionLkey: null,
-    cityLkey: null,
-    patientClassLkey: null,
-    securityAccessLevelLkey: null,
-    responsiblePartyLkey: null,
-    educationalLevelLkey: null,
-    preferredContactLkey: null,
-    roleLkey: null
-  });
-  setValidationResult(undefined);
-  dispatch(setPatient(null));
-  dispatch(setEncounter(null));
-};
-
-// Effects
-useEffect(() => {
-  dispatch(setPageCode('Patient_Registration'));
-  dispatch(setDivContent(divContentHTML));
-  dispatch(setPatient({ ...newApPatient }));
-
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent('  '));
   };
-}, [location.pathname, dispatch]);
 
-useEffect(() => {
-  if (propsData && propsData.patient) {
-    setLocalPatient(propsData.patient);
-  }
-}, [propsData]);
 
-useEffect(() => {
-  if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
-    setLocalPatient(savePatientMutation.data);
-    dispatch(setPatient(savePatientMutation.data));
+  // Handle clear patient data
+  const handleClear = () => {
+    setLocalPatient({
+      ...newApPatient,
+      documentCountryLkey: null,
+      documentTypeLkey: null,
+      specialCourtesyLkey: null,
+      genderLkey: null,
+      maritalStatusLkey: null,
+      nationalityLkey: null,
+      primaryLanguageLkey: null,
+      religionLkey: null,
+      ethnicityLkey: null,
+      occupationLkey: null,
+      emergencyContactRelationLkey: null,
+      countryLkey: null,
+      stateProvinceRegionLkey: null,
+      cityLkey: null,
+      patientClassLkey: null,
+      securityAccessLevelLkey: null,
+      responsiblePartyLkey: null,
+      educationalLevelLkey: null,
+      preferredContactLkey: null,
+      roleLkey: null
+    });
     setValidationResult(undefined);
-  } else if (savePatientMutation && savePatientMutation.status === 'rejected') {
-    setValidationResult(savePatientMutation.error.data.validationResult);
-  }
-}, [savePatientMutation]);
+    dispatch(setPatient(null));
+    dispatch(setEncounter(null));
+  };
 
-return (
-  <>
-    <div className="patient-profile-container">
-      <Panel
-        bordered
-        className={clsx('patient-profile-info', {
-          expanded: expand
-        })}
-      >
+  // Effects
+  useEffect(() => {
+    dispatch(setPageCode('Patient_Registration'));
+    dispatch(setDivContent(divContentHTML));
+    dispatch(setPatient({ ...newApPatient }));
 
-                <ProfileHeader
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+
+  useEffect(() => {
+    if (propsData && propsData.patient) {
+      setLocalPatient(propsData.patient);
+    }
+  }, [propsData]);
+
+  useEffect(() => {
+    if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
+      setLocalPatient(savePatientMutation.data);
+      dispatch(setPatient(savePatientMutation.data));
+      setValidationResult(undefined);
+    } else if (savePatientMutation && savePatientMutation.status === 'rejected') {
+      setValidationResult(savePatientMutation.error.data.validationResult);
+    }
+  }, [savePatientMutation]);
+  useEffect(() => {
+    dispatch(setPageCode('Patient_Registration'));
+    dispatch(setDivContent(divContentHTML));
+    dispatch(setPatient({ ...newApPatient }));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+
+  return (
+    <>
+      <div className="patient-profile-container">
+        <Panel
+          bordered
+          className={clsx('patient-profile-info', {
+            expanded: expand
+          })}
+        >
+
+          <ProfileHeader
+            localPatient={localPatient}
+            handleSave={handleSave}
+            handleClear={handleClear}
+            setVisitHistoryModel={setVisitHistoryModel}
+            setQuickAppointmentModel={setQuickAppointmentModel}
+            validationResult={validationResult}
+            setRefetchAttachmentList={setRefetchAttachmentList}
+          />
+
+          <ProfileTabs
+            localPatient={localPatient}
+            setLocalPatient={setLocalPatient}
+            validationResult={validationResult}
+            setRefetchAttachmentList={setRefetchAttachmentList}
+            refetchAttachmentList={refetchAttachmentList}
+
+          />
+        </Panel>
+
+        <ProfileSidebar
+          expand={expand}
+          setExpand={setExpand}
+          windowHeight={windowHeight}
+          setLocalPatient={setLocalPatient}
+          refetchData={refetchData}
+          setRefetchData={setRefetchData}
+        />
+      </div>
+
+      {quickAppointmentModel && (
+        <PatientQuickAppointment
+          quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
-          handleSave={handleSave}
-          handleClear={handleClear}
+          setQuickAppointmentModel={setQuickAppointmentModel}
+          localVisit={localVisit}
+        />
+      )}
+
+      {visitHistoryModel && (
+        <PatientVisitHistory
+          visitHistoryModel={visitHistoryModel}
+          quickAppointmentModel={quickAppointmentModel}
+          localPatient={localPatient}
           setVisitHistoryModel={setVisitHistoryModel}
           setQuickAppointmentModel={setQuickAppointmentModel}
-          validationResult={validationResult}
-          setRefetchAttachmentList={setRefetchAttachmentList}
         />
-
-        <ProfileTabs
-          localPatient={localPatient}
-          setLocalPatient={setLocalPatient}
-          validationResult={validationResult}
-          setRefetchAttachmentList={setRefetchAttachmentList}
-          refetchAttachmentList={refetchAttachmentList}
-
-        />
-      </Panel>
-
-      <ProfileSidebar
-        expand={expand}
-        setExpand={setExpand}
-        windowHeight={windowHeight}
-        setLocalPatient={setLocalPatient}
-        refetchData={refetchData}
-        setRefetchData={setRefetchData}
-      />
-    </div>
-
-    {quickAppointmentModel && (
-      <PatientQuickAppointment
-        quickAppointmentModel={quickAppointmentModel}
-        localPatient={localPatient}
-        setQuickAppointmentModel={setQuickAppointmentModel}
-        localVisit={localVisit}
-      />
-    )}
-
-    {visitHistoryModel && (
-      <PatientVisitHistory
-        visitHistoryModel={visitHistoryModel}
-        quickAppointmentModel={quickAppointmentModel}
-        localPatient={localPatient}
-        setVisitHistoryModel={setVisitHistoryModel}
-        setQuickAppointmentModel={setQuickAppointmentModel}
-      />
-    )}
-    <PatientDuplicate open={openPatientsDuplicateModal} setOpen={setOpenPatientsDuplicateModal}
-      list={patientList}
-      setlocalPatient={setLocalPatient}
-      handleSave={() => savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
-        .unwrap()
-        .then(() => {
-          setRefetchData(true);
-          dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-          setOpenPatientsDuplicateModal(false);
-        })} />
-  </>
-);
+      )}
+      <PatientDuplicate open={openPatientsDuplicateModal} setOpen={setOpenPatientsDuplicateModal}
+        list={patientList}
+        setlocalPatient={setLocalPatient}
+        handleSave={() => savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
+          .unwrap()
+          .then(() => {
+            setRefetchData(true);
+            dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+            setOpenPatientsDuplicateModal(false);
+          })} />
+    </>
+  );
 };
 
 export default PatientProfile;

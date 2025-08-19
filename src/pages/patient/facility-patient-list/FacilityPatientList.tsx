@@ -172,7 +172,7 @@ const FacilityPatientList = () => {
   const dispatch = useDispatch();
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <h5>Facility Patients List</h5>
+      <h5>Information Desk</h5>
     </div>
   );
   // page header setup

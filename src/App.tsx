@@ -320,7 +320,7 @@ const App = () => {
               <Route path="tele-consultation-screen" element={<TeleconsultationScreen />} />
               <Route path="start-tele-consultation" element={<StartTeleConsultation />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
-              <Route path="facility-patient-list" element={<FacilityPatientList />} />
+              <Route path="information-desk" element={<FacilityPatientList />} />
               <Route path="ER-start-triage" element={<ERStartTriage />} />
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="ER-waiting-list" element={<ERWaitingList />} />
