@@ -169,6 +169,21 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
             setPatientTemporaryDischarge({ ...newApPatientTemporaryDischarge });
         }
     }, [open]);
+    useEffect(() => {
+    if (departmentKey) {
+        setListRequest(prev => ({
+            ...prev,
+            filters: [
+                {
+                    fieldName: 'department_key',
+                    operator: 'match',
+                    value: departmentKey
+                }
+            ]
+        }));
+    }
+}, [departmentKey]);
+    console.log("dep---->", departmentKey)
     return (
         <>
             <MyModal
