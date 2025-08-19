@@ -545,10 +545,10 @@ const Physiotherapy = () => {
               {/* Attachments section */}
               <Section
                 title={
-                  <div>
+                  <>
                     <FontAwesomeIcon icon={faPaperclip} className="font-small" />
                     <p className="font-small">Attachments</p>
-                  </div>
+                  </>
                 }
                 content={
                   <PatientAttachment
@@ -662,7 +662,6 @@ const Physiotherapy = () => {
         attachmentSource={{ key: 'physiotherapy-plan' }}
         attatchmentType="PHYSIOTHERAPY"
         patientKey="patient-123"
-        onSuccess={() => console.log('Attachment uploaded successfully')}
       />
     </div>
   );

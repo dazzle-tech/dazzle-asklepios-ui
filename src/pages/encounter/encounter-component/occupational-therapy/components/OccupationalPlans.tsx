@@ -81,7 +81,7 @@ const OccupationalPlans = () => {
       return (
         <div className="plan-form-container">
           <Form fluid>
-            {/* Sections for treatment goals and physiotherapy plan details */}
+            {/* Sections for treatment goals and Occupational plan details */}
             <div className="section-column">
               {/* Treatment Goals */}
               <Section
@@ -130,12 +130,12 @@ const OccupationalPlans = () => {
                   </>
                 }
               />
-              {/* Physiotherapy Plan Details */}
+              {/* Occupational Plan Details */}
               <Section
                 title={
                   <>
                     <FontAwesomeIcon icon={faClipboardList} className="font-small" />
-                    <p className="font-small">Physiotherapy Plan Details</p>
+                    <p className="font-small">Occupational Plan Details</p>
                   </>
                 }
                 content={
@@ -340,10 +340,11 @@ const OccupationalPlans = () => {
               {/* Attachments section */}
               <Section
                 title={
-                  <div>
+                  <>
                     <FontAwesomeIcon icon={faPaperclip} className="font-small" />
                     <p className="font-small">Attachments</p>
-                  </div>
+                  </>
+                  
                 }
                 content={
                   <PatientAttachment
@@ -563,11 +564,12 @@ const OccupationalPlans = () => {
       <MyModal
         open={initiatePlanModalOpen}
         setOpen={setInitiatePlanModalOpen}
-        title="Initiate Physiotherapy Plan"
+        title="Initiate Occupational Plan"
         size="80vw"
         bodyheight="75vh"
         content={initiatePlanContent}
         steps={[{ title: 'Treatment Plan', icon: <FontAwesomeIcon icon={faBullseye} /> }]}
+        hideActionBtn = {true}
         footerButtons={
           <div className="modal-footer-buttons">
             <MyButton appearance="subtle" onClick={handleSaveDraft}>
