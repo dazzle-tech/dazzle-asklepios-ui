@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Panel } from 'rsuite';
+import { Panel, Tabs } from 'rsuite';
 import {
   useGetLovValuesByCodeQuery,
   useGetProductQuery,
@@ -25,6 +25,16 @@ import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
 import AddEditProduct from './AddEditProduct';
 import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds } from '@/utils';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { Box } from '@mui/material';
+import { Tab, TabList, TabPanel } from 'react-tabs';
+import ChartTab from '@/pages/encounter/dental-screen/tabs/DentalChartTab';
+import BasicInf from './BasicInf';
+import MaintenanceInformation from './MaintenanceInformation';
+import UomGroup from './UOMGroup';
+import InventoryAttributes from './InventoryAttributes';
+import RegulSafty from './RegulSafty';
+import FinancCostInfo from './FinancCostInfo';
 
 const ProductSetup = () => {
   const dispatch = useAppDispatch();
@@ -36,10 +46,15 @@ const ProductSetup = () => {
   const [stateOfDeleteModal, setStateOfDeleteModal] = useState<string>('delete');
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [UnitListRequest, setUnitListRequest] = useState<ListRequest>({
-     ...initialListRequest ,
-    });
+    ...initialListRequest,
+  });
   const { data: UnitListResponse, refetch: unitRefetch } = useGetUomGroupsUnitsQuery(listRequest);
-  const { data: UOMLovResponseData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  const [uomListRequest, setUomListRequest] = useState<ListRequest>({ ...initialListRequest });
+
+  const {
+    data: uomGroupsUnitsListResponse,
+    refetch: refetchUomGroupsUnit,
+  } = useGetUomGroupsUnitsQuery(uomListRequest);
   // Save product 
   const [saveProduct, saveProductMutation] = useSaveProductMutation();
 
@@ -215,22 +230,55 @@ const ProductSetup = () => {
       key: 'baseUomKey',
       title: <Translate>Base UOM</Translate>,
       flexGrow: 4,
-    render: rowData =>  (
-            <span>
-              {conjureValueBasedOnKeyFromList(
-                UOMLovResponseData?.object ?? [],
-                rowData.baseUomKey,
-                'lovDisplayVale'
-              )}
-            </span>
-          )
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            uomGroupsUnitsListResponse?.object ?? [],
+            rowData.baseUomKey,
+            'units'
+          )}
+        </span>
+      )
     },
     {
       key: 'inventoryTypeLkey',
       title: <Translate>Lot Type</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.inventoryTypeLvalue ? rowData.inventoryTypeLvalue.lovDisplayVale : rowData.inventoryTypeLkey
+      width: 100,
+      render: (rowData, index) => {
+        const status = rowData?.inventoryTypeLkey || 'Unknown';
+
+        const getStatusConfig = status => {
+          switch (status) {
+            case '5274928776446580'://Lot
+              return {
+                backgroundColor: 'var(--light-green)',
+                color: 'var(--primary-green)',
+                contant: 'LOT'
+              };
+            case '5274937762090202': //Serial
+              return {
+                backgroundColor: 'var(--light-purple)',
+                color: 'var(--primary-purple)',
+                contant: 'Serial'
+              };
+            default:
+              return {
+                backgroundColor: 'var(--background-gray)',
+                color: 'var(--primary-gray)',
+                contant: 'Unknown'
+              };
+          }
+        };
+
+        const config = getStatusConfig(status);
+        return (
+          <MyBadgeStatus
+            backgroundColor={config.backgroundColor}
+            color={config.color}
+            contant={config.contant}
+          />
+        );
+      }
     },
     {
       key: 'createdBy',
@@ -238,7 +286,7 @@ const ProductSetup = () => {
       flexGrow: 4,
       render: (rowData: any) => {
         return rowData?.createdBy ?? "";
-    }
+      }
     },
     {
       key: 'createdAt',
@@ -254,15 +302,15 @@ const ProductSetup = () => {
       flexGrow: 4,
       render: (rowData: any) => {
         return rowData?.updatedBy ?? "";
-    }
+      }
     },
     {
       key: 'updatedAt',
       title: <Translate>Updated  At</Translate>,
       flexGrow: 4,
-        render: (rowData: any) => {
-              return rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : '';
-            }
+      render: (rowData: any) => {
+        return rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : '';
+      }
     },
     {
       key: 'icons',
@@ -271,6 +319,33 @@ const ProductSetup = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
+
+  const tabContant = () => {
+    return (
+      <Box>
+                <Tabs defaultActiveKey="1" appearance="subtle" >
+            <Tabs.Tab eventKey="1" title="Bacis Info">
+                 <BasicInf product={product} setProduct={setProduct} disabled={true}/>
+            </Tabs.Tab>
+            <Tabs.Tab eventKey="2" title="Maintenance Information">
+               <MaintenanceInformation product={product} setProduct={setProduct} disabled={true}/>
+            </Tabs.Tab>
+            <Tabs.Tab eventKey="3" title="UOM">
+                 <UomGroup product={product} setProduct={setProduct} disabled={true}/>
+            </Tabs.Tab>
+             <Tabs.Tab eventKey="4" title="Inventory Attributes">
+                  <InventoryAttributes product={product} setProduct={setProduct} disabled={true}/>
+            </Tabs.Tab>
+              <Tabs.Tab eventKey="5" title="Regulatory & Safety">
+                  <RegulSafty product={product} setProduct={setProduct} disabled={true}/>
+            </Tabs.Tab>
+             <Tabs.Tab eventKey="6" title="Financial & Costing Information">
+                   <FinancCostInfo product={product} setProduct={setProduct} disabled={true} />
+            </Tabs.Tab>
+        </Tabs>
+      </Box>
+    );
+  }
   return (
     <Panel>
       <div className="container-of-add-new-button">
@@ -317,6 +392,7 @@ const ProductSetup = () => {
         }
         actionType={stateOfDeleteModal}
       />
+      {product.key && tabContant()}
     </Panel>
   );
 };

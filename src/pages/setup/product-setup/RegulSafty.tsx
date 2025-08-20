@@ -4,7 +4,7 @@ import { Form } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
-const RegulSafty = ({ product, setProduct }) => {
+const RegulSafty = ({ product, setProduct, disabled }) => {
 
     const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
     const [filteredResourcesList, setFilteredResourcesList] = useState([]);
@@ -21,6 +21,7 @@ const RegulSafty = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
 
                 <MyInput
@@ -29,6 +30,7 @@ const RegulSafty = ({ product, setProduct }) => {
                     fieldName="hazardousTag"
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
 
                 <MyInput
@@ -38,6 +40,7 @@ const RegulSafty = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
             </Form>
         </>
