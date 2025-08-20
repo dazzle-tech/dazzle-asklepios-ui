@@ -1,6 +1,6 @@
 // TeleScreenOperationRequests.tsx
 import React, { useState } from 'react';
-import Details from '../../encounter-component/operation-request/request/Details'; // أو وين ما كان موجود فعليًا
+import Details from '../../encounter-component/operation-request/request/Details';
 import { newApOperationRequests } from '@/types/model-types-constructor';
 
 const TeleScreenOperationRequests = ({ open, onClose, patient, encounter, refetch }) => {
