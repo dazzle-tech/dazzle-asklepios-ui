@@ -89,8 +89,8 @@ const Frame = (props: FrameProps) => {
       >
         <Sidenav.Header></Sidenav.Header>
         <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
-          <Sidenav.Body style={navBodyStyle}>
-            <Nav>
+          <Sidenav.Body style={navBodyStyle} >
+            <Nav className="sidebar-scroll">
               {expand && (
                 <img
                   onClick={() => {
@@ -131,12 +131,12 @@ const Frame = (props: FrameProps) => {
                   return (
                     <Nav.Menu
                       className={`nav-menu ${expand ? 'expanded' : ''}`}
-                      expanded
                       key={item.eventKey}
-                      placement="rightStart"
+                      placement={expand ? 'bottomStart' : 'rightStart'}
                       trigger="hover"
                       {...rest}
                     >
+
                       {/* This inline style cannot be removed because it uses dynamic variables */}
                       <div
                         style={{

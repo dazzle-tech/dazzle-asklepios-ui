@@ -356,3 +356,86 @@
 .sidebar-unexpanded .rs-nav-item.rs-dropdown-toggle {
   height: 40px;             
 }
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  z-index: 10;
+  overflow: hidden; 
+}
+.sidebar .rs-sidenav {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.sidebar .rs-sidenav-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.sidebar .sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none; 
+  scrollbar-width: none;    
+}
+.sidebar .sidebar-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.rs-sidenav .rs-nav .rs-dropdown-menu::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.rs-sidenav .rs-nav .rs-dropdown-menu {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.rs-sidenav, 
+.rs-sidenav-body {
+  overflow: visible; 
+}
+.rs-sidenav .rs-nav .rs-dropdown-menu::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.sidebar .sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.sidebar .sidebar-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.rs-sidenav .rs-nav .rs-dropdown-menu {
+  position: fixed !important;  
+  top: auto !important;         
+  left: 50px !important;      
+  z-index: 100000 !important;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  border-radius: 8px;
+  max-height: 70vh;            
+  overflow-y: auto;
+  transform: translateY(-20px);
+}
+
+.rs-sidenav-collapse-in .rs-dropdown .rs-dropdown-menu {
+    display: none !important; 
+    position: static !important;
+    float: none !important;
+    box-shadow: none !important;
+    animation-name: none !important;
+    padding: 10px !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+}
+.rs-sidenav-collapse-in .rs-dropdown:hover .rs-dropdown-menu {
+    display: block !important;
+}
