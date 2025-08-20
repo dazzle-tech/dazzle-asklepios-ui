@@ -17,6 +17,8 @@ import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import {
   useDeactiveActiveResourceMutation,
   useGetResourcesQuery,
+  useGetResourcesWithAvailabilityQuery,
+  useGetResourceWithDetailsQuery,
   useSaveResourcesMutation
 } from '@/services/appointmentService';
 import ReactDOMServer from 'react-dom/server';
@@ -27,22 +29,26 @@ import MyButton from '@/components/MyButton/MyButton';
 import AvailabilityTimeModal from './AvailabilityTimeModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
+import NewAvailabilityTimeModal from './NewAvailabilityTimeModal';
 const Resources = () => {
   const dispatch = useAppDispatch();
   const [resources, setResources] = useState<ApResources>({ ...newApResources });
+  const [selectedResources, setSelectedResources] = useState<ApResources>({ ...newApResources });
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [popupOpen, setPopupOpen] = useState(false); // to open add/edit resource pop up
   const [openAvailabilityTimePopup, setOpenAvailabilityTimePopup] = useState<boolean>(false); // to open availability time pop up
   const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
   const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>('delete');
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+
+ 
   // save resource
   const [saveResources, saveResourcesMutation] = useSaveResourcesMutation();
   // Fetch resources list response
-  const {data: resourcesListResponse, refetch: refetchResources, isFetching} = useGetResourcesQuery(listRequest);
+  const { data: resourcesListResponse, refetch: refetchResources, isFetching } = useGetResourcesQuery(listRequest);
   // Deactivate resource
   const [deactiveResource] = useDeactiveActiveResourceMutation();
-   // Header page setUp
+  // Header page setUp
   const divContent = (
     <div className='page-title'>
       <h5>Resources</h5>
@@ -51,6 +57,18 @@ const Resources = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Resources'));
   dispatch(setDivContent(divContentHTML));
+  const { data: resourcesWithAvailabilityResponse } = useGetResourcesWithAvailabilityQuery(listRequest);
+  const { data: resourceAvailabilityDetails, error, isLoading } = useGetResourceWithDetailsQuery(selectedResources.key || '', {
+    skip: !selectedResources.key
+  });
+
+
+  useEffect(() => {
+    if (openAvailabilityTimePopup) {
+      console.log("resourceAvailabilityDetails:", resourceAvailabilityDetails);
+    }
+  }, [ openAvailabilityTimePopup]);
+
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -62,8 +80,7 @@ const Resources = () => {
     { label: 'Resource Name', value: 'resourceName' },
     { label: 'Status', value: 'isValid' },
     { label: 'Creation Date', value: 'createdAt' },
-    { label: 'createdBy', value: 'Created By' }
-  ];
+  ]
   // Class name of selected row
   const isSelected = rowData => {
     if (rowData && resources && rowData.key === resources.key) {
@@ -72,11 +89,11 @@ const Resources = () => {
   };
 
   // Effects
-   useEffect(() => {
-        const handleResize = () => setWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (saveResourcesMutation.data) {
@@ -164,7 +181,7 @@ const Resources = () => {
   //handle Reactivate
   const handleReactiveResource = () => {
     setOpenConfirmDeleteUserModal(false);
-    const updatedResource = {...resources, deletedAt: null};
+    const updatedResource = { ...resources, deletedAt: null };
     saveResources(updatedResource)
       .unwrap()
       .then(() => {
@@ -267,7 +284,7 @@ const Resources = () => {
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApResources) => (
     <div className="container-of-icons">
-       {/* display availability time when click on this icon */}
+      {/* display availability time when click on this icon */}
       <IoSettingsSharp
         className="icons-style"
         title="Availability Time"
@@ -275,6 +292,7 @@ const Resources = () => {
         fill="var(--primary-gray)"
         onClick={() => {
           setOpenAvailabilityTimePopup(true);
+          setSelectedResources(rowData);
         }}
       />
       {/* open edit resource when click on this icon */}
@@ -311,7 +329,7 @@ const Resources = () => {
       )}
     </div>
   );
-  
+ 
   return (
     <Panel>
       <div className="container-of-add-new-button">
@@ -332,7 +350,7 @@ const Resources = () => {
         rowClassName={isSelected}
         filters={filters()}
         onRowClick={rowData => {
-          setResources(rowData);
+          setSelectedResources(rowData);
         }}
         sortColumn={listRequest.sortBy}
         sortType={listRequest.sortType}
@@ -345,10 +363,15 @@ const Resources = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-      <AvailabilityTimeModal
+      {/* <AvailabilityTimeModal
         open={openAvailabilityTimePopup}
         setOpen={setOpenAvailabilityTimePopup}
         resource={resources}
+      /> */}
+      <NewAvailabilityTimeModal
+        open={openAvailabilityTimePopup}
+        setOpen={setOpenAvailabilityTimePopup}
+        selectedResource={resourceAvailabilityDetails}
       />
       <AddEditResources
         open={popupOpen}

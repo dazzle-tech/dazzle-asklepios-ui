@@ -29,7 +29,7 @@ import { faCross, faFileCsv, faPaperPlane, faPlus, faPrint, faUserPlus } from "@
 import { hideSystemLoader, notify, showSystemLoader } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import AppointmentActionsModal from "./AppointmentActionsModal";
-import { useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetAppointmentsQuery } from '@/services/appointmentService';
+import { useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetAppointmentsQuery, useGetResourcesWithAvailabilityQuery } from '@/services/appointmentService';
 import MyInput from '@/components/MyInput';
 import Resources from "@/pages/appointment/resources";
 import CalenderSimpleIcon from '@rsuite/icons/CalenderSimple';
@@ -69,6 +69,14 @@ const ScheduleScreen = () => {
     const [finalAppointments, setFinalAppointments] = useState();
 
 
+    const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+    const { data: resourcesWithAvailabilityResponse } = useGetResourcesWithAvailabilityQuery(listRequest);
+
+    useEffect(() => {
+        console.log(resourcesWithAvailabilityResponse?.object);
+    }, [resourcesWithAvailabilityResponse]);
+
+
     useEffect(() => {
         return () => {
             dispatch(setPageCode(''));
@@ -102,13 +110,13 @@ const ScheduleScreen = () => {
 
 
     useEffect(() => {
-        if (appointments?.object && resourcesListResponse?.object) {
+        if (appointments?.object && resourcesWithAvailabilityResponse?.object) {
             const today = new Date();
 
             const formattedAppointments = appointments.object.map((appointment) => {
                 const dob = new Date(appointment?.patient?.dob);
 
-                const resource = resourcesListResponse.object.find(
+                const resource = resourcesWithAvailabilityResponse.object.find(
                     (item) => item.key === appointment.resourceKey
                 );
 
@@ -129,15 +137,14 @@ const ScheduleScreen = () => {
             });
             setAppointmentsData(formattedAppointments);
         }
-    }, [appointments, resourcesListResponse, currentView]);
-    const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
-    const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
+    }, [appointments, resourcesWithAvailabilityResponse, currentView]);
+
     useEffect(() => {
         if (selectedResourceType) {
-            const filtered = resourcesListResponse.object.filter(resource => resource.resourceTypeLkey === selectedResourceType?.resourcesType);
+            const filtered = resourcesWithAvailabilityResponse.object.filter(resource => resource.resourceTypeLkey === selectedResourceType?.resourcesType);
             setFilteredResourcesList(filtered);
         }
-    }, [resourcesListResponse, selectedResourceType?.resourcesType]);
+    }, [resourcesWithAvailabilityResponse, selectedResourceType?.resourcesType]);
     ;
     useEffect(() => {
         if (selectedSlot) {
@@ -402,8 +409,6 @@ const ScheduleScreen = () => {
 
                     break;
                 }
-
-
                 default:
                     break;
             }
@@ -443,7 +448,7 @@ const ScheduleScreen = () => {
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("PREV")}><ArrowLeftLineIcon /></button>
                     <Button
                         onClick={handleClickCalinderSearch}
-                        style={{ display: showDatePicker ? "none" : "inline-block", border: "none", height: "35px" }} 
+                        style={{ display: showDatePicker ? "none" : "inline-block", border: "none", height: "35px" }}
                     >
                         <strong>{label}</strong>
                     </Button>
@@ -462,7 +467,7 @@ const ScheduleScreen = () => {
                             format={currentView === "month" ? "yyyy-MM" : "yyyy-MM-dd"}
                             onClose={() => {
                                 console.log("DatePicker closed");
-                                setShowDatePicker(false);  // إخفاء الـ DatePicker عند إغلاقه
+                                setShowDatePicker(false);
                             }}
                         />
                     )}
@@ -487,7 +492,6 @@ const ScheduleScreen = () => {
         }
     };
 
-    const [value, setValue] = useState(new Date());
     const [currentCalView, setCurrentCalView] = useState("month"); // Force "month" view
     const divElement = useSelector((state: RootState) => state.div?.divElement);
     const divContent = (
@@ -507,13 +511,6 @@ const ScheduleScreen = () => {
             dispatch(setDivContent("  "));
         };
     }, [location.pathname, dispatch])
-
-
-    const practitioners = [
-        { resourceId: 1, name: "Dr. Ahmad", avatar: "/avatars/ahmad.jpg" },
-        { resourceId: 2, name: "Dr. Sara", avatar: "/avatars/sara.jpg" },
-        { resourceId: 3, name: "Dr. Tarek", avatar: "/avatars/tarek.jpg" },
-    ];
 
 
 
@@ -562,7 +559,7 @@ const ScheduleScreen = () => {
     minTime.setHours(8, 0, 0);
 
     useEffect(() => {
-        console.log(filteredResourcesList.length > 0 ? filteredResourcesList : !selectedResourceType?.resourcesType ? resourcesListResponse?.object : [])
+        console.log(filteredResourcesList.length > 0 ? filteredResourcesList : !selectedResourceType?.resourcesType ? resourcesWithAvailabilityResponse?.object : [])
     }, [filteredResourcesList, selectedResourceType])
 
     useEffect(() => {
@@ -584,11 +581,11 @@ const ScheduleScreen = () => {
         }
 
         if (!finalList || finalList.length === 0) {
-            finalList = resourcesListResponse?.object || [];
+            finalList = resourcesWithAvailabilityResponse?.object || [];
         }
 
         setFinalResourceLit(finalList);
-    }, [selectedResources, selectedResourceType, filteredResourcesList, resourcesListResponse]);
+    }, [selectedResources, selectedResourceType, filteredResourcesList, resourcesWithAvailabilityResponse]);
 
 
 
@@ -631,7 +628,7 @@ const ScheduleScreen = () => {
                 borderRadius: "8px",
 
             }}>
-                <div style={{marginRight:"5px"}} >
+                <div style={{ marginRight: "5px" }} >
                     <Avatar size="xs" circle
                         src={
                             image ? `data:${content_type};base64,${image}`
@@ -655,11 +652,6 @@ const ScheduleScreen = () => {
 
     const normalize = (str) => str?.toLowerCase().replace(/[-_]/g, ' ').trim();
 
-    const getBackgroundColor = (status) => {
-        const item = legendItems.find(i => normalize(i.label) === normalize(status));
-        return item ? hexToRgba(item.color, 0.1) : '#ffffff';
-    };
-
     const eventPropGetter = () => (
         {
             style: {
@@ -670,11 +662,43 @@ const ScheduleScreen = () => {
             }
 
 
-
-
         });
 
 
+
+const slotPropGetter = (date, resourceId) => {
+    const defaultShadedStyle = {
+        backgroundColor: '#eee',
+        pointerEvents: 'none',
+        color: '#ccc',
+    };
+
+    const currentResource = resourcesWithAvailabilityResponse?.object.find(
+        r => r.key === resourceId
+    );
+
+    if (currentResource && currentResource.availability) {
+        const currentDay = date.getDay();
+        const currentMinutes = date.getHours() * 60 + date.getMinutes();
+        const isAvailable = currentResource?.availability?.some(period => {
+            const startMinutes = period.startHour * 60 + (period.startMinute || 0);
+            const endMinutes = period.endHour * 60 + (period.endMinute || 0);
+
+            const match = (
+                period.dayOfWeek === currentDay &&
+                currentMinutes >= startMinutes &&
+                currentMinutes < endMinutes
+            );
+            return match;
+        }) || false;
+
+        if (isAvailable) {
+            return {};
+        }
+    }
+
+    return { style: defaultShadedStyle };
+};
     return (
         <div   >
             <div style={{
@@ -687,11 +711,6 @@ const ScheduleScreen = () => {
             }} className="inline-two-four-container">
 
                 <Panel className="left-section" bordered>
-
-
-                    {/* <RsuiteCalendar compact style={{ width: 320, height: 320 }} /> */}
-
-
                     <p style={{ color: 'gray', fontSize: "14px" }}>FILTERS</p>
 
                     <div >
@@ -754,7 +773,7 @@ const ScheduleScreen = () => {
                                 width={"11.5vw"}
                                 column
                                 fieldLabel="Resources"
-                                selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !selectedResourceType?.resourcesType ? resourcesListResponse?.object : []}
+                                selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !selectedResourceType?.resourcesType ? resourcesWithAvailabilityResponse?.object : []}
                                 fieldType="multyPicker"
                                 selectDataLabel="resourceName"
                                 selectDataValue="key"
@@ -871,17 +890,22 @@ const ScheduleScreen = () => {
                         style={{ height: "73vh" }}
                         min={minTime}
                         {...(currentView === "day" && {
-                            resources: finalResourceLit,
+                            resources: finalResourceLit ?? [],
                             resourceIdAccessor: "key",
                             resourceTitleAccessor: "resourceName",
                         })}
                         formats={formats}
+
                         localizer={localizer}
-                        events={finalAppointments}
+                        events={
+                            // finalAppointments
+                            []
+                        }
                         step={60}
                         timeslots={1}
                         onSelectSlot={(slotInfo) => {
                             console.log("Selected slot:", slotInfo);
+                            setSelectedSlot(slotInfo);
                             setModalOpen(true);
                         }}
                         startAccessor="start"
@@ -900,8 +924,10 @@ const ScheduleScreen = () => {
                             resourceHeader: ResourceHeader,
                             event: MyEvent,
                         }}
+                        slotPropGetter={currentView == "day" ? slotPropGetter : null}
 
                     />
+
 
                     <Stack style={{ margin: "0.4%" }}>
                         {legendItems.map(({ label, color }) => (
@@ -933,6 +959,7 @@ const ScheduleScreen = () => {
                 facility={selectedFacility}
                 onSave={refitchAppointments}
                 showOnly={showAppointmentOnly}
+                selectedSlot={selectedSlot}
             />
             <AppointmentActionsModal viewAppointment={() => handleViewAppointment()} editAppointment={() => handleChangeAppointment()} onStatusChange={refitchAppointments} isActionsModalOpen={ActionsModalOpen}
                 onActionsModalClose={() => { setSelectedEvent(null), setActionsModalOpen(false), setAppointment(null) }}
