@@ -72,7 +72,7 @@ const PreviousRoundsHistory = ({ patient, encounter, isConfirmedRound, setIsConf
 
     // Effects
     useEffect(() => {
-        setDoctorRoundListRequest((prev) => ({
+        setDoctorRoundListRequest(prev => ({
             ...prev,
             filters: [
                 {

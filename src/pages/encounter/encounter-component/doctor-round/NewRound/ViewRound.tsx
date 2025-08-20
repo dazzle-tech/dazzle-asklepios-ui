@@ -23,6 +23,7 @@ import Assessment from './Assessment';
 import PatientSummary from './PatientSummary';
 import NursingReportsSummary from './NursingReportsSummary';
 import PhysicalExamination from './PhysicalExamination';
+import NewRound from './NewRound';
 
 const ViewRound = () => {
   const location = useLocation();
@@ -137,7 +138,6 @@ const ViewRound = () => {
           content={<PhysicalExamination patient={patient} encounter={encounter} edit="" />}
         />
        </Row>
-
     </Form>
     </Row>
   );
