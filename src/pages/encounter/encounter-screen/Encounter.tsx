@@ -40,12 +40,13 @@ import React, { useEffect, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
-import { Col, Divider, Drawer, Form, List, Panel, Row, Text } from 'rsuite';
+import { Col, Divider, Drawer, Form, List, Panel, Row, Text, Tooltip, Whisper } from 'rsuite';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import './styles.less';
 import BackButton from '@/components/BackButton/BackButton';
 import { useGetAppointmentsQuery } from '@/services/appointmentService';
 import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons';
 import {
   faBrain,
   faEarListen,
@@ -65,8 +66,11 @@ import MyInput from '@/components/MyInput';
 import { set } from 'lodash';
 import { FaSearch } from 'react-icons/fa';
 import { faCapsules } from '@fortawesome/free-solid-svg-icons';
-
+import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 const Encounter = () => {
+  // create the action for the Customize Dashboard that we defined it in Patient summary page
+  const [action, setAction] = useState(() => () => {});
+
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -438,220 +442,238 @@ const Encounter = () => {
   }, [location.pathname, dispatch]);
 
   return (
-    <div className="container">
-      <div className="left-box">
-        <Panel>
-          <div className="container-bt">
-            <div className="left">
-              <BackButton onClick={handleGoBack} />
-              <Form fluid>
-                <MyInput
-                  width="100%"
-                  placeholder="Search screens..."
-                  fieldName={'term'}
-                  record={searchTerm}
-                  setRecord={setSearchTerm}
-                  showLabel={false}
-                  enterClick={() => setIsDrawerOpen(true)}
-                  rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                />
-              </Form>
-            </div>
-            <div className="right">
-              <MyButton
-                prefixIcon={() => <BarChartHorizontalIcon />}
-                backgroundColor={'var(--deep-blue)'}
-                onClick={() => {
-                  setIsDrawerOpen(true);
-                }}
-              >
-                Medical Sheets
-              </MyButton>
-              <MyButton
-                disabled={edit}
-                prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
-                onClick={() => {
-                  setModalOpen(true);
-                }}
-              >
-                Create Follow-up
-              </MyButton>
-              <MyButton
-                disabled={propsData?.patient?.hasAllergy ? false : true}
-                backgroundColor={
-                  propsData?.patient?.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'
-                }
-                onClick={OpenAllargyModal}
-                prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
-              >
-                Allergy
-              </MyButton>
-              <MyButton
-                disabled={propsData?.patient?.hasWarning ? false : true}
-                backgroundColor={
-                  propsData?.patient?.hasWarning ? 'var(--primary-orange)' : 'var(--deep-blue)'
-                }
-                onClick={OpenWarningModal}
-                prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
-              >
-                Warning
-              </MyButton>
-              {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
-                !(propsData?.encounter?.resourceTypeLkey === '91084250213000') && (
-                  <MyButton
-                    prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
-                    onClick={() => {
-                      setOpenAdmitModal(true);
-                    }}
-                    appearance="ghost"
-                  >
-                    <Translate>Admit to Inpatient</Translate>
-                  </MyButton>
-                )}
-              {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
+    <ActionContext.Provider value={{ action, setAction }}>
+      <div className="container">
+        <div className="left-box">
+          <Panel>
+            <div className="container-bt">
+              <div className="left">
+                <BackButton onClick={handleGoBack} />
+                <Form fluid>
+                  <MyInput
+                    width="100%"
+                    placeholder="Search screens..."
+                    fieldName={'term'}
+                    record={searchTerm}
+                    setRecord={setSearchTerm}
+                    showLabel={false}
+                    enterClick={() => setIsDrawerOpen(true)}
+                    rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
+                  />
+                </Form>
+              </div>
+              <div className="right">
                 <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={() =>
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
-                      ? setOpenDischargeModal(true)
-                      : handleCompleteEncounter()
-                  }
-                  appearance="ghost"
-                >
-                  <Translate>
-                    {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                    propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
-                      ? 'Discharge'
-                      : 'Complete Visit'}
-                  </Translate>
-                </MyButton>
-              )}
-            </div>
-          </div>
-          <Divider />
-          <Drawer
-            open={isDrawerOpen}
-            onClose={() => setIsDrawerOpen(false)}
-            placement="left"
-            className="drawer-style"
-          >
-            <Drawer.Header>
-              <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
-            </Drawer.Header>
-            <Drawer.Body className="drawer-body">
-              <Form fluid>
-                <Row>
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      placeholder="Search screens..."
-                      fieldName={'term'}
-                      record={searchTerm}
-                      setRecord={setSearchTerm}
-                      showLabel={false}
-                      rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
-                    />
-                  </Col>
-                </Row>
-              </Form>
-
-              <List hover className="drawer-list-style">
-                <List.Item
-                  className="drawer-item return-button"
+                  prefixIcon={() => <BarChartHorizontalIcon />}
+                  backgroundColor={'var(--deep-blue)'}
                   onClick={() => {
-                    const basePath = location.pathname.split('/').slice(0, -1).join('/');
-                    navigate(basePath, { state: location.state });
-                    setIsDrawerOpen(false);
+                    setIsDrawerOpen(true);
                   }}
                 >
-                  <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
-                  <Translate>Dashboard</Translate>
-                </List.Item>
+                  Medical Sheets
+                </MyButton>
+                <MyButton
+                  disabled={edit}
+                  prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
+                  onClick={() => {
+                    setModalOpen(true);
+                  }}
+                >
+                  Create Follow-up
+                </MyButton>
+                <MyButton
+                  disabled={propsData?.patient?.hasAllergy ? false : true}
+                  backgroundColor={
+                    propsData?.patient?.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'
+                  }
+                  onClick={OpenAllargyModal}
+                  prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
+                >
+                  Allergy
+                </MyButton>
+                <MyButton
+                  disabled={propsData?.patient?.hasWarning ? false : true}
+                  backgroundColor={
+                    propsData?.patient?.hasWarning ? 'var(--primary-orange)' : 'var(--deep-blue)'
+                  }
+                  onClick={OpenWarningModal}
+                  prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
+                >
+                  Warning
+                </MyButton>
+                {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
+                  !(propsData?.encounter?.resourceTypeLkey === '91084250213000') && (
+                    <MyButton
+                      prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
+                      onClick={() => {
+                        setOpenAdmitModal(true);
+                      }}
+                      appearance="ghost"
+                    >
+                      <Translate>Admit to Inpatient</Translate>
+                    </MyButton>
+                  )}
+                {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
+                  <MyButton
+                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                    onClick={() =>
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                        ? setOpenDischargeModal(true)
+                        : handleCompleteEncounter()
+                    }
+                    appearance="ghost"
+                  >
+                    <Translate>
+                      {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                        ? 'Discharge'
+                        : 'Complete Visit'}
+                    </Translate>
+                  </MyButton>
+                )}
+                 {/* show this button only on the dashboard page */}
+                {location.pathname == '/encounter' && (
+                  <MyButton
+                    prefixIcon={() => (
+                      <Whisper
+                        trigger="hover"
+                        placement="top"
+                        speaker={<Tooltip>Customize Dashboard</Tooltip>}
+                      >
+                        <FontAwesomeIcon icon={faChartLine} />
+                      </Whisper>
+                    )}
+                    onClick={action}
+                    backgroundColor="#8360BF"
+                  ></MyButton>
+                )}
+              </div>
+            </div>
+            <Divider />
+            <Drawer
+              open={isDrawerOpen}
+              onClose={() => setIsDrawerOpen(false)}
+              placement="left"
+              className="drawer-style"
+            >
+              <Drawer.Header>
+                <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
+              </Drawer.Header>
+              <Drawer.Body className="drawer-body">
+                <Form fluid>
+                  <Row>
+                    <Col md={24}>
+                      <MyInput
+                        width="100%"
+                        placeholder="Search screens..."
+                        fieldName={'term'}
+                        record={searchTerm}
+                        setRecord={setSearchTerm}
+                        showLabel={false}
+                        rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
+                      />
+                    </Col>
+                  </Row>
+                </Form>
 
-                {menuItems
-                  .filter(({ label }) =>
-                    label.toLowerCase().includes(searchTerm.term.toLowerCase())
-                  )
-                  .map(({ key, label, icon, path }) =>
-                    medicalSheet?.object?.[key] ? (
-                      <List.Item
-                        key={key}
-                        className="drawer-item"
-                        onClick={() => {
-                          setIsDrawerOpen(false);
-                          navigate(path, {
-                            state: {
+                <List hover className="drawer-list-style">
+                  <List.Item
+                    className="drawer-item return-button"
+                    onClick={() => {
+                      const basePath = location.pathname.split('/').slice(0, -1).join('/');
+                      navigate(basePath, { state: location.state });
+                      setIsDrawerOpen(false);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
+                    <Translate>Dashboard</Translate>
+                  </List.Item>
+
+                  {menuItems
+                    .filter(({ label }) =>
+                      label.toLowerCase().includes(searchTerm.term.toLowerCase())
+                    )
+                    .map(({ key, label, icon, path }) =>
+                      medicalSheet?.object?.[key] ? (
+                        <List.Item
+                          key={key}
+                          className="drawer-item"
+                          onClick={() => {
+                            setIsDrawerOpen(false);
+                            navigate(path, {
+                              state: {
+                                patient: propsData.patient,
+                                encounter: propsData.encounter,
+                                edit
+                              }
+                            });
+                          }}
+                        >
+                          <Link
+                            to={path}
+                            state={{
                               patient: propsData.patient,
                               encounter: propsData.encounter,
                               edit
-                            }
-                          });
-                        }}
-                      >
-                        <Link
-                          to={path}
-                          state={{
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
-                          }}
-                          style={{ color: 'inherit', textDecoration: 'none' }}
-                        >
-                          <FontAwesomeIcon icon={icon} className="icon" />
-                          <Translate> {label} </Translate>
-                        </Link>
-                      </List.Item>
-                    ) : null
-                  )}
-              </List>
-            </Drawer.Body>
-          </Drawer>
-          <Outlet />
-          {/* {activeContent} Render the selected content */}
-        </Panel>
-        <AdmitToInpatientModal
-          open={openAdmitModal}
-          setOpen={setOpenAdmitModal}
-          encounter={propsData?.encounter}
-        />
-        <AppointmentModal
-          from={'Encounter'}
-          isOpen={modalOpen}
-          onClose={() => {
-            setModalOpen(false), setShowAppointmentOnly(false);
-          }}
-          appointmentData={selectedEvent?.appointmentData}
-          resourceType={selectedResourceType}
-          facility={selectedFacility}
-          onSave={refitchAppointments}
-          showOnly={showAppointmentOnly}
-        />
-      </div>
+                            }}
+                            style={{ color: 'inherit', textDecoration: 'none' }}
+                          >
+                            <FontAwesomeIcon icon={icon} className="icon" />
+                            <Translate> {label} </Translate>
+                          </Link>
+                        </List.Item>
+                      ) : null
+                    )}
+                </List>
+              </Drawer.Body>
+            </Drawer>
+            <Outlet />
+            {/* {activeContent} Render the selected content */}
+          </Panel>
+          <AdmitToInpatientModal
+            open={openAdmitModal}
+            setOpen={setOpenAdmitModal}
+            encounter={propsData?.encounter}
+          />
+          <AppointmentModal
+            from={'Encounter'}
+            isOpen={modalOpen}
+            onClose={() => {
+              setModalOpen(false), setShowAppointmentOnly(false);
+            }}
+            appointmentData={selectedEvent?.appointmentData}
+            resourceType={selectedResourceType}
+            facility={selectedFacility}
+            onSave={refitchAppointments}
+            showOnly={showAppointmentOnly}
+          />
+        </div>
 
-      <div className="right-box">
-        <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
+        <div className="right-box">
+          <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
+        </div>
+        <WarningiesModal
+          open={openWarningModal}
+          setOpen={setOpenWarningModal}
+          patient={propsData.patient}
+        />
+        <AllergiesModal
+          open={openAllargyModal}
+          setOpen={setOpenAllargyModal}
+          patient={propsData.patient}
+        />
+        <EncounterDischarge
+          open={openDischargeModal}
+          setOpen={setOpenDischargeModal}
+          encounter={propsData.encounter}
+        />
       </div>
-      <WarningiesModal
-        open={openWarningModal}
-        setOpen={setOpenWarningModal}
-        patient={propsData.patient}
-      />
-      <AllergiesModal
-        open={openAllargyModal}
-        setOpen={setOpenAllargyModal}
-        patient={propsData.patient}
-      />
-      <EncounterDischarge
-        open={openDischargeModal}
-        setOpen={setOpenDischargeModal}
-        encounter={propsData.encounter}
-      />
-    </div>
+    </ActionContext.Provider>
   );
 };
 
