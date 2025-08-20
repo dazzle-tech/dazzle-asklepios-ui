@@ -6,7 +6,7 @@ import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/se
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
 import Room from '../bed-room-setup';
 import MyLabel from '@/components/MyLabel';
-const MaintenanceInformation = ({ product, setProduct }) => {
+const MaintenanceInformation = ({ product, setProduct, disabled}) => {
 
     const { data: timeUnitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
 
@@ -21,6 +21,7 @@ const MaintenanceInformation = ({ product, setProduct }) => {
                     fieldName="startDate"
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
                 <MyInput
                     column
@@ -30,6 +31,7 @@ const MaintenanceInformation = ({ product, setProduct }) => {
                     fieldName="endDate"
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
                 <div>
                     <MyInput
@@ -39,6 +41,7 @@ const MaintenanceInformation = ({ product, setProduct }) => {
                         fieldType='number'
                         record={product}
                         setRecord={setProduct}
+                        disabled={disabled}
                     />
                     <MyInput
                         fieldLabel="Type"
@@ -50,6 +53,7 @@ const MaintenanceInformation = ({ product, setProduct }) => {
                         record={product}
                         setRecord={setProduct}
                         searchable={false}
+                        disabled={disabled}
                     />
                 </div>
 
@@ -60,6 +64,7 @@ const MaintenanceInformation = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
                 <MyInput
                     fieldLabel="Calibration Required"
@@ -68,6 +73,7 @@ const MaintenanceInformation = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
                 <MyInput
                     fieldLabel="Training Required"
@@ -76,6 +82,7 @@ const MaintenanceInformation = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
             </Form>
         </>

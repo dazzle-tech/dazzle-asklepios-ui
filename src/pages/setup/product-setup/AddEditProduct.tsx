@@ -3,7 +3,7 @@ import MyInput from '@/components/MyInput';
 import { Form, Grid, InputGroup, Row, Stack, Col, Panel, Modal, Button, Divider, Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyButton from '@/components/MyButton/MyButton';
-import { faBan, faBold, faBox, faBoxesPacking, faBoxesStacked, faBroom, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faBold, faBox, faBoxesPacking, faBoxesStacked, faBroom, faCheckDouble, faDiceD6 } from '@fortawesome/free-solid-svg-icons';
 import ChildModal from '@/components/ChildModal';
 import { notify } from '@/utils/uiReducerActions';
 import Translate from '@/components/Translate';
@@ -26,153 +26,252 @@ import InventoryAttributes from './InventoryAttributes';
 import RegulSafty from './RegulSafty';
 import FinancCostInfo from './FinancCostInfo';
 import MaintenanceInformation from './MaintenanceInformation';
+import MyModal from '@/components/MyModal/MyModal';
+import { FaProductHunt } from 'react-icons/fa6';
 
 const AddEditProduct = ({
-    
     open,
     setOpen,
     product,
     setProduct,
     refetch
-})=> {
+}) => {
     const dispatch = useAppDispatch();
     const [uomUnit, setUomUnit] = useState<ApUomGroupsUnits>({
-      ...newApUomGroupsUnits
+        ...newApUomGroupsUnits
     });
 
     const [saveProduct, saveProductMutation] = useSaveProductMutation();
-   
-  
+
+
     const handleSave = () => {
-      const response = saveProduct({
-        ...product,
-      }).unwrap().then(() => {
-        console.log(response)
-        setProduct({ ...response });
-        refetch();
-        dispatch(
-          notify({
-            msg: 'The product Added/Edited successfully ',
-            sev: 'success'
-          })
-        );
-      }).catch((e) => {
-  
-        if (e.status === 422) {
-          console.log("Validation error: Unprocessable Entity", e);
-  
-        } else {
-          console.log("An unexpected error occurred", e);
-          dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-        }
-      });;
-  
+        const response = saveProduct({
+            ...product,
+        }).unwrap().then(() => {
+            console.log(response)
+            setProduct({ ...response });
+            refetch();
+            dispatch(
+                notify({
+                    msg: 'The product Added/Edited successfully ',
+                    sev: 'success'
+                })
+            );
+        }).catch((e) => {
+
+            if (e.status === 422) {
+                console.log("Validation error: Unprocessable Entity", e);
+
+            } else {
+                console.log("An unexpected error occurred", e);
+                dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
+            }
+        });;
+
     };
-  
+
 
     const handleClear = () => {
-      setProduct({
-        ...newApProducts
-      })
-      setOpen(false);
+        setProduct({
+            ...newApProducts
+        })
+        setOpen(false);
     };
-  
-  
-  
+
+     const { data: lotSerialLovQueryResponse } = useGetLovValuesByCodeQuery('LOT_SERIAL');
+    
+      //Modal Content
+        const content = () => (
+            <>
+                <Row gutter={10} className="d">
+                        <Form fluid>
+                            <Col md={12}>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text> Basic Information </Text>
+
+                                        </div>
+                                        <Divider />
+                                        <BasicInf product={product} setProduct={setProduct} disabled={false}/>
+                                    </div>
+                                </Row>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>UMO Group </Text>
+
+                                        </div>
+                                        <Divider />
+                                        <UomGroup product={product} setProduct={setProduct} disabled={false} />
+                                    </div>
+                                </Row>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>Regulatory & Safety</Text>
+
+                                        </div>
+                                        <Divider />
+                                        <RegulSafty product={product} setProduct={setProduct} disabled={false} />
+                                    </div>
+                                </Row>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>Financial & Costing Information </Text>
+
+                                        </div>
+                                        <Divider />
+                                        <div className='container'>
+                                            <FinancCostInfo product={product} setProduct={setProduct} disabled={false}/>
+                                        </div>
+
+                                    </div>
+                                </Row>
+                            </Col>
+                            <Col md={12}>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>Maintenance Information</Text>
+
+                                        </div>
+                                        <Divider />
+                                        <MaintenanceInformation product={product} setProduct={setProduct} disabled={false} />
+                                    </div>
+                                </Row>
+
+                            </Col>
+                            <Col md={12}>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>Inventory Attributes</Text>
+
+                                        </div>
+                                        <Divider />
+                                        <InventoryAttributes product={product} setProduct={setProduct} disabled={false} />
+                                    </div>
+                                </Row>
+                            </Col>
+                        </Form>
+
+
+                    </Row>
+            </>
+        );
+
+
     return (
         <>
-        <Modal size={'lg'} open={open} backdrop="static">
-        <Modal.Header>
-            <Modal.Title>Product Setup</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-        <Row gutter={15} className="d">
-            <Form fluid>
-                     <Col md={12}>
-                    <Row>
-                        <div className='container-form'>
-                            <div className='title-div'>
-                                <Text> Basic Information </Text>
-
-                            </div>
-                            <Divider />
-                            <BasicInf product={product} setProduct={setProduct}/> 
-                        </div>
-                    </Row>
-                    <Row>
-                        <div className='container-form'>
-                            <div className='title-div'>
-                                <Text>UMO Group </Text>
-
-                            </div>
-                            <Divider />
-                            <UomGroup product={product} setProduct={setProduct}/> 
-                        </div>
-                    </Row>
-                    <Row>
-                        <div className='container-form'>
-                            <div className='title-div'>
-                                <Text>Regulatory & Safety</Text>
-
-                            </div>
-                            <Divider />
-                            <RegulSafty product={product} setProduct={setProduct}/>
-                             </div>
-                    </Row>
-                    <Row>
-                        <div className='container-form'>
-                            <div className='title-div'>
-                                <Text>Financial & Costing Information </Text>
-
-                            </div>
-                            <Divider />
-                            <div className='container'>
-                            <FinancCostInfo product={product} setProduct={setProduct} />
-                            </div>
-
-                        </div>
-                    </Row>
-                </Col>
-                <Col md={12}>
-                    <Row>
-                        <div className='container-form'>
-                            <div className='title-div'>
-                                <Text>Maintenance Information</Text>
-
-                            </div>
-                            <Divider /> 
-                            <MaintenanceInformation product={product} setProduct={setProduct}  />
-                            </div>
-                    </Row>
+        <MyModal 
+          open={open}
+                    setOpen={setOpen}
+                    title="Product Setup"
+                    size="lg"
+                    bodyheight="65vh"
+                    content={content}
                    
-                </Col>
-                <Col md={12}>
-                    <Row>
-                        <div className='container-form'>
-                            <div className='title-div'>
-                                <Text>Inventory Attributes</Text>
+                    hideBack={true}
+                    steps={[{ title: "Product Setup", icon: <FontAwesomeIcon icon={faDiceD6} />}]}
+                    actionButtonLabel="Save"
+                    actionButtonFunction={() => handleSave()}
+        
+        />
+{/*             
+            <Modal size={'s'} open={open} backdrop="static">
+                <Modal.Header>
+                    <Modal.Title>Product Setup</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Row gutter={10} className="d">
+                        <Form fluid>
+                            <Col md={12}>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text> Basic Information </Text>
 
-                            </div>
-                            <Divider />
-                            <InventoryAttributes product={product} setProduct={setProduct}/>
-                             </div>
+                                        </div>
+                                        <Divider />
+                                        <BasicInf product={product} setProduct={setProduct} />
+                                    </div>
+                                </Row>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>UMO Group </Text>
+
+                                        </div>
+                                        <Divider />
+                                        <UomGroup product={product} setProduct={setProduct} />
+                                    </div>
+                                </Row>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>Regulatory & Safety</Text>
+
+                                        </div>
+                                        <Divider />
+                                        <RegulSafty product={product} setProduct={setProduct} />
+                                    </div>
+                                </Row>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>Financial & Costing Information </Text>
+
+                                        </div>
+                                        <Divider />
+                                        <div className='container'>
+                                            <FinancCostInfo product={product} setProduct={setProduct} />
+                                        </div>
+
+                                    </div>
+                                </Row>
+                            </Col>
+                            <Col md={12}>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>Maintenance Information</Text>
+
+                                        </div>
+                                        <Divider />
+                                        <MaintenanceInformation product={product} setProduct={setProduct} />
+                                    </div>
+                                </Row>
+
+                            </Col>
+                            <Col md={12}>
+                                <Row>
+                                    <div className='container-form'>
+                                        <div className='title-div'>
+                                            <Text>Inventory Attributes</Text>
+
+                                        </div>
+                                        <Divider />
+                                        <InventoryAttributes product={product} setProduct={setProduct} />
+                                    </div>
+                                </Row>
+                            </Col>
+                        </Form>
+
+
                     </Row>
-                </Col>
-            </Form>
-
-
-        </Row>
-        </Modal.Body>
-        <Modal.Footer>
-            <MyButton appearance="primary" onClick={handleSave}>
-                Save
-            </MyButton>
-            <MyButton appearance="subtle" onClick={handleClear}>
-                Cancel
-            </MyButton>
-        </Modal.Footer>
-    </Modal>
-    </>
+                </Modal.Body>
+                <Modal.Footer>
+                    <MyButton appearance="primary" onClick={handleSave}>
+                        Save
+                    </MyButton>
+                    <MyButton appearance="subtle" onClick={handleClear}>
+                        Cancel
+                    </MyButton>
+                </Modal.Footer>
+            </Modal> */}
+        </>
     );
 };
 

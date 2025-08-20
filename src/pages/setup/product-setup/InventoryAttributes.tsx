@@ -7,7 +7,7 @@ import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuer
 import MyLabel from '@/components/MyLabel';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPerson } from '@fortawesome/free-solid-svg-icons';
-const InventoryAttributes = ({ product, setProduct }) => {
+const InventoryAttributes = ({ product, setProduct , disabled }) => {
 
     const { data: lotSerialLovQueryResponse } = useGetLovValuesByCodeQuery('LOT_SERIAL');
 
@@ -21,6 +21,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
 
                 <MyInput
@@ -30,6 +31,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
                 <MyInput
                     fieldLabel="Serialized Item"
@@ -38,6 +40,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
                 <MyInput
                     fieldLabel="Reusable"
@@ -46,6 +49,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
                 <MyInput
                     fieldLabel="Inventory Type"
@@ -59,6 +63,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                     menuMaxHeight={200}
                     width={400}
                     searchable={false}
+                    disabled={disabled}
                 />
                 <Row className="rows-gap">
                     <Col md={12}>
@@ -70,6 +75,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                             fieldType='number'
                             record={product}
                             setRecord={setProduct}
+                            disabled={disabled}
                         ></MyInput></Col>
                     <Col md={12}>
                         <MyInput
@@ -80,6 +86,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                             fieldType='number'
                             record={product}
                             setRecord={setProduct}
+                            disabled={disabled}
                         ></MyInput></Col>
                 </Row>
                 <MyInput
@@ -88,6 +95,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                     fieldName="erpIntegId"
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
 
             </Form>

@@ -7,7 +7,7 @@ import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuer
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBoxesPacking } from '@fortawesome/free-solid-svg-icons';
-const UomGroup = ({ product, setProduct }) => {
+const UomGroup = ({ product, setProduct, disabled}) => {
 
     const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
     const [listRequest, setListRequest] = useState<ListRequest>({ 
@@ -74,6 +74,7 @@ const UomGroup = ({ product, setProduct }) => {
                     record={product}
                     setRecord={setProduct}
                     searchable={true}
+                    disabled={disabled}
                 />
                 <MyInput
                     fieldLabel="Base UOM"
@@ -85,6 +86,7 @@ const UomGroup = ({ product, setProduct }) => {
                     record={product}
                     setRecord={setProduct}
                     searchable={false}
+                    disabled={disabled}
                 />
                 <MyInput
                     fieldLabel="Dispense UOM"
@@ -96,8 +98,8 @@ const UomGroup = ({ product, setProduct }) => {
                     record={product}
                     setRecord={setProduct}
                     searchable={false}
+                    disabled={disabled}
                 />
-                <br />
                 <MyButton
                     prefixIcon={() => <FontAwesomeIcon icon={faBoxesPacking} />}
                     color="var(--deep-blue)"

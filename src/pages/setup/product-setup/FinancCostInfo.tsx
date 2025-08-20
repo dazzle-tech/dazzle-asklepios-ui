@@ -4,7 +4,7 @@ import { Form } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
-const FinancCostInfo = ({ product, setProduct }) => {
+const FinancCostInfo = ({ product, setProduct, disabled}) => {
 
 
     return (
@@ -17,6 +17,7 @@ const FinancCostInfo = ({ product, setProduct }) => {
                     fieldType="number"
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
 
                 <MyInput
@@ -25,6 +26,7 @@ const FinancCostInfo = ({ product, setProduct }) => {
                     fieldType="number"
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
 
             </Form>

@@ -6,7 +6,7 @@ import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/se
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
 import SearchIcon from '@rsuite/icons/Search';
 import { useGetActiveIngredientQuery, useGetGenericMedicationQuery } from '@/services/medicationsSetupService';
-const BasicInf = ({ product, setProduct }) => {
+const BasicInf = ({ product, setProduct, disabled }) => {
 
     const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -69,6 +69,7 @@ const BasicInf = ({ product, setProduct }) => {
                     menuMaxHeight={200}
                     width={400}
                     searchable={false}
+                    disabled={disabled}
                 />
             </Form>
             {product.typeLkey === '5274597115605262' &&
@@ -86,6 +87,7 @@ const BasicInf = ({ product, setProduct }) => {
                         menuMaxHeight={200}
                         width={480}
                         searchable={true}
+                        disabled={disabled}
                     />
 
                     <MyInput
@@ -120,6 +122,7 @@ const BasicInf = ({ product, setProduct }) => {
                         fieldName="name"
                         record={product}
                         setRecord={setProduct}
+                        disabled={disabled}
                     />
 
                     <MyInput
@@ -127,6 +130,7 @@ const BasicInf = ({ product, setProduct }) => {
                         fieldName="code"
                         record={product}
                         setRecord={setProduct}
+                        disabled={disabled}
                     />
                 </Form>
            )
@@ -141,6 +145,7 @@ const BasicInf = ({ product, setProduct }) => {
                     fieldName="barecode"
                     record={product}
                     setRecord={setProduct}
+                    disabled={disabled}
                 />
             </Form>
         </>
