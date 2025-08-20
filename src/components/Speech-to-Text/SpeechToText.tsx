@@ -14,7 +14,9 @@ const SpeechToText = ({ record, setRecord, fieldName, ...props }) => {
 
   // handle clear textarea
   const handleClear = () => {
+     if (!props.disabled) {
     setRecord({ ...record, [fieldName]: '' });
+     }
   };
 
   // change recording state
@@ -33,7 +35,7 @@ const SpeechToText = ({ record, setRecord, fieldName, ...props }) => {
         <Translate>{fieldLabel}</Translate>
         <div className="container-of-icons-speech-to-text">
           <Whisper placement="top" trigger="hover" speaker={<Tooltip>Clear</Tooltip>}>
-            <FontAwesomeIcon icon={faBroom} className="icons-style" onClick={handleClear} />
+            <FontAwesomeIcon className={props.disabled ? "disabled-icon icons-style" : "icons-style"} icon={faBroom} onClick={handleClear} />
           </Whisper>
 
           <div
@@ -41,7 +43,7 @@ const SpeechToText = ({ record, setRecord, fieldName, ...props }) => {
             onClick={changeRecordingState}
             style={{ position: 'relative' }}
           >
-            <FontAwesomeIcon icon={faMicrophone} />
+            <FontAwesomeIcon icon={faMicrophone} className={props.disabled ? "disabled-icon icons-style" : "active-icon icons-style"} />
             {recording && <span className="pulse-ring"></span>}
           </div>
         </div>

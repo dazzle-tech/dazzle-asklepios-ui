@@ -1,7 +1,9 @@
 import React from 'react';
 import { Form } from 'rsuite';
 import SpeechToText from '@/components/Speech-to-Text';
-const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList }) => {
+const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList, ...props }) => {
+
+ 
   return (
       <Form>
         <SpeechToText
@@ -10,7 +12,7 @@ const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList }) => {
           fieldName="initialNote"
           record={doctorRound}
           setRecord={setDoctorRound}
-          disabled={!doctorRound?.key || (doctorRoundList?.object?.[0]?.initialNote ?? '') !== ''}
+          disabled={!doctorRound?.key || (doctorRoundList?.object?.[0]?.initialNote ?? '') !== '' || props.view}
         />
         <br/>
         <SpeechToText
@@ -19,7 +21,7 @@ const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList }) => {
           fieldName="progressNote"
           record={doctorRound}
           setRecord={setDoctorRound}
-          disabled={!doctorRound?.key}
+          disabled={!doctorRound?.key || props.view}
         />
         <br/>
         <SpeechToText
@@ -28,7 +30,7 @@ const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList }) => {
           fieldName="specialEventNote"
           record={doctorRound}
           setRecord={setDoctorRound}
-          disabled={!doctorRound?.key}
+          disabled={!doctorRound?.key || props.view}
         />
         </Form>
   

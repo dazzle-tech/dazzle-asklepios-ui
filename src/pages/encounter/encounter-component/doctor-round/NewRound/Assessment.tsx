@@ -11,7 +11,8 @@ const Assessment = ({
   doctorRound,
   setDoctorRound,
   recordOfIndicationsDescription,
-  setRecordOfIndicationsDescription
+  setRecordOfIndicationsDescription,
+  ...props
 }) => {
   const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: '' });
   const [secondlistIcdRequest, setSecondListIcdRequest] = useState({ ...initialListRequest });
@@ -76,6 +77,7 @@ const Assessment = ({
               setOpject={setDoctorRound}
               label="Primary Diagnosis"
               fieldName="primaryDiagnosis"
+              disabled={props?.view}
             />
           </Col>
           <Col md={8}>
@@ -85,7 +87,7 @@ const Assessment = ({
               fieldName="clinicalImpression"
               record={doctorRound}
               setRecord={setDoctorRound}
-              disabled={!doctorRound?.key}
+              disabled={!doctorRound?.key || props?.view}
             />
           </Col>
           <Col md={8}>
@@ -99,7 +101,7 @@ const Assessment = ({
               selectDataValue="key"
               record={doctorRound}
               setRecord={setDoctorRound}
-              disabled={!doctorRound?.key}
+              disabled={!doctorRound?.key || props?.view}
               searchable={false}
             />
           </Col>
@@ -113,7 +115,7 @@ const Assessment = ({
               record={recordOfSearch}
               setRecord={setRecordOfSearch}
               rightAddon={<SearchIcon />}
-              disabled={!doctorRound?.key}
+              disabled={!doctorRound?.key || props?.view}
             />
             {recordOfSearch['searchKeyword'] && (
               <Dropdown.Menu className="menu-diagnostic">
@@ -147,7 +149,7 @@ const Assessment = ({
           </Col>
           <Col md={8}>
             <MyInput
-              disabled={!doctorRound?.key}
+              disabled={!doctorRound?.key || props.view}
               fieldType="textarea"
               fieldLabel="Complications Noted"
               record={doctorRound}
@@ -159,7 +161,7 @@ const Assessment = ({
           </Col>
           <Col md={8}>
             <MyInput
-              disabled={!doctorRound?.key}
+              disabled={!doctorRound?.key || props?.view}
               fieldType="textarea"
               record={doctorRound}
               setRecord={setDoctorRound}
@@ -170,7 +172,7 @@ const Assessment = ({
             />
           </Col>
         </Row>
-        <Row className="major-suspected">
+        <Row className="hidden-class">
           <Col>
             <MyInput
               fieldLable="Major"
