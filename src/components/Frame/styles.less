@@ -356,66 +356,86 @@
 .sidebar-unexpanded .rs-nav-item.rs-dropdown-toggle {
   height: 40px;             
 }
-/* السايدناف نفسه */
-/* السايدبار الأساسي */
 .sidebar {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden; /* يمنع scroll جانبي */
+  position: relative;
+  z-index: 10;
+  overflow: hidden; 
 }
-
-/* السايدناف */
 .sidebar .rs-sidenav {
   flex: 1;
   min-height: 0;
   overflow: hidden;
 }
-
-/* جسم السايدناف */
 .sidebar .rs-sidenav-body {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
 }
-
-/* الليستة بس اللي تسكرول */
 .sidebar .sidebar-scroll {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  z-index: 999999999 !important; /* مهم: يمنع أي scroll أفقي */
+  -ms-overflow-style: none; 
+  scrollbar-width: none;    
 }
-
-/* إخفاء scrollbar (اختياري) */
 .sidebar .sidebar-scroll::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
+.rs-sidenav .rs-nav .rs-dropdown-menu::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.rs-sidenav .rs-nav .rs-dropdown-menu {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.rs-sidenav, 
+.rs-sidenav-body {
+  overflow: visible; 
+}
+.rs-sidenav .rs-nav .rs-dropdown-menu::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
 .sidebar .sidebar-scroll {
-  -ms-overflow-style: none; /* IE & Edge */
-  scrollbar-width: none;    /* Firefox */
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.sidebar .sidebar-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.rs-sidenav .rs-nav .rs-dropdown-menu {
+  position: fixed !important;  
+  top: auto !important;         
+  left: 50px !important;      
+  z-index: 100000 !important;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  border-radius: 8px;
+  max-height: 70vh;            
+  overflow-y: auto;
+  transform: translateY(-20px);
 }
 
-/* وقت ما يكون السايدبار مسكر */
-/* وقت السايدبار مسكر */
-.sidebar-unexpanded .rs-nav-item,
-.sidebar-unexpanded .rs-nav-menu {
-  position: relative;
+.rs-sidenav-collapse-in .rs-dropdown .rs-dropdown-menu {
+    display: none !important; 
+    position: static !important;
+    float: none !important;
+    box-shadow: none !important;
+    animation-name: none !important;
+    padding: 10px !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
 }
-
-/* القائمة تطلع بجانب السايدبار */
-// .sidebar-unexpanded .rs-dropdown-menu,
-// .sidebar-unexpanded .rs-nav-menu .rs-nav-menu-collapse {
-//   position: absolute !important;   /* نسبة للـ Nav.Menu */
-//   left: 100%;                      /* يطلع مباشرة يمين السايدبار */
-//   top: 0;                           /* يظل بمحاذاة الأعلى للأيقونة */
-//   min-width: 200px;                 /* عرض مناسب */
-//   background: #fff;
-//   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-//   z-index: 9999 !important;
-// }
-.nav-menu  .rs-dropdown-menu{
-  z-index: 9999999 !important;
+.rs-sidenav-collapse-in .rs-dropdown:hover .rs-dropdown-menu {
+    display: block !important;
 }
