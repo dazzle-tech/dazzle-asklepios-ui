@@ -16,7 +16,7 @@ const TeleScreenOperationRequests = ({ open, onClose, patient, encounter, refetc
       setRequest={setRequest}
       refetch={refetch}
       refetchrequest={() => {}}
-      user={{}} // عدّل حسب الحاجة إذا في `user` فعلي
+      user={{}}
     />
   );
 };

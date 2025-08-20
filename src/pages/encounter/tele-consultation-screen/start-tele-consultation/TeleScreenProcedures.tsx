@@ -9,7 +9,6 @@ const TeleScreenProcedures = ({ open = false, onClose }) => {
   const dummyPatient = { key: '123', name: 'John Doe' };
   const dummyEncounter = { key: '456', editable: true };
 
-  // ✅ Sync with prop when "open" changes
   useEffect(() => {
     setOpenDetailsModal(open);
   }, [open]);
@@ -26,7 +25,7 @@ const TeleScreenProcedures = ({ open = false, onClose }) => {
         setOpenDetailsModal={(val) => {
           setOpenDetailsModal(val);
           if (!val && onClose) {
-            onClose(); // ✅ Notify parent to clean up
+            onClose();
           }
         }}
         proRefetch={() => console.log('Refetch procedures')}

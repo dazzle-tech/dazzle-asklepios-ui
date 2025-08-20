@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import DetailsModal from '../../encounter-component/drug-order/DetailsModal';
 
 const TeleScreenMedicationOrder = ({ open, onClose, patient, encounter, medicRefetch }) => {
-  // هنا تحكم حالة فتح المودال داخل الصفحة نفسها
   const [orderMedication, setOrderMedication] = useState({});
   const [drugKey, setDrugKey] = useState(null);
   const [editing, setEditing] = useState(false);

@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import TransferTestList from '../../encounter-component/diagnostics-order/TransferTestList';
 
-// هنا اللستة مع بيانات الفحوصات
 const dummyTestsList = [
   { key: '1', testName: 'Complete Blood Count (CBC)' },
   { key: '2', testName: 'Blood Glucose' },
@@ -19,13 +18,12 @@ const dummyTestsList = [
 ];
 
 const TeleScreenSelectTests = ({ open, onClose }) => {
-    const [leftItems, setLeftItems] = useState(dummyTestsList); // العناصر المتاحة للاختيار
-    const [selectedTestsList, setSelectedTestsList] = useState([]); // العناصر المختارة
+    const [leftItems, setLeftItems] = useState(dummyTestsList);
+    const [selectedTestsList, setSelectedTestsList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     const handleSaveTests = () => {
         console.log("Selected Tests:", selectedTestsList);
-        // ممكن تخزن أو ترجع البيانات للأب هنا
         onClose();
     };
 
