@@ -6,7 +6,7 @@ import { useGetPractitionersQuery } from '@/services/setupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyButton from '@/components/MyButton/MyButton';
 import CheckIcon from '@rsuite/icons/Check';
-const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNewRound }) => {
+const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNewRound, ...props }) => {
   const [physicanListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -39,7 +39,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             fieldType="datetime"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key}
+            disabled={doctorRound?.key || props?.view}
           />
         </Col>
         <Col xs={32}>
@@ -53,7 +53,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             selectDataValue="key"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key}
+            disabled={doctorRound?.key || props?.view}
           />
         </Col>
         <Col xs={32}>
@@ -67,10 +67,10 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
             selectDataValue="key"
             record={doctorRound}
             setRecord={setDoctorRound}
-            disabled={doctorRound?.key}
+            disabled={doctorRound?.key || props?.view}
           />
         </Col>
-        <Col xs={32}>
+        <Col xs={32} className={props?.view ? "hidden-class" : ""}>
           <div className="search-btn">
             <MyButton
               prefixIcon={() => <CheckIcon />}
@@ -83,7 +83,7 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
           </div>
         </Col>
       </div>
-      <div>{saveAndComplete()}</div>
+      <div className={props?.view ? "hidden-class" : ""}>{saveAndComplete()}</div>
     </Form>
   );
 };
