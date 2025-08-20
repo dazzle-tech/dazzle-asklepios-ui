@@ -87,7 +87,7 @@ case 'Consultation':
   return;
 case 'Operation Requests':
   setShowOperationRequest(true);
-  return; // حتى ما يفتح MyModal
+  return;
     case 'Procedures':
       setShowProcedureDetails(true);
       return; // NOTE: exit early so modal doesn't open
