@@ -581,9 +581,12 @@ const Referrals = (props) => {
 
       <Details patient={patient}
         proRefetch={proRefetch}
-        encounter={encounter} edit={edit}
-        procedure={procedure} setProcedure={setProcedure}
-        openDetailsModal={openDetailsModal} setOpenDetailsModal={setOpenDetailsModal} />
+        encounter={encounter}
+        edit={edit}
+        procedure={procedure}
+        setProcedure={setProcedure}
+        openDetailsModal={openDetailsModal}
+        setOpenDetailsModal={setOpenDetailsModal} />
 
 
       <CancellationModal

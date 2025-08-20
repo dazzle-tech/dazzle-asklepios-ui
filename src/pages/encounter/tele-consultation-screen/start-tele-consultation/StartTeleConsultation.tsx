@@ -28,16 +28,25 @@ import MyModal from '@/components/MyModal/MyModal';
 import Prescription from '../../encounter-component/prescription';
 import DrugOrder from '../../encounter-component/drug-order';
 import DiagnosticsOrder from '../../encounter-component/diagnostics-order';
-import Consultation from '../../encounter-component/consultation';
-import OperationRequest from '../../encounter-component/operation-request/OperationRequest';
 import Procedures from '../../encounter-component/patient-summary/Procedures/Procedures';
-import Referrals from '../../encounter-component/procedure';
-
+import TeleScreenProcedures from './TeleScreenProcedures';
+import TeleScreenOperationRequests from './TeleScreenOperationRequests';
+import TeleScreenConsultation from './TeleScreenConsultation';
+import TeleScreenSelectTests from './TeleScreenDiagnosticsOrder';
+import TeleScreenMedicationOrder from './TeleScreenMedicationOrder';
 // Import custom styles
 import './styles.less';
 
 const StartTeleconsultation = () => {
   const navigate = useNavigate();
+
+//
+const [showProcedureDetails, setShowProcedureDetails] = useState(false);
+const [showOperationRequest, setShowOperationRequest] = useState(false);
+const [showConsultationModal, setShowConsultationModal] = useState(false);
+const [showSelectTestsModal, setShowSelectTestsModal] = useState(false);
+const [showMedicationOrderModal, setShowMedicationOrderModal] = useState(false);
+
 
   // State to control edit mode (currently unused)
   const [edit] = useState(false);
@@ -60,36 +69,35 @@ const StartTeleconsultation = () => {
     { label: 'Operation Requests', icon: faNotesMedical },
     { label: 'Procedures', icon: faProcedures }
   ];
-
+//\u00A0
   // Function to handle opening modal based on button label
-  const handleOpenModal = (label: string) => {
-    switch (label) {
-      case 'Prescription':
-        setSelectedModalContent(<Prescription patient={dummyPatient} encounter={dummyEncounter} />);
-        break;
-      case 'Medication Order':
-        setSelectedModalContent(<DrugOrder />);
-        break;
-      case 'Diagnostics Order':
-        setSelectedModalContent(<DiagnosticsOrder />);
-        break;
-      case 'Consultation':
-        setSelectedModalContent(<Consultation patient={dummyPatient} encounter={dummyEncounter} />);
-        break;
-      case 'Operation Requests':
-        setSelectedModalContent(
-          <OperationRequest patient={dummyPatient} encounter={dummyEncounter} />
-        );
-        break;
-      case 'Procedures':
-        setSelectedModalContent(<Referrals patient={dummyPatient} encounter={dummyEncounter} />);
-        break;
-      default:
-        setSelectedModalContent(<div>{label} form goes here</div>);
-    }
+const handleOpenModal = (label: string) => {
+  switch (label) {
+    case 'Prescription':
+      setSelectedModalContent(<Prescription patient={dummyPatient} encounter={dummyEncounter} />);
+      break;
+    case 'Medication Order':
+      setShowMedicationOrderModal(true);
+      return;
+case 'Diagnostics Order':
+  setShowSelectTestsModal(true);
+  return;
+case 'Consultation':
+  setShowConsultationModal(true);
+  return;
+case 'Operation Requests':
+  setShowOperationRequest(true);
+  return; // حتى ما يفتح MyModal
+    case 'Procedures':
+      setShowProcedureDetails(true);
+      return; // NOTE: exit early so modal doesn't open
+    default:
+      setSelectedModalContent(<div>{label} form goes here</div>);
+  }
 
-    setIsModalOpen(true); // Open modal
-  };
+  setIsModalOpen(true); // ✅ always open modal unless returned early
+};
+
 
   return (
     <div className="container">
@@ -177,6 +185,50 @@ const StartTeleconsultation = () => {
         size="60vw"
         handleCancelFunction={() => setSelectedModalContent(null)}
       />
+
+{showProcedureDetails && (
+  <TeleScreenProcedures
+    open={showProcedureDetails}
+    onClose={() => setShowProcedureDetails(false)}
+  />
+)}
+
+{showOperationRequest && (
+  <TeleScreenOperationRequests
+    open={showOperationRequest}
+    onClose={() => setShowOperationRequest(false)}
+    patient={dummyPatient}
+    encounter={dummyEncounter}
+    refetch={() => {}}
+  />
+)}
+
+{showConsultationModal && (
+  <TeleScreenConsultation
+    open={showConsultationModal}
+    onClose={() => setShowConsultationModal(false)}
+    patient={dummyPatient}
+    encounter={dummyEncounter}
+    refetch={() => {}}
+  />
+)}
+{showSelectTestsModal && (
+  <TeleScreenSelectTests
+    open={showSelectTestsModal}
+    onClose={() => setShowSelectTestsModal(false)}
+  />
+)}
+{showMedicationOrderModal && (
+  <TeleScreenMedicationOrder
+    open={showMedicationOrderModal}
+    onClose={() => setShowMedicationOrderModal(false)}
+    patient={dummyPatient}
+    encounter={dummyEncounter}
+    medicRefetch={() => {}}
+  />
+)}
+
+
     </div>
   );
 };
