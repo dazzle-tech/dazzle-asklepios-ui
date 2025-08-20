@@ -6,6 +6,7 @@ import {
   Button,
   ButtonGroup,
   Col,
+  Dropdown,
   Form,
   Panel,
   Popover,
@@ -29,12 +30,12 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './styles.less';
-import MyButton from '@/components/MyButton/MyButton';
 const MAR = () => {
   const dispatch = useAppDispatch();
   const [medication, setMedication] = useState({ status: '' });
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  // const [openKey, setOpenKey] = useState<string | null>(null);
   const [record, setRecord] = useState({ filter: '', value: '' });
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   // Fetch mar Dose Status Lov list response
   const { data: marDoseStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MAR_DOSE_STATUS');
@@ -52,67 +53,12 @@ const MAR = () => {
     { label: 'Medication Name', value: 'name' }
   ];
 
-  // handle save action
-  const handleSave = () => {
-     setOpenKey(null);
-  };
-
-  // handle close container
-  const handleClose = () => {
-     setOpenKey(null);
-  };
-
-  // container to choose action appear as a toolTip
-  const content = (
-    <Popover title="Choose action" className='container-of-choose-action'>
-      <Form className='choose-action-form'>
-        <MyInput
-          fieldType="select"
-          fieldName="status"
-          selectData={marDoseStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={medication}
-          showLabel={false}
-          setRecord={setMedication}
-          menuMaxHeight={150}
-          width={270}
-          searchable={false}
-        />
-        <div className="container-of-add-new-button">
-          <div className='container-of-buttons-mar'>
-          <MyButton
-            color="var(--deep-blue)"
-            onClick={handleSave}
-            width="50px"
-          >
-            Save
-          </MyButton>
-          <MyButton
-            color="var(--deep-blue)"
-            onClick={handleClose}
-            width="50px"
-          >
-            Close
-          </MyButton>
-          </div>
-        </div>
-      </Form>
-    </Popover>
-  );
-
   // array of actions icons
   const icons = [
     {
       key: '1',
       title: 'Action',
-      icon: (
-        <FontAwesomeIcon
-          icon={faPills}
-          title="Action"
-          className="icons-style"
-        />
-      )
+      icon: <FontAwesomeIcon icon={faPills} title="Action" className="icons-style" />
     },
     {
       key: '8632641360936162',
@@ -194,6 +140,29 @@ const MAR = () => {
       )
     }
   ];
+
+  // container to choose action appear as a toolTip
+  const content = (
+    <Popover full>
+      <Dropdown.Menu>
+        {marDoseStatusLovQueryResponse?.object?.map((item: any) => (
+          <>
+            <Dropdown.Item divider />
+            <Dropdown.Item
+              key={item.code}
+              active={selectedKey === item.key}
+              onClick={() => setSelectedKey(item.key)}
+            >
+              <div className="container-of-icon-and-key1">
+                {icons?.find(obj => obj.key === item.key)?.icon}
+                {item.lovDisplayVale}
+              </div>
+            </Dropdown.Item>
+          </>
+        ))}
+      </Dropdown.Menu>
+    </Popover>
+  );
 
   const tableData = [
     {
@@ -525,7 +494,7 @@ const MAR = () => {
           setRecord={setMedication}
         />
       </div>
-      <div className='container-of-select-type'>
+      <div className="container-of-select-type">
         <ButtonGroup size="md">
           <Button>STAT</Button>
           <Button>PRN</Button>
@@ -574,24 +543,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <Whisper
-                  placement="right"
-                  trigger="click"
-                  onClose={() => setOpenKey(null)}
-                  open={openKey === item.key}
-                  speaker={content}
-                >
-                  <span
-                    onClick={e => {
-                      if(item.status == '1' && !openKey){
-                      e.stopPropagation();
-                      setOpenKey(openKey === item.key ? null : item.key);
-                      }
-                    }}
-                  >
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                  </span>
-                </Whisper>
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -611,25 +566,11 @@ const MAR = () => {
               <Col md={10}>
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
-             <Col md={2}>
-                <Whisper
-                  placement="right"
-                  trigger="click"
-                  onClose={() => setOpenKey(null)}
-                  open={openKey === item.key}
-                  speaker={content}
-                >
-                  <span
-                    onClick={e => {
-                      if(item.status == '1' && !openKey){
-                      e.stopPropagation();
-                      setOpenKey(openKey === item.key ? null : item.key);
-                      }
-                    }}
-                  >
+              <Col md={2}>
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                  </span>
-                </Whisper>
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -650,24 +591,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <Whisper
-                  placement="right"
-                  trigger="click"
-                  onClose={() => setOpenKey(null)}
-                  open={openKey === item.key}
-                  speaker={content}
-                >
-                  <span
-                   onClick={e => {
-                      if(item.status == '1' && !openKey){
-                      e.stopPropagation();
-                      setOpenKey(openKey === item.key ? null : item.key);
-                      }
-                    }}
-                  >
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                  </span>
-                </Whisper>
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -688,24 +615,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <Whisper
-                  placement="right"
-                  trigger="click"
-                  onClose={() => setOpenKey(null)}
-                  open={openKey === item.key}
-                  speaker={content}
-                >
-                  <span
-                   onClick={e => {
-                      if(item.status == '1' && !openKey){
-                      e.stopPropagation();
-                      setOpenKey(openKey === item.key ? null : item.key);
-                      }
-                    }}
-                  >
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                  </span>
-                </Whisper>
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -726,24 +639,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <Whisper
-                  placement="right"
-                  trigger="click"
-                  onClose={() => setOpenKey(null)}
-                  open={openKey === item.key}
-                  speaker={content}
-                >
-                  <span
-                    onClick={e => {
-                      if(item.status == '1' && !openKey){
-                      e.stopPropagation();
-                      setOpenKey(openKey === item.key ? null : item.key);
-                      }
-                    }}
-                  >
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                  </span>
-                </Whisper>
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -788,4 +687,3 @@ const MAR = () => {
   );
 };
 export default MAR;
-
