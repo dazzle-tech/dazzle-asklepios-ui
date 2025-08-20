@@ -69,7 +69,6 @@ const [showMedicationOrderModal, setShowMedicationOrderModal] = useState(false);
     { label: 'Operation Requests', icon: faNotesMedical },
     { label: 'Procedures', icon: faProcedures }
   ];
-//\u00A0
   // Function to handle opening modal based on button label
 const handleOpenModal = (label: string) => {
   switch (label) {
