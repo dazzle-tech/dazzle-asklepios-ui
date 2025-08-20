@@ -261,7 +261,7 @@ const NewRound = ({ patient, encounter, edit, setIsConfirmedRound }) => {
                 doctorRound={doctorRound}
                 setDoctorRound={setDoctorRound}
                 saveAndComplete={saveAndComplete}
-                handleStartNewRound={handleCompleteRound}
+                handleStartNewRound={handleStartNewRound}
               />
             }
           />
