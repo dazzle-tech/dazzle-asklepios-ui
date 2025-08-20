@@ -27,7 +27,7 @@ const OccupationalPlans = () => {
   const location = useLocation();
   const propsData = location.state;
   const [initiatePlanModalOpen, setInitiatePlanModalOpen] = useState(false); // modal open/close
-  // Physiotherapy plan form data
+  // Occupational Plan form data
   const [planData, setPlanData] = useState({
     shortTermGoals: '',
     longTermGoals: '',

@@ -246,7 +246,8 @@ const Encounter = () => {
     '/encounter/dietary-request': 'Dietary Request',
     '/encounter/medication-administration-record': 'MAR',
     '/encounter/physiotherapy-plan': 'Physiotherapy Plan',
-    '/encounter/occupational-therapy': 'Occupational Therapy'
+    '/encounter/occupational-therapy': 'Occupational Therapy',
+    '/encounter/speech-therapy': 'Speech Therapy'
   };
 
   const menuItems = [
@@ -424,6 +425,12 @@ const Encounter = () => {
       label: 'Occupational Therapy',
       icon: faPersonWalking,
       path: 'occupational-therapy'
+    },
+    {
+      key: 'speechTherapy',
+      label: 'Speech Therapy',
+      icon: faPersonWalking,
+      path: 'speech-therapy'
     }
   ];
   const [currentHeader, setCurrentHeader] = useState();

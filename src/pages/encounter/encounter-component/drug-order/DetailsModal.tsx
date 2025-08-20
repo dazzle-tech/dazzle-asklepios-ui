@@ -482,7 +482,6 @@ const DetailsModal = ({
                     }}
                   >
                     <div className="medication-form-row">
-                      {/* البحث */}
                       <div className="search-wrapper">
                         <InputGroup inside style={{ width: '150px' }} className="input-search-p">
                           <Input
@@ -523,7 +522,6 @@ const DetailsModal = ({
                         )}
                       </div>
 
-                      {/* زر البدائل */}
                       <div className="button-wrapper">
                         <MyButton
                           radius={'25px'}
