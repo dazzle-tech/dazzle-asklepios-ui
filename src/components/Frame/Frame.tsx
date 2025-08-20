@@ -89,7 +89,7 @@ const Frame = (props: FrameProps) => {
       >
         <Sidenav.Header></Sidenav.Header>
         <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
-          <Sidenav.Body style={navBodyStyle}>
+          <Sidenav.Body style={navBodyStyle} className="sidebar-scroll">
             <Nav>
               {expand && (
                 <img
