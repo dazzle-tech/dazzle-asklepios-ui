@@ -23,6 +23,7 @@ import AddProgressNotes from '@/components/ProgressNotes';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 import './style.less';
 import { useLocation } from 'react-router-dom';
+import MyLabel from '@/components/MyLabel';
 
 const Physiotherapy = () => {
   // State initialization
@@ -189,14 +190,7 @@ const Physiotherapy = () => {
     { key: 'notes', title: <Translate>Notes</Translate> },
     {
       key: 'status',
-      title: <Translate>Status</Translate>,
-      render: rowData => (
-        <span
-          className={`status-badge ${rowData.status === 'Confirmed' ? 'confirmed' : 'requested'}`}
-        >
-          <Translate>{rowData.status}</Translate>
-        </span>
-      )
+      title: <Translate>Status</Translate>
     }
   ];
 
@@ -206,12 +200,7 @@ const Physiotherapy = () => {
     { key: 'totalPlanDuration', title: <Translate>Total Plan Duration</Translate> },
     {
       key: 'status',
-      title: <Translate>Status</Translate>,
-      render: rowData => (
-        <span className={`status-badge ${rowData.status?.toLowerCase()}`}>
-          <Translate>{rowData.status}</Translate>
-        </span>
-      )
+      title: <Translate>Status</Translate>
     },
     {
       key: 'initiatedByAt',
@@ -486,9 +475,7 @@ const Physiotherapy = () => {
                     <div className="form-row">
                       {/* Pain level slider */}
                       <div className="pain-level-container">
-                        <label>
-                          <Translate>Pain Level (1-10)</Translate>
-                        </label>
+                        <MyLabel label="Pain Level (1-10)" />
 
                         <div className="slider-class">
                           <Slider
@@ -513,6 +500,7 @@ const Physiotherapy = () => {
                               borderRadius: '4px'
                             }}
                           />
+                          
                         </div>
                       </div>
                       <div className="margin2-class">
@@ -596,7 +584,7 @@ const Physiotherapy = () => {
         <MyNestedTable data={referralsData} columns={referralColumns} />
       </Panel>
 
-      <Divider />
+      {/* <Divider /> */}
 
       {/* Physiotherapy plans section */}
       <Panel className="section-panel">
