@@ -40,6 +40,7 @@ const ERStartTriage = () => {
     const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
     const [refetchPatientObservations, setRefetchPatientObservations] = useState(false);
     const [openSendToModal, setOpenSendToModal] = useState(false);
+    const [patientPriority, setPatientPriority] = useState({ key: '' });
     const [encounter, setEncounter] = useState<ApEncounter>({ ...propsData.encounter });
     const YES_KEY = '1476229927081534';
     const NO_KEY = '1476240934233400';
@@ -73,6 +74,7 @@ const ERStartTriage = () => {
     const { data: painScoreLovQuery } = useGetLovValuesByCodeQuery('NUMBERS');
     const { data: levelOfConscLovQuery } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
     const { data: emergencyLevelLovQuery } = useGetLovValuesByCodeQuery('EMERGENCY_LEVEL');
+    const { data: patientPriorityLov } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
     // Find the selected emergency level object from the list based on the selected key
     const selectedEmergencyLevel = (emergencyLevelLovQuery?.object ?? []).find(
         (item) => item.key === emergencyTriage?.emergencyLevelLkey
@@ -237,13 +239,24 @@ const ERStartTriage = () => {
                         <Translate>  Send to </Translate>
                     </MyButton>
                     <div className='bt-right'>
-                        <Form fluid layout="inline">
+                        <Form fluid className='patient-priority-er-level-handle-position'>
+                                <MyInput
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Patient Priority"
+                                    fieldName="key"
+                                    selectData={patientPriorityLov?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={patientPriority}
+                                    setRecord={setPatientPriority}
+                                />
                             <MyLabel label="Emergency Level" />
                             {emergencyTriage?.emergencyLevelLkey && (
                                 <MyBadgeStatus
                                     color={selectedEmergencyLevel?.valueColor}
                                     contant={selectedEmergencyLevel?.lovDisplayVale ?? emergencyTriage?.emergencyLevelLkey}
-                                />
+                                /> 
                             )}
                         </Form>
                     </div> </div>

@@ -247,6 +247,21 @@ const ERWaitingList = () => {
         ? rowData?.encounterStatusLvalue?.lovDisplayVale
         : rowData?.encounterStatusLkey} />
     },
+//Need Edit (visitTypeLvalue)
+{
+  key: 'priority',
+  title: <Translate>PRIORITY</Translate>,
+  render: rowData => (
+    <MyBadgeStatus
+      color={rowData?.visitTypeLvalue?.valueColor}
+      contant={
+        rowData?.visitTypeLvalue
+          ? rowData?.visitTypeLvalue?.lovDisplayVale
+          : rowData?.visitTypeLkey
+      }
+    />
+  )
+},
     {
       key: 'actions',
       title: <Translate> </Translate>,

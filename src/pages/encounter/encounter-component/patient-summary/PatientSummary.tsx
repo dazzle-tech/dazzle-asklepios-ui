@@ -58,7 +58,7 @@ const PatientSummary = () => {
       { id: 'c3', content: <PatientMajorProblemTable patient={patient} />, display: true },
       { id: 'c4', content: <PatientChronicMedicationTable patient={patient} />, display: true },
       { id: 'c5', content: <PreObservation patient={patient} />, display: true },
-       {
+      {
         id: 'c6',
         content: <FunctionalAssessmentSummary patient={patient} encounter={encounter} />,
         display: false
@@ -76,8 +76,7 @@ const PatientSummary = () => {
         id: 'c10',
         content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,
         display: false
-      },
-      
+      }
     ],
     col3: [
       { id: 'c11', content: <Procedures patient={patient} />, display: true },

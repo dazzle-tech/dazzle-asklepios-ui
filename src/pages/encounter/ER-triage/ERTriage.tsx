@@ -28,6 +28,7 @@ import { useNavigate } from 'react-router-dom';
 import SendToModal from './SendToModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
+import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 
 const ERTriage = () => {
     const location = useLocation();
@@ -38,7 +39,8 @@ const ERTriage = () => {
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
     const [openSendToModal, setOpenSendToModal] = useState(false);
     const [open, setOpen] = useState(false);
-
+    const [record, setRecord] = useState({});
+    const [encounterStatus, setEncounterStatus] = useState({ key: '' });
     const [startEncounter] = useSaveEncounterChangesMutation();
     const navigate = useNavigate();
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -78,7 +80,7 @@ const ERTriage = () => {
         isLoading
     } = useGetEREncountersListQuery(listRequest);
     // Fetch list of values (LOV) for emergency levels using the provided code
-
+const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
     const { data: emergencyLevellovqueryresponse } = useGetLovValuesByCodeQuery('EMERGENCY_LEVEL');
 
     // Function to check if a row is currently selected based on encounter key
@@ -316,9 +318,8 @@ const ERTriage = () => {
         },
         {
             key: 'erLevel',
-            title: <Translate>Visit Type</Translate>,
-            render: rowData =>
-                rowData.visitTypeLvalue ? rowData.visitTypeLvalue.lovDisplayVale : rowData.visitTypeLkey
+            title: <Translate>Priority</Translate>,
+            render: () => 'test'
         },
         {
             key: 'chiefComplaint',
@@ -460,9 +461,8 @@ const ERTriage = () => {
 
     const filters = () => {
         return (
-            <Form layout="inline" fluid className="date-filter-form">
+            <Form fluid className="date-filter-form">
                 <MyInput
-                    column
                     width={180}
                     fieldType="date"
                     fieldLabel="From Date"
@@ -472,7 +472,6 @@ const ERTriage = () => {
                 />
                 <MyInput
                     width={180}
-                    column
                     fieldType="date"
                     fieldLabel="To Date"
                     fieldName="toDate"
@@ -481,7 +480,6 @@ const ERTriage = () => {
                 />
                 <MyInput
                     width={200}
-                    column
                     fieldType='select'
                     fieldLabel="Emergency Level"
                     fieldName="key"
@@ -491,6 +489,51 @@ const ERTriage = () => {
                     record={emergencyLevel}
                     setRecord={setEmergencyLevel}
                 />
+                 <MyInput
+          width="10vw"
+          fieldLabel="Select Filter"
+          fieldName="selectfilter"
+          fieldType="select"
+          selectData={[
+            { key: 'MRN', value: 'MRN' },
+            { key: 'Document Number', value: 'Document Number' },
+            { key: 'Full Name', value: 'Full Name' },
+            { key: 'Archiving Number', value: 'Archiving Number' },
+            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+            { key: 'Date of Birth', value: 'Date of Birth'}
+        ]}
+          selectDataLabel="value"
+          selectDataValue="key"
+          record={record}
+          setRecord={setRecord}
+        />
+        <MyInput
+          fieldLabel='Search by'
+          fieldName="searchCriteria"
+          fieldType="text"
+          placeholder="Search"
+          width="15vw"
+          record={record}
+          setRecord={setRecord}
+          />
+            <MyInput
+            width={200}
+            fieldType="select"
+            fieldLabel="Encounter Status"
+            fieldName="key"
+            selectData={encounterStatusLov?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={encounterStatus}
+            setRecord={setEncounterStatus}
+            />
+
+<MyButton appearance='ghost'>
+  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
+  Advance
+</MyButton>
+
+
             </Form>
         );
     };
