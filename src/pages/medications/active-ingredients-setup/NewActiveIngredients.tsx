@@ -27,6 +27,7 @@ import PregnancyLactationAndSpecialPopulation from './PregnancyLactationAndSpeci
 import Synonyms from './Synonyms';
 import MyButton from '@/components/MyButton/MyButton';
 import Section from '@/components/Section';
+import PreRequestedTests from './Pre-requestedTests';
 const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
   const dispatch = useAppDispatch();
   const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({
@@ -366,6 +367,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
           </Tabs.Tab>
           <Tabs.Tab eventKey="9" title="Synonyms">
             <Section title="Synonyms" content={<Synonyms activeIngredients={activeIngredient} />} />
+          </Tabs.Tab>
+          <Tabs.Tab eventKey="10" title="Pre-requested Tests">
+            <Section title="Pre-requested Tests" content={<PreRequestedTests activeIngredients={activeIngredient} />} />
           </Tabs.Tab>
         </Tabs>
       </Panel>

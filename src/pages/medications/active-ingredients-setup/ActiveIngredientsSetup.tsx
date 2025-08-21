@@ -49,7 +49,7 @@ const ActiveIngredientsSetup = () => {
 
   // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='page-title'>
       <h5>Active Ingredients</h5>
     </div>
   );
