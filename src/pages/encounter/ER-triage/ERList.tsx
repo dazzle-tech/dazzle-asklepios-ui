@@ -30,6 +30,8 @@ import MyInput from "@/components/MyInput";
 import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
+import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 const ERList = () => {
     const location = useLocation();
@@ -53,6 +55,8 @@ const ERList = () => {
     const [startEncounter] = useStartEncounterMutation();
     const [departmentFilter, setDepartmentFilter] = useState({ key: '' });
     const [switchDepartment, setSwitchDepartment] = useState(false);
+    const [record, setRecord] = useState({});
+    const [encounterStatus, setEncounterStatus] = useState({ key: '' });
     const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -88,6 +92,7 @@ const ERList = () => {
 
     // Fetch department list response
     const departmentListResponse = useGetResourceTypeQuery("6743167799449277");
+    const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
 
     //Functions
     const isSelected = rowData => {
@@ -143,10 +148,9 @@ const ERList = () => {
     };
     // Function to search for patients based on the search keyword
     const filters = () => (
-        <Form layout="inline" fluid>
-            <div className="switch-dep-dev "> <MyInput
+        <Form fluid className="switch-dep-dev">
+                <MyInput
                 require
-                column
                 fieldLabel="Select Department"
                 fieldType="select"
                 fieldName="key"
@@ -161,14 +165,55 @@ const ERList = () => {
                 searchable={false}
                 width={200}
             />
-
-                <MyButton
+                <MyInput
+          width="10vw"
+          fieldLabel="Select Filter"
+          fieldName="selectfilter"
+          fieldType="select"
+          selectData={[
+            { key: 'MRN', value: 'MRN' },
+            { key: 'Document Number', value: 'Document Number' },
+            { key: 'Full Name', value: 'Full Name' },
+            { key: 'Archiving Number', value: 'Archiving Number' },
+            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+            { key: 'Date of Birth', value: 'Date of Birth'}
+        ]}
+          selectDataLabel="value"
+          selectDataValue="key"
+          record={record}
+          setRecord={setRecord}
+        />
+        <MyInput
+          fieldLabel='Search by'
+          fieldName="searchCriteria"
+          fieldType="text"
+          placeholder="Search"
+          width="15vw"
+          record={record}
+          setRecord={setRecord}
+          />
+            <MyInput
+            width={200}
+            fieldType="select"
+            fieldLabel="Encounter Status"
+            fieldName="key"
+            selectData={encounterStatusLov?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={encounterStatus}
+            setRecord={setEncounterStatus}
+            />
+<div className='buttons-filter-table-position-handle'>
+<MyButton appearance='ghost'>
+  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
+  Advance
+</MyButton>
+        <MyButton
                     size="small"
                     backgroundColor="gray"
                     onClick={() => { setSwitchDepartment(true); }}
                     prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />
-                    }
-                >
+                    }>
                     Switch Department
                 </MyButton></div>
         </Form>

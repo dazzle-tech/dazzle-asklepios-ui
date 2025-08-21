@@ -27,6 +27,8 @@ import { faRepeat } from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
 import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
+import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 const DayCaseList = () => {
     const location = useLocation();
@@ -49,6 +51,9 @@ const DayCaseList = () => {
     const [startEncounter] = useStartEncounterMutation();
     const [departmentFilter, setDepartmentFilter] = useState({ key: '' });
     const [openChangeBedModal, setOpenChangeBedModal] = useState(false);
+    const [record, setRecord] = useState({});
+    const [encounterStatus, setEncounterStatus] = useState({ key: '' });
+
     const [switchDepartment, setSwitchDepartment] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -78,6 +83,7 @@ const DayCaseList = () => {
     // Fetch department list response
     const departmentListResponse = useGetResourceTypeQuery('5433343011954425');
 
+    const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');  
     // Fetch the encounter list using the current listRequest
     const {
         data: encounterListResponse,
@@ -379,6 +385,52 @@ const DayCaseList = () => {
                     searchable={false}
                     width={200}
                 />
+                <MyInput
+          column
+          width="10vw"
+          fieldLabel="Select Filter"
+          fieldName="selectfilter"
+          fieldType="select"
+          selectData={[
+            { key: 'MRN', value: 'MRN' },
+            { key: 'Document Number', value: 'Document Number' },
+            { key: 'Full Name', value: 'Full Name' },
+            { key: 'Archiving Number', value: 'Archiving Number' },
+            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+            { key: 'Date of Birth', value: 'Date of Birth'}
+        ]}
+          selectDataLabel="value"
+          selectDataValue="key"
+          record={record}
+          setRecord={setRecord}
+        />
+        <MyInput
+          column
+          fieldLabel='Search by'
+          fieldName="searchCriteria"
+          fieldType="text"
+          placeholder="Search"
+          width="15vw"
+          record={record}
+          setRecord={setRecord}
+          />
+            <MyInput
+            column
+            width={200}
+            fieldType="select"
+            fieldLabel="Encounter Status"
+            fieldName="key"
+            selectData={encounterStatusLov?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={encounterStatus}
+            setRecord={setEncounterStatus}
+            />
+
+<MyButton appearance='ghost'>
+  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
+  Advance
+</MyButton>
                 <MyButton
                     size="small"
                     backgroundColor="gray"

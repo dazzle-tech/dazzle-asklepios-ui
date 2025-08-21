@@ -23,6 +23,9 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+
 
 const EncounterList = () => {
   const location = useLocation();
@@ -39,8 +42,11 @@ const EncounterList = () => {
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [open, setOpen] = useState(false);
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const [record, setRecord] = useState({});
+  const [encounterStatus, setEncounterStatus] = useState({ key: '' });
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
+  const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true,
@@ -441,6 +447,52 @@ const EncounterList = () => {
           record={dateFilter}
           setRecord={setDateFilter}
         />
+        <MyInput
+          width="10vw"
+          column
+          fieldLabel="Select Filter"
+          fieldName="selectfilter"
+          fieldType="select"
+          selectData={[
+            { key: 'MRN', value: 'MRN' },
+            { key: 'Document Number', value: 'Document Number' },
+            { key: 'Full Name', value: 'Full Name' },
+            { key: 'Archiving Number', value: 'Archiving Number' },
+            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+            { key: 'Date of Birth', value: 'Date of Birth'}
+        ]}
+          selectDataLabel="value"
+          selectDataValue="key"
+          record={record}
+          setRecord={setRecord}
+        />
+        <MyInput
+          fieldLabel='Search by'
+          column
+          fieldName="searchCriteria"
+          fieldType="text"
+          placeholder="Search"
+          width="15vw"
+          record={record}
+          setRecord={setRecord}
+          />
+            <MyInput
+            column
+            width={200}
+            fieldType="select"
+            fieldLabel="Encounter Status"
+            fieldName="key"
+            selectData={encounterStatusLov?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={encounterStatus}
+            setRecord={setEncounterStatus}
+            />
+<div className='advanced-button-position-handler'>
+<MyButton appearance='ghost'>
+  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
+  Advance
+</MyButton></div>
       </Form>
     );
   };
