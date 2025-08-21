@@ -36,8 +36,19 @@
 .container-of-fields-active .rs-form-group {
   margin-bottom: 0 !important;
 }
-.container-active{
+.container-active {
   .rs-row {
-  margin-bottom: 0px !important;
+    margin-bottom: 0px !important;
+  }
 }
+.container-of-header-actions-pre-requested-tests {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  @media (max-width: 400px) {
+    flex-direction: column;
+    // gap: 5px;
+    align-items: start;
+    margin-bottom: 10px;
+  }
 }
