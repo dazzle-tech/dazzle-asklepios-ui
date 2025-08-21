@@ -2,7 +2,19 @@ import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
-import { Button, ButtonGroup, Col, Form, Panel, Row, Text, Tooltip, Whisper } from 'rsuite';
+import {
+  Button,
+  ButtonGroup,
+  Col,
+  Dropdown,
+  Form,
+  Panel,
+  Popover,
+  Row,
+  Text,
+  Tooltip,
+  Whisper
+} from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPills } from '@fortawesome/free-solid-svg-icons';
@@ -16,15 +28,14 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyCard from '@/components/MyCard';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-import ActionModal from './ActionModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './styles.less';
 const MAR = () => {
   const dispatch = useAppDispatch();
-  const [width, setWidth] = useState<number>(window.innerWidth);
   const [medication, setMedication] = useState({ status: '' });
-  const [openActionModal, setOpenActionModal] = useState<boolean>(false);
+  // const [openKey, setOpenKey] = useState<string | null>(null);
   const [record, setRecord] = useState({ filter: '', value: '' });
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   // Fetch mar Dose Status Lov list response
   const { data: marDoseStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MAR_DOSE_STATUS');
@@ -47,16 +58,7 @@ const MAR = () => {
     {
       key: '1',
       title: 'Action',
-      icon: (
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Action</Tooltip>}>
-          <FontAwesomeIcon
-            icon={faPills}
-            title="Action"
-            onClick={() => setOpenActionModal(true)}
-            className="icons-style"
-          />
-        </Whisper>
-      )
+      icon: <FontAwesomeIcon icon={faPills} title="Action" className="icons-style" />
     },
     {
       key: '8632641360936162',
@@ -139,6 +141,29 @@ const MAR = () => {
     }
   ];
 
+  // container to choose action appear as a toolTip
+  const content = (
+    <Popover full>
+      <Dropdown.Menu>
+        {marDoseStatusLovQueryResponse?.object?.map((item: any) => (
+          <>
+            <Dropdown.Item divider />
+            <Dropdown.Item
+              key={item.code}
+              active={selectedKey === item.key}
+              onClick={() => setSelectedKey(item.key)}
+            >
+              <div className="container-of-icon-and-key1">
+                {icons?.find(obj => obj.key === item.key)?.icon}
+                {item.lovDisplayVale}
+              </div>
+            </Dropdown.Item>
+          </>
+        ))}
+      </Dropdown.Menu>
+    </Popover>
+  );
+
   const tableData = [
     {
       type: 'Missed Doses',
@@ -190,21 +215,25 @@ const MAR = () => {
       type: 'PRN',
       day1: [
         {
+          key: '0',
           date: '31/7/2025',
           hour: '06:00',
           status: '8632641360936162'
         },
         {
+          key: '1',
           date: '31/7/2025',
           hour: '12:00',
           status: '8632624584925141'
         },
         {
+          key: '2',
           date: '31/7/2025',
           hour: '6:00',
           status: '8632633074146151'
         },
         {
+          key: '3',
           date: '1/8/2025',
           hour: '00:00',
           status: '8632651909869906'
@@ -212,21 +241,25 @@ const MAR = () => {
       ],
       day2: [
         {
+          key: '4',
           date: '1/8/2025',
           hour: '06:00',
           status: '8632772055422992'
         },
         {
+          key: '5',
           date: '1/8/2025',
           hour: '12:00',
           status: '8632633074146151'
         },
         {
+          key: '6',
           date: '1/8/2025',
           hour: '06:00',
           status: '1'
         },
         {
+          key: '7',
           date: '2/8/2025',
           hour: '00:00',
           status: '1'
@@ -234,21 +267,25 @@ const MAR = () => {
       ],
       day3: [
         {
+          key: '8',
           date: '2/8/2025',
           hour: '06:00',
           status: '1'
         },
         {
+          key: '9',
           date: '2/8/2025',
           hour: '12:00',
           status: '1'
         },
         {
+          key: '10',
           date: '2/8/2025',
           hour: '6:00',
           status: '1'
         },
         {
+          key: '11',
           date: '3/8/2025',
           hour: '00:00',
           status: '1'
@@ -256,21 +293,25 @@ const MAR = () => {
       ],
       day4: [
         {
+          key: '12',
           date: '3/8/2025',
           hour: '06:00',
           status: '1'
         },
         {
+          key: '13',
           date: '3/8/2025',
           hour: '12:00',
           status: '1'
         },
         {
+          key: '14',
           date: '3/8/2025',
           hour: '06:00',
           status: '1'
         },
         {
+          key: '15',
           date: '4/8/2025',
           hour: '00:00',
           status: '1'
@@ -278,21 +319,25 @@ const MAR = () => {
       ],
       day5: [
         {
+          key: '16',
           date: '4/8/2025',
           hour: '06:00',
           status: '1'
         },
         {
+          key: '17',
           date: '4/8/2025',
           hour: '12:00',
           status: '1'
         },
         {
+          key: '18',
           date: '4/8/2025',
           hour: '06:00',
           status: '1'
         },
         {
+          key: '19',
           date: '5/8/2025',
           hour: '00:00',
           status: '1'
@@ -311,11 +356,13 @@ const MAR = () => {
       type: 'Scheduled',
       day1: [
         {
+          key: '20',
           date: '1/8/2025',
           hour: '08:00',
           status: '8632641360936162'
         },
         {
+          key: '21',
           date: '1/8/2025',
           hour: '20:00',
           status: '8632624584925141'
@@ -323,11 +370,13 @@ const MAR = () => {
       ],
       day2: [
         {
+          key: '22',
           date: '2/8/2025',
           hour: '08:00',
           status: '8632633074146151'
         },
         {
+          key: '23',
           date: '2/8/2025',
           hour: '20:00',
           status: '1'
@@ -335,11 +384,13 @@ const MAR = () => {
       ],
       day3: [
         {
+          key: '24',
           date: '3/8/2025',
           hour: '08:00',
           status: '8632651909869906'
         },
         {
+          key: '25',
           date: '3/8/2025',
           hour: '20:00',
           status: '8632772055422992'
@@ -347,11 +398,13 @@ const MAR = () => {
       ],
       day4: [
         {
+          key: '26',
           date: '4/8/2025',
           hour: '08:00',
           status: '1'
         },
         {
+          key: '27',
           date: '4/8/2025',
           hour: '20:00',
           status: '1'
@@ -359,11 +412,13 @@ const MAR = () => {
       ],
       day5: [
         {
+          key: '28',
           date: '5/8/2025',
           hour: '08:00',
           status: '1'
         },
         {
+          key: '29',
           date: '5/8/2025',
           hour: '20:00',
           status: '1'
@@ -439,7 +494,7 @@ const MAR = () => {
           setRecord={setMedication}
         />
       </div>
-      <div style={{ display: 'flex', alignItems: 'end' }}>
+      <div className="container-of-select-type">
         <ButtonGroup size="md">
           <Button>STAT</Button>
           <Button>PRN</Button>
@@ -488,7 +543,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <>{icons.find(obj => obj.key === item.status).icon}</>
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                    {icons.find(obj => obj.key === item.status).icon}
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -509,7 +567,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <>{icons.find(obj => obj.key === item.status).icon}</>
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                    {icons.find(obj => obj.key === item.status).icon}
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -530,7 +591,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <>{icons.find(obj => obj.key === item.status).icon}</>
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                    {icons.find(obj => obj.key === item.status).icon}
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -551,7 +615,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <>{icons.find(obj => obj.key === item.status).icon}</>
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                    {icons.find(obj => obj.key === item.status).icon}
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -572,7 +639,10 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-                <>{icons.find(obj => obj.key === item.status).icon}</>
+               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                    {icons.find(obj => obj.key === item.status).icon}
+                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
+                }
               </Col>
             </Row>
           ))}
@@ -582,11 +652,6 @@ const MAR = () => {
   ];
 
   // Effects
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -616,16 +681,8 @@ const MAR = () => {
           setMedication(rowData);
         }}
       />
-      <br/>
+      <br />
       <MyTable height={200} data={tableData} columns={columns} />
-
-      <ActionModal
-        open={openActionModal}
-        setOpen={setOpenActionModal}
-        handleSave=""
-        width={width}
-        icons={icons}
-      />
     </Panel>
   );
 };
