@@ -12,7 +12,7 @@ import {
     TimePicker,
     Panel
 } from 'rsuite';
-import { DAYS, DayValue } from '@/constants/Days';
+import { DAYS, DayValue } from '@/constants/days';
 import { ApResources } from '@/types/model-types';
 import { useGetFacilitiesQuery } from '@/services/setupService';
 
