@@ -1483,6 +1483,22 @@ export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = {
 	statusLkey:undefined,
 } 
 
+export const newApEventSlice:modelTypes.ApEventSlice = { 
+	key:undefined,
+	sliceKey:undefined,
+	eventType:'',
+	linkedEventKey:undefined,
+	dayOfWeek:'',
+	eventDate:null,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApFacility:modelTypes.ApFacility = { 
 	key:undefined,
 	facilityId:'',

@@ -19,7 +19,7 @@ import { useGetPatientsQuery } from "@/services/patientService";
 import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import TrashIcon from '@rsuite/icons/Trash';
 import { useAppDispatch, useAppSelector } from "@/hooks";
-import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
+import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetResourceWithDetailsQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
 import AttachmentModal from "@/components/AttachmentUploadModal/AttachmentUploadModal";
 import { object } from "prop-types";
 import { setPatient } from "@/reducers/patientSlice";
@@ -31,12 +31,20 @@ import MyButton from "@/components/MyButton/MyButton";
 import { green } from "@mui/material/colors";
 import "./AppoitmentModal.less";
 import { useFetchAttachmentQuery } from "@/services/attachmentService";
+import SliceBox from "./SliceBox";
 
+// TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
+const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, appointmentData, showOnly, from, selectedSlot }) => {
 
+    const { data: resourceAvailabilityDetails, error, isLoading } = useGetResourceWithDetailsQuery(selectedSlot?.resourceId || '', {
+        skip: !selectedSlot?.resourceId
+    });
+    const [selectedSlices, setSelectedSlices] = useState([]);
 
-const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, appointmentData, showOnly, from }) => {
-
+    useEffect(() => {
+        console.log("Selected Slices:", selectedSlices);
+    }, [selectedSlices]);
 
     useEffect(() => {
 
@@ -51,12 +59,84 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         }
     }, [appointmentData])
 
-    useEffect(() => {
-        if (showOnly) {
 
-            // console.log(showOnly)
+    useEffect(() => {
+        console.log(selectedSlot?.resourceId)
+    }, [selectedSlot])
+
+    useEffect(() => {
+        console.log(resourceAvailabilityDetails?.object[0]?.availabilitySlices)
+    }, [resourceAvailabilityDetails])
+
+// TODO: will user the day constants to map the days of the week instead of using numbers here directly ,/src/constants/days.ts.
+    const DAYS = [
+        { label: 'Sunday', value: '0' },
+        { label: 'Monday', value: '1' },
+        { label: 'Tuesday', value: '2' },
+        { label: 'Wednesday', value: '3' },
+        { label: 'Thursday', value: '4' },
+        { label: 'Friday', value: '5' },
+        { label: 'Saturday', value: '6' },
+    ];
+    const minutesToDisplayDate = (minutes) => {
+        if (minutes === null || typeof minutes === 'undefined') return null;
+        const d = new Date(0);
+        d.setHours(Math.floor(minutes / 60));
+        d.setMinutes(minutes % 60);
+        d.setSeconds(0);
+        d.setMilliseconds(0);
+        return d;
+    };
+    const [dailySlices, setDailySlices] = useState({});
+
+    useEffect(() => {
+        console.log('useEffect triggered for resourceAvailabilityDetails:', resourceAvailabilityDetails);
+        console.log(resourceAvailabilityDetails?.object[0]?.availabilitySlices?.length > 0 ? 'Data found' : 'No data found');
+        if (resourceAvailabilityDetails?.object[0]?.availabilitySlices?.length > 0) {
+            console.log('Availability slices data found:', resourceAvailabilityDetails.object[0].availabilitySlices);
+            const loadedSlices = {};
+            resourceAvailabilityDetails.object[0].availabilitySlices.forEach(slice => {
+                const day = slice.dayOfWeek;
+                if (!loadedSlices[day]) {
+                    loadedSlices[day] = [];
+                }
+                const fromDate = minutesToDisplayDate(slice.startHour);
+                const toDate = minutesToDisplayDate(slice.endHour);
+
+                // Log the conversion results
+                console.log(`Processing slice for day ${day}: startHour=${slice.startHour} -> fromDate=${fromDate?.toLocaleTimeString()}; endHour=${slice.endHour} -> toDate=${toDate?.toLocaleTimeString()}`);
+
+                loadedSlices[day].push({
+                    from: fromDate,
+                    to: toDate,
+                    isBreak: slice.break || false,
+                    SliceKey: slice.key,
+                });
+            });
+
+            // Sort slices for each day by start time
+            Object.keys(loadedSlices).forEach(day => {
+                loadedSlices[day].sort((a, b) => {
+                    // Ensure 'from' is a valid Date object before comparing
+                    const timeA = a.from instanceof Date && !isNaN(a.from) ? a.from.getTime() : 0;
+                    const timeB = b.from instanceof Date && !isNaN(b.from) ? b.from.getTime() : 0;
+                    return timeA - timeB;
+                });
+            });
+
+            console.log('Processed dailySlices:', loadedSlices);
+            setDailySlices(loadedSlices);
+        } else {
+            console.log('No availability slices data found or array is empty.');
+            setDailySlices({}); // Clear slices if no data
         }
-    }, [showOnly])
+    }, [resourceAvailabilityDetails]);
+
+    // Get unique sorted days that have slices
+    const sortedDaysWithSlices = Object.keys(dailySlices).sort((a, b) => parseInt(a) - parseInt(b));
+
+
+
     const patientSlice = useAppSelector(state => state.patient);
 
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -64,11 +144,10 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [appointment, setAppoitment] = useState<ApAppointment>({ ...newApAppointment })
-    const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest,pageSize:100});
+    const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 100 });
     const dispatch = useAppDispatch();
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null); // To store selected event details
-    const [selectedSlot, setSelectedSlot] = useState(null);
     const [validationResult, setValidationResult] = useState({});
     const [selectedCriterion, setSelectedCriterion] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
@@ -339,7 +418,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                         <MyInput
                             width={150}
                             height="40px"
-                             
+
                             vr={validationResult}
                             column
                             fieldLabel="Search Criteria"
@@ -733,6 +812,11 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const [modalKey, setModalKey] = useState(0);
 
 
+    const handleDayClick = (day) => {
+        setOpenDay(openDay === day ? null : day);
+    };
+    const [openDay, setOpenDay] = useState(null);
+
 
     return (
         <div>
@@ -921,7 +1005,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                     <MyInput
                                                         height={35}
                                                         disabled={showOnly}
-                                                         
+
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -958,7 +1042,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         height={35}
-                                                         
+
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -978,7 +1062,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                         <div style={{ flex: 1 }}>
                                                             <MyInput
                                                                 height={35}
-                                                                 
+
                                                                 width={"100%"}
                                                                 vr={validationResult}
                                                                 column
@@ -1131,6 +1215,51 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                     </Form>
                                 </Panel>
+
+                                <div style={{ width: "100%" }}>
+
+                                    <div style={{ display: "flex", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+                                        {sortedDaysWithSlices.map((day) => {
+                                            const dayLabel = DAYS.find(d => d.value === day)?.label;
+
+                                            return (
+                                                <div
+                                                    key={day}
+                                                    onClick={() => handleDayClick(day)}
+                                                    style={{
+                                                        padding: "8px 12px",
+                                                        borderRadius: "8px",
+                                                        cursor: "pointer",
+                                                        backgroundColor: openDay === day ? "#4caf50" : "#f0f0f0",
+                                                        color: openDay === day ? "white" : "black",
+                                                        fontWeight: "bold",
+                                                        userSelect: "none",
+                                                        transition: "background-color 0.3s",
+                                                    }}
+                                                >
+                                                    {dayLabel}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <SliceBox
+                                        dailySlices={dailySlices}
+                                        openDay={openDay}
+                                        // sortedDaysWithSlices={sortedDaysWithSlices}
+                                        onSelectionChange={(newSelection) => {
+                                            setSelectedSlices(newSelection);
+                                            // setAppoitment({
+                                            //     ...appointment,
+                                            //     appointmentSlices: newSelection.map(sliceId => {
+                                            //         const [day, index] = sliceId.split('-').map(Number);
+                                            //         return dailySlices[day][index];
+                                            //     })
+                                            // });
+                                        }}
+                                    />
+
+                                </div>
                                 <Panel
                                     header={
                                         <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
@@ -1145,7 +1274,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                         
+
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1179,7 +1308,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                         
+
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1208,7 +1337,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                         
+
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1230,7 +1359,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 9 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                         
+
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1295,7 +1424,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper"  >
                                                     <MyInput
                                                         disabled={!appointment?.isReminder}
-                                                         
+
                                                         width={170}
                                                         vr={validationResult}
                                                         column

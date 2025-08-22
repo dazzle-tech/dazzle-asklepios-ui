@@ -19,6 +19,18 @@ export const appointmentService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getResourcesWithAvailability: builder.query({
+      query: (listRequest) => ({
+        url: `/appointment/resources-with-availability?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      keepUnusedDataFor: 5
+    }),
+    getResourceWithDetails: builder.query({
+      query: (id) => ({
+        url: `/appointment/resources-with-availability?id=${id}`
+      }),
+      keepUnusedDataFor: 5
+    }),
     getResourcesByResourceId: builder.query({
       query: (resourceKey: string) => ({
         url: `/appointment/resource-by-key`,
@@ -67,7 +79,7 @@ export const appointmentService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    }), 
+    }),
     changeAppointmentStatus: builder.mutation({
       query: (appointment: ApAppointment) => ({
         url: `/appointment/save-appointment`,
@@ -91,45 +103,58 @@ export const appointmentService = createApi({
         return response.object;
       }
     }),
-      getResourcesAvailabilityTime: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/appointment/resources-availability-time-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+    getResourcesAvailabilityTime: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/appointment/resources-availability-time-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      saveResourcesAvailabilityTime: builder.mutation({
-        query: (resourcesAvailabilityTime: ApResourcesAvailabilityTime) => ({
-          url: `/appointment/save-resources-availability-time`,
-          method: 'POST',
-          body: resourcesAvailabilityTime
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveResourcesAvailabilityTime: builder.mutation({
+      query: (resourcesAvailabilityTime: ApResourcesAvailabilityTime) => ({
+        url: `/appointment/save-resources-availability-time`,
+        method: 'POST',
+        body: resourcesAvailabilityTime
       }),
-      // TestTest
-      deactiveActiveResource: builder.mutation({
-            query: (resource: ApResources) => ({
-              url: `/appointment/remove-resource`,
-              method: 'POST',
-              body: resource,
-            }),
-            onQueryStarted: onQueryStarted,
-            transformResponse: (response: any) => {
-              return response.object;
-            },
-          }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    // TestTest
+    deactiveActiveResource: builder.mutation({
+      query: (resource: ApResources) => ({
+        url: `/appointment/remove-resource`,
+        method: 'POST',
+        body: resource,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
+    saveAvailabilitySlices: builder.mutation({
+      query: (requestData) => ({
+        url: '/appointment/save',
+        method: 'POST',
+        body: requestData,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
+  }),
 
-    })
 
-  
+
 });
 
 export const {
-  
+  useSaveAvailabilitySlicesMutation,
   useGetResourcesQuery,
+  useGetResourcesWithAvailabilityQuery,
+  useGetResourceWithDetailsQuery,
   useGetResourcesByResourceIdQuery,
   useGetResourceTypeQuery,
   useSaveResourcesMutation,
@@ -140,5 +165,6 @@ export const {
   useGetAppointmentsQuery,
   useChangeAppointmentStatusMutation,
   useDeactiveActiveResourceMutation
+
 
 } = appointmentService;

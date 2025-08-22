@@ -1482,6 +1482,22 @@ export interface ApEncounterVaccination {
 	statusLkey:string;
 } 
 
+export interface ApEventSlice { 
+	key:string;
+	sliceKey:string;
+	eventType:string;
+	linkedEventKey:string;
+	dayOfWeek:string;
+	eventDate:Date;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApFacility { 
 	key:string;
 	facilityId:string;
