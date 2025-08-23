@@ -2,7 +2,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppSelector } from '@/hooks';
 import { useLoginMutation } from '@/services/authService';
-import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation,useGetLovDefultByCodeQuery } from '@/services/setupService';
+import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
 import { initialListRequest } from '@/types/types';
@@ -61,25 +61,24 @@ const SignIn = () => {
   };
 
   useEffect(() => {
-    // if there is a user, navigate to dashboard
-    if (
-      authSlice.user &&
-      localStorage.getItem('access_token') &&
-      !authSlice.user?.mustChangePassword
-    ) {
-      navigate('/');
-    } else if (
-      authSlice.user &&
-      localStorage.getItem('access_token') &&
-      authSlice.user?.mustChangePassword
-    ) {
+    console.log('loginResult:', loginResult);
+    console.log('authSlice.user:', authSlice.user);
 
+    const user = loginResult?.user || authSlice.user;
+
+    if (user && !user.mustChangePassword) {
+      console.log('Navigating to dashboard...');
+      navigate('/');
+    } else if (user && user.mustChangePassword) {
+      console.log('User must change password, showing modal...');
       setChangePasswordView(true);
+    } else {
+      console.log('No user found, stay on login page.');
     }
-  }, [authSlice.user]);
+  }, [loginResult, authSlice.user, navigate]);
 
   useEffect(() => {
-  
+
   }, [changePasswordView]);
 
   const [user, setUser] = useState<ApUser>({
@@ -123,168 +122,168 @@ const SignIn = () => {
   // }, [Background]);
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
-    <Panel bordered  style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' ,padding: '20px', borderRadius: '10px'}}>
-      <div className="bodySignInDiv">
-        {/* Logo Panel */}
-     
-        <Panel className="logo-panel">
-          <img
-            src={
-              authSlice.tenant && authSlice.tenant.tenantLogoPath
-                ? authSlice.tenant.tenantLogoPath
-                : Logo
-            }
-            alt="Tenant Logo"
-          />
-        </Panel>
+      <Panel bordered style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '10px' }}>
+        <div className="bodySignInDiv">
+          {/* Logo Panel */}
 
-        {/* Sign In Panel */}
-        {!resetPasswordView && (
-          <Panel className="sign-in-panel ">
-          
-            {!authSlice.tenant && (
-              <Message type="warning" showIcon>
-                <Translate>No Tenant Configured</Translate>
-              </Message>
-            )}
+          <Panel className="logo-panel">
+            <img
+              src={
+                authSlice.tenant && authSlice.tenant.tenantLogoPath
+                  ? authSlice.tenant.tenantLogoPath
+                  : Logo
+              }
+              alt="Tenant Logo"
+            />
+          </Panel>
 
-            <Form fluid onKeyPress={handleKeyPress}>
-              <MyInput
-                disabled={!authSlice.tenant}
-                placeholder="Select Facility"
-                width="100%"
-                fieldType='select'
-                fieldLabel="Facility"
-                selectData={facilityListResponse?.object ?? []}
-                selectDataLabel="facilityName"
-                selectDataValue="key"
-                fieldName="orgKey"
-                record={credentials}
-                setRecord={setCredentials} 
-                 showLabel={false}/>
-              <MyInput
-                width="100%"
-                fieldName="lang"
-                fieldType="select"
-                selectData={langLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                defaultSelectValue={langdefult?.object?.key.toString() ?? ''}
-                record={{}}
-                setRecord={() => { }}
-                placeholder="Select Language"
-                showLabel={false}
-               
-              />
-              <MyInput
-                width="100%"
-                placeholder="Enter User Name"
-                disabled={!authSlice.tenant}
-                fieldLabel="User Name"
-                fieldName="username"
-                record={credentials}
-                setRecord={setCredentials}
-                 showLabel={false}
-              />
+          {/* Sign In Panel */}
+          {!resetPasswordView && (
+            <Panel className="sign-in-panel ">
 
+              {!authSlice.tenant && (
+                <Message type="warning" showIcon>
+                  <Translate>No Tenant Configured</Translate>
+                </Message>
+              )}
 
-              <Form.Group>
-              
-                <Form.Control
-                placeholder='Enter Password'
+              <Form fluid onKeyPress={handleKeyPress}>
+                <MyInput
                   disabled={!authSlice.tenant}
-                  name="password"
-                  type="password"
-                  value={credentials.password}
-                  onChange={e => setCredentials({ ...credentials, password: e })}
+                  placeholder="Select Facility"
+                  width="100%"
+                  fieldType='select'
+                  fieldLabel="Facility"
+                  selectData={facilityListResponse?.object ?? []}
+                  selectDataLabel="facilityName"
+                  selectDataValue="key"
+                  fieldName="orgKey"
+                  record={credentials}
+                  setRecord={setCredentials}
+                  showLabel={false} />
+                <MyInput
+                  width="100%"
+                  fieldName="lang"
+                  fieldType="select"
+                  selectData={langLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  defaultSelectValue={langdefult?.object?.key.toString() ?? ''}
+                  record={{}}
+                  setRecord={() => { }}
+                  placeholder="Select Language"
+                  showLabel={false}
+
+                />
+                <MyInput
+                  width="100%"
+                  placeholder="Enter User Name"
+                  disabled={!authSlice.tenant}
+                  fieldLabel="User Name"
+                  fieldName="username"
+                  record={credentials}
+                  setRecord={setCredentials}
+                  showLabel={false}
+                />
+
+
+                <Form.Group>
+
+                  <Form.Control
+                    placeholder='Enter Password'
+                    disabled={!authSlice.tenant}
+                    name="password"
+                    type="password"
+                    value={credentials.password}
+                    onChange={e => setCredentials({ ...credentials, password: e })}
+                  />
+                </Form.Group>
+                <a className="forgot-password">Forgot password?</a>
+
+                <Form.Group>
+                  <Button
+                    style={{ backgroundColor: 'var(--primary-blue)' }}
+                    appearance="primary"
+                    onClick={handleLogin}
+                    disabled={!authSlice.tenant}
+                    className="submit-button"
+                  >
+                    Sign in
+                  </Button>
+                </Form.Group>
+              </Form>
+            </Panel>
+          )}
+        </div>
+
+        {/* Reset Password Panel */}
+        {resetPasswordView && (
+          <Panel bordered className="reset-password-panel" header={<h3>Sign In</h3>}>
+            <Form fluid>
+              <Form.Group>
+                <Form.ControlLabel>Organization</Form.ControlLabel>
+                <Form.Control
+                  block
+                  accepter={SelectPicker}
+                  name="organization"
+                  data={organizations}
+                  value={credentials.orgKey}
+                  onChange={e => setCredentials({ ...credentials, orgKey: e })}
                 />
               </Form.Group>
-              <a className="forgot-password">Forgot password?</a>
 
               <Form.Group>
-                <Button
-                  style={{ backgroundColor: 'var(--primary-blue)' }}
-                  appearance="primary"
-                  onClick={handleLogin}
-                  disabled={!authSlice.tenant}
-                  className="submit-button"
-                >
-                  Sign in
+                <Form.ControlLabel>Username</Form.ControlLabel>
+                <Form.Control
+                  name="username"
+                  value={credentials.username}
+                  onChange={e => setCredentials({ ...credentials, username: e })}
+                />
+              </Form.Group>
+
+              <Form.Group>
+                <Button appearance="primary" onClick={handleLogin}>
+                  Send OTP
                 </Button>
               </Form.Group>
             </Form>
           </Panel>
         )}
-      </div>
 
-      {/* Reset Password Panel */}
-      {resetPasswordView && (
-        <Panel bordered className="reset-password-panel" header={<h3>Sign In</h3>}>
-          <Form fluid>
-            <Form.Group>
-              <Form.ControlLabel>Organization</Form.ControlLabel>
-              <Form.Control
-                block
-                accepter={SelectPicker}
-                name="organization"
-                data={organizations}
-                value={credentials.orgKey}
-                onChange={e => setCredentials({ ...credentials, orgKey: e })}
-              />
-            </Form.Group>
+        {/* Modal for Password Change */}
+        <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
+          <Modal.Body>
+            <RemindIcon className="remind-icon" />
+            {'New password required!'}
 
-            <Form.Group>
-              <Form.ControlLabel>Username</Form.ControlLabel>
-              <Form.Control
-                name="username"
-                value={credentials.username}
-                onChange={e => setCredentials({ ...credentials, username: e })}
-              />
-            </Form.Group>
-
-            <Form.Group>
-              <Button appearance="primary" onClick={handleLogin}>
-                Send OTP
-              </Button>
-            </Form.Group>
-          </Form>
-        </Panel>
-      )}
-
-      {/* Modal for Password Change */}
-      <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
-        <Modal.Body>
-          <RemindIcon className="remind-icon" />
-          {'New password required!'}
-
-          <Form fluid>
-            <Form.Group>
-              <Form.ControlLabel>New Password</Form.ControlLabel>
-              <Form.Control
-                name="New Password"
-                value={newPassword}
-                onChange={e => setNewPassword(e)}
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.ControlLabel>Password Confirm</Form.ControlLabel>
-              <Form.Control
-                name="Password Confirm"
-                value={newPasswordConfirm}
-                onChange={e => setNewPasswordConfirm(e)}
-              />
-            </Form.Group>
-          </Form>
-          <p className="error-text"> {errText}</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleSaveNewPassword} appearance="primary">
-            Ok
-          </Button>
-          <Button appearance="subtle">Cancel</Button>
-        </Modal.Footer>
-      </Modal>
-    </Panel></Panel>
+            <Form fluid>
+              <Form.Group>
+                <Form.ControlLabel>New Password</Form.ControlLabel>
+                <Form.Control
+                  name="New Password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e)}
+                />
+              </Form.Group>
+              <Form.Group>
+                <Form.ControlLabel>Password Confirm</Form.ControlLabel>
+                <Form.Control
+                  name="Password Confirm"
+                  value={newPasswordConfirm}
+                  onChange={e => setNewPasswordConfirm(e)}
+                />
+              </Form.Group>
+            </Form>
+            <p className="error-text"> {errText}</p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={handleSaveNewPassword} appearance="primary">
+              Ok
+            </Button>
+            <Button appearance="subtle">Cancel</Button>
+          </Modal.Footer>
+        </Modal>
+      </Panel></Panel>
   );
 };
 
