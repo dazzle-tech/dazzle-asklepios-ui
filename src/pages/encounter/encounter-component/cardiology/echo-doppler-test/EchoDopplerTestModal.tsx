@@ -1,0 +1,509 @@
+import React, { useState, useEffect } from 'react';
+import { Form } from 'rsuite';
+import MyModal from '@/components/MyModal/MyModal';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStethoscope } from '@fortawesome/free-solid-svg-icons';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { Checkbox, RadioGroup, Radio } from 'rsuite';
+import Section from '@/components/Section';
+import './style.less';
+
+// Dummy initial object for now
+const defaultEchoDoppler = {
+  testDate: '',
+  testType: '',
+  result: ''
+};
+
+interface RecordType {
+  LVEDD?: number;
+  LVEF?: number;
+  pericardialEffusion?: string;
+
+}
+
+const rwmaOptions = [
+  { RwmaValue: 'Normal', value: 'Normal' },
+  { RwmaValue: 'Hypokinesia', value: 'Hypokinesia' },
+  { RwmaValue: 'Akinesia', value: 'Akinesia' },
+  { RwmaValue: 'Dyskinesia', value: 'Dyskinesia' },
+  { RwmaValue: 'Aneurysm (per segment)', value: 'Aneurysm' },
+];
+
+const EchoDopplerTestModal = ({ open, setOpen, patient, encounter, echoTestObject, refetch, edit }) => {
+  const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
+const [echoTest, setEchoTest] = useState({
+  indication: '',
+  indicationOther: ''
+});
+const [record, setRecord] = useState<RecordType>({});
+
+
+//LOV Api's
+const { data: echoIndicationsLov } = useGetLovValuesByCodeQuery('ECHO_INDICATIONS');
+const { data: echoTypesLov } = useGetLovValuesByCodeQuery('ECHO_TYPES');
+const { data: patientPositionLov } = useGetLovValuesByCodeQuery('PAT_POSITION');
+
+
+
+const otherIndicationKey = echoIndicationsLov?.object?.find(
+  item => item.lovDisplayVale?.toLowerCase() === 'other'
+)?.key;
+  useEffect(() => {
+    setEchoTest({ ...echoTestObject });
+  }, [echoTestObject]);
+  const handleClearField = () => {
+    setEchoTest({ ...defaultEchoDoppler });
+  };
+  const handleSave = async () => {
+    try {
+      // TODO: Replace this with real save API when ready
+      console.log('Saving Echo Doppler Test:', {
+        ...echoTest,
+        patientKey: patient?.key,
+        encounterKey: encounter?.key,
+        createdBy: authSlice?.user?.key
+      });
+
+      dispatch(notify({ msg: 'Echo Doppler Test Saved Successfully', sev: 'success' }));
+      setOpen(false);
+      handleClearField();
+      refetch?.();
+    } catch (error) {
+      console.error('Error saving echo doppler test:', error);
+      dispatch(notify({ msg: 'Failed to save Echo Doppler Test', sev: 'error' }));
+    }
+  };
+
+const physicians = [
+  { id: 'p1', fullName: 'Dr. Ahmed Ali' },
+  { id: 'p2', fullName: 'Dr. Sara Hassan' },
+  { id: 'p3', fullName: 'Dr. Omar Khaled' },
+];
+const usersList = [
+  { id: 'u1', fullName: 'Technician John' },
+  { id: 'u2', fullName: 'Operator Layla' },
+  { id: 'u3', fullName: 'Technician Mike' },
+];
+
+  const content = (
+      <Form fluid layout="inline" disabled={edit}>
+        <div className='sections-handle-position'>
+<Section title="Test Information"
+content={
+<>
+<MyInput
+    width={200}
+    fieldType="select"
+    fieldLabel="Indication"
+    fieldName="indication"
+    selectData={echoIndicationsLov?.object ?? []}
+    selectDataLabel="lovDisplayVale"
+    selectDataValue="key"
+    record={echoTest}
+    setRecord={setEchoTest}
+  />
+
+{echoTest?.indication === otherIndicationKey && (
+  <MyInput
+    width={300}
+    fieldType="text"
+    fieldLabel="Other Indication"
+    fieldName="indicationOther"
+    placeholder="Please specify"
+    record={echoTest}
+    setRecord={setEchoTest}
+  />
+)}
+<MyInput
+  width={200}
+  fieldType="select"
+  fieldLabel="Echo Type"
+  fieldName="echoType"
+  selectData={echoTypesLov?.object ?? []}
+  selectDataLabel="lovDisplayVale"
+  selectDataValue="key"
+  record={echoTest}
+  setRecord={setEchoTest}
+/>
+<MyInput
+  width={300}
+  fieldType="select"
+  fieldLabel="Referring Physician"
+  fieldName="referringPhysician"
+  selectData={physicians}
+  selectDataLabel="fullName"
+  selectDataValue="id"
+  record={echoTest}
+  setRecord={setEchoTest}
+/>
+<MyInput
+  width={300}
+  fieldType="select"
+  fieldLabel="Technician/Operator Name"
+  fieldName="technicianName"
+  selectData={usersList}
+  selectDataLabel="fullName"
+  selectDataValue="id"
+  record={echoTest}
+  setRecord={setEchoTest}
+/>
+ </>}/>
+
+<Section title="Technical Quality"
+content={
+<>
+<MyInput
+  width={300}
+  fieldType="select"
+  fieldLabel="Patient Position"
+  fieldName="patientPosition"
+  selectData={patientPositionLov?.object ?? []}
+  selectDataLabel="lovDisplayVale"
+  selectDataValue="key"
+  record={record}
+  setRecord={setRecord}
+/>
+    <RadioGroup
+      name="imageQuality"
+      value={record?.imageQuality ?? ''}
+      onChange={value => setRecord({ ...record, imageQuality: value })}
+    >    <label>Image Quality</label>
+
+      <Radio value="Excellent">Excellent</Radio>
+      <Radio value="Good">Good</Radio>
+      <Radio value="Fair">Fair</Radio>
+      <Radio value="Poor">Poor</Radio>
+    </RadioGroup>
+</>}/>
+
+<Section title="Measurements – M-mode / 2D"
+  content={
+    <>
+<MyInput
+  fieldLabel="LVEDD (LV End-Diastolic Diameter)"
+  fieldName="LVEDD"
+  fieldType="number"
+  record={record}
+  setRecord={setRecord}
+  required
+  inputColor={
+    (record?.LVEDD < 30 || record?.LVEDD > 70) && record?.LVEDD !== 0
+      ? 'danger'
+      : ''
+  }
+  width={120}
+  rightAddon="mm"
+/>
+
+      <MyInput
+        fieldLabel="LVESD (LV End-Systolic Diameter)"
+        fieldName="LVESD"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        required
+        width={120}
+        rightAddon="mm"
+      />
+      <MyInput
+        fieldLabel="IVS Thickness (Diastole)"
+        fieldName="IVSThickness"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        required
+        width={120}
+        rightAddon="mm"
+      />
+      <MyInput
+        fieldLabel="Posterior Wall Thickness (Diastole)"
+        fieldName="posteriorWallThickness"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        required
+        width={180}
+        rightAddon="mm"
+      />
+<MyInput
+  fieldLabel="LVEF"
+  fieldName="LVEF"
+  fieldType="number"
+  record={record}
+  setRecord={setRecord}
+  required
+  width={120}
+  rightAddon="%"
+  inputColor={
+    (record?.LVEF < 10 || record?.LVEF > 90) && record?.LVEF !== undefined
+      ? 'danger'
+      : ''
+  }
+/>
+
+      <MyInput
+        fieldLabel="LV Mass Index"
+        fieldName="LVMassIndex"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        required
+        width={120}
+        rightAddon="g/m²"
+      />
+      <MyInput
+        fieldLabel="LA Diameter"
+        fieldName="LADiameter"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        required
+        width={120}
+        rightAddon="mm"
+      />
+      <MyInput
+        fieldLabel="RA Area"
+        fieldName="RAArea"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        required
+        width={120}
+        rightAddon="cm²"
+      />
+      <MyInput
+        fieldLabel="RV Diameter"
+        fieldName="RVDiameter"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        required
+        width={120}
+        rightAddon="mm"
+      />
+      <MyInput
+        fieldLabel="Ascending Aorta Diameter"
+        fieldName="ascendingAortaDiameter"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        required
+        width={180}
+        rightAddon="mm"
+      />
+    </>
+  }
+/>
+
+<Section title="Doppler – Valves"
+  content={
+    <>
+      <MyInput
+        fieldLabel="Aortic Valve Peak Velocity"
+        fieldName="aorticValvePeakVelocity"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="m/s"
+      />
+      <MyInput
+        fieldLabel="Aortic Valve Mean Gradient"
+        fieldName="aorticValveMeanGradient"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="mmHg"
+      />
+      <MyInput
+        fieldLabel="Aortic Valve Area"
+        fieldName="aorticValveArea"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="cm²"
+      />
+      <MyInput
+        fieldLabel="Mitral Valve E Velocity"
+        fieldName="mitralValveEVelocity"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="m/s"
+      />
+      <MyInput
+        fieldLabel="Mitral Valve A Velocity"
+        fieldName="mitralValveAVelocity"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="m/s"
+      />
+      <MyInput
+        fieldLabel="E/A Ratio"
+        fieldName="eaRatio"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="ratio"
+      />
+      <MyInput
+        fieldLabel="Mitral Valve Deceleration Time"
+        fieldName="mitralValveDecelerationTime"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="ms"
+      />
+      <MyInput
+        fieldLabel="Mitral Valve Area"
+        fieldName="mitralValveArea"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="cm²"
+      />
+      <MyInput
+        fieldLabel="Tricuspid Regurgitation Peak Velocity"
+        fieldName="tricuspidRegurgitationPeakVelocity"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="m/s"
+      />
+      <MyInput
+        fieldLabel="Estimated PASP"
+        fieldName="estimatedPASP"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="mmHg"
+      />
+      <MyInput
+        fieldLabel="Pulmonic Valve Peak Velocity"
+        fieldName="pulmonicValvePeakVelocity"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width={150}
+        rightAddon="m/s"
+      />
+    </>
+  }
+/>
+
+<Section title="Color Doppler Findings"
+  content={
+    <>
+    </>
+  }
+/>
+
+<Section title="Other Findings"
+  content={
+    <>
+      <RadioGroup
+        name="pericardialEffusion"
+        value={record?.pericardialEffusion ?? ''}
+        onChange={value => setRecord({ ...record, pericardialEffusion: value })}
+      >
+        <label>Pericardial Effusion</label>
+        <Radio value="None">None</Radio>
+        <Radio value="Small">Small</Radio>
+        <Radio value="Moderate">Moderate</Radio>
+        <Radio value="Large">Large</Radio>
+      </RadioGroup>
+
+    <MyInput
+  width="100%"
+  fieldType="checkPicker"
+  fieldName="rwma"
+  record={record}
+  setRecord={setRecord}
+  fieldLabel="RWMA"
+  selectData={rwmaOptions}
+  selectDataLabel="RwmaValue"
+  selectDataValue="value"
+  searchable
+/>
+<MyInput
+  fieldLabel="Additional Notes"
+  fieldName="additionalNotes"
+  fieldType="textarea"
+  rows={4}
+  width="100%"
+  record={record}
+  setRecord={setRecord}
+/>
+
+    </>
+  }
+/>
+
+<Section title="Conclusion"
+  content={
+    <>
+<MyInput
+        fieldLabel="Final Impression"
+        fieldName="finalImpression"
+        fieldType="textarea"
+        rows={4}
+        width="100%"
+        record={record}
+        setRecord={setRecord}
+      />
+
+      <MyInput
+        fieldLabel="Recommendation"
+        fieldName="recommendation"
+        fieldType="textarea"
+        rows={4}
+        width="100%"
+        record={record}
+        setRecord={setRecord}
+      />
+    </>
+  }
+/>
+
+</div>
+      </Form>
+  );
+
+  return (
+    <MyModal
+      open={open}
+      setOpen={setOpen}
+      title="Add/Edit Echo Doppler Test"
+      actionButtonFunction={handleSave}
+      position="center"
+      isDisabledActionBtn={edit}
+      size="70vw"
+      steps={[
+        {
+          title: 'Echo Doppler',
+          icon: <FontAwesomeIcon icon={faStethoscope} />,
+          footer: <MyButton appearance="ghost" onClick={handleClearField}>Clear</MyButton>
+        }
+      ]}
+      content={content}
+    />
+  );
+};
+
+export default EchoDopplerTestModal;
