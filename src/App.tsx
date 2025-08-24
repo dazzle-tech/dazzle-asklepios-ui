@@ -167,6 +167,8 @@ import SpeechTherapy from './pages/encounter/encounter-component/speech-therapy'
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
+  const user = useAppSelector(state => state.auth.user);
+
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
   const [navigationMap, setNavigationMap] = useState([]);
@@ -174,7 +176,7 @@ const App = () => {
     data: navigationMapRawData,
     isLoading: isLoadingNavigationMap,
     isFetching: isFetchingNavigationMap
-  } = useLoadNavigationMapQuery(authSlice.user, { skip: !authSlice.user });
+  } = useLoadNavigationMapQuery(user?.key || '');
   const [screenKeys, setScreenKeys] = useState({});
   const location = useLocation();
 
