@@ -247,7 +247,8 @@ const Encounter = () => {
     '/encounter/medication-administration-record': 'MAR',
     '/encounter/physiotherapy-plan': 'Physiotherapy Plan',
     '/encounter/occupational-therapy': 'Occupational Therapy',
-    '/encounter/speech-therapy': 'Speech Therapy'
+    '/encounter/speech-therapy': 'Speech Therapy',
+    '/encounter/iv-fluid-administration': 'IV Fluid Administration'
   };
 
   const menuItems = [
@@ -431,6 +432,12 @@ const Encounter = () => {
       label: 'Speech Therapy',
       icon: faPersonWalking,
       path: 'speech-therapy'
+    },
+    {
+      key: 'ivFluidAdministration',
+      label: 'IV Fluid Administration',
+      icon: faSyringe,
+      path: 'iv-fluid-administration'
     }
   ];
   const [currentHeader, setCurrentHeader] = useState();
@@ -543,7 +550,7 @@ const Encounter = () => {
                     </Translate>
                   </MyButton>
                 )}
-                 {/* show this button only on the dashboard page */}
+                {/* show this button only on the dashboard page */}
                 {location.pathname == '/encounter' && (
                   <MyButton
                     prefixIcon={() => (

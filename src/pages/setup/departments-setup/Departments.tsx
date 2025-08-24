@@ -86,7 +86,7 @@ const Departments = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
+    <div className="page-title">
       <h5>Departments</h5>
     </div>
   );
@@ -181,7 +181,8 @@ const Departments = () => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Departments Saved successfully', sev: 'success' }));
-      }).catch(() => {
+      })
+      .catch(() => {
         dispatch(notify({ msg: 'Failed to save this Departments', sev: 'error' }));
       });
     setLoad(false);
@@ -222,20 +223,30 @@ const Departments = () => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        className='icons-style'
-        onClick={() => { setPopupOpen(true); }}
+        className="icons-style"
+        onClick={() => {
+          setPopupOpen(true);
+        }}
       />
       {rowData?.deletedAt ? (
-        <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" className='icons-style' />
+        <FontAwesomeIcon
+          title="Active"
+          icon={faRotateRight}
+          fill="var(--primary-gray)"
+          className="icons-style"
+        />
       ) : (
-        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" className='icons-style'/>
+        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" className="icons-style" />
       )}
       <FontAwesomeIcon
         icon={faSheetPlastic}
         style={{
-          cursor: ['5673990729647001', '5673990729647002', '5673990729647005','5673990729647004'].includes(
-            rowData?.departmentTypeLkey
-          )
+          cursor: [
+            '5673990729647001',
+            '5673990729647002',
+            '5673990729647005',
+            '5673990729647004'
+          ].includes(rowData?.departmentTypeLkey)
             ? 'pointer'
             : 'not-allowed',
           color: 'var(--primary-gray)'
@@ -243,10 +254,15 @@ const Departments = () => {
         title="Medical Sheets"
         size={'lg'}
         onClick={() => {
-          if(['5673990729647001', '5673990729647002', '5673990729647005','5673990729647004'].includes(
-            rowData?.departmentTypeLkey
-          ))
-          setOpenScreensPopup(true);
+          if (
+            [
+              '5673990729647001',
+              '5673990729647002',
+              '5673990729647005',
+              '5673990729647004'
+            ].includes(rowData?.departmentTypeLkey)
+          )
+            setOpenScreensPopup(true);
         }}
       />
     </div>
@@ -257,8 +273,7 @@ const Departments = () => {
       key: 'facilityName',
       title: <Translate>Facility Name</Translate>,
       flexGrow: 4,
-      render: rowData => rowData?.facility?.facilityName ? rowData?.facility?.facilityName : ' '
-
+      render: rowData => (rowData?.facility?.facilityName ? rowData?.facility?.facilityName : ' ')
     },
     {
       key: 'name',
@@ -289,7 +304,7 @@ const Departments = () => {
     {
       key: 'appointable',
       title: <Translate>Appointable</Translate>,
-       render: (rowData: ApDepartment) => {
+      render: (rowData: ApDepartment) => {
         return <p>{rowData?.appointable ? 'Yes' : 'No'}</p>;
       }
     },
@@ -355,7 +370,7 @@ const Departments = () => {
 
   return (
     <Panel>
-      <div className='container-of-add-new-button'>
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"
@@ -370,8 +385,8 @@ const Departments = () => {
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => {
-            setDepartment(rowData);
-          }}
+          setDepartment(rowData);
+        }}
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}

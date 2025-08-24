@@ -164,6 +164,7 @@ import PhysiotherapyPlan from './pages/encounter/encounter-component/physiothera
 import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
 import OccupationalTherapy from './pages/encounter/encounter-component/occupational-therapy';
 import SpeechTherapy from './pages/encounter/encounter-component/speech-therapy';
+import IVFluidAdministration from './pages/encounter/encounter-component/iv-fluid-administration/IVFluidAdministration';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -387,6 +388,7 @@ const App = () => {
                 <Route path="physiotherapy-plan" element={<PhysiotherapyPlan />} />
                 <Route path="occupational-therapy" element={<OccupationalTherapy />} />
                 <Route path="speech-therapy" element={<SpeechTherapy />} />
+                {/* <Route path="iv-fluid-Administration" element={<IVFluidAdministration />} /> */}
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
@@ -473,7 +475,7 @@ const App = () => {
               <Route path="service-and-products" element={<ServiceAndProducts />} />
             </Route>
           </Route>
-
+          <Route path="iv-fluid-Administration" element={<IVFluidAdministration />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
