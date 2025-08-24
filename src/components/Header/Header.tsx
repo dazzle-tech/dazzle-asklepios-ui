@@ -29,7 +29,7 @@ import {
 } from '@/utils/uiReducerActions';
 import EditProfile from './EditProfile';
 import RegistrationWizard from '@/pages/patient/facility-patient-list/RegistrationWizard';
-import authSlice from '@/reducers/authSlice';
+import authSlice, { setUser } from '@/reducers/authSlice';
 import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const Header = ({ expand, setExpand }) => {
@@ -66,12 +66,15 @@ const Header = ({ expand, setExpand }) => {
       console.log(eventKey);
     };
 
-    const handleLogout = () => {
-      logout('').unwrap();
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-      localStorage.clear();
-    };
+const handleLogout = () => {
+  dispatch(setUser(null));
+  dispatch(setPageCode(''));
+  dispatch(setDivContent(''));
+
+  localStorage.clear();
+
+  navigate('/login');
+};
 
     useEffect(() => {
       if (logoutResult && !isLoggingOut && !authSlice.user) {
