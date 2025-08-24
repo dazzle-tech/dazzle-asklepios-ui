@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { onQueryStarted, baseQuery } from '@/api';
+import authSlice from '@/reducers/authSlice';
 
 export const uiService = createApi({
   reducerPath: 'uiApi',
@@ -19,8 +20,10 @@ export const uiService = createApi({
       }
     }),
     loadNavigationMap: builder.query({
-      query: () => ({
-        url: `/setup/navigation-map`
+      query: (userKey) => ({
+        url: `/setup/navigation-map`,
+      params: { userId: userKey },
+
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 1,
