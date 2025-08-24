@@ -70,6 +70,7 @@ const Header = ({ expand, setExpand }) => {
       logout('').unwrap();
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
+      localStorage.clear();
     };
 
     useEffect(() => {
