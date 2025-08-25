@@ -24,6 +24,8 @@ import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 import './style.less';
 import { useLocation } from 'react-router-dom';
 import MyLabel from '@/components/MyLabel';
+import NursingReportAssesments from '../occupational-therapy/components/NursingReportAssesments';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 const Physiotherapy = () => {
   // State initialization
@@ -190,7 +192,42 @@ const Physiotherapy = () => {
     { key: 'notes', title: <Translate>Notes</Translate> },
     {
       key: 'status',
-      title: <Translate>Status</Translate>
+      title: <Translate>Status</Translate>,
+      render: rowData => {
+        const status = rowData.status || 'Requested';
+
+        const getStatusConfig = status => {
+          switch (status) {
+            case 'Requested':
+              return {
+                backgroundColor: 'var(--light-orange)',
+                color: 'var(--primary-orange)',
+                contant: 'Requested'
+              };
+            case 'Confirmed':
+              return {
+                backgroundColor: 'var(--light-green)',
+                color: 'var(--primary-green)',
+                contant: 'Confirmed'
+              };
+            default:
+              return {
+                backgroundColor: 'var(--background-gray)',
+                color: 'var(--primary-gray)',
+                contant: 'Unknown'
+              };
+          }
+        };
+
+        const config = getStatusConfig(status);
+        return (
+          <MyBadgeStatus
+            backgroundColor={config.backgroundColor}
+            color={config.color}
+            contant={config.contant}
+          />
+        );
+      }
     }
   ];
 
@@ -200,7 +237,49 @@ const Physiotherapy = () => {
     { key: 'totalPlanDuration', title: <Translate>Total Plan Duration</Translate> },
     {
       key: 'status',
-      title: <Translate>Status</Translate>
+      title: <Translate>Status</Translate>,
+      width: 120,
+      render: rowData => {
+        const status = rowData.status || 'Active';
+
+        const getStatusConfig = status => {
+          switch (status) {
+            case 'Active':
+              return {
+                backgroundColor: 'var(--very-light-blue)',
+                color: 'var(--primary-blue)',
+                contant: 'Active'
+              };
+            case 'Completed':
+              return {
+                backgroundColor: 'var(--light-green)',
+                color: 'var(--primary-green)',
+                contant: 'Completed'
+              };
+            case 'Cancelled':
+              return {
+                backgroundColor: 'var(--light-red)',
+                color: 'var(--primary-red)',
+                contant: 'Cancelled'
+              };
+            default:
+              return {
+                backgroundColor: 'var(--background-gray)',
+                color: 'var(--primary-gray)',
+                contant: 'Unknown'
+              };
+          }
+        };
+
+        const config = getStatusConfig(status);
+        return (
+          <MyBadgeStatus
+            backgroundColor={config.backgroundColor}
+            color={config.color}
+            contant={config.contant}
+          />
+        );
+      }
     },
     {
       key: 'initiatedByAt',
@@ -500,7 +579,6 @@ const Physiotherapy = () => {
                               borderRadius: '4px'
                             }}
                           />
-                          
                         </div>
                       </div>
                       <div className="margin2-class">
@@ -584,7 +662,11 @@ const Physiotherapy = () => {
         <MyNestedTable data={referralsData} columns={referralColumns} />
       </Panel>
 
-      {/* <Divider /> */}
+      <Divider />
+      <Panel>
+        <NursingReportAssesments />
+      </Panel>
+      <Divider />
 
       {/* Physiotherapy plans section */}
       <Panel className="section-panel">

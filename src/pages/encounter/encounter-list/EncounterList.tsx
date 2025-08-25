@@ -11,7 +11,11 @@ import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useCancelEncounterMutation, useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
+import {
+  useCancelEncounterMutation,
+  useGetEncountersQuery,
+  useStartEncounterMutation
+} from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -24,8 +28,7 @@ import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const EncounterList = () => {
   const location = useLocation();
@@ -56,15 +59,13 @@ const EncounterList = () => {
         operator: 'in',
         value: ['2039534205961578', '2039620472612029', '2039516279378421']
           .map(key => `(${key})`)
-          .join(' '),
+          .join(' ')
       },
       {
         fieldName: 'encounter_status_lkey',
         operator: 'in',
-        value: ['91063195286200', '91084250213000']
-          .map(key => `(${key})`)
-          .join(' '),
-      },
+        value: ['91063195286200', '91084250213000'].map(key => `(${key})`).join(' ')
+      }
     ]
   });
   const {
@@ -113,21 +114,20 @@ const EncounterList = () => {
       );
     } else {
       setListRequest({
-        ...listRequest, filters: [
+        ...listRequest,
+        filters: [
           {
             fieldName: 'resource_type_lkey',
             operator: 'in',
             value: ['2039534205961578', '2039620472612029', '2039516279378421']
               .map(key => `(${key})`)
-              .join(' '),
-          }, {
+              .join(' ')
+          },
+          {
             fieldName: 'encounter_status_lkey',
             operator: 'in',
-            value: ['91063195286200', '91084250213000']
-              .map(key => `(${key})`)
-              .join(' '),
-          },
-
+            value: ['91063195286200', '91084250213000'].map(key => `(${key})`).join(' ')
+          }
         ]
       });
     }
@@ -147,7 +147,7 @@ const EncounterList = () => {
           info: 'toEncounter',
           fromPage: 'EncounterList',
           patient: patientData,
-          encounter: encounterData,
+          encounter: encounterData
         }
       });
     } else {
@@ -156,12 +156,11 @@ const EncounterList = () => {
           info: 'toEncounter',
           fromPage: 'EncounterList',
           patient: patientData,
-          encounter: encounterData,
-
+          encounter: encounterData
         }
       });
     }
-    sessionStorage.setItem("encounterPageSource", "EncounterList");
+    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
   const handleGoToPreVisitObservations = async (encounterData, patientData) => {
     const privatePatientPath = '/user-access-patient-private';
@@ -172,7 +171,13 @@ const EncounterList = () => {
         state: { info: 'toNurse', patient: patientData, encounter: encounterData }
       });
     } else {
-      navigate(targetPath, { state: { patient: patientData, encounter: encounterData, edit: encounterData.encounterStatusLvalue.valueCode == "CLOSED" } });
+      navigate(targetPath, {
+        state: {
+          patient: patientData,
+          encounter: encounterData,
+          edit: encounterData.encounterStatusLvalue.valueCode == 'CLOSED'
+        }
+      });
     }
   };
   const handleCancelEncounter = async () => {
@@ -184,7 +189,7 @@ const EncounterList = () => {
         setOpen(false);
       }
     } catch (error) {
-      console.error("Encounter completion error:", error);
+      console.error('Encounter completion error:', error);
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
@@ -203,11 +208,10 @@ const EncounterList = () => {
     handleManualSearch();
   }, []);
 
-
   useEffect(() => {
     if (isLoading || (manualSearchTriggered && isFetching)) {
       dispatch(showSystemLoader());
-    } else if ((isFetching && isLoading)) {
+    } else if (isFetching && isLoading) {
       dispatch(hideSystemLoader());
     }
 
@@ -215,8 +219,6 @@ const EncounterList = () => {
       dispatch(hideSystemLoader());
     };
   }, [isLoading, isFetching, dispatch]);
-
-
 
   const tableColumns = [
     {
@@ -248,7 +250,7 @@ const EncounterList = () => {
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
             <div style={{ display: 'inline-block' }}>
               {rowData?.patientObject?.privatePatient ? (
-                <Badge color='blue' content="Private">
+                <Badge color="blue" content="Private">
                   <p style={{ marginTop: '5px', cursor: 'pointer' }}>
                     {rowData?.patientObject?.fullName}
                   </p>
@@ -272,7 +274,7 @@ const EncounterList = () => {
     {
       key: 'chiefComplaint',
       title: <Translate>CHIEF COMPLAIN</Translate>,
-      render: rowData => rowData?.chiefComplaint,
+      render: rowData => rowData?.chiefComplaint
     },
     {
       key: 'diagnosis',
@@ -315,11 +317,16 @@ const EncounterList = () => {
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
-      render: rowData => <MyBadgeStatus color={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
-        ? rowData?.encounterStatusLvalue?.lovDisplayVale
-        : rowData?.encounterStatusLkey} />
-
-
+      render: rowData => (
+        <MyBadgeStatus
+          color={rowData?.encounterStatusLvalue?.valueColor}
+          contant={
+            rowData.encounterStatusLvalue
+              ? rowData?.encounterStatusLvalue?.lovDisplayVale
+              : rowData?.encounterStatusLkey
+          }
+        />
+      )
     },
     {
       key: 'hasObservation',
@@ -327,7 +334,6 @@ const EncounterList = () => {
       render: rowData =>
         rowData.hasObservation ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
-
         ) : (
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
@@ -373,27 +379,26 @@ const EncounterList = () => {
             </Whisper>
             <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
               <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="violet"
-                >
+                <MyButton size="small" backgroundColor="violet">
                   <FontAwesomeIcon icon={faFileWaveform} />
                 </MyButton>
               </div>
             </Whisper>
-            {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
-              <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                    setOpen(true);
-                  }}>
-                  <FontAwesomeIcon icon={faRectangleXmark} />
-                </MyButton>
-              </div>
-            </Whisper>}
-
+            {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                <div>
+                  <MyButton
+                    size="small"
+                    onClick={() => {
+                      setLocalEncounter(rowData);
+                      setOpen(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faRectangleXmark} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
           </Form>
         );
       },
@@ -459,15 +464,15 @@ const EncounterList = () => {
             { key: 'Full Name', value: 'Full Name' },
             { key: 'Archiving Number', value: 'Archiving Number' },
             { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-            { key: 'Date of Birth', value: 'Date of Birth'}
-        ]}
+            { key: 'Date of Birth', value: 'Date of Birth' }
+          ]}
           selectDataLabel="value"
           selectDataValue="key"
           record={record}
           setRecord={setRecord}
         />
         <MyInput
-          fieldLabel='Search by'
+          fieldLabel="Search by"
           column
           fieldName="searchCriteria"
           fieldType="text"
@@ -475,24 +480,25 @@ const EncounterList = () => {
           width="15vw"
           record={record}
           setRecord={setRecord}
-          />
-            <MyInput
-            column
-            width={200}
-            fieldType="select"
-            fieldLabel="Encounter Status"
-            fieldName="key"
-            selectData={encounterStatusLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={encounterStatus}
-            setRecord={setEncounterStatus}
-            />
-<div className='advanced-button-position-handler'>
-<MyButton appearance='ghost'>
-  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
-  Advance
-</MyButton></div>
+        />
+        <MyInput
+          column
+          width={200}
+          fieldType="select"
+          fieldLabel="Encounter Status"
+          fieldName="key"
+          selectData={encounterStatusLov?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={encounterStatus}
+          setRecord={setEncounterStatus}
+        />
+        <div className="advanced-button-position-handler">
+          <MyButton appearance="ghost">
+            <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+            Advance
+          </MyButton>
+        </div>
       </Form>
     );
   };
@@ -525,8 +531,9 @@ const EncounterList = () => {
         actionButtonFunction={handleCancelEncounter}
         actionType="Deactivate"
         confirmationQuestion="Do you want to cancel this Encounter ?"
-        actionButtonLabel='Cancel'
-        cancelButtonLabel='Close' />
+        actionButtonLabel="Cancel"
+        cancelButtonLabel="Close"
+      />
     </Panel>
   );
 };

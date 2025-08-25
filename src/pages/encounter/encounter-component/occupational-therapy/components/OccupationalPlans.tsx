@@ -22,6 +22,7 @@ import MyInput from '@/components/MyInput';
 import AddProgressNotes from '@/components/ProgressNotes/ProgressNotes';
 import { useLocation } from 'react-router-dom';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 const OccupationalPlans = () => {
   const location = useLocation();
@@ -45,7 +46,8 @@ const OccupationalPlans = () => {
     progressNotes: '',
     painLevel: 0,
     functionalImprovement: '',
-    nextReviewDate: ''
+    nextReviewDate: '',
+    status: 'Confirmed'
   });
   const [progressNotes, setProgressNotes] = useState([]);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
@@ -344,7 +346,6 @@ const OccupationalPlans = () => {
                     <FontAwesomeIcon icon={faPaperclip} className="font-small" />
                     <p className="font-small">Attachments</p>
                   </>
-                  
                 }
                 content={
                   <PatientAttachment
@@ -387,11 +388,48 @@ const OccupationalPlans = () => {
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      render: rowData => (
-        <span className={`status-badge ${rowData.status?.toLowerCase()}`}>
-          <Translate>{rowData.status}</Translate>
-        </span>
-      )
+      width: 120,
+      render: rowData => {
+        const status = rowData.status || 'Active';
+
+        const getStatusConfig = status => {
+          switch (status) {
+            case 'Active':
+              return {
+                backgroundColor: 'var(--very-light-blue)',
+                color: 'var(--primary-blue)',
+                contant: 'Active'
+              };
+            case 'Completed':
+              return {
+                backgroundColor: 'var(--light-green)',
+                color: 'var(--primary-green)',
+                contant: 'Completed'
+              };
+            case 'Cancelled':
+              return {
+                backgroundColor: 'var(--light-red)',
+                color: 'var(--primary-red)',
+                contant: 'Cancelled'
+              };
+            default:
+              return {
+                backgroundColor: 'var(--background-gray)',
+                color: 'var(--primary-gray)',
+                contant: 'Unknown'
+              };
+          }
+        };
+
+        const config = getStatusConfig(status);
+        return (
+          <MyBadgeStatus
+            backgroundColor={config.backgroundColor}
+            color={config.color}
+            contant={config.contant}
+          />
+        );
+      }
     },
     {
       key: 'initiatedByAt',
@@ -569,7 +607,7 @@ const OccupationalPlans = () => {
         bodyheight="75vh"
         content={initiatePlanContent}
         steps={[{ title: 'Treatment Plan', icon: <FontAwesomeIcon icon={faBullseye} /> }]}
-        hideActionBtn = {true}
+        hideActionBtn={true}
         footerButtons={
           <div className="modal-footer-buttons">
             <MyButton appearance="subtle" onClick={handleSaveDraft}>
