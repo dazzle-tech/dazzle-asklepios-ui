@@ -8,16 +8,13 @@ import { faSprayCanSparkles, faPlay, faBottleDroplet } from '@fortawesome/free-s
 import AddEditFluidOrder from '../iv-fluid-order/AddEditFluidOrder';
 import Additives from '../iv-fluid-order/additives';
 import './style.less';
-import { Tooltip, Whisper, RadioGroup, Radio, Row, Col, Form, Text } from 'rsuite';
+import { Tooltip, Whisper, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import VitalSigns from '@/pages/medical-component/vital-signs';
 // import VitalSigns from './VitalSignsIv';
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { newApPatientObservationSummary } from '@/types/model-types-constructor';
 import Section from '@/components/Section';
-import Toggle from './Toggle';
-import FluidAdministration from './FluidAdministration';
-import FluidAdministrationTable from './FluidAdministrationTable';
 import AdministrationDetails from './AdministrationDetails';
 import FluidAdministrationSection from './FluidAdministrationSection';
 
@@ -37,22 +34,7 @@ const IVFluidAdministration = () => {
     measurementSiteLkey: '',
     respiratoryRate: 0
   });
-  const [patientObservationSummary, setPatientObservationSummary] =
-    useState<ApPatientObservationSummary>({
-      ...newApPatientObservationSummary,
-      latesttemperature: null,
-      latestbpSystolic: null,
-      latestbpDiastolic: null,
-      latestheartrate: null,
-      latestrespiratoryrate: null,
-      latestoxygensaturation: null,
-      latestglucoselevel: null,
-      latestweight: null,
-      latestheight: null,
-      latestheadcircumference: null,
-      latestpainlevelLkey: null
-    });
-  const [readOnly, setReadOnly] = useState(false);
+
 
   const isSelected = rowData => (rowData?.key === fluidOrder?.key ? 'selected-row' : '');
 

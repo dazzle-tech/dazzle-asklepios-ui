@@ -1,10 +1,8 @@
-// src/components/AdministrationDetails.jsx
 import React from 'react';
 import { Form, RadioGroup, Radio } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import Section from '@/components/Section'; // إذا Section عندك كومبوننت جاهز
+import Section from '@/components/Section';
 import Toggle from './Toggle';
-// import MyLabel لو بتحتاجه
 
 const AdministrationDetails = ({ fluidOrder, setFluidOrder }) => {
   return (
