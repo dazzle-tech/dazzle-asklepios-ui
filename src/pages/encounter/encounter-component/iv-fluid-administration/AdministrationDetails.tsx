@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Form, RadioGroup, Radio } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import Section from '@/components/Section';
-import Toggle from './Toggle';
 
 const AdministrationDetails = ({ fluidOrder, setFluidOrder }) => {
+  const [formRecord, setFormRecord] = useState({ anyReaction: false, reaction: '' });
+  const [showTagField, setShowTagField] = useState(false);
   return (
     <Section
       title={<p className="font-small">Administration Details</p>}
@@ -47,7 +48,37 @@ const AdministrationDetails = ({ fluidOrder, setFluidOrder }) => {
                 record={fluidOrder}
                 setRecord={setFluidOrder}
               />
-              <Toggle />
+              <Form fluid>
+                <div className="flexing">
+                  {/* Checkbox */}
+                  <MyInput
+                    fieldType="checkbox"
+                    fieldName="anyReaction"
+                    fieldLabel="Any Reaction"
+                    width={100}
+                    record={formRecord}
+                    setRecord={val => {
+                      setFormRecord(val);
+                      setShowTagField(val.anyReaction === true);
+                    }}
+                  />
+
+                  {/* Tag field */}
+                  {showTagField && (
+                    <div className="margin-but">
+                      <MyInput
+                        fieldType="text"
+                        fieldName="reaction"
+                        fieldLabel="Reactions"
+                        placeholder="Enter tag"
+                        record={formRecord}
+                        setRecord={setFormRecord}
+                        width={200}
+                      />
+                    </div>
+                  )}
+                </div>
+              </Form>
             </div>
             <div className="full-width">
               <MyInput

@@ -11,9 +11,6 @@ import './style.less';
 import { Tooltip, Whisper, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import VitalSigns from '@/pages/medical-component/vital-signs';
-// import VitalSigns from './VitalSignsIv';
-import { ApPatientObservationSummary } from '@/types/model-types';
-import { newApPatientObservationSummary } from '@/types/model-types-constructor';
 import Section from '@/components/Section';
 import AdministrationDetails from './AdministrationDetails';
 import FluidAdministrationSection from './FluidAdministrationSection';
@@ -34,7 +31,6 @@ const IVFluidAdministration = () => {
     measurementSiteLkey: '',
     respiratoryRate: 0
   });
-
 
   const isSelected = rowData => (rowData?.key === fluidOrder?.key ? 'selected-row' : '');
 
