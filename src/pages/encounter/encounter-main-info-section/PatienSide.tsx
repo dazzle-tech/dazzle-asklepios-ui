@@ -126,7 +126,7 @@ return (
 
         </div>
 
-        <Text >
+        <Text className='main-info-patient-side' >
             <FontAwesomeIcon icon={faIdCard} className='icon-color' /> <span className='section-title'>Document  Information</span>
         </Text>
         <br />
@@ -152,7 +152,7 @@ return (
         </div>
         <Divider className='divider-style' />
 
-        <Text >
+        <Text className='main-info-patient-side'>
             <FontAwesomeIcon icon={faUser} className='icon-color' /> <span className='section-title'>Patient  Information</span>
         </Text>
         <br />
@@ -178,7 +178,7 @@ return (
 
         </div>
         <Divider className='divider-style' />
-        <Text >
+        <Text className='main-info-patient-side'>
             <FaWeight className='icon-color' /> <span className='section-title'>Physical Measurements</span>
         </Text>
         <div className='details-section'>
@@ -238,7 +238,7 @@ return (
         </div>
         <Divider className='divider-style' />
 
-        <Text >
+        <Text className='main-info-patient-side'>
             <FontAwesomeIcon icon={faFileWaveform} className='icon-color' /> <span className='section-title'>{encounter?.resourceTypeLvalue?.valueCode !== "BRT_INPATIENT" ? "Visit Details" : "Admission Details"}</span>
         </Text>
         {encounter?.resourceTypeLvalue?.valueCode !== "BRT_INPATIENT" &&
