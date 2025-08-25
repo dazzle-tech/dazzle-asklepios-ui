@@ -2,6 +2,7 @@ import React from 'react';
 import TreadmillStress from '../treadm-stress/TreadmillStress';
 import ChiefComplaintSymptoms from '../chief_complaint_symptoms/ChiefComplaintSymptoms';
 import ElectrocardiogramECG from '../electrocardiogram-ecg/ElectrocardiogramECG';
+import EchoDopplerTest from './echo-doppler-test/EchoDopplerTest';
 import { Tabs } from 'rsuite';
 import { useLocation } from 'react-router-dom';
 const Cardiology = () => {
@@ -17,6 +18,9 @@ const Cardiology = () => {
             </Tabs.Tab>
             <Tabs.Tab eventKey="3" title="Electrocardiography (ECG)">
                 <ElectrocardiogramECG patient={patient} encounter={encounter} edit={edit} />
+            </Tabs.Tab>
+            <Tabs.Tab eventKey="4" title="Echo Doppler Test">
+                <EchoDopplerTest patient={patient} encounter={encounter} edit={edit} />
             </Tabs.Tab>
         </Tabs>
     );
