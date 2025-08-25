@@ -14,7 +14,7 @@ import {
 } from 'rsuite';
 import MyLabel from '../MyLabel';
 import Translate from '../Translate';
-import clsx from "clsx";
+import clsx from 'clsx';
 
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
@@ -23,21 +23,11 @@ const Textarea = React.forwardRef((props, ref: any) => (
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
   <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
 ));
-const CustomDateTimePicker = React.forwardRef(
-  (props: any, ref: ForwardedRef<HTMLDivElement>) => (
-    <DatePicker
-      {...props}
-      oneTap
-      format="dd-MM-yyyy HH:mm"
-      cleanable={false}
-      block
-      ref={ref}
-    />
-  )
-);
+const CustomDateTimePicker = React.forwardRef((props: any, ref: ForwardedRef<HTMLDivElement>) => (
+  <DatePicker {...props} oneTap format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
+));
 
-
-const handleEnterFocusNext = (e) => {
+const handleEnterFocusNext = e => {
   if (e.key === 'Enter') {
     e.preventDefault();
     const form = e.target.form;
@@ -49,7 +39,7 @@ const handleEnterFocusNext = (e) => {
   }
 };
 
-const focusNextField = (e) => {
+const focusNextField = e => {
   if (e.key === 'Enter') {
     e.preventDefault();
     const form = e.target.form;
@@ -73,7 +63,7 @@ const MyInput = ({
   vr = undefined,
   rows = 1,
   showLabel = true, // form validation result
-  className = "",
+  className = '',
   ...props
 }) => {
   // <<< Added this line here to fix the error
@@ -131,7 +121,12 @@ const MyInput = ({
         return (
           <Form.Control
             className="custom-date-input"
-            style={{ width: props?.width ?? 145, '--input-height': `${props?.height ?? 30}px` } as React.CSSProperties}
+            style={
+              {
+                width: props?.width ?? 145,
+                '--input-height': `${props?.height ?? 30}px`
+              } as React.CSSProperties
+            }
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? new Date(record[fieldName]) : null}
@@ -145,13 +140,22 @@ const MyInput = ({
         return (
           <Form.Control
             className="custom-time-input"
-            style={{ width: props?.width ?? 145, '--custom-time-input': `${props?.height ?? 30}px` } as React.CSSProperties}
+            style={
+              {
+                width: props?.width ?? 145,
+                '--custom-time-input': `${props?.height ?? 30}px`
+              } as React.CSSProperties
+            }
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? record[fieldName] : null}
             accepter={TimePicker}
-            onChange={(value) => { handleValueChange(value) }}
-            onClean={() => { handleValueChange(null) }}
+            onChange={value => {
+              handleValueChange(value);
+            }}
+            onClean={() => {
+              handleValueChange(null);
+            }}
             placeholder={props.placeholder}
             format="HH:mm"
             cleanable
@@ -247,8 +251,8 @@ const MyInput = ({
         const addonWidth = 40;
         const totalWidth =
           inputWidth +
-          (leftAddon ? (leftAddonwidth ?? addonWidth) : 0) +
-          (rightAddon ? (rightAddonwidth ?? addonWidth) : 0);
+          (leftAddon ? leftAddonwidth ?? addonWidth : 0) +
+          (rightAddon ? rightAddonwidth ?? addonWidth : 0);
 
         const inputControl = (
           <Form.Control
@@ -270,13 +274,31 @@ const MyInput = ({
           return (
             <InputGroup style={{ width: totalWidth }}>
               {leftAddon && (
-                <InputGroup.Addon style={{ width: leftAddonwidth ?? addonWidth, textAlign: 'center', color: '#A1A9B8', backgroundColor: '#e0e0e0' }}>
+                <InputGroup.Addon
+                  style={{
+                    width: leftAddonwidth ?? addonWidth,
+                    textAlign: 'center',
+                    color: '#A1A9B8',
+                    backgroundColor: '#e0e0e0',
+                    pointerEvents: 'none', // <-- حتى ما يتفاعل لكن يضل شكله طبيعي
+                    opacity: 1 // <-- يخلي اللون طبيعي حتى لو الـ input معطل
+                  }}
+                >
                   {leftAddon}
                 </InputGroup.Addon>
               )}
               {inputControl}
               {rightAddon && (
-                <InputGroup.Addon style={{ width: rightAddonwidth ?? addonWidth, textAlign: 'center', color: '#A1A9B8', backgroundColor: '#e0e0e0' }}>
+                <InputGroup.Addon
+                  style={{
+                    width: rightAddonwidth ?? addonWidth,
+                    textAlign: 'center',
+                    color: '#A1A9B8',
+                    backgroundColor: '#e0e0e0',
+                    pointerEvents: 'none',
+                    opacity: 1
+                  }}
+                >
                   {rightAddon}
                 </InputGroup.Addon>
               )}
@@ -301,8 +323,9 @@ const MyInput = ({
         const inputWidth = props?.width ?? 145;
         const addonWidth = 40;
         const totalWidth =
-
-          inputWidth + (leftAddon ? leftAddonwidth ? leftAddonwidth : addonWidth : 0) + (rightAddon ? rightAddonwidth ? rightAddonwidth : addonWidth : 0);
+          inputWidth +
+          (leftAddon ? (leftAddonwidth ? leftAddonwidth : addonWidth) : 0) +
+          (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const inputControl = (
           <Form.Control
@@ -314,12 +337,11 @@ const MyInput = ({
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
             placeholder={props.placeholder}
-      
-            onKeyDown={async (e) => {
+            onKeyDown={async e => {
               if (e.key === 'Enter') {
-                e.preventDefault(); 
+                e.preventDefault();
 
-                const result = await props.enterClick?.(); 
+                const result = await props.enterClick?.();
                 if (result !== false) {
                   handleEnterFocusNext(e);
                 }
@@ -331,9 +353,17 @@ const MyInput = ({
         if (leftAddon || rightAddon) {
           return (
             <InputGroup style={{ width: totalWidth }}>
-              {leftAddon && <InputGroup.Addon style={{ width: addonWidth, textAlign: 'center' }}>{leftAddon}</InputGroup.Addon>}
+              {leftAddon && (
+                <InputGroup.Addon style={{ width: addonWidth, textAlign: 'center' }}>
+                  {leftAddon}
+                </InputGroup.Addon>
+              )}
               {inputControl}
-              {rightAddon && <InputGroup.Addon style={{ width: addonWidth, textAlign: 'center' }}>{rightAddon}</InputGroup.Addon>}
+              {rightAddon && (
+                <InputGroup.Addon style={{ width: addonWidth, textAlign: 'center' }}>
+                  {rightAddon}
+                </InputGroup.Addon>
+              )}
             </InputGroup>
           );
         }
@@ -355,8 +385,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                  ? 'orange'
-                  : 'grey'
+                ? 'orange'
+                : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
@@ -369,7 +399,7 @@ const MyInput = ({
 
   return (
     <Form.Group className={clsx(`my-input-container ${className}`)}>
-      <Form.ControlLabel >
+      <Form.ControlLabel>
         {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
         {props.required && <span className="required-field ">*</span>}
       </Form.ControlLabel>

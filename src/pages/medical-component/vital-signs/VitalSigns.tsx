@@ -5,7 +5,7 @@ import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
-const VitalSigns = ({ object, setObject, disabled, width = '100%' }) => {
+const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField = false }) => {
   const [map, setMap] = useState(null);
   const { data: BPMeasurmentLov } = useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
   useEffect(() => {
@@ -120,6 +120,24 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%' }) => {
             />
           </Col>
         </Row>
+        {showNoteField && (
+          <Row className="rows-gap margin-left">
+            <Col md={24}>
+              <Form fluid>
+                <MyInput
+                  fieldLabel="Note"
+                  height="100px"
+                  width={430}
+                  fieldName="latestnotes"
+                  fieldType="textarea"
+                  record={object}
+                  setRecord={setObject}
+                  disabled={disabled}
+                />
+              </Form>
+            </Col>
+          </Row>
+        )}
       </Form>
     </div>
   );

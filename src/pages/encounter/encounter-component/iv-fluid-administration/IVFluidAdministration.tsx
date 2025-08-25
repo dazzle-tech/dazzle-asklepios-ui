@@ -16,8 +16,10 @@ import { ApPatientObservationSummary } from '@/types/model-types';
 import { newApPatientObservationSummary } from '@/types/model-types-constructor';
 import Section from '@/components/Section';
 import Toggle from './Toggle';
-import AdministrationDetails from './AdministrationDetails';
+import FluidAdministration from './FluidAdministration';
 import FluidAdministrationTable from './FluidAdministrationTable';
+import AdministrationDetails from './AdministrationDetails';
+import FluidAdministrationSection from './FluidAdministrationSection';
 
 const IVFluidAdministration = () => {
   const [fluidOrder, setFluidOrder] = useState<any>({});
@@ -218,105 +220,27 @@ const IVFluidAdministration = () => {
                 title={<p className="font-small">Vital Signs</p>}
                 content={
                   <div className="main-content-section-1 margin-left">
-                    <VitalSigns object={vital} setObject={setVital} disabled={true} width="28vw" />
-
-                    <Row className="rows-gap margin-left">
-                      <Col md={24}>
-                        <Form fluid>
-                          <MyInput
-                            fieldLabel="Note"
-                            height="100px"
-                            width={430}
-                            fieldName="latestnotes"
-                            disabled={true || readOnly}
-                            fieldType="textarea"
-                            record={patientObservationSummary}
-                            setRecord={setPatientObservationSummary}
-                          />
-                        </Form>
-                      </Col>
-                    </Row>
+                    <VitalSigns
+                      object={vital}
+                      setObject={setVital}
+                      disabled={true}
+                      width="28vw"
+                      showNoteField={true}
+                    />
                   </div>
                 }
               />
             </div>
 
             <div className="half-width">
-              <Section
-                title={<p className="font-small">Administration Details</p>}
-                content={
-                  <div className="main-content-section-1 margin-3">
-                    <Form fluid className="administration-details form-flex-wrap">
-                      <MyInput
-                        width="100%"
-                        fieldName="preparationTime"
-                        fieldType="datetime"
-                        record={fluidOrder}
-                        setRecord={setFluidOrder}
-                      />
-                      <MyInput
-                        width="100%"
-                        fieldName="actualStartTime"
-                        fieldType="datetime"
-                        record={fluidOrder}
-                        setRecord={setFluidOrder}
-                      />
-                      <Form.Group>
-                        <Form.ControlLabel>Fluid Appearance</Form.ControlLabel>
-                        <RadioGroup inline name="fluidAppearance">
-                          <Radio value="Clear">Clear</Radio>
-                          <Radio value="Cloudy">Cloudy</Radio>
-                          <Radio value="Leaking">Leaking</Radio>
-                        </RadioGroup>
-                      </Form.Group>
-                      <div className="full-width flexing">
-                        <MyInput
-                          fieldType="checkbox"
-                          fieldName="rateConfirmed"
-                          fieldLabel="Rate Confirmed"
-                          width={100}
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                        />
-                        <Toggle />
-                      </div>
-                      <div className="full-width">
-                        <MyInput
-                          fieldType="textarea"
-                          fieldName="monitoringNotes"
-                          placeholder="Monitoring Notes"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          height={35}
-                        />
-                      </div>
-                    </Form>
-                  </div>
-                }
-              />
+              <AdministrationDetails fluidOrder={fluidOrder} setFluidOrder={setFluidOrder} />
             </div>
           </div>
           <div className="margin-10">
-            <Section
-              title={
-                <>
-                  <p className="font-small">Fluid Administration</p>
-                </>
-              }
-              content={
-                <>
-                  <AdministrationDetails
-                    fluidOrder={fluidOrder}
-                    setFluidOrder={setFluidOrder}
-                    addLog={addLog}
-                  />
-                  <FluidAdministrationTable
-                    fluidOrder={fluidOrder}
-                    setFluidOrder={setFluidOrder}
-                    addLog={addLog}
-                  />
-                </>
-              }
+            <FluidAdministrationSection
+              fluidOrder={fluidOrder}
+              setFluidOrder={setFluidOrder}
+              addLog={addLog}
             />
           </div>
         </div>

@@ -1,116 +1,70 @@
+// src/components/AdministrationDetails.jsx
 import React from 'react';
-import { Form, Whisper, Tooltip } from 'rsuite';
+import { Form, RadioGroup, Radio } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay } from '@fortawesome/free-solid-svg-icons';
-import MyButton from '@/components/MyButton/MyButton';
+import Section from '@/components/Section'; // إذا Section عندك كومبوننت جاهز
+import Toggle from './Toggle';
+// import MyLabel لو بتحتاجه
 
-const AdministrationDetails = ({ fluidOrder, setFluidOrder, addLog }) => {
+const AdministrationDetails = ({ fluidOrder, setFluidOrder }) => {
   return (
-    <Form fluid className="administration-details">
-      <div className="flexing">
-        {/* Total Requested Amount */}
-        <MyInput
-          fieldType="text"
-          fieldLabel="Total Requested Amount"
-          fieldName="volume"
-          value={fluidOrder.volume}
-          disabled
-          record={fluidOrder}
-          setRecord={setFluidOrder}
-          rightAddon={'ml'}
-          width={120}
-        />
-
-        {/* Infusion Rate Requested */}
-        <MyInput
-          fieldType="text"
-          fieldLabel="Infusion Rate Requested"
-          fieldName="infusionRate"
-          value={fluidOrder.infusionRate}
-          disabled
-          record={fluidOrder}
-          setRecord={setFluidOrder}
-          rightAddon={'ml/h'}
-          rightAddonwidth={45}
-          width={130}
-        />
-
-        {/* Administered Amount */}
-        <MyInput
-          fieldType="number"
-          fieldLabel="Administered Amount"
-          fieldName="administeredAmount"
-          record={fluidOrder}
-          setRecord={setFluidOrder}
-          rightAddon={'ml'}
-          width={120}
-        />
-
-        {/* Administration Rate */}
-        <MyInput
-          fieldType="number"
-          fieldLabel="Administration Rate"
-          fieldName="administeredRate"
-          record={fluidOrder}
-          setRecord={setFluidOrder}
-          rightAddon={'ml/hr'}
-          rightAddonwidth={55}
-          width={120}
-        />
-
-        {/* Rate Variation Reason */}
-        <MyInput
-          fieldType="text"
-          fieldLabel="Rate Variation Reason"
-          fieldName="rateVariationReason"
-          record={fluidOrder}
-          setRecord={setFluidOrder}
-          width={140}
-        />
-
-        {/* Remaining Amount */}
-        <MyInput
-          fieldType="text"
-          fieldLabel="Remaining Amount"
-          fieldName="remainingAmount"
-          value={fluidOrder.volume - (fluidOrder.administeredAmount || 0)}
-          disabled
-          record={fluidOrder}
-          setRecord={setFluidOrder}
-          rightAddon={'ml'}
-          width={120}
-        />
-
-        {/* Nurse Notes */}
-        <MyInput
-          fieldType="textarea"
-          fieldLabel="Nurse Notes"
-          fieldName="nurseNotes"
-          height={35}
-          record={fluidOrder}
-          setRecord={setFluidOrder}
-          width={180}
-        />
-      </div>
-
-      {/* Start Button */}
-      <div className="margin-top-but">
-        <MyButton
-          onClick={() => {
-            addLog('Start');
-            setFluidOrder({
-              ...fluidOrder,
-              status: 'Started',
-              actualStart: new Date()
-            });
-          }}
-        >
-          <FontAwesomeIcon icon={faPlay} />
-          Start
-        </MyButton>
-      </div>
-    </Form>
+    <Section
+      title={<p className="font-small">Administration Details</p>}
+      content={
+        <div className="main-content-section-1 margin-3">
+          <Form fluid className="administration-details form-flex-wrap">
+            <MyInput
+              width="100%"
+              fieldName="preparationTime"
+              fieldType="datetime"
+              record={fluidOrder}
+              setRecord={setFluidOrder}
+            />
+            <MyInput
+              width="100%"
+              fieldName="actualStartTime"
+              fieldType="datetime"
+              record={fluidOrder}
+              setRecord={setFluidOrder}
+            />
+            <Form.Group>
+              <Form.ControlLabel>Fluid Appearance</Form.ControlLabel>
+              <RadioGroup
+                inline
+                name="fluidAppearance"
+                value={fluidOrder.fluidAppearance}
+                onChange={val => setFluidOrder({ ...fluidOrder, fluidAppearance: val })}
+              >
+                <Radio value="Clear">Clear</Radio>
+                <Radio value="Cloudy">Cloudy</Radio>
+                <Radio value="Leaking">Leaking</Radio>
+              </RadioGroup>
+            </Form.Group>
+            <div className="full-width flexing">
+              <MyInput
+                fieldType="checkbox"
+                fieldName="rateConfirmed"
+                fieldLabel="Rate Confirmed"
+                width={100}
+                record={fluidOrder}
+                setRecord={setFluidOrder}
+              />
+              <Toggle />
+            </div>
+            <div className="full-width">
+              <MyInput
+                fieldType="textarea"
+                fieldName="monitoringNotes"
+                placeholder="Monitoring Notes"
+                record={fluidOrder}
+                setRecord={setFluidOrder}
+                height={35}
+              />
+            </div>
+          </Form>
+        </div>
+      }
+    />
   );
 };
 
