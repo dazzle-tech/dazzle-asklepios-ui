@@ -1,18 +1,19 @@
-// pages/EchoSections/TechnicalQuality.tsx
-
 import React from 'react';
 import Section from '@/components/Section';
 import MyInput from '@/components/MyInput';
 import { RadioGroup, Radio } from 'rsuite';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import '../style.less';
 
 interface Props {
   record: any;
   setRecord: (value: any) => void;
-  patientPositionLov?: { object: Array<any> };
 }
 
-const TechnicalQuality: React.FC<Props> = ({ record, setRecord, patientPositionLov }) => {
+const TechnicalQuality: React.FC<Props> = ({ record, setRecord }) => {
+  // 👇 جلب LOV للـ Patient Position
+  const { data: patientPositionLov } = useGetLovValuesByCodeQuery('PAT_POSITION');
+
   return (
     <Section
       title="Technical Quality"

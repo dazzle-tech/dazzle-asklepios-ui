@@ -53,47 +53,82 @@ const FacilityPatientList = () => {
   const [selectedBeds, setSelectedBeds] = useState<any[]>([]);
   const [responsiblePhysicians, setResponsiblePhysicians] = useState<any[]>([]);
 
-  const dummyRow = {
-    created_at: '2025-08-18',
-    patientMrn: 'MRN123456',
-    fullName: 'John Doe',
-    genderLkey: 'M',
-    genderLvalue: { lovDisplayVale: 'Male' },
-    dob: '1990-01-01',
-    documentTypeLkey: 'PASSPORT',
-    documentTypeLvalue: { lovDisplayVale: 'Passport' },
-    documentNo: 'P123456789',
-    phone: '+1234567890',
-    insurance: 'ACME Health',
-    plan: 'Premium'
-  };
+const companionDummyRow = {
+  companioncard:'test',
+  fullName: 'Jane Smith',
+  patientMrn: 'MRN987654',
+  visitTypeLkey: 'INPATIENT',
+  visitTypeLvalue: { lovDisplayVale: 'Inpatient' },
+  visitId: 'VIS123456',
+  departmentName: 'Cardiology',
+  room: '302B',
+  location: 'Building A - 3rd Floor',
+  bed: 'B12',
+  genderLkey: 'F',
+  genderLvalue: { lovDisplayVale: 'Female' },
+  responsiblePhysicianId: 'PHY001',
+  responsiblePhysician: { fullName: 'Dr. Adam Johnson' },
+  daysOfStaying: 5,
+  encounterStatusLkey: 'ONGOING',
+  encounterStatusLvalue: { lovDisplayVale: 'Ongoing' }
+};
+
 
   // table columns
-  const columns = [
-    { key: 'index', title: '#', render: (rowData, rowIndex) => rowIndex + 1 },
-    { key: 'created_at', title: 'REGISTRATION DATE', dataKey: 'created_at' },
-    { key: 'patientMrn', title: 'MRN', dataKey: 'patientMrn' },
-    { key: 'fullName', title: 'FULL NAME', dataKey: 'fullName' },
-    {
-      key: 'gender',
-      title: 'SEX AT BIRTH',
-      render: rowData =>
-        rowData.genderLvalue ? rowData.genderLvalue.lovDisplayVale : rowData.genderLkey
-    },
-    { key: 'dob', title: 'DOB', dataKey: 'dob' },
-    {
-      key: 'documentType',
-      title: 'DOCUMENT TYPE',
-      render: rowData =>
-        rowData.documentTypeLvalue
-          ? rowData.documentTypeLvalue.lovDisplayVale
-          : rowData.documentTypeLkey
-    },
-    { key: 'documentNo', title: 'DOCUMENT NUMBER', dataKey: 'documentNo' },
-    { key: 'phone', title: 'PRIMARY PHONE NUMBER', dataKey: 'phone' },
-    { key: 'insurance', title: 'PRIMARY INSURANCE PROVIDER', dataKey: 'insurance' },
-    { key: 'plan', title: 'PLAN', dataKey: 'plan' }
-  ];
+const columns = [
+  { key: 'companioncard', title: 'Companion Card', dataKey: 'companioncard' },
+
+  { key: 'fullName', title: 'Patient Name', dataKey: 'fullName' },
+  { key: 'patientMrn', title: 'MRN', dataKey: 'patientMrn' },
+
+  {
+    key: 'visitType',
+    title: 'Visit Type',
+    render: rowData =>
+      rowData.visitTypeLvalue
+        ? rowData.visitTypeLvalue.lovDisplayVale
+        : rowData.visitTypeLkey
+  },
+
+  { key: 'visitId', title: 'Visit ID', dataKey: 'visitId' },
+  { key: 'departmentName', title: 'Department Name', dataKey: 'departmentName' },
+  { key: 'room', title: 'Room', dataKey: 'room' },
+  { key: 'location', title: 'Location', dataKey: 'location' },
+  { key: 'bed', title: 'Bed', dataKey: 'bed' },
+
+  {
+    key: 'gender',
+    title: 'Sex at Birth',
+    render: rowData =>
+      rowData.genderLvalue
+        ? rowData.genderLvalue.lovDisplayVale
+        : rowData.genderLkey
+  },
+
+  {
+    key: 'responsiblePhysician',
+    title: 'Responsible Physician',
+    render: rowData =>
+      rowData.responsiblePhysician?.fullName || rowData.responsiblePhysicianId || '-'
+  },
+
+  {
+    key: 'daysOfStaying',
+    title: 'Days of Staying',
+    render: rowData =>
+      rowData.daysOfStaying !== undefined ? rowData.daysOfStaying : '-'
+  },
+
+  {
+    key: 'encounterStatus',
+    title: 'Encounter Status',
+    render: rowData =>
+      rowData.encounterStatusLvalue
+        ? rowData.encounterStatusLvalue.lovDisplayVale
+        : rowData.encounterStatusLkey
+  }
+];
+
   // handle manual search from date to date
   const handleManualSearch = () => {
     if (dateFilter.fromDate && dateFilter.toDate) {
@@ -331,7 +366,7 @@ const FacilityPatientList = () => {
           </div>
         </div>
       </div>
-      <MyTable data={[dummyRow]} columns={columns} height={800} loading={false} />
+      <MyTable data={[companionDummyRow]} columns={columns} height={800} loading={false} />
     </div>
   );
 };

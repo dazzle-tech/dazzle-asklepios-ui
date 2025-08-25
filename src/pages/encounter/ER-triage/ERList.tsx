@@ -165,6 +165,15 @@ const ERList = () => {
                 searchable={false}
                 width={200}
             />
+
+            <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => { setSwitchDepartment(true); }}
+                    prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />
+                    }>
+                    Switch Department
+            </MyButton>
                 <MyInput
           width="10vw"
           fieldLabel="Select Filter"
@@ -208,14 +217,7 @@ const ERList = () => {
   <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
   Advance
 </MyButton>
-        <MyButton
-                    size="small"
-                    backgroundColor="gray"
-                    onClick={() => { setSwitchDepartment(true); }}
-                    prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />
-                    }>
-                    Switch Department
-                </MyButton></div>
+</div>
         </Form>
     );
 

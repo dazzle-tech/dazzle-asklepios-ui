@@ -1,29 +1,29 @@
-// pages/EchoSections/TestInformation.tsx
-
 import React from 'react';
 import Section from '@/components/Section';
 import MyInput from '@/components/MyInput';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import '../style.less';
 
 interface Props {
   echoTest: any;
   setEchoTest: React.Dispatch<React.SetStateAction<any>>;
-  echoIndicationsLov?: { object: Array<any> };
-  echoTypesLov?: { object: Array<any> };
   physicians: Array<any>;
   usersList: Array<any>;
-  otherIndicationKey?: string;
 }
 
 const TestInformation: React.FC<Props> = ({
   echoTest,
   setEchoTest,
-  echoIndicationsLov,
-  echoTypesLov,
   physicians,
-  usersList,
-  otherIndicationKey
+  usersList
 }) => {
+  // 👇 جلب الـ LOVs من السيرفر
+  const { data: echoIndicationsLov } = useGetLovValuesByCodeQuery('ECHO_INDICATIONS');
+  const { data: echoTypesLov } = useGetLovValuesByCodeQuery('ECHO_TYPES');
+
+  // 👇 المفتاح الذي يمثل خيار "Other"
+  const otherIndicationKey = 'OTHER';
+
   return (
     <Section
       title="Test Information"
