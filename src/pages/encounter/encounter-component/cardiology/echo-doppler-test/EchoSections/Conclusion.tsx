@@ -7,11 +7,10 @@ interface Props {
   record: any;
   setRecord: (value: any) => void;
   usersList: Array<any>;
-  currentUserId?: string; // لو حابب تمرر الآي دي تبع المستخدم الحالي للتعبئة التلقائية
+  currentUserId?: string;
 }
 
 const Conclusion: React.FC<Props> = ({ record, setRecord, usersList, currentUserId }) => {
-  // 🧠 إذا ما تم اختيار طبيب، عبيه تلقائيًا بأول تحميل (مرة وحدة)
   useEffect(() => {
     if (!record?.cardiologistName && currentUserId) {
       setRecord((prev: any) => ({

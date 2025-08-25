@@ -17,11 +17,9 @@ const TestInformation: React.FC<Props> = ({
   physicians,
   usersList
 }) => {
-  // 👇 جلب الـ LOVs من السيرفر
   const { data: echoIndicationsLov } = useGetLovValuesByCodeQuery('ECHO_INDICATIONS');
   const { data: echoTypesLov } = useGetLovValuesByCodeQuery('ECHO_TYPES');
 
-  // 👇 المفتاح الذي يمثل خيار "Other"
   const otherIndicationKey = 'OTHER';
 
   return (

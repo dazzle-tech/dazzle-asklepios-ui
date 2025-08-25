@@ -11,7 +11,6 @@ interface Props {
 }
 
 const TechnicalQuality: React.FC<Props> = ({ record, setRecord }) => {
-  // 👇 جلب LOV للـ Patient Position
   const { data: patientPositionLov } = useGetLovValuesByCodeQuery('PAT_POSITION');
 
   return (
