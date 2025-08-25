@@ -385,6 +385,17 @@ const DayCaseList = () => {
                     searchable={false}
                     width={200}
                 />
+
+                <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => {
+                        setSwitchDepartment(true);
+                    }}
+                    prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
+                >
+                    Switch Department
+                </MyButton>
                 <MyInput
           column
           width="10vw"
@@ -431,16 +442,6 @@ const DayCaseList = () => {
   <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
   Advance
 </MyButton>
-                <MyButton
-                    size="small"
-                    backgroundColor="gray"
-                    onClick={() => {
-                        setSwitchDepartment(true);
-                    }}
-                    prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
-                >
-                    Switch Department
-                </MyButton>
             </div>
         </Form>
     );

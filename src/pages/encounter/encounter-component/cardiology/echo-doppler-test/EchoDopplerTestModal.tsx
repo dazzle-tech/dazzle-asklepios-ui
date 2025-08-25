@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStethoscope } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import TestInformation from './EchoSections/TestInformation';
 import TechnicalQuality from './EchoSections/TechnicalQuality';
 import OtherFindings from './EchoSections/OtherFindings';
@@ -108,7 +107,7 @@ const EchoDopplerTestModal = ({
           setEchoTest={setEchoTest}
           physicians={physicians}
           usersList={usersList}
-        />
+          />
 
         <TechnicalQuality record={record} setRecord={setRecord}></TechnicalQuality>
 
@@ -118,7 +117,12 @@ const EchoDopplerTestModal = ({
         <ColorDopplerFindings></ColorDopplerFindings>
 
         <OtherFindings record={record} setRecord={setRecord} rwmaOptions={rwmaOptions} />
-        <Conclusion record={record} setRecord={setRecord} usersList={usersList} />
+<Conclusion
+  record={record}
+  setRecord={setRecord}
+  usersList={usersList}
+  currentUserId={currentUser.id}
+/>
       </div>
     </Form>
   );

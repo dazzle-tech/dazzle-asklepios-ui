@@ -121,7 +121,7 @@ const location = useLocation();
    
   if(!attachmentsModalOpen ){
     setConsultationOrder({...newApConsultationOrder});
-    const updatedFilters =  [
+    const updatedFilters = [
             {
                 fieldName: 'deleted_at',
                 operator: 'isNull',
@@ -347,21 +347,30 @@ const location = useLocation();
                 );
             }
         },
-    {
-      key: "",
-      dataKey: "",
-      title: <Translate>EDIT</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return <MdModeEdit
+{
+  key: "",
+  dataKey: "",
+  title: <Translate>Action</Translate>,
+  flexGrow: 1,
+  render: (rowData: any) => {
+    return (
+      <>
+        <MdModeEdit
           title="Edit"
           size={24}
           fill="var(--primary-gray)"
           onClick={() => setOpenDetailsModal(true)}
-        />;
-      }
-
-    },
+          className="icon-button"
+        />
+        <i
+          className="fas fa-clone icon-button clone-icon"
+          title="Clone"
+          onClick={() => handleClone(rowData)}
+        />
+      </>
+    );
+  }
+},
     {
       key: 'created',
       title: 'SUBMISSION AT/BY',
