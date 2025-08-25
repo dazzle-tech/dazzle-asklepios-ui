@@ -34,7 +34,7 @@ const SessionExpiredBackdrop = () => {
             appearance="primary"
             onClick={() => {
               navigate('/login');
-              // dispatch(setSessionExpiredBackdrop(false));
+              dispatch(setSessionExpiredBackdrop(false));
             }}
           >
             Take me back to Login
