@@ -78,7 +78,7 @@ const handleLogout = () => {
 
     useEffect(() => {
       if (logoutResult && !isLoggingOut && !authSlice.user) {
-        navigate('/iv-fluid-Administration');
+        navigate('/login');
       }
     }, [isLoggingOut, authSlice.user]);
 
