@@ -33,7 +33,7 @@ const SessionExpiredBackdrop = () => {
             icon={<ArrowLeftLine />}
             appearance="primary"
             onClick={() => {
-              navigate('/iv-fluid-Administration');
+              navigate('/login');
               // dispatch(setSessionExpiredBackdrop(false));
             }}
           >
