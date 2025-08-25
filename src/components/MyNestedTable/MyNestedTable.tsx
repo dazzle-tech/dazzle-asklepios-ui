@@ -111,21 +111,39 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
 
                 let sortIcon: ReactNode = null;
                 if (isActive) {
-                  sortIcon = sortType === 'asc'
-                    ? <ArrowUpwardIcon fontSize="small" />
-                    : <ArrowDownwardIcon fontSize="small" />;
+                  sortIcon =
+                    sortType === 'asc' ? (
+                      <ArrowUpwardIcon fontSize="small" />
+                    ) : (
+                      <ArrowDownwardIcon fontSize="small" />
+                    );
                 }
 
                 return (
                   <TableCell
                     key={col.key}
                     align={col.align || 'left'}
-                    sx={{ whiteSpace: 'nowrap', cursor: isSortable ? 'pointer' : 'default' }}
+                    sx={{
+                      whiteSpace: 'nowrap',
+                      cursor: isSortable ? 'pointer' : 'default',
+                      width: col.width,
+                      maxWidth: col.width,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
                     onClick={isSortable ? () => onSortChange!(col.key, nextDirection) : undefined}
                   >
-                    <Box display="flex" alignItems="center" justifyContent={
-                      col.align === 'center' ? 'center' : col.align === 'right' ? 'flex-end' : 'flex-start'
-                    }>
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent={
+                        col.align === 'center'
+                          ? 'center'
+                          : col.align === 'right'
+                          ? 'flex-end'
+                          : 'flex-start'
+                      }
+                    >
                       {col.title}
                       {sortIcon}
                     </Box>
@@ -158,17 +176,34 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
                       {getNestedTable && (
                         <TableCell padding="checkbox">
                           {nestedTable ? (
-                            <IconButton size="small" onClick={(e) => {
-                              e.stopPropagation();
-                              handleExpandClick(index);
-                            }}>
-                              {expandedRow === index ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                            <IconButton
+                              size="small"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleExpandClick(index);
+                              }}
+                            >
+                              {expandedRow === index ? (
+                                <KeyboardArrowUpIcon />
+                              ) : (
+                                <KeyboardArrowDownIcon />
+                              )}
                             </IconButton>
                           ) : null}
                         </TableCell>
                       )}
                       {columns.map(col => (
-                        <TableCell key={col.key} align={col.align || 'left'}>
+                        <TableCell
+                          key={col.key}
+                          align={col.align || 'left'}
+                          sx={{
+                            width: col.width,
+                            maxWidth: col.width,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                        >
                           {col.render ? col.render(row, index) : row[col.dataKey || col.key]}
                         </TableCell>
                       ))}
@@ -180,7 +215,17 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
                             <TableHead>
                               <TableRow>
                                 {nestedTable.columns.map(nCol => (
-                                  <TableCell key={nCol.key} align={nCol.align || 'left'}>
+                                  <TableCell
+                                    key={nCol.key}
+                                    align={nCol.align || 'left'}
+                                    sx={{
+                                      width: nCol.width,
+                                      maxWidth: nCol.width,
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
                                     {nCol.title}
                                   </TableCell>
                                 ))}
@@ -197,7 +242,17 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
                                 nestedTable.data.map((nRow, nIndex) => (
                                   <TableRow key={nIndex}>
                                     {nestedTable.columns.map(nCol => (
-                                      <TableCell key={nCol.key} align={nCol.align || 'left'}>
+                                      <TableCell
+                                        key={nCol.key}
+                                        align={nCol.align || 'left'}
+                                        sx={{
+                                          width: nCol.width,
+                                          maxWidth: nCol.width,
+                                          whiteSpace: 'nowrap',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis'
+                                        }}
+                                      >
                                         {nCol.render
                                           ? nCol.render(nRow, nIndex)
                                           : nRow[nCol.dataKey || nCol.key]}
@@ -212,16 +267,16 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
                           {nestedTable.page !== undefined &&
                             nestedTable.rowsPerPage !== undefined &&
                             nestedTable.totalCount !== undefined && (
-                            <TablePagination
-                              component="div"
-                              count={nestedTable.totalCount}
-                              page={nestedTable.page}
-                              onPageChange={nestedTable.onPageChange!}
-                              rowsPerPage={nestedTable.rowsPerPage}
-                              onRowsPerPageChange={nestedTable.onRowsPerPageChange!}
-                              rowsPerPageOptions={[3, 5, 10]}
-                            />
-                          )}
+                              <TablePagination
+                                component="div"
+                                count={nestedTable.totalCount}
+                                page={nestedTable.page}
+                                onPageChange={nestedTable.onPageChange!}
+                                rowsPerPage={nestedTable.rowsPerPage}
+                                onRowsPerPageChange={nestedTable.onRowsPerPageChange!}
+                                rowsPerPageOptions={[3, 5, 10]}
+                              />
+                            )}
                         </TableCell>
                       </TableRow>
                     )}

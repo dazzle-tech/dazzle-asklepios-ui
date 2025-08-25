@@ -387,7 +387,49 @@ const OccupationalPlans = () => {
     { key: 'totalPlanDuration', title: <Translate>Total Plan Duration</Translate> },
     {
       key: 'status',
-      title: <Translate>Status</Translate>
+      title: <Translate>Status</Translate>,
+      width: 120,
+      render: rowData => {
+        const status = rowData.status || 'Active';
+
+        const getStatusConfig = status => {
+          switch (status) {
+            case 'Active':
+              return {
+                backgroundColor: 'var(--very-light-blue)',
+                color: 'var(--primary-blue)',
+                contant: 'Active'
+              };
+            case 'Completed':
+              return {
+                backgroundColor: 'var(--light-green)',
+                color: 'var(--primary-green)',
+                contant: 'Completed'
+              };
+            case 'Cancelled':
+              return {
+                backgroundColor: 'var(--light-red)',
+                color: 'var(--primary-red)',
+                contant: 'Cancelled'
+              };
+            default:
+              return {
+                backgroundColor: 'var(--background-gray)',
+                color: 'var(--primary-gray)',
+                contant: 'Unknown'
+              };
+          }
+        };
+
+        const config = getStatusConfig(status);
+        return (
+          <MyBadgeStatus
+            backgroundColor={config.backgroundColor}
+            color={config.color}
+            contant={config.contant}
+          />
+        );
+      }
     },
     {
       key: 'initiatedByAt',
