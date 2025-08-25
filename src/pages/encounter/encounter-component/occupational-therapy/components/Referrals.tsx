@@ -1,3 +1,4 @@
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyLabel from '@/components/MyLabel';
 import MyNestedTable from '@/components/MyNestedTable';
 import Translate from '@/components/Translate';
@@ -49,13 +50,41 @@ const Referrals = () => {
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      render: rowData => (
-        <span
-          className={`status-badge ${rowData.status === 'Confirmed' ? 'confirmed' : 'requested'}`}
-        >
-          <Translate>{rowData.status}</Translate>
-        </span>
-      )
+      render: rowData => {
+        const status = rowData.status || 'Requested';
+
+        const getStatusConfig = status => {
+          switch (status) {
+            case 'Requested':
+              return {
+                backgroundColor: 'var(--light-orange)',
+                color: 'var(--primary-orange)',
+                contant: 'Requested'
+              };
+            case 'Confirmed':
+              return {
+                backgroundColor: 'var(--light-green)',
+                color: 'var(--primary-green)',
+                contant: 'Confirmed'
+              };
+            default:
+              return {
+                backgroundColor: 'var(--background-gray)',
+                color: 'var(--primary-gray)',
+                contant: 'Unknown'
+              };
+          }
+        };
+
+        const config = getStatusConfig(status);
+        return (
+          <MyBadgeStatus
+            backgroundColor={config.backgroundColor}
+            color={config.color}
+            contant={config.contant}
+          />
+        );
+      }
     }
   ];
 

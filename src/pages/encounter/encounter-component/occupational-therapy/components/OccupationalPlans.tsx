@@ -22,6 +22,7 @@ import MyInput from '@/components/MyInput';
 import AddProgressNotes from '@/components/ProgressNotes/ProgressNotes';
 import { useLocation } from 'react-router-dom';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 const OccupationalPlans = () => {
   const location = useLocation();
@@ -45,7 +46,8 @@ const OccupationalPlans = () => {
     progressNotes: '',
     painLevel: 0,
     functionalImprovement: '',
-    nextReviewDate: ''
+    nextReviewDate: '',
+    status: 'Confirmed'
   });
   const [progressNotes, setProgressNotes] = useState([]);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
@@ -344,7 +346,6 @@ const OccupationalPlans = () => {
                     <FontAwesomeIcon icon={faPaperclip} className="font-small" />
                     <p className="font-small">Attachments</p>
                   </>
-                  
                 }
                 content={
                   <PatientAttachment
@@ -386,12 +387,7 @@ const OccupationalPlans = () => {
     { key: 'totalPlanDuration', title: <Translate>Total Plan Duration</Translate> },
     {
       key: 'status',
-      title: <Translate>Status</Translate>,
-      render: rowData => (
-        <span className={`status-badge ${rowData.status?.toLowerCase()}`}>
-          <Translate>{rowData.status}</Translate>
-        </span>
-      )
+      title: <Translate>Status</Translate>
     },
     {
       key: 'initiatedByAt',
@@ -569,7 +565,7 @@ const OccupationalPlans = () => {
         bodyheight="75vh"
         content={initiatePlanContent}
         steps={[{ title: 'Treatment Plan', icon: <FontAwesomeIcon icon={faBullseye} /> }]}
-        hideActionBtn = {true}
+        hideActionBtn={true}
         footerButtons={
           <div className="modal-footer-buttons">
             <MyButton appearance="subtle" onClick={handleSaveDraft}>

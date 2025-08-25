@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Slider, Divider } from 'rsuite';
+import { Divider } from 'rsuite';
 import NursingReportAssesments from './components/NursingReportAssesments';
 import OccupationalPlans from './components/OccupationalPlans';
 import Referrals from './components/Referrals';
@@ -21,9 +21,11 @@ const OccupationalTherapy = () => {
     <div className="physiotherapy-container">
       {/* Referrals section */}
       <Referrals />
+      {/*  */}
       <Divider />
       {/* Nursing Reports Summary section */}
       <NursingReportAssesments />
+      {/*  */}
       <Divider />
       {/* Occupational Therapy Plans section */}
       <OccupationalPlans />
