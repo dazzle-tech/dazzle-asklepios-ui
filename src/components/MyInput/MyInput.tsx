@@ -280,8 +280,8 @@ const MyInput = ({
                     textAlign: 'center',
                     color: '#A1A9B8',
                     backgroundColor: '#e0e0e0',
-                    pointerEvents: 'none', // <-- حتى ما يتفاعل لكن يضل شكله طبيعي
-                    opacity: 1 // <-- يخلي اللون طبيعي حتى لو الـ input معطل
+                    pointerEvents: 'none',
+                    opacity: 1
                   }}
                 >
                   {leftAddon}
