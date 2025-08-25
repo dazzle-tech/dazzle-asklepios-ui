@@ -217,10 +217,10 @@ const IVFluidAdministration = () => {
               <Section
                 title={<p className="font-small">Vital Signs</p>}
                 content={
-                  <div className="main-content-section-1">
+                  <div className="main-content-section-1 margin-left">
                     <VitalSigns object={vital} setObject={setVital} disabled={true} width="28vw" />
 
-                    <Row className="rows-gap">
+                    <Row className="rows-gap margin-left">
                       <Col md={24}>
                         <Form fluid>
                           <MyInput
@@ -245,7 +245,7 @@ const IVFluidAdministration = () => {
               <Section
                 title={<p className="font-small">Administration Details</p>}
                 content={
-                  <div className="main-content-section-1">
+                  <div className="main-content-section-1 margin-3">
                     <Form fluid className="administration-details form-flex-wrap">
                       <MyInput
                         width="100%"
@@ -269,15 +269,17 @@ const IVFluidAdministration = () => {
                           <Radio value="Leaking">Leaking</Radio>
                         </RadioGroup>
                       </Form.Group>
-                      <MyInput
-                        fieldType="checkbox"
-                        fieldName="rateConfirmed"
-                        fieldLabel="Rate Confirmed"
-                        width={100}
-                        record={fluidOrder}
-                        setRecord={setFluidOrder}
-                      />
-                      <Toggle />
+                      <div className="full-width flexing">
+                        <MyInput
+                          fieldType="checkbox"
+                          fieldName="rateConfirmed"
+                          fieldLabel="Rate Confirmed"
+                          width={100}
+                          record={fluidOrder}
+                          setRecord={setFluidOrder}
+                        />
+                        <Toggle />
+                      </div>
                       <div className="full-width">
                         <MyInput
                           fieldType="textarea"
