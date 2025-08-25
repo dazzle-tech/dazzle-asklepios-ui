@@ -6,15 +6,14 @@ import { Checkbox } from 'rsuite';
 import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import Translate from '@/components/Translate';
-import EchoDopplerTestModal from './EchoDopplerTestModal'; // 👈 استيراد المودال
+import EchoDopplerTestModal from './EchoDopplerTestModal';
 
 const EchoDopplerTest = ({ patient, encounter, edit }) => {
-  const [echoData, setEchoData] = useState([]); // Placeholder data
   const [selectedRow, setSelectedRow] = useState(null);
   const [showCancelled, setShowCancelled] = useState(false);
 
-  const [openModal, setOpenModal] = useState(false); // 👈 التحكم بالمودال
-  const [echoTestObject, setEchoTestObject] = useState(null); // 👈 للـ add/edit
+  const [openModal, setOpenModal] = useState(false);
+  const [echoTestObject, setEchoTestObject] = useState(null);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -30,27 +29,121 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
     setOpenModal(true);
   };
 
+  const [echoData, setEchoData] = useState([
+  {
+    key: 1,
+    testIndication: 'Chest Pain',
+    echotype: 'Transthoracic Echo',
+    referringphysician: 'Dr. Smith',
+    finalimpression: 'Normal function',
+    recommendation: 'Follow-up in 6 months',
+    cardiologist: 'Dr. Heart',
+    createdBy: 'Nurse Jane',
+    createdAt: '2025-08-20 10:30 AM',
+    canceledBy: 'Admin Joe',
+    canceledAt: '2025-08-21 09:15 AM',
+    cancellationResult: 'Patient rescheduled'
+  },
+  {
+    key: 2,
+    testIndication: 'Shortness of breath',
+    echotype: 'Transesophageal Echo',
+    referringphysician: 'Dr. Adams',
+    finalimpression: 'Mild regurgitation',
+    recommendation: 'Cardiology consult',
+    cardiologist: 'Dr. Valve',
+    createdBy: 'Nurse Sam',
+    createdAt: '2025-08-19 11:45 AM',
+    canceledBy: '',
+    canceledAt: '',
+    cancellationResult: ''
+  }
+]);
+
+
   const columns: ColumnConfig[] = [
     {
-      key: 'testDate',
-      title: 'Test Date',
-      dataKey: 'testDate',
+      key: 'testIndication',
+      title: 'Test Indication ',
+      dataKey: 'testIndication',
       width: 150
     },
     {
-      key: 'testType',
-      title: 'Test Type',
-      dataKey: 'testType',
+      key: 'echotype',
+      title: 'Echo Type',
+      dataKey: 'echotype',
       width: 200
     },
     {
-      key: 'result',
-      title: 'Result',
-      dataKey: 'result',
+      key: 'referringphysician',
+      title: 'Referring Physician',
+      dataKey: 'referringphysician',
       width: 200
-    }
+    },
+        {
+      key: 'finalimpression',
+      title: 'Final Impression',
+      dataKey: 'finalimpression',
+      width: 200
+    },
+        {
+      key: 'recommendation',
+      title: 'Recommendation',
+      dataKey: 'recommendation',
+      width: 200
+    },
+{
+  key: 'cardiologist',
+  title: 'Cardiologist',
+  dataKey: 'cardiologist',
+  width: 200
+},
+{
+  key: 'createdByAt',
+  title: 'Created By/At',
+  dataKey: 'createdByAt',
+  expandable: true,
+  width: 220,
+  render: row => (
+    <>
+      {row.createdBy}
+      <br />
+      <span className="date-table-style">{row.createdAt}</span>
+    </>
+  )
+},
+{
+  key: 'canceledByAt',
+  title: 'Canceled By/At',
+  dataKey: 'canceledByAt',
+  expandable: true,
+  width: 220,
+  render: row => (
+    <>
+      {row.canceledBy}
+      <br />
+      <span className="date-table-style">{row.canceledAt}</span>
+    </>
+  )
+},
+{
+  key: 'cancellationResult',
+  title: 'Cancellation Result',
+  expandable: true,
+  dataKey: 'cancellationResult',
+
+  width: 220,
+  render: row => (
+    <>
+      {row.cancellationResult}
+    </>
+  )
+}
   ];
 
+
+
+  
   const tableFilters = (
     <div className="bt-div">
       <MyButton
@@ -71,7 +164,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         <MyButton
           prefixIcon={() => <PlusIcon />}
           disabled={edit}
-          onClick={handleAddClick} // 👈 التفعيل هنا
+          onClick={handleAddClick}
         >
           Add
         </MyButton>
@@ -95,7 +188,6 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
-      {/* 👇 المودال */}
       <EchoDopplerTestModal
         open={openModal}
         setOpen={setOpenModal}
@@ -103,10 +195,9 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         encounter={encounter}
         echoTestObject={echoTestObject}
         refetch={() => {
-          // 👇 لاحقاً ضع هنا refetch API call
           console.log("Refetch after save");
         }}
-        edit={false} // 👈 يمكن التحكم فيه لاحقًا
+        edit={false}
       />
     </>
   );
