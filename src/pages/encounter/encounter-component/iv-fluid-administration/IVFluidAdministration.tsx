@@ -14,6 +14,7 @@ import VitalSigns from '@/pages/medical-component/vital-signs';
 import Section from '@/components/Section';
 import AdministrationDetails from './AdministrationDetails';
 import FluidAdministrationSection from './FluidAdministrationSection';
+import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 
 const IVFluidAdministration = () => {
   const [fluidOrder, setFluidOrder] = useState<any>({});
@@ -195,7 +196,24 @@ const IVFluidAdministration = () => {
           <div className="flex-gap-stretch">
             <div className="half-width min-height-394">
               <Section
-                title={<p className="font-small">Vital Signs</p>}
+                title={
+                  <div className="section-title-with-icon">
+                    <Whisper
+                      placement="top"
+                      trigger="hover"
+                      speaker={<Tooltip>Fill Last Readings</Tooltip>}
+                    >
+                      <FontAwesomeIcon
+                        icon={faClockRotateLeft}
+                        className="vital-icon"
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </Whisper>
+                                        <p className="font-small-for-icon-position">
+                      Vital Signs
+                    </p>
+                  </div>
+                }
                 content={
                   <div className="main-content-section-1 margin-left">
                     <VitalSigns
