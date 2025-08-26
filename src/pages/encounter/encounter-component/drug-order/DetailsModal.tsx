@@ -32,7 +32,6 @@ const DetailsModal = ({
   setOpen,
   orderMedication,
   setOrderMedication,
-
   drugKey,
   editing,
   patient,
@@ -375,9 +374,9 @@ const DetailsModal = ({
     });
 
     setSelectedGeneric(genericMedication || null);
-    setOpenFavoritesModal(false);
-    setOpenDetailsModel(true);
-    setOpenToAdd(true);
+    // setOpenFavoritesModal(false);
+    // setOpenDetailsModel(true);
+    // setOpenToAdd(true);
   };
   const addToFavorites = rowData => {
     const alreadyExists = favoriteMedications.some(
@@ -797,7 +796,6 @@ const DetailsModal = ({
                   <Row className="rows-gap">
                     {/*  */}
                     <Col md={6}>
-                      {' '}
                       <Input
                         as="textarea"
                         disabled={true}
@@ -808,7 +806,6 @@ const DetailsModal = ({
                     </Col>
                     {/*  */}
                     <Col md={6}>
-                      {' '}
                       <Input
                         as="textarea"
                         disabled={true}
@@ -1132,20 +1129,20 @@ const DetailsModal = ({
             </Row>
           </Form>
         }
-      ></AdvancedModal>
+      />
       <Substitues
         open={openSubstitutesModel}
         setOpen={setOpenSubstitutesModel}
         selectedGeneric={selectedGeneric}
         setSelectedGeneric={setSelectedGeneric}
-      ></Substitues>
+      />
       <MyModal
         open={openOrderModel}
         setOpen={setOpenOrderModel}
         size={'full'}
         title="Add Order"
         content={<DiagnosticsOrder edit={edit} patient={patient} encounter={encounter} />}
-      ></MyModal>
+      />
     </>
   );
 };

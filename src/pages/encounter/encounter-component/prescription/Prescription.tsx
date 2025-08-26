@@ -1,8 +1,10 @@
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import { formatDateWithoutSeconds } from '@/utils';
 import {
   useGetCustomeInstructionsQuery,
   useGetPrescriptionMedicationsQuery,
@@ -14,6 +16,10 @@ import {
   useGetGenericMedicationWithActiveIngredientQuery,
   useGetPrescriptionInstructionQuery
 } from '@/services/medicationsSetupService';
+import { FaFilePrescription } from 'react-icons/fa6';
+import { MdModeEdit } from 'react-icons/md';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { ApPrescriptionMedications } from '@/types/model-types';
 import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -23,17 +29,13 @@ import CheckIcon from '@rsuite/icons/Check';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useState } from 'react';
-import { FaFilePrescription } from 'react-icons/fa6';
-import { MdModeEdit } from 'react-icons/md';
-import { formatDateWithoutSeconds } from '@/utils';
-import { Checkbox, Divider, SelectPicker, Table } from 'rsuite';
+import { Checkbox, Divider, Form, SelectPicker, Table } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
-import MyModal from '@/components/MyModal/MyModal';
+import UrgencyButton from '../drug-order/UrgencyButton';
+import MyInput from '@/components/MyInput';
 
 const { Column, HeaderCell, Cell } = Table;
 const Prescription = props => {
@@ -86,7 +88,6 @@ const Prescription = props => {
 
   const [favoriteMedications, setFavoriteMedications] = useState([]);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(true);
 
   const addToFavorites = rowData => {
     const alreadyExists = favoriteMedications.some(
@@ -111,7 +112,7 @@ const Prescription = props => {
         ...rowData,
         genericName: genericMedication ? genericMedication.genericName : 'Unnamed Medication',
         administrationInstructions: rowData.administrationInstructions || null,
-        parametersToMonitor: rowData.parametersToMonitor || ""
+        parametersToMonitor: rowData.parametersToMonitor || ''
       };
 
       setFavoriteMedications(prev => [...prev, medicationToAdd]);
@@ -181,6 +182,7 @@ const Prescription = props => {
     prescriptions?.object?.find(prescription => prescription.key === preKey)?.saveDraft
   );
 
+  // Effects
   useEffect(() => {
     const foundPrescription = prescriptions?.object?.find(
       prescription => prescription.key === preKey
@@ -248,6 +250,7 @@ const Prescription = props => {
     }
   }, [showCanceled]);
 
+  // Functions
   const handleCheckboxChange = key => {
     setSelectedRows(prev => {
       if (prev.includes(key)) {
@@ -286,6 +289,7 @@ const Prescription = props => {
       dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
     }
   };
+
   const handleSubmitPres = async () => {
     try {
       await savePrescription({
@@ -336,6 +340,7 @@ const Prescription = props => {
       });
     } catch (error) {}
   };
+
   const cancleDraft = async () => {
     try {
       await savePrescription({
@@ -371,6 +376,26 @@ const Prescription = props => {
       }
     } else {
       console.warn('Patient or encounter is missing. Cannot save prescription.');
+    }
+  };
+
+  const handleNewPrescriptionAndAddMedication = async () => {
+    try {
+      if (!preKey) {
+        await handleSavePrescription();
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      handleCleare();
+      setOpenDetailsModal(true);
+      setOpenToAdd(true);
+
+      if (preKey || prescriptions?.object?.some(p => p.saveDraft === true)) {
+        await saveDraft();
+      }
+    } catch (error) {
+      dispatch(notify({ msg: 'Failed to complete actions', type: 'error' }));
     }
   };
 
@@ -585,6 +610,7 @@ const Prescription = props => {
       pageNumber: 1 // reset to first page
     });
   };
+
   return (
     <>
       <div className="bt-div">
@@ -601,18 +627,45 @@ const Prescription = props => {
             }}
           />
         </div>
-
+        <div className="icon-style">
+          <FaFilePrescription size={18} />
+        </div>
+        <div>
+          <div className="prescripton-word-style">Prescription</div>
+          <div className="prescripton-number-style">
+            {prescriptions?.object?.find(prescription => prescription.key === preKey)
+              ?.prescriptionId || '_'}
+          </div>
+        </div>
         <div
           className={clsx('bt-right', {
             'disabled-panel': edit
           })}
         >
-          <MyButton
-            onClick={handleSavePrescription}
-            disabled={isdraft}
-            prefixIcon={() => <PlusIcon />}
-          >
+          <Form fluid>
+            <MyInput
+              fieldName=""
+              fieldType="select"
+              selectData={[]}
+              placeholder="Pharmacy"
+              selectDataLabel="label"
+              selectDataValue="key"
+              record={{}}
+              setRecord={''}
+            />
+          </Form>
+          <UrgencyButton />
+          <MyButton>Validate With</MyButton>
+          <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
+          <MyButton onClick={handleNewPrescriptionAndAddMedication} prefixIcon={() => <PlusIcon />}>
             New Prescription
+          </MyButton>
+          <MyButton
+            prefixIcon={() => <BlockIcon />}
+            onClick={() => setOpenCancellation(true)}
+            disabled={selectedRows.length === 0}
+          >
+            Cancel
           </MyButton>
           <MyButton
             onClick={handleSubmitPres}
@@ -624,22 +677,8 @@ const Prescription = props => {
             }
             prefixIcon={() => <CheckIcon />}
           >
-            Submit Prescription
+            Sign & Submit Order
           </MyButton>
-          {!isdraft && (
-            <MyButton
-              onClick={saveDraft}
-              prefixIcon={() => <DocPassIcon />}
-              disabled={
-                preKey
-                  ? prescriptions?.object?.find(prescription => prescription.key === preKey)
-                      ?.statusLkey === '1804482322306061'
-                  : true
-              }
-            >
-              Save draft
-            </MyButton>
-          )}
           {isdraft && (
             <MyButton
               appearance="ghost"
@@ -652,7 +691,7 @@ const Prescription = props => {
                   : true
               }
             >
-              Cancle draft
+              Cancel draft
             </MyButton>
           )}
         </div>
@@ -660,43 +699,7 @@ const Prescription = props => {
       <Divider />
 
       <div className="bt-div">
-        <div className="icon-style">
-          <FaFilePrescription size={18} />
-        </div>
-        <div>
-          <div className="prescripton-word-style">Prescription</div>
-          <div className="prescripton-number-style">
-            {prescriptions?.object?.find(prescription => prescription.key === preKey)
-              ?.prescriptionId || '_'}
-          </div>
-        </div>
         <div className="bt-right">
-          <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
-          <MyButton
-            disabled={
-              !edit
-                ? preKey
-                  ? prescriptions?.object?.find(pre => pre.key === preKey)?.statusLkey ===
-                    '1804482322306061'
-                  : true
-                : true
-            }
-            prefixIcon={() => <PlusIcon />}
-            onClick={() => {
-              setOpenDetailsModal(true);
-              setOpenToAdd(true);
-            }}
-          >
-            Add Medication
-          </MyButton>
-          <MyButton
-            prefixIcon={() => <BlockIcon />}
-            onClick={() => setOpenCancellation(true)}
-            disabled={selectedRows.length === 0}
-          >
-            Cancle
-          </MyButton>
-
           <Checkbox
             checked={!showCanceled}
             onChange={() => {
@@ -725,7 +728,7 @@ const Prescription = props => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-      ></MyTable>
+      />
 
       <DetailsModal
         edit={edit}
@@ -747,7 +750,7 @@ const Prescription = props => {
         handleCancle={handleCancle}
         withReason={false}
         title={'Cancellation'}
-      ></CancellationModal>
+      />
 
       <MyModal
         open={openFavoritesModal}
@@ -847,7 +850,7 @@ const Prescription = props => {
                 }
               ]}
               onRowClick={rowData => {
-                setPrescriptionMedications({...rowData,parametersToMonitor:""});
+                setPrescriptionMedications({ ...rowData, parametersToMonitor: '' });
               }}
               data={favoriteMedications}
             />
