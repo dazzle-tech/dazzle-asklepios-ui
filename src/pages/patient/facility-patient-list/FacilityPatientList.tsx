@@ -5,9 +5,10 @@ import { Tabs } from 'rsuite';
 import InformationDesk from './information-desk/InformationDesk';
 import CancelledAdmissions from './cancelled-admissions/CancelledAdmissions';
 import DischargedPatients from './discharged-patients/DischargedPatients';
+
+
 const FacilityPatientList = () => {
   return (
-    <>
       <Tabs appearance="subtle" className="doctor-round-tabs" defaultActiveKey="1">
         <Tabs.Tab eventKey="1" title="Information Desk">
           <InformationDesk />
@@ -19,7 +20,6 @@ const FacilityPatientList = () => {
           <DischargedPatients></DischargedPatients>
         </Tabs.Tab>
       </Tabs>
-    </>
   );
 };
 export default FacilityPatientList;

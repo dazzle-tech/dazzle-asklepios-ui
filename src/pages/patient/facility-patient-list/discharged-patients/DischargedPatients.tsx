@@ -151,7 +151,6 @@ const DischargedPatients = () => {
   );
 
   return (
-    <div>
       <MyTable
         data={paginated}
         columns={columns}
@@ -172,7 +171,6 @@ const DischargedPatients = () => {
           setPage(0);
         }}
       />
-    </div>
   );
 };
 
