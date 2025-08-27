@@ -652,6 +652,7 @@ const Prescription = props => {
               selectDataValue="key"
               record={{}}
               setRecord={''}
+              width={110}
             />
           </Form>
           <UrgencyButton />

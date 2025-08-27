@@ -7,7 +7,18 @@ import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
 import React, { useEffect, useState } from 'react';
-import { Col, Dropdown, Form, Input, InputGroup, Radio, RadioGroup, Row, Text } from 'rsuite';
+import {
+  Col,
+  Divider,
+  Dropdown,
+  Form,
+  Input,
+  InputGroup,
+  Radio,
+  RadioGroup,
+  Row,
+  Text
+} from 'rsuite';
 import ActiveIngrediantList from './ActiveIngredient';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -255,7 +266,7 @@ const DetailsModal = ({
       durationTypeLkey: null,
       administrationInstructions: null,
       instructionsTypeLkey: null,
-      genericSubstitute: false,
+      substituteAllowed: false,
       chronicMedication: false,
       refillIntervalUnitLkey: null,
       indicationUseLkey: null
@@ -387,20 +398,11 @@ const DetailsModal = ({
             >
               <Col>
                 <Row className="display-flex">
-                  <Col
-                    className="borderr"
-                    style={{
-                      border: '1px solid #ccc',
-                      padding: '16px',
-                      borderRadius: '8px',
-                      marginRight: '8px',
-                      flex: 2
-                    }}
-                  >
-                    <div className="medication-form-row min-hieght">
+                  <Col className="borderr border-flex">
+                    <div className="medication-form-rows min-hieght">
                       {/* Medication Search */}
                       <div className="search-wrapper">
-                        <InputGroup inside style={{ width: '200px' }} className="input-search-p">
+                        <InputGroup className="input-search-p">
                           <Input
                             placeholder={'Medication Name'}
                             value={searchKeyword}
@@ -438,7 +440,6 @@ const DetailsModal = ({
                           </Dropdown.Menu>
                         )}
                       </div>
-
                       {/* Substitute Button */}
                       <div className="button-wrapper">
                         <MyButton
@@ -451,7 +452,7 @@ const DetailsModal = ({
                       </div>
 
                       {/* Instruction Type Radio Group */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      <div className="radio-group">
                         <RadioGroup
                           value={selectedOption}
                           inline
@@ -472,9 +473,7 @@ const DetailsModal = ({
                           ))}
                         </RadioGroup>
                       </div>
-
                       {/* Instructions Component */}
-
                       <Instructions
                         selectedOption={selectedOption}
                         setCustomeinst={setCustomeinst}
@@ -517,7 +516,6 @@ const DetailsModal = ({
                           setRecord={setPrescriptionMedications}
                         />
                       </div>
-
                       <div className="inputs-inline">
                         <MyInput
                           disabled={preKey != null ? false : true}
@@ -542,9 +540,9 @@ const DetailsModal = ({
                         <MyInput
                           disabled={preKey != null ? false : true}
                           width={140}
-                          fieldLabel="Brand Substitute Allowed"
+                          fieldLabel="Substitute Allowed"
                           fieldType="checkbox"
-                          fieldName="genericSubstitute"
+                          fieldName="substituteAllowed"
                           record={prescriptionMedication}
                           setRecord={setPrescriptionMedications}
                         />
@@ -552,15 +550,7 @@ const DetailsModal = ({
                     </div>
                   </Col>
 
-                  <Col
-                    className="borderr"
-                    style={{
-                      border: '1px solid #ccc',
-                      padding: '16px',
-                      borderRadius: '8px',
-                      flex: 1
-                    }}
-                  >
+                  <Col className="borderr left-side-borderd">
                     <div className="medication-form-flex">
                       {/* Start Date */}
                       <MyInput
@@ -569,7 +559,7 @@ const DetailsModal = ({
                         fieldLabel="Start Time"
                         record={''}
                         setRecord={setOrderMedication}
-                        width={180}
+                        width={190}
                       />
 
                       {/* End Date */}
@@ -579,11 +569,11 @@ const DetailsModal = ({
                         fieldLabel="End Time"
                         record={''}
                         setRecord={setOrderMedication}
-                        width={180}
+                        width={190}
                       />
 
                       <MyInput
-                        width={120}
+                        width={190}
                         fieldLabel="Therapy Type"
                         fieldType="select"
                         fieldName="therapyType"
@@ -592,28 +582,30 @@ const DetailsModal = ({
                       />
 
                       <MyInput
-                        width={120}
+                        width={190}
                         fieldLabel="Reason for Prescription"
-                        fieldType="note"
+                        fieldType="textarea"
                         fieldName="reasonForPrescription"
                         record={''}
                         setRecord={setOrderMedication}
+                        height={35}
                       />
 
                       <MyInput
-                        width={120}
+                        width={190}
                         fieldLabel="Approval Number"
-                        fieldType="Text"
+                        fieldType="textarea"
                         fieldName="approvalNumber"
                         record={''}
                         setRecord={setOrderMedication}
+                        height={35}
                       />
                     </div>
                   </Col>
                 </Row>
 
                 {/* Indication Section */}
-                <Row className="rows-gap borderr">
+                <Row className="borderr">
                   <Row className="rows-gap">
                     <Text className="font-style">Indication</Text>
                   </Row>
@@ -691,8 +683,8 @@ const DetailsModal = ({
                         <Input
                           as="textarea"
                           rows={3}
-                          readOnly
-                          style={{ width: '100%', marginTop: '6px' }}
+                          className="ico"
+                          placeholder="Indication Use"
                         />
                       </Row>
                     </Col>
@@ -708,61 +700,27 @@ const DetailsModal = ({
                       />
                     </Col>
                   </Row>
-
-                  <Row className="rows-gap margin-top-1" gutter={16}>
-                    <Col md={6}>
-                      <MyInput
-                        disabled={preKey != null ? false : true}
-                        width="100%"
-                        fieldType="textarea"
-                        fieldLabel="Manual Indication"
-                        fieldName="indicationManually"
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                        height={60}
-                      />
-                    </Col>
-
-                    <Col md={6}>
-                      <MyInput
-                        disabled={preKey != null ? false : true}
-                        height={60}
-                        fieldType="textarea"
-                        width="100%"
-                        fieldLabel="Notes"
-                        fieldName={'notes'}
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                      />
-                    </Col>
-                  </Row>
                 </Row>
               </Col>
             </Row>
             {/* noti */}
-            <Row className="rows-gap" style={{ display: 'flex' }}>
+            <Row className="rows-gap flex-class">
               {/* Left Half - Notes and Buttons */}
-              <Col
-                style={{
-                  border: '1px solid #ccc',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  marginRight: '8px'
-                }}
-              >
+              <Col className="col-edit border-margin">
                 <MyInput
-                  disabled={drugKey != null ? editing : true}
-                  height={60}
+                  disabled={preKey != null ? false : true}
+                  height={35}
                   fieldType="textarea"
-                  fieldName={'notes'}
-                  record={''}
-                  setRecord={setOrderMedication}
                   width="100%"
+                  fieldLabel="Notes"
+                  fieldName={'notes'}
+                  record={prescriptionMedication}
+                  setRecord={setPrescriptionMedications}
                 />
 
                 <MyInput
                   disabled={drugKey != null ? editing : true}
-                  height={60}
+                  height={35}
                   fieldType="textarea"
                   fieldName={'Extra Documentation'}
                   record={''}
@@ -782,20 +740,14 @@ const DetailsModal = ({
                 </Row>
               </Col>
               {/* Right Half - Refills and Parameters to monitor Section */}
-              <Col
-                style={{
-                  border: '1px solid #ccc',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  marginRight: '8px',
-                  flex: 1
-                }}
-              >
+
+              <Col className="right-side">
                 <Row gutter={16}>
-                  <Row style={{ width: '100%' }}>
+                  <Row className="right-side-label">
                     <MyLabel label="Parameters to monitor" />
                     <MyTagInput tags={tags} setTags={setTags} />
                   </Row>
+                  <Divider />
                   <Col md={8}>
                     <MyInput
                       disabled={preKey != null ? false : true}
@@ -840,7 +792,7 @@ const DetailsModal = ({
             </Row>
 
             {/* racall */}
-            <Row className="rows-gap borderr">
+            <Row className="borderr">
               <Row>
                 <Text className="margin-n font-style">Recall From Favorite</Text>
                 <div>
@@ -912,17 +864,14 @@ const DetailsModal = ({
                         title: 'Actions',
                         render: (rowData: any) => {
                           return (
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <div className="flex-gap-center">
                               <MyButton size="xs" onClick={() => handleRecall(rowData)}>
                                 Recall
                               </MyButton>
                               <FontAwesomeIcon
                                 icon={faStar}
                                 onClick={() => addToFavorites(rowData)}
-                                style={{
-                                  cursor: 'pointer',
-                                  color: '#ffc107'
-                                }}
+                                className="pointerr"
                                 title="Remove from favorites"
                               />
                             </div>
