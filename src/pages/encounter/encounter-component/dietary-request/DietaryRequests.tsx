@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBowlFood, faPlus, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEye, faClone, faPrint, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyTable from '@/components/MyTable';
 import { Form } from 'rsuite';
@@ -8,17 +8,27 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import { Radio, RadioGroup, Text } from 'rsuite';
-
+import { ApPatient } from '@/types/model-types';
+import { newApPatient } from '@/types/model-types-constructor';
 import './style.less';
+import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 
 const initialForm = {
   dietOrderType: '',
   startDateTime: '',
+  endDateTime: '',
   duration: '',
   durationUnit: '',
+  // Repeat fields
+  repeatEvery: '',
+  repeatUnit: '',
   foodPreferences: '',
   foodAvoidances: '',
   allergyAvoidances: '',
+  // New fields
+  extraDocumentation: '',
+  notes: '',
+  attachments: [],
   // Conditional fields below
   mealType: '',
   portionSize: '',
@@ -50,13 +60,18 @@ const sampleRequests = [
     startTime: '8:00',
     duration: '3',
     durationUnit: 'days',
+    repeatEvery: '1',
+    repeatUnit: 'week',
     orderedBy: 'Dr. Smith',
     status: 'Active',
     mealType: 'all',
     portionSize: 'medium',
     foodPreferences: 'Low sodium, high fiber',
     foodAvoidances: 'Nuts, shellfish',
-    allergyAvoidances: 'Peanuts, dairy'
+    allergyAvoidances: 'Peanuts, dairy',
+    extraDocumentation: 'Patient has history of hypertension',
+    notes: 'Monitor sodium intake closely',
+    attachments: []
   },
   {
     id: 2,
@@ -66,6 +81,8 @@ const sampleRequests = [
     startTime: '14:30',
     duration: '7',
     durationUnit: 'days',
+    repeatEvery: '',
+    repeatUnit: '',
     orderedBy: 'Dr. Johnson',
     status: 'Active',
     dietCategory: 'diabetic',
@@ -73,7 +90,10 @@ const sampleRequests = [
     proteinTarget: '80',
     foodPreferences: 'Sugar-free options',
     foodAvoidances: 'High carb foods',
-    allergyAvoidances: 'None'
+    allergyAvoidances: 'None',
+    extraDocumentation: 'Diabetic patient with swallowing difficulties',
+    notes: 'Requires texture modification and blood sugar monitoring',
+    attachments: []
   }
 ];
 
@@ -83,6 +103,10 @@ const DietaryRequests = () => {
   const [modalMode, setModalMode] = useState('add');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [form, setForm] = useState(initialForm);
+  const [showPostSaveActions, setShowPostSaveActions] = useState(true);
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
+
   //LOV
   const { data: dietOrderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DIET_ORDER_TYPE');
   const { data: durationLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
@@ -93,11 +117,13 @@ const DietaryRequests = () => {
   );
   const { data: deliveryMethodLovQueryResponse } = useGetLovValuesByCodeQuery('IV_FREQUENCY');
   const { data: lineTypeMethodLovQueryResponse } = useGetLovValuesByCodeQuery('FLUID_ROUTE');
+
   //handles
   const handleAddNewRequest = () => {
     setModalMode('add');
     setForm(initialForm);
     setSelectedRequest(null);
+    setShowPostSaveActions(false);
     setModalOpen(true);
   };
 
@@ -106,8 +132,10 @@ const DietaryRequests = () => {
     setModalMode('view');
     setSelectedRequest(request);
     setForm({ ...request });
+    setShowPostSaveActions(false);
     setModalOpen(true);
   };
+
   // forms
   const renderBasicFields = () => (
     <>
@@ -137,6 +165,7 @@ const DietaryRequests = () => {
         searchable={false}
       />
 
+      {/* Start Date */}
       <MyInput
         fieldLabel="Start Date & Time"
         fieldName="startDateTime"
@@ -147,6 +176,18 @@ const DietaryRequests = () => {
         width={250}
         disabled={modalMode === 'view'}
       />
+
+      {/* End Date */}
+      <MyInput
+        fieldType="datetime"
+        fieldName="endDateTime"
+        fieldLabel="End Date & Time"
+        record={form}
+        setRecord={setForm}
+        width={250}
+        disabled={modalMode === 'view'}
+      />
+
       <div className="two">
         <MyInput
           fieldLabel="Duration"
@@ -174,6 +215,34 @@ const DietaryRequests = () => {
         />
       </div>
 
+      {/* Repeat Fields */}
+      <div className="two">
+        <MyInput
+          fieldLabel="Repeat Every"
+          fieldName="repeatEvery"
+          fieldType="number"
+          record={form}
+          setRecord={setForm}
+          required
+          width={119}
+          disabled={modalMode === 'view'}
+        />
+        <MyInput
+          className="sec"
+          fieldLabel=""
+          fieldName="repeatUnit"
+          fieldType="select"
+          selectData={durationLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={form}
+          setRecord={setForm}
+          width={120}
+          disabled={modalMode === 'view'}
+          searchable={false}
+        />
+      </div>
+
       <MyInput
         fieldLabel="Food Preferences"
         fieldName="foodPreferences"
@@ -183,6 +252,7 @@ const DietaryRequests = () => {
         width={250}
         disabled={modalMode === 'view'}
       />
+
       <MyInput
         fieldLabel="Food Avoidances"
         fieldName="foodAvoidances"
@@ -192,6 +262,7 @@ const DietaryRequests = () => {
         width={250}
         disabled={modalMode === 'view'}
       />
+
       <MyInput
         fieldLabel="Allergy Avoidances"
         fieldName="allergyAvoidances"
@@ -201,8 +272,33 @@ const DietaryRequests = () => {
         width={250}
         disabled={modalMode === 'view'}
       />
+
+      {/* Extra Documentation */}
+      <MyInput
+        fieldLabel="Extra Documentation"
+        fieldName="extraDocumentation"
+        fieldType="textarea"
+        record={form}
+        setRecord={setForm}
+        width={250}
+        disabled={modalMode === 'view'}
+        rows={4}
+      />
+
+      {/* Notes */}
+      <MyInput
+        fieldLabel="Notes"
+        fieldName="notes"
+        fieldType="textarea"
+        record={form}
+        setRecord={setForm}
+        width={250}
+        disabled={modalMode === 'view'}
+        rows={3}
+      />
     </>
   );
+
   const renderConditionalField = () => {
     const isDisabled = modalMode === 'view';
 
@@ -286,7 +382,12 @@ const DietaryRequests = () => {
         return (
           <div>
             <Text>Texture Level</Text>
-            <RadioGroup inline>
+            <RadioGroup
+              inline
+              value={form.textureLevel}
+              onChange={value => setForm(prev => ({ ...prev, textureLevel: value }))}
+              disabled={isDisabled}
+            >
               <Radio value="Pureed">Pureed</Radio>
               <Radio value="Minced">Minced</Radio>
               <Radio value="Soft">Soft</Radio>
@@ -295,7 +396,12 @@ const DietaryRequests = () => {
 
             <div className="margin-top">
               <Text>Fluid Consistency</Text>
-              <RadioGroup inline>
+              <RadioGroup
+                inline
+                value={form.fluidConsistency}
+                onChange={value => setForm(prev => ({ ...prev, fluidConsistency: value }))}
+                disabled={isDisabled}
+              >
                 <Radio value="Thin">Thin</Radio>
                 <Radio value="Nectar-Thick">Nectar-Thick</Radio>
                 <Radio value="Honey-Thick">Honey-Thick</Radio>
@@ -442,6 +548,7 @@ const DietaryRequests = () => {
               required
               width={120}
               rightAddon="hours"
+              rightAddonwidth={60}
               disabled={isDisabled}
             />
             <MyInput
@@ -464,11 +571,12 @@ const DietaryRequests = () => {
         return null;
     }
   };
+
   const renderConditionalFields = () => {
     const isDisabled = modalMode === 'view';
 
     switch (form.dietOrderType) {
-      // TODO convert key to code
+      // TODO convert key to code
       case '9487510426587150':
         return (
           <>
@@ -500,7 +608,7 @@ const DietaryRequests = () => {
             />
           </>
         );
-      // TODO convert key to code
+      // TODO convert key to code
       case '9487527629315307':
         return (
           <>
@@ -540,12 +648,17 @@ const DietaryRequests = () => {
             />
           </>
         );
-      // TODO convert key to code
+      // TODO convert key to code
       case '9583433916270487':
         return (
           <div>
             <Text>Texture Level</Text>
-            <RadioGroup inline>
+            <RadioGroup
+              inline
+              value={form.textureLevel}
+              onChange={value => setForm(prev => ({ ...prev, textureLevel: value }))}
+              disabled={isDisabled}
+            >
               <Radio value="Pureed">Pureed</Radio>
               <Radio value="Minced">Minced</Radio>
               <Radio value="Soft">Soft</Radio>
@@ -554,7 +667,12 @@ const DietaryRequests = () => {
 
             <div className="margin-top">
               <Text>Fluid Consistency</Text>
-              <RadioGroup inline>
+              <RadioGroup
+                inline
+                value={form.fluidConsistency}
+                onChange={value => setForm(prev => ({ ...prev, fluidConsistency: value }))}
+                disabled={isDisabled}
+              >
                 <Radio value="Thin">Thin</Radio>
                 <Radio value="Nectar-Thick">Nectar-Thick</Radio>
                 <Radio value="Honey-Thick">Honey-Thick</Radio>
@@ -562,7 +680,7 @@ const DietaryRequests = () => {
             </div>
           </div>
         );
-      // TODO convert key to code
+      // TODO convert key to code
       case '9583445779340729':
         return (
           <MyInput
@@ -575,7 +693,7 @@ const DietaryRequests = () => {
             disabled={isDisabled}
           />
         );
-      // TODO convert key to code
+      // TODO convert key to code
       case '9583463461702679':
         return (
           <MyInput
@@ -589,7 +707,7 @@ const DietaryRequests = () => {
             disabled={isDisabled}
           />
         );
-      // TODO convert key to code
+      // TODO convert key to code
       case '9583509741073933':
         return (
           <>
@@ -662,7 +780,7 @@ const DietaryRequests = () => {
             />
           </>
         );
-      // TODO convert key to code
+      // TODO convert key to code
       case '9583532408326686':
         return (
           <>
@@ -694,7 +812,8 @@ const DietaryRequests = () => {
               record={form}
               setRecord={setForm}
               width={120}
-              placeholder="hours"
+              rightAddon="hours"
+              rightAddonwidth={60}
               disabled={isDisabled}
             />
             <MyInput
@@ -716,6 +835,21 @@ const DietaryRequests = () => {
         return null;
     }
   };
+
+  const renderModalFooter = (
+    <div className="render-modal-footer">
+      <div>
+        <MyButton
+          appearance="ghost"
+          size="sm"
+          onClick={() => setAttachmentsModalOpen(true)}
+          prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
+        >
+          Add Attachment
+        </MyButton>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -742,7 +876,7 @@ const DietaryRequests = () => {
             title: 'Start Date Time',
             dataKey: 'startDateTime',
             width: 160,
-            render: (rowData: any) =>
+            render: rowData =>
               rowData?.startDateTime ? (
                 <>
                   {rowData.startDate}
@@ -760,6 +894,16 @@ const DietaryRequests = () => {
             width: 100,
             render: row => `${row.duration} ${row.durationUnit}`
           },
+          {
+            key: 'repeat',
+            title: 'Repeat',
+            dataKey: 'repeat',
+            width: 120,
+            render: row =>
+              row.repeatEvery && row.repeatUnit
+                ? `Every ${row.repeatEvery} ${row.repeatUnit}${row.repeatEvery > 1 ? 's' : ''}`
+                : 'No repeat'
+          },
           { key: 'orderedBy', title: 'Ordered By\\At', dataKey: 'orderedBy', width: 160 },
           { key: 'status', title: 'Status', dataKey: 'status', width: 100 },
           {
@@ -767,14 +911,17 @@ const DietaryRequests = () => {
             title: 'View',
             width: 80,
             render: row => (
-              <div
-                style={{ cursor: 'pointer' }}
-                onClick={e => {
-                  e.stopPropagation();
-                  handleViewRequest(row);
-                }}
-              >
-                <FontAwesomeIcon icon={faEye} className="font-aws" />
+              <div className="render-aws">
+                <FontAwesomeIcon
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleViewRequest(row);
+                  }}
+                  icon={faEye}
+                  className="font-aws"
+                />
+                <FontAwesomeIcon icon={faPrint} className="font-aws" />
+                <FontAwesomeIcon icon={faClone} className="font-aws" />
               </div>
             )
           }
@@ -794,6 +941,14 @@ const DietaryRequests = () => {
             {renderConditionalField()}
           </Form>
         }
+        footerButtons={renderModalFooter}
+      />
+      <AttachmentModal
+        isOpen={attachmentsModalOpen}
+        setIsOpen={setAttachmentsModalOpen}
+        attachmentSource={localPatient}
+        attatchmentType={'APPOINTMENT_ATTACHMENT'}
+        patientKey={localPatient?.key}
       />
     </>
   );

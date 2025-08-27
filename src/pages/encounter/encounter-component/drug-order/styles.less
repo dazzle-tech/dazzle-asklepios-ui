@@ -327,12 +327,12 @@
   padding-left: 12px;
 }
 
-.borderr {
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 6px;
+.rows-gap.rs-row {
+  margin-bottom: 5px !important;
 }
-
+.col-edit > .my-input-container.rs-form-group {
+  margin-bottom: 6px !important;
+}
 .medication-form-row {
   display: flex;
   flex-direction: row;
@@ -340,7 +340,16 @@
   align-items: flex-start;
   flex-wrap: wrap;
 }
-
+.medication-form-rows {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.medication-form-row.min-hieght {
+  gap: 0 !important;
+}
 .search-wrapper {
   margin-top: 22px;
   min-width: 150px;
@@ -369,5 +378,14 @@
 .margin-n {
   margin-bottom: 8px !important;
 }
-.font-style-s {
+.borderr {
+  border: 1px solid #ccc;
+  padding: 16px;
+  padding-bottom: 0 !important;
+  border-radius: 8px;
+  margin-bottom: 0 !important;
+}
+.border-flex {
+  margin-right: 8px;
+  flex: 2;
 }
