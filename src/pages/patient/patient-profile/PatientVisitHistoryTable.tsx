@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Drawer, Tooltip, Form, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import {
@@ -19,19 +19,38 @@ import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { faPowerOff } from '@fortawesome/free-solid-svg-icons';
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
-import PatientVisitHistoryTable from './PatientVisitHistoryTable';
+import { ApPatient } from '@/types/model-types';
+import { newApPatient } from '@/types/model-types-constructor';
 
-const PatientVisitHistory = ({
+const PatientVisitHistoryTable = ({
   visitHistoryModel,
-  localPatient,
   setVisitHistoryModel,
   quickAppointmentModel,
-  setQuickAppointmentModel
+  setQuickAppointmentModel,
+  localPatient
 }) => {
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [open, setOpen] = useState(false);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    console.log("patient: " + localPatient.key + " " + localPatient.fullName);
+    setVisitHistoryListRequest({
+      ...initialListRequest,
+      sortBy: 'plannedStartDate',
+      sortType: 'desc',
+      filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: localPatient.key || undefined
+        }
+      ]
+    });
+  }, [localPatient]);
+  
+  
 
   // Request object for encounter list API
   const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
@@ -45,8 +64,9 @@ const PatientVisitHistory = ({
         value: localPatient.key || undefined
       }
     ],
-     pageSize: 15
+    pageSize: 15
   });
+  
   // Mutations for encounter actions
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
@@ -54,8 +74,12 @@ const PatientVisitHistory = ({
   const {
     data: visiterHistoryResponse,
     refetch: refetchEncounter,
-    isLoading
+    isFetching
   } = useGetEncountersQuery(visitHistoryListRequest);
+
+  useEffect(() => {
+    refetchEncounter();
+  }, [visitHistoryListRequest]);
   // Cancel encounter handler
   const handleCancelEncounter = async () => {
     try {
@@ -215,38 +239,13 @@ const PatientVisitHistory = ({
     }
   ];
   return (
-    // <PatientVisitHistoryTable
-    // visitHistoryModel={visitHistoryModel}
-    //  localPatient={localPatient}
-    //   setVisitHistoryModel={setVisitHistoryModel}
-    //    quickAppointmentModel={quickAppointmentModel}
-    //     setQuickAppointmentModel={setQuickAppointmentModel}
-    // />
-    <div className="drawer-container">
-      <Drawer
-        size="md"
-        placement={'right'}
-        open={visitHistoryModel}
-        onClose={() => setVisitHistoryModel(false)}
-      >
-        <Drawer.Header>
-          <Drawer.Title>{localPatient?.firstName}'s Visits history</Drawer.Title>
-        </Drawer.Header>
-        <Drawer.Body>
-          <MyTable
-            data={visiterHistoryResponse?.object ?? []}
-            columns={tableColumns}
-            height={580}
-            loading={isLoading}
-          />
-          {/* <PatientVisitHistoryTable
-            visitHistoryModel={visitHistoryModel}
-            setVisitHistoryModel={setVisitHistoryModel}
-            quickAppointmentModel={quickAppointmentModel}
-            setQuickAppointmentModel={setQuickAppointmentModel}
-          /> */}
-        </Drawer.Body>
-      </Drawer>
+    <>
+      <MyTable
+        data={visiterHistoryResponse?.object ?? []}
+        columns={tableColumns}
+        height={580}
+        loading={isFetching}
+      />
       <DeletionConfirmationModal
         open={open}
         setOpen={setOpen}
@@ -272,8 +271,8 @@ const PatientVisitHistory = ({
       ) : (
         <></>
       )}
-    </div>
+    </>
   );
 };
 
-export default PatientVisitHistory;
+export default PatientVisitHistoryTable;

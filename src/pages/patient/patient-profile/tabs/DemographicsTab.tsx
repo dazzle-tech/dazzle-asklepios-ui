@@ -24,7 +24,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
 
   return (
     <Form layout="inline" fluid>
-      <MyInput
+      {/* <MyInput
         vr={validationResult}
         column
         fieldLabel="First Name (Sec. Lang)"
@@ -55,7 +55,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         fieldName="lastNameOtherLang"
         record={localPatient}
         setRecord={setLocalPatient}
-      />
+      /> */}
       <MyInput
         vr={validationResult}
         column
@@ -161,6 +161,17 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
       />
+      {/* <Form layout="inline" fluid> */}
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      fieldLabel=" Details"
+                      fieldType="textarea"
+                      fieldName="extraDetails"
+                      record={localPatient}
+                      setRecord={setLocalPatient}
+                    />
+                  {/* </Form> */}
     </Form>
   );
 };

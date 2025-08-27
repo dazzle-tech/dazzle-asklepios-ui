@@ -23,7 +23,7 @@ interface ProfileTabsProps {
   setLocalPatient: (patient: ApPatient) => void;
   validationResult: any;
   setRefetchAttachmentList: (value: boolean) => void;
-  refetchAttachmentList:boolean;
+  refetchAttachmentList: boolean;
 }
 
 const ProfileTabs: React.FC<ProfileTabsProps> = ({
@@ -31,7 +31,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   setLocalPatient,
   validationResult,
   refetchAttachmentList,
-  setRefetchAttachmentList,
+  setRefetchAttachmentList
 }) => {
   const [ageGroupValue, setAgeGroupValue] = useState({
     ageGroup: ''
@@ -83,7 +83,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
   return (
     <>
-      <Panel
+      {/* <Panel
         header={
           <h5 className="title">
             <Translate>Basic Information</Translate>
@@ -102,7 +102,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           ageFormatType={ageFormatType}
           ageGroupValue={ageGroupValue}
         />
-      </Panel>
+      </Panel> */}
       <Panel
         header={
           <h5 className="title">
@@ -111,15 +111,41 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         }
       >
         <Tabs defaultActiveKey="1" appearance="subtle" className="patient-info-tabs">
-          <Tabs.Tab eventKey="1" title="Demographics">
-            <DemographicsTab localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
+          <Tabs.Tab eventKey="11" title="Demographics">
+            <BasicInfoTab
+              localPatient={localPatient}
+              setLocalPatient={setLocalPatient}
+              validationResult={validationResult}
+              genderLovQueryResponse={genderLovQueryResponse}
+              docTypeLovQueryResponse={docTypeLovQueryResponse}
+              countryLovQueryResponse={countryLovQueryResponse}
+              patientClassLovQueryResponse={patientClassLovQueryResponse}
+              bloodGroupLovQueryResponse={bloodGroupLovQueryResponse}
+              ageFormatType={ageFormatType}
+              ageGroupValue={ageGroupValue}
+            />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="2" title="Contact">
-            <ContactTab localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
+          <Tabs.Tab eventKey="1" title="Extra Details">
+            <DemographicsTab
+              localPatient={localPatient}
+              setLocalPatient={setLocalPatient}
+              validationResult={validationResult}
+            />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="3" title="Address">
-            <AddressTab localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
-          </Tabs.Tab>
+          {/* <Tabs.Tab eventKey="2" title="Contact">
+            <ContactTab
+              localPatient={localPatient}
+              setLocalPatient={setLocalPatient}
+              validationResult={validationResult}
+            />
+          </Tabs.Tab> */}
+          {/* <Tabs.Tab eventKey="3" title="Address">
+            <AddressTab
+              localPatient={localPatient}
+              setLocalPatient={setLocalPatient}
+              validationResult={validationResult}
+            />
+          </Tabs.Tab> */}
           <Tabs.Tab eventKey="4" title="Insurance">
             <InsuranceTab localPatient={localPatient} />
           </Tabs.Tab>
@@ -139,8 +165,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <Tabs.Tab eventKey="8" title="Family Members">
             <PatientFamilyMembers localPatient={localPatient} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="9" title="Extra Details">
-            <Form layout="inline" fluid>
+          <Tabs.Tab eventKey="9" title="Secondary ID">
+            {/* <Form layout="inline" fluid>
               <MyInput
                 vr={validationResult}
                 column
@@ -150,13 +176,15 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
                 record={localPatient}
                 setRecord={setLocalPatient}
               />
-            </Form>
+            </Form> */}
             <PatientExtraDetails localPatient={localPatient} />
           </Tabs.Tab>
           <Tabs.Tab eventKey="10" title="Attachments">
-            <PatientAttachment localPatient={localPatient}   
-            setRefetchAttachmentList={setRefetchAttachmentList}
-            refetchAttachmentList={refetchAttachmentList}/>
+            <PatientAttachment
+              localPatient={localPatient}
+              setRefetchAttachmentList={setRefetchAttachmentList}
+              refetchAttachmentList={refetchAttachmentList}
+            />
           </Tabs.Tab>
         </Tabs>
       </Panel>

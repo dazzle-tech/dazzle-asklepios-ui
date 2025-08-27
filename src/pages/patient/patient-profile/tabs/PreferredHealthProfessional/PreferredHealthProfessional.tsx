@@ -82,7 +82,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
     // Initialize patient preferred health professional list request with default filters
     const [patientPreferredHealthProfessional, setPatientPreferredHealthProfessional] = useState<ListRequest>({
         ...initialListRequest,
-        pageSize: 1000,
+        pageSize: 15,
         filters: [
             {
                 fieldName: 'deleted_at',
