@@ -43,7 +43,7 @@ const DrugOrder = props => {
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
   const dispatch = useAppDispatch();
-  const [order,setOrder]=useState({...newApDrugOrder})
+  const [order, setOrder] = useState({ ...newApDrugOrder });
   const [drugKey, setDrugKey] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showCanceled, setShowCanceled] = useState(true);
@@ -156,11 +156,6 @@ const DrugOrder = props => {
     } else return '';
   };
 
-
-
-
-
-
   //Effect
   useEffect(() => {
     setListRequest(prev => ({
@@ -187,10 +182,9 @@ const DrugOrder = props => {
 
       if (foundOrder?.key != null) {
         setDrugKey(foundOrder?.key);
-        setOrder({...foundOrder});
-      }
-      else{
-        setOrder({...newApDrugOrder})
+        setOrder({ ...foundOrder });
+      } else {
+        setOrder({ ...newApDrugOrder });
       }
     }
   }, [orders]);
@@ -205,13 +199,6 @@ const DrugOrder = props => {
       setIsDraft(foundOrder?.saveDraft);
     }
   }, [orders, drugKey]);
-
-
-
-
-
-
-
 
   //functions
   const saveDraft = async () => {
@@ -258,7 +245,7 @@ const DrugOrder = props => {
         dispatch(notify('Start New Order whith ID:' + response?.data?.drugorderId));
 
         setDrugKey(response?.data?.key);
-       setIsDraft(true);
+        setIsDraft(true);
         ordRefetch()
           .then(() => {})
           .catch(error => {
@@ -309,11 +296,11 @@ const DrugOrder = props => {
         saveDraft: false,
         submittedAt: Date.now()
       }).unwrap();
-      
+
       dispatch(notify({ msg: 'Submetid  Successfully', sev: 'success' }));
       await handleCleare();
       await ordRefetch();
-      setOrder({...newApDrugOrder})
+      setOrder({ ...newApDrugOrder });
       setDrugKey(null);
     } catch (error) {
       dispatch(notify({ msg: 'Error saving order or medications', sev: 'error' }));
@@ -599,7 +586,6 @@ const DrugOrder = props => {
     setOpenToAdd(true);
   };
 
-
   return (
     <>
       <div className="bt-div">
@@ -621,9 +607,7 @@ const DrugOrder = props => {
         </div>
         <div>
           <div className="prescripton-word-style">Order</div>
-          <div className="prescripton-number-style">
-            {order?.drugorderId || '_'}
-          </div>
+          <div className="prescripton-number-style">{order?.drugorderId || '_'}</div>
         </div>
         <div
           className={clsx('bt-right', {
@@ -649,11 +633,9 @@ const DrugOrder = props => {
             prefixIcon={() => <PlusIcon />}
             onClick={async () => {
               try {
-               
-             
-                if(!order.key){
-
-                await handleSaveOrder();}
+                if (!order.key) {
+                  await handleSaveOrder();
+                }
 
                 handleCleare();
                 setOpenDetailsModel(true);
@@ -732,7 +714,7 @@ const DrugOrder = props => {
           fieldName="cancellationReason"
           fieldLabel={'Cancellation Reason'}
           title={'Cancellation'}
-        ></CancellationModal>
+        />
 
         <DetailsModal
           edit={edit}
@@ -747,7 +729,7 @@ const DrugOrder = props => {
           medicRefetch={medicRefetch}
           openToAdd={openToAdd}
           isFavorite={isFavorite}
-        ></DetailsModal>
+        />
 
         <AddEditFluidOrder
           open={openAddEditFluidOrderPopup}
