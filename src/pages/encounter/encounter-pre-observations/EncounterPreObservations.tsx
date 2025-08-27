@@ -3,7 +3,7 @@ import { Panel, Divider } from 'rsuite';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import { useAppDispatch } from '@/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble,faPrint } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
 import Allergies from './AllergiesNurse';
 import { Check } from '@rsuite/icons';
@@ -102,7 +102,11 @@ const EncounterPreObservations = ({}) => {
                 <div className="left-buttons-contant">
                   {/* TODO update status to be a LOV value */}
                   {!localEncounter.discharge &&
-                    localEncounter.encounterStatusLkey !== '91109811181900' && (
+                    localEncounter.encounterStatusLkey !== '91109811181900' && (<>
+                                  <MyButton>
+                                    <FontAwesomeIcon icon={faPrint}/>
+                                    Print Report
+                                </MyButton>
                       <MyButton
                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                         onClick={() =>
@@ -118,7 +122,8 @@ const EncounterPreObservations = ({}) => {
                             : 'Complete Visit'}
                         </Translate>
                       </MyButton>
-                    )}
+                      
+                   </> )}
                   {activeKey == '1' && <Divider vertical />}
                   {activeKey == '1' && (
                     <MyButton

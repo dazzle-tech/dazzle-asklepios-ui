@@ -187,7 +187,6 @@ const Details = ({
                 setRecord={setConsultationOrder}
               />
               <div className='attachment-button-consultation-position'>
-                <label>Add Attachments</label>
                 <MyButton
               className="my-button-for-attachment-modal"
               onClick={() => setShowAttachmentModal(true)}
