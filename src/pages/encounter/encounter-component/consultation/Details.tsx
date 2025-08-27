@@ -165,16 +165,7 @@ const Details = ({
                 setRecord={setConsultationOrder}
                 searchable={false}
               />
-              <MyInput
-                width={'12vw'}
-                disabled={editing}
-                fieldType="text"
-                fieldLabel="Approval Number"
-                fieldName="approvalNumber"
-                record={consultationOrders}
-                setRecord={setConsultationOrder}
-              />
-              <MyInput
+                            <MyInput
                 width={'12vw'}
                 disabled={editing}
                 fieldType="select"
@@ -186,10 +177,29 @@ const Details = ({
                 record={consultationOrders}
                 setRecord={setConsultationOrder}
               />
-            </div>
-            <div className='text-area-positions-detail-consultion'>
               <MyInput
                 width={'12vw'}
+                disabled={editing}
+                fieldType="text"
+                fieldLabel="Approval Number"
+                fieldName="approvalNumber"
+                record={consultationOrders}
+                setRecord={setConsultationOrder}
+              />
+              <div className='attachment-button-consultation-position'>
+                <label>Add Attachments</label>
+                <MyButton
+              className="my-button-for-attachment-modal"
+              onClick={() => setShowAttachmentModal(true)}
+            >
+              <FontAwesomeIcon icon={faPaperclip} />
+              Attachments
+            </MyButton></div>
+            </div>
+            <div className='text-area-positions-detail-consultion'>
+
+                <MyInput
+                width={'24vw'}
                 disabled={editing}
                 fieldName="consultationContent"
                 rows={6}
@@ -197,6 +207,7 @@ const Details = ({
                 record={consultationOrders}
                 setRecord={setConsultationOrder}
               />
+              
               <MyInput
                 width={'12vw'}
                 disabled={editing}
@@ -205,15 +216,18 @@ const Details = ({
                 fieldType="textarea"
                 record={consultationOrders}
                 setRecord={setConsultationOrder}
-              /></div>
-
-            <MyButton
-              className="my-button-for-attachment-modal"
-              onClick={() => setShowAttachmentModal(true)}
-            >
-              <FontAwesomeIcon icon={faPaperclip} />
-              Attachments
-            </MyButton></div>
+              />
+                            <MyInput
+                width={'12vw'}
+                disabled={editing}
+                fieldName="extra documentation"
+                rows={6}
+                fieldType="textarea"
+                record={consultationOrders}
+                setRecord={setConsultationOrder}
+              />
+              </div>
+</div>
           </Form>
         }
         leftContent={<Diagnosis patient={patient} encounter={encounter} />}

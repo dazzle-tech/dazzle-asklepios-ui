@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import MainScreenBar from '../MainScreenBarIcons/MainScreenBar';
+import MainScreenBarFilters from '../MainScreenBarIcons/MainScreenBarFilters';
 import {
   Dropdown,
   Popover,
@@ -66,15 +68,15 @@ const Header = ({ expand, setExpand }) => {
       console.log(eventKey);
     };
 
-const handleLogout = () => {
-  dispatch(setUser(null));
-  dispatch(setPageCode(''));
-  dispatch(setDivContent(''));
+    const handleLogout = () => {
+      dispatch(setUser(null));
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
 
-  localStorage.clear();
+      localStorage.clear();
 
-  navigate('/login');
-};
+      navigate('/login');
+    };
 
     useEffect(() => {
       if (logoutResult && !isLoggingOut && !authSlice.user) {
@@ -191,15 +193,26 @@ const handleLogout = () => {
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
   return (
     <>
-      <Stack className={`header ${expand ? 'expand' : ''}`} spacing={8}>
-        <div dangerouslySetInnerHTML={{ __html: divElement }} />
-        <div className="headerItem">
-          {pageCode === 'P_Facility' || pageCode === 'ER_Triage'? <RegistrationWizard /> : <></>}
 
+      <Stack className={`header ${expand ? 'expand' : ''}`} spacing={8}>
+
+<div className='main-screen-bar-filters-header-main-container'>
+  <div dangerouslySetInnerHTML={{ __html: divElement }} />
+  
+  <div className="main-screen-bar-filters-header">
+    <MainScreenBarFilters />
+  </div></div>
+
+    
+
+        <div className="headerItem">
+          {pageCode === 'P_Facility' || pageCode === 'ER_Triage' ? <RegistrationWizard /> : <>
+          </>}
+
+          <MainScreenBar></MainScreenBar>
           <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
             <IconButton icon={<FaEarthAmericas style={{ fontSize: 20 }} />} />
           </Whisper>
-
           <Whisper
             placement="bottomEnd"
             trigger="click"

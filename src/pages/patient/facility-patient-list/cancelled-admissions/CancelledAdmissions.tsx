@@ -139,7 +139,6 @@ const filterss = (
       </Form>);
 
   return (
-    <div>
       <MyTable
         data={paginated}
         columns={columns}
@@ -160,7 +159,6 @@ const filterss = (
           setPage(0);
         }}
       />
-    </div>
   );
 };
 
