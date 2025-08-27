@@ -5,7 +5,7 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
+import { faUserNurse, faUserDoctor, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
@@ -345,6 +345,7 @@ const EncounterList = () => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
+        const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
@@ -399,6 +400,22 @@ const EncounterList = () => {
                 </div>
               </Whisper>
             )}
+
+                        <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="light-blue"
+                  onClick={() => {
+                    const patientData = rowData.patientObject;
+                    setLocalEncounter(rowData);
+                    handleGoToPreVisitObservations(rowData, patientData);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPrint} />
+                </MyButton>
+              </div>
+            </Whisper>
           </Form>
         );
       },
@@ -498,6 +515,12 @@ const EncounterList = () => {
             <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
             Advance
           </MyButton>
+        
+            <MyButton>
+            <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+            Refill
+          </MyButton>
+
         </div>
       </Form>
     );

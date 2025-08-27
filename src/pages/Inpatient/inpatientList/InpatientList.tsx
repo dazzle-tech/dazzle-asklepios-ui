@@ -41,6 +41,7 @@ import { faPersonWalkingArrowLoopLeft } from '@fortawesome/free-solid-svg-icons'
 import ReturnFromTemporary from './temporaryDischarge/ReturnFromTemporary';
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import {faBarcode, faUserGroup} from '@fortawesome/free-solid-svg-icons';
 
 const InpatientList = () => {
   const location = useLocation();
@@ -69,6 +70,8 @@ const InpatientList = () => {
   const [encounterStatus, setEncounterStatus] = useState({ key: '' }); 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [openReturnFromTemporaryModal, setOpenReturnFromTemporaryModal] = useState(false);
+  const tooltipWrist = <Tooltip>Wrist Band</Tooltip>;
+  const tooltipCompanion = <Tooltip>Companion Card</Tooltip>;
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -178,7 +181,7 @@ const InpatientList = () => {
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
-  const filters = () => (
+  const filters = () => (<>
     <Form layout="inline" fluid>
       <div className="switch-dep-dev ">
         {' '}
@@ -259,6 +262,26 @@ const InpatientList = () => {
 </MyButton>
       </div>
     </Form>
+    <div className='companion-wrist-icons-position-handles'>
+    <Whisper trigger="hover" placement="top" speaker={tooltipWrist}>
+                <div>
+                  <MyButton
+                    size="small"
+                      disabled={!encounter?.key}>
+                    <FontAwesomeIcon icon={faBarcode} />
+                  </MyButton>
+                </div>
+              </Whisper>
+
+<Whisper trigger="hover" placement="top" speaker={tooltipCompanion}>
+                <div>
+                  <MyButton
+                    size="small"
+                    disabled={!encounter?.key}>
+                    <FontAwesomeIcon icon={faUserGroup} />
+                  </MyButton>
+                </div>
+              </Whisper></div></>
   );
 
   //useEffect
@@ -427,7 +450,6 @@ const InpatientList = () => {
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         const tooltipDischarge = <Tooltip>Temporary Discharge</Tooltip>;
         const tooltipReturnFromDischarge = <Tooltip>Return from Temporary DC</Tooltip>;
-
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>

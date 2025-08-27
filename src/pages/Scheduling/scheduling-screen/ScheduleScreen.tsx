@@ -865,7 +865,7 @@ const slotPropGetter = (date, resourceId) => {
                                     borderRadius: "5px",
                                     color: "blue"
                                 }}
-                                    appearance="ghost"  >
+                                    appearance="ghost">
 
                                     <FontAwesomeIcon icon={faPrint} style={{ color: "#2264E5", marginRight: "25px", fontSize: "18px" }} />
                                     Print Report
