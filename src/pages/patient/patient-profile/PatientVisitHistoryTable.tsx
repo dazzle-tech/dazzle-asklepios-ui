@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useState } from 'react';
-import { Drawer, Tooltip, Form, Whisper } from 'rsuite';
+import { Tooltip, Form, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import {
   useGetEncountersQuery,
@@ -19,39 +19,17 @@ import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { faPowerOff } from '@fortawesome/free-solid-svg-icons';
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
-import { ApPatient } from '@/types/model-types';
-import { newApPatient } from '@/types/model-types-constructor';
+import { formatDateWithoutSeconds } from '@/utils';
 
 const PatientVisitHistoryTable = ({
-  visitHistoryModel,
-  setVisitHistoryModel,
   quickAppointmentModel,
   setQuickAppointmentModel,
   localPatient
 }) => {
+   const dispatch = useDispatch();
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [open, setOpen] = useState(false);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    console.log("patient: " + localPatient.key + " " + localPatient.fullName);
-    setVisitHistoryListRequest({
-      ...initialListRequest,
-      sortBy: 'plannedStartDate',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: localPatient.key || undefined
-        }
-      ]
-    });
-  }, [localPatient]);
-  
-  
-
   // Request object for encounter list API
   const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -66,20 +44,18 @@ const PatientVisitHistoryTable = ({
     ],
     pageSize: 15
   });
-  
+
   // Mutations for encounter actions
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
-  // Query for encounter list
+  // Fetch visit history list response
   const {
     data: visiterHistoryResponse,
     refetch: refetchEncounter,
     isFetching
   } = useGetEncountersQuery(visitHistoryListRequest);
 
-  useEffect(() => {
-    refetchEncounter();
-  }, [visitHistoryListRequest]);
+ 
   // Cancel encounter handler
   const handleCancelEncounter = async () => {
     try {
@@ -90,10 +66,10 @@ const PatientVisitHistoryTable = ({
         setOpen(false);
       }
     } catch (error) {
-      console.error('Encounter completion error:', error);
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
+
   // Complete encounter handler
   const handleCompleteEncounter = async () => {
     try {
@@ -103,7 +79,6 @@ const PatientVisitHistoryTable = ({
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
     } catch (error) {
-      console.error('Encounter completion error:', error);
       dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
     }
   };
@@ -236,8 +211,84 @@ const PatientVisitHistoryTable = ({
           </Form>
         );
       }
+    },
+
+    {
+      key: 'visitTypeLvalue',
+      title: <Translate>Visit Type</Translate>,
+      expandable: true,
+      render: (rowData: any) => <span>{rowData?.visitTypeLvalue?.lovDisplayVale}</span>
+    },
+    {
+      key: 'CreatedByAt',
+      title: <Translate>Created By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) =>
+        rowData?.createdAt ? (
+          <>
+            {rowData?.createdBy}
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(rowData.createdAt)}
+            </span>{' '}
+          </>
+        ) : (
+          ' '
+        )
+    },
+    {
+      key: 'cancelledByAt',
+      title: <Translate>Cancelled By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (
+          <>
+            <span>{rowData.deletedBy}</span>
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData.deletedAt)}</span>
+          </>
+        );
+      }
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>Cancellation Reason</Translate>,
+      expandable: true
+    },
+    {
+      key: 'dischargedByAt',
+      title: <Translate>Discharged By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (
+          <>
+            <span>{rowData.discharge}</span>
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(rowData.dischargeAt)}
+            </span>
+          </>
+        );
+      }
     }
   ];
+
+  // Effects
+  useEffect(() => {
+    setVisitHistoryListRequest({
+      ...initialListRequest,
+      sortBy: 'plannedStartDate',
+      sortType: 'desc',
+      filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: localPatient.key || undefined
+        }
+      ]
+    });
+  }, [localPatient]);
+
   return (
     <>
       <MyTable
@@ -271,8 +322,10 @@ const PatientVisitHistoryTable = ({
       ) : (
         <></>
       )}
+      
     </>
   );
 };
 
 export default PatientVisitHistoryTable;
+

@@ -1,3 +1,3 @@
-import PatientExtraDetails from './PatientExtraDetails';
+import SecondaryIDTab from './SecondaryIDTab';
 
-export default PatientExtraDetails;
+export default SecondaryIDTab;

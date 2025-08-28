@@ -24,7 +24,7 @@ const InsuranceModal = ({
 }) => {
   const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
   const [savePatientInsurance] = useSavePatientInsuranceMutation();
-  const [relationsList, setRelationsList] = useState()
+  const [relationsList, setRelationsList] = useState();
   const dispatch = useAppDispatch();
 
   // Fetch LOV data for various fields
@@ -122,7 +122,8 @@ const InsuranceModal = ({
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
-          searchable={false}        />
+          searchable={false}
+          />
         <MyInput
           column
           fieldLabel="Primary Insurance"
@@ -204,12 +205,11 @@ const InsuranceModal = ({
   //handle save insurance
   const handleSave = async () => {
     savePatientInsurance({ ...patientInsurance, patientKey: patientKey.key }).unwrap().then(() => {
-      refetchInsurance()
-      handleClearModal()
+      refetchInsurance();
+      handleClearModal();
       dispatch(notify({ msg: 'Insurance Saved Successfully', sev: "success" }));
-    }).catch((error) => {
-      console.log(error)
-      setPatientInsurance({ ...patientInsurance, primaryInsurance: false })
+    }).catch(() => {
+      setPatientInsurance({ ...patientInsurance, primaryInsurance: false });
     });
 
   };
@@ -230,14 +230,13 @@ const InsuranceModal = ({
       };
     });
     setRelationsList(namesAndIds);
-    console.log(namesAndIds)
   }, [relations]);
  
   useEffect(() => {
     if (open === false) {
       handleClearModal();
     }
-  }, [open])
+  }, [open]);
  
   useEffect(() => {
     if (editing) {

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import type { ApPatient } from '@/types/model-types';
-import { Form, ButtonToolbar, Button } from 'rsuite';
+import { Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import PostalCodeModal from './postal-code-details/PostalCodeModal';
-import { Icon } from '@rsuite/icons';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery, useGetLovValuesByCodeAndParentQuery } from '@/services/setupService';
 import { FaClock } from 'react-icons/fa6';
@@ -50,6 +49,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        menuMaxHeight={200}
       />
       <MyInput
         vr={validationResult}

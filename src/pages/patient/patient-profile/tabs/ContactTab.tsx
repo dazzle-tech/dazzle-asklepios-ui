@@ -123,6 +123,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        menuMaxHeight={200}
       />
       <MyInput
         vr={validationResult}

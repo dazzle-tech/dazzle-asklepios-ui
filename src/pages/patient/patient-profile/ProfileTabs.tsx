@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import type { ApPatient } from '@/types/model-types';
-import { Panel, Tabs, Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
+import { Panel, Tabs } from 'rsuite';
 import { useGetAgeGroupValueQuery } from '@/services/patientService';
 import { calculateAgeFormat } from '@/utils';
-import BasicInfoTab from './tabs/BasicInfoTab';
 import DemographicsTab from './tabs/DemographicsTab';
-import ContactTab from './tabs/ContactTab';
-import AddressTab from './tabs/AddressTab';
+import ExtraDetailsTab from './tabs/ExtraDetailsTab';
 import InsuranceTab from './tabs/InsuranceTab';
 import ConsentFormTab from './ConsentFormTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
-import PatientExtraDetails from './tabs/ExtraDetails/PatientExtraDetails';
+import SecondaryIDTab from './tabs/ExtraDetails/SecondaryIDTab';
 import PatientAttachment from './tabs/Attachment/PatientAttachment';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -83,26 +80,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
   return (
     <>
-      {/* <Panel
-        header={
-          <h5 className="title">
-            <Translate>Basic Information</Translate>
-          </h5>
-        }
-      >
-        <BasicInfoTab
-          localPatient={localPatient}
-          setLocalPatient={setLocalPatient}
-          validationResult={validationResult}
-          genderLovQueryResponse={genderLovQueryResponse}
-          docTypeLovQueryResponse={docTypeLovQueryResponse}
-          countryLovQueryResponse={countryLovQueryResponse}
-          patientClassLovQueryResponse={patientClassLovQueryResponse}
-          bloodGroupLovQueryResponse={bloodGroupLovQueryResponse}
-          ageFormatType={ageFormatType}
-          ageGroupValue={ageGroupValue}
-        />
-      </Panel> */}
       <Panel
         header={
           <h5 className="title">
@@ -111,8 +88,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         }
       >
         <Tabs defaultActiveKey="1" appearance="subtle" className="patient-info-tabs">
-          <Tabs.Tab eventKey="11" title="Demographics">
-            <BasicInfoTab
+          <Tabs.Tab eventKey="1" title="Demographics">
+            <DemographicsTab
               localPatient={localPatient}
               setLocalPatient={setLocalPatient}
               validationResult={validationResult}
@@ -125,61 +102,36 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
               ageGroupValue={ageGroupValue}
             />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="1" title="Extra Details">
-            <DemographicsTab
+          <Tabs.Tab eventKey="2" title="Extra Details">
+            <ExtraDetailsTab
               localPatient={localPatient}
               setLocalPatient={setLocalPatient}
               validationResult={validationResult}
             />
           </Tabs.Tab>
-          {/* <Tabs.Tab eventKey="2" title="Contact">
-            <ContactTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
-          </Tabs.Tab> */}
-          {/* <Tabs.Tab eventKey="3" title="Address">
-            <AddressTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
-          </Tabs.Tab> */}
-          <Tabs.Tab eventKey="4" title="Insurance">
+          <Tabs.Tab eventKey="3" title="Insurance">
             <InsuranceTab localPatient={localPatient} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="5" title="Privacy & Security">
+          <Tabs.Tab eventKey="4" title="Privacy & Security">
             <PrivacySecurityTab
               localPatient={localPatient}
               setLocalPatient={setLocalPatient}
               validationResult={validationResult}
             />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="6" title="Consent Forms">
+          <Tabs.Tab eventKey="5" title="Consent Forms">
             <ConsentFormTab patient={localPatient} isClick={!localPatient.key} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="7" title="Preferred Health Professional">
+          <Tabs.Tab eventKey="6" title="Preferred Health Professional">
             <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.key} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="8" title="Family Members">
+          <Tabs.Tab eventKey="7" title="Family Members">
             <PatientFamilyMembers localPatient={localPatient} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="9" title="Secondary ID">
-            {/* <Form layout="inline" fluid>
-              <MyInput
-                vr={validationResult}
-                column
-                fieldLabel=" Details"
-                fieldType="textarea"
-                fieldName="extraDetails"
-                record={localPatient}
-                setRecord={setLocalPatient}
-              />
-            </Form> */}
-            <PatientExtraDetails localPatient={localPatient} />
+          <Tabs.Tab eventKey="8" title="Secondary ID">
+            <SecondaryIDTab localPatient={localPatient} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="10" title="Attachments">
+          <Tabs.Tab eventKey="9" title="Attachments">
             <PatientAttachment
               localPatient={localPatient}
               setRefetchAttachmentList={setRefetchAttachmentList}
