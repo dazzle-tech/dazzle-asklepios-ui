@@ -93,11 +93,7 @@ const MyTable: React.FC<MyTableProps> = ({
 
   return (
     <Box className="my-table-wrapper">
-      {filters && (
-        <Box className="my-table-filters-wrapper">
-          <Box className="my-table-filters">{filters}</Box>
-        </Box>
-      )}
+      {filters && <Box className="my-table-filters">{filters}</Box>}
 
       {tableButtons && <Box className="my-table-buttons-wrapper">{tableButtons}</Box>}
       <Box className="my-table-content-wrapper">
