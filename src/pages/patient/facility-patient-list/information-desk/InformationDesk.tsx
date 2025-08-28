@@ -13,13 +13,14 @@ import { addFilterToListRequest } from '@/utils';
 import '../styles.less';
 import { newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
 import { useDispatch } from 'react-redux';
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlass,faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { faFileCsv,faPrint } from '@fortawesome/free-solid-svg-icons';
 import ReactDOMServer from 'react-dom/server';
 import MyButton from '@/components/MyButton/MyButton';
+import Section from '@/components/Section';
 
 const InformationDesk = () => {
   const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({
@@ -229,10 +230,7 @@ const sortedData = [...[companionDummyRow]].sort((a, b) => {
 });
 const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-
-  return (
-    <div className="container-div">
-      <div className="field-btn-div">
+const tablefilters = (<div className="field-btn-div">
         <Form layout="inline" fluid>
           <MyInput
             column
@@ -368,27 +366,35 @@ const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + 
             setRecord={val => setResponsiblePhysicians(val.responsiblePhysicians)}
             searchable={false}
           />
+
         </Form>
         <div className="bt-right-group">
-          <div className="btns-group">
-            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}></MyButton>
+                    <MyButton appearance='ghost'>
+  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
+  Advance
+</MyButton>
+            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}>Search</MyButton>
             <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>Clear</MyButton>
-            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileCsv} />}>
-              Export to Xsl
-            </MyButton>
-            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}>
-              Print Card
-            </MyButton>
-          </div>
-        </div>
-      </div>
-<MyTable
+        </div></div>);
+
+  return (
+<div className="container-div">
+
+   <MyTable
   data={paginatedData}
   columns={columns}
   height={800}
   loading={false}
   sortColumn={sortColumn}
   sortType={sortType}
+  filters={tablefilters}
+  tableButtons={<><div className="btns-group">
+            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileCsv} />}>
+              Export to Xsl
+            </MyButton>
+            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}>
+              Print Card
+            </MyButton> </div></>}
   onSortChange={(col, type) => {
     setSortColumn(col);
     setSortType(type);
@@ -401,10 +407,7 @@ const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + 
     setRowsPerPage(parseInt(e.target.value, 10));
     setPage(0);
   }}
-/>
-
-    </div>
-  );
+/></div>);
 };
 
 export default InformationDesk;

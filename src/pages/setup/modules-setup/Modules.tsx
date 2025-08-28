@@ -267,8 +267,11 @@ const Modules = () => {
   return (
     <Carousel className="carousel" autoplay={false} activeIndex={carouselActiveIndex}>
       <Panel>
-        <div className="container-of-header-actions-module">
-          <Form layout="inline">
+        <MyTable
+          height={450}
+          data={moduleListResponse?.object ?? []}
+          columns={tableColumns}
+          filters={<><Form layout="inline">
             <MyInput
               placeholder="Search by Name"
               fieldName="name"
@@ -278,20 +281,13 @@ const Modules = () => {
               showLabel={false}
               width={'220px'}
             />
-          </Form>
-          <MyButton
+          </Form></>}
+          tableButtons={<><MyButton
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"
             onClick={handleModuleNew}
             width="109px"
-          >
-            Add New
-          </MyButton>
-        </div>
-        <MyTable
-          height={450}
-          data={moduleListResponse?.object ?? []}
-          columns={tableColumns}
+          >Add New</MyButton></>}
           rowClassName={isSelected}
           loading={isFetching}
           onRowClick={rowData => {
