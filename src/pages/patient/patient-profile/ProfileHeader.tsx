@@ -36,6 +36,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [upload, uploadMutation] = useUploadMutation();
+  const [openBedsideRegistrations, setOpenBedsideRegistrations] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   // Fetch patient profile image
@@ -204,10 +205,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
               Quick Appointment
             </MyButton>
+             
             <AdministrativeWarningsModal
               localPatient={localPatient}
               validationResult={validationResult}
             />
+            <MyButton onClick={() => setOpenBedsideRegistrations(true)}>
+              Bedside Registrations
+            </MyButton>
           </Form>
         </Form>
       </Stack.Item>
