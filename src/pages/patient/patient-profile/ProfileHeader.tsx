@@ -22,6 +22,7 @@ interface ProfileHeaderProps {
   validationResult: any;
   setQuickAppointmentModel: (value: boolean) => void;
   setRefetchAttachmentList: (value: boolean) => void;
+  setOpenBedsideRegistrations: (value: boolean) => void
 }
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
@@ -30,13 +31,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setVisitHistoryModel,
   setQuickAppointmentModel,
   setRefetchAttachmentList,
-  validationResult
+  validationResult,
+  setOpenBedsideRegistrations
 }) => {
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [upload, uploadMutation] = useUploadMutation();
-  const [openBedsideRegistrations, setOpenBedsideRegistrations] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   // Fetch patient profile image
