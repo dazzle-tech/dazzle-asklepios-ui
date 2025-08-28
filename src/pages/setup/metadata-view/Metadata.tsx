@@ -128,7 +128,12 @@ const Metadata = () => {
   return (
     <Carousel className="carousel-metadata" autoplay={false} activeIndex={carouselActiveIndex}>
       <Panel>
-        <Form className="container-of-search-metadata">
+        <MyTable
+          height={450}
+          data={metadataListResponse?.object ?? []}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          filters={<Form className="container-of-search-metadata">
           <MyInput
             fieldName="objectName"
             fieldType="text"
@@ -138,12 +143,7 @@ const Metadata = () => {
             placeholder="Search by Object Name"
             width={'220px'}
           />
-        </Form>
-        <MyTable
-          height={450}
-          data={metadataListResponse?.object ?? []}
-          columns={tableColumns}
-          rowClassName={isSelected}
+        </Form>}
           loading={isFetching}
           onRowClick={rowData => {
             setMetadata(rowData);

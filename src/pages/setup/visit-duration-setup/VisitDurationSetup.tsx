@@ -198,7 +198,8 @@ const VisitDurationSetup = () => {
       <MyTable
         data={paginatedData}
         columns={columns}
-        filters={
+        filters={<></>}
+        tableButtons={
           <Form fluid>
             <div className="bt-div">
               <div className="bt-right">

@@ -515,12 +515,6 @@ const EncounterList = () => {
             <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
             Advance
           </MyButton>
-        
-            <MyButton>
-            <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
-            Refill
-          </MyButton>
-
         </div>
       </Form>
     );
@@ -529,6 +523,10 @@ const EncounterList = () => {
     <Panel>
       <MyTable
         filters={filters()}
+        tableButtons={<><MyButton>
+            <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+            Refill
+          </MyButton></>}
         height={600}
         data={encounterListResponse?.object ?? []}
         columns={tableColumns}

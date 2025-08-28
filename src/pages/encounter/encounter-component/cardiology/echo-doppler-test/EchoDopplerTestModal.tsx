@@ -121,7 +121,7 @@ const EchoDopplerTestModal = ({
   record={record}
   setRecord={setRecord}
   usersList={usersList}
-  currentUserId={currentUser.id}
+  currentUserId={authSlice?.user?.id}
 />
       </div>
     </Form>
