@@ -6,20 +6,23 @@ import { type ApPatient } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import { useLocation } from 'react-router-dom';
 import ReactDOMServer from 'react-dom/server';
-import { DOMHelper, Panel } from 'rsuite';
-import type { RootState } from '@/store';
-import { useSelector } from 'react-redux';
+import { Col, DOMHelper, Panel, Row, Text } from 'rsuite';
 import ProfileHeader from './ProfileHeader';
 import ProfileSidebar from './ProfileSidebar';
 import ProfileTabs from './ProfileTabs';
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import PatientVisitHistory from './PatientVisitHistory';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import { usePatientListByRoleCandidateMutation, useSavePatientMutation } from '@/services/patientService';
+import {
+  usePatientListByRoleCandidateMutation,
+  useSavePatientMutation
+} from '@/services/patientService';
 import clsx from 'clsx';
 import { useLazyGetCandidatesByDepartmentKeyQuery } from '@/services/setupService';
 import PatientDuplicate from './patientsDuplicate';
-import MyButton from '@/components/MyButton/MyButton';
+import SectionContainer from '@/components/SectionsoContainer';
+import PatientVisitHistoryTable from './PatientVisitHistoryTable';
+import PatientAppointments from './PatientAppointments';
 
 const { getHeight } = DOMHelper;
 
@@ -27,8 +30,8 @@ const PatientProfile = () => {
   const authSlice = useAppSelector(state => state.auth);
 
   const dispatch = useAppDispatch();
-  const [localVisit, setLocalVisit] = useState({ ...newApEncounter, discharge: false });
-  const [windowHeight, setWindowHeight] = useState(getHeight(window));
+  const [localVisit] = useState({ ...newApEncounter, discharge: false });
+  const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [validationResult, setValidationResult] = useState({});
@@ -40,12 +43,10 @@ const PatientProfile = () => {
   const [refetchData, setRefetchData] = useState(false);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
-  const [patientList, setPatientList] = useState([])
-  const [trigger, { data: candidate, isLoading, isError, error }] = useLazyGetCandidatesByDepartmentKeyQuery();
-  const [patientListByRoleCandidate, { data, isLoading: isPatientsLoading, error: e }] = usePatientListByRoleCandidateMutation();
-  console.log("Candidate ", candidate?.object)
+  const [patientList, setPatientList] = useState([]);
+  const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
+  const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
   // Page header setup
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Patient Registration</h5>
@@ -56,13 +57,12 @@ const PatientProfile = () => {
   // Handle save patient
   const handleSave = async () => {
     try {
-
       const { data: candidateData } = await trigger(authSlice.user.departmentKey);
 
       if (localPatient.key == undefined) {
         const Response = await patientListByRoleCandidate({
           patient: localPatient,
-          role: candidateData?.object // بدل candidate?.object
+          role: candidateData?.object
         }).unwrap();
 
         if (Response.extraNumeric > 0) {
@@ -92,7 +92,6 @@ const PatientProfile = () => {
       console.log(error);
     }
   };
-
 
   // Handle clear patient data
   const handleClear = () => {
@@ -171,7 +170,6 @@ const PatientProfile = () => {
             expanded: expand
           })}
         >
-
           <ProfileHeader
             localPatient={localPatient}
             handleSave={handleSave}
@@ -182,16 +180,38 @@ const PatientProfile = () => {
             setRefetchAttachmentList={setRefetchAttachmentList}
           />
 
-          <ProfileTabs
-            localPatient={localPatient}
-            setLocalPatient={setLocalPatient}
-            validationResult={validationResult}
-            setRefetchAttachmentList={setRefetchAttachmentList}
-            refetchAttachmentList={refetchAttachmentList}
-
-          />
+          <div className="container-of-tabs-reg">
+            <ProfileTabs
+              localPatient={localPatient}
+              setLocalPatient={setLocalPatient}
+              validationResult={validationResult}
+              setRefetchAttachmentList={setRefetchAttachmentList}
+              refetchAttachmentList={refetchAttachmentList}
+            />
+          </div>
+          <br />
+          <br />
+          <Row className="btm-sections">
+            <Col md={12}>
+              <SectionContainer
+                title={<Text>Visit history</Text>}
+                content={
+                  <PatientVisitHistoryTable
+                    quickAppointmentModel={quickAppointmentModel}
+                    setQuickAppointmentModel={setQuickAppointmentModel}
+                    localPatient={localPatient}
+                  />
+                }
+              />
+            </Col>
+            <Col md={12}>
+              <SectionContainer
+                title={<Text>Appointments</Text>}
+                content={<PatientAppointments />}
+              />
+            </Col>
+          </Row>
         </Panel>
-
         <ProfileSidebar
           expand={expand}
           setExpand={setExpand}
@@ -201,7 +221,6 @@ const PatientProfile = () => {
           setRefetchData={setRefetchData}
         />
       </div>
-
       {quickAppointmentModel && (
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
@@ -210,7 +229,6 @@ const PatientProfile = () => {
           localVisit={localVisit}
         />
       )}
-
       {visitHistoryModel && (
         <PatientVisitHistory
           visitHistoryModel={visitHistoryModel}
@@ -220,16 +238,21 @@ const PatientProfile = () => {
           setQuickAppointmentModel={setQuickAppointmentModel}
         />
       )}
-      <PatientDuplicate open={openPatientsDuplicateModal} setOpen={setOpenPatientsDuplicateModal}
+      <PatientDuplicate
+        open={openPatientsDuplicateModal}
+        setOpen={setOpenPatientsDuplicateModal}
         list={patientList}
         setlocalPatient={setLocalPatient}
-        handleSave={() => savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
-          .unwrap()
-          .then(() => {
-            setRefetchData(true);
-            dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-            setOpenPatientsDuplicateModal(false);
-          })} />
+        handleSave={() =>
+          savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
+            .unwrap()
+            .then(() => {
+              setRefetchData(true);
+              dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+              setOpenPatientsDuplicateModal(false);
+            })
+        }
+      />
     </>
   );
 };
