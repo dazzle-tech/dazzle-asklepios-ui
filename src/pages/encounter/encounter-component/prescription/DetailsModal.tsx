@@ -7,18 +7,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
 import React, { useEffect, useState } from 'react';
-import {
-  Col,
-  Divider,
-  Dropdown,
-  Form,
-  Input,
-  InputGroup,
-  Radio,
-  RadioGroup,
-  Row,
-  Text
-} from 'rsuite';
+import { Col, Dropdown, Form, Input, InputGroup, Radio, RadioGroup, Row, Text } from 'rsuite';
 import ActiveIngrediantList from './ActiveIngredient';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -266,7 +255,7 @@ const DetailsModal = ({
       durationTypeLkey: null,
       administrationInstructions: null,
       instructionsTypeLkey: null,
-      substituteAllowed: false,
+      genericSubstitute: false,
       chronicMedication: false,
       refillIntervalUnitLkey: null,
       indicationUseLkey: null
@@ -398,214 +387,241 @@ const DetailsModal = ({
             >
               <Col>
                 <Row className="display-flex">
-                  <Col className="borderr border-flex">
-                    <div className="medication-form-rows min-hieght">
-                      {/* Medication Search */}
-                      <div className="search-wrapper">
-                        <InputGroup className="input-search-p">
-                          <Input
-                            placeholder={'Medication Name'}
-                            value={searchKeyword}
-                            onChange={handleSearch}
+                  <Col
+                    className="borderr"
+                    style={{
+                      border: '1px solid #ccc',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      marginRight: '8px',
+                      flex: 2
+                    }}
+                  >
+                    <div className="medication-form-row min-hieght">
+                      <div className="full-block">
+                        {/* Medication Search */}
+                        <div className="search-wrapper">
+                          <InputGroup inside style={{ width: '200px' }} className="input-search-p">
+                            <Input
+                              placeholder={'Medication Name'}
+                              value={searchKeyword}
+                              onChange={handleSearch}
+                            />
+                            <InputGroup.Button>
+                              <SearchIcon />
+                            </InputGroup.Button>
+                          </InputGroup>
+                          {searchKeyword && (
+                            <Dropdown.Menu className="dropdown-menuresult">
+                              {genericMedicationListResponse?.object?.map(Generic => (
+                                <Dropdown.Item
+                                  key={Generic.key}
+                                  eventKey={Generic.key}
+                                  onClick={() => handleItemClick(Generic)}
+                                >
+                                  <div className="dropdown-item-content">
+                                    <div className="dropdown-item-title">
+                                      {Generic.genericName}{' '}
+                                      {Generic.dosageFormLvalue?.lovDisplayVale &&
+                                        `(${Generic.dosageFormLvalue?.lovDisplayVale})`}
+                                    </div>
+                                    <div className="dropdown-item-sub">
+                                      {Generic.manufacturerLvalue?.lovDisplayVale}{' '}
+                                      {Generic.roaLvalue?.lovDisplayVale &&
+                                        `| ${Generic.roaLvalue?.lovDisplayVale}`}
+                                    </div>
+                                    <div className="dropdown-item-extra">
+                                      {Generic.activeIngredients}
+                                    </div>
+                                  </div>
+                                </Dropdown.Item>
+                              ))}
+                            </Dropdown.Menu>
+                          )}
+                        </div>
+
+                        {/* Substitute Button */}
+                        <div className="button-wrapper">
+                          <MyButton
+                            radius={'25px'}
+                            appearance="ghost"
+                            color="#808099"
+                            onClick={() => setOpenSubstitutesModel(true)}
+                            prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
                           />
-                          <InputGroup.Button>
-                            <SearchIcon />
-                          </InputGroup.Button>
-                        </InputGroup>
-                        {searchKeyword && (
-                          <Dropdown.Menu className="dropdown-menuresult">
-                            {genericMedicationListResponse?.object?.map(Generic => (
-                              <Dropdown.Item
-                                key={Generic.key}
-                                eventKey={Generic.key}
-                                onClick={() => handleItemClick(Generic)}
-                              >
-                                <div className="dropdown-item-content">
-                                  <div className="dropdown-item-title">
-                                    {Generic.genericName}{' '}
-                                    {Generic.dosageFormLvalue?.lovDisplayVale &&
-                                      `(${Generic.dosageFormLvalue?.lovDisplayVale})`}
-                                  </div>
-                                  <div className="dropdown-item-sub">
-                                    {Generic.manufacturerLvalue?.lovDisplayVale}{' '}
-                                    {Generic.roaLvalue?.lovDisplayVale &&
-                                      `| ${Generic.roaLvalue?.lovDisplayVale}`}
-                                  </div>
-                                  <div className="dropdown-item-extra">
-                                    {Generic.activeIngredients}
-                                  </div>
-                                </div>
-                              </Dropdown.Item>
+                        </div>
+                      </div>
+                      <div className="full-block">
+                        {/* Instruction Type Radio Group */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                          <RadioGroup
+                            value={selectedOption}
+                            inline
+                            name="radio-group"
+                            disabled={preKey != null ? false : true}
+                            onChange={value => {
+                              setSelectedOption(String(value));
+                              setPrescriptionMedications({
+                                ...prescriptionMedication,
+                                instructionsTypeLkey: String(value)
+                              });
+                            }}
+                          >
+                            {instructionTypeQueryResponse?.object?.map((instruction, index) => (
+                              <Radio key={index} value={instruction.key}>
+                                {instruction.lovDisplayVale}
+                              </Radio>
                             ))}
-                          </Dropdown.Menu>
-                        )}
+                          </RadioGroup>
+                        </div>
                       </div>
-                      {/* Substitute Button */}
-                      <div className="button-wrapper">
-                        <MyButton
-                          radius={'25px'}
-                          appearance="ghost"
-                          color="#808099"
-                          onClick={() => setOpenSubstitutesModel(true)}
-                          prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
-                        />
+                      <div className="full-block">
+                        {/* Instructions Component */}
+                        <Instructions
+                          selectedOption={selectedOption}
+                          setCustomeinst={setCustomeinst}
+                          customeinst={customeinst}
+                          selectedGeneric={selectedGeneric}
+                          setInst={setInst}
+                          prescriptionMedication={prescriptionMedication}
+                        />{' '}
                       </div>
+                      <div className="full-block">
+                        {/* Duration Fields */}
+                        <div className="inputs-inline">
+                          <MyInput
+                            disabled={preKey != null ? editDuration : true}
+                            width={120}
+                            fieldType="number"
+                            fieldLabel="Duration"
+                            fieldName={'duration'}
+                            record={prescriptionMedication}
+                            setRecord={setPrescriptionMedications}
+                          />
+                          <MyInput
+                            disabled={preKey != null ? editDuration : true}
+                            width={142}
+                            fieldType="select"
+                            fieldLabel="Duration Type"
+                            selectData={DurationTypeLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            fieldName={'durationTypeLkey'}
+                            record={prescriptionMedication}
+                            setRecord={setPrescriptionMedications}
+                            searchable={false}
+                          />
+                          <MyInput
+                            disabled={preKey != null ? false : true}
+                            width={120}
+                            fieldLabel="Chronic Medication"
+                            fieldType="checkbox"
+                            fieldName="chronicMedication"
+                            record={prescriptionMedication}
+                            setRecord={setPrescriptionMedications}
+                          />
+                        </div>
+                        <div className="full-block">
+                          <div className="inputs-inline">
+                            <MyInput
+                              disabled={preKey != null ? false : true}
+                              width={120}
+                              fieldType="number"
+                              fieldLabel="Maximum Dose"
+                              fieldName={'maximumDose'}
+                              record={prescriptionMedication}
+                              setRecord={setPrescriptionMedications}
+                            />
 
-                      {/* Instruction Type Radio Group */}
-                      <div className="radio-group">
-                        <RadioGroup
-                          value={selectedOption}
-                          inline
-                          name="radio-group"
-                          disabled={preKey != null ? false : true}
-                          onChange={value => {
-                            setSelectedOption(String(value));
-                            setPrescriptionMedications({
-                              ...prescriptionMedication,
-                              instructionsTypeLkey: String(value)
-                            });
-                          }}
-                        >
-                          {instructionTypeQueryResponse?.object?.map((instruction, index) => (
-                            <Radio key={index} value={instruction.key}>
-                              {instruction.lovDisplayVale}
-                            </Radio>
-                          ))}
-                        </RadioGroup>
-                      </div>
-                      {/* Instructions Component */}
-                      <Instructions
-                        selectedOption={selectedOption}
-                        setCustomeinst={setCustomeinst}
-                        customeinst={customeinst}
-                        selectedGeneric={selectedGeneric}
-                        setInst={setInst}
-                        prescriptionMedication={prescriptionMedication}
-                      />
-                      {/* Duration Fields */}
-                      <div className="inputs-inline">
-                        <MyInput
-                          disabled={preKey != null ? editDuration : true}
-                          width={120}
-                          fieldType="number"
-                          fieldLabel="Duration"
-                          fieldName={'duration'}
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                        />
-                        <MyInput
-                          disabled={preKey != null ? editDuration : true}
-                          width={142}
-                          fieldType="select"
-                          fieldLabel="Duration Type"
-                          selectData={DurationTypeLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName={'durationTypeLkey'}
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                          searchable={false}
-                        />
-                        <MyInput
-                          disabled={preKey != null ? false : true}
-                          width={120}
-                          fieldLabel="Chronic Medication"
-                          fieldType="checkbox"
-                          fieldName="chronicMedication"
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                        />
-                      </div>
-                      <div className="inputs-inline">
-                        <MyInput
-                          disabled={preKey != null ? false : true}
-                          width={120}
-                          fieldType="number"
-                          fieldLabel="Maximum Dose"
-                          fieldName={'maximumDose'}
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                        />
+                            <MyInput
+                              disabled={preKey != null ? false : true}
+                              width={140}
+                              fieldType="date"
+                              fieldLabel="Valid Until"
+                              fieldName={'validUtil'}
+                              record={prescriptionMedication}
+                              setRecord={setPrescriptionMedications}
+                            />
 
-                        <MyInput
-                          disabled={preKey != null ? false : true}
-                          width={140}
-                          fieldType="date"
-                          fieldLabel="Valid Until"
-                          fieldName={'validUtil'}
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                        />
-
-                        <MyInput
-                          disabled={preKey != null ? false : true}
-                          width={140}
-                          fieldLabel="Substitute Allowed"
-                          fieldType="checkbox"
-                          fieldName="substituteAllowed"
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                        />
+                            <MyInput
+                              disabled={preKey != null ? false : true}
+                              width={140}
+                              fieldLabel="Brand Substitute Allowed"
+                              fieldType="checkbox"
+                              fieldName="genericSubstitute"
+                              record={prescriptionMedication}
+                              setRecord={setPrescriptionMedications}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </Col>
 
-                  <Col className="borderr left-side-borderd">
-                    <div className="medication-form-flex">
-                      {/* Start Date */}
-                      <MyInput
-                        fieldType="datetime"
-                        fieldName="startDateTime"
-                        fieldLabel="Start Time"
-                        record={''}
-                        setRecord={setOrderMedication}
-                        width={190}
-                      />
+                  <Col
+                    className="borderr"
+                    style={{
+                      border: '1px solid #ccc',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      flex: 1
+                    }}
+                  >
+                    <div className="full-block">
+                      <div className="medication-form-flex">
+                        {/* Start Date */}
+                        <MyInput
+                          fieldType="datetime"
+                          fieldName="startDateTime"
+                          fieldLabel="Start Time"
+                          record={''}
+                          setRecord={setOrderMedication}
+                          width={180}
+                        />
 
-                      {/* End Date */}
-                      <MyInput
-                        fieldType="datetime"
-                        fieldName="endDateTime"
-                        fieldLabel="End Time"
-                        record={''}
-                        setRecord={setOrderMedication}
-                        width={190}
-                      />
+                        {/* End Date */}
+                        <MyInput
+                          fieldType="datetime"
+                          fieldName="endDateTime"
+                          fieldLabel="End Time"
+                          record={''}
+                          setRecord={setOrderMedication}
+                          width={180}
+                        />
 
-                      <MyInput
-                        width={190}
-                        fieldLabel="Therapy Type"
-                        fieldType="select"
-                        fieldName="therapyType"
-                        record={''}
-                        setRecord={setOrderMedication}
-                      />
+                        <MyInput
+                          width={120}
+                          fieldLabel="Therapy Type"
+                          fieldType="select"
+                          fieldName="therapyType"
+                          record={''}
+                          setRecord={setOrderMedication}
+                        />
 
-                      <MyInput
-                        width={190}
-                        fieldLabel="Reason for Prescription"
-                        fieldType="textarea"
-                        fieldName="reasonForPrescription"
-                        record={''}
-                        setRecord={setOrderMedication}
-                        height={35}
-                      />
+                        <MyInput
+                          width={120}
+                          fieldLabel="Reason for Prescription"
+                          fieldType="note"
+                          fieldName="reasonForPrescription"
+                          record={''}
+                          setRecord={setOrderMedication}
+                        />
 
-                      <MyInput
-                        width={190}
-                        fieldLabel="Approval Number"
-                        fieldType="textarea"
-                        fieldName="approvalNumber"
-                        record={''}
-                        setRecord={setOrderMedication}
-                        height={35}
-                      />
+                        <MyInput
+                          width={120}
+                          fieldLabel="Approval Number"
+                          fieldType="Text"
+                          fieldName="approvalNumber"
+                          record={''}
+                          setRecord={setOrderMedication}
+                        />
+                      </div>
                     </div>
                   </Col>
                 </Row>
 
                 {/* Indication Section */}
-                <Row className="borderr">
+                <Row className="rows-gap borderr">
                   <Row className="rows-gap">
                     <Text className="font-style">Indication</Text>
                   </Row>
@@ -683,8 +699,8 @@ const DetailsModal = ({
                         <Input
                           as="textarea"
                           rows={3}
-                          className="ico"
-                          placeholder="Indication Use"
+                          readOnly
+                          style={{ width: '100%', marginTop: '6px' }}
                         />
                       </Row>
                     </Col>
@@ -700,27 +716,61 @@ const DetailsModal = ({
                       />
                     </Col>
                   </Row>
+
+                  <Row className="rows-gap margin-top-1" gutter={16}>
+                    <Col md={6}>
+                      <MyInput
+                        disabled={preKey != null ? false : true}
+                        width="100%"
+                        fieldType="textarea"
+                        fieldLabel="Manual Indication"
+                        fieldName="indicationManually"
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                        height={60}
+                      />
+                    </Col>
+
+                    <Col md={6}>
+                      <MyInput
+                        disabled={preKey != null ? false : true}
+                        height={60}
+                        fieldType="textarea"
+                        width="100%"
+                        fieldLabel="Notes"
+                        fieldName={'notes'}
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                      />
+                    </Col>
+                  </Row>
                 </Row>
               </Col>
             </Row>
             {/* noti */}
-            <Row className="rows-gap flex-class">
+            <Row className="rows-gap" style={{ display: 'flex' }}>
               {/* Left Half - Notes and Buttons */}
-              <Col className="col-edit border-margin">
+              <Col
+                style={{
+                  border: '1px solid #ccc',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  marginRight: '8px'
+                }}
+              >
                 <MyInput
-                  disabled={preKey != null ? false : true}
-                  height={35}
+                  disabled={drugKey != null ? editing : true}
+                  height={60}
                   fieldType="textarea"
-                  width="100%"
-                  fieldLabel="Notes"
                   fieldName={'notes'}
-                  record={prescriptionMedication}
-                  setRecord={setPrescriptionMedications}
+                  record={''}
+                  setRecord={setOrderMedication}
+                  width="100%"
                 />
 
                 <MyInput
                   disabled={drugKey != null ? editing : true}
-                  height={35}
+                  height={60}
                   fieldType="textarea"
                   fieldName={'Extra Documentation'}
                   record={''}
@@ -740,14 +790,20 @@ const DetailsModal = ({
                 </Row>
               </Col>
               {/* Right Half - Refills and Parameters to monitor Section */}
-
-              <Col className="right-side">
+              <Col
+                style={{
+                  border: '1px solid #ccc',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  marginRight: '8px',
+                  flex: 1
+                }}
+              >
                 <Row gutter={16}>
-                  <Row className="right-side-label">
+                  <Row style={{ width: '100%' }}>
                     <MyLabel label="Parameters to monitor" />
                     <MyTagInput tags={tags} setTags={setTags} />
                   </Row>
-                  <Divider />
                   <Col md={8}>
                     <MyInput
                       disabled={preKey != null ? false : true}
@@ -792,7 +848,7 @@ const DetailsModal = ({
             </Row>
 
             {/* racall */}
-            <Row className="borderr">
+            <Row className="rows-gap borderr">
               <Row>
                 <Text className="margin-n font-style">Recall From Favorite</Text>
                 <div>
@@ -864,14 +920,17 @@ const DetailsModal = ({
                         title: 'Actions',
                         render: (rowData: any) => {
                           return (
-                            <div className="flex-gap-center">
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                               <MyButton size="xs" onClick={() => handleRecall(rowData)}>
                                 Recall
                               </MyButton>
                               <FontAwesomeIcon
                                 icon={faStar}
                                 onClick={() => addToFavorites(rowData)}
-                                className="pointerr"
+                                style={{
+                                  cursor: 'pointer',
+                                  color: '#ffc107'
+                                }}
                                 title="Remove from favorites"
                               />
                             </div>

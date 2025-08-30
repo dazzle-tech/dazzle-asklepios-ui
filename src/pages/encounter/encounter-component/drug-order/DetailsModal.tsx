@@ -32,6 +32,7 @@ const DetailsModal = ({
   setOpen,
   orderMedication,
   setOrderMedication,
+
   drugKey,
   editing,
   patient,
@@ -374,9 +375,9 @@ const DetailsModal = ({
     });
 
     setSelectedGeneric(genericMedication || null);
-    // setOpenFavoritesModal(false);
-    // setOpenDetailsModel(true);
-    // setOpenToAdd(true);
+    setOpenFavoritesModal(false);
+    setOpenDetailsModel(true);
+    setOpenToAdd(true);
   };
   const addToFavorites = rowData => {
     const alreadyExists = favoriteMedications.some(
@@ -481,132 +482,136 @@ const DetailsModal = ({
                     }}
                   >
                     <div className="medication-form-row">
-                      <div className="search-wrapper">
-                        <InputGroup inside style={{ width: '150px' }} className="input-search-p">
-                          <Input
-                            placeholder="Medic Name"
-                            value={searchKeyword}
-                            onChange={handleSearch}
+                      <div className="full-block">
+                        <div className="search-wrapper">
+                          <InputGroup inside style={{ width: '150px' }} className="input-search-p">
+                            <Input
+                              placeholder="Medic Name"
+                              value={searchKeyword}
+                              onChange={handleSearch}
+                            />
+                            <InputGroup.Button>
+                              <SearchIcon />
+                            </InputGroup.Button>
+                          </InputGroup>
+                          {searchKeyword && (
+                            <Dropdown.Menu className="dropdown-menuresult">
+                              {genericMedicationListResponse?.object?.map(Generic => (
+                                <Dropdown.Item
+                                  key={Generic.key}
+                                  eventKey={Generic.key}
+                                  onClick={() => handleItemClick(Generic)}
+                                >
+                                  <div className="dropdown-item-content">
+                                    <div className="dropdown-item-title">
+                                      {Generic.genericName}{' '}
+                                      {Generic.dosageFormLvalue?.lovDisplayVale &&
+                                        `(${Generic.dosageFormLvalue?.lovDisplayVale})`}
+                                    </div>
+                                    <div className="dropdown-item-sub">
+                                      {Generic.manufacturerLvalue?.lovDisplayVale}{' '}
+                                      {Generic.roaLvalue?.lovDisplayVale &&
+                                        `| ${Generic.roaLvalue?.lovDisplayVale}`}
+                                    </div>
+                                    <div className="dropdown-item-extra">
+                                      {Generic.activeIngredients}
+                                    </div>
+                                  </div>
+                                </Dropdown.Item>
+                              ))}
+                            </Dropdown.Menu>
+                          )}
+                        </div>
+
+                        <div className="button-wrapper">
+                          <MyButton
+                            radius={'25px'}
+                            appearance="ghost"
+                            color="#808099"
+                            onClick={() => setOpenSubstitutesModel(true)}
+                            prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
                           />
-                          <InputGroup.Button>
-                            <SearchIcon />
-                          </InputGroup.Button>
-                        </InputGroup>
-                        {searchKeyword && (
-                          <Dropdown.Menu className="dropdown-menuresult">
-                            {genericMedicationListResponse?.object?.map(Generic => (
-                              <Dropdown.Item
-                                key={Generic.key}
-                                eventKey={Generic.key}
-                                onClick={() => handleItemClick(Generic)}
-                              >
-                                <div className="dropdown-item-content">
-                                  <div className="dropdown-item-title">
-                                    {Generic.genericName}{' '}
-                                    {Generic.dosageFormLvalue?.lovDisplayVale &&
-                                      `(${Generic.dosageFormLvalue?.lovDisplayVale})`}
-                                  </div>
-                                  <div className="dropdown-item-sub">
-                                    {Generic.manufacturerLvalue?.lovDisplayVale}{' '}
-                                    {Generic.roaLvalue?.lovDisplayVale &&
-                                      `| ${Generic.roaLvalue?.lovDisplayVale}`}
-                                  </div>
-                                  <div className="dropdown-item-extra">
-                                    {Generic.activeIngredients}
-                                  </div>
-                                </div>
-                              </Dropdown.Item>
-                            ))}
-                          </Dropdown.Menu>
-                        )}
-                      </div>
+                        </div>
 
-                      <div className="button-wrapper">
-                        <MyButton
-                          radius={'25px'}
-                          appearance="ghost"
-                          color="#808099"
-                          onClick={() => setOpenSubstitutesModel(true)}
-                          prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
+                        {/* Order Type */}
+                        <MyInput
+                          fieldType="select"
+                          fieldLabel="Drug Order Type"
+                          selectData={orderTypeLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          fieldName={'drugOrderTypeLkey'}
+                          record={orderMedication}
+                          setRecord={setOrderMedication}
+                          searchable={false}
+                          width={100}
                         />
+
+                        <MyInput
+                          width={100}
+                          fieldType="select"
+                          fieldLabel="ROA"
+                          selectData={filteredList ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          fieldName="roaLkey"
+                          record={orderMedication}
+                          setRecord={setOrderMedication}
+                        />
+                        {/* Titration Button */}
+                        <div className="button-wrapper">
+                          <MyButton>Titration Plan</MyButton>
+                        </div>
                       </div>
+                      {/*  */}
+                      <div className="full-block">
+                        <MyInput
+                          width={95}
+                          fieldType="number"
+                          fieldLabel="Dose"
+                          fieldName="dose"
+                          record={orderMedication}
+                          setRecord={setOrderMedication}
+                        />
 
-                      {/* Order Type */}
-                      <MyInput
-                        fieldType="select"
-                        fieldLabel="Drug Order Type"
-                        selectData={orderTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName={'drugOrderTypeLkey'}
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                        searchable={false}
-                        width={100}
-                      />
+                        <MyInput
+                          width={95}
+                          fieldType="select"
+                          fieldLabel="Unit"
+                          selectData={unitLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          fieldName="doseUnitLkey"
+                          record={orderMedication}
+                          setRecord={setOrderMedication}
+                        />
 
-                      <MyInput
-                        width={100}
-                        fieldType="select"
-                        fieldLabel="ROA"
-                        selectData={filteredList ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="roaLkey"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                      />
-                      {/* Titration Button */}
-                      <div className="button-wrapper">
-                        <MyButton>Titration Plan</MyButton>
-                      </div>
+                        <MyInput
+                          width={95}
+                          disabled={drugKey != null ? editing : true}
+                          fieldLabel="Frequency"
+                          fieldType="number"
+                          fieldName="frequency"
+                          record={orderMedication}
+                          setRecord={setOrderMedication}
+                        />
 
-                      <MyInput
-                        width={95}
-                        fieldType="number"
-                        fieldLabel="Dose"
-                        fieldName="dose"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                      />
+                        <MyInput
+                          width={95}
+                          fieldType="select"
+                          fieldLabel="Unit"
+                          selectData={unitsLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          fieldName="frequencyUnitLkey"
+                          record={orderMedication}
+                          setRecord={setOrderMedication}
+                        />
 
-                      <MyInput
-                        width={95}
-                        fieldType="select"
-                        fieldLabel="Unit"
-                        selectData={unitLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="doseUnitLkey"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                      />
-
-                      <MyInput
-                        width={95}
-                        disabled={drugKey != null ? editing : true}
-                        fieldLabel="Frequency"
-                        fieldType="number"
-                        fieldName="frequency"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                      />
-
-                      <MyInput
-                        width={95}
-                        fieldType="select"
-                        fieldLabel="Unit"
-                        selectData={unitsLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="frequencyUnitLkey"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                      />
-
-                      {/* Titration Button */}
-                      <div className="button-wrapper-p">
-                        <MyButton>Generate Instructions</MyButton>
+                        {/* Titration Button */}
+                        <div className="button-wrapper-p">
+                          <MyButton>Generate Instructions</MyButton>
+                        </div>
                       </div>
                       <Col>
                         <Col style={{ marginRight: '12px' }}>
@@ -796,6 +801,7 @@ const DetailsModal = ({
                   <Row className="rows-gap">
                     {/*  */}
                     <Col md={6}>
+                      {' '}
                       <Input
                         as="textarea"
                         disabled={true}
@@ -806,6 +812,7 @@ const DetailsModal = ({
                     </Col>
                     {/*  */}
                     <Col md={6}>
+                      {' '}
                       <Input
                         as="textarea"
                         disabled={true}
@@ -1129,20 +1136,20 @@ const DetailsModal = ({
             </Row>
           </Form>
         }
-      />
+      ></AdvancedModal>
       <Substitues
         open={openSubstitutesModel}
         setOpen={setOpenSubstitutesModel}
         selectedGeneric={selectedGeneric}
         setSelectedGeneric={setSelectedGeneric}
-      />
+      ></Substitues>
       <MyModal
         open={openOrderModel}
         setOpen={setOpenOrderModel}
         size={'full'}
         title="Add Order"
         content={<DiagnosticsOrder edit={edit} patient={patient} encounter={encounter} />}
-      />
+      ></MyModal>
     </>
   );
 };
