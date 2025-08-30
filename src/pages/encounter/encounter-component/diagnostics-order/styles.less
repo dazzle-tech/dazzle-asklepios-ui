@@ -1,82 +1,195 @@
 .top-container {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    padding: 10px;
-    gap: 10px;
-  
-  }
-  
-  .form-search-container {
-    display: flex;
-    flex-direction: column;
-   gap: 5px;
-  }
-  
-  .input-search{
-    width: 250px !important;
-    height: 35px !important;
-    direction: ltr;
-  }
-  
-  .dropdown-menuresult {
-   
-      position: absolute;
-      z-index: 1000;
-      max-height: 200px;
-      overflow-y: auto;
-      width: 100%;
-      top: 100%;// Ensure it appears directly below the input
-      left: 0;
-      background: white; 
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  }
-  
-  .checkbox-container {
-    margin-top: 10px;
-  }
-  
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  padding: 10px;
+  gap: 10px;
+}
 
-  
-  .form-inline-container {
-    display: flex;
-    gap: 10px;
-    padding-left: 10px;
-    margin-left: 10px;
-  }
+.form-search-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 
-  .buttons-sect {
-   
-    display: flex;
-    gap: 10px;
-   margin-left: auto;
-   align-items: end;
-   
+.input-search {
+  width: 250px !important;
+  height: 35px !important;
+  direction: ltr;
 }
-.div-parent{
-  display:flex !important;
-  gap:17px !important;
+
+.dropdown-menuresult {
+  position: absolute;
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
-.prescripton-word-style{
-    font-family:"Inter Medium";
-    font-size: 12px;
+
+.checkbox-container {
+  margin-top: 10px;
 }
-.prescripton-number-style{
- font-family:"Inter Medium" ;
- font-size: 16px;
+
+.form-inline-container {
+  display: flex;
+  gap: 10px;
+  padding-left: 10px;
+  margin-left: 10px;
 }
-.icon-style{
-    background-color:#E8E8E8;
-    padding-top:11px;
-    padding-left:12px;
-    padding-right:12px;
-    padding-bottom:10px;
-    border-radius:4px;
+
+.buttons-sect {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  align-items: end;
 }
-  .disabled-panel {
-    pointer-events: none;
-    opacity: 0.6;
-  }
-  
+
+.div-parent {
+  display: flex !important;
+  gap: 17px !important;
+}
+
+.prescripton-word-style {
+  font-family: 'Inter Medium';
+  font-size: 12px;
+}
+
+.prescripton-number-style {
+  font-family: 'Inter Medium';
+  font-size: 16px;
+}
+
+.icon-style {
+  background-color: #e8e8e8;
+  padding-top: 11px;
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-bottom: 10px;
+  border-radius: 4px;
+}
+
+.disabled-panel {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* New classes for converted inline styles */
+.main-container {
+  margin-left: 10px;
+  padding: 5px;
+}
+
+.enhanced-header {
+  margin-bottom: 20px;
+}
+
+.header-first-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 15px;
+}
+
+.select-picker-orders {
+  width: 250px;
+  margin-top: 8px;
+}
+
+.buttons-group {
+  display: flex;
+  gap: 8px;
+}
+
+.header-second-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.header-third-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.date-table-style {
+  /* Add any specific styling for date display */
+}
+
+.icons-styles {
+  cursor: pointer;
+  /* Add any specific icon styling */
+}
+
+.icons-styless {
+  cursor: pointer;
+  /* Add any specific icon styling for favorites */
+}
+
+.font-awsy {
+  color: #ffc107; /* Yellow color for favorited items */
+}
+
+.font-aws {
+  color: var(--primary-gray); /* Default color */
+}
+
+.details-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-row-margins {
+  margin: 5px;
+}
+
+.panel-style {
+  /* Add any specific panel styling */
+}
+
+.selected-row {
+  background-color: var(--selected-row-bg, #e6f3ff);
+}
+
+.modal-content-padding {
+  padding: 20px;
+}
+
+.favorites-modal-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.star-favorite-icon {
+  cursor: pointer;
+  color: #ffc107;
+}
+
+.attachment-actions {
+  /* For HStack spacing replacement */
+}
+
+.attachment-spacing {
+  /* For HStack spacing replacement */
+}
+
+.sample-spacing {
+  /* For HStack spacing replacement */
+}
+
+.test-card-spacing {
+  /* For HStack spacing replacement */
+}

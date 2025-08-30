@@ -111,10 +111,7 @@ const DiagnosticsOrder = props => {
   const [drugKey, setDrugKey] = useState(null);
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openSampleModal, setOpenSampleModal] = useState(false);
-  const [catalogOptions] = useState([
-    { key: 'cat1', lovDisplayVale: 'Catalog 1' },
-    { key: 'cat2', lovDisplayVale: 'Catalog 2' }
-  ]);
+
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
   const [orderMedication, setOrderMedication] = useState<any>({
@@ -218,12 +215,6 @@ const DiagnosticsOrder = props => {
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
     'MED_ORDER_ADMIN_NSTRUCTIONS'
   );
-
-  const getCategoryOptions = () => {
-    if (orders.type === 'Laboratory') return labCategoriesLovResponse?.object ?? [];
-    if (orders.type === 'Radiology') return radCategoriesLovResponse?.object ?? [];
-    return [];
-  };
 
   const isSelected = rowData => {
     if (rowData && orderTest && rowData.key === orderTest.key) {
@@ -887,23 +878,14 @@ const DiagnosticsOrder = props => {
 
   return (
     <>
-      <div style={{ marginLeft: '10px', padding: '5px' }}>
+      <div className="main-container">
         {/* Enhanced Header with New Fields */}
-        <div className="enhanced-header" style={{ marginBottom: '20px' }}>
+        <div className="enhanced-header">
           {/* First Row - Existing Order Selector and Basic Controls */}
-          <div
-            className="top-container"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '16px',
-              marginBottom: '15px'
-            }}
-          >
+          <div className="header-first-row">
             {/* Select */}
             <SelectPicker
-              style={{ width: 250, marginTop: '8px' }}
+              className="select-picker-orders"
               data={filteredOrders ?? []}
               labelKey="orderId"
               valueKey="key"
@@ -929,7 +911,7 @@ const DiagnosticsOrder = props => {
             </div>
 
             {/* Buttons */}
-            <div className="buttons-sect" style={{ display: 'flex', gap: '8px' }}>
+            <div className="buttons-group">
               <MyButton
                 loading={isFetching}
                 onClick={handleSaveOrdersAndDraft}
@@ -952,15 +934,7 @@ const DiagnosticsOrder = props => {
           </div>
 
           {/* Second Row - New Header Fields */}
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '15px',
-              alignItems: 'center',
-              marginBottom: '15px'
-            }}
-          >
+          <div className="header-second-row">
             {/* Test Name */}
             <Form>
               <MyInput
@@ -1063,15 +1037,7 @@ const DiagnosticsOrder = props => {
           </div>
 
           {/* Third Row - Action Buttons */}
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '10px',
-              alignItems: 'center',
-              marginBottom: '15px'
-            }}
-          >
+          <div className="header-third-row">
             {/* Request New Test Setup */}
             <MyButton onClick={handleRequestNewTestSetup} appearance="ghost">
               <Translate>Request New TestSetup</Translate>
@@ -1086,17 +1052,6 @@ const DiagnosticsOrder = props => {
             >
               <Translate>Sign & Submit</Translate>
             </MyButton>
-            {/* Pre-test Assessment */}
-
-            {/* <FontAwesomeIcon icon={faListCheck} /> */}
-
-            {/* Collect Sample */}
-
-            {/* <FontAwesomeIcon icon={faVial} /> */}
-
-            {/* Test Card */}
-
-            {/* <FontAwesomeIcon icon={faClipboardCheck} /> */}
           </div>
         </div>
 
@@ -1129,7 +1084,7 @@ const DiagnosticsOrder = props => {
           </div>
         </Row>
       </div>
-      <Row style={{ margin: '5px' }}>
+      <Row className="table-row-margins">
         <MyTable
           columns={tableColumns}
           sortColumn={listOrdersRequest.sortBy}
@@ -1212,7 +1167,7 @@ const DiagnosticsOrder = props => {
         title="Recall Favorite Orders"
         size="60vw"
         content={
-          <div style={{ padding: '20px' }}>
+          <div className="modal-content-padding">
             <p>Select favorite diagnostic orders to recall...</p>
             {/* TODO: Add favorite orders selection component similar to medication */}
           </div>
@@ -1226,7 +1181,7 @@ const DiagnosticsOrder = props => {
         title="Pre-test Assessment"
         size="70vw"
         content={
-          <div style={{ padding: '20px' }}>
+          <div className="modal-content-padding">
             <p>Pre-test assessment checklist and requirements...</p>
             {/* TODO: Add pre-test assessment form */}
           </div>
@@ -1240,7 +1195,7 @@ const DiagnosticsOrder = props => {
         title="Laboratory Sample Collection"
         size="60vw"
         content={
-          <div style={{ padding: '20px' }}>
+          <div className="modal-content-padding">
             <p>Sample collection interface and tracking...</p>
             {/* TODO: Add sample collection interface */}
           </div>
@@ -1254,7 +1209,7 @@ const DiagnosticsOrder = props => {
         title="Test Card"
         size="80vw"
         content={
-          <div style={{ padding: '20px' }}>
+          <div className="modal-content-padding">
             <p>Test card information and details...</p>
             {/* TODO: Add test card component */}
           </div>
@@ -1332,17 +1287,14 @@ const DiagnosticsOrder = props => {
                   title: 'Actions',
                   render: (rowData: any) => {
                     return (
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div className="favorites-modal-actions">
                         <MyButton size="xs" onClick={() => handleRecall(rowData)}>
                           Recall
                         </MyButton>
                         <FontAwesomeIcon
                           icon={faStar}
                           onClick={() => addToFavorites(rowData)}
-                          style={{
-                            cursor: 'pointer',
-                            color: '#ffc107'
-                          }}
+                          className="star-favorite-icon"
                           title="Remove from favorites"
                         />
                       </div>

@@ -52,56 +52,56 @@ const Instructions = ({
   return (
     <>
       {selectedOption === '3010606785535008' && (
-        <Form fluid layout="inline" className="fill-width margin-left-3">
-          <Row>
+        <Form fluid layout="inline">
+          <Row gutter={16}>
             <Col md={6}>
-                <MyInput
-                  width={120}
-                  fieldType="number"
-                  fieldName="dose"
-                  fieldLabel="Dose"
-                  record={customeinst}
-                  setRecord={setCustomeinst}
-                />
+              <MyInput
+                width={120}
+                fieldType="number"
+                fieldName="dose"
+                fieldLabel="Dose"
+                record={customeinst}
+                setRecord={setCustomeinst}
+              />
             </Col>
             <Col md={6}>
-                <MyInput
-                  width={120}
-                  fieldType="select"
-                  fieldLabel="Unit"
-                  selectData={unitLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="unit"
-                  record={customeinst}
-                  setRecord={setCustomeinst}
-                />
+              <MyInput
+                width={120}
+                fieldType="select"
+                fieldLabel="Unit"
+                selectData={unitLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName="unit"
+                record={customeinst}
+                setRecord={setCustomeinst}
+              />
             </Col>
             <Col md={6}>
-                <MyInput
-                  width={120}
-                  fieldType="select"
-                  fieldLabel="Frequency"
-                  selectData={FrequencyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="frequency"
-                  record={customeinst}
-                  setRecord={setCustomeinst}
-                />
+              <MyInput
+                width={120}
+                fieldType="select"
+                fieldLabel="Frequency"
+                selectData={FrequencyLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName="frequency"
+                record={customeinst}
+                setRecord={setCustomeinst}
+              />
             </Col>
             <Col md={6}>
-                <MyInput
-                  width={120}
-                  fieldType="select"
-                  fieldLabel="ROA"
-                  selectData={filteredList ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="roa"
-                  record={customeinst}
-                  setRecord={setCustomeinst}
-                />
+              <MyInput
+                width={120}
+                fieldType="select"
+                fieldLabel="ROA"
+                selectData={filteredList ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName="roa"
+                record={customeinst}
+                setRecord={setCustomeinst}
+              />
             </Col>
           </Row>
         </Form>
