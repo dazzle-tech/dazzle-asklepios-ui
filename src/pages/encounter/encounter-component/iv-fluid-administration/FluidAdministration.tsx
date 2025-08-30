@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Whisper, Tooltip } from 'rsuite';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
