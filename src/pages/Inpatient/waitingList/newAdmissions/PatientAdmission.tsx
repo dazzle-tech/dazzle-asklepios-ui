@@ -503,7 +503,6 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
     </Form>
   );
   return (
-    <>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -516,7 +515,6 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
         leftWidth="19%"
         rightWidth="81%"
       />
-    </>
   );
 };
 export default PatientAdmission;
