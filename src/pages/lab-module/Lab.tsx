@@ -1,30 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import {
-  useGetDiagnosticsTestLaboratoryListQuery,
-} from '@/services/setupService';
-
+import { useGetDiagnosticsTestLaboratoryListQuery } from '@/services/setupService';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-
-import {
-  DatePicker,
-  Row,
-  Table
-} from 'rsuite';
+import { DatePicker, Row, Table } from 'rsuite';
 import './styles.less';
-
-import {
-  useGetOrderTestSamplesByTestIdQuery
-} from '@/services/labService';
+import { useGetOrderTestSamplesByTestIdQuery } from '@/services/labService';
 import { addFilterToListRequest, getNumericTimestamp } from '@/utils';
-
-
-import {
-  useSaveDiagnosticOrderTestMutation
-} from '@/services/encounterService';
+import { useSaveDiagnosticOrderTestMutation } from '@/services/encounterService';
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
@@ -35,14 +19,9 @@ import {
 } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds } from '@/utils';
-import {
-  Col
-} from 'rsuite';
+import { Col } from 'rsuite';
 import PatientSide from './PatienSide';
 import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
-
-
 import MyStepper from '@/components/MyStepper';
 import Orders from './Orders';
 import Result from './Result';
@@ -52,41 +31,40 @@ const Lab = () => {
   const uiSlice = useAppSelector(state => state.auth);
   const ResultRef = useRef(null);
   const TestRef = useRef(null);
+  const { Column, HeaderCell, Cell } = Table;
   const refetchTest = () => {
     TestRef.current?.refetchTest();
   };
   const refetchResult = () => {
     ResultRef.current?.resultFetch();
   };
-  useEffect(() => {
-
-  }, [refetchResult]);
+  useEffect(() => {}, [refetchResult]);
   const [localUser, setLocalUser] = useState(uiSlice?.user);
-  const [currentStep, setCurrentStep] = useState("6055029972709625");
-  const [encounter, setEncounter] = useState({ ...newApEncounter,discharge:false });
+  const [currentStep, setCurrentStep] = useState('6055029972709625');
+  const [encounter, setEncounter] = useState({ ...newApEncounter, discharge: false });
   const [patient, setPatient] = useState({ ...newApPatient });
-  const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders })
+  const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-  const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult, resultLkey: '' })
+  const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult, resultLkey: '' });
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
-    pageSize:1000,
+    pageSize: 1000,
     ...initialListRequest
-
   });
   const [listResultResponse, setListResultResponse] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
-        fieldName: "order_test_key",
-        operator: "match",
-        value: test?.key || undefined,
+        fieldName: 'order_test_key',
+        operator: 'match',
+        value: test?.key || undefined
       }
-
-
-    ],
+    ]
   });
 
-  const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
+  const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(
+    test?.key || undefined,
+    { skip: test.key == null }
+  );
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Clinical Laboratory</h5>
@@ -96,58 +74,46 @@ const Lab = () => {
   dispatch(setPageCode('Lab'));
   dispatch(setDivContent(divContentHTML));
 
-
-
   const [dateFilter, setDateFilter] = useState({
-    fromDate: new Date(),//new Date(),
+    fromDate: new Date(), //new Date(),
     toDate: new Date()
   });
 
   const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
     ...initialListRequest
-
   });
-
 
   const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
 
-
   useEffect(() => {
     handleManualSearch();
   }, []);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-useEffect(() => {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
-    
     };
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
 
-   
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
   useEffect(() => {
-    setResult({ ...newApDiagnosticOrderTestsResult })
+    setResult({ ...newApDiagnosticOrderTestsResult });
     const updatedFilters = [
       {
-        fieldName: "order_test_key",
-        operator: "match",
-        value: test?.key || undefined,
+        fieldName: 'order_test_key',
+        operator: 'match',
+        value: test?.key || undefined
       }
-
-
     ];
-    setListResultResponse((prevRequest) => ({
+    setListResultResponse(prevRequest => ({
       ...prevRequest,
-      filters: updatedFilters,
+      filters: updatedFilters
     }));
-
-
-
   }, [test]);
   useEffect(() => {
     setPatient(order.patient);
@@ -157,12 +123,11 @@ useEffect(() => {
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
 
   useEffect(() => {
-
     if (dateFilter.fromDate && dateFilter.toDate) {
       const formattedFromDate = getNumericTimestamp(dateFilter.fromDate, true);
 
@@ -192,21 +157,17 @@ useEffect(() => {
   }, [dateFilter]);
 
   useEffect(() => {
-    setResult({ ...newApDiagnosticOrderTestsResult })
-    const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
+    setResult({ ...newApDiagnosticOrderTestsResult });
+    const cat = laboratoryList?.object?.find(item => item.testKey === test.testKey);
     setLabDetails(cat);
     setCurrentStep(test.processingStatusLkey);
-
   }, [test]);
-
 
   useEffect(() => {
     handleManualSearch();
   }, []);
 
-
   const handleManualSearch = () => {
-
     if (dateFilter.fromDate && dateFilter.toDate) {
       const formattedFromDate = getNumericTimestamp(dateFilter.fromDate, true);
 
@@ -234,67 +195,103 @@ useEffect(() => {
       setListOrdersResponse({ ...listOrdersResponse, filters: [] });
     }
   };
-  ;
-
   const stepsData = [
-    { key: "6055207372976955", value: "Sample Collected", description: " "  ,isError:false },
-    { key: "6055074111734636", value: "Accepted", description: formatDateWithoutSeconds(test.acceptedAt) ,isError:false},
-    { key: "6055192099058457", value: "Rejected", description: formatDateWithoutSeconds(test.rejectedAt ) ,isError:true },
-    { key: "265123250697000", value: "Result Ready", description:formatDateWithoutSeconds(test.readyAt )  ,isError:false},
-    { key: "265089168359400", value: "Result Approved", description:formatDateWithoutSeconds(test.approvedAt)  },
+    { key: '6055207372976955', value: 'Sample Collected', description: ' ', isError: false },
+    {
+      key: '6055074111734636',
+      value: 'Accepted',
+      description: formatDateWithoutSeconds(test.acceptedAt),
+      isError: false
+    },
+    {
+      key: '6055192099058457',
+      value: 'Rejected',
+      description: formatDateWithoutSeconds(test.rejectedAt),
+      isError: true
+    },
+    {
+      key: '265123250697000',
+      value: 'Result Ready',
+      description: formatDateWithoutSeconds(test.readyAt),
+      isError: false
+    },
+    {
+      key: '265089168359400',
+      value: 'Result Approved',
+      description: formatDateWithoutSeconds(test.approvedAt)
+    }
   ];
 
   const filteredStepsData = stepsData.filter(step =>
-    currentStep == "6055192099058457" ? step.value !== "Accepted" : step.value !== "Rejected"
+    currentStep == '6055192099058457' ? step.value !== 'Accepted' : step.value !== 'Rejected'
   );
 
   const activeStep = filteredStepsData.findIndex(step => step.key === currentStep);
-  
-  return (<>
 
-    <div className='container'>
-      <div className='left-box' >
-        <Row>
-          <Col xs={14}>
-            <Orders order={order} setOrder={setOrder} listOrdersResponse={listOrdersResponse} setListOrdersResponse={setListOrdersResponse} />
-          </Col>
-          <Col xs={10}>
-            <Row>
-              <DatePicker
-
-                oneTap
-                placeholder="From Date"
-                value={dateFilter.fromDate}
-                onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
-                style={{ width: '230px', marginRight: '5px', fontFamily: 'Inter', fontSize: '14px', height: '30px' }}
+  return (
+    <>
+      <div className="container">
+        <div className="left-box">
+          <Row>
+            <Col xs={14}>
+              <Orders
+                order={order}
+                setOrder={setOrder}
+                listOrdersResponse={listOrdersResponse}
+                setListOrdersResponse={setListOrdersResponse}
               />
-              <DatePicker
-                oneTap
-                placeholder="To Date"
-                value={dateFilter.toDate}
-                onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
-                style={{ width: '230px', marginRight: '5px', fontFamily: 'Inter', fontSize: '14px', height: '30px' }}
-              />
-
-            </Row>
-
-
-            {test.key &&
+            </Col>
+            <Col xs={10}>
               <Row>
-                <Col md={24}>
-                 <MyStepper stepsList={filteredStepsData} activeStep={activeStep}/>
-                </Col>
-               
-              </Row>}
-            {test.key && <Row>Number of Samples Collected:{samplesList?.object?.length}</Row>}
-          </Col>
-        </Row>
-        <Row>
-          {order.key &&
-            <Tests order={order} setTest={setTest} test={test} samplesList={samplesList} resultFetch={refetchResult} fecthSample={fecthSample} />}
-        </Row>
-        <Row>
-          {test.key &&
+                <DatePicker
+                  oneTap
+                  placeholder="From Date"
+                  value={dateFilter.fromDate}
+                  onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
+                  style={{
+                    width: '230px',
+                    marginRight: '5px',
+                    fontFamily: 'Inter',
+                    fontSize: '14px',
+                    height: '30px'
+                  }}
+                />
+                <DatePicker
+                  oneTap
+                  placeholder="To Date"
+                  value={dateFilter.toDate}
+                  onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
+                  style={{
+                    width: '230px',
+                    marginRight: '5px',
+                    fontFamily: 'Inter',
+                    fontSize: '14px',
+                    height: '30px'
+                  }}
+                />
+              </Row>
+
+              {test.key && (
+                <Row>
+                  <Col md={24}>
+                    <MyStepper stepsList={filteredStepsData} activeStep={activeStep} />
+                  </Col>
+                </Row>
+              )}
+              {test.key && <Row>Number of Samples Collected:{samplesList?.object?.length}</Row>}
+            </Col>
+          </Row>
+          <Row>
+            <Tests
+              order={order}
+              setTest={setTest}
+              test={test}
+              samplesList={samplesList}
+              resultFetch={refetchResult}
+              fecthSample={fecthSample}
+            />
+          </Row>
+          <Row>
             <Result
               result={result}
               setResult={setResult}
@@ -307,18 +304,16 @@ useEffect(() => {
               fetchTest={refetchTest}
               fecthSample={fecthSample}
               listResultResponse={listResultResponse}
-              setListResultResponse={setListResultResponse} />
-          }
-        </Row>
+              setListResultResponse={setListResultResponse}
+            />
+          </Row>
+        </div>
 
+        <div className="right-box">
+          <PatientSide patient={patient} encounter={encounter} />
+        </div>
       </div>
-
-      <div className='right-box' >
-        <PatientSide patient={patient} encounter={encounter} />
-      </div>
-    </div>
-
-
-  </>)
-}
+    </>
+  );
+};
 export default Lab;
