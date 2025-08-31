@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import '../styles.less';
 import { useAppDispatch } from '@/hooks';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import MyModal from '@/components/MyModal/MyModal';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
-import { faBed } from '@fortawesome/free-solid-svg-icons';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import { newApAdmitOutpatientInpatient } from '@/types/model-types-constructor';
 import { useGetPractitionersQuery } from '@/services/setupService';
@@ -17,10 +14,22 @@ import { ApAdmitOutpatientInpatient } from '@/types/model-types';
 import { useGetBedListQuery } from '@/services/setupService';
 import { useNavigate } from 'react-router-dom';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
+import AdvancedModal from '@/components/AdvancedModal';
+import { newApPatient } from '@/types/model-types-constructor';
+import { ApPatient } from '@/types/model-types';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newApEncounter } from '@/types/model-types-constructor';
+import MyButton from '@/components/MyButton/MyButton';
+import './style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
   const [admitToInpatient, setAdmitToInpatient] = useState<ApAdmitOutpatientInpatient>({
     ...newApAdmitOutpatientInpatient
   });
+  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
+  const [encounter, setEncounter] = useState<any>({ ...newApEncounter });
+  const [showPreviousAdmission, setShowPreviousAdmission] = useState(false);
+
   const inpatientDepartmentListResponse = useGetResourceTypeQuery('4217389643435490');
   const navigate = useNavigate();
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -59,6 +68,9 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
     skip: !admitToInpatient?.roomKey
   });
 
+  // lov query response
+  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+
   const [physicanListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -80,7 +92,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
   // handle save To admit outpatient to inpatient function
   const handleSave = async () => {
     try {
-       await saveAdmitToInpatient({
+      await saveAdmitToInpatient({
         ...admitToInpatient
       }).unwrap();
       navigate('/inpatient-encounters-list');
@@ -133,12 +145,12 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
     });
   }, [admitToInpatient]);
 
-  // modal content
-  const modalContent = (
+  // right modal content
+  const rightModalContent = (
     <Form fluid>
-      <Row>
+      <div className="fields-containerss margin-top-10">
         <Col md={12}>
-          <div style={{ display: 'flex', gap: '5px', alignItems: 'end' }}>
+          <div className="dis-flex">
             <Icd10Search
               object={admitToInpatient}
               setOpject={setAdmitToInpatient}
@@ -147,7 +159,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             />
           </div>
         </Col>
-        <Col md={6}>
+        <Col md={6} className="margin-n">
           <MyInput
             require
             fieldLabel="Admission Department"
@@ -161,6 +173,9 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             width="100%"
           />
         </Col>
+      </div>
+
+      <div className="fields-containerss margin-top-9">
         <Col md={6}>
           <MyInput
             require
@@ -176,9 +191,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             searchable={false}
           />
         </Col>
-      </Row>
-      <Row>
-        <Col md={8}>
+        <Col md={6}>
           <MyInput
             require
             fieldLabel="Select Bed"
@@ -193,7 +206,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             width="100%"
           />
         </Col>
-        <Col md={8}>
+        <Col md={6}>
           <MyInput
             require
             fieldLabel="Responsible Department"
@@ -208,10 +221,13 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             disabled
           />
         </Col>
-        <Col md={8}>
+      </div>
+
+      {/* New Row for Resident and Secondary Physicians */}
+      <div className="fields-containerss margin-top-10">
+        <Col md={6}>
           <MyInput
             require
-            //   column
             fieldLabel="Responsible physician"
             fieldType="select"
             fieldName="physicianKey"
@@ -224,8 +240,166 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             disabled
           />
         </Col>
-      </Row>
-      <Row>
+        <Col md={6}>
+          <MyInput
+            fieldLabel="Resident"
+            fieldType="select"
+            fieldName="residentKey"
+            selectData={practitionerListResponse?.object ?? []}
+            selectDataLabel="practitionerFullName"
+            selectDataValue="key"
+            record={admitToInpatient}
+            setRecord={setAdmitToInpatient}
+            width="100%"
+          />
+        </Col>
+        <Col md={6}>
+          <MyInput
+            fieldLabel="Secondary Physicians"
+            fieldType="multiselect"
+            fieldName="secondaryPhysicianKeys"
+            selectData={practitionerListResponse?.object ?? []}
+            selectDataLabel="practitionerFullName"
+            selectDataValue="key"
+            record={admitToInpatient}
+            setRecord={setAdmitToInpatient}
+            width="100%"
+          />
+        </Col>
+      </div>
+
+      {/* Last Admission Date and View Previous Admission Button */}
+      <div className="fields-containerss margin-top-10">
+        <Col md={6}>
+          <MyInput
+            fieldLabel="Last Admission Date"
+            fieldType="text"
+            fieldName="lastAdmissionDate"
+            record={admitToInpatient}
+            setRecord={setAdmitToInpatient}
+            width={232}
+            disabled
+            readOnly
+          />
+        </Col>
+        <Col md={8}>
+          <div className="margin-top-23">
+            <MyButton
+              appearance="primary"
+              onClick={() => setShowPreviousAdmission(!showPreviousAdmission)}
+            >
+              View Previous Admission
+            </MyButton>
+          </div>
+        </Col>
+      </div>
+
+      {/* Previous Admission Details - Show/Hide based on button click */}
+      <div className="margin-top-bottom-10">
+        {showPreviousAdmission && (
+          <SectionContainer
+            title="Conclusion"
+            content={
+              <>
+                <div className="fields-containerss">
+                  <Col md={6}>
+                    <MyInput
+                      fieldLabel="Date of Previous Admission"
+                      fieldType="text"
+                      fieldName="previousAdmissionDate"
+                      record={admitToInpatient}
+                      setRecord={setAdmitToInpatient}
+                      width="100%"
+                      disabled
+                      readOnly
+                    />
+                  </Col>
+                  <Col md={6}>
+                    <MyInput
+                      fieldLabel="Period in Days"
+                      fieldType="text"
+                      fieldName="periodInDays"
+                      record={admitToInpatient}
+                      setRecord={setAdmitToInpatient}
+                      width={310}
+                      disabled
+                      readOnly
+                    />
+                  </Col>
+                </div>
+                <div className="fields-containerss margin-top-10">
+                  <Col md={6}>
+                    <MyInput
+                      fieldLabel="Status of Discharge"
+                      fieldType="text"
+                      fieldName="statusOfDischarge"
+                      record={admitToInpatient}
+                      setRecord={setAdmitToInpatient}
+                      width="100%"
+                      disabled
+                      readOnly
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <MyInput
+                      fieldLabel="Responsible Physician of Last Admission"
+                      fieldType="text"
+                      fieldName="responsiblePhysicianLastAdmission"
+                      record={admitToInpatient}
+                      setRecord={setAdmitToInpatient}
+                      width={310}
+                      disabled
+                      readOnly
+                    />
+                  </Col>
+                </div>
+                <div className="fields-containerss margin-top-10">
+                  <Col md={6}>
+                    <MyInput
+                      fieldLabel="Specialty of Last Admission"
+                      fieldType="text"
+                      fieldName="specialtyLastAdmission"
+                      record={admitToInpatient}
+                      setRecord={setAdmitToInpatient}
+                      width="100%"
+                      disabled
+                      readOnly
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <MyInput
+                      fieldLabel="Department Discharge Patient for Last Admission"
+                      fieldType="text"
+                      fieldName="departmentDischargeLastAdmission"
+                      record={admitToInpatient}
+                      setRecord={setAdmitToInpatient}
+                      width="100%"
+                      disabled
+                      readOnly
+                    />
+                  </Col>
+                </div>
+                <div className="fields-containerss margin-top-10">
+                  <Col md={12}>
+                    <MyInput
+                      fieldLabel="Discharge Diagnosis for Last Admission"
+                      fieldType="textarea"
+                      fieldName="dischargeDiagnosisLastAdmission"
+                      record={admitToInpatient}
+                      setRecord={setAdmitToInpatient}
+                      width="100%"
+                      disabled
+                      readOnly
+                    />
+                  </Col>
+                </div>
+              </>
+            }
+          />
+        )}
+      </div>
+      {/* Original textarea fields */}
+      <div className="fields-containerss margin-top-10">
         <Col md={12}>
           <MyInput
             fieldType="textarea"
@@ -246,20 +420,103 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             width="100%"
           />
         </Col>
-      </Row>
+      </div>
+    </Form>
+  );
+  // let modalContent;
+  const leftModalContent = (
+    <Form fluid layout="inline" className="fields-container">
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Patient Name"
+        fieldName="fullName"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Patient MRN"
+        fieldName="patientMrn"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Gender"
+        fieldType="select"
+        fieldName="genderLkey"
+        selectData={genderLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        disabled
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldType="date"
+        fieldLabel="Date of Birth"
+        fieldName="dateofBirth"
+        record={admitToInpatient}
+        setRecord={setAdmitToInpatient}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldType="number"
+        fieldLabel="Age"
+        fieldName="age"
+        record={admitToInpatient}
+        setRecord={setAdmitToInpatient}
+        disabled
+      />
+      <MyInput
+        column
+        fieldLabel="Responsible physician"
+        fieldType="select"
+        fieldName="physicianKey"
+        selectData={practitionerListResponse?.object ?? []}
+        selectDataLabel="practitionerFullName"
+        selectDataValue="key"
+        record={admitToInpatient}
+        setRecord={setAdmitToInpatient}
+        width={200}
+        disabled
+      />
+      <MyInput
+        width={200}
+        fieldType="textarea"
+        fieldLabel="Diagnosis"
+        fieldName="diagnosis"
+        record={encounter}
+        setRecord={setEncounter}
+        disabled
+      />
     </Form>
   );
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Admit to Inpatient"
-      steps={[{ title: 'Admit to Inpatient', icon: <FontAwesomeIcon icon={faBed} /> }]}
-      size="60vw"
-      bodyheight="500px"
-      actionButtonFunction={handleSave}
-      content={modalContent}
-    />
+    <>
+      <AdvancedModal
+        open={open}
+        setOpen={setOpen}
+        leftTitle="Patient Information"
+        rightTitle="Admit to Inpatient"
+        leftContent={leftModalContent}
+        rightContent={rightModalContent}
+        actionButtonLabel="Admit"
+        actionButtonFunction={handleSave}
+        leftWidth="19%"
+        rightWidth="81%"
+      />
+    </>
   );
 };
 export default PatientAdmission;
