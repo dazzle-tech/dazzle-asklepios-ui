@@ -198,17 +198,6 @@ const IVFluidAdministration = () => {
               <Section
                 title={
                   <div className="section-title-with-icon">
-                    <Whisper
-                      placement="top"
-                      trigger="hover"
-                      speaker={<Tooltip>Fill Last Readings</Tooltip>}
-                    >
-                      <FontAwesomeIcon
-                        icon={faClockRotateLeft}
-                        className="vital-icon"
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </Whisper>
                                         <p className="font-small-for-icon-position">
                       Vital Signs
                     </p>

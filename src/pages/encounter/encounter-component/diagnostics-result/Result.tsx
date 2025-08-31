@@ -440,7 +440,7 @@ const Result = ({ patient, user }) => {
                 />
 
                 <Checkbox
-                    style={{ marginTop: "20px" }}
+                    className="result-checkbox-show-abnormal-result"
                     checked={showAbnormal}
                     onChange={() => {
                         if (showAbnormal) {
