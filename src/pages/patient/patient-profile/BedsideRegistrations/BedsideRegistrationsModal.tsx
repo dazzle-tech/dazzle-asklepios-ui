@@ -4,71 +4,97 @@ import './styles.less';
 import { GrScheduleNew } from 'react-icons/gr';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRepeat } from '@fortawesome/free-solid-svg-icons';
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetTransferPatientsListQuery } from '@/services/encounterService';
-const BedsideRegistrationsModal = ({ open, setOpen }) => {
+import { useGetPatientsQuery } from '@/services/patientService';
+import MergePatient from './MergePatient';
+import { Tooltip, Whisper } from 'rsuite';
+const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
+  const [openMergePatient, setOpenMergePatient] = useState<boolean>(false);
+  const [patient, setPatient] = useState({});
+  const [listRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'unknown_patient',
+        operator: 'match',
+        value: true as any
+      }
+    ]
+  });
+  // Fetch unknown pqtients list
+  const { data: patientListResponse, isFetching } = useGetPatientsQuery({
+    ...listRequest,
+    filterLogic: 'or'
+  });
 
-     const [listRequest, setListRequest] = useState<ListRequest>({
-             ...initialListRequest,
-             filters: []
-         });
-         //fetch transfer patients list
-         const {
-             data: transferPatientsListResponse,
-             isFetching,
-             refetch,
-             isLoading
-         } = useGetTransferPatientsListQuery(listRequest);
-          console.log("list");
-         console.log(transferPatientsListResponse);
-
-      // Icons column (Edit, reactive/Deactivate)
-      const iconsForActions = () => (
-        <div className="container-of-icons">
-        <FontAwesomeIcon icon={faRepeat} className='icons-style' title='Merge' />
-         <FontAwesomeIcon icon={faUser} className='icons-style' title='Update Information' />
-        </div>
-      );
-      // Table columns definition
-      const tableColumns = [
-        {
-          key: 'updateInformation',
-          title: <Translate>Update Information</Translate>,
-           render: () => iconsForActions()
-        },
-        {
-          key: 'fullName',
-          title: <Translate>Patient Name</Translate>,
-        },
-        {
-          key: 'patientMrn',
-          title: <Translate>MRN</Translate>,
-          
-        },
-        {
-          key: 'encountertype',
-          title: <Translate>Visit ID</Translate>,
-        },
-        {
-          key: 'sexAtBirthLkey',
-          title: <Translate>Sex at Birth</Translate>,
-        },
-      ];
+  // Icons column (Merge, Update Information)
+  const iconsForActions = rowData => (
+    <div className="container-of-icons">
+      <Whisper placement="top" trigger="hover" speaker={<Tooltip>Merge</Tooltip>}>
+        <FontAwesomeIcon
+          icon={faRepeat}
+          className="icons-style"
+          onClick={() => {
+            setOpenMergePatient(true);
+            setPatient(rowData);
+          }}
+        />
+      </Whisper>
+      <Whisper placement="top" trigger="hover" speaker={<Tooltip>Update Information</Tooltip>}>
+        <FontAwesomeIcon
+          icon={faUser}
+          className="icons-style"
+          onClick={() => {
+            setLocalPatient(rowData);
+            setOpen(false);
+          }}
+        />
+      </Whisper>
+    </div>
+  );
+  // Table columns definition
+  const tableColumns = [
+    {
+      key: 'updateInformation',
+      title: <Translate>Update Information</Translate>,
+      render: rowData => iconsForActions(rowData)
+    },
+    {
+      key: 'fullName',
+      title: <Translate>Patient Name</Translate>
+    },
+    {
+      key: 'patientMrn',
+      title: <Translate>MRN</Translate>
+    },
+    {
+      key: 'encountertype',
+      title: <Translate>Visit ID</Translate>
+    },
+    {
+      key: 'genderLvalue',
+      title: <Translate>Sex at Birth</Translate>,
+      render: rowData => <span>{rowData?.genderLvalue?.lovDisplayVale}</span>
+    }
+  ];
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
-        return(
-         <MyTable
-         data={transferPatientsListResponse?.object ?? []}
-         columns={tableColumns}
-         height={580}
-         loading={isFetching} 
-         />
+        return (
+          <>
+            <MyTable
+              data={patientListResponse?.object ?? []}
+              columns={tableColumns}
+              height={580}
+              loading={isFetching}
+            />
+            <MergePatient open={openMergePatient} setOpen={setOpenMergePatient} patient={patient} />
+          </>
         );
     }
   };
@@ -79,11 +105,8 @@ const BedsideRegistrationsModal = ({ open, setOpen }) => {
       title="Bedside Registrations"
       position="right"
       content={conjureFormContent}
-      //   actionButtonLabel={resources?.key ? 'Save' : 'Create'}
       hideActionBtn
-      //   actionButtonFunction={handleSave}
       steps={[{ title: 'Bedside Registrations', icon: <GrScheduleNew /> }]}
-      //   size={width > 600 ? '36vw' : '70vw'}
     />
   );
 };

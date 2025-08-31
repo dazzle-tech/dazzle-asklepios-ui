@@ -244,6 +244,7 @@ const PatientProfile = () => {
       <BedsideRegistrationsModal 
       open={openBedsideRegistrations}
       setOpen={setOpenBedsideRegistrations}
+      setLocalPatient={setLocalPatient}
       />
       <PatientDuplicate
         open={openPatientsDuplicateModal}
