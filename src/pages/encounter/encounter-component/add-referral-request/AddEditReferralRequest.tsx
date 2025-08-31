@@ -7,70 +7,82 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
 import { initialListRequest, ListRequest } from '@/types/types';
-const AddEditReferralRequest = ({
-  open,
-  setOpen,
-  width,
-  referral,
-setReferral
-}) => {
- 
-  
+const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral }) => {
   // Fetch referral Type Lov response
-   const { data: referralTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTER_EXTER');
-   const { data: referralReasonLovQueryResponse } = useGetLovValuesByCodeQuery('REFERRAL_REASONS');
-    const [departmentListRequest] = useState<ListRequest>({ ...initialListRequest });
-    const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
+  const { data: referralTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTER_EXTER');
+  const { data: referralReasonLovQueryResponse } = useGetLovValuesByCodeQuery('REFERRAL_REASONS');
+  const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+
+  const [departmentListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid >
-        <MyInput
-          width="100%"
-          selectData={referralTypeLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          fieldType="select"
-          fieldName="referralType"
-          record={referral}
-          setRecord={setReferral}
-          menuMaxHeight={200}
-        />
-        {referral?.referralType == '4925976052929804' && (
-          <MyInput
-            width="100%"
-            fieldName="departmentKey"
-            fieldType="select"
-            selectData={departmentListResponse?.object ?? []}
-            selectDataLabel="name"
-            selectDataValue="key"
-            record={referral}
-            setRecord={setReferral}
-            menuMaxHeight={200}
-          />
-        )}
-        <MyInput
-          width="100%"
-          selectData={referralReasonLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          fieldType="select"
-          fieldName="referralReason"
-          record={referral}
-          setRecord={setReferral}
-          menuMaxHeight={200}
-        />
-        <MyInput
-          width="100%"
-          fieldType="textarea"
-          fieldName="notes"
-          record={referral}
-          setRecord={setReferral}
-        />
-      </Form>
+          <Form fluid>
+            <MyInput
+              width="100%"
+              selectData={referralTypeLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              fieldType="select"
+              fieldName="referralType"
+              record={referral}
+              setRecord={setReferral}
+              menuMaxHeight={200}
+            />
+            {referral?.referralType == '4925976052929804' && (
+              <MyInput
+                width="100%"
+                fieldName="departmentKey"
+                fieldType="select"
+                selectData={departmentListResponse?.object ?? []}
+                selectDataLabel="name"
+                selectDataValue="key"
+                record={referral}
+                setRecord={setReferral}
+                menuMaxHeight={200}
+              />
+            )}
+            <MyInput
+              width="100%"
+              selectData={referralReasonLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              fieldType="select"
+              fieldName="referralReason"
+              record={referral}
+              setRecord={setReferral}
+              menuMaxHeight={200}
+            />
+            <MyInput
+              width="100%"
+              fieldType="textarea"
+              fieldName="notes"
+              record={referral}
+              setRecord={setReferral}
+            />
+            <MyInput
+              width="100%"
+              fieldType="text"
+              fieldLabel="Approval Number"
+              fieldName="approvalNumber"
+              record={referral}
+              setRecord={setReferral}
+            />
+            <MyInput
+              width="100%"
+              selectData={priorityLevelLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              fieldType="select"
+              fieldName="priorityLevel"
+              record={referral}
+              setRecord={setReferral}
+            />
+          </Form>
         );
     }
   };
@@ -83,8 +95,8 @@ setReferral
       content={conjureFormContent}
       actionButtonLabel={referral?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
-      steps={[{ title: 'Referral Request Info', icon:<FontAwesomeIcon icon={faComment} />}]}
-       size={width > 600 ? '36vw' : '70vw'}
+      steps={[{ title: 'Referral Request Info', icon: <FontAwesomeIcon icon={faComment} /> }]}
+      size={width > 600 ? '36vw' : '70vw'}
     />
   );
 };
