@@ -24,7 +24,7 @@ const Conclusion: React.FC<Props> = ({ record, setRecord, usersList, currentUser
     <Section
       title="Conclusion"
       content={
-        <div className="handle-inputs-positions-size">
+        <div className="handle-inputs-positions-size conclusion-main-container-positions">
           <MyInput
             fieldLabel="Final Impression"
             fieldName="finalImpression"
@@ -53,6 +53,7 @@ const Conclusion: React.FC<Props> = ({ record, setRecord, usersList, currentUser
             selectDataValue="id"
             record={record}
             setRecord={setRecord}
+              searchable={false}
           />
         </div>
       }

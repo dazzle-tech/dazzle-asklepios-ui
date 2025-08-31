@@ -7,6 +7,7 @@ import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import Translate from '@/components/Translate';
 import EchoDopplerTestModal from './EchoDopplerTestModal';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 const EchoDopplerTest = ({ patient, encounter, edit }) => {
   const [selectedRow, setSelectedRow] = useState(null);
@@ -144,8 +145,8 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
 
 
   
-  const tableFilters = (
-    <div className="bt-div">
+  const tableFilters = (<>
+  <div>
       <MyButton
         onClick={() => {
           console.log('Cancel clicked');
@@ -158,8 +159,12 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
 
       <Checkbox checked={showCancelled} onChange={(_, checked) => setShowCancelled(checked)}>
         Show Cancelled
-      </Checkbox>
+      </Checkbox></div>
 
+    <AdvancedSearchFilters/>
+  </>);
+
+  const tablebuttons = (<>
       <div className="bt-right">
         <MyButton
           prefixIcon={() => <PlusIcon />}
@@ -168,9 +173,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         >
           Add
         </MyButton>
-      </div>
-    </div>
-  );
+      </div></>);
 
   return (
     <>
@@ -179,6 +182,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         columns={columns}
         filters={tableFilters}
         loading={false}
+        tableButtons={tablebuttons}
         rowClassName={(row) => (row?.key === selectedRow?.key ? 'selected-row' : '')}
         onRowClick={(row) => setSelectedRow(row)}
         page={page}

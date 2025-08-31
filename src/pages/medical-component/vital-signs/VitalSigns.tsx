@@ -4,7 +4,9 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
-import { Col, Form, Row } from 'rsuite';
+import {Tooltip,Whisper,IconButton} from 'rsuite';
+import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { Form } from 'rsuite';
 const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField = false }) => {
   const [map, setMap] = useState(null);
   const { data: BPMeasurmentLov } = useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
@@ -19,8 +21,20 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
   return (
     <div style={width ? { width } : {}}>
       <Form fluid>
-        <Row>
-          <Col md={8}>
+        <div className='fill-last-readings-main-position'>
+          <Whisper
+  placement="top"
+  trigger="hover"
+  speaker={<Tooltip>Fill Last Readings</Tooltip>}
+>
+  <IconButton
+    icon={<FontAwesomeIcon icon={faClockRotateLeft} />}
+    className="vital-icon"
+    style={{ fontSize: 20, cursor: 'pointer' }}
+    appearance="subtle"
+  />
+</Whisper></div>
+<div className='vital-signs-handle-position-row'>
             <MyInput
               width="100%"
               fieldType="number"
@@ -29,11 +43,8 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
               setRecord={setObject}
               disabled={disabled}
             />
-          </Col>
-          <Col md={2}>
-            <div style={{ padding: '20px', paddingTop: '30px' }}>/</div>
-          </Col>
-          <Col md={8}>
+            <div className='gap-betwen-blood-pressures'>
+            /</div>
             <MyInput
               width="100%"
               fieldType="number"
@@ -42,19 +53,14 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
               setRecord={setObject}
               disabled={disabled}
             />
-          </Col>
-          <Col md={6}>
             <div className="container-Column">
               <MyLabel label="MAP" />
               <div>
                 <FontAwesomeIcon icon={faHeartPulse} className="my-icon" />
                 <text>{map}</text>
               </div>
+          </div>
             </div>
-          </Col>
-        </Row>
-        <Row>
-          <Col md={24}>
             <MyInput
               width="100%"
               fieldType="select"
@@ -66,10 +72,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
               setRecord={setObject}
               disabled={disabled}
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col md={12}>
+            <div className='vital-signs-handle-position-row'>
             <MyInput
               width="100%"
               fieldType="number"
@@ -80,9 +83,6 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
               setRecord={setObject}
               disabled={disabled}
             />
-          </Col>
-
-          <Col md={12}>
             <MyInput
               width="100%"
               fieldType="number"
@@ -91,11 +91,8 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
               record={object}
               setRecord={setObject}
               disabled={disabled}
-            />
-          </Col>
-        </Row>
-        <Row>
-          <Col md={12}>
+            /></div>
+            <div className='vital-signs-handle-position-row'>
             <MyInput
               width="100%"
               fieldType="number"
@@ -105,8 +102,6 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
               setRecord={setObject}
               disabled={disabled}
             />
-          </Col>
-          <Col md={12}>
             <MyInput
               width="100%"
               fieldType="number"
@@ -118,11 +113,8 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
               setRecord={setObject}
               disabled={disabled}
             />
-          </Col>
-        </Row>
+            </div>
         {showNoteField && (
-          <Row className="rows-gap margin-left">
-            <Col md={24}>
               <Form fluid>
                 <MyInput
                   fieldLabel="Note"
@@ -135,8 +127,6 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
                   disabled={disabled}
                 />
               </Form>
-            </Col>
-          </Row>
         )}
       </Form>
     </div>

@@ -57,7 +57,7 @@ const OtherFindings: React.FC<Props> = ({ record, setRecord, rwmaOptions }) => {
             selectData={rwmaOptions}
             selectDataLabel="RwmaValue"
             selectDataValue="value"
-            searchable
+            searchable={false}
           />
 
           <div style={{ position: 'relative', marginLeft: '1.5vw' }}>

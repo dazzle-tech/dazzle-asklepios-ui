@@ -37,6 +37,7 @@ const TestInformation: React.FC<Props> = ({
             selectDataValue="key"
             record={echoTest}
             setRecord={setEchoTest}
+            searchable={false}
           />
           {echoTest?.indication === otherIndicationKey && (
             <MyInput
@@ -47,6 +48,7 @@ const TestInformation: React.FC<Props> = ({
               placeholder="Please specify"
               record={echoTest}
               setRecord={setEchoTest}
+              searchable={false}
             />
           )}
           <MyInput
@@ -59,6 +61,7 @@ const TestInformation: React.FC<Props> = ({
             selectDataValue="key"
             record={echoTest}
             setRecord={setEchoTest}
+            searchable={false}
           />
           <MyInput
             width={300}
@@ -70,6 +73,7 @@ const TestInformation: React.FC<Props> = ({
             selectDataValue="id"
             record={echoTest}
             setRecord={setEchoTest}
+            searchable={false}
           />
           <MyInput
             width={300}
@@ -81,6 +85,7 @@ const TestInformation: React.FC<Props> = ({
             selectDataValue="id"
             record={echoTest}
             setRecord={setEchoTest}
+            searchable={false}
           />
         </div>
       }
