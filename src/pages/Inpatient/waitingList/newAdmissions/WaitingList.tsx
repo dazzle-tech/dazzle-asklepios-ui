@@ -9,6 +9,7 @@ import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetWaitingListEncounterQuery, useCancelEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
@@ -238,11 +239,14 @@ const WaitingList = () => {
         });
     };
 
+    const filters =(<><AdvancedSearchFilters searchFilter={true}/></>)
+
     return (
         <Panel>
             <MyTable
                 height={600}
                 data={encounterListResponse?.object ?? []}
+                filters={filters}
                 columns={tableColumns}
                 rowClassName={isSelected}
                 loading={isLoading || (manualSearchTriggered && isFetching) || isFetching}

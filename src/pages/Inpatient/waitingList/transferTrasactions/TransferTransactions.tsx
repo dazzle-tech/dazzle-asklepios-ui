@@ -3,6 +3,7 @@ import Translate from '@/components/Translate';
 import { newApEncounter, newApTransferPatient } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import { Form, Panel } from 'rsuite';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -163,7 +164,7 @@ const TransferTransactions = () => {
     };
     // Filters component for the table
     const filters = () => {
-        return (
+        return (<>
             <Form layout="inline" fluid className="date-filter-form">
                 <MyInput
                     column
@@ -226,7 +227,9 @@ const TransferTransactions = () => {
                     setRecord={setTransferPatient}
                 />
             </Form>
-        );
+
+            <AdvancedSearchFilters searchFilter={true}/>
+        </>);
     };
 
     //Effects

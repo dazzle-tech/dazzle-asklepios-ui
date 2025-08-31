@@ -1,6 +1,8 @@
 import ChatModal from "@/components/ChatModal";
 import MyInput from "@/components/MyInput";
 import MyTable from "@/components/MyTable";
+import MyButton from "@/components/MyButton/MyButton";
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
 import { useGetEncounterByIdQuery } from "@/services/encounterService";
@@ -11,7 +13,7 @@ import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsResult, newApDiagno
 import { initialListRequest, initialListRequestAllValues, ListRequest } from "@/types/types";
 import { addFilterToListRequest, formatDateWithoutSeconds } from '@/utils';
 import { notify } from "@/utils/uiReducerActions";
-import { faArrowDown, faArrowUp, faCircleExclamation, faComment, faStar, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faCircleExclamation, faMagnifyingGlassPlus, faComment, faStar, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { update } from "lodash";
 import React, { useEffect, useState } from "react";
@@ -439,7 +441,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
         });
     };
     const filters = () => {
-        return (
+        return (<>
             <Form layout="inline" fluid className="date-filter-form">
                 <MyInput
                     column
@@ -488,15 +490,16 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 </Checkbox>
 
                 <Checkbox
-
+                    style={{ marginTop: "20px" }}
                     checked={showAbnormal}
                     onChange={() => {
                         setShowAbnormal(!showAbnormal);
                     }}>
                     Show Abnormal Result
                 </Checkbox>
+
             </Form>
-        );
+        <AdvancedSearchFilters searchFilter={true}/></>);
     };
     return (
         <>

@@ -332,10 +332,6 @@ const DepartmentStock = () => {
       {/* Main content area with table and filters */}
       <div className="container-of-tables-int">
         {/* Header section with department/stock selectors and action buttons */}
-        <DepartmentStockHeader
-          onExportXLS={handleExportXLS}
-          onRefillRequest={handleRefillRequest}
-        />
 
         {/* Main stock table with pagination and filters */}
         <MainStockTable

@@ -35,6 +35,7 @@ import UomGroup from './UOMGroup';
 import InventoryAttributes from './InventoryAttributes';
 import RegulSafty from './RegulSafty';
 import FinancCostInfo from './FinancCostInfo';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 const ProductSetup = () => {
   const dispatch = useAppDispatch();
@@ -346,25 +347,30 @@ const ProductSetup = () => {
       </Box>
     );
   }
+
+  const filters = (<><AdvancedSearchFilters searchFilter={true}/></>);
+  const tablebuttons = (<>          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={() => {
+                setOpenAddEditPopup(true), setWarehouseProduct({ ...newApWarehouseProduct }), setEdit_new(true);
+              }}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div></>);
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         height={450}
         data={productListResponse?.object ?? []}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        // filters={filters()}
+        filters={filters}
+        tableButtons={tablebuttons}
         onRowClick={rowData => {
           setProduct(rowData);
         }}

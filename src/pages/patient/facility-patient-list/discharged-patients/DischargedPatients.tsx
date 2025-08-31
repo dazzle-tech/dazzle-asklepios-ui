@@ -4,6 +4,7 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import '../styles.less';
 import MyButton from '@/components/MyButton/MyButton';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 const dummyRow = {
   fullName: 'Ali Hassan',
@@ -87,7 +88,7 @@ const DischargedPatients = () => {
 
   const paginated = sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const filterss = (
+  const filterss = (<>
     <Form fluid>
       <div className="table-filters-handle-positions">
         <MyInput
@@ -142,13 +143,11 @@ const DischargedPatients = () => {
           record={filters}
           setRecord={setFilters}
         />
-        <div className="cancelled-admissions-buttons-positions">
-          <MyButton>Search</MyButton>
-          <MyButton>Clear</MyButton>
-        </div>
+
       </div>
     </Form>
-  );
+    <AdvancedSearchFilters searchFilter={false}/>
+  </>);
 
   return (
       <MyTable

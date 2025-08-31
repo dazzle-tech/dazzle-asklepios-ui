@@ -5,6 +5,7 @@ import TotalQuantitiesTable from './TotalQuantitiesTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import { Checkbox } from 'rsuite';
 import { Form } from 'rsuite';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import './styles.less';
 
 //Table Data
@@ -98,27 +99,10 @@ const RequestedProceduresTable = () => {
   const filters = (
     <>
       <Form fluid>
- <div
-    className="material-table-filter-table-header"
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between'
-    }}
-  >
-    <h5 className="operation-materials-table-header" style={{ margin: 0 }}>
+    <div className="check-boxes-material-table-positions">
+            <h5 className="operation-materials-table-header">
       Operation Materials
     </h5>
-
-    <div
-      className="check-boxes-material-table-positions"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem'
-      }}
-    >
-
       <Checkbox>
         Implant
       </Checkbox>
@@ -131,10 +115,11 @@ const RequestedProceduresTable = () => {
         Surgical Instrument
       </Checkbox>
     </div>
-  </div>
       </Form>
-    </>
-  );
+      
+      <AdvancedSearchFilters searchFilter={true}/>
+    
+    </>);
 
   return (
     <div>

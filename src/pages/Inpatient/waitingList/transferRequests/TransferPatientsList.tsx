@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBedPulse, faFileWaveform, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Form, Panel, Tooltip, Whisper, Checkbox } from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
 import CancellationModal from '@/components/CancellationModal';
@@ -48,7 +49,7 @@ const TransferPatientsList = () => {
     });
 
     // Filters
-    const filters = () => (
+    const filters = () => (<>
         <Form layout="inline" fluid className="date-filter-form">
             <MyInput
                 column
@@ -68,7 +69,7 @@ const TransferPatientsList = () => {
                 record={dateFilter}
                 setRecord={setDateFilter}
             />
-            <div className='checkboxes-container'>
+            <div className='checkboxes-container-transfer-patient-list'>
                 <Checkbox
                     onChange={(value, checked) => {
                         setTransferRequest(checked ? '91098528988200' : '');
@@ -78,7 +79,9 @@ const TransferPatientsList = () => {
                 </Checkbox>
             </div>
         </Form>
-    );
+
+        <AdvancedSearchFilters searchFilter={true}/>
+    </>);
     // Table Columns
     const tableColumns = [
         {

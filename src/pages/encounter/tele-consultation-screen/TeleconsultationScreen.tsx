@@ -4,6 +4,7 @@ import { Panel } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Form } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import CancellationModal from '@/components/CancellationModal';
@@ -147,7 +148,7 @@ const TeleconsultationRequests = () => {
     setCancelObject({});
   };
 
-  const filterstable = (
+  const filterstable = (<>  
     <Form fluid>
       <div className="from-to-input-position">
         <MyInput
@@ -168,7 +169,8 @@ const TeleconsultationRequests = () => {
         />
       </div>
     </Form>
-  );
+<AdvancedSearchFilters searchFilter={true}/>
+  </>);
 
   const columns = [
     {

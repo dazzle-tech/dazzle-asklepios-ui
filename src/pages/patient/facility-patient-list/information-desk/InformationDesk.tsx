@@ -21,6 +21,7 @@ import { faFileCsv,faPrint } from '@fortawesome/free-solid-svg-icons';
 import ReactDOMServer from 'react-dom/server';
 import MyButton from '@/components/MyButton/MyButton';
 import Section from '@/components/Section';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 const InformationDesk = () => {
   const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({
@@ -368,14 +369,7 @@ const tablefilters = (<div className="field-btn-div">
           />
 
         </Form>
-        <div className="bt-right-group">
-                    <MyButton appearance='ghost'>
-  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
-  Advance
-</MyButton>
-            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}>Search</MyButton>
-            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>Clear</MyButton>
-        </div></div>);
+             <AdvancedSearchFilters searchFilter={false}/></div>);
 
   return (
 <div className="container-div">

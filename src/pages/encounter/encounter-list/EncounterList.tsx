@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserNurse, faUserDoctor, faPrint } from '@fortawesome/free-solid-svg-icons';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
@@ -449,7 +450,7 @@ const EncounterList = () => {
   };
 
   const filters = () => {
-    return (
+    return (<>
       <Form layout="inline" fluid className="date-filter-form">
         <MyInput
           column
@@ -510,21 +511,16 @@ const EncounterList = () => {
           record={encounterStatus}
           setRecord={setEncounterStatus}
         />
-        <div className="advanced-button-position-handler">
-          <MyButton appearance="ghost">
-            <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
-            Advance
-          </MyButton>
-        </div>
       </Form>
-    );
+
+      <AdvancedSearchFilters searchFilter={true}/>
+    </>);
   };
   return (
     <Panel>
       <MyTable
         filters={filters()}
         tableButtons={<><MyButton>
-            <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
             Refill
           </MyButton></>}
         height={600}

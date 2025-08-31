@@ -16,6 +16,8 @@ import { faFile } from '@fortawesome/free-solid-svg-icons';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import Dispense from './Dispense';
 import CancellationModal from '@/components/CancellationModal';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+
 
 const ControlledMedications = () => {
   const dispatch = useAppDispatch();
@@ -71,7 +73,7 @@ const ControlledMedications = () => {
   );
 
   // Filter table
-  const filters = () => (
+  const filters = () => (<>
     <Form layout="inline" fluid className="filter-fields-pharmacey">
       <MyInput column fieldName="" fieldType="date" fieldLabel="From date" record="" setRecord="" />
       <MyInput column fieldName="" fieldType="date" fieldLabel="To date" record="" setRecord="" />
@@ -79,11 +81,10 @@ const ControlledMedications = () => {
       <MyInput column fieldName="" fieldLabel="Ward" record="" setRecord="" />
       <MyInput column fieldName="" fieldLabel="Drug Name" record="" setRecord="" />
       <MyInput column fieldName="" fieldLabel="Status" record="" setRecord="" fieldType="select" />
-      <MyButton color="var(--deep-blue)" width="109px">
-        Search
-      </MyButton>
     </Form>
-  );
+              <AdvancedSearchFilters searchFilter={true}/>
+
+  </>);
 
   // dummy data
   const data = [

@@ -17,6 +17,8 @@ import React, { useEffect, useState } from "react";
 import { FaBedPulse, FaFileArrowDown, FaPrint } from "react-icons/fa6";
 import { MdAttachFile } from "react-icons/md";
 import { Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+
 import Perform from "../encounter/encounter-component/procedure/Perform";
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
@@ -553,7 +555,7 @@ const handleFilterChange = (fieldName, value) => {
         });
     };
 
-    const filters = () => (
+    const filters = () => (<>
         <Form layout="inline" fluid>
             <MyInput
                
@@ -599,14 +601,7 @@ const handleFilterChange = (fieldName, value) => {
                 showLabel={false}
                 placeholder="Search"
             />
-        </Form>
-    );
-    return (
-        <>
-
-            <div className='bt-div'>
-
-                <Checkbox
+                            <Checkbox
                     checked={!showCanceled}
                     onChange={() => {
                         setShowCanceled(!showCanceled);
@@ -615,10 +610,13 @@ const handleFilterChange = (fieldName, value) => {
                 >
                     Show Cancelled
                 </Checkbox>
+        </Form>
+        <AdvancedSearchFilters searchFilter={true}/>
 
-            </div>
-
-            <MyTable
+    </>);
+    return (
+        <>
+              <MyTable
                 filters={filters()}
                 columns={tableColumns}
                 data={procedures?.object ?? []}

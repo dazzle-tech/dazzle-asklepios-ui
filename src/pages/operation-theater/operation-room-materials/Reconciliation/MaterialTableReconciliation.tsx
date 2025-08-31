@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { Checkbox } from 'rsuite';
 import { formatDateWithoutSeconds } from '@/utils';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Form } from 'rsuite';
-
+import '../Preparation/styles.less';
 //Table Data
 const sampleData = [
   {
@@ -99,34 +100,21 @@ const MaterialTableReconciliation = () => {
   const filters = (
     <>
       <Form fluid>
-        <div
-          className="material-table-filter-table-header"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
+    <div className="check-boxes-material-table-positions">
+
           <h5 className="operation-materials-table-header" style={{ margin: 0 }}>
             Operation Materials
           </h5>
-
-          <div
-            className="check-boxes-material-table-positions"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem'
-            }}
-          >
             <Checkbox>Implant</Checkbox>
 
             <Checkbox>Consumable</Checkbox>
 
             <Checkbox>Surgical Instrument</Checkbox>
-          </div>
-        </div>
+</div>
       </Form>
+      <AdvancedSearchFilters searchFilter={true}/>
+
+
     </>
   );
 

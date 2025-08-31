@@ -24,6 +24,8 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyModal from '@/components/MyModal/MyModal';
 import ModalProductCard from '../product-catalog/ModalProductCard';
 import InfoCardList from '@/components/InfoCardList';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+
 const InventoryTransaction = () => {
 
     const dispatch = useAppDispatch();
@@ -605,10 +607,15 @@ const InventoryTransaction = () => {
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Inventory_Transaction'));
     dispatch(setDivContent(divContentHTML));
-    return (
-        <div className='container-div'>
-            {/* {productKey === null && ( */}
-            <div className='field-btn-div'>
+
+    const tablebuttons = (<div className='bt-right-group'>
+                    <div className='btns-group'>
+                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => { setOpen(true), setInventoryTransaction({ ...newApInventoryTransaction }) }}>Add Transaction</MyButton>
+                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileExport} />} >Export to Xsl</MyButton>
+                    </div>
+                </div>);
+
+const filters = (<>
                 <Form layout='inline' fluid>
                     <MyInput
                         column
@@ -674,21 +681,20 @@ const InventoryTransaction = () => {
                         setRecord={setSearchTrans}
                     />
                 </Form>
-                <div className='bt-right-group'>
-                    <div className='btns-group'>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />} ></MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} >Clear</MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => { setOpen(true), setInventoryTransaction({ ...newApInventoryTransaction }) }}>Add Transaction</MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileExport} />} >Export to Xsl</MyButton>
-                    </div>
-                </div>
-            </div>
-            {/* )} */}
+                          <AdvancedSearchFilters searchFilter={true}/>
+
+            </>);
+
+    return (
+        <div className='container-div'>
+            
             <MyTable
                 data={inventoryTransProductListResponse?.object ?? []}
                 columns={columns}
                 height={1000}
                 loading={isLoading || isFetching}
+                filters={filters}
+                tableButtons={tablebuttons}
                 page={pageIndex}
                 rowsPerPage={rowsPerPage}
                 totalCount={totalCount}

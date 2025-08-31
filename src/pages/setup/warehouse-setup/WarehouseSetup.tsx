@@ -31,6 +31,7 @@ import AddEditWarehouse from './AddEditWarehouse';
 import { FaClock, FaHourglass, FaUser } from 'react-icons/fa6';
 import Users from './Users';
 import WorkingHours from './WorkingHours';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { set } from 'lodash';
 const WarehouseSetup = () => {
   const dispatch = useAppDispatch();
@@ -182,7 +183,7 @@ const WarehouseSetup = () => {
     });
   };
   // Filter table
-  const filters = () => (
+  const filters = () => (<>
     <Form layout="inline" fluid className="container-of-filter-fields">
       <MyInput
         selectDataValue="value"
@@ -211,7 +212,8 @@ const WarehouseSetup = () => {
         placeholder="Search"
       />
     </Form>
-  );
+        <AdvancedSearchFilters searchFilter={true}/>
+  </>);
   // Icons column (Edit, User, , reactive/Deactivate)
   const iconsForActions = (rowData: ApWarehouse) => (
     <div className="container-of-icons">
@@ -310,9 +312,7 @@ const WarehouseSetup = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-  return (
-    <Panel>
-      <div className="container-of-add-new-button">
+  const tablebuttons = (<div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"
@@ -323,12 +323,15 @@ const WarehouseSetup = () => {
         >
           Add New
         </MyButton>
-      </div>
+      </div>);
+  return (
+    <Panel>
       <MyTable
         height={450}
         data={warehouseListResponseLoading?.object ?? []}
         loading={isFetching}
         columns={tableColumns}
+        tableButtons={tablebuttons}
         rowClassName={isSelected}
         filters={filters()}
         onRowClick={rowData => {

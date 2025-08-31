@@ -1,6 +1,7 @@
 //Declares
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 //Table Data
 const sampleData = [
@@ -76,6 +77,10 @@ const TotalQuantitiesTable = () => {
     return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
   });
 
+  const filters = (<><h5 className="total-quantities-table-header">Total Counts</h5>
+        <AdvancedSearchFilters searchFilter={true}/>
+
+  </>);
 //Pagination
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   return (
@@ -84,7 +89,7 @@ const TotalQuantitiesTable = () => {
         data={paginatedData}
         columns={columns}
         loading={false}
-        filters={<h5 className="total-quantities-table-header">Total Counts</h5>}
+        filters={filters}
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={(col, type) => {

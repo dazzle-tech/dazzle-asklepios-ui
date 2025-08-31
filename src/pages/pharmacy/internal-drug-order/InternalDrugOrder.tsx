@@ -22,6 +22,7 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { Tabs } from 'rsuite';
 import Warning from '@/pages/encounter/encounter-pre-observations/warning/Warning';
 import Allergies from '@/pages/encounter/encounter-pre-observations/AllergiesNurse/Allergies';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 const InternalDrugOrder = () => {
   const dispatch = useAppDispatch();
@@ -349,7 +350,7 @@ const InternalDrugOrder = () => {
   );
 
   // Filter orders table
-  const filters = () => (
+  const filters = () => (<>
     <Form layout="inline" fluid className="filter-fields-pharmacey">
       <MyInput
         column
@@ -387,11 +388,10 @@ const InternalDrugOrder = () => {
         record={{}}
         setRecord={{}}
       />
-      <MyButton color="var(--deep-blue)" width="109px">
-        Search
-      </MyButton>
     </Form>
-  );
+          <AdvancedSearchFilters searchFilter={true}/>
+
+  </>);
 
   //Table columns
   const orderColumns = [

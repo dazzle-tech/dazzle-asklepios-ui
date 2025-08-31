@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Form} from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import '../styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 const dummyRow = {
@@ -78,7 +79,7 @@ const CancelledAdmissions = () => {
   });
   const paginated = sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-const filterss = (
+const filterss = (<>
 <Form fluid >
         <div className='table-filters-handle-positions'>   
         <MyInput
@@ -133,10 +134,12 @@ const filterss = (
           record={filters}
           setRecord={setFilters}
         />
-          <div className="cancelled-admissions-buttons-positions">
-        <MyButton >Search</MyButton>
-        <MyButton >Clear</MyButton></div></div>
-      </Form>);
+
+</div>
+      </Form>
+              <AdvancedSearchFilters searchFilter={true}/>
+
+      </>);
 
   return (
       <MyTable

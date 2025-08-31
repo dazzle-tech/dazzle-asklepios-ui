@@ -9,6 +9,7 @@ import { ApWarehouse, ApWarehouseProduct } from '@/types/model-types';
 import { newApWarehouse, newApWarehouseProduct } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
 import './styles.less';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import {
   useGetDepartmentsQuery,
@@ -211,7 +212,7 @@ const WarehouseItemsSetup = () => {
     });
   };
   // Filter table
-  const filters = () => (
+  const filters = () => (<>
     <Form layout="inline" fluid className="container-of-filter-fields">
       <MyInput
         selectDataValue="value"
@@ -240,7 +241,8 @@ const WarehouseItemsSetup = () => {
         placeholder="Search"
       />
     </Form>
-  );
+    <AdvancedSearchFilters searchFilter={true}/>
+  </>);
 
 
   //Table columns
@@ -276,11 +278,8 @@ const WarehouseItemsSetup = () => {
       render: rowData => (rowData.isvalid ? 'InValid' : 'Valid')
     }
   ];
-  return (
-    <Panel>
-      <Row className='container-of-add-new-button'>
-        <Col xs={24}>
-          <div className="container-of-add-new-button">
+
+  const tablebuttons = (<><div className="container-of-add-new-button">
             <MyButton
               prefixIcon={() => <AddOutlineIcon />}
               color="var(--deep-blue)"
@@ -291,12 +290,17 @@ const WarehouseItemsSetup = () => {
             >
               Add New
             </MyButton>
-          </div>
+          </div></>);
+  return (
+    <Panel>
+      <Row className='container-of-add-new-button'>
+        <Col xs={24}>
           <MyTable
             height={450}
             data={warehouseContainProductsListResponseLoading?.object ?? []}
             loading={warehouseProductIsFetching}
             columns={tableColumns}
+            tableButtons={tablebuttons}
             rowClassName={isSelected}
             filters={filters()}
             onRowClick={rowData => {

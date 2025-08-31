@@ -2,6 +2,7 @@ import ChatModal from "@/components/ChatModal";
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import MyModal from "@/components/MyModal/MyModal";
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
@@ -12,7 +13,7 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsRadReport, newApDiagnosticOrderTestsReportNotes } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
-import { faComment, faFileLines, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faComment, faFileLines, faStar,faMagnifyingGlassPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useRef, useState } from "react";
 import { Checkbox, Col, Form, HStack, Row, Tooltip, Whisper } from "rsuite";
@@ -350,7 +351,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
         });
     };
     const filters = () => {
-        return (
+        return (<>
             <Form layout="inline" fluid className="date-filter-form">
                 <MyInput
                     column
@@ -397,7 +398,8 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                     Show Review Result
                 </Checkbox>
             </Form>
-        );
+            <AdvancedSearchFilters searchFilter={true}/>
+        </>);
     };
     return (<>
         <MyTable
