@@ -10,6 +10,7 @@ import MyTable from "@/components/MyTable";
 import MyInput from "@/components/MyInput";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faSquareXmark } from "@fortawesome/free-solid-svg-icons";
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import CancellationModal from "@/components/CancellationModal";
@@ -321,10 +322,9 @@ const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTa
         }
     ];
 
-    const filters = () => (
+    const filters = () => (<>
         <Form layout="inline" fluid className="container-of-filter-fields-department">
             <MyInput
-
                 fieldType="date"
                 fieldLabel="From Date"
                 fieldName="fromDate"
@@ -333,7 +333,6 @@ const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTa
                 showLabel={false}
             />
             <MyInput
-
                 fieldType="date"
                 fieldLabel="To Date"
                 fieldName="toDate"
@@ -341,21 +340,17 @@ const RequestList = ({ patient, setPatient, encounter, setEncounter, setActiveTa
                 setRecord={setDateFilter}
                 showLabel={false}
             />
-            <div className='bt-div'>
-
                 <Checkbox
                     checked={!showCancelled}
                     onChange={() => {
                         setShowCancelled(!showCancelled);
 
-                    }}
-                >
+                    }}>
                     Show Cancelled
                 </Checkbox>
-
-            </div>
-        </Form>
-    );
+</Form>
+      <AdvancedSearchFilters searchFilter={true}/>
+    </>);
     return (
 
         <Row>

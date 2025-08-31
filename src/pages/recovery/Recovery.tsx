@@ -1,6 +1,7 @@
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import {
   useGetOperationRequestsListQuery,
   useSaveOperationRequestsMutation
@@ -305,7 +306,7 @@ const Recovery = () => {
     }
   };
 
-  const filters = () => (
+  const filters = () => (<>
     <Form layout="inline" fluid className="container-of-filter-fields-department">
       <MyInput
         fieldType="date"
@@ -325,7 +326,10 @@ const Recovery = () => {
       />
       <Checkbox>Show Moved to bed</Checkbox>
     </Form>
-  );
+
+          <AdvancedSearchFilters searchFilter={true}/>
+
+  </>);
   return (
     <div className="container">
       <div className="left-box">

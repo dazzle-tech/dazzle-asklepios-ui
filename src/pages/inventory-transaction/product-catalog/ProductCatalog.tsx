@@ -21,6 +21,7 @@ import Translate from '@/components/Translate';
 import { MdCheckBox, MdListAlt } from 'react-icons/md';
 import InfoCardList from '@/components/InfoCardList';
 import ModalProductCard from './ModalProductCard';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { set } from 'lodash';
 const ProductCatalog = () => {
 
@@ -201,8 +202,11 @@ const ProductCatalog = () => {
 
     return (
          <div className='container-div'>
-           <div className='field-btn-div'>
+           <div className='field-btn-div'>                            
+            
+            <div className='product-catalog-filters-borders'>
                         <Form layout='inline' fluid>
+                                <div className='inputs-product-catalog-filters'>
                             <MyInput
                                 column
                                 fieldLabel="Product Name"
@@ -238,13 +242,9 @@ const ProductCatalog = () => {
                                 selectDataValue="key"
                                 record={searchPatient}
                                 setRecord={setSearchPatient}
-                            />
+                            /></div>
                         </Form>
-                        <div className='bt-right-group'>
-                            <div className='btns-group'>
-                                <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />} ></MyButton>
-                                <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} >Clear</MyButton>
-                            </div>
+                                <AdvancedSearchFilters searchFilter={true}/>
                         </div>
                     </div>
             <InfoCardList

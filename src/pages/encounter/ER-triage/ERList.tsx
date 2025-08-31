@@ -25,13 +25,16 @@ import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagement
 import { faBed } from '@fortawesome/free-solid-svg-icons';
 import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
-import './styles.less'
+import './styles.less';
 import MyInput from "@/components/MyInput";
 import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import MyLabel from '@/components/MyLabel';
+
 
 const ERList = () => {
     const location = useLocation();
@@ -147,8 +150,9 @@ const ERList = () => {
         }
     };
     // Function to search for patients based on the search keyword
-    const filters = () => (
-        <Form fluid className="switch-dep-dev">
+    const filters = () => (<>
+        <Form fluid>
+            <div className='er-department-table-filters-position'>
                 <MyInput
                 require
                 fieldLabel="Select Department"
@@ -165,7 +169,7 @@ const ERList = () => {
                 searchable={false}
                 width={200}
             />
-
+            <div className='switch-department-er-department-position'>
             <MyButton
                     size="small"
                     backgroundColor="gray"
@@ -173,7 +177,8 @@ const ERList = () => {
                     prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />
                     }>
                     Switch Department
-            </MyButton>
+            </MyButton></div>
+
                 <MyInput
           width="10vw"
           fieldLabel="Select Filter"
@@ -211,15 +216,11 @@ const ERList = () => {
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
-            />
-<div className='buttons-filter-table-position-handle'>
-<MyButton appearance='ghost'>
-  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
-  Advance
-</MyButton>
-</div>
+            /></div>
         </Form>
-    );
+        <AdvancedSearchFilters searchFilter={true}/>
+
+    </>);
 
     //useEffect
     useEffect(() => {

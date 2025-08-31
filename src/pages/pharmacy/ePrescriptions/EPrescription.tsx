@@ -16,6 +16,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds } from '@/utils';
 import PatientSearch from '@/pages/patient/patient-profile/tabs/FamilyMember/PatientSearch';
 import SearchIcon from '@rsuite/icons/Search';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { fromCamelCaseToDBName } from '@/utils';
 import MedicationsModal from './MedicationsModal';
@@ -356,7 +357,7 @@ const EPrescriptions = () => {
   };
 
   // Filter orders table
-  const filters = () => (
+  const filters = () => (<>
     <Form layout="inline" fluid className="filter-fields-pharmacey">
       <MyInput
         column
@@ -404,11 +405,10 @@ const EPrescriptions = () => {
         record={{}}
         setRecord={{}}
       />
-      <MyButton color="var(--deep-blue)" width="109px">
-        Search
-      </MyButton>
     </Form>
-  );
+          <AdvancedSearchFilters searchFilter={true}/>
+
+  </>);
   console.log('selectedPatientRelation', selectedPatientRelation);
   //Table columns
   const tableOrdersColumns = [

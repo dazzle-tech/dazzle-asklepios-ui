@@ -6,6 +6,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
@@ -28,8 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import SendToModal from './SendToModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
-import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
-
+import './styles.less';
 const ERTriage = () => {
     const location = useLocation();
     const dispatch = useDispatch();
@@ -460,8 +460,9 @@ const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
     };
 
     const filters = () => {
-        return (
+        return (<>
             <Form fluid className="date-filter-form">
+                <div className='er-triage-filters-position-handle'>
                 <MyInput
                     width={180}
                     fieldType="date"
@@ -516,26 +517,22 @@ const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
           record={record}
           setRecord={setRecord}
           />
-            <MyInput
-            width={200}
-            fieldType="select"
-            fieldLabel="Encounter Status"
+        <MyInput
+          width="10vw"
+          fieldType="select"
+          fieldLabel="Encounter Status"
             fieldName="key"
             selectData={encounterStatusLov?.object ?? []}
             selectDataLabel="lovDisplayVale"
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
-            />
-
-<MyButton appearance='ghost'>
-  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
-  Advance
-</MyButton>
-
-
+        />
+</div>
             </Form>
-        );
+     <AdvancedSearchFilters searchFilter={true}/>
+
+        </>);
     };
     return (
         <Panel>

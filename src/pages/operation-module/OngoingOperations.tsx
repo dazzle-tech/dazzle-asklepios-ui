@@ -7,6 +7,7 @@ import { newApOperationRequests } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
 import { formatDateWithoutSeconds } from "@/utils";
 import { faNotesMedical, faPlay } from "@fortawesome/free-solid-svg-icons";
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
@@ -277,7 +278,7 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
             return [...filters, newFilter];
         }
     };
-    const filters = () => (
+    const filters = () => (<>
         <Form layout="inline" fluid className="container-of-filter-fields-department">
             <MyInput
 
@@ -299,7 +300,10 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
             />
 
         </Form>
-    );
+
+      <AdvancedSearchFilters searchFilter={true}/>
+
+    </>);
     return (<>
         <MyTable
             filters={filters()}

@@ -21,6 +21,7 @@ import { useGetInventoryTransactionsAttachmentQuery, useGetInventoryTransactions
 import Translate from '@/components/Translate';
 import { MdCheckBox, MdListAlt } from 'react-icons/md';
 import TransferProductList from './TransferProductList';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 const inventoryTransferApproval = () => {
 
     const [open, setOpen] = useState(false);
@@ -281,11 +282,7 @@ const inventoryTransferApproval = () => {
         };
     }, [location.pathname, dispatch]);
 
-    
-    return (
-        <div className='container-div'>
-            <div className='field-btn-div'>
-                <Form layout='inline' fluid>
+    const filters = (<>   <Form layout='inline' fluid>
                     <MyInput
                         column
                         fieldLabel="From Date"
@@ -325,17 +322,14 @@ const inventoryTransferApproval = () => {
                         setRecord={setInsurancePatient}
                     />
                 </Form>
-                <div className='bt-right-group'>
-                    <div className='btns-group'>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />} ></MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} >Clear</MyButton>
-                    </div>
-                </div>
-            </div>
+                <AdvancedSearchFilters searchFilter={true}/></>);
+    return (<>
+
             <MyTable
                 data={inventoryTransListResponse?.object ?? []}
                 columns={columns}
                 height={800}
+                filters={filters}
                 loading={false}
             />
             <TransferProductList
@@ -345,9 +339,8 @@ const inventoryTransferApproval = () => {
                 setTransfer={setTransfer}
                 refetch={refetchTransProduct}
             />
-        </div>
 
-    );
+    </>);
 };
 
 export default inventoryTransferApproval;

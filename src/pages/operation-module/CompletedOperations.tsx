@@ -8,6 +8,7 @@ import { formatDateWithoutSeconds } from "@/utils";
 import { faEye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { FaStreetView } from "react-icons/fa";
 import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
 import StartedDetails from "./StartedDetails/StartedDetails";
@@ -261,7 +262,7 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
         }
     };
 
-    const filters = () => (
+    const filters = () => (<>
             <Form layout="inline" fluid className="container-of-filter-fields-department">
                 <MyInput
     
@@ -283,7 +284,10 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                 />
     
             </Form>
-        );
+
+                  <AdvancedSearchFilters searchFilter={true}/>
+        
+        </>);
     return (<> <MyTable
             filters={filters()}
             columns={columns}

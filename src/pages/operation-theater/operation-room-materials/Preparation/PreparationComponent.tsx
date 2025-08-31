@@ -8,6 +8,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Form } from 'rsuite';
 import './styles.less';
 
@@ -143,7 +144,7 @@ const Preparation = () => {
   });
 
   //Table Filters(Header)
-  const filterstable = (
+  const filterstable = (<>
     <Form fluid>
       <h5 className="requested-procedures-table-header">Requested Operation</h5>
       <div className="from-to-input-position">
@@ -165,7 +166,10 @@ const Preparation = () => {
         />
       </div>
     </Form>
-  );
+      <AdvancedSearchFilters searchFilter={true}/>
+
+
+  </>);
 //Pagination
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 

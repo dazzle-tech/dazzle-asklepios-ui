@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Whisper, Tooltip } from 'rsuite';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
@@ -259,7 +260,7 @@ const ERDashboardTable = () => {
 
   const isSelectedRow = (row: any) => (row.id === selectedRowId ? 'selected-row' : '');
 
-  const tableFilters = (
+  const tableFilters = (<>
     <Form fluid>
       <div className="filters-container">
         <MyInput
@@ -371,7 +372,8 @@ const ERDashboardTable = () => {
         />
       </div>
     </Form>
-  );
+    <AdvancedSearchFilters searchFilter={true}/>
+  </>);
 
   return (
     <div className="first-middle-table-er-dashboard">

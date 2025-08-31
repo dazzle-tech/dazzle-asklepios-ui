@@ -39,7 +39,7 @@ import { faPersonWalkingArrowRight } from '@fortawesome/free-solid-svg-icons';
 import TemporaryDischarge from './temporaryDischarge/TemporaryDischarge';
 import { faPersonWalkingArrowLoopLeft } from '@fortawesome/free-solid-svg-icons';
 import ReturnFromTemporary from './temporaryDischarge/ReturnFromTemporary';
-import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import {faBarcode, faUserGroup} from '@fortawesome/free-solid-svg-icons';
 
@@ -256,13 +256,14 @@ const InpatientList = () => {
             setRecord={setEncounterStatus}
             />
 
-<MyButton appearance='ghost'>
-  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
-  Advance
-</MyButton>
       </div>
     </Form>
-    <div className='companion-wrist-icons-position-handles'>
+    <AdvancedSearchFilters searchFilter={true}/>
+
+</>
+  );
+
+  const tablebuttons =(<>    <div className='companion-wrist-icons-position-handles'>
     <Whisper trigger="hover" placement="top" speaker={tooltipWrist}>
                 <div>
                   <MyButton
@@ -281,8 +282,7 @@ const InpatientList = () => {
                     <FontAwesomeIcon icon={faUserGroup} />
                   </MyButton>
                 </div>
-              </Whisper></div></>
-  );
+              </Whisper></div></>);
 
   //useEffect
   useEffect(() => {
@@ -614,6 +614,7 @@ const InpatientList = () => {
         filters={filters()}
         data={encounterListResponse?.object ?? []}
         columns={tableColumns}
+        tableButtons={tablebuttons}
         rowClassName={isSelected}
         loading={isLoading || (manualSearchTriggered && isFetching) || isFetching}
         onRowClick={rowData => {

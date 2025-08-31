@@ -16,6 +16,7 @@ import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { faFileCsv } from '@fortawesome/free-solid-svg-icons';
 import ReactDOMServer from 'react-dom/server';
 import MyButton from '@/components/MyButton/MyButton';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { formatDateWithoutSeconds } from '@/utils';
 import { useGetInventoryTransactionsAttachmentQuery, useGetInventoryTransactionsProductQuery, useGetInventoryTransactionsQuery, useGetInventoryTransferQuery } from '@/services/inventoryTransactionService';
 import Translate from '@/components/Translate';
@@ -257,11 +258,7 @@ const inventoryTransfer = () => {
         };
     }, [location.pathname, dispatch]);
 
-
-    return (
-        <div className='container-div'>
-            <div className='field-btn-div'>
-                <Form layout='inline' fluid>
+const filters = (<>                <Form layout='inline' fluid>
                     <MyInput
                         column
                         fieldLabel="From Date"
@@ -301,24 +298,27 @@ const inventoryTransfer = () => {
                         setRecord={setInsurancePatient}
                     />
                 </Form>
-                <div className='bt-right-group'>
-                    <div className='btns-group'>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />} ></MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} >Clear</MyButton>
+                
+                          <AdvancedSearchFilters searchFilter={true}/>
+</>);
+
+const tablebuttons = (<><div className='btns-group'>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => setOpen(true)}>Initiate Transfer</MyButton>
-                    </div>
-                </div>
-            </div>
+                    </div></>);
+    return (<>
+
+
             <MyTable
                 data={inventoryTransListResponse?.object ?? []}
                 columns={columns}
+                filters={filters}
+                tableButtons={tablebuttons}
                 height={800}
                 loading={false}
             />
             <AddEditTransfer open={open} setOpen={setOpen} transfer={transfer} setTransfer={setTransfer} refetch={refetchTransProduct} />
-        </div>
 
-    );
+    </>);
 };
 
 export default inventoryTransfer;

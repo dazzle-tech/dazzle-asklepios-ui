@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
@@ -372,7 +373,7 @@ const ERWaitingList = () => {
   };
 
   const filters = () => {
-    return (
+    return (<>
       <Form layout="inline" fluid className="date-filter-form">
         <MyInput
           column
@@ -393,7 +394,8 @@ const ERWaitingList = () => {
           setRecord={setDateFilter}
         />
       </Form>
-    );
+<AdvancedSearchFilters searchFilter={true}/>
+    </>);
   };
   return (
     <Panel>

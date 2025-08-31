@@ -5,6 +5,7 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
@@ -364,7 +365,7 @@ const DayCaseList = () => {
         });
     };
     // filters
-    const filters = () => (
+    const filters = () => (<>
         <Form layout="inline" fluid>
             <div className="switch-dep-dev ">
                 {' '}
@@ -437,14 +438,10 @@ const DayCaseList = () => {
             record={encounterStatus}
             setRecord={setEncounterStatus}
             />
-
-<MyButton appearance='ghost'>
-  <FontAwesomeIcon icon={faMagnifyingGlassPlus}/>
-  Advance
-</MyButton>
             </div>
         </Form>
-    );
+        <AdvancedSearchFilters searchFilter={true}/>
+    </>);
 
     // Effects 
     // useEffect(() => {

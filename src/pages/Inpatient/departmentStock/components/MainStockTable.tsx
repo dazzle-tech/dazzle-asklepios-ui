@@ -6,6 +6,8 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import DepartmentStockHeader from './DepartmentStockHeader';
 import Translate from '@/components/Translate';
 import { formatDateWithoutSeconds } from '@/utils';
 
@@ -82,7 +84,7 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
   /**
    * Search and filter form for the main table
    */
-  const filters = () => (
+  const filters = () => (<>
     <Form layout="inline" fluid className="filter-fields-pharmacey">
       <MyInput
         column
@@ -138,11 +140,11 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
         record={{}}
         setRecord={{}}
       />
-      <MyButton color="var(--deep-blue)" width="109px">
-        Search
-      </MyButton>
     </Form>
-  );
+
+    <AdvancedSearchFilters searchFilter={true}/>
+
+  </>);
 
   /**
    * Main table columns configuration
@@ -316,6 +318,11 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
     }
   ];
 
+ const handleExportXLS = () => {
+    console.log('Export XLS clicked');};
+  const handleRefillRequest = () => {
+    console.log('Refill Request clicked');};
+
   return (
     <MyTable
       data={data}
@@ -326,6 +333,9 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
       onPageChange={onPageChange}
       onRowsPerPageChange={onRowsPerPageChange}
       height={500}
+      tableButtons={<><DepartmentStockHeader
+          onExportXLS={handleExportXLS}
+          onRefillRequest={handleRefillRequest}/></>}
       filters={filters()}
     />
   );

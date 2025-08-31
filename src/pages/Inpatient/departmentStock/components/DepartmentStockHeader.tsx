@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
-
+import './style.less';
 /**
  * DepartmentStockHeader Component
  *
