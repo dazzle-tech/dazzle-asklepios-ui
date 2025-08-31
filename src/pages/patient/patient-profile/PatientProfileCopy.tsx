@@ -23,6 +23,7 @@ import PatientDuplicate from './patientsDuplicate';
 import SectionContainer from '@/components/SectionsoContainer';
 import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 import PatientAppointments from './PatientAppointments';
+import BedsideRegistrationsModal from './BedsideRegistrations';
 
 const { getHeight } = DOMHelper;
 
@@ -43,6 +44,7 @@ const PatientProfile = () => {
   const [refetchData, setRefetchData] = useState(false);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
+  const [openBedsideRegistrations,setOpenBedsideRegistrations] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
   const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
@@ -178,6 +180,7 @@ const PatientProfile = () => {
             setQuickAppointmentModel={setQuickAppointmentModel}
             validationResult={validationResult}
             setRefetchAttachmentList={setRefetchAttachmentList}
+            setOpenBedsideRegistrations={setOpenBedsideRegistrations}
           />
 
           <div className="container-of-tabs-reg">
@@ -238,6 +241,11 @@ const PatientProfile = () => {
           setQuickAppointmentModel={setQuickAppointmentModel}
         />
       )}
+      <BedsideRegistrationsModal 
+      open={openBedsideRegistrations}
+      setOpen={setOpenBedsideRegistrations}
+      setLocalPatient={setLocalPatient}
+      />
       <PatientDuplicate
         open={openPatientsDuplicateModal}
         setOpen={setOpenPatientsDuplicateModal}

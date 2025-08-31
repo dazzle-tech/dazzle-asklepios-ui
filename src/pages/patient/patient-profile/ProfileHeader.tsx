@@ -22,6 +22,7 @@ interface ProfileHeaderProps {
   validationResult: any;
   setQuickAppointmentModel: (value: boolean) => void;
   setRefetchAttachmentList: (value: boolean) => void;
+  setOpenBedsideRegistrations: (value: boolean) => void
 }
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
@@ -30,7 +31,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setVisitHistoryModel,
   setQuickAppointmentModel,
   setRefetchAttachmentList,
-  validationResult
+  validationResult,
+  setOpenBedsideRegistrations
 }) => {
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
@@ -204,10 +206,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
               Quick Appointment
             </MyButton>
+             
             <AdministrativeWarningsModal
               localPatient={localPatient}
               validationResult={validationResult}
             />
+            <MyButton onClick={() => setOpenBedsideRegistrations(true)}>
+              Bedside Registrations
+            </MyButton>
           </Form>
         </Form>
       </Stack.Item>
