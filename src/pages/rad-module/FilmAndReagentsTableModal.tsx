@@ -36,8 +36,8 @@ const FilmAndReagentsTableModal: React.FC<FilmAndReagentsTableModalProps> = ({ o
     }
   ]);
   const filterFields = [
-    { label: 'Reagent', value: 'reagent' },
-    { label: 'Film', value: 'film' }
+    { label: 'Reagent', value: 'Reagent' },
+    { label: 'Film', value: 'Film' }
   ];
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const handleRowClick = (row: any) => {
