@@ -99,7 +99,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
         switch (stepNumber) {
             case 0:
                 return (
-                    <RegistrationEncounter localEncounter={localEncounter} setLocalEncounter={setLocalEncounter} isReadOnly={isReadOnly} />
+                    <RegistrationEncounter localEncounter={localEncounter} setLocalEncounter={setLocalEncounter} isReadOnly={isReadOnly} localPatient={localPatient} />
                 );
             case 1:
                 return (

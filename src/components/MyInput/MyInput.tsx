@@ -183,6 +183,7 @@ const MyInput = ({
             searchable={props.searchable}
             menuMaxHeight={props?.menuMaxHeight ?? ''}
             onKeyDown={focusNextField}
+            loading={props?.loading ?? false}
           />
         );
       //<TagPicker data={data} style={{ width: 300 }} />
