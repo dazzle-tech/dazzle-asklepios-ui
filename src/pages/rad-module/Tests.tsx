@@ -18,7 +18,12 @@ import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import ReloadIcon from '@rsuite/icons/Reload';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { notify } from '@/utils/uiReducerActions';
-import { faComment, faHospitalUser, faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
+import {
+  faClipboardList,
+  faComment,
+  faHospitalUser,
+  faRightFromBracket
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState, useEffect, useRef } from 'react';
 import { HStack, Tooltip, Whisper } from 'rsuite';
@@ -26,8 +31,17 @@ import ChatModal from '@/components/ChatModal';
 import { formatDateWithoutSeconds } from '@/utils';
 import PatientArrivalModal from './PatientArrivalModal';
 import { useDeleteTestReportsMutation } from '@/services/radService';
-import { set } from 'lodash';
-const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport, saveReportMutation, reportFetch }) => {
+const Tests = ({
+  test,
+  setTest,
+  order,
+  patient,
+  encounter,
+  saveTest,
+  saveReport,
+  saveReportMutation,
+  reportFetch
+}) => {
   const dispatch = useAppDispatch();
   const [openNoteModal, setOpenNoteModal] = useState(false);
   const [openArrivalModal, setOpenArrivalModal] = useState(false);
@@ -56,7 +70,7 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
   });
 
   const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
-  const [deleteReports]=useDeleteTestReportsMutation();
+  const [deleteReports] = useDeleteTestReportsMutation();
   const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(
     test?.key || undefined,
     { skip: test.key == null }
@@ -70,7 +84,6 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
     refetch: fetchTest,
     isFetching: isTestFetching
   } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
-
 
   const isSelected = rowData => {
     if (rowData && test && rowData.key === test.key) {
@@ -119,11 +132,9 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
     fetchData();
   }, [test]);
 
-
   useEffect(() => {
     reportFetch();
-  }
-    , [saveReportMutation?.isSuccess]);
+  }, [saveReportMutation?.isSuccess]);
   const handleRejectedTest = async () => {
     try {
       const Response = await saveTest({
@@ -173,21 +184,25 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       dispatch(notify({ msg: 'Wait for the patient to arrive', sev: 'warning' }));
     }
   };
-  const handleUndoAcceptTest= async rowData => {
-  
-
+  const handleUndoAcceptTest = async rowData => {
     try {
-        const Response=await saveTest({...rowData, processingStatusLkey: '6055029972709625', acceptedAt: null ,patientArrivedAt:null}).unwrap();
+      const Response = await saveTest({
+        ...rowData,
+        processingStatusLkey: '6055029972709625',
+        acceptedAt: null,
+        patientArrivedAt: null
+      }).unwrap();
       await deleteReports(rowData.key).unwrap();
-     
+
       dispatch(notify({ msg: 'Undo Successfully', sev: 'success' }));
       setTest({ ...newApDiagnosticOrderTests });
-     fetchTest();
-     reportFetch();
+      fetchTest();
+      reportFetch();
       // setTest({ ...Response });
     } catch (error) {
-      dispatch(notify({ msg: 'Undo Faild', sev: 'error' }))
-      ;}}
+      dispatch(notify({ msg: 'Undo Faild', sev: 'error' }));
+    }
+  };
   const handleSendMessage = async value => {
     try {
       await savenotes({
@@ -264,11 +279,13 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       title: <Translate>PHYSICIAN</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.createdBy}</span>
-          <br />
-          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.createdAt)}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.createdBy}</span>
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
+          </>
+        );
       }
     },
     {
@@ -324,7 +341,6 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
           : rowData.processingStatusLkey;
       }
     },
-    ,
     {
       key: 'action',
       title: <Translate>ACTION</Translate>,
@@ -332,6 +348,13 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       render: (rowData: any) => {
         return (
           <HStack spacing={10}>
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Assessment</Tooltip>}>
+              <FontAwesomeIcon
+                icon={faClipboardList}
+                style={{ fontSize: '1em', marginRight: 10 }}
+                className="icons-styles font-aws"
+              />
+            </Whisper>
             <Whisper placement="top" trigger="hover" speaker={<Tooltip>Accepted</Tooltip>}>
               <CheckRoundIcon
                 onClick={() =>
@@ -344,12 +367,12 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
                   marginRight: 10,
                   color:
                     rowData.processingStatusLkey !== '6055029972709625' &&
-                      rowData.processingStatusLkey !== '6816324725527414'
+                    rowData.processingStatusLkey !== '6816324725527414'
                       ? 'gray'
                       : 'inherit',
                   cursor:
                     rowData.processingStatusLkey !== '6055029972709625' &&
-                      rowData.processingStatusLkey !== '6816324725527414'
+                    rowData.processingStatusLkey !== '6816324725527414'
                       ? 'not-allowed'
                       : 'pointer'
                 }}
@@ -358,18 +381,18 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
             <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accepted</Tooltip>}>
               <ReloadIcon
                 onClick={() =>
-                  (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED') &&
+                  rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED' &&
                   handleUndoAcceptTest(rowData)
                 }
                 style={{
                   fontSize: '1em',
                   marginRight: 10,
                   color:
-                    (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED')
+                    rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED'
                       ? 'inherit'
                       : 'gray',
                   cursor:
-                    (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED')
+                    rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED'
                       ? 'pointer'
                       : 'not-allowed'
                 }}
@@ -388,12 +411,12 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
                   marginRight: 10,
                   color:
                     rowData.processingStatusLkey !== '6055029972709625' &&
-                      rowData.processingStatusLkey !== '6816324725527414'
+                    rowData.processingStatusLkey !== '6816324725527414'
                       ? 'gray'
                       : 'inherit',
                   cursor:
                     rowData.processingStatusLkey !== '6055029972709625' &&
-                      rowData.processingStatusLkey !== '6816324725527414'
+                    rowData.processingStatusLkey !== '6816324725527414'
                       ? 'not-allowed'
                       : 'pointer'
                 }}
@@ -414,20 +437,20 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       }
     },
     ,
-
     {
       key: 'acceptedAt',
       dataKey: 'acceptedAt',
       title: <Translate>ACCEPTED AT/BY</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.acceptedBy}</span>
-          <br />
-          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.acceptedAt)}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.acceptedBy}</span>
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData.acceptedAt)}</span>
+          </>
+        );
       }
-
     },
 
     {
@@ -437,12 +460,13 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       flexGrow: 1,
       expandable: true,
       render: (rowData: any) => {
-        return <>
-          <span>{rowData.rejectedBy}</span>
-          <br />
-          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
-        </>
-
+        return (
+          <>
+            <span>{rowData.rejectedBy}</span>
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
+          </>
+        );
       }
     },
 
@@ -451,8 +475,56 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       dataKey: 'rejectedReason',
       title: <Translate>REJECTED REASON</Translate>,
       flexGrow: 1,
+      expandable: true
+    },
+    {
+      key: 'startedAt',
+      title: <Translate>STARTED AT/BY</Translate>,
       expandable: true,
 
+      render: (rowData: any) => (
+        <>
+          <span>{rowData.startedBy}</span>
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(rowData.startedAt)}</span>
+        </>
+      )
+    },
+    {
+      key: 'pausedAt',
+      title: <Translate>PAUSED AT/BY</Translate>,
+      expandable: true,
+      render: (rowData: any) => (
+        <>
+          <span>{rowData.pausedBy}</span>
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(rowData.pausedAt)}</span>
+        </>
+      )
+    },
+    {
+      key: 'resumedAt',
+      title: <Translate>RESUMED AT/BY</Translate>,
+      expandable: true,
+      render: (rowData: any) => (
+        <>
+          <span>{rowData.resumedBy}</span>
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(rowData.resumedAt)}</span>
+        </>
+      )
+    },
+    {
+      key: 'finishedAt',
+      title: <Translate>FINISHED AT/BY</Translate>,
+      expandable: true,
+      render: (rowData: any) => (
+        <>
+          <span>{rowData.finishedBy}</span>
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(rowData.finishedAt)}</span>
+        </>
+      )
     }
   ];
 

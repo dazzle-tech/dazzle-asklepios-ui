@@ -187,100 +187,98 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
 
   // left modal content
   const modalContent = (
-    <>
-      <Form fluid layout="inline" className="fields-container">
-        <MyInput
-          width={200}
-          column
-          fieldLabel="Patient Name"
-          fieldName="fullName"
-          record={localPatient}
-          setRecord={setLocalPatient}
-          disabled
-        />
-        <MyInput
-          width={200}
-          column
-          fieldLabel="Patient MRN"
-          fieldName="patientMrn"
-          record={localPatient}
-          setRecord={setLocalPatient}
-          disabled
-        />
-        <MyInput
-          width={200}
-          column
-          fieldLabel="Gender"
-          fieldType="select"
-          fieldName="genderLkey"
-          selectData={genderLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={localPatient}
-          setRecord={setLocalPatient}
-          disabled
-        />
-        <MyInput
-          width={200}
-          column
-          fieldLabel="Admission Date"
-          fieldName="plannedStartDate"
-          record={encounter}
-          setRecord={setEncounter}
-          disabled
-        />
-        <MyInput
-          width={200}
-          column
-          fieldLabel="Current Ward"
-          fieldName="departmentName"
-          record={encounter}
-          setRecord={setEncounter}
-          disabled
-        />
-        <MyInput
-          width={200}
-          column
-          fieldLabel="Room"
-          fieldName="name"
-          record={apRoom}
-          setRecord={setApRoom}
-          disabled
-        />
-        <MyInput
-          width={200}
-          column
-          fieldLabel="Bed"
-          fieldName="name"
-          record={apBed}
-          setRecord={setApBed}
-          disabled
-        />
-        <MyInput
-          column
-          fieldLabel="Responsible physician"
-          fieldType="select"
-          fieldName="physicianKey"
-          selectData={practitionerListResponse?.object ?? []}
-          selectDataLabel="practitionerFullName"
-          selectDataValue="key"
-          record={admitToInpatient}
-          setRecord={setAdmitToInpatient}
-          width={200}
-          disabled
-        />
-        <MyInput
-          width={400}
-          column
-          fieldType="textarea"
-          fieldLabel="Diagnosis"
-          fieldName="diagnosis"
-          record={encounter}
-          setRecord={setEncounter}
-          disabled
-        />
-      </Form>
-    </>
+    <Form fluid layout="inline" className="fields-container">
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Patient Name"
+        fieldName="fullName"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Patient MRN"
+        fieldName="patientMrn"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Gender"
+        fieldType="select"
+        fieldName="genderLkey"
+        selectData={genderLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Admission Date"
+        fieldName="plannedStartDate"
+        record={encounter}
+        setRecord={setEncounter}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Current Ward"
+        fieldName="departmentName"
+        record={encounter}
+        setRecord={setEncounter}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Room"
+        fieldName="name"
+        record={apRoom}
+        setRecord={setApRoom}
+        disabled
+      />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Bed"
+        fieldName="name"
+        record={apBed}
+        setRecord={setApBed}
+        disabled
+      />
+      <MyInput
+        column
+        fieldLabel="Responsible physician"
+        fieldType="select"
+        fieldName="physicianKey"
+        selectData={practitionerListResponse?.object ?? []}
+        selectDataLabel="practitionerFullName"
+        selectDataValue="key"
+        record={admitToInpatient}
+        setRecord={setAdmitToInpatient}
+        width={200}
+        disabled
+      />
+      <MyInput
+        width={400}
+        column
+        fieldType="textarea"
+        fieldLabel="Diagnosis"
+        fieldName="diagnosis"
+        record={encounter}
+        setRecord={setEncounter}
+        disabled
+      />
+    </Form>
   );
 
   // Function to handle saving the transfer patient data

@@ -543,10 +543,13 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                {item.status == '1' ? (
+                  <Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
-                }
+                  </Whisper>
+                ) : (
+                  icons.find(obj => obj.key === item.status).icon
+                )}
               </Col>
             </Row>
           ))}
@@ -567,10 +570,13 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                {item.status == '1' ? (
+                  <Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
-                }
+                  </Whisper>
+                ) : (
+                  icons.find(obj => obj.key === item.status).icon
+                )}
               </Col>
             </Row>
           ))}
@@ -591,10 +597,13 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                {item.status == '1' ? (
+                  <Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
-                }
+                  </Whisper>
+                ) : (
+                  icons.find(obj => obj.key === item.status).icon
+                )}
               </Col>
             </Row>
           ))}
@@ -615,10 +624,13 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                {item.status == '1' ? (
+                  <Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
-                }
+                  </Whisper>
+                ) : (
+                  icons.find(obj => obj.key === item.status).icon
+                )}
               </Col>
             </Row>
           ))}
@@ -639,10 +651,13 @@ const MAR = () => {
                 <MyBadgeStatus color="#45b887" contant={item.hour} />
               </Col>
               <Col md={2}>
-               {item.status == "1" ? (<Whisper placement="right" trigger="click" speaker={content}>
+                {item.status == '1' ? (
+                  <Whisper placement="right" trigger="click" speaker={content}>
                     {icons.find(obj => obj.key === item.status).icon}
-                </Whisper>) : ( icons.find(obj => obj.key === item.status).icon)
-                }
+                  </Whisper>
+                ) : (
+                  icons.find(obj => obj.key === item.status).icon
+                )}
               </Col>
             </Row>
           ))}
