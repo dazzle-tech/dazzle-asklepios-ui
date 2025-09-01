@@ -30,6 +30,8 @@ import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagement
 import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import MyModal from '@/components/MyModal/MyModal';
+import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 
 const DayCaseList = () => {
     const location = useLocation();
@@ -54,7 +56,7 @@ const DayCaseList = () => {
     const [openChangeBedModal, setOpenChangeBedModal] = useState(false);
     const [record, setRecord] = useState({});
     const [encounterStatus, setEncounterStatus] = useState({ key: '' });
-
+    const [openRefillModal, setOpenRefillModal] = useState(false);
     const [switchDepartment, setSwitchDepartment] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -506,6 +508,12 @@ const DayCaseList = () => {
                 onRowClick={rowData => {
                     setLocalEncounter(rowData);
                 }}
+                tableButtons={
+                        <>
+                        <MyButton onClick={() => setOpenRefillModal(true)}>
+                            Refill
+                        </MyButton>
+            </>}
                 sortColumn={listRequest.sortBy}
                 sortType={listRequest.sortType}
                 onSortChange={(sortBy, sortType) => {
@@ -536,6 +544,18 @@ const DayCaseList = () => {
                 localEncounter={encounter}
                 refetchInpatientList={refetchEncounter}
             />
+            <MyModal
+      open={openRefillModal}
+      setOpen={setOpenRefillModal}
+      title="Refill"
+      size="90vw"
+      content={<><RefillModalComponent></RefillModalComponent></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+                />
         </Panel>
     );
 };

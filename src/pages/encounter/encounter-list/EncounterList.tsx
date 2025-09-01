@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserNurse, faUserDoctor, faPrint } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
+import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
@@ -19,6 +20,7 @@ import {
 } from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import MyModal from '@/components/MyModal/MyModal';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import './styles.less';
@@ -47,6 +49,7 @@ const EncounterList = () => {
   const [open, setOpen] = useState(false);
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [record, setRecord] = useState({});
+  const [openRefillModal, setOpenRefillModal] = useState(false);
   const [encounterStatus, setEncounterStatus] = useState({ key: '' });
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
@@ -516,43 +519,64 @@ const EncounterList = () => {
       <AdvancedSearchFilters searchFilter={true}/>
     </>);
   };
-  return (
-    <Panel>
-      <MyTable
-        filters={filters()}
-        tableButtons={<><MyButton>
+return (
+  <Panel>
+    <MyTable
+      filters={filters()}
+      tableButtons={
+        <>
+          <MyButton onClick={() => setOpenRefillModal(true)}>
             Refill
-          </MyButton></>}
-        height={600}
-        data={encounterListResponse?.object ?? []}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        loading={isLoading || (manualSearchTriggered && isFetching)}
-        onRowClick={rowData => {
-          setLocalEncounter(rowData);
-        }}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          setListRequest({ ...listRequest, sortBy, sortType });
-        }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
-      <DeletionConfirmationModal
-        open={open}
-        setOpen={setOpen}
-        actionButtonFunction={handleCancelEncounter}
-        actionType="Deactivate"
-        confirmationQuestion="Do you want to cancel this Encounter ?"
-        actionButtonLabel="Cancel"
-        cancelButtonLabel="Close"
-      />
-    </Panel>
-  );
+          </MyButton>
+        </>
+      }
+      height={600}
+      data={encounterListResponse?.object ?? []}
+      columns={tableColumns}
+      rowClassName={isSelected}
+      loading={isLoading || (manualSearchTriggered && isFetching)}
+      onRowClick={rowData => {
+        setLocalEncounter(rowData);
+      }}
+      sortColumn={listRequest.sortBy}
+      sortType={listRequest.sortType}
+      onSortChange={(sortBy, sortType) => {
+        setListRequest({ ...listRequest, sortBy, sortType });
+      }}
+      page={pageIndex}
+      rowsPerPage={rowsPerPage}
+      totalCount={totalCount}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
+    />
+
+    {/* Refill Modal */}
+    <MyModal
+      open={openRefillModal}
+      setOpen={setOpenRefillModal}
+      title="Refill"
+      size="90vw"
+      content={<><RefillModalComponent></RefillModalComponent></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+    />
+
+
+    {/* Existing deletion modal */}
+    <DeletionConfirmationModal
+      open={open}
+      setOpen={setOpen}
+      actionButtonFunction={handleCancelEncounter}
+      actionType="Deactivate"
+      confirmationQuestion="Do you want to cancel this Encounter ?"
+      actionButtonLabel="Cancel"
+      cancelButtonLabel="Close"
+    />
+  </Panel>
+);
 };
 
 export default EncounterList;

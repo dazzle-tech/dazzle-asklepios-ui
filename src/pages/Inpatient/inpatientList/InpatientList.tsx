@@ -9,6 +9,7 @@ import { faRepeat } from '@fortawesome/free-solid-svg-icons';
 import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
+import DischargeTrackingModal from './dischargetracking/DischargeTrackingModal';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
   useGetInpatientEncountersQuery,
@@ -18,6 +19,8 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
+import MyModal from '@/components/MyModal/MyModal';
+import RefillModalComponent from '../departmentStock/refill-component';
 import ReactDOMServer from 'react-dom/server';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
@@ -72,6 +75,9 @@ const InpatientList = () => {
   const [openReturnFromTemporaryModal, setOpenReturnFromTemporaryModal] = useState(false);
   const tooltipWrist = <Tooltip>Wrist Band</Tooltip>;
   const tooltipCompanion = <Tooltip>Companion Card</Tooltip>;
+  const [openRefillModal, setOpenRefillModal] = useState(false);
+  const [openDischargeTracking, setOpenDischargeTracking] = useState(false);
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -263,7 +269,7 @@ const InpatientList = () => {
 </>
   );
 
-  const tablebuttons =(<>    <div className='companion-wrist-icons-position-handles'>
+  const tablebuttons = (<><div className='companion-wrist-icons-position-handles'>
     <Whisper trigger="hover" placement="top" speaker={tooltipWrist}>
                 <div>
                   <MyButton
@@ -282,7 +288,17 @@ const InpatientList = () => {
                     <FontAwesomeIcon icon={faUserGroup} />
                   </MyButton>
                 </div>
-              </Whisper></div></>);
+              </Whisper>
+                          <MyButton onClick={() => setOpenRefillModal(true)}>
+            Refill
+          </MyButton>
+
+          <MyButton onClick={() => setOpenDischargeTracking(true)}>
+            Discharge Tracking
+          </MyButton> 
+        </div>
+        
+</>);
 
   //useEffect
   useEffect(() => {
@@ -673,6 +689,32 @@ const InpatientList = () => {
         localPatient={localPatient}
         departmentKey={encounter?.resourceObject?.key}
       />
+
+      <MyModal
+      open={openRefillModal}
+      setOpen={setOpenRefillModal}
+      title="Refill"
+      size="90vw"
+      content={<><RefillModalComponent></RefillModalComponent></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+    />
+
+      <MyModal
+      open={openDischargeTracking}
+      setOpen={setOpenDischargeTracking}
+      title="Discharge Tracking"
+      size="55vw"
+      content={<><DischargeTrackingModal/></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save Discharge Tracking');
+      }}
+      cancelButtonLabel="Close"
+    />
     </Panel>
   );
 };
