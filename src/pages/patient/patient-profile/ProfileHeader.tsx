@@ -185,7 +185,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
           </AvatarGroup>
           <Form fluid layout="inline">
-                        <MyButton>Print Patient Label</MyButton>
+            <MyButton>Print Patient Label</MyButton>
             <MyButton>Scan Document</MyButton>
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -197,7 +197,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               Clear
             </MyButton>
 
-
             <MyButton
               appearance="ghost"
               disabled={localPatient.key === undefined}
@@ -208,7 +207,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
               Quick Appointment
             </MyButton>
-             
+
             <AdministrativeWarningsModal
               localPatient={localPatient}
               validationResult={validationResult}
@@ -219,6 +218,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <MyButton onClick={() => setOpenRegistrationWarningsSummary(true)}>
               Registration Warnings Summary
             </MyButton>
+            <MyButton>Print Information</MyButton>
+            <MyButton>Price List</MyButton>
+            <MyButton>Approvals</MyButton>
+            <MyButton>Appointments</MyButton>
+            <MyButton>Bulk Registration</MyButton>
+            <MyButton>Transactions</MyButton>
           </Form>
         </Form>
       </Stack.Item>
