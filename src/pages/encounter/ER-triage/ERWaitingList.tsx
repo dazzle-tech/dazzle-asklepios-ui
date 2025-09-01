@@ -28,8 +28,6 @@ import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import BedAssignmentModal from '../day-case/DayCaseList/BedAssignmentModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
-import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
-import MyModal from '@/components/MyModal/MyModal';
 
 const ERWaitingList = () => {
   const location = useLocation();
@@ -40,7 +38,6 @@ const ERWaitingList = () => {
   const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
-  const [openRefillModal, setOpenRefillModal] = useState(false);
 
   // header setup
   const divContent = (
@@ -427,12 +424,6 @@ const ERWaitingList = () => {
         page={pageIndex}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
-        tableButtons={
-        <>
-          <MyButton onClick={() => setOpenRefillModal(true)}>
-            Refill
-          </MyButton>
-            </>}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
@@ -444,18 +435,7 @@ const ERWaitingList = () => {
         confirmationQuestion="Do you want to cancel this Encounter ?"
         actionButtonLabel='Cancel'
         cancelButtonLabel='Close' />
-      <MyModal
-        open={openRefillModal}
-        setOpen={setOpenRefillModal}
-        title="Refill"
-        size="90vw"
-        content={<><RefillModalComponent></RefillModalComponent></>}
-        actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
-        cancelButtonLabel="Close"
-      />
+    
 
     </Panel>
   );

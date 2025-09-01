@@ -34,6 +34,9 @@ import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import MyLabel from '@/components/MyLabel';
+import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
+import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+import MyModal from '@/components/MyModal/MyModal';
 
 
 const ERList = () => {
@@ -61,6 +64,8 @@ const ERList = () => {
     const [record, setRecord] = useState({});
     const [encounterStatus, setEncounterStatus] = useState({ key: '' });
     const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
+      const [openRefillModal, setOpenRefillModal] = useState(false);
+      const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -462,6 +467,16 @@ const ERList = () => {
             pageNumber: 1 // reset to first page
         });
     };
+        const tablebuttons = (<div className='er-list-table-buttons-position-handle'>
+            <MyButton onClick={() => setOpenRefillModal(true)}>
+                       Refill
+                  </MyButton>
+                  <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
+                            Task Management
+                        </MyButton>
+
+
+                  </div>);
 
     return (
         <Panel>
@@ -479,6 +494,7 @@ const ERList = () => {
                 data={encounterListResponse?.object ?? []}
                 columns={tableColumns}
                 rowClassName={isSelected}
+                tableButtons ={tablebuttons}
                 loading={isLoading || (manualSearchTriggered && isFetching) || isFetching}
                 onRowClick={rowData => {
                     setLocalEncounter(rowData);
@@ -518,6 +534,31 @@ const ERList = () => {
                 confirmationQuestion="Do you want to cancel this Encounter ?"
                 actionButtonLabel='Cancel'
                 cancelButtonLabel='Close' />
+                  <MyModal
+        open={openRefillModal}
+        setOpen={setOpenRefillModal}
+        title="Refill"
+        size="90vw"
+        content={<><RefillModalComponent></RefillModalComponent></>}
+        actionButtonLabel="Save"
+        actionButtonFunction={() => {
+          console.log('Save refill clicked');
+        }}
+        cancelButtonLabel="Close"
+      />
+
+<MyModal
+      open={openPhysicianOrderSummaryModal}
+      setOpen={setOpenPhysicianOrderSummaryModal}
+      title="Task Management"
+      size="90vw"
+      content={<><PhysicianOrderSummaryModal></PhysicianOrderSummaryModal></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+        />
         </Panel>
     );
 };
