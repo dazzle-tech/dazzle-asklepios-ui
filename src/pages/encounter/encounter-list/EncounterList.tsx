@@ -32,6 +32,8 @@ import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+
 
 const EncounterList = () => {
   const location = useLocation();
@@ -50,6 +52,7 @@ const EncounterList = () => {
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [record, setRecord] = useState({});
   const [openRefillModal, setOpenRefillModal] = useState(false);
+  const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [encounterStatus, setEncounterStatus] = useState({ key: '' });
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
@@ -524,11 +527,16 @@ return (
     <MyTable
       filters={filters()}
       tableButtons={
-        <>
-          <MyButton onClick={() => setOpenRefillModal(true)}>
-            Refill
-          </MyButton>
-        </>
+<div className='out-patient-list-table-buttons-position-handle'>
+            <MyButton onClick={() => setOpenRefillModal(true)}>
+                       Refill
+                  </MyButton>
+                  <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
+                            Task Management
+                        </MyButton>
+
+
+         </div>
       }
       height={600}
       data={encounterListResponse?.object ?? []}
@@ -575,6 +583,19 @@ return (
       actionButtonLabel="Cancel"
       cancelButtonLabel="Close"
     />
+
+    <MyModal
+      open={openPhysicianOrderSummaryModal}
+      setOpen={setOpenPhysicianOrderSummaryModal}
+      title="Task Management"
+      size="90vw"
+      content={<><PhysicianOrderSummaryModal></PhysicianOrderSummaryModal></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+  />
   </Panel>
 );
 };

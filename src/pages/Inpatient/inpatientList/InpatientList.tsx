@@ -45,6 +45,7 @@ import ReturnFromTemporary from './temporaryDischarge/ReturnFromTemporary';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import {faBarcode, faUserGroup} from '@fortawesome/free-solid-svg-icons';
+import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 
 const InpatientList = () => {
   const location = useLocation();
@@ -76,6 +77,7 @@ const InpatientList = () => {
   const tooltipWrist = <Tooltip>Wrist Band</Tooltip>;
   const tooltipCompanion = <Tooltip>Companion Card</Tooltip>;
   const [openRefillModal, setOpenRefillModal] = useState(false);
+  const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openDischargeTracking, setOpenDischargeTracking] = useState(false);
 
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -292,6 +294,10 @@ const InpatientList = () => {
                           <MyButton onClick={() => setOpenRefillModal(true)}>
             Refill
           </MyButton>
+        <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
+            Task Management
+        </MyButton>
+
 
           <MyButton onClick={() => setOpenDischargeTracking(true)}>
             Discharge Tracking
@@ -701,7 +707,7 @@ const InpatientList = () => {
         console.log('Save refill clicked');
       }}
       cancelButtonLabel="Close"
-    />
+/>
 
       <MyModal
       open={openDischargeTracking}
@@ -714,7 +720,20 @@ const InpatientList = () => {
         console.log('Save Discharge Tracking');
       }}
       cancelButtonLabel="Close"
-    />
+/>
+
+<MyModal
+      open={openPhysicianOrderSummaryModal}
+      setOpen={setOpenPhysicianOrderSummaryModal}
+      title="Task Management"
+      size="90vw"
+      content={<><PhysicianOrderSummaryModal></PhysicianOrderSummaryModal></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+  />
     </Panel>
   );
 };

@@ -32,6 +32,8 @@ import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import MyModal from '@/components/MyModal/MyModal';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
+import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+import './style.less';
 
 const DayCaseList = () => {
     const location = useLocation();
@@ -57,6 +59,7 @@ const DayCaseList = () => {
     const [record, setRecord] = useState({});
     const [encounterStatus, setEncounterStatus] = useState({ key: '' });
     const [openRefillModal, setOpenRefillModal] = useState(false);
+    const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
     const [switchDepartment, setSwitchDepartment] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -509,11 +512,15 @@ const DayCaseList = () => {
                     setLocalEncounter(rowData);
                 }}
                 tableButtons={
-                        <>
+                        <div className='day-case-list-table-buttons-position'>
                         <MyButton onClick={() => setOpenRefillModal(true)}>
                             Refill
                         </MyButton>
-            </>}
+
+                        <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
+                            Task Management
+                        </MyButton>
+            </div>}
                 sortColumn={listRequest.sortBy}
                 sortType={listRequest.sortType}
                 onSortChange={(sortBy, sortType) => {
@@ -556,6 +563,20 @@ const DayCaseList = () => {
       }}
       cancelButtonLabel="Close"
                 />
+
+ <MyModal
+      open={openPhysicianOrderSummaryModal}
+      setOpen={setOpenPhysicianOrderSummaryModal}
+      title="Task Management"
+      size="90vw"
+      content={<><PhysicianOrderSummaryModal></PhysicianOrderSummaryModal></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+                />
+
         </Panel>
     );
 };
