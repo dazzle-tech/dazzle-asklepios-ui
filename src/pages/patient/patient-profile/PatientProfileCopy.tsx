@@ -24,6 +24,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 import PatientAppointments from './PatientAppointments';
 import BedsideRegistrationsModal from './BedsideRegistrations';
+import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 
 const { getHeight } = DOMHelper;
 
@@ -45,6 +46,7 @@ const PatientProfile = () => {
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
   const [openBedsideRegistrations,setOpenBedsideRegistrations] = useState<boolean>(false);
+  const [openRegistrationWarningsSummary,setOpenRegistrationWarningsSummary] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
   const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
@@ -181,6 +183,7 @@ const PatientProfile = () => {
             validationResult={validationResult}
             setRefetchAttachmentList={setRefetchAttachmentList}
             setOpenBedsideRegistrations={setOpenBedsideRegistrations}
+            setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
           />
 
           <div className="container-of-tabs-reg">
@@ -245,6 +248,10 @@ const PatientProfile = () => {
       open={openBedsideRegistrations}
       setOpen={setOpenBedsideRegistrations}
       setLocalPatient={setLocalPatient}
+      />
+      <RegistrationWarningsSummary
+      open={openRegistrationWarningsSummary}
+      setOpen={setOpenRegistrationWarningsSummary}
       />
       <PatientDuplicate
         open={openPatientsDuplicateModal}
