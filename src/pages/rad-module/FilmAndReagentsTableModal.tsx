@@ -39,12 +39,21 @@ const FilmAndReagentsTableModal: React.FC<FilmAndReagentsTableModalProps> = ({ o
     { label: 'Reagent', value: 'reagent' },
     { label: 'Film', value: 'film' }
   ];
-
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const handleRowClick = (row: any) => {
+    const exists = selectedRows.find(r => r === row);
+    if (exists) {
+      setSelectedRows(selectedRows.filter(r => r !== row));
+    } else {
+      setSelectedRows([...selectedRows, row]);
+    }
+  };
   const filteredData = tableData.filter(
     item =>
       (!searchType || item.type === searchType) &&
       item.name.toLowerCase().includes(searchName.toLowerCase())
   );
+  const isSelected = (row: any) => selectedRows.includes(row);
 
   const columns = [
     { key: 'type', title: 'Type', width: 100 },
@@ -135,7 +144,8 @@ const FilmAndReagentsTableModal: React.FC<FilmAndReagentsTableModalProps> = ({ o
               columns={columns}
               height={400}
               loading={false}
-              onRowClick={row => console.log('Row clicked:', row)}
+              onRowClick={handleRowClick}
+              rowClassName={(row: any) => (isSelected(row) ? 'selected-row' : '')}
             />
           </div>
         )}
