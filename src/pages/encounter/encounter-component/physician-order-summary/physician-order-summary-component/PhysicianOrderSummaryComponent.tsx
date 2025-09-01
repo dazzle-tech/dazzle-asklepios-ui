@@ -1,3 +1,4 @@
+//imports
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -7,15 +8,16 @@ import TableModal from '../tableModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-
 import '../style.less';
 import { title } from 'process';
 
+//declares
 const PhysicianOrderSummaryComponent = () => {
   const [openModal, setOpenModal] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
   const rowsPerPage = 5;
 
+  //table samble data
   const data = [
     {
       patientname: 'Ali Ahmad',
@@ -85,13 +87,14 @@ const PhysicianOrderSummaryComponent = () => {
     }
   ];
 
+  //declares
   const totalCount = data.length;
   const paginatedData = data.slice(pageIndex * rowsPerPage, (pageIndex + 1) * rowsPerPage);
   const [ record, setRecord ] = useState({});
   const handlePageChange = (_: any, newPageIndex: number) => {
     setPageIndex(newPageIndex);
   };
-
+//table coulmns
   const columns = [
     {title :  'Patient Name', dataIndex:'patientname', key: 'patientname'},
     {title :  'MRN', dataIndex:'mrn', key: 'mrn'},
@@ -208,7 +211,7 @@ const PhysicianOrderSummaryComponent = () => {
     Pending: data.filter(d => d.status === 'Pending').length,
     Completed: data.filter(d => d.status === 'Completed').length
   };
-
+//table filters
   const tablefilters = (<> <Form fluid>
       <div className="from-to-input-position">
         <MyInput
