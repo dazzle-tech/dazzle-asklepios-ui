@@ -231,7 +231,7 @@ const Lab = () => {
   return (
     <>
       <div className="container">
-        <div className="left-box">
+        <div className="left-boxs">
           <Row>
             <Col xs={14}>
               <Orders
@@ -309,7 +309,7 @@ const Lab = () => {
           </Row>
         </div>
 
-        <div className="right-box">
+        <div className="right-boxs">
           <PatientSide patient={patient} encounter={encounter} />
         </div>
       </div>

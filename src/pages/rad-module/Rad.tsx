@@ -24,6 +24,8 @@ import FilterDate from './FilterDate';
 import Orders from './Orders';
 import Report from './Report';
 import Tests from './Tests';
+import MyButton from '@/components/MyButton/MyButton';
+import FilmAndReagentsTableModal from './FilmAndReagentsTableModal';
 const Rad = () => {
   const dispatch = useAppDispatch();
   const [currentStep, setCurrentStep] = useState('6055029972709625');
@@ -32,6 +34,7 @@ const Rad = () => {
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [report, setReport] = useState({ ...newApDiagnosticOrderTestsRadReport });
+  const [openFilmAndReagentsModal, setOpenFilmAndReagentsModal] = useState(false);
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest,
     sortBy: 'isUrgent',
@@ -56,9 +59,8 @@ const Rad = () => {
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
   const [saveReport, saveReportMutation] = useSaveDiagnosticOrderTestRadReportMutation();
 
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className="flexs">
       <h5>Clinical Radiology</h5>
     </div>
   );
@@ -134,7 +136,7 @@ const Rad = () => {
   return (
     <div>
       <div className="container">
-        <div className="left-box">
+        <div className="left-boxs">
           <Row>
             <Col xs={14}>
               <Orders
@@ -160,12 +162,7 @@ const Rad = () => {
           </Row>
           <Row>
             <Col md={24}>
-              <Panel
-                header="Order's Tests"
-                collapsible
-                defaultExpanded
-                style={{ border: '1px solid #e5e5ea' }}
-              >
+              <Panel header="Order's Tests" defaultExpanded>
                 <Tests
                   saveReportMutation={saveReportMutation}
                   test={test}
@@ -182,12 +179,16 @@ const Rad = () => {
           </Row>
           <Row>
             <Col md={24}>
-              <Panel
-                header="Test's Results Processing"
-                collapsible
-                defaultExpanded
-                style={{ border: '1px solid #e5e5ea' }}
-              >
+              <Panel header="Test's Results Processing" defaultExpanded>
+                <div className="flexs-end">
+                  <MyButton
+                    onClick={() => {
+                      setOpenFilmAndReagentsModal(true);
+                    }}
+                  >
+                    Use Film & Reagents
+                  </MyButton>
+                </div>
                 <Report
                   report={report}
                   setReport={setReport}
@@ -201,12 +202,16 @@ const Rad = () => {
                   patient={patient}
                   order={order}
                 />
+                <FilmAndReagentsTableModal
+                  open={openFilmAndReagentsModal}
+                  setOpen={setOpenFilmAndReagentsModal}
+                />
               </Panel>
             </Col>
           </Row>
         </div>
 
-        <div className="right-box">
+        <div className="right-boxs">
           <PatientSide patient={patient} encounter={encounter} />
         </div>
       </div>

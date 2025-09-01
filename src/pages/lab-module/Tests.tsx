@@ -34,11 +34,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { HStack, Panel, SelectPicker, Table, Tooltip, Whisper } from 'rsuite';
+import { Form, HStack, Panel, SelectPicker, Table, Tooltip, Whisper } from 'rsuite';
 import SampleModal from './SampleModal';
 import './styles.less';
 import ReloadIcon from '@rsuite/icons/Reload';
 import { formatDateWithoutSeconds } from '@/utils';
+import MyInput from '@/components/MyInput';
 type Props = {
   order: any;
   test: any;
@@ -612,28 +613,37 @@ const Tests = forwardRef<unknown, Props>(
         });
       }
     };
+    const [record, setRecord] = useState({});
     //test category filter
     const filters = () => {
       return (
-        <SelectPicker
-          style={{ width: '200px' }}
-          placeholder={<Translate>Select Action From List</Translate>}
-          data={labCatLovQueryResponse?.object}
-          labelKey="lovDisplayVale"
-          valueKey="key"
-          onSelect={value => {
-            setSelectedCatValue(value);
-            handleFilterResultChange('testKey', value);
-          }}
-          onClean={() => {
-            setTimeout(() => setShowListFilter(false), 200);
-            handleFilterResultChange('testKey', null);
-          }}
-        />
+        <Form>
+          <MyInput
+            fieldType="select"
+            fieldName="testKey"
+            fieldLabel=""
+            width={200}
+            placeholder={'Select Action From List'}
+            selectData={labCatLovQueryResponse?.object}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+            onChange={value => {
+              setSelectedCatValue(value);
+              handleFilterResultChange('testKey', value);
+            }}
+            onClean={() => {
+              setTimeout(() => setShowListFilter(false), 200);
+              handleFilterResultChange('testKey', null);
+            }}
+            searchable={false}
+          />
+        </Form>
       );
     };
     return (
-      <Panel ref={ref} header="Order's Tests" collapsible defaultExpanded className="panel-border">
+      <Panel ref={ref} header="Order's Tests" defaultExpanded>
         <MyTable
           filters={filters()}
           columns={tableClumns}
