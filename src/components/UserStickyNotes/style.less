@@ -10,3 +10,82 @@
   margin-top: 10px;
   padding-right: 6px;
 }
+
+
+.color-radio-wrapper {
+  margin-top: 10px;
+  margin-bottom: 10px;
+
+  .label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .color-radio {
+    display: inline-block;
+    margin-right: 12px;
+    cursor: pointer;
+  }
+
+  .color-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    transition: border 0.2s ease-in-out;
+
+    &.active {
+      border: 2px solid #000;
+
+      .checkmark {
+        color: #fff;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+.note-list-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 20px;
+}
+
+.note-box {
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 20px;
+  width: 330px;
+  color: #000;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  box-sizing: border-box;
+
+  .note-level {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+
+  .note-footer {
+    font-size: 12px;
+    margin-top: 8px;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .delete-note-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #333;
+      padding: 0;
+    }
+  }
+}
