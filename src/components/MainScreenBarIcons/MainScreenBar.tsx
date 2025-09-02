@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import { IconButton, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -8,10 +9,11 @@ import {
   faBookmark,
   faBullhorn,
   faRepeat,
-  faHeadset
+  faHeadset,
+  faNoteSticky
 } from '@fortawesome/free-solid-svg-icons';
 import './style.less';
-const MainScreenBar = () => {
+const MainScreenBar = ({ setExpandNotes }) => {
   return (
     <div className='main-screen-bar-icons-main-container'>
       {/* Dashboard Customizing */}
@@ -49,9 +51,16 @@ const MainScreenBar = () => {
         <IconButton icon={<FontAwesomeIcon className='header-screen-bar-icon-size-handle' icon={faHeadset} />} appearance="subtle" circle />
       </Whisper>
 
-
-    </div>
-);
+<Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Sticky Notes</Tooltip>}>
+      <IconButton
+        icon={<FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faNoteSticky} />}
+        appearance="subtle"
+        circle
+        onClick={() => setExpandNotes(true)}
+      />
+    </Whisper>
+    
+</div>);
 };
 
 export default MainScreenBar;

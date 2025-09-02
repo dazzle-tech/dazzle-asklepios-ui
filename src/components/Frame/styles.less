@@ -439,3 +439,23 @@
 .rs-sidenav-collapse-in .rs-dropdown:hover .rs-dropdown-menu {
     display: block !important;
 }
+
+.content-with-sticky {
+  display: flex;
+  flex-direction: row;
+}
+
+.main-content-area {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 16px;
+  @media (max-width: 685px) {
+  margin-top: 40px;
+}
+}
+
+.sticky-sidebar-area {
+  margin-top: 0.8vw;
+  width: 370px;
+  border-radius: 8px;
+}
