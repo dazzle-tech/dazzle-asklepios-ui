@@ -12,6 +12,7 @@ import Logo from '../../images/Logo_BLUE_New.svg';
 import { setScreenKey } from '@/utils/uiReducerActions';
 import MyInput from '../MyInput';
 import './styles.less';
+import UserStickyNotes from '../UserStickyNotes/UserStickyNotes';
 const { getHeight, on } = DOMHelper;
 const NavItem = props => {
   const { title, eventKey, ...rest } = props;
@@ -41,6 +42,7 @@ const Frame = (props: FrameProps) => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const authSlice = useAppSelector(state => state.auth);
   const patientSlice = useAppSelector(state => state.patient);
+  const [expandNotes, setExpandNotes] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const navBodyStyle: React.CSSProperties = expand
@@ -186,7 +188,11 @@ const Frame = (props: FrameProps) => {
         />
       </Sidebar>
       <Container className={containerClasses}>
-        <Header expand={expand} setExpand={setExpand} />
+<Header
+  expand={expand}
+  setExpand={setExpand}
+  setExpandNotes={setExpandNotes}
+/>
         <Content>
           <Stack
             id="fixedInfoBar"
@@ -196,9 +202,23 @@ const Frame = (props: FrameProps) => {
             }}
             divider={<Divider vertical />}
           ></Stack>
-          <div className="content">
-            <Outlet />
-          </div>
+
+<div className="content-with-sticky">
+  <div className="main-content-area">
+    <Outlet />
+  </div>
+
+  {expandNotes && (
+    <div className="sticky-sidebar-area">
+      <UserStickyNotes
+        expand={expandNotes}
+        setExpand={setExpandNotes}
+        windowHeight={windowHeight}
+      />
+    </div>
+  )}
+</div>
+
         </Content>
       </Container>
     </Container>

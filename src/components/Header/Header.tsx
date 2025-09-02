@@ -34,7 +34,7 @@ import RegistrationWizard from '@/pages/patient/facility-patient-list/Registrati
 import authSlice, { setUser } from '@/reducers/authSlice';
 import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-const Header = ({ expand, setExpand }) => {
+const Header = ({ expand, setExpand, setExpandNotes }) => {
   const dispatch = useDispatch();
 
   const showChangePassword = useSelector((state: RootState) => state.ui.showChangePassword);
@@ -209,7 +209,8 @@ const Header = ({ expand, setExpand }) => {
           {pageCode === 'P_Facility' || pageCode === 'ER_Triage' ? <RegistrationWizard /> : <>
           </>}
 
-          <MainScreenBar></MainScreenBar>
+<MainScreenBar setExpandNotes={setExpandNotes} />
+
           <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
             <IconButton icon={<FaEarthAmericas style={{ fontSize: 20 }} />} />
           </Whisper>
