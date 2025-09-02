@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyInput from '@/components/MyInput';
 import './style.less';
 import MyLabel from '@/components/MyLabel';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const DiagnosisAndGoalsSection = () => {
   // Speech therapy plan form data
@@ -85,60 +86,60 @@ const DiagnosisAndGoalsSection = () => {
   };
 
   return (
-      <Section
-        title={
-          <>
-            <FontAwesomeIcon icon={faBullseye} className="font-small" />
-            <p className="font-small">Diagnosis & Goals</p>
-          </>
-        }
-        content={
-            <div className="goals-container">
-              <MyInput
-                fieldName="shortTermGoals"
-                fieldType="textarea"
-                fieldLabel="Short-Term Goals"
-                record={planData}
-                setRecord={setPlanData}
-                width={400}
-                rows={4}
-              />
-              <MyInput
-                fieldName="longTermGoals"
-                fieldType="textarea"
-                fieldLabel="Long-Term Goals"
-                record={planData}
-                setRecord={setPlanData}
-                width={400}
-                rows={4}
-              />
+    <SectionContainer
+      title={
+        <div className="title-div">
+          <FontAwesomeIcon icon={faBullseye} className="font-small title-div-s" />
+          <p className="font-small title-div-p">Diagnosis & Goals</p>
+        </div>
+      }
+      content={
+        <div className="goals-container">
+          <MyInput
+            fieldName="shortTermGoals"
+            fieldType="textarea"
+            fieldLabel="Short-Term Goals"
+            record={planData}
+            setRecord={setPlanData}
+            width={400}
+            rows={4}
+          />
+          <MyInput
+            fieldName="longTermGoals"
+            fieldType="textarea"
+            fieldLabel="Long-Term Goals"
+            record={planData}
+            setRecord={setPlanData}
+            width={400}
+            rows={4}
+          />
 
-              {/* Prognosis Slider */}
-              <div className="slider-container">
-                <MyLabel label={<p className="bolddd">Prognosis</p>} />
-                <div className="custom-slider">
-                  <Slider
-                    value={planData.prognosis}
-                    onChange={value => setPlanData(prev => ({ ...prev, prognosis: value }))}
-                    min={0}
-                    max={3}
-                    step={1}
-                    progress
-                  />
-                  <div
-                    className="sliders-class"
-                    style={{
-                      top: '3px',
-                      width: `${(planData.prognosis / 3) * 100}%`,
-                      backgroundColor: getSwallowingColor(planData.prognosis)
-                    }}
-                  />
-                  <span className="slider-label">{getPrognosisLabel(planData.prognosis)}</span>
-                </div>
-              </div>
+          {/* Prognosis Slider */}
+          <div className="slider-container">
+            <MyLabel label={<p className="bolddd">Prognosis</p>} />
+            <div className="custom-slider">
+              <Slider
+                value={planData.prognosis}
+                onChange={value => setPlanData(prev => ({ ...prev, prognosis: value }))}
+                min={0}
+                max={3}
+                step={1}
+                progress
+              />
+              <div
+                className="sliders-class"
+                style={{
+                  top: '3px',
+                  width: `${(planData.prognosis / 3) * 100}%`,
+                  backgroundColor: getSwallowingColor(planData.prognosis)
+                }}
+              />
+              <span className="slider-label">{getPrognosisLabel(planData.prognosis)}</span>
             </div>
-        }
-      />
+          </div>
+        </div>
+      }
+    />
   );
 };
 

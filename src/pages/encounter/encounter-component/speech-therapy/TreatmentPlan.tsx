@@ -7,6 +7,7 @@ import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import './style.less';
 import Translate from '@/components/Translate';
+import SectionContainer from '@/components/SectionsoContainer';
 
 // Therapy type options
 const therapyTypeOptions = [
@@ -85,12 +86,12 @@ const TreatmentPlan = () => {
 
   return (
     <>
-      <Section
+      <SectionContainer
         title={
-          <>
-            <FontAwesomeIcon icon={faClipboardList} className="font-small" />
-            <p className="font-small">Treatment Plan</p>
-          </>
+          <div className="title-div">
+            <FontAwesomeIcon icon={faClipboardList} className="font-small title-div-s" />
+            <p className="font-small title-div-p">Treatment Plan</p>
+          </div>
         }
         content={
           <>

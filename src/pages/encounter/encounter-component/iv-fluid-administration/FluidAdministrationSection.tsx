@@ -1,11 +1,11 @@
 import React from 'react';
-import Section from '@/components/Section';
 import FluidAdministration from './FluidAdministration';
 import FluidAdministrationTable from './FluidAdministrationTable';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const FluidAdministrationSection = ({ fluidOrder, setFluidOrder, addLog }) => {
   return (
-    <Section
+    <SectionContainer
       title={<p className="font-small">Fluid Administration</p>}
       content={
         <>

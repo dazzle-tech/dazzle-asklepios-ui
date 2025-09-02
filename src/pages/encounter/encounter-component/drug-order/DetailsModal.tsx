@@ -25,6 +25,8 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyTable from '@/components/MyTable';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { FaDownload } from 'react-icons/fa';
+import Section from '@/components/Section';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const DetailsModal = ({
   edit,
@@ -471,665 +473,689 @@ const DetailsModal = ({
             >
               <Col>
                 <Row className="" style={{ display: 'flex' }}>
-                  <Col
-                    className="borderr"
-                    style={{
-                      border: '1px solid #ccc',
-                      padding: '16px',
-                      borderRadius: '8px',
-                      marginRight: '8px',
-                      flex: 2
-                    }}
-                  >
-                    <div className="medication-form-row">
-                      <div className="full-block">
-                        <div className="search-wrapper">
-                          <InputGroup inside style={{ width: '150px' }} className="input-search-p">
-                            <Input
-                              placeholder="Medic Name"
-                              value={searchKeyword}
-                              onChange={handleSearch}
+                  <Col className="padding-16 flex2-radius ">
+                    <SectionContainer
+                      title={<></>}
+                      content={
+                        <div className="medication-form-row" style={{ minHeight: '288px' }}>
+                          <div className="full-block">
+                            <div className="search-wrapper">
+                              <InputGroup
+                                inside
+                                style={{ width: '150px' }}
+                                className="input-search-p"
+                              >
+                                <Input
+                                  placeholder="Medic Name"
+                                  value={searchKeyword}
+                                  onChange={handleSearch}
+                                />
+                                <InputGroup.Button>
+                                  <SearchIcon />
+                                </InputGroup.Button>
+                              </InputGroup>
+                              {searchKeyword && (
+                                <Dropdown.Menu className="dropdown-menuresult">
+                                  {genericMedicationListResponse?.object?.map(Generic => (
+                                    <Dropdown.Item
+                                      key={Generic.key}
+                                      eventKey={Generic.key}
+                                      onClick={() => handleItemClick(Generic)}
+                                    >
+                                      <div className="dropdown-item-content">
+                                        <div className="dropdown-item-title">
+                                          {Generic.genericName}{' '}
+                                          {Generic.dosageFormLvalue?.lovDisplayVale &&
+                                            `(${Generic.dosageFormLvalue?.lovDisplayVale})`}
+                                        </div>
+                                        <div className="dropdown-item-sub">
+                                          {Generic.manufacturerLvalue?.lovDisplayVale}{' '}
+                                          {Generic.roaLvalue?.lovDisplayVale &&
+                                            `| ${Generic.roaLvalue?.lovDisplayVale}`}
+                                        </div>
+                                        <div className="dropdown-item-extra">
+                                          {Generic.activeIngredients}
+                                        </div>
+                                      </div>
+                                    </Dropdown.Item>
+                                  ))}
+                                </Dropdown.Menu>
+                              )}
+                            </div>
+
+                            <div className="button-wrapper">
+                              <MyButton
+                                radius={'25px'}
+                                appearance="ghost"
+                                color="#808099"
+                                onClick={() => setOpenSubstitutesModel(true)}
+                                prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
+                              />
+                            </div>
+
+                            {/* Order Type */}
+                            <MyInput
+                              fieldType="select"
+                              fieldLabel="Drug Order Type"
+                              selectData={orderTypeLovQueryResponse?.object ?? []}
+                              selectDataLabel="lovDisplayVale"
+                              selectDataValue="key"
+                              fieldName={'drugOrderTypeLkey'}
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                              searchable={false}
+                              width={100}
                             />
-                            <InputGroup.Button>
-                              <SearchIcon />
-                            </InputGroup.Button>
-                          </InputGroup>
-                          {searchKeyword && (
-                            <Dropdown.Menu className="dropdown-menuresult">
-                              {genericMedicationListResponse?.object?.map(Generic => (
-                                <Dropdown.Item
-                                  key={Generic.key}
-                                  eventKey={Generic.key}
-                                  onClick={() => handleItemClick(Generic)}
-                                >
-                                  <div className="dropdown-item-content">
-                                    <div className="dropdown-item-title">
-                                      {Generic.genericName}{' '}
-                                      {Generic.dosageFormLvalue?.lovDisplayVale &&
-                                        `(${Generic.dosageFormLvalue?.lovDisplayVale})`}
-                                    </div>
-                                    <div className="dropdown-item-sub">
-                                      {Generic.manufacturerLvalue?.lovDisplayVale}{' '}
-                                      {Generic.roaLvalue?.lovDisplayVale &&
-                                        `| ${Generic.roaLvalue?.lovDisplayVale}`}
-                                    </div>
-                                    <div className="dropdown-item-extra">
-                                      {Generic.activeIngredients}
-                                    </div>
-                                  </div>
-                                </Dropdown.Item>
-                              ))}
-                            </Dropdown.Menu>
-                          )}
+
+                            <MyInput
+                              width={100}
+                              fieldType="select"
+                              fieldLabel="ROA"
+                              selectData={filteredList ?? []}
+                              selectDataLabel="lovDisplayVale"
+                              selectDataValue="key"
+                              fieldName="roaLkey"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                            />
+                            {/* Titration Button */}
+                            <div className="button-wrapper">
+                              <MyButton>Titration Plan</MyButton>
+                            </div>
+                          </div>
+                          {/*  */}
+                          <div className="full-block">
+                            <MyInput
+                              width={95}
+                              fieldType="number"
+                              fieldLabel="Dose"
+                              fieldName="dose"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                            />
+
+                            <MyInput
+                              width={95}
+                              fieldType="select"
+                              fieldLabel="Unit"
+                              selectData={unitLovQueryResponse?.object ?? []}
+                              selectDataLabel="lovDisplayVale"
+                              selectDataValue="key"
+                              fieldName="doseUnitLkey"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                            />
+
+                            <MyInput
+                              width={95}
+                              disabled={drugKey != null ? editing : true}
+                              fieldLabel="Frequency"
+                              fieldType="number"
+                              fieldName="frequency"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                            />
+
+                            <MyInput
+                              width={95}
+                              fieldType="select"
+                              fieldLabel="Unit"
+                              selectData={unitsLovQueryResponse?.object ?? []}
+                              selectDataLabel="lovDisplayVale"
+                              selectDataValue="key"
+                              fieldName="frequencyUnitLkey"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                            />
+
+                            {/* Titration Button */}
+                            <div className="button-wrapper-p">
+                              <MyButton>Generate Instructions</MyButton>
+                            </div>
+                          </div>
+                          <Col>
+                            <Col style={{ marginRight: '12px' }}>
+                              <MyInput
+                                width={100}
+                                disabled={editDuration}
+                                fieldType="number"
+                                fieldLabel="Duration"
+                                fieldName="duration"
+                                record={orderMedication}
+                                setRecord={setOrderMedication}
+                              />
+                            </Col>
+
+                            <Col style={{ marginRight: '12px' }}>
+                              <MyInput
+                                width={100}
+                                disabled={editDuration}
+                                fieldType="select"
+                                fieldLabel="Duration type"
+                                selectData={DurationTypeLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldName="durationTypeLkey"
+                                record={orderMedication}
+                                setRecord={setOrderMedication}
+                                searchable={false}
+                              />{' '}
+                            </Col>
+
+                            <Col style={{ marginRight: '12px' }}>
+                              <MyInput
+                                width={100}
+                                fieldLabel="Chronic"
+                                fieldType="checkbox"
+                                fieldName="chronicMedication"
+                                record={orderMedication}
+                                setRecord={setOrderMedication}
+                              />
+                            </Col>
+
+                            <Col md={6}>
+                              <MyInput
+                                width={266}
+                                fieldType="textarea"
+                                fieldName="instructions"
+                                fieldLabel="Instructions"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                disabled={!orderMedication.diluent}
+                                height={35}
+                              />
+                            </Col>
+                          </Col>
                         </div>
-
-                        <div className="button-wrapper">
-                          <MyButton
-                            radius={'25px'}
-                            appearance="ghost"
-                            color="#808099"
-                            onClick={() => setOpenSubstitutesModel(true)}
-                            prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
-                          />
-                        </div>
-
-                        {/* Order Type */}
-                        <MyInput
-                          fieldType="select"
-                          fieldLabel="Drug Order Type"
-                          selectData={orderTypeLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName={'drugOrderTypeLkey'}
-                          record={orderMedication}
-                          setRecord={setOrderMedication}
-                          searchable={false}
-                          width={100}
-                        />
-
-                        <MyInput
-                          width={100}
-                          fieldType="select"
-                          fieldLabel="ROA"
-                          selectData={filteredList ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="roaLkey"
-                          record={orderMedication}
-                          setRecord={setOrderMedication}
-                        />
-                        {/* Titration Button */}
-                        <div className="button-wrapper">
-                          <MyButton>Titration Plan</MyButton>
-                        </div>
-                      </div>
-                      {/*  */}
-                      <div className="full-block">
-                        <MyInput
-                          width={95}
-                          fieldType="number"
-                          fieldLabel="Dose"
-                          fieldName="dose"
-                          record={orderMedication}
-                          setRecord={setOrderMedication}
-                        />
-
-                        <MyInput
-                          width={95}
-                          fieldType="select"
-                          fieldLabel="Unit"
-                          selectData={unitLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="doseUnitLkey"
-                          record={orderMedication}
-                          setRecord={setOrderMedication}
-                        />
-
-                        <MyInput
-                          width={95}
-                          disabled={drugKey != null ? editing : true}
-                          fieldLabel="Frequency"
-                          fieldType="number"
-                          fieldName="frequency"
-                          record={orderMedication}
-                          setRecord={setOrderMedication}
-                        />
-
-                        <MyInput
-                          width={95}
-                          fieldType="select"
-                          fieldLabel="Unit"
-                          selectData={unitsLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="frequencyUnitLkey"
-                          record={orderMedication}
-                          setRecord={setOrderMedication}
-                        />
-
-                        {/* Titration Button */}
-                        <div className="button-wrapper-p">
-                          <MyButton>Generate Instructions</MyButton>
-                        </div>
-                      </div>
-                      <Col>
-                        <Col style={{ marginRight: '12px' }}>
-                          <MyInput
-                            width={100}
-                            disabled={editDuration}
-                            fieldType="number"
-                            fieldLabel="Duration"
-                            fieldName="duration"
-                            record={orderMedication}
-                            setRecord={setOrderMedication}
-                          />
-                        </Col>
-
-                        <Col style={{ marginRight: '12px' }}>
-                          <MyInput
-                            width={100}
-                            disabled={editDuration}
-                            fieldType="select"
-                            fieldLabel="Duration type"
-                            selectData={DurationTypeLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            fieldName="durationTypeLkey"
-                            record={orderMedication}
-                            setRecord={setOrderMedication}
-                            searchable={false}
-                          />{' '}
-                        </Col>
-
-                        <Col style={{ marginRight: '12px' }}>
-                          <MyInput
-                            width={100}
-                            fieldLabel="Chronic"
-                            fieldType="checkbox"
-                            fieldName="chronicMedication"
-                            record={orderMedication}
-                            setRecord={setOrderMedication}
-                          />
-                        </Col>
-
-                        <Col md={6}>
-                          <MyInput
-                            width={266}
-                            fieldType="textarea"
-                            fieldName="instructions"
-                            fieldLabel="Instructions"
-                            record={fluidOrder}
-                            setRecord={setFluidOrder}
-                            disabled={!orderMedication.diluent}
-                            height={35}
-                          />
-                        </Col>
-                      </Col>
-                    </div>
+                      }
+                    ></SectionContainer>
                   </Col>
                   <Col
-                    className="borderr"
+                    className="padding-16"
                     style={{
-                      border: '1px solid #ccc',
-                      padding: '16px',
                       borderRadius: '8px',
                       flex: 1
                     }}
                   >
-                    <div className="medication-form-flex">
-                      {/* Start Date */}
-                      <MyInput
-                        fieldType="datetime"
-                        fieldName="startDateTime"
-                        fieldLabel="Start Time"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                        width={180}
-                      />
+                    <SectionContainer
+                      title={<></>}
+                      content={
+                        <>
+                          <div className="medication-form-flex">
+                            {/* Start Date */}
+                            <MyInput
+                              fieldType="datetime"
+                              fieldName="startDateTime"
+                              fieldLabel="Start Time"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                              width={180}
+                            />
 
-                      {/* End Date */}
-                      <MyInput
-                        fieldType="datetime"
-                        fieldName="endDateTime"
-                        fieldLabel="End Time"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                        width={180}
-                      />
+                            {/* End Date */}
+                            <MyInput
+                              fieldType="datetime"
+                              fieldName="endDateTime"
+                              fieldLabel="End Time"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                              width={180}
+                            />
 
-                      <MyInput
-                        width={120}
-                        fieldLabel="Home Med"
-                        fieldType="checkbox"
-                        fieldName="homeMed"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                      />
+                            <MyInput
+                              width={120}
+                              fieldLabel="Home Med"
+                              fieldType="checkbox"
+                              fieldName="homeMed"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                            />
 
-                      <MyInput
-                        width={120}
-                        fieldLabel="Substitute Allowed"
-                        fieldType="checkbox"
-                        fieldName="substituteAllowed"
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                      />
-                    </div>
+                            <MyInput
+                              width={120}
+                              fieldLabel="Substitute Allowed"
+                              fieldType="checkbox"
+                              fieldName="substituteAllowed"
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                            />
+                          </div>
+                        </>
+                      }
+                    ></SectionContainer>
                   </Col>
                 </Row>
 
                 {/* Indication */}
 
-                <Row className="rows-gap borderr">
-                  <Row className="rows-gap">
-                    <Text className="font-style">Indication</Text>
-                  </Row>
-                  <Row>
-                    <Col md={6} style={{ marginTop: '18px' }}>
-                      {' '}
-                      <InputGroup inside>
-                        <Input
-                          placeholder="Search ICD-10"
-                          value={searchKeywordicd}
-                          onChange={handleSearchIcd}
-                        />
-                        <InputGroup.Button>
-                          <SearchIcon />
-                        </InputGroup.Button>
-                      </InputGroup>
-                      {searchKeywordicd && (
-                        <Dropdown.Menu className="dropdown-menuresult">
-                          {modifiedData?.map(mod => (
-                            <Dropdown.Item
-                              key={mod.key}
-                              eventKey={mod.key}
-                              onClick={() => {
-                                setIndicationsIcd({
-                                  ...indicationsIcd,
-                                  indicationIcd: mod.key
-                                });
-                                setSearchKeywordicd('');
-                              }}
-                            >
-                              {mod.icdCode} {' - '} {mod.description}
-                            </Dropdown.Item>
-                          ))}
-                        </Dropdown.Menu>
-                      )}
-                    </Col>
-                    <Col md={6} style={{ marginTop: '18px' }}>
-                      <InputGroup>
-                        <Input
-                          disabled={drugKey != null ? editing : true}
-                          placeholder="Search SNOMED-CT"
-                          value={''}
-                        />
-                        <InputGroup.Button>
-                          <SearchIcon />
-                        </InputGroup.Button>
-                      </InputGroup>
-                    </Col>
-                    <Col md={6}>
-                      <MyInput
-                        width="100%"
-                        fieldType="select"
-                        fieldLabel="Indication Use"
-                        selectData={indicationLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName={'indicationUseLkey'}
-                        record={orderMedication}
-                        setRecord={setOrderMedication}
-                        searchable={false}
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <MyInput
-                        width="100%"
-                        fieldType="select"
-                        fieldLabel="Administration Instructions"
-                        selectData={administrationInstructionsLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName={'inst'}
-                        record={slectInst}
-                        setRecord={setSelectInt}
-                      />
-                    </Col>
-                  </Row>
-                  <Row className="rows-gap">
-                    {/*  */}
-                    <Col md={6}>
-                      {' '}
-                      <Input
-                        as="textarea"
-                        disabled={true}
-                        onChange={value => setindicationsDescription(value)}
-                        value={indicationsDescription || orderMedication.indicationIcd}
-                        rows={3}
-                      />
-                    </Col>
-                    {/*  */}
-                    <Col md={6}>
-                      {' '}
-                      <Input
-                        as="textarea"
-                        disabled={true}
-                        onChange={value => setAdminDescription(value)}
-                        value={adminDescription || orderMedication.indicationIcd}
-                        rows={3}
-                      />
-                    </Col>
+                <Row className="padding-16">
+                  <SectionContainer
+                    title={<Text className="font-style">Indication</Text>}
+                    content={
+                      <>
+                        <Row>
+                          <Col md={6} style={{ marginTop: '18px' }}>
+                            {' '}
+                            <InputGroup inside>
+                              <Input
+                                placeholder="Search ICD-10"
+                                value={searchKeywordicd}
+                                onChange={handleSearchIcd}
+                              />
+                              <InputGroup.Button>
+                                <SearchIcon />
+                              </InputGroup.Button>
+                            </InputGroup>
+                            {searchKeywordicd && (
+                              <Dropdown.Menu className="dropdown-menuresult">
+                                {modifiedData?.map(mod => (
+                                  <Dropdown.Item
+                                    key={mod.key}
+                                    eventKey={mod.key}
+                                    onClick={() => {
+                                      setIndicationsIcd({
+                                        ...indicationsIcd,
+                                        indicationIcd: mod.key
+                                      });
+                                      setSearchKeywordicd('');
+                                    }}
+                                  >
+                                    {mod.icdCode} {' - '} {mod.description}
+                                  </Dropdown.Item>
+                                ))}
+                              </Dropdown.Menu>
+                            )}
+                          </Col>
+                          <Col md={6} style={{ marginTop: '18px' }}>
+                            <InputGroup>
+                              <Input
+                                disabled={drugKey != null ? editing : true}
+                                placeholder="Search SNOMED-CT"
+                                value={''}
+                              />
+                              <InputGroup.Button>
+                                <SearchIcon />
+                              </InputGroup.Button>
+                            </InputGroup>
+                          </Col>
+                          <Col md={6}>
+                            <MyInput
+                              width="100%"
+                              fieldType="select"
+                              fieldLabel="Indication Use"
+                              selectData={indicationLovQueryResponse?.object ?? []}
+                              selectDataLabel="lovDisplayVale"
+                              selectDataValue="key"
+                              fieldName={'indicationUseLkey'}
+                              record={orderMedication}
+                              setRecord={setOrderMedication}
+                              searchable={false}
+                            />
+                          </Col>
+                          <Col md={6}>
+                            <MyInput
+                              width="100%"
+                              fieldType="select"
+                              fieldLabel="Administration Instructions"
+                              selectData={administrationInstructionsLovQueryResponse?.object ?? []}
+                              selectDataLabel="lovDisplayVale"
+                              selectDataValue="key"
+                              fieldName={'inst'}
+                              record={slectInst}
+                              setRecord={setSelectInt}
+                            />
+                          </Col>
+                        </Row>
+                        <Row>
+                          {/*  */}
+                          <Col md={6}>
+                            {' '}
+                            <Input
+                              as="textarea"
+                              disabled={true}
+                              onChange={value => setindicationsDescription(value)}
+                              value={indicationsDescription || orderMedication.indicationIcd}
+                              rows={3}
+                            />
+                          </Col>
+                          {/*  */}
+                          <Col md={6}>
+                            {' '}
+                            <Input
+                              as="textarea"
+                              disabled={true}
+                              onChange={value => setAdminDescription(value)}
+                              value={adminDescription || orderMedication.indicationIcd}
+                              rows={3}
+                            />
+                          </Col>
 
-                    {/*  */}
-                    <Col md={6}>
-                      <Input as="textarea" rows={3} />
-                    </Col>
-                    {/*  */}
-                    <Col md={6}>
-                      <Input
-                        as="textarea"
-                        onChange={e => setInstruc(e.target.value)}
-                        value={instr}
-                        rows={3}
-                      />
-                    </Col>
-                  </Row>
+                          {/*  */}
+                          <Col md={6}>
+                            <Input as="textarea" rows={3} />
+                          </Col>
+                          {/*  */}
+                          <Col md={6}>
+                            <Input
+                              as="textarea"
+                              onChange={e => setInstruc(e.target.value)}
+                              value={instr}
+                              rows={3}
+                            />
+                          </Col>
+                        </Row>
+                      </>
+                    }
+                  ></SectionContainer>
                 </Row>
 
                 {/* Notes */}
-                <Row className="rows-gap" style={{ display: 'flex' }}>
+                <Row className="flex-class">
                   {/* Left Half - Notes + Buttons */}
                   <Col
+                    className="padding-16"
                     style={{
-                      border: '1px solid #ccc',
-                      padding: '16px',
-                      borderRadius: '8px',
-                      marginRight: '8px'
-                    }}
-                  >
-                    <MyInput
-                      disabled={drugKey != null ? editing : true}
-                      height={60}
-                      fieldType="textarea"
-                      fieldName={'notes'}
-                      record={orderMedication}
-                      setRecord={setOrderMedication}
-                      width="100%"
-                    />
-
-                    <MyInput
-                      disabled={drugKey != null ? editing : true}
-                      height={60}
-                      fieldType="textarea"
-                      fieldName={'Extra Documentation'}
-                      record={orderMedication}
-                      setRecord={setOrderMedication}
-                      width="100%"
-                    />
-
-                    <Row className="mt-2" gutter={10}>
-                      <Col>
-                        <MyButton onClick={handleAddNewAttachment} prefixIcon={() => <PlusRound />}>
-                          New Attachment
-                        </MyButton>
-                      </Col>
-                      <Col>
-                        <MyButton prefixIcon={() => <FaDownload />}>Download</MyButton>
-                      </Col>
-                    </Row>
-                  </Col>
-
-                  {/* Right Half - Diluent + Fluid Order */}
-                  <Col
-                    style={{
-                      flex: 1,
-                      border: '1px solid #ccc',
-                      padding: '16px',
                       borderRadius: '8px'
                     }}
                   >
-                    <Row className="align-center mb-2">
-                      <Col md={3}>
-                        <MyInput
-                          fieldLabel="Diluent"
-                          fieldType="checkbox"
-                          fieldName="diluent"
-                          record={orderMedication}
-                          setRecord={setOrderMedication}
-                          onChange={value => {
-                            setOrderMedication({ ...orderMedication, diluent: value });
-                            if (!value) setFluidOrder({});
-                          }}
-                        />
-                      </Col>
-                    </Row>
+                    <SectionContainer
+                      title={<Text className="font-style">Notes</Text>}
+                      content={
+                        <>
+                          <MyInput
+                            disabled={drugKey != null ? editing : true}
+                            height={60}
+                            fieldType="textarea"
+                            fieldName={'notes'}
+                            record={orderMedication}
+                            setRecord={setOrderMedication}
+                            width="100%"
+                          />
 
-                    {/* Row 1 */}
-                    <Row gutter={16} className="mb-2">
-                      <Col md={6}>
-                        <MyInput
-                          width="100%"
-                          selectData={[]}
-                          fieldType="select"
-                          fieldName="fluidType"
-                          fieldLabel="Fluid Type"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          menuMaxHeight={200}
-                          disabled={!orderMedication.diluent}
-                        />
-                      </Col>
-                      <Col md={6}>
-                        <MyInput
-                          width="100%"
-                          fieldType="number"
-                          rightAddon="ml"
-                          fieldName="volume"
-                          fieldLabel="Volume"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          disabled={!orderMedication.diluent}
-                        />
-                      </Col>
-                      <Col md={6}>
-                        <MyInput
-                          width="100%"
-                          selectData={infusionDeviceLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldType="select"
-                          fieldName="infusionDevice"
-                          fieldLabel="Infusion Device"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          menuMaxHeight={200}
-                          searchable={false}
-                          disabled={!orderMedication.diluent}
-                        />
-                      </Col>
+                          <MyInput
+                            disabled={drugKey != null ? editing : true}
+                            height={60}
+                            fieldType="textarea"
+                            fieldName={'Extra Documentation'}
+                            record={orderMedication}
+                            setRecord={setOrderMedication}
+                            width="100%"
+                          />
 
-                      <Col md={6}>
-                        <MyInput
-                          width="100%"
-                          fieldType="number"
-                          rightAddon="mL/hr"
-                          rightAddonwidth={70}
-                          fieldName="infusionRate"
-                          fieldLabel="Infusion Rate"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          disabled={!orderMedication.diluent}
-                        />
-                      </Col>
-                    </Row>
+                          <Row className="mt-2" gutter={10}>
+                            <Col>
+                              <MyButton
+                                onClick={handleAddNewAttachment}
+                                prefixIcon={() => <PlusRound />}
+                              >
+                                New Attachment
+                              </MyButton>
+                            </Col>
+                            <Col>
+                              <MyButton prefixIcon={() => <FaDownload />}>Download</MyButton>
+                            </Col>
+                          </Row>
+                        </>
+                      }
+                    ></SectionContainer>
+                  </Col>
 
-                    {/* Row 2 */}
-                    <Row gutter={16} className="mb-2">
-                      <Col md={6}>
-                        <MyInput
-                          width="100%"
-                          selectData={routeLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldType="select"
-                          fieldName="route"
-                          fieldLabel="Route"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          menuMaxHeight={200}
-                          searchable={false}
-                          disabled={!orderMedication.diluent}
-                        />
-                      </Col>
-                      <Col md={6}>
-                        <MyInput
-                          width="100%"
-                          selectData={frequencyLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldType="select"
-                          fieldName="frequency"
-                          fieldLabel="Frequency"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          searchable={false}
-                          disabled={!orderMedication.diluent}
-                        />
-                      </Col>
-                      <Col md={6}>
-                        <MyInput
-                          width="100%"
-                          fieldType="textarea"
-                          fieldName="notesToNurse"
-                          fieldLabel="Notes To Nurse"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          disabled={!orderMedication.diluent}
-                          height={35}
-                        />
-                      </Col>
+                  {/* Right Half - Diluent + Fluid Order */}
+                  <Col className="padding-16 flex1-radius">
+                    <SectionContainer
+                      title={<Text className="font-style">Diluent</Text>}
+                      content={
+                        <div style={{ minHeight: '253px' }}>
+                          <Row className="align-center mb-2">
+                            <Col md={3}>
+                              <MyInput
+                                fieldLabel="Diluent"
+                                fieldType="checkbox"
+                                fieldName="diluent"
+                                record={orderMedication}
+                                setRecord={setOrderMedication}
+                                onChange={value => {
+                                  setOrderMedication({ ...orderMedication, diluent: value });
+                                  if (!value) setFluidOrder({});
+                                }}
+                              />
+                            </Col>
+                          </Row>
 
-                      <Col md={6} style={{ marginTop: '5px', clear: 'both' }}>
-                        <MyInput
-                          disabled={fluidOrder?.untilCompleted || !orderMedication.diluent}
-                          width={100}
-                          fieldName="duration"
-                          fieldLabel="Duration"
-                          fieldType="number"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                        />
-                      </Col>
-                      <Col md={6} style={{ marginTop: '5px' }}>
-                        <MyInput
-                          width={100}
-                          fieldType="checkbox"
-                          fieldName="untilCompleted"
-                          fieldLabel="Until Completed"
-                          record={fluidOrder}
-                          setRecord={setFluidOrder}
-                          disabled={!orderMedication.diluent}
-                        />
-                      </Col>
-                    </Row>
+                          {/* Row 1 */}
+                          <Row gutter={16} className="mb-2">
+                            <Col md={6}>
+                              <MyInput
+                                width="100%"
+                                selectData={[]}
+                                fieldType="select"
+                                fieldName="fluidType"
+                                fieldLabel="Fluid Type"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                menuMaxHeight={200}
+                                disabled={!orderMedication.diluent}
+                              />
+                            </Col>
+                            <Col md={6}>
+                              <MyInput
+                                width="100%"
+                                fieldType="number"
+                                rightAddon="ml"
+                                fieldName="volume"
+                                fieldLabel="Volume"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                disabled={!orderMedication.diluent}
+                              />
+                            </Col>
+                            <Col md={6}>
+                              <MyInput
+                                width="100%"
+                                selectData={infusionDeviceLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldType="select"
+                                fieldName="infusionDevice"
+                                fieldLabel="Infusion Device"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                menuMaxHeight={200}
+                                searchable={false}
+                                disabled={!orderMedication.diluent}
+                              />
+                            </Col>
+
+                            <Col md={6}>
+                              <MyInput
+                                width="100%"
+                                fieldType="number"
+                                rightAddon="mL/hr"
+                                rightAddonwidth={70}
+                                fieldName="infusionRate"
+                                fieldLabel="Infusion Rate"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                disabled={!orderMedication.diluent}
+                              />
+                            </Col>
+                          </Row>
+
+                          {/* Row 2 */}
+                          <Row gutter={16} className="mb-2">
+                            <Col md={6}>
+                              <MyInput
+                                width="100%"
+                                selectData={routeLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldType="select"
+                                fieldName="route"
+                                fieldLabel="Route"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                menuMaxHeight={200}
+                                searchable={false}
+                                disabled={!orderMedication.diluent}
+                              />
+                            </Col>
+                            <Col md={6}>
+                              <MyInput
+                                width="100%"
+                                selectData={frequencyLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldType="select"
+                                fieldName="frequency"
+                                fieldLabel="Frequency"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                searchable={false}
+                                disabled={!orderMedication.diluent}
+                              />
+                            </Col>
+                            <Col md={6}>
+                              <MyInput
+                                width="100%"
+                                fieldType="textarea"
+                                fieldName="notesToNurse"
+                                fieldLabel="Notes To Nurse"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                disabled={!orderMedication.diluent}
+                                height={35}
+                              />
+                            </Col>
+
+                            <Col md={6} style={{ marginTop: '5px', clear: 'both' }}>
+                              <MyInput
+                                disabled={fluidOrder?.untilCompleted || !orderMedication.diluent}
+                                width={100}
+                                fieldName="duration"
+                                fieldLabel="Duration"
+                                fieldType="number"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                              />
+                            </Col>
+                            <Col md={6} style={{ marginTop: '5px' }}>
+                              <MyInput
+                                width={100}
+                                fieldType="checkbox"
+                                fieldName="untilCompleted"
+                                fieldLabel="Until Completed"
+                                record={fluidOrder}
+                                setRecord={setFluidOrder}
+                                disabled={!orderMedication.diluent}
+                              />
+                            </Col>
+                          </Row>
+                        </div>
+                      }
+                    ></SectionContainer>
                   </Col>
                 </Row>
 
-                <Row className="rows-gap borderr">
+                <Row className="padding-20">
                   <Row>
-                    <Text className="margin-n font-style">Recall From Favorite</Text>
-                    <div>
-                      <MyTable
-                        columns={[
-                          {
-                            key: 'medicationName',
-                            dataKey: 'genericMedicationsKey',
-                            title: 'Medication Name',
-                            render: (rowData: any) => {
-                              return (
-                                genericMedicationListResponse?.object?.find(
-                                  item => item.key === rowData.genericMedicationsKey
-                                )?.genericName || 'Unknown Medication'
-                              );
-                            }
-                          },
-                          {
-                            key: 'instruction',
-                            dataKey: '',
-                            title: 'Instruction',
-                            render: (rowData: any) => {
-                              return joinValuesFromArray([
-                                rowData.dose,
-                                rowData.doseUnitLvalue?.lovDisplayVale,
-                                rowData.drugOrderTypeLkey == '2937757567806213'
-                                  ? 'STAT'
-                                  : 'every ' + rowData.frequency + ' hours',
-                                rowData.roaLvalue?.lovDisplayVale
-                              ]);
-                            }
-                          },
-                          {
-                            key: 'administrationInstruction',
-                            dataKey: 'administrationInstructions',
-                            title: 'Administration Instruction',
-                            render: (rowData: any) => {
-                              if (rowData.administrationInstructions?.lovDisplayVale) {
-                                return rowData.administrationInstructions.lovDisplayVale;
-                              } else if (rowData.administrationInstructions) {
-                                const instruction =
-                                  administrationInstructionsLovQueryResponse?.object?.find(
-                                    item => item.key === rowData.administrationInstructions
+                    <SectionContainer
+                      title={<Text className="font-style">Recall From Favorite</Text>}
+                      content={
+                        <div>
+                          <MyTable
+                            columns={[
+                              {
+                                key: 'medicationName',
+                                dataKey: 'genericMedicationsKey',
+                                title: 'Medication Name',
+                                render: (rowData: any) => {
+                                  return (
+                                    genericMedicationListResponse?.object?.find(
+                                      item => item.key === rowData.genericMedicationsKey
+                                    )?.genericName || 'Unknown Medication'
                                   );
-                                return (
-                                  instruction?.lovDisplayVale || rowData.administrationInstructions
-                                );
+                                }
+                              },
+                              {
+                                key: 'instruction',
+                                dataKey: '',
+                                title: 'Instruction',
+                                render: (rowData: any) => {
+                                  return joinValuesFromArray([
+                                    rowData.dose,
+                                    rowData.doseUnitLvalue?.lovDisplayVale,
+                                    rowData.drugOrderTypeLkey == '2937757567806213'
+                                      ? 'STAT'
+                                      : 'every ' + rowData.frequency + ' hours',
+                                    rowData.roaLvalue?.lovDisplayVale
+                                  ]);
+                                }
+                              },
+                              {
+                                key: 'administrationInstruction',
+                                dataKey: 'administrationInstructions',
+                                title: 'Administration Instruction',
+                                render: (rowData: any) => {
+                                  if (rowData.administrationInstructions?.lovDisplayVale) {
+                                    return rowData.administrationInstructions.lovDisplayVale;
+                                  } else if (rowData.administrationInstructions) {
+                                    const instruction =
+                                      administrationInstructionsLovQueryResponse?.object?.find(
+                                        item => item.key === rowData.administrationInstructions
+                                      );
+                                    return (
+                                      instruction?.lovDisplayVale ||
+                                      rowData.administrationInstructions
+                                    );
+                                  }
+                                  return 'No instruction';
+                                }
+                              },
+                              {
+                                key: 'parametersToMonitor',
+                                dataKey: 'parametersToMonitorKey',
+                                title: 'Parameters To Monitor',
+                                render: (rowData: any) => {
+                                  if (rowData.parametersToMonitor) {
+                                    return rowData.parametersToMonitor;
+                                  } else if (rowData.parametersToMonitorValue?.lovDisplayVale) {
+                                    return rowData.parametersToMonitorValue.lovDisplayVale;
+                                  } else if (rowData.parametersToMonitorKey) {
+                                    return rowData.parametersToMonitorKey;
+                                  }
+                                  return 'No parameters specified';
+                                }
+                              },
+                              {
+                                key: 'actions',
+                                title: 'Actions',
+                                render: (rowData: any) => {
+                                  return (
+                                    <div
+                                      style={{ display: 'flex', gap: '8px', alignItems: 'center' }}
+                                    >
+                                      <MyButton size="xs" onClick={() => handleRecall(rowData)}>
+                                        Recall
+                                      </MyButton>
+                                      <FontAwesomeIcon
+                                        icon={faStar}
+                                        onClick={() => addToFavorites(rowData)}
+                                        style={{
+                                          cursor: 'pointer',
+                                          color: '#ffc107'
+                                        }}
+                                        title="Remove from favorites"
+                                      />
+                                    </div>
+                                  );
+                                }
                               }
-                              return 'No instruction';
-                            }
-                          },
-                          {
-                            key: 'parametersToMonitor',
-                            dataKey: 'parametersToMonitorKey',
-                            title: 'Parameters To Monitor',
-                            render: (rowData: any) => {
-                              if (rowData.parametersToMonitor) {
-                                return rowData.parametersToMonitor;
-                              } else if (rowData.parametersToMonitorValue?.lovDisplayVale) {
-                                return rowData.parametersToMonitorValue.lovDisplayVale;
-                              } else if (rowData.parametersToMonitorKey) {
-                                return rowData.parametersToMonitorKey;
-                              }
-                              return 'No parameters specified';
-                            }
-                          },
-                          {
-                            key: 'actions',
-                            title: 'Actions',
-                            render: (rowData: any) => {
-                              return (
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                  <MyButton size="xs" onClick={() => handleRecall(rowData)}>
-                                    Recall
-                                  </MyButton>
-                                  <FontAwesomeIcon
-                                    icon={faStar}
-                                    onClick={() => addToFavorites(rowData)}
-                                    style={{
-                                      cursor: 'pointer',
-                                      color: '#ffc107'
-                                    }}
-                                    title="Remove from favorites"
-                                  />
-                                </div>
-                              );
-                            }
-                          }
-                        ]}
-                        data={favoriteMedications || []}
-                      />
-                    </div>
+                            ]}
+                            data={favoriteMedications || []}
+                          />
+                        </div>
+                      }
+                    ></SectionContainer>
                   </Row>
                 </Row>
               </Col>

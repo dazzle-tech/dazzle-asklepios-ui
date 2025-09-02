@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Form, RadioGroup, Radio } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import Section from '@/components/Section';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const AdministrationDetails = ({ fluidOrder, setFluidOrder }) => {
   const [formRecord, setFormRecord] = useState({ anyReaction: false, reaction: '' });
   const [showTagField, setShowTagField] = useState(false);
   return (
-    <Section
+    <SectionContainer
       title={<p className="font-small">Administration Details</p>}
       content={
         <div className="main-content-section-1 margin-3">

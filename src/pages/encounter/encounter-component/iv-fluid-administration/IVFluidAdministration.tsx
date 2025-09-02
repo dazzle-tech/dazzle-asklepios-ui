@@ -15,6 +15,7 @@ import Section from '@/components/Section';
 import AdministrationDetails from './AdministrationDetails';
 import FluidAdministrationSection from './FluidAdministrationSection';
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const IVFluidAdministration = () => {
   const [fluidOrder, setFluidOrder] = useState<any>({});
@@ -195,7 +196,7 @@ const IVFluidAdministration = () => {
         <div className="mt-42">
           <div className="flex-gap-stretch">
             <div className="half-width min-height-394">
-              <Section
+              <SectionContainer
                 title={
                   <div className="section-title-with-icon">
                                         <p className="font-small-for-icon-position">

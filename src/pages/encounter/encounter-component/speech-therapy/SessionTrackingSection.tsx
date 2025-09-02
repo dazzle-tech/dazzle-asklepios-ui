@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import './style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const SessionTrackingSection = () => {
   // Speech therapy plan form data
@@ -54,80 +55,80 @@ const SessionTrackingSection = () => {
   });
 
   return (
-      <Section
-        title={
-          <>
-            <FontAwesomeIcon icon={faBrain} className="font-small" />
-            <p className="font-small">Session Tracking</p>
-          </>
-        }
-        content={
-          <>
-            <div className="goals-container">
-              <MyInput
-                fieldName="activitiesPerformed"
-                fieldType="text"
-                fieldLabel="Activities Performed"
-                record={planData}
-                setRecord={setPlanData}
-                width={400}
-                rows={3}
-              />
+    <SectionContainer
+      title={
+        <div className="title-div">
+          <FontAwesomeIcon icon={faBrain} className="font-small title-div-s" />
+          <p className="font-small title-div-p">Session Tracking</p>
+        </div>
+      }
+      content={
+        <>
+          <div className="goals-container">
+            <MyInput
+              fieldName="activitiesPerformed"
+              fieldType="text"
+              fieldLabel="Activities Performed"
+              record={planData}
+              setRecord={setPlanData}
+              width={400}
+              rows={3}
+            />
 
-              <div className="radio-group-container">
-                <label>
-                  <Translate>Patient Response</Translate>
-                </label>
-                <RadioGroup
-                  name="patientResponse"
-                  value={planData.patientResponse}
-                  onChange={value => setPlanData(prev => ({ ...prev, patientResponse: value }))}
-                  inline
-                >
-                  <Radio value="Good">Good</Radio>
-                  <Radio value="Fair">Fair</Radio>
-                  <Radio value="Poor">Poor</Radio>
-                </RadioGroup>
-              </div>
-
-              <div className="radio-group-container">
-                <label>
-                  <Translate>Progress Toward Goals</Translate>
-                </label>
-                <RadioGroup
-                  name="progressTowardGoals"
-                  value={planData.progressTowardGoals}
-                  onChange={value => setPlanData(prev => ({ ...prev, progressTowardGoals: value }))}
-                  inline
-                >
-                  <Radio value="On track">On track</Radio>
-                  <Radio value="Delayed">Delayed</Radio>
-                  <Radio value="Goal met">Goal met</Radio>
-                </RadioGroup>
-              </div>
-
-              <MyInput
-                fieldName="sessionNotes"
-                fieldType="textarea"
-                fieldLabel="Notes"
-                record={planData}
-                setRecord={setPlanData}
-                width={400}
-                rows={4}
-              />
-
-              <MyInput
-                fieldName="nextSessionPlan"
-                fieldType="date"
-                fieldLabel="Next Session Plan"
-                record={planData}
-                setRecord={setPlanData}
-                width={200}
-              />
+            <div className="radio-group-container">
+              <label>
+                <Translate>Patient Response</Translate>
+              </label>
+              <RadioGroup
+                name="patientResponse"
+                value={planData.patientResponse}
+                onChange={value => setPlanData(prev => ({ ...prev, patientResponse: value }))}
+                inline
+              >
+                <Radio value="Good">Good</Radio>
+                <Radio value="Fair">Fair</Radio>
+                <Radio value="Poor">Poor</Radio>
+              </RadioGroup>
             </div>
-          </>
-        }
-      />
+
+            <div className="radio-group-container">
+              <label>
+                <Translate>Progress Toward Goals</Translate>
+              </label>
+              <RadioGroup
+                name="progressTowardGoals"
+                value={planData.progressTowardGoals}
+                onChange={value => setPlanData(prev => ({ ...prev, progressTowardGoals: value }))}
+                inline
+              >
+                <Radio value="On track">On track</Radio>
+                <Radio value="Delayed">Delayed</Radio>
+                <Radio value="Goal met">Goal met</Radio>
+              </RadioGroup>
+            </div>
+
+            <MyInput
+              fieldName="sessionNotes"
+              fieldType="textarea"
+              fieldLabel="Notes"
+              record={planData}
+              setRecord={setPlanData}
+              width={400}
+              rows={4}
+            />
+
+            <MyInput
+              fieldName="nextSessionPlan"
+              fieldType="date"
+              fieldLabel="Next Session Plan"
+              record={planData}
+              setRecord={setPlanData}
+              width={200}
+            />
+          </div>
+        </>
+      }
+    />
   );
 };
 
