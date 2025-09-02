@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 import { useLocation } from 'react-router-dom';
 import './style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const AttachmentsSection = () => {
   const location = useLocation();
@@ -12,21 +13,21 @@ const AttachmentsSection = () => {
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
 
   return (
-      <Section
-        title={
-          <>
-            <FontAwesomeIcon icon={faPaperclip} className="font-small" />
-            <p className="font-small">Attachments</p>
-          </>
-        }
-        content={
-          <PatientAttachment
-            localPatient={propsData?.patient}
-            setRefetchAttachmentList={setRefetchAttachmentList}
-            refetchAttachmentList={refetchAttachmentList}
-          />
-        }
-      />
+    <SectionContainer
+      title={
+        <div className="title-div">
+          <FontAwesomeIcon icon={faPaperclip} className="font-small title-div-s" />
+          <p className="font-small title-div-p">Attachments</p>
+        </div>
+      }
+      content={
+        <PatientAttachment
+          localPatient={propsData?.patient}
+          setRefetchAttachmentList={setRefetchAttachmentList}
+          refetchAttachmentList={refetchAttachmentList}
+        />
+      }
+    />
   );
 };
 

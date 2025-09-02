@@ -26,6 +26,7 @@ import { useLocation } from 'react-router-dom';
 import MyLabel from '@/components/MyLabel';
 import NursingReportAssesments from '../occupational-therapy/components/NursingReportAssesments';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const Physiotherapy = () => {
   // State initialization
@@ -352,12 +353,12 @@ const Physiotherapy = () => {
             {/* Sections for treatment goals and physiotherapy plan details */}
             <div className="section-column">
               {/* Treatment Goals */}
-              <Section
+              <SectionContainer
                 title={
-                  <>
-                    <FontAwesomeIcon icon={faBullseye} className="font-small" />
-                    <p className="font-small">Treatment Goals</p>
-                  </>
+                  <div className="title-div">
+                    <FontAwesomeIcon icon={faBullseye} className="font-small title-div-s" />
+                    <p className="font-small title-div-p">Treatment Goals</p>
+                  </div>
                 }
                 content={
                   <>
@@ -391,12 +392,12 @@ const Physiotherapy = () => {
                 }
               />
               {/* Physiotherapy Plan Details */}
-              <Section
+              <SectionContainer
                 title={
-                  <>
-                    <FontAwesomeIcon icon={faClipboardList} className="font-small" />
-                    <p className="font-small">Physiotherapy Plan Details</p>
-                  </>
+                  <div className="title-div">
+                    <FontAwesomeIcon icon={faClipboardList} className="font-small title-div-s" />
+                    <p className="font-small title-div-p">Physiotherapy Plan Details</p>
+                  </div>
                 }
                 content={
                   <>
@@ -532,12 +533,12 @@ const Physiotherapy = () => {
 
             {/* Sections for progress notes and attachments */}
             <div className="section-column">
-              <Section
+              <SectionContainer
                 title={
-                  <>
-                    <FontAwesomeIcon icon={faFileAlt} className="font-small" />{' '}
-                    <p className="font-small">Progress Notes</p>
-                  </>
+                  <div className="title-div">
+                    <FontAwesomeIcon icon={faFileAlt} className="font-small title-div-s" />{' '}
+                    <p className="font-small title-div-p">Progress Notes</p>
+                  </div>
                 }
                 content={
                   <div className="notes">
@@ -609,12 +610,12 @@ const Physiotherapy = () => {
               />
 
               {/* Attachments section */}
-              <Section
+              <SectionContainer
                 title={
-                  <>
-                    <FontAwesomeIcon icon={faPaperclip} className="font-small" />
-                    <p className="font-small">Attachments</p>
-                  </>
+                  <div className="title-div">
+                    <FontAwesomeIcon icon={faPaperclip} className="font-small title-div-s" />
+                    <p className="font-small title-div-p">Attachments</p>
+                  </div>
                 }
                 content={
                   <PatientAttachment
