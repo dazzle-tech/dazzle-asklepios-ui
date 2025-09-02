@@ -1,5 +1,4 @@
 import React from 'react';
-import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './style.less';
 
