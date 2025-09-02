@@ -32,6 +32,8 @@ import { green } from "@mui/material/colors";
 import "./AppoitmentModal.less";
 import { useFetchAttachmentQuery } from "@/services/attachmentService";
 import SliceBox from "./SliceBox";
+import { mapJsDayToCustom, DAYS, DayValue } from '@/utils/dayMapping';
+
 
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
@@ -61,23 +63,25 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
 
     useEffect(() => {
-        console.log(selectedSlot?.resourceId)
-    }, [selectedSlot])
+        if (selectedSlot?.start) {
+            const slotDate = new Date(selectedSlot.start);
+            setSelectedDate(slotDate);
+
+            const jsDay = slotDate.getDay();
+            const customDay = mapJsDayToCustom(jsDay);
+
+            console.log("JS getDay():", jsDay, "→ Custom DayValue:", customDay);
+
+            setOpenDay(customDay);
+        }
+    }, [selectedSlot]);
+
 
     useEffect(() => {
         console.log(resourceAvailabilityDetails?.object[0]?.availabilitySlices)
     }, [resourceAvailabilityDetails])
 
-// TODO: will user the day constants to map the days of the week instead of using numbers here directly ,/src/constants/days.ts.
-    const DAYS = [
-        { label: 'Sunday', value: '0' },
-        { label: 'Monday', value: '1' },
-        { label: 'Tuesday', value: '2' },
-        { label: 'Wednesday', value: '3' },
-        { label: 'Thursday', value: '4' },
-        { label: 'Friday', value: '5' },
-        { label: 'Saturday', value: '6' },
-    ];
+
     const minutesToDisplayDate = (minutes) => {
         if (minutes === null || typeof minutes === 'undefined') return null;
         const d = new Date(0);
@@ -306,6 +310,12 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const { data: durationLovQueryResponse } = useGetLovValuesByCodeQuery('APNTMNT_DURATION');
     const { data: weekDaysLovQueryResponse } = useGetLovValuesByCodeQuery('DAYS_OF_WEEK');
     const [isSideSearchOpen, setIsSideSearchOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState()
+
+
+    useEffect(() => {
+        console.log(selectedDate)
+    }, [selectedDate])
 
     // const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     //     code: 'CITY',
@@ -554,49 +564,53 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     };
 
     const handleSaveAppointment = () => {
-        if (localPatient?.key) {
-            console.log({
-                ...appointment,
-                patientKey: localPatient.key,
-                appointmentStart: calculateAppointmentDate(0),
-                appointmentEnd: calculateAppointmentDate(selectedDuration),
-                instructions: instructions,
-                appointmentStatus: appointment.appointmentStatus
-                    ? appointment.appointmentStatus
-                    : "New-Appointment",
-            });
+        console.log({
+            ...appointment,
+            patientKey: localPatient.key,
+            appointmentStart: calculateAppointmentDate(0),
+            appointmentEnd: calculateAppointmentDate(selectedDuration),
+            instructions: instructions,
+            appointmentStatus: appointment.appointmentStatus
+                ? appointment.appointmentStatus
+                : "New-Appointment",
+            selectedSlices: selectedSlices ?? [],
+            appointmentDate: selectedDate
 
-            saveAppointment({
-                ...appointment,
-                patientKey: localPatient.key,
-                appointmentStart: calculateAppointmentDate(0),
-                appointmentEnd: calculateAppointmentDate(selectedDuration),
-                instructions: instructions,
-                appointmentStatus: appointment.appointmentStatus
-                    ? appointment.appointmentStatus
-                    : "New-Appointment",
+        });
+        // if (localPatient?.key) {
+        saveAppointment({
+            ...appointment,
+            patientKey: localPatient.key,
+            appointmentStart: calculateAppointmentDate(0),
+            appointmentEnd: calculateAppointmentDate(selectedDuration),
+            instructions: instructions,
+            appointmentStatus: appointment.appointmentStatus
+                ? appointment.appointmentStatus
+                : "New-Appointment",
+            selectedSlices: selectedSlices ?? [],
+            appointmentDate: selectedDate
+        })
+            .unwrap()
+            .then(() => {
+                // closeModal();
+                // handleClear();
+                // onSave();
             })
-                .unwrap()
-                .then(() => {
-                    closeModal();
-                    handleClear();
-                    onSave();
-                })
-                .catch((e) => {
-                    if (e.status === 422) {
-                        console.log("Validation error: Unprocessable Entity", e);
-                        // dispatch(notify({ msg: 'The patient already has an appointment on this day.', sev: 'warn' }));
+            .catch((e) => {
+                if (e.status === 422) {
+                    console.log("Validation error: Unprocessable Entity", e);
+                    // dispatch(notify({ msg: 'The patient already has an appointment on this day.', sev: 'warn' }));
 
-                    } else {
-                        console.log("An unexpected error occurred", e);
-                        dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
+                } else {
+                    console.log("An unexpected error occurred", e);
+                    dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
 
-                    }
-                });
-        } else {
-            dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
+                }
+            });
+        // } else {
+        //     dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
 
-        }
+        // }
 
     }
 
@@ -814,8 +828,10 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
     const handleDayClick = (day) => {
         setOpenDay(openDay === day ? null : day);
+        console.log("Clicked day:", day)
+        setSelectedDate(null)
     };
-    const [openDay, setOpenDay] = useState(null);
+    const [openDay, setOpenDay] = useState<DayValue | null>(null);
 
 
     return (
@@ -1113,105 +1129,36 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                             <div className="flex-container">
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <div>
-                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                                            Year
-                                                        </label>
-                                                        <SelectPicker
-                                                            disabled={showOnly}
-                                                            style={{ width: "100%" }}
-                                                            data={Array.from({ length: 5 }, (_, index) => {
-                                                                const year = new Date().getFullYear() + index;
-                                                                return { label: year.toString(), value: year };
-                                                            })}
-                                                            defaultValue={new Date().getFullYear()}
-                                                            onChange={(selectedYear) => {
-                                                                setSelectedYear(selectedYear);
+                                                        <DatePicker
+                                                            value={selectedDate}
+                                                            onChange={(date) => {
+                                                                setSelectedDate(date);
+                                                                if (date) {
+                                                                    const dayOfWeek = mapJsDayToCustom(date.getDay());
+                                                                    setOpenDay(dayOfWeek);
+                                                                } else {
+                                                                    setOpenDay(null);
+                                                                }
                                                             }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                                    <div>
-                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                                            Month
-                                                        </label>
-                                                        <SelectPicker
-                                                            disabled={showOnly}
-                                                            style={{ width: "100%" }}
-                                                            data={[
-                                                                { label: "January", value: 0 },
-                                                                { label: "February", value: 1 },
-                                                                { label: "March", value: 2 },
-                                                                { label: "April", value: 3 },
-                                                                { label: "May", value: 4 },
-                                                                { label: "June", value: 5 },
-                                                                { label: "July", value: 6 },
-                                                                { label: "August", value: 7 },
-                                                                { label: "September", value: 8 },
-                                                                { label: "October", value: 9 },
-                                                                { label: "November", value: 10 },
-                                                                { label: "December", value: 11 },
-                                                            ]}
-                                                            defaultValue={new Date().getMonth()}
-                                                            onChange={(selectedMonth) => {
-                                                                setSelectedMonth(selectedMonth);
+                                                            shouldDisableDate={(date) => {
+                                                                if (openDay !== null) {
+                                                                    const dayOfWeek = mapJsDayToCustom(date.getDay());
+                                                                    return dayOfWeek !== openDay;
+                                                                }
+                                                                return false;
                                                             }}
+                                                            size="md"
+                                                            placeholder="Medium"
                                                         />
-                                                    </div>
-                                                </div>
-                                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                                    <div>
-                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                                            Week Day
-                                                        </label>
-                                                        <SelectPicker
-                                                            disabled={showOnly}
-                                                            style={{ width: "100%" }}
-                                                            data={availabilDays ? availabilDays.map(item => ({ label: item.label, value: item.value })) : []}
-                                                            onChange={handleSelectDayOfWeek}
-                                                        />
+
+
+
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="show-grid">
-                                            <div className="flex-container">
-                                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                                    <div>
-                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                                            Month Day
-                                                        </label>
-                                                        <SelectPicker
-                                                            disabled={!(availableDatesInMonth?.length > 0) || showOnly}
-                                                            style={{ width: "100%" }}
-                                                            data={filteredDates?.map(date => ({
-                                                                label: `Day ${date}`,
-                                                                value: date,
-                                                            }))}
-                                                            placeholder="Select a day"
-                                                            onChange={setSelectedMonthDay}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                                    <div>
-                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                                            Time
-                                                        </label>
-                                                        <DatePicker
-                                                            style={{ width: "100%" }}
-                                                            disabled={!selectedMonthDay}
-                                                            format="HH:mm"
-                                                            ranges={[]}
-                                                            shouldDisableHour={(hour) => !isHourAvailable(hour)}
-                                                            shouldDisableMinute={(minute, selectedHour) => !isMinuteAvailable(selectedHour, minute)}
-                                                            onChange={(value) => setSelectedTime(value)}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+
 
                                     </Form>
                                 </Panel>
