@@ -898,8 +898,7 @@ const slotPropGetter = (date, resourceId) => {
 
                         localizer={localizer}
                         events={
-                            // finalAppointments
-                            []
+                            finalAppointments??[]
                         }
                         step={60}
                         timeslots={1}
