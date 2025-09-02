@@ -5,6 +5,7 @@ import Section from '@/components/Section';
 import MyInput from '@/components/MyInput';
 import { RadioGroup, Radio, Slider } from 'rsuite';
 import '../style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 interface Props {
   record: any;
@@ -29,7 +30,7 @@ const getDiastolicDysfunctionColor = (grade: number): string => {
 
 const OtherFindings: React.FC<Props> = ({ record, setRecord, rwmaOptions }) => {
   return (
-    <Section
+    <SectionContainer
       title="Other Findings"
       content={
         <div className="handle-other-findings-positions-sort">

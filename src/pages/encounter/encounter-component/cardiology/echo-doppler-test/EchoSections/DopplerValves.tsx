@@ -4,6 +4,7 @@ import React from 'react';
 import Section from '@/components/Section';
 import MyInput from '@/components/MyInput';
 import '../style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 interface Props {
   record: any;
@@ -12,7 +13,7 @@ interface Props {
 
 const DopplerValves: React.FC<Props> = ({ record, setRecord }) => {
   return (
-    <Section
+    <SectionContainer
       title="Doppler – Valves"
       content={
         <div className="handle-inputs-positions-size">

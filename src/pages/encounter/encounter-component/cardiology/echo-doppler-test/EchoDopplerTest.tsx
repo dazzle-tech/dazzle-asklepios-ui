@@ -147,7 +147,12 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
   
   const tableFilters = (<>
   <div>
-      <MyButton
+      </div>
+
+    <AdvancedSearchFilters/>
+  </>);
+
+  const tablebuttons = (<>              <MyButton
         onClick={() => {
           console.log('Cancel clicked');
         }}
@@ -159,12 +164,9 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
 
       <Checkbox checked={showCancelled} onChange={(_, checked) => setShowCancelled(checked)}>
         Show Cancelled
-      </Checkbox></div>
+      </Checkbox>
 
-    <AdvancedSearchFilters/>
-  </>);
-
-  const tablebuttons = (<>
+      
       <div className="bt-right">
         <MyButton
           prefixIcon={() => <PlusIcon />}
@@ -173,7 +175,11 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         >
           Add
         </MyButton>
-      </div></>);
+
+
+      </div>
+
+      </>);
 
   return (
     <>

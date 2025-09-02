@@ -13,7 +13,7 @@ import { addFilterToListRequest } from '@/utils';
 import '../styles.less';
 import { newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
 import { useDispatch } from 'react-redux';
-import { faMagnifyingGlass,faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlass,faMagnifyingGlassPlus,faAddressCard  } from '@fortawesome/free-solid-svg-icons';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
@@ -22,6 +22,8 @@ import ReactDOMServer from 'react-dom/server';
 import MyButton from '@/components/MyButton/MyButton';
 import Section from '@/components/Section';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import MyModal from '@/components/MyModal/MyModal';
+import CompanionCardModal from './CompanionCardModal';
 
 const InformationDesk = () => {
   const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({
@@ -54,6 +56,8 @@ const InformationDesk = () => {
   const [selectedDepartments, setSelectedDepartments] = useState<any[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<any[]>([]);
   const [selectedBeds, setSelectedBeds] = useState<any[]>([]);
+  const [selectedRow, setSelectedRow] = useState<any | null>(null);
+  const [open, setOpen] = useState(false);
   const [responsiblePhysicians, setResponsiblePhysicians] = useState<any[]>([]);
   const [sortColumn, setSortColumn] = useState('fullName');
   type SortType = 'asc' | 'desc';
@@ -78,14 +82,37 @@ const companionDummyRow = {
   responsiblePhysician: { fullName: 'Dr. Adam Johnson' },
   daysOfStaying: 5,
   encounterStatusLkey: 'ONGOING',
-  encounterStatusLvalue: { lovDisplayVale: 'Ongoing' }
+  encounterStatusLvalue: { lovDisplayVale: 'Ongoing' },
+  picture: 'https://randomuser.me/api/portraits/men/32.jpg',
+  companionname: 'Ahmad Al-Kareem',
+  relationwithpatient: 'Brother',
+  patientname: 'Yousef Al-Mansour',
+  ward: 'Internal Medicine - Ward B',
+  admissiondate: '2025-08-25'
 };
 
 
   // table columns
 const columns = [
-  { key: 'companioncard', title: 'Companion Card', dataKey: 'companioncard' },
-
+{
+  key: 'companioncard',
+  title: 'Companion Card',
+  dataKey: 'companioncard',
+  align: 'center',
+  render: (rowData: FacilityPatientList) => (
+    <div className="actions-icons">
+      <FontAwesomeIcon
+        icon={faAddressCard}
+        title="Open Companion Card"
+        className="action-icon start-icon"
+        onClick={() => {
+          setSelectedRow(rowData);
+          setOpen(true);
+        }}
+      />
+    </div>
+  )
+},
   { key: 'fullName', title: 'Patient Name', dataKey: 'fullName' },
   { key: 'patientMrn', title: 'MRN', dataKey: 'patientMrn' },
 
@@ -371,6 +398,9 @@ const tablefilters = (<div className="field-btn-div">
         </Form>
              <AdvancedSearchFilters searchFilter={false}/></div>);
 
+
+
+
   return (
 <div className="container-div">
 
@@ -401,7 +431,32 @@ const tablefilters = (<div className="field-btn-div">
     setRowsPerPage(parseInt(e.target.value, 10));
     setPage(0);
   }}
-/></div>);
+/>
+
+<MyModal
+  open={open}
+  setOpen={setOpen}
+  title="Companion Card"
+  actionButtonFunction={{}}
+  position="left"
+  size="25vw"
+  steps={[
+    {
+      title: 'Companion Card',
+      icon: <FontAwesomeIcon icon={faAddressCard } />,
+      footer: (
+        <MyButton appearance="ghost">
+          <FontAwesomeIcon icon={faPrint } />
+          Print
+        </MyButton>
+      )
+    }
+  ]}
+  content={<CompanionCardModal record={selectedRow} />}
+/>
+
+
+</div>);
 };
 
 export default InformationDesk;
