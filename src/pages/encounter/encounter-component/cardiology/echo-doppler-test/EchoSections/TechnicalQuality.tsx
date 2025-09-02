@@ -4,6 +4,7 @@ import MyInput from '@/components/MyInput';
 import { RadioGroup, Radio } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import '../style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 interface Props {
   record: any;
@@ -14,7 +15,8 @@ const TechnicalQuality: React.FC<Props> = ({ record, setRecord }) => {
   const { data: patientPositionLov } = useGetLovValuesByCodeQuery('PAT_POSITION');
 
   return (
-    <Section
+
+    <SectionContainer
       title="Technical Quality"
       content={
         <div className="handle-inputs-positions-size-coulmn">
@@ -44,8 +46,7 @@ const TechnicalQuality: React.FC<Props> = ({ record, setRecord }) => {
           </RadioGroup>
         </div>
       }
-    />
-  );
+    />);
 };
 
 export default TechnicalQuality;

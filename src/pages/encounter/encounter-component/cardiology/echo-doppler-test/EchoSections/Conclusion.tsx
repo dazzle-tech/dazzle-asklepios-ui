@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import Section from '@/components/Section';
 import MyInput from '@/components/MyInput';
 import '../style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 interface Props {
   record: any;
@@ -21,7 +22,7 @@ const Conclusion: React.FC<Props> = ({ record, setRecord, usersList, currentUser
   }, [currentUserId, record?.cardiologistName, setRecord]);
 
   return (
-    <Section
+    <SectionContainer
       title="Conclusion"
       content={
         <div className="handle-inputs-positions-size conclusion-main-container-positions">

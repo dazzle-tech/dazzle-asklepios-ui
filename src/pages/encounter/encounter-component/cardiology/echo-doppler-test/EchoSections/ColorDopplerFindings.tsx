@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Section from '@/components/Section';
 import { Slider } from 'rsuite';
 import '../style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const ColorDopplerFindings = () => {
   const [regurgitation, setRegurgitation] = useState({
@@ -62,7 +63,7 @@ const ColorDopplerFindings = () => {
   );
 
   return (
-    <Section
+    <SectionContainer
       title="Color Doppler Findings"
       content={
         <div className="color-dopler-findings-position">

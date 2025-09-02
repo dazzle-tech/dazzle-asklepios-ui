@@ -3,6 +3,7 @@ import Section from '@/components/Section';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import '../style.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 interface Props {
   echoTest: any;
@@ -23,74 +24,78 @@ const TestInformation: React.FC<Props> = ({
   const otherIndicationKey = 'OTHER';
 
   return (
-    <Section
-      title="Test Information"
-      content={
-        <div className="handle-inputs-positions-size">
-          <MyInput
-            width={200}
-            fieldType="select"
-            fieldLabel="Indication"
-            fieldName="indication"
-            selectData={echoIndicationsLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={echoTest}
-            setRecord={setEchoTest}
-            searchable={false}
-          />
-          {echoTest?.indication === otherIndicationKey && (
-            <MyInput
-              width={300}
-              fieldType="text"
-              fieldLabel="Other Indication"
-              fieldName="indicationOther"
-              placeholder="Please specify"
-              record={echoTest}
-              setRecord={setEchoTest}
-              searchable={false}
-            />
-          )}
-          <MyInput
-            width={200}
-            fieldType="select"
-            fieldLabel="Echo Type"
-            fieldName="echoType"
-            selectData={echoTypesLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={echoTest}
-            setRecord={setEchoTest}
-            searchable={false}
-          />
-          <MyInput
-            width={300}
-            fieldType="select"
-            fieldLabel="Referring Physician"
-            fieldName="referringPhysician"
-            selectData={physicians}
-            selectDataLabel="fullName"
-            selectDataValue="id"
-            record={echoTest}
-            setRecord={setEchoTest}
-            searchable={false}
-          />
-          <MyInput
-            width={300}
-            fieldType="select"
-            fieldLabel="Technician/Operator Name"
-            fieldName="technicianName"
-            selectData={usersList}
-            selectDataLabel="fullName"
-            selectDataValue="id"
-            record={echoTest}
-            setRecord={setEchoTest}
-            searchable={false}
-          />
-        </div>
-      }
-    />
-  );
+<SectionContainer
+  title="Test Information"
+  content={
+    <div className="handle-inputs-positions-size">
+      <MyInput
+        width={200}
+        fieldType="select"
+        fieldLabel="Indication"
+        fieldName="indication"
+        selectData={echoIndicationsLov?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={echoTest}
+        setRecord={setEchoTest}
+        searchable={false}
+      />
+
+      {echoTest?.indication === otherIndicationKey && (
+        <MyInput
+          width={300}
+          fieldType="text"
+          fieldLabel="Other Indication"
+          fieldName="indicationOther"
+          placeholder="Please specify"
+          record={echoTest}
+          setRecord={setEchoTest}
+          searchable={false}
+        />
+      )}
+
+      <MyInput
+        width={200}
+        fieldType="select"
+        fieldLabel="Echo Type"
+        fieldName="echoType"
+        selectData={echoTypesLov?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={echoTest}
+        setRecord={setEchoTest}
+        searchable={false}
+      />
+
+      <MyInput
+        width={300}
+        fieldType="select"
+        fieldLabel="Referring Physician"
+        fieldName="referringPhysician"
+        selectData={physicians}
+        selectDataLabel="fullName"
+        selectDataValue="id"
+        record={echoTest}
+        setRecord={setEchoTest}
+        searchable={false}
+      />
+
+      <MyInput
+        width={300}
+        fieldType="select"
+        fieldLabel="Technician/Operator Name"
+        fieldName="technicianName"
+        selectData={usersList}
+        selectDataLabel="fullName"
+        selectDataValue="id"
+        record={echoTest}
+        setRecord={setEchoTest}
+        searchable={false}
+      />
+    </div>
+  }
+/>
+);
 };
 
 export default TestInformation;
