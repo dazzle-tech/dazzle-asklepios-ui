@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { Checkbox } from 'rsuite';
 import { formatDateWithoutSeconds } from '@/utils';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Form } from 'rsuite';
 import '../Preparation/styles.less';
 //Table Data
@@ -112,8 +111,6 @@ const MaterialTableReconciliation = () => {
             <Checkbox>Surgical Instrument</Checkbox>
 </div>
       </Form>
-      <AdvancedSearchFilters searchFilter={true}/>
-
 
     </>
   );

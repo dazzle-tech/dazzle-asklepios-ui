@@ -145,12 +145,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
 
 
   
-  const tableFilters = (<>
-  <div>
-      </div>
 
-    <AdvancedSearchFilters/>
-  </>);
 
   const tablebuttons = (<>              <MyButton
         onClick={() => {
@@ -186,7 +181,6 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
       <MyTable
         data={echoData}
         columns={columns}
-        filters={tableFilters}
         loading={false}
         tableButtons={tablebuttons}
         rowClassName={(row) => (row?.key === selectedRow?.key ? 'selected-row' : '')}

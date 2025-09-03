@@ -36,6 +36,7 @@ import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import UrgencyButton from '../drug-order/UrgencyButton';
 import MyInput from '@/components/MyInput';
+import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNurse/AllergyFloatingButton';
 
 const { Column, HeaderCell, Cell } = Table;
 const Prescription = props => {
@@ -858,6 +859,7 @@ const Prescription = props => {
           </div>
         }
       />
+      <AllergyFloatingButton patientKey={patient.key} />
     </>
   );
 };

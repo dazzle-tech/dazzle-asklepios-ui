@@ -621,6 +621,8 @@ const Allergies = props => {
         fetchallerges={fetchallerges}
         openToAdd={openToAdd}
       />
+
+
     </div>
   );
 };
