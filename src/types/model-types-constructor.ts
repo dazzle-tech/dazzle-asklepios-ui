@@ -4257,37 +4257,6 @@ export const newApUomGroupsUnits:modelTypes.ApUomGroupsUnits = {
 	uomGroupKey:undefined,
 } 
 
-export const newApUser:modelTypes.ApUser = { 
-	key:undefined,
-	username:'',
-	password:'',
-	fullName:'',
-	verified:'',
-	lastGeneratedOtp:'',
-	passcode:'',
-	tenantKey:undefined,
-	organizationKey:undefined,
-	accessRoleKey:undefined,
-	email:'',
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-	departmentKey:undefined,
-	firstName:'',
-	secondName:'',
-	lastName:'',
-	dob:null,
-	sexAtBirthLkey:undefined,
-	phoneNumber:0,
-	jobDescription:'',
-	jobRoleLkey:undefined,
-	jobRoleKey:undefined,
-	mustChangePassword:undefined,
-} 
 
 export const newApUserAccessPrivatePatient:modelTypes.ApUserAccessPrivatePatient = { 
 	key:undefined,

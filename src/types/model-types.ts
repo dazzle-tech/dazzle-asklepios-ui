@@ -4256,37 +4256,6 @@ export interface ApUomGroupsUnits {
 	uomGroupKey:string;
 } 
 
-export interface ApUser { 
-	key:string;
-	username:string;
-	password:string;
-	fullName:string;
-	verified:string;
-	lastGeneratedOtp:string;
-	passcode:string;
-	tenantKey:string;
-	organizationKey:string;
-	accessRoleKey:string;
-	email:string;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-	departmentKey:string;
-	firstName:string;
-	secondName:string;
-	lastName:string;
-	dob:Date;
-	sexAtBirthLkey:string;
-	phoneNumber:number;
-	jobDescription:string;
-	jobRoleLkey:string;
-	jobRoleKey:string;
-	mustChangePassword:boolean;
-} 
 
 export interface ApUserAccessPrivatePatient { 
 	key:string;
