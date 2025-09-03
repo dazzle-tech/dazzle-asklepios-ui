@@ -65,7 +65,6 @@ const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
   return (
     <>
        {visible ? (
-        // نافذة البيانات
         <Draggable>
           <div className="allergy-floating-fab">
             <div className="fab-header">
@@ -84,7 +83,6 @@ const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
           </div>
         </Draggable>
       ) : (
-        // الزر الدائري القابل للسحب
         <Draggable
           onStart={() => setWasDragged(false)}
           onDrag={() => setWasDragged(true)}
