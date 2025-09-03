@@ -317,9 +317,10 @@ const MyInput = ({
             onChange={(_, checked) => handleValueChange(checked)}
             disabled={props.disabled}
           >
-            {props.label ?? fieldLabel}
+            {props.label ? props.label : fieldLabel}
           </Checkbox>
         );
+
       default:
         const inputWidth = props?.width ?? 145;
         const addonWidth = 40;
@@ -386,8 +387,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
+                  ? 'orange'
+                  : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>

@@ -340,63 +340,64 @@ const ChooseDepartment = ({
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                    <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'dialysisRequest'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                      <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'slidingScale'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                       <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'pointOfCareCests'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                        <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'hospitalCourse'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                       <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'childGrowth'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                   <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'flaccNeonatesPainAssessment'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
+                    fieldLabel={'FLACC Neonates Pain Assessment'}
                   />
-                      <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'universalPainAssessment'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                        <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'patientRestraint'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
-                        <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'infectionControl'}
                     showLabel={false}
@@ -409,8 +410,9 @@ const ChooseDepartment = ({
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
+                    fieldLabel={'SOFA'}
                   />
-                   <MyInput
+                  <MyInput
                     fieldType="check"
                     fieldName={'medicalCalculators'}
                     showLabel={false}
@@ -423,6 +425,7 @@ const ChooseDepartment = ({
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
+                    fieldLabel={'CPOE Results Manager'}
                   />
                 </div>
               </div>
