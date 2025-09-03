@@ -29,6 +29,8 @@ import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import DetailsTele from './DetailsTele';
+
+// Download a base64 attachment as a file
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -38,7 +40,6 @@ const handleDownload = attachment => {
   const byteArray = new Uint8Array(byteNumbers);
   const blob = new Blob([byteArray], { type: attachment.contentType });
 
-  // Create a temporary  element and trigger the download
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.style.display = 'none';
@@ -48,6 +49,7 @@ const handleDownload = attachment => {
   a.click();
   window.URL.revokeObjectURL(url);
 };
+
 const Consultation = props => {
   const location = useLocation();
 
@@ -55,6 +57,8 @@ const Consultation = props => {
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
   const dispatch = useAppDispatch();
+
+  // Local state for UI management
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedRowKey, setSelectedRowKey] = useState<number | null>(null);
   const [showCanceled, setShowCanceled] = useState(true);
@@ -64,8 +68,10 @@ const Consultation = props => {
   const [openDetailsMdal, setOpenDetailsModal] = useState(false);
   const [openConfirmCancelModel, setOpenConfirmCancelModel] = useState(false);
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
-  const [record, setRecord] = useState({}); // Add this line to define 'record' state
+  const [record, setRecord] = useState({});
   const [openModal, setOpenModal] = useState(false);
+
+  // Initial filters for consultation orders
   const filters = [
     {
       fieldName: 'patient_key',
@@ -79,6 +85,7 @@ const Consultation = props => {
     }
   ];
 
+  // Add filter for current encounter if "showPrev" is enabled
   if (showPrev) {
     filters.push({
       fieldName: 'visit_key',
@@ -86,21 +93,28 @@ const Consultation = props => {
       value: encounter.key
     });
   }
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters
   });
+
+  // Fetch consultation orders with filters
   const {
     data: consultationOrderListResponse,
     refetch: refetchCon,
     isLoading: consaultLoading
   } = useGetConsultationOrdersQuery(listRequest);
 
+  // Mutation to save consultation orders
   const [saveconsultationOrders, saveConsultationOrdersMutation] =
     useSaveConsultationOrdersMutation();
+
   const [consultationOrders, setConsultationOrder] = useState<ApConsultationOrder>({
     ...newApConsultationOrder
   });
+
+  // Filters for fetching patient attachments
   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -109,7 +123,6 @@ const Consultation = props => {
         operator: 'isNull',
         value: undefined
       },
-
       {
         fieldName: 'attachment_type',
         operator: 'match',
@@ -118,18 +131,21 @@ const Consultation = props => {
     ]
   });
 
+  // Fetch patient attachments
   const {
     data: fetchPatintAttachmentsResponce,
     refetch: attachmentRefetch,
     isLoading: loadAttachment
   } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
 
+  // Highlight selected row
   const isSelected = rowData => {
     if (rowData && consultationOrders && rowData.key === consultationOrders.key) {
       return 'selected-row';
     } else return '';
   };
 
+  // Refresh attachments list after modal closes
   useEffect(() => {
     if (!attachmentsModalOpen) {
       setConsultationOrder({ ...newApConsultationOrder });
@@ -139,7 +155,6 @@ const Consultation = props => {
           operator: 'isNull',
           value: undefined
         },
-
         {
           fieldName: 'attachment_type',
           operator: 'match',
@@ -153,6 +168,8 @@ const Consultation = props => {
     }
     attachmentRefetch();
   }, [attachmentsModalOpen]);
+
+  // Update filters when "showCanceled" changes
   useEffect(() => {
     const upateFilter = [
       {
@@ -172,6 +189,7 @@ const Consultation = props => {
     }));
   }, [showCanceled]);
 
+  // Handle checkbox select/deselect
   const handleCheckboxChange = key => {
     setSelectedRows(prev => {
       if (prev.includes(key)) {
@@ -181,13 +199,18 @@ const Consultation = props => {
       }
     });
   };
+
+  // Open confirmation modal for cancel
   const OpenConfirmDeleteModel = () => {
     setOpenConfirmCancelModel(true);
   };
+
+  // Close confirmation modal
   const CloseConfirmDeleteModel = () => {
     setOpenConfirmCancelModel(false);
   };
 
+  // Reset consultation order form
   const handleClear = async () => {
     setConsultationOrder({
       ...newApConsultationOrder,
@@ -198,6 +221,8 @@ const Consultation = props => {
       preferredConsultantKey: null
     });
   };
+
+  // Cancel selected consultation orders
   const handleCancle = async () => {
     try {
       await Promise.all(
@@ -211,16 +236,8 @@ const Consultation = props => {
           }).unwrap()
         )
       );
-
       dispatch(notify('All orders deleted successfully'));
-
-      refetchCon()
-        .then(() => {
-          console.log('Refetch complete');
-        })
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
+      refetchCon();
       setSelectedRows([]);
       CloseConfirmDeleteModel();
     } catch (error) {
@@ -229,6 +246,8 @@ const Consultation = props => {
       CloseConfirmDeleteModel();
     }
   };
+
+  // Submit selected consultation orders
   const handleSubmit = async () => {
     try {
       await Promise.all(
@@ -240,32 +259,30 @@ const Consultation = props => {
           }).unwrap()
         )
       );
-
       dispatch(notify('All  Submitted successfully'));
-
-      refetchCon()
-        .then(() => {
-          console.log('Refetch complete');
-        })
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
+      refetchCon();
       setSelectedRows([]);
     } catch (error) {
       console.error('Encounter save failed:', error);
       dispatch(notify('One or more saves failed'));
     }
   };
+
+  // Open modal to add new consultation
   const handelAddNew = () => {
     handleClear();
     setOpenDetailsModal(true);
     setEditing(false);
   };
+
+  // Open modal to add telephonic consultation
   const handelAdd = () => {
     handleClear();
     setOpenModal(true);
     setEditing(false);
   };
+
+  // Table columns definition
   const tableColumns = [
     {
       key: '',
@@ -358,7 +375,6 @@ const Consultation = props => {
         );
       }
     },
-
     {
       key: 'created',
       title: 'SUBMISSION AT/BY',
@@ -408,33 +424,33 @@ const Consultation = props => {
       flexGrow: 4
     }
   ];
-  const pageIndex = listRequest.pageNumber - 1;
 
-  // how many rows per page:
-  const rowsPerPage = listRequest.pageSize;
+  // Pagination helpers
+  const pageIndex = listRequest.pageNumber - 1; // zero-based
+  const rowsPerPage = listRequest.pageSize; // rows per page
+  const totalCount = consultationOrderListResponse?.extraNumeric ?? 0; // total rows
 
-  // total number of items in the backend:
-  const totalCount = consultationOrderListResponse?.extraNumeric ?? 0;
-
-  // handler when the user clicks a new page number:
+  // Handle page change
   const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
     setManualSearchTriggered(true);
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
 
-  // handler when the user chooses a different rows-per-page:
+  // Handle rows per page change
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualSearchTriggered(true);
     setListRequest({
       ...listRequest,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
+      pageNumber: 1
     });
   };
+
+  // Handle row click
   const handleRowClick = (row: any) => {
-    setSelectedRowKey(row.id); // row.id أو أي مفتاح فريد للصف
+    setSelectedRowKey(row.id);
   };
+
   return (
     <div>
       <Tabs appearance="subtle" className="doctor-round-tabs" defaultActiveKey="1">
@@ -452,7 +468,7 @@ const Consultation = props => {
               onClick={OpenConfirmDeleteModel}
               disabled={selectedRows.length === 0}
             >
-              Cancle
+              Cancel
             </MyButton>
             <MyButton
               appearance="ghost"
