@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import {
   useGetCdtsQuery,
   useSaveCdtMutation,
-  useGetLovValuesByCodeQuery,
+  useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { notify } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -30,7 +30,7 @@ const CDTSetup = () => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [saveCdt, saveCdtMutation] = useSaveCdtMutation();
-  // Initial table request with default filter 
+  // Initial table request with default filter
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 1000
@@ -41,7 +41,7 @@ const CDTSetup = () => {
 
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
+    <div className="page-title">
       <h5>CDT Codes</h5>
     </div>
   );
@@ -68,13 +68,15 @@ const CDTSetup = () => {
   // Handle Save Cdt Object
   const handleSave = () => {
     setPopupOpen(false);
-    saveCdt(cdt).unwrap().then(() => {
-      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-    })
-    .catch((error) => {
-      dispatch(notify({ msg: 'Failed to save', sev: 'error' }));
-      console.error('Save error:', error);
-    });
+    saveCdt(cdt)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+      })
+      .catch(error => {
+        dispatch(notify({ msg: 'Failed to save', sev: 'error' }));
+        console.error('Save error:', error);
+      });
   };
   // Handle changes in filter fields
   const handleFilterChange = (fieldName, value) => {
@@ -91,13 +93,14 @@ const CDTSetup = () => {
     } else {
       // Reset to default filter if value is empty
       setListRequest({
-        ...listRequest, filters: [
+        ...listRequest,
+        filters: [
           {
             fieldName: 'deleted_at',
             operator: 'isNull',
             value: undefined
           }
-        ],
+        ]
       });
     }
   };
@@ -126,20 +129,18 @@ const CDTSetup = () => {
     {
       key: 'cdtCode',
       title: 'Code',
-      render: (rowData) => rowData?.cdtCode ?? 'N/A',
+      render: rowData => rowData?.cdtCode ?? 'N/A'
     },
     {
       key: 'description',
       title: 'Description',
-      render: (rowData) => rowData?.description ?? 'N/A',
+      render: rowData => rowData?.description ?? 'N/A'
     },
     {
       key: 'classLkey',
       title: 'Class',
-      render: (rowData) =>
-        rowData.classLvalue
-          ? rowData.classLvalue.lovDisplayVale
-          : rowData.classLkey,
+      render: rowData =>
+        rowData.classLvalue ? rowData.classLvalue.lovDisplayVale : rowData.classLkey
     }
   ];
   // Filter form rendered above the table
@@ -152,7 +153,7 @@ const CDTSetup = () => {
         fieldName="filter"
         fieldType="select"
         record={record}
-        setRecord={(updatedRecord) => {
+        setRecord={updatedRecord => {
           setRecord({
             ...record,
             filter: updatedRecord.filter,
@@ -180,9 +181,9 @@ const CDTSetup = () => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = cdtListResponse?.extraNumeric ?? 0;
 
-  // MyModal content 
+  // MyModal content
   const modalContent = (
-    <Form fluid layout='inline'>
+    <Form fluid layout="inline">
       <MyInput
         width={350}
         column
@@ -252,26 +253,12 @@ const CDTSetup = () => {
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
   return (
-    <div>
-      <div className='bt-div'>
-        <MyButton prefixIcon={() => <AddOutlineIcon />} backgroundColor="var(--deep-blue)" onClick={handleNew}>
-          Add New
-        </MyButton>
-        <MyButton disabled={!cdt.key} onClick={() => setPopupOpen(true)} backgroundColor="var(--deep-blue)" prefixIcon={() => <EditIcon />}>
-          Edit Selected
-        </MyButton>
-        <MyButton disabled={true || !cdt.key} backgroundColor="var(--primary-pink)" prefixIcon={() => <TrashIcon />}>
-          Delete Selected
-        </MyButton>
-        <MyButton disabled={!cdt.key} onClick={() => setServicesOpen(true)} backgroundColor="var(--light-blue)">
-          Linked Services
-        </MyButton>
-      </div>
-      <hr />
+    <>
+      
       <MyTable
         data={cdtListResponse?.object ?? []}
         columns={columns}
@@ -282,8 +269,43 @@ const CDTSetup = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         rowClassName={isSelected}
-        onRowClick={rowData => { setCdt(rowData) }}
+        onRowClick={rowData => {
+          setCdt(rowData);
+        }}
         loading={isLoading}
+        tableButtons={
+          <div className="bts-div">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              backgroundColor="var(--deep-blue)"
+              onClick={handleNew}
+            >
+              Add New
+            </MyButton>
+            <MyButton
+              disabled={!cdt.key}
+              onClick={() => setPopupOpen(true)}
+              backgroundColor="var(--deep-blue)"
+              prefixIcon={() => <EditIcon />}
+            >
+              Edit Selected
+            </MyButton>
+            <MyButton
+              disabled={true || !cdt.key}
+              backgroundColor="var(--primary-pink)"
+              prefixIcon={() => <TrashIcon />}
+            >
+              Delete Selected
+            </MyButton>
+            <MyButton
+              disabled={!cdt.key}
+              onClick={() => setServicesOpen(true)}
+              backgroundColor="var(--light-blue)"
+            >
+              Linked Services
+            </MyButton>
+          </div>
+        }
       />
       <MyModal
         open={popupOpen}
@@ -294,11 +316,11 @@ const CDTSetup = () => {
         actionButtonLabel="Save"
         actionButtonFunction={handleSave}
         size="xs"
-        position='right'
-        steps={[{ title: 'CDT', icon:<FontAwesomeIcon icon={ faTooth }/>}]}
+        position="right"
+        steps={[{ title: 'CDT', icon: <FontAwesomeIcon icon={faTooth} /> }]}
       />
       <LinkedServices open={servicesOpen} setOpen={setServicesOpen} cdt={cdt} setCdt={setCdt} />
-    </div>
+    </>
   );
 };
 
