@@ -13,7 +13,7 @@ const SessionExpiredBackdrop = () => {
 
   return (
     <>
-      {sessionExpired && location.pathname !== '/login' && (
+      {sessionExpired && location.pathname !== '/login'  && (
         <div
           style={{
             position: 'fixed',

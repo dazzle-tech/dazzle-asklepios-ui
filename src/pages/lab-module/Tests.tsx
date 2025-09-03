@@ -642,60 +642,61 @@ const Tests = forwardRef<unknown, Props>(
         </Form>
       );
     };
-    return (
-      <Panel ref={ref} header="Order's Tests" defaultExpanded>
-        <MyTable
-          filters={filters()}
-          columns={tableClumns}
-          data={testsList?.object ?? []}
-          onRowClick={rowData => {
-            setTest(rowData);
-          }}
-          rowClassName={isTestSelected}
-          loading={isTestsFetching}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortChange={(sortBy, sortType) => {
-            setListRequest({ ...listRequest, sortBy, sortType });
-          }}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
+return (
+  <Panel ref={ref} header="Order's Tests" defaultExpanded>
+    <MyTable
+      filters={filters()}
+      columns={tableClumns}
+      data={testsList?.object ?? []}
+      onRowClick={rowData => {
+        setTest(rowData);
+      }}
+      rowClassName={isTestSelected}
+      loading={isTestsFetching}
+      sortColumn={listRequest.sortBy}
+      sortType={listRequest.sortType}
+      onSortChange={(sortBy, sortType) => {
+        setListRequest({ ...listRequest, sortBy, sortType });
+      }}
+      page={pageIndex}
+      rowsPerPage={rowsPerPage}
+      totalCount={totalCount}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
+    />
 
-        <SampleModal
-          open={openSampleModal}
-          setOpen={setOpenSampleModal}
-          samplesList={samplesList}
-          labDetails={laboratoryList?.object?.find(item => item.testKey === test.testKey)}
-          saveTest={saveTest}
-          fetchTest={fetchTest}
-          test={test}
-          setTest={setTest}
-          fecthSample={fecthSample}
-        />
-        <ChatModal
-          open={openNoteModal}
-          setOpen={setOpenNoteModal}
-          handleSendMessage={handleSendMessage}
-          title={'Technician Notes'}
-          list={messagesList?.object}
-          fieldShowName={'notes'}
-        />
-        <CancellationModal
-          open={openRejectedModal}
-          setOpen={setOpenRejectedModal}
-          fieldName="rejectedReason"
-          handleCancle={handleRejectedTest}
-          object={test}
-          setObject={setTest}
-          fieldLabel={'Reject Reason'}
-          title="Reject"
-        />
-      </Panel>
-    );
+    <SampleModal
+      open={openSampleModal}
+      setOpen={setOpenSampleModal}
+      samplesList={samplesList}
+      labDetails={laboratoryList?.object?.find(item => item.testKey === test.testKey)}
+      saveTest={saveTest}
+      fetchTest={fetchTest}
+      test={test}
+      setTest={setTest}
+      fecthSample={fecthSample}
+    />
+    <ChatModal
+      open={openNoteModal}
+      setOpen={setOpenNoteModal}
+      handleSendMessage={handleSendMessage}
+      title="Technician Notes"
+      list={messagesList?.object}
+      fieldShowName="notes"
+    />
+    <CancellationModal
+      open={openRejectedModal}
+      setOpen={setOpenRejectedModal}
+      fieldName="rejectedReason"
+      handleCancle={handleRejectedTest}
+      object={test}
+      setObject={setTest}
+      fieldLabel="Reject Reason"
+      title="Reject"
+    />
+  </Panel>
+);
+
   }
 );
 export default Tests;

@@ -1,14 +1,15 @@
 import { useAppSelector } from '@/hooks';
-import { setUser } from '@/reducers/authSlice';
-import { useGetAccessRolesQuery, useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation } from '@/services/setupService';
-import { ApUser } from '@/types/model-types';
-import { newApUser } from '@/types/model-types-constructor';
+import { useGetAccessRolesQuery, useGetFacilitiesQuery, useGetLovValuesByCodeQuery} from '@/services/setupService';
+
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Button, Form, Modal } from 'rsuite';
 import MyInput from '../MyInput';
 import { initialListRequest } from '@/types/types';
+import { ApUser } from '@/types/model-types-new';
+import { newApUser } from '@/types/model-types-constructor-new';
+import { useSaveAccountMutation } from '@/services/userService';
 
 interface EditProfileProps {
     open: boolean;
@@ -24,7 +25,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
     const { data: facilityListResponse } = useGetFacilitiesQuery({ ...initialListRequest, pageSize: 1000 });
     const { data: accessRoleListResponse } = useGetAccessRolesQuery({ ...initialListRequest, pageSize: 1000 });
 
-     const [user, setUser] = useState<ApUser>({ ...newApUser, isValid: true });
+     const [user, setUser] = useState<ApUser>({ ...newApUser });
     const [readyUser, setReadyUser] = useState<Partial<ApUser>>({});
 
      useEffect(() => {
@@ -33,17 +34,17 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
         }
     }, [authSlice.user]);
 
-     useEffect(() => {
-        if (user?.firstName && user?.lastName) {
-            setReadyUser({
-                ...user,
-                fullName: `${user.firstName} ${user.lastName}`,
-                username: user.username ?? (user.firstName.slice(0, 1) + user.lastName).toLowerCase()
-            });
-        }
-    }, [user]);
+    //  useEffect(() => {
+    //     if (user?.firstName && user?.lastName) {
+    //         setReadyUser({
+    //             ...user,
+    //             fullName: `${user.firstName} ${user.lastName}`,
+    //             username: user.username ?? (user.firstName.slice(0, 1) + user.lastName).toLowerCase()
+    //         });
+    //     }
+    // }, [user]);
 
-     const [saveUser, saveUserMutation] = useSaveUserMutation();
+     const [saveUser, saveUserMutation] = useSaveAccountMutation()
 
      const handleSubmit = async () => {
         try {
@@ -62,16 +63,16 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
             <div>
                 <Form layout='inline' fluid>
                     <MyInput disabled={!editing} column fieldName="firstName" required record={user} setRecord={setUser} />
-                    <MyInput disabled={!editing} column fieldName="secondName" required record={user} setRecord={setUser} />
+                    {/* <MyInput disabled={!editing} column fieldName="secondName" required record={user} setRecord={setUser} /> */}
                     <MyInput disabled={!editing} column fieldName="lastName" required record={user} setRecord={setUser} />
                     <MyInput disabled column fieldName="fullName" required record={user} setRecord={setUser} />
-                    <MyInput disabled={!editing} column fieldName="username" required record={readyUser} setRecord={setReadyUser} />
+                    <MyInput disabled={!editing} column fieldName="login" required record={readyUser} setRecord={setReadyUser} />
                 </Form>
 
                 <Form layout='inline' fluid>
                     <MyInput disabled={!editing} column fieldName="email" required record={user} setRecord={setUser} />
                     <MyInput disabled={!editing} column fieldName="phoneNumber" required record={user} setRecord={setUser} />
-                    <MyInput
+                    {/* <MyInput
                         disabled={!editing}
                         column
                         fieldLabel="sex at birth"
@@ -91,7 +92,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
                         fieldName="dob"
                         record={user}
                         setRecord={setUser}
-                    />
+                    /> */}
                 </Form>
             </div>
         );

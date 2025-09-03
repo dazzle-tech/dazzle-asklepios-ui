@@ -13,6 +13,7 @@ import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
+import {userService} from '@/services/userService';
 import divSlice from './reducers/divSlice';
 import { labService } from './services/labService';
 import { radService } from '@/services/radService';
@@ -80,7 +81,8 @@ export const store = configureStore({
     [procedureService.reducerPath]: procedureService.reducer,
 
     //recovery
-    [recoveryService.reducerPath]: recoveryService.reducer
+    [recoveryService.reducerPath]: recoveryService.reducer,
+    [userService.reducerPath]: userService.reducer,
 
   },
   // @ts-ignore
@@ -102,7 +104,8 @@ export const store = configureStore({
       radService.middleware,
       procedureService.middleware,
       operationService.middleware,
-      recoveryService.middleware
+      recoveryService.middleware,
+      userService.middleware
 
     ])
 

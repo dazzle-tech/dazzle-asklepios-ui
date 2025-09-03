@@ -1,68 +1,65 @@
-import { useAppSelector } from '@/hooks';
-import { setUser } from '@/reducers/authSlice';
-import { useSaveUserMutation } from '@/services/setupService';
-import { ApUser } from '@/types/model-types';
-import { newApUser } from '@/types/model-types-constructor';
-import { notify } from '@/utils/uiReducerActions';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Dropdown, Popover, Button, Modal, Input, Form } from 'rsuite';
+import { Button, Form, Modal } from 'rsuite';
 import MyInput from '../MyInput';
-import FormControl from 'rsuite/esm/FormControl';
-import { Password } from 'primereact/password';
+import MyModal from '../MyModal/MyModal';
+import { useChangePasswordMutation } from '@/services/userService';
+import { notify } from '@/utils/uiReducerActions';
 
 const ChangePassword = ({ open, onClose }) => {
-    const [password, setPassword] = useState({ password: '' });
+    const dispatch = useDispatch();
+    const [currentPassword, setCurrentPassword] = useState({ currentPassword: '' });
     const [newPassword, setNewPassword] = useState({ newPassword: '' });
     const [confirmPassword, setConfirmPassword] = useState({ confirmPassword: '' });
-    const authSlice = useAppSelector(state => state.auth);
-    const [saveUser, saveUserMutation] = useSaveUserMutation();
-    const dispatch = useDispatch();
-    const [localUser, setLocalUser] = useState<ApUser>({ ...newApUser });
+    const [error, setError] = useState('');
+    const [changePassword, { isLoading }] = useChangePasswordMutation();
 
-    useEffect(() => {
-        setLocalUser(authSlice.user)
-        console.log(authSlice.user)
-
-    }, [authSlice.user])
-
- 
-
-    const handleClearFields = () => {
-        setNewPassword({ newPassword: '' })
-        setConfirmPassword({ confirmPassword: '' })
-        setPassword({ password: '' })
-    }
+      const clearFields = () => {
+        setCurrentPassword({currentPassword: ""});
+        setNewPassword({newPassword:''});
+        setConfirmPassword({confirmPassword:''});
+        setError('');
+      };
 
     const handleSubmit = async () => {
-        console.log(authSlice.user);
+        setError('');
 
-        if (authSlice.user.password === password?.password) {
-            if (newPassword?.newPassword === confirmPassword?.confirmPassword && newPassword?.newPassword.length > 0) {
-                try {
-                    await saveUser({ ...localUser, password: newPassword?.newPassword }).unwrap();
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            setError('Please fill in all fields');
+            dispatch(notify({ msg: 'Please fill in all fields', sev: 'info' }))
+            return;
+        }
 
-                    console.log('Password changed successfully:', newPassword);
+        if (newPassword.newPassword !== confirmPassword.confirmPassword) {
+            console.log("new", newPassword);
+            console.log("confirm", confirmPassword)
+            setError('New passwords do not match');
+            dispatch(notify({ msg: 'New passwords do not match', sev: 'info' }))
+            return;
+        }
 
-                    dispatch(notify({ msg: 'Password changed successfully' }));
-                    handleClearFields();
-                    dispatch(setUser({ ...localUser, password: newPassword?.newPassword }));
+        try {
 
-                    onClose();
-                } catch (error) {
-                    console.error('Failed to change password:', error);
-                    dispatch(notify({ msg: 'Failed to change password. Please try again.', sev: 'error' }));
-                }
-            } else {
-                console.log('Passwords do not match.');
-                dispatch(notify({ msg: 'Passwords do not match.', sev: 'error' }));
-            }
-        } else {
-            console.log('Incorrect current password');
-            dispatch(notify({ msg: 'Incorrect current password.', sev: 'error' }));
+            const Current = currentPassword.currentPassword;
+            const New = newPassword.newPassword
+            console.log({
+                "currentPassword": Current,
+                "newPassword": New
+            });
+            await changePassword({
+                "currentPassword": Current,
+                "newPassword": New
+            }).unwrap();
+            dispatch(notify({ msg: 'Password changed successfully', sev: 'success' }));
+            onClose();
+              clearFields();
+
+        } catch (err) {
+            console.error('Password change failed:', err);
+            setError('Failed to change password. Please try again.');
+            dispatch(notify({ msg: 'Failed to change password. Please try again.', sev: 'error' }));
         }
     };
-
 
     return (
         <Modal open={open} backdrop="static" onClose={onClose}>
@@ -76,9 +73,17 @@ const ChangePassword = ({ open, onClose }) => {
                         width={350}
                         column
                         fieldLabel="Current Password"
-                        fieldName="password"
-                        record={password}
-                        setRecord={setPassword}
+                        fieldName="currentPassword"
+                        record={currentPassword}
+                        setRecord={setCurrentPassword}
+                    />
+                    <MyInput
+                        width={350}
+                        column
+                        fieldLabel="New Password"
+                        fieldName="newPassword"
+                        record={newPassword}
+                        setRecord={setNewPassword}
                     />
 
                     <MyInput
@@ -89,14 +94,7 @@ const ChangePassword = ({ open, onClose }) => {
                         record={confirmPassword}
                         setRecord={setConfirmPassword}
                     />
-                    <MyInput
-                        width={350}
-                        column
-                        fieldLabel="New Password"
-                        fieldName="newPassword"
-                        record={newPassword}
-                        setRecord={setNewPassword}
-                    />
+
                 </Form>
 
             </Modal.Body>
@@ -110,5 +108,6 @@ const ChangePassword = ({ open, onClose }) => {
             </Modal.Footer>
         </Modal>
     );
-}
+};
+
 export default ChangePassword;

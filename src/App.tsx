@@ -165,6 +165,10 @@ import StartTeleConsultation from './pages/encounter/tele-consultation-screen/st
 import OccupationalTherapy from './pages/encounter/encounter-component/occupational-therapy';
 import SpeechTherapy from './pages/encounter/encounter-component/speech-therapy';
 import IVFluidAdministration from './pages/encounter/encounter-component/iv-fluid-administration/IVFluidAdministration';
+import UsersNew from './pages/setup/users-setup-new';
+import ResetPassword from './pages/reset-password/ResetPassword';
+
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -184,6 +188,7 @@ const App = () => {
   useEffect(() => {
     console.log(config.backendBaseURL);
     console.log(config.tenantId);
+    console.log(location.pathname)
   }, []);
 
   useEffect(() => {
@@ -290,7 +295,7 @@ const App = () => {
         <Routes>
           <Route
             element={
-              <ProtectedRoute>
+              <ProtectedRoute >
                 <BlockUI
                   template={
                     <h3
@@ -418,6 +423,7 @@ const App = () => {
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
+              <Route path="users-new" element={<UsersNew />} />
               <Route path="uom-group" element={<UOMGroup />} />
               <Route path="med-matrix-setup" element={<MedicationMatrix />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
@@ -472,9 +478,13 @@ const App = () => {
               <Route path="department-stock" element={<DepartmentStock />} />
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
+
               <Route path="service-and-products" element={<ServiceAndProducts />} />
+  
+             
             </Route>
           </Route>
+          <Route path="reset-password" element={<ResetPassword />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
