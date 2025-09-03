@@ -11,9 +11,7 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-
 import { faLeaf } from '@fortawesome/free-solid-svg-icons';
-
 import {
   faBedPulse,
   faCheckDouble,
@@ -67,6 +65,8 @@ import { set } from 'lodash';
 import { FaSearch } from 'react-icons/fa';
 import { faCapsules } from '@fortawesome/free-solid-svg-icons';
 import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
+import SideSummaryScreen from './SideSummaryScreen';
+
 const Encounter = () => {
   // create the action for the Customize Dashboard that we defined it in Patient summary page
   const [action, setAction] = useState(() => () => {});
@@ -455,6 +455,22 @@ const Encounter = () => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
   }, [location.pathname, dispatch]);
 
+
+const [expand, setExpand] = useState(false);
+
+
+const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+
+useEffect(() => {
+  const handleResize = () => {
+    setWindowHeight(window.innerHeight);
+  };
+
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+
+
   return (
     <ActionContext.Provider value={{ action, setAction }}>
       <div className="container">
@@ -550,6 +566,8 @@ const Encounter = () => {
                     </Translate>
                   </MyButton>
                 )}
+
+
                 {/* show this button only on the dashboard page */}
                 {location.pathname == '/encounter' && (
                   <MyButton
@@ -566,6 +584,22 @@ const Encounter = () => {
                     backgroundColor="#8360BF"
                   ></MyButton>
                 )}
+
+
+ {location.pathname !== '/encounter' && (
+      <MyButton
+        prefixIcon={() => (
+          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Summary</Tooltip>}>
+            <FontAwesomeIcon icon={faChartLine} />
+          </Whisper>
+        )}
+        onClick={() => setExpand(!expand)}
+        backgroundColor="#8360BF"
+      />
+    )}
+
+
+
               </div>
             </div>
             <Divider />
@@ -646,7 +680,27 @@ const Encounter = () => {
                 </List>
               </Drawer.Body>
             </Drawer>
-            <Outlet />
+
+
+<div className="content-with-sticky">
+  <div className="main-content-area">
+    <Outlet />
+  </div>
+
+{expand && (
+  <div className="sticky-sidebar-area">
+    <SideSummaryScreen
+      expand={expand}
+      setExpand={setExpand}
+      windowHeight={windowHeight}
+      patient={propsData.patient}
+      encounter={propsData.encounter}
+    />
+  </div>
+)}
+
+    </div>
+      
             {/* {activeContent} Render the selected content */}
           </Panel>
           <AdmitToInpatientModal
@@ -668,9 +722,11 @@ const Encounter = () => {
           />
         </div>
 
-        <div className="right-box">
-          <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
-        </div>
+
+<div className="right-box">
+  <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
+
+</div>
         <WarningiesModal
           open={openWarningModal}
           setOpen={setOpenWarningModal}
@@ -686,6 +742,10 @@ const Encounter = () => {
           setOpen={setOpenDischargeModal}
           encounter={propsData.encounter}
         />
+
+
+
+
       </div>
     </ActionContext.Provider>
   );

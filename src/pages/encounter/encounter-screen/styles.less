@@ -84,3 +84,30 @@
   font-family:"Manrope Bold";
   font-size: 20px;
 }
+
+
+
+//sidebarsummary
+  .summary-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+    max-height: calc(100vh - 150px); 
+    overflow-y: auto;
+    padding-right: 10px;
+    padding-bottom: 5vw;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: #c1c1c1;
+      border-radius: 3px;
+    }
+  }
+
+
+.content-with-sticky{display: flex;
+flex-direction: row;
+gap: 15px;}
