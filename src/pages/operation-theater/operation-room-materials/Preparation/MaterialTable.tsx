@@ -5,8 +5,8 @@ import TotalQuantitiesTable from './TotalQuantitiesTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import { Checkbox } from 'rsuite';
 import { Form } from 'rsuite';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import './styles.less';
+import { filter } from 'lodash';
 
 //Table Data
 const sampleData = [
@@ -117,7 +117,6 @@ const RequestedProceduresTable = () => {
     </div>
       </Form>
       
-      <AdvancedSearchFilters searchFilter={true}/>
     
     </>);
 

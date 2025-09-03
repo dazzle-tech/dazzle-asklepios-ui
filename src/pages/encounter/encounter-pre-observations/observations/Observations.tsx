@@ -259,8 +259,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                     <Text>Vital Signs</Text>
                   </div>
                   <Divider />
-                  <VitalSigns object={vital} setObject={setVital} />
-
+                    <VitalSigns
+                      object={vital}
+                      setObject={setVital}
+                      disabled={true}
+                      width="28vw"
+                      showNoteField={true}
+                    />
                   <Row className="rows-gap">
                     <Col md={24}>
                       <MyInput

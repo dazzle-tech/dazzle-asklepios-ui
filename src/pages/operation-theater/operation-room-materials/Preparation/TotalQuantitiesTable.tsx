@@ -1,7 +1,6 @@
 //Declares
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 //Table Data
 const sampleData = [
@@ -78,7 +77,6 @@ const TotalQuantitiesTable = () => {
   });
 
   const filters = (<><h5 className="total-quantities-table-header">Total Counts</h5>
-        <AdvancedSearchFilters searchFilter={true}/>
 
   </>);
 //Pagination

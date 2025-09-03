@@ -33,6 +33,7 @@ import { faStar } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
+import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNurse/AllergyFloatingButton';
 import UrgencyButton from './UrgencyButton';
 const DrugOrder = props => {
   const location = useLocation();
@@ -835,6 +836,8 @@ const DrugOrder = props => {
           }
         />
       </div>
+            <AllergyFloatingButton patientKey={patient.key} />
+      
     </>
   );
 };
