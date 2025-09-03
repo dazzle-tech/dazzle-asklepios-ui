@@ -2018,6 +2018,19 @@ export interface ApMedicalSheets {
 	occupationalTherapy:boolean;
 	physiotherapyPlan:boolean;
 	medicationAdministrationRecord:boolean;
+	continuousObservations:boolean;
+	dialysisRequest:boolean;
+	slidingScale:boolean;
+	pointOfCareCests:boolean;
+	hospitalCourse:boolean;
+	childGrowth :boolean;
+	flaccNeonatesPainAssessment:boolean;
+	universalPainAssessment:boolean;
+	patientRestraint :boolean;
+	infectionControl:boolean;
+	sofa:boolean;
+	medicalCalculators:boolean;
+	cpoeResultsManager:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -4527,4 +4540,3 @@ export interface ApWarehouseUser {
 	deletedAt:number;
 	isvalid:boolean;
 } 
-

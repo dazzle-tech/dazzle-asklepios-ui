@@ -2019,6 +2019,19 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	occupationalTherapy:undefined,
 	physiotherapyPlan:undefined,
 	medicationAdministrationRecord:undefined,
+	continuousObservations:undefined,
+	dialysisRequest:undefined,
+	slidingScale:undefined,
+	pointOfCareCests:undefined,
+	hospitalCourse:undefined,
+	childGrowth :undefined,
+	flaccNeonatesPainAssessment:undefined,
+	universalPainAssessment:undefined,
+	patientRestraint :undefined,
+	infectionControl:undefined,
+	sofa:undefined,
+	medicalCalculators:undefined,
+	cpoeResultsManager:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
@@ -4528,4 +4541,3 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	deletedAt:undefined,
 	isvalid:undefined,
 } 
-
