@@ -65,14 +65,14 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
                     <MyInput disabled={!editing} column fieldName="firstName" required record={user} setRecord={setUser} />
                     {/* <MyInput disabled={!editing} column fieldName="secondName" required record={user} setRecord={setUser} /> */}
                     <MyInput disabled={!editing} column fieldName="lastName" required record={user} setRecord={setUser} />
-                    <MyInput disabled column fieldName="fullName" required record={user} setRecord={setUser} />
-                    <MyInput disabled={!editing} column fieldName="login" required record={readyUser} setRecord={setReadyUser} />
+                    {/* <MyInput disabled column fieldName="fullName" required record={user} setRecord={setUser} /> */}
+                    <MyInput disabled={!editing} column fieldName="login" required record={user} setRecord={setUser} />
                 </Form>
 
                 <Form layout='inline' fluid>
                     <MyInput disabled={!editing} column fieldName="email" required record={user} setRecord={setUser} />
                     <MyInput disabled={!editing} column fieldName="phoneNumber" required record={user} setRecord={setUser} />
-                    {/* <MyInput
+                    <MyInput
                         disabled={!editing}
                         column
                         fieldLabel="sex at birth"
@@ -92,7 +92,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
                         fieldName="dob"
                         record={user}
                         setRecord={setUser}
-                    /> */}
+                    />
                 </Form>
             </div>
         );
