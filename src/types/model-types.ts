@@ -2023,10 +2023,10 @@ export interface ApMedicalSheets {
 	slidingScale:boolean;
 	pointOfCareCests:boolean;
 	hospitalCourse:boolean;
-	childGrowth :boolean;
+	childGrowth:boolean;
 	flaccNeonatesPainAssessment:boolean;
 	universalPainAssessment:boolean;
-	patientRestraint :boolean;
+	patientRestraint:boolean;
 	infectionControl:boolean;
 	sofa:boolean;
 	medicalCalculators:boolean;
