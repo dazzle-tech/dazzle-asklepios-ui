@@ -521,7 +521,7 @@ const Prescription = props => {
           item => item.genericMedicationsKey === rowData.genericMedicationsKey
         );
         return (
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div className='flex-c8'>
             <MdModeEdit
               title="Edit"
               size={20}
@@ -660,7 +660,7 @@ const Prescription = props => {
           <MyButton>Validate With</MyButton>
           <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
           <MyButton onClick={handleNewPrescriptionAndAddMedication} prefixIcon={() => <PlusIcon />}>
-            New Prescription
+            Add Medication
           </MyButton>
           <MyButton
             prefixIcon={() => <BlockIcon />}
@@ -828,7 +828,7 @@ const Prescription = props => {
                   title: 'Actions',
                   render: rowData => {
                     return (
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div className="flex-c8">
                         <MyButton
                           size="xs"
                           onClick={() => {
@@ -840,10 +840,7 @@ const Prescription = props => {
                         <FontAwesomeIcon
                           icon={faStar}
                           onClick={() => addToFavorites(rowData)}
-                          style={{
-                            cursor: 'pointer',
-                            color: '#ffc107'
-                          }}
+                          className='star-favorite-icon'
                           title="Remove from favorites"
                         />
                       </div>

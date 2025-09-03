@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Diagnosis from '../procedure/Diagnosis';
 import MyInput from '@/components/MyInput';
 import { useAppDispatch } from '@/hooks';
@@ -6,16 +6,13 @@ import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { Form } from 'rsuite';
-import { useSaveConsultationOrdersMutation } from '@/services/encounterService';
 import { newApConsultationOrder } from '@/types/model-types-constructor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom, faFile, faPaperclip } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery, useGetPractitionersQuery } from '@/services/setupService';
+import { faBroom, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
-import { initialListRequest, ListRequest } from '@/types/types';
 import clsx from 'clsx';
 
-const Details = ({
+const DetailsTele = ({
   patient,
   encounter,
   consultationOrders,
@@ -27,16 +24,6 @@ const Details = ({
   edit
 }) => {
   const dispatch = useAppDispatch();
-  const [saveconsultationOrders, saveConsultationOrdersMutation] =
-    useSaveConsultationOrdersMutation();
-
-  const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
-  const { data: consultantSpecialtyLovQueryResponse } =
-    useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY ');
-  const { data: cityLovQueryResponse } = useGetLovValuesByCodeQuery('CITY');
-  const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
-  const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
-  const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
 
   const handleClear = async () => {
     setConsultationOrder({
@@ -103,77 +90,27 @@ const Details = ({
             <div className="main-details-consultion-page-container">
               <div className="consultion-details-modal-handle-position">
                 <MyInput
-                  disabled={editing}
                   width={'12vw'}
-                  fieldType="select"
-                  fieldLabel="Consultant Specialty"
-                  selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName={'consultantSpecialtyLkey'}
+                  fieldName="physician"
+                  fieldLabel="Physician"
+                  fieldType="text"
                   record={consultationOrders}
                   setRecord={setConsultationOrder}
                 />
                 <MyInput
                   width={'12vw'}
-                  disabled={editing}
-                  fieldType="select"
-                  fieldLabel="City"
-                  selectData={cityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName={'cityLkey'}
+                  fieldName="callDateTime"
+                  fieldLabel="Call Date/Time"
+                  fieldType="datetime"
                   record={consultationOrders}
                   setRecord={setConsultationOrder}
                 />
                 <MyInput
-                  width={'12vw'}
+                  width={'24vw'}
                   disabled={editing}
-                  fieldType="select"
-                  fieldLabel="Preferred Consultant"
-                  fieldName={'preferredConsultantKey'}
-                  selectData={practitionerListResponse?.object ?? []}
-                  selectDataLabel="practitionerFullName"
-                  selectDataValue="key"
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                />
-
-                <MyInput
-                  width={'12vw'}
-                  disabled={editing}
-                  fieldType="select"
-                  fieldLabel="Consultation Method"
-                  selectData={consultationMethodLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName={'consultationMethodLkey'}
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                  searchable={false}
-                />
-                <MyInput
-                  width={'12vw'}
-                  disabled={editing}
-                  fieldType="select"
-                  fieldLabel="Consultation Type"
-                  selectData={consultationTypeLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName={'consultationTypeLkey'}
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                  searchable={false}
-                />
-                <MyInput
-                  width={'12vw'}
-                  disabled={editing}
-                  fieldType="select"
-                  fieldLabel="Priority Level"
-                  fieldName="priorityLkey"
-                  selectData={orderPriorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  fieldName="consultationContent"
+                  rows={6}
+                  fieldType="textarea"
                   record={consultationOrders}
                   setRecord={setConsultationOrder}
                 />
@@ -197,16 +134,6 @@ const Details = ({
                 </div>
               </div>
               <div className="text-area-positions-detail-consultion">
-                <MyInput
-                  width={'24vw'}
-                  disabled={editing}
-                  fieldName="consultationContent"
-                  rows={6}
-                  fieldType="textarea"
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                />
-
                 <MyInput
                   width={'12vw'}
                   disabled={editing}
@@ -241,4 +168,4 @@ const Details = ({
     </>
   );
 };
-export default Details;
+export default DetailsTele;
