@@ -171,57 +171,59 @@
     }
   }
 }
-.profile-header{
+.profile-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-.avatar-card-parent{
-  align-items: flex-start !important; 
-  padding: 5px ;
-  .avatar-image {
-    cursor: pointer;
+  gap: 25px;
+
+  .icons-style:hover {
+    color: inherit !important;
   }
-  .avatar-container {
-    display: flex;
-    flex-direction: column;
-    font-family: 'Manrope Medium'!important; 
-    .patient-name {
-      font-size: 14px; 
-    }
-    
-    .patient-info {
-      display: flex;
-      gap: 4px;
-      color: var(--primary-gray);
-      font-size: 12px;
-      font-family: 'Manrope Medium'!important; 
-      font-weight: 500 !important; 
-    }
-    
-    .patient-mrn {
-      color: var(--icon-gray);
-      font-family: 'Manrope Bold'!important; 
-      font-size: 12px;
-    }
-  
-  }
-  .status-icons-container {
-    display: flex;
-    flex-direction: column;
-    .status-icon {
-      font-size: 18px;
-      position: relative;
-      margin-right: 10px;
+  .avatar-card-parent {
+    align-items: flex-start !important;
+    padding: 5px;
+    .avatar-image {
       cursor: pointer;
     }
+    .avatar-container {
+      display: flex;
+      flex-direction: column;
+      font-family: 'Manrope Medium' !important;
+      .patient-name {
+        font-size: 14px;
+      }
+
+      .patient-info {
+        display: flex;
+        gap: 4px;
+        color: var(--primary-gray);
+        font-size: 12px;
+        font-family: 'Manrope Medium' !important;
+        font-weight: 500 !important;
+      }
+
+      .patient-mrn {
+        color: var(--icon-gray);
+        font-family: 'Manrope Bold' !important;
+        font-size: 12px;
+      }
+    }
+    .status-icons-container {
+      display: flex;
+      flex-direction: column;
+      .status-icon {
+        font-size: 18px;
+        position: relative;
+        margin-right: 10px;
+        cursor: pointer;
+      }
+    }
   }
-  
-}
 }
 
-.btn-fileds-above-table{
+.btn-fileds-above-table {
   display: flex;
-  align-items: flex-end ;
+  align-items: flex-end;
   justify-content: space-between;
 }
 .fields-container {
@@ -229,23 +231,24 @@
   flex-wrap: wrap;
   align-items: center;
 }
-.payment-method-container{
-  .payment-method-content{
+.payment-method-container {
+  .payment-method-content {
     display: flex;
     align-items: center;
     gap: 10px;
   }
 }
-.family-member-input-search{
+.family-member-input-search {
   width: 250px !important;
   height: 40px !important;
   direction: ltr;
 }
 
-.header-buttons-patient-profile{position: relative;
-display: flex;
-justify-content: center;
-gap: 0.8vw;
-bottom: 3.8vw;
-right: 0.1vw;}
-
+.header-buttons-patient-profile {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 0.8vw;
+  bottom: 3.8vw;
+  right: 0.1vw;
+}
