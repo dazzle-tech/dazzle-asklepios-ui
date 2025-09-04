@@ -5,7 +5,7 @@ import { faBroom, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { calculateAgeFormat } from '@/utils';
 import { useFetchAttachmentQuery, useUploadMutation } from '@/services/attachmentService';
-import { AvatarGroup, Avatar, Whisper, Tooltip, Form, Stack } from 'rsuite';
+import { AvatarGroup, Avatar, Whisper, Tooltip, Form, Stack, Popover, Dropdown } from 'rsuite';
 import { Icon } from '@rsuite/icons';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
@@ -14,6 +14,17 @@ import AdministrativeWarningsModal from './AdministrativeWarning';
 import { useAppDispatch } from '@/hooks';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
+import { faThumbsUp } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDay } from '@fortawesome/free-solid-svg-icons';
+import { faHandHoldingDollar } from '@fortawesome/free-solid-svg-icons';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faPersonCircleQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faUsersLine } from '@fortawesome/free-solid-svg-icons';
+import { faBars } from '@fortawesome/free-solid-svg-icons';
+import { faPrint } from '@fortawesome/free-solid-svg-icons';
+
 interface ProfileHeaderProps {
   localPatient: ApPatient;
   handleSave: () => void;
@@ -39,6 +50,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
+  const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
+  const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [upload, uploadMutation] = useUploadMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
@@ -49,6 +62,94 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       refKey: localPatient.key
     },
     { skip: !localPatient.key }
+  );
+
+  // container to choose action from more menu
+  const contentOfMoreIconMenu = (
+    <Popover full>
+      <Dropdown.Menu>
+        <Dropdown.Item
+          disabled={localPatient.key === undefined}
+          onClick={() => {
+            if (!(localPatient.key === undefined)) {
+              setOpenMoreMenu(false);
+              setVisitHistoryModel(true);
+            }
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faCalendarCheck} />
+            Visit History
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faThumbsUp} />
+            Approvals
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faCalendarDay} />
+            Appointments
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faHandHoldingDollar} />
+            View Price List
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenRegistrationWarningsSummary(true);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            Warnings Summary
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenBedsideRegistrations(true);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faPersonCircleQuestion} />
+            Bedside Registration
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faUsersLine} />
+            Bulk Registration
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faBars} />
+            Encounter Transactions
+          </div>
+        </Dropdown.Item>
+      </Dropdown.Menu>
+    </Popover>
+  );
+
+  // container to choose action from print menu
+  const contentOfPrintIconMenu = (
+    <Popover full>
+      <Dropdown.Menu>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">Print Information</div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">Print Patient Label</div>
+        </Dropdown.Item>
+      </Dropdown.Menu>
+    </Popover>
   );
 
   // Handle image click for upload
@@ -185,7 +286,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
           </AvatarGroup>
           <Form fluid layout="inline">
-            <MyButton>Print Patient Label</MyButton>
             <MyButton>Scan Document</MyButton>
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -196,14 +296,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
               Clear
             </MyButton>
-
-            <MyButton
-              appearance="ghost"
-              disabled={localPatient.key === undefined}
-              onClick={() => setVisitHistoryModel(true)}
-            >
-              Visit History
-            </MyButton>
             <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
               Quick Appointment
             </MyButton>
@@ -212,18 +304,34 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               localPatient={localPatient}
               validationResult={validationResult}
             />
-            <MyButton onClick={() => setOpenBedsideRegistrations(true)}>
-              Bedside Registrations
-            </MyButton>
-            <MyButton onClick={() => setOpenRegistrationWarningsSummary(true)}>
-              Registration Warnings Summary
-            </MyButton>
-            <MyButton>Print Information</MyButton>
-            <MyButton>Price List</MyButton>
-            <MyButton>Approvals</MyButton>
-            <MyButton>Appointments</MyButton>
-            <MyButton>Bulk Registration</MyButton>
-            <MyButton>Transactions</MyButton>
+            <Whisper
+              open={openMoreMenu}
+              onOpen={() => setOpenMoreMenu(true)}
+              onClose={() => setOpenMoreMenu(false)}
+              placement="bottom"
+              trigger="click"
+              speaker={contentOfMoreIconMenu}
+            >
+              <span>
+                <MyButton size="small" onClick={() => setOpenMoreMenu(!openMoreMenu)}>
+                  <FontAwesomeIcon icon={faEllipsisVertical} className="icons-style" />
+                </MyButton>
+              </span>
+            </Whisper>
+            <Whisper
+              open={openPrintMenu}
+              onOpen={() => setOpenPrintMenu(true)}
+              onClose={() => setOpenPrintMenu(false)}
+              placement="bottom"
+              trigger="click"
+              speaker={contentOfPrintIconMenu}
+            >
+              <span>
+                <MyButton size="small" onClick={() => setOpenPrintMenu(!openPrintMenu)}>
+                  <FontAwesomeIcon icon={faPrint} className="icons-style" />
+                </MyButton>
+              </span>
+            </Whisper>
           </Form>
         </Form>
       </Stack.Item>
