@@ -25,6 +25,7 @@ import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 import PatientAppointments from './PatientAppointments';
 import BedsideRegistrationsModal from './BedsideRegistrations';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
+import BulkRegistration from './BulkRegistration';
 
 const { getHeight } = DOMHelper;
 
@@ -47,6 +48,7 @@ const PatientProfile = () => {
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
   const [openBedsideRegistrations,setOpenBedsideRegistrations] = useState<boolean>(false);
   const [openRegistrationWarningsSummary,setOpenRegistrationWarningsSummary] = useState<boolean>(false);
+    const [openBulkRegistrationModal,setOpenBulkRegistrationModal] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
   const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
@@ -184,6 +186,8 @@ const PatientProfile = () => {
             setRefetchAttachmentList={setRefetchAttachmentList}
             setOpenBedsideRegistrations={setOpenBedsideRegistrations}
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
+            setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
+            
           />
 
           <div className="container-of-tabs-reg">
@@ -252,6 +256,10 @@ const PatientProfile = () => {
       <RegistrationWarningsSummary
       open={openRegistrationWarningsSummary}
       setOpen={setOpenRegistrationWarningsSummary}
+      />
+      <BulkRegistration
+      open={openBulkRegistrationModal}
+      setOpen={setOpenBulkRegistrationModal}
       />
       <PatientDuplicate
         open={openPatientsDuplicateModal}

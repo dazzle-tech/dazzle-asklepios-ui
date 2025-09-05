@@ -35,6 +35,7 @@ interface ProfileHeaderProps {
   setRefetchAttachmentList: (value: boolean) => void;
   setOpenBedsideRegistrations: (value: boolean) => void;
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
+  setOpenBulkRegistrationModal: (value: boolean) => void;
 }
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
@@ -45,7 +46,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setRefetchAttachmentList,
   validationResult,
   setOpenBedsideRegistrations,
-  setOpenRegistrationWarningsSummary
+  setOpenRegistrationWarningsSummary,
+  setOpenBulkRegistrationModal
 }) => {
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
@@ -122,7 +124,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             Bedside Registration
           </div>
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenBulkRegistrationModal(true);
+          }}
+        >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faUsersLine} />
             Bulk Registration
