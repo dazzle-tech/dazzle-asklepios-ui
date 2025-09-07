@@ -12,6 +12,7 @@ import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-compo
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
+import DetailsCard from '@/components/DetailsCard';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
   useCancelEncounterMutation,
@@ -524,41 +525,43 @@ const EncounterList = () => {
   };
 return (<>
 
-<div className='count-div-on-top-of-page-visit-list'>
+    <div className="count-div-on-top-of-page-visit-list">
+      <DetailsCard
+        title="Total Patients"
+        number={4}
+        color="--primary-blue"
+        backgroundClassName="result-ready-section"
+        position='center'
+        width={'15vw'}
+
+      />
+      <DetailsCard
+        title="Active Cases"
+        number={3}
+        color="--green-600"
+        backgroundClassName="sample-collected-section"
+        position='center'
+        width={'15vw'}
+      />
+      <DetailsCard
+        title="Completed"
+        number={1}
+        color="--primary-purple "
+        backgroundClassName="new-section"
+        position='center'
+        width={'15vw'}
+      />
+      <DetailsCard
+        title="Avg Progress"
+        number={'80%'}
+        color="--primary-yellow"
+        backgroundClassName="total-test-section"
+        position='center'
+        width={'15vw'}
+      />
+    </div>
 
 
-<div className='total-patients-section'>
-  
-  <div className='sections-coulmns-positions-handle-patient-visit-list'>
-<h4 className='numper-of-the-total-patients'>4</h4>
-<p>Total Patients</p>
-</div>
-
-</div>
-
-<div className='active-cases-section'>
-  <div className='sections-coulmns-positions-handle-patient-visit-list'>
-<h4 className='numper-of-the-active-cases'>3</h4>
-<p>Active Cases</p>
-</div>
-</div>
-
-
-<div className='completed-section'>
-
-  <div className='sections-coulmns-positions-handle-patient-visit-list'>
-<h4 className='numper-of-the-completed-section'>1</h4>
-<p>Completed</p>
-</div>
-</div>
-
-<div className='avg-progress-section'>
-  <div className='sections-coulmns-positions-handle-patient-visit-list'>
-<h4 className='numper-of-the-avg-progress'>80%</h4>
-<p>Avg Progress</p></div>
-</div>
-
-</div>
   <Panel>
     <MyTable
       filters={filters()}

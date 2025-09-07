@@ -150,6 +150,7 @@ const Rad = () => {
         icon={faCircleCheck}
         color="--green-600"
         backgroundClassName="result-ready-section"
+        width={'20vw'}
       />
       <DetailsCard
         title="Patient Arrived"
@@ -157,6 +158,7 @@ const Rad = () => {
         icon={faClock}
         color="--primary-yellow"
         backgroundClassName="sample-collected-section"
+        width={'20vw'}
       />
       <DetailsCard
         title="New"
@@ -164,6 +166,7 @@ const Rad = () => {
         icon={faRectangleList}
         color="--primary-blue"
         backgroundClassName="new-section"
+        width={'20vw'}
       />
       <DetailsCard
         title="Total Test"
@@ -171,6 +174,7 @@ const Rad = () => {
         icon={faTriangleExclamation}
         color="--gray-dark"
         backgroundClassName="total-test-section"
+        width={'20vw'}
       />
     </div>
 

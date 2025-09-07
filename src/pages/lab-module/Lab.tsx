@@ -246,13 +246,15 @@ const Lab = () => {
         icon={faCircleCheck}
         color="--green-600"
         backgroundClassName="result-ready-section"
-      />
+        width={'20vw'}
+        />
       <DetailsCard
         title="Sample Collected"
         number={2}
         icon={faClock}
         color="--primary-yellow"
         backgroundClassName="sample-collected-section"
+        width={'20vw'}
       />
       <DetailsCard
         title="New"
@@ -260,6 +262,7 @@ const Lab = () => {
         icon={faRectangleList}
         color="--primary-blue"
         backgroundClassName="new-section"
+        width={'20vw'}
       />
       <DetailsCard
         title="Total Test"
@@ -267,6 +270,7 @@ const Lab = () => {
         icon={faTriangleExclamation}
         color="--gray-dark"
         backgroundClassName="total-test-section"
+        width={'20vw'}
       />
     </div>
 

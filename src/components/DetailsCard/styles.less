@@ -1,35 +1,39 @@
-// DetailsCard.styles.less
-
 .details-card {
-  border: 1px solid #dcdcdc;
   border-radius: 8px;
-  width: 20vw;
+  overflow: hidden;
 }
 
-.icon-style {
+.details-card-content {
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  padding: 1vw;
+}
+
+.details-card-icon {
   width: 25px;
   height: 25px;
-  padding-top: 0.8vw;
-  padding-left: 1vw;
 }
 
-.sections-row-positions-handle {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5vw;
-}
-
-.sections-coulmns-positions-handle {
+.details-card-text {
   display: flex;
   flex-direction: column;
-  padding-bottom: 0.5vw;
 }
 
-.sections-coulmns-positions-handle p {
-  font-size: 12px;
-  color: rgb(70, 70, 70);
+.position-left {
+  justify-content: flex-start;
+  text-align: left;
 }
-.icon-style {
-  background: none !important;
-  background-color: transparent !important;
+
+.position-center {
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.position-right {
+  justify-content: flex-end;
+  text-align: right;
+  width: 100%;
 }

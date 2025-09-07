@@ -2,15 +2,18 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import './styles.less';
+import { Panel } from 'rsuite';
 
+import './styles.less';
 //props
 interface DetailsCardProps {
   title: string;
-  number: number;
-  icon: IconDefinition;
+  number: number | string;
+  icon?: IconDefinition;
   color: string;
   backgroundClassName?: string;
+  position?: 'left' | 'center' | 'right';
+  width?: string | number;
 }
 
 const DetailsCard: React.FC<DetailsCardProps> = ({
@@ -19,21 +22,31 @@ const DetailsCard: React.FC<DetailsCardProps> = ({
   icon,
   color,
   backgroundClassName = '',
+  position = 'left',
+  width = 240,
 }) => {
   return (
-    <div className={`details-card ${backgroundClassName}`}>
-      <div className="sections-row-positions-handle">
-        <FontAwesomeIcon
-          className="icon-style"
-          icon={icon}
-          style={{ color: `var(${color})` }}
-        />
-        <div className="sections-coulmns-positions-handle">
+    <Panel
+      shaded
+      bordered
+      bodyFill
+      className={`details-card ${backgroundClassName}`}
+      style={{ width }}
+    >
+      <div className={`details-card-content position-${position}`}>
+        {icon && (
+          <FontAwesomeIcon
+            className="details-card-icon"
+            icon={icon}
+            style={{ color: `var(${color})` }}
+          />
+        )}
+        <div className="details-card-text">
           <h4 style={{ color: `var(${color})` }}>{number}</h4>
           <p>{title}</p>
         </div>
       </div>
-    </div>
+    </Panel>
   );
 };
 
