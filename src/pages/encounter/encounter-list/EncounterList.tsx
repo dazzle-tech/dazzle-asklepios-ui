@@ -522,7 +522,43 @@ const EncounterList = () => {
       <AdvancedSearchFilters searchFilter={true}/>
     </>);
   };
-return (
+return (<>
+
+<div className='count-div-on-top-of-page-visit-list'>
+
+
+<div className='total-patients-section'>
+  
+  <div className='sections-coulmns-positions-handle-patient-visit-list'>
+<h4 className='numper-of-the-total-patients'>4</h4>
+<p>Total Patients</p>
+</div>
+
+</div>
+
+<div className='active-cases-section'>
+  <div className='sections-coulmns-positions-handle-patient-visit-list'>
+<h4 className='numper-of-the-active-cases'>3</h4>
+<p>Active Cases</p>
+</div>
+</div>
+
+
+<div className='completed-section'>
+
+  <div className='sections-coulmns-positions-handle-patient-visit-list'>
+<h4 className='numper-of-the-completed-section'>1</h4>
+<p>Completed</p>
+</div>
+</div>
+
+<div className='avg-progress-section'>
+  <div className='sections-coulmns-positions-handle-patient-visit-list'>
+<h4 className='numper-of-the-avg-progress'>80%</h4>
+<p>Avg Progress</p></div>
+</div>
+
+</div>
   <Panel>
     <MyTable
       filters={filters()}
@@ -597,7 +633,7 @@ return (
       cancelButtonLabel="Close"
   />
   </Panel>
-);
+</>);
 };
 
 export default EncounterList;

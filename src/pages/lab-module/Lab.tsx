@@ -17,6 +17,15 @@ import {
   newApEncounter,
   newApPatient
 } from '@/types/model-types-constructor';
+import DetailsCard from '@/components/DetailsCard';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faCircleCheck,
+  faClock,
+  faRectangleList,
+  faTriangleExclamation} from '@fortawesome/free-solid-svg-icons';
+
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds } from '@/utils';
 import { Col } from 'rsuite';
@@ -230,7 +239,39 @@ const Lab = () => {
 
   return (
     <>
+    <div className="count-div-on-top-of-page">
+      <DetailsCard
+        title="Result Ready"
+        number={2}
+        icon={faCircleCheck}
+        color="--green-600"
+        backgroundClassName="result-ready-section"
+      />
+      <DetailsCard
+        title="Sample Collected"
+        number={2}
+        icon={faClock}
+        color="--primary-yellow"
+        backgroundClassName="sample-collected-section"
+      />
+      <DetailsCard
+        title="New"
+        number={2}
+        icon={faRectangleList}
+        color="--primary-blue"
+        backgroundClassName="new-section"
+      />
+      <DetailsCard
+        title="Total Test"
+        number={2}
+        icon={faTriangleExclamation}
+        color="--gray-dark"
+        backgroundClassName="total-test-section"
+      />
+    </div>
+
       <div className="container">
+        
         <div className="left-boxs">
           <Row>
             <Col xs={14}>

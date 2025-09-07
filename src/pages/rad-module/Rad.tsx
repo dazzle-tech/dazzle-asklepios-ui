@@ -8,6 +8,13 @@ import { formatDateWithoutSeconds } from '@/utils';
 import MyStepper from '@/components/MyStepper';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useSaveDiagnosticOrderTestMutation } from '@/services/encounterService';
+import DetailsCard from '@/components/DetailsCard';
+import {
+  faCircleCheck,
+  faClock,
+  faRectangleList,
+  faTriangleExclamation} from '@fortawesome/free-solid-svg-icons';
+
 import { RootState } from '@/store';
 import {
   newApDiagnosticOrders,
@@ -135,6 +142,39 @@ const Rad = () => {
 
   return (
     <div>
+
+          <div className="count-div-on-top-of-page">
+      <DetailsCard
+        title="Result Ready"
+        number={2}
+        icon={faCircleCheck}
+        color="--green-600"
+        backgroundClassName="result-ready-section"
+      />
+      <DetailsCard
+        title="Patient Arrived"
+        number={2}
+        icon={faClock}
+        color="--primary-yellow"
+        backgroundClassName="sample-collected-section"
+      />
+      <DetailsCard
+        title="New"
+        number={2}
+        icon={faRectangleList}
+        color="--primary-blue"
+        backgroundClassName="new-section"
+      />
+      <DetailsCard
+        title="Total Test"
+        number={2}
+        icon={faTriangleExclamation}
+        color="--gray-dark"
+        backgroundClassName="total-test-section"
+      />
+    </div>
+
+
       <div className="container">
         <div className="left-boxs">
           <Row>
