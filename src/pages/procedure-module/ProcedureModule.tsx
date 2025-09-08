@@ -558,7 +558,6 @@ const handleFilterChange = (fieldName, value) => {
     const filters = () => (<>
         <Form layout="inline" fluid>
             <MyInput
-               
                 fieldType="date"
                 fieldLabel="From Date"
                 fieldName="fromDate"
