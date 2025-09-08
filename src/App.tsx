@@ -167,8 +167,7 @@ import SpeechTherapy from './pages/encounter/encounter-component/speech-therapy'
 import IVFluidAdministration from './pages/encounter/encounter-component/iv-fluid-administration/IVFluidAdministration';
 import UsersNew from './pages/setup/users-setup-new';
 import ResetPassword from './pages/reset-password/ResetPassword';
-
-
+import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -394,6 +393,7 @@ const App = () => {
                 <Route path="occupational-therapy" element={<OccupationalTherapy />} />
                 <Route path="speech-therapy" element={<SpeechTherapy />} />
                 <Route path="iv-fluid-Administration" element={<IVFluidAdministration />} />
+                <Route path="continuous-observation" element={<ContinuousObservations />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
