@@ -248,7 +248,8 @@ const Encounter = () => {
     '/encounter/physiotherapy-plan': 'Physiotherapy Plan',
     '/encounter/occupational-therapy': 'Occupational Therapy',
     '/encounter/speech-therapy': 'Speech Therapy',
-    '/encounter/iv-fluid-administration': 'IV Fluid Administration'
+    '/encounter/iv-fluid-administration': 'IV Fluid Administration',
+    '/encounter/continuous-observation': 'Continuous Observation'
   };
 
   const menuItems = [
@@ -438,6 +439,12 @@ const Encounter = () => {
       label: 'IV Fluid Administration',
       icon: faSyringe,
       path: 'iv-fluid-administration'
+    },
+    {
+      key: 'continuousObservations',
+      label: 'Continuous Observation',
+      icon: faSyringe,
+      path: 'continuous-observation'
     }
   ];
   const [currentHeader, setCurrentHeader] = useState();
