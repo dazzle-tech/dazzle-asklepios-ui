@@ -259,27 +259,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                     <Text>Vital Signs</Text>
                   </div>
                   <Divider />
-                    <VitalSigns
-                      object={vital}
-                      setObject={setVital}
-                      disabled={true}
-                      width="28vw"
-                      showNoteField={true}
-                    />
-                  <Row className="rows-gap">
-                    <Col md={24}>
-                      <MyInput
-                        fieldLabel="Note"
-                        height="100px"
-                        width="100%"
-                        fieldName="latestnotes"
-                        disabled={isEncounterStatusClosed || readOnly}
-                        fieldType="textarea"
-                        record={patientObservationSummary}
-                        setRecord={setPatientObservationSummary}
-                      ></MyInput>
-                    </Col>
-                  </Row>
+                  <VitalSigns
+                    object={vital}
+                    setObject={setVital}
+                    disabled={true}
+                    width="28vw"
+                    showNoteField={true}
+                  />
                 </div>
               </Col>
             </Row>
@@ -344,7 +330,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                         setRecord={setLocalEncounter}
                         disabled={isEncounterStatusClosed || readOnly}
                         searchable={false}
-                      /></Col></Row>
+                      />
+                    </Col>
+                  </Row>
                 </div>{' '}
               </Col>
             </Row>
