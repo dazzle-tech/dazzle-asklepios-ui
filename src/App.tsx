@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
 import { CustomProvider } from 'rsuite';
 import enGB from 'rsuite/locales/en_GB';
@@ -80,7 +80,6 @@ import Allergies from './pages/encounter/encounter-pre-observations/AllergiesNur
 import Warning from './pages/encounter/encounter-pre-observations/warning';
 import Cardiology from './pages/encounter/encounter-component/cardiology';
 import OptometricExam from './pages/encounter/encounter-component/optometric-exam';
-import AddAudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone/AddAudiometryPuretone';
 import AudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone';
 import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
 import Prescription from './pages/encounter/encounter-component/prescription';
@@ -120,7 +119,6 @@ import DischargePlanning from './pages/encounter/encounter-component/discharged-
 import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
 import InventoryTransaction from './pages/inventory-transaction/inventory-transaction';
 import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
-import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import DayCaseContent from './pages/encounter/encounter-component/day-case-content';
 import BloodOrder from './pages/encounter/encounter-component/blood-order';
 import IntakeOutputBalance from './pages/encounter/encounter-component/intake-output-balance';
@@ -168,6 +166,8 @@ import IVFluidAdministration from './pages/encounter/encounter-component/iv-flui
 import UsersNew from './pages/setup/users-setup-new';
 import ResetPassword from './pages/reset-password/ResetPassword';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
+import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -187,7 +187,7 @@ const App = () => {
   useEffect(() => {
     console.log(config.backendBaseURL);
     console.log(config.tenantId);
-    console.log(location.pathname)
+    console.log(location.pathname);
   }, []);
 
   useEffect(() => {
@@ -294,7 +294,7 @@ const App = () => {
         <Routes>
           <Route
             element={
-              <ProtectedRoute >
+              <ProtectedRoute>
                 <BlockUI
                   template={
                     <h3
@@ -394,6 +394,7 @@ const App = () => {
                 <Route path="speech-therapy" element={<SpeechTherapy />} />
                 <Route path="iv-fluid-Administration" element={<IVFluidAdministration />} />
                 <Route path="continuous-observation" element={<ContinuousObservations />} />
+                <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
@@ -480,8 +481,6 @@ const App = () => {
               <Route path="medication-schedule" element={<MedicationSchedule />} />
 
               <Route path="service-and-products" element={<ServiceAndProducts />} />
-  
-             
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

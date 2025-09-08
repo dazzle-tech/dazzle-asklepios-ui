@@ -250,6 +250,7 @@ const Encounter = () => {
     '/encounter/speech-therapy': 'Speech Therapy',
     '/encounter/iv-fluid-administration': 'IV Fluid Administration',
     '/encounter/continuous-observation': 'Continuous Observation'
+    '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment'
   };
 
   const menuItems = [
@@ -445,6 +446,12 @@ const Encounter = () => {
       label: 'Continuous Observation',
       icon: faSyringe,
       path: 'continuous-observation'
+    },
+    {
+      key: 'flaccNeonatesPainAssessment',
+      label: 'FLACC Neonates Pain Assessment',
+      icon: faSyringe,
+      path: 'FLACC-neonates-pain-assessment'
     }
   ];
   const [currentHeader, setCurrentHeader] = useState();
@@ -462,21 +469,18 @@ const Encounter = () => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
   }, [location.pathname, dispatch]);
 
+  const [expand, setExpand] = useState(false);
 
-const [expand, setExpand] = useState(false);
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowHeight(window.innerHeight);
+    };
 
-const [windowHeight, setWindowHeight] = useState(window.innerHeight);
-
-useEffect(() => {
-  const handleResize = () => {
-    setWindowHeight(window.innerHeight);
-  };
-
-  window.addEventListener('resize', handleResize);
-  return () => window.removeEventListener('resize', handleResize);
-}, []);
-
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>
@@ -574,7 +578,6 @@ useEffect(() => {
                   </MyButton>
                 )}
 
-
                 {/* show this button only on the dashboard page */}
                 {location.pathname == '/encounter' && (
                   <MyButton
@@ -592,21 +595,17 @@ useEffect(() => {
                   ></MyButton>
                 )}
 
-
- {location.pathname !== '/encounter' && (
-      <MyButton
-        prefixIcon={() => (
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Summary</Tooltip>}>
-            <FontAwesomeIcon icon={faChartLine} />
-          </Whisper>
-        )}
-        onClick={() => setExpand(!expand)}
-        backgroundColor="#8360BF"
-      />
-    )}
-
-
-
+                {location.pathname !== '/encounter' && (
+                  <MyButton
+                    prefixIcon={() => (
+                      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Summary</Tooltip>}>
+                        <FontAwesomeIcon icon={faChartLine} />
+                      </Whisper>
+                    )}
+                    onClick={() => setExpand(!expand)}
+                    backgroundColor="#8360BF"
+                  />
+                )}
               </div>
             </div>
             <Divider />
@@ -688,26 +687,24 @@ useEffect(() => {
               </Drawer.Body>
             </Drawer>
 
+            <div className="content-with-sticky">
+              <div className="main-content-area">
+                <Outlet />
+              </div>
 
-<div className="content-with-sticky">
-  <div className="main-content-area">
-    <Outlet />
-  </div>
+              {expand && (
+                <div className="sticky-sidebar-area">
+                  <SideSummaryScreen
+                    expand={expand}
+                    setExpand={setExpand}
+                    windowHeight={windowHeight}
+                    patient={propsData.patient}
+                    encounter={propsData.encounter}
+                  />
+                </div>
+              )}
+            </div>
 
-{expand && (
-  <div className="sticky-sidebar-area">
-    <SideSummaryScreen
-      expand={expand}
-      setExpand={setExpand}
-      windowHeight={windowHeight}
-      patient={propsData.patient}
-      encounter={propsData.encounter}
-    />
-  </div>
-)}
-
-    </div>
-      
             {/* {activeContent} Render the selected content */}
           </Panel>
           <AdmitToInpatientModal
@@ -729,11 +726,9 @@ useEffect(() => {
           />
         </div>
 
-
-<div className="right-box">
-  <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
-
-</div>
+        <div className="right-box">
+          <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
+        </div>
         <WarningiesModal
           open={openWarningModal}
           setOpen={setOpenWarningModal}
@@ -749,10 +744,6 @@ useEffect(() => {
           setOpen={setOpenDischargeModal}
           encounter={propsData.encounter}
         />
-
-
-
-
       </div>
     </ActionContext.Provider>
   );
