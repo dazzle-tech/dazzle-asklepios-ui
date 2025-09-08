@@ -249,7 +249,7 @@ const Encounter = () => {
     '/encounter/occupational-therapy': 'Occupational Therapy',
     '/encounter/speech-therapy': 'Speech Therapy',
     '/encounter/iv-fluid-administration': 'IV Fluid Administration',
-    '/encounter/continuous-observation': 'Continuous Observation'
+    '/encounter/continuous-observation': 'Continuous Observation',
     '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment'
   };
 
