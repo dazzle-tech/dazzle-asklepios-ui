@@ -37,6 +37,8 @@ import MyLabel from '@/components/MyLabel';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import MyModal from '@/components/MyModal/MyModal';
+import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
+
 
 
 const ERList = () => {
@@ -66,6 +68,7 @@ const ERList = () => {
     const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
       const [openRefillModal, setOpenRefillModal] = useState(false);
       const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
+      const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -474,7 +477,9 @@ const ERList = () => {
                   <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
                             Task Management
                         </MyButton>
-
+<MyButton onClick={() => setOpenEncounterLogsModal(true)}>
+  Encounter Logs
+</MyButton>
 
                   </div>);
 
@@ -559,6 +564,18 @@ const ERList = () => {
       }}
       cancelButtonLabel="Close"
         />
+
+        <MyModal
+  open={openEncounterLogsModal}
+  setOpen={setOpenEncounterLogsModal}
+  title="Encounter Logs"
+  size="70vw"
+  content={<EncounterLogsTable/>
+  }
+  actionButtonLabel="Close"
+  actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+  cancelButtonLabel="Cancel"
+/>
         </Panel>
     );
 };

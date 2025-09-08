@@ -70,7 +70,7 @@ import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuic
 import PatientEMR from './pages/patient/patient-emr';
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
 import Lab from './pages/lab-module';
-import Rad from './pages/rad-module';
+import Rad from './pages/rad-module/RadiologyMain';
 import SystemLoader from './components/Loaders/SystemLoader';
 import DrugOrder from './pages/encounter/encounter-component/drug-order';
 import PatientSummary from './pages/encounter/encounter-component/patient-summary';

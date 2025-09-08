@@ -34,6 +34,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 
 
 const EncounterList = () => {
@@ -54,6 +55,7 @@ const EncounterList = () => {
   const [record, setRecord] = useState({});
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
+  const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
   const [encounterStatus, setEncounterStatus] = useState({ key: '' });
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
@@ -574,6 +576,10 @@ return (<>
                             Task Management
                         </MyButton>
 
+                        <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
+  Encounter Logs
+</MyButton>
+
 
          </div>
       }
@@ -635,6 +641,18 @@ return (<>
       }}
       cancelButtonLabel="Close"
   />
+
+  <MyModal
+  open={openEncounterLogsModal}
+  setOpen={setOpenEncounterLogsModal}
+  title="Encounter Logs"
+  size="70vw"
+  content={<EncounterLogsTable/>
+  }
+  actionButtonLabel="Close"
+  actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+  cancelButtonLabel="Cancel"
+/>
   </Panel>
 </>);
 };

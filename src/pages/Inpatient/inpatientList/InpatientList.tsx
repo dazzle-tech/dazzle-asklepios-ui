@@ -46,6 +46,7 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import {faBarcode, faUserGroup} from '@fortawesome/free-solid-svg-icons';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+import EncounterLogsTable from './EncounterLogsTable';
 
 const InpatientList = () => {
   const location = useLocation();
@@ -78,6 +79,7 @@ const InpatientList = () => {
   const tooltipCompanion = <Tooltip>Companion Card</Tooltip>;
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
+  const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
   const [openDischargeTracking, setOpenDischargeTracking] = useState(false);
 
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -298,6 +300,9 @@ const InpatientList = () => {
             Task Management
         </MyButton>
 
+<MyButton onClick={() => setOpenEncounterLogsModal(true)}>
+  Encounter Logs
+</MyButton>
 
           <MyButton onClick={() => setOpenDischargeTracking(true)}>
             Discharge Tracking
@@ -734,6 +739,19 @@ const InpatientList = () => {
       }}
       cancelButtonLabel="Close"
   />
+
+<MyModal
+  open={openEncounterLogsModal}
+  setOpen={setOpenEncounterLogsModal}
+  title="Encounter Logs"
+  size="70vw"
+  content={<EncounterLogsTable/>
+  }
+  actionButtonLabel="Close"
+  actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+  cancelButtonLabel="Cancel"
+/>
+
     </Panel>
   );
 };
