@@ -6,7 +6,10 @@ import Icd10Search from '@/pages/medical-component/Icd10Search';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import MyLabel from '@/components/MyLabel';
-import "./styles.less";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FaModx } from 'react-icons/fa';
+import './styles.less';
+
 const DischargePlanning = () => {
   // Fetch readiness Status Lov response
   const { data: readinessStatusLovQueryResponse } = useGetLovValuesByCodeQuery('READINESS_STATUS');
@@ -117,8 +120,8 @@ const DischargePlanning = () => {
                 </Row>
                 <Row>
                   <Col md={24}>
-                     <div className='container-ofiicd10-search-discharge-planning'>
-                    <Icd10Search object="" setOpject="" fieldName="diagnosisKey" />
+                    <div className="container-ofiicd10-search-discharge-planning">
+                      <Icd10Search object="" setOpject="" fieldName="diagnosisKey" />
                     </div>
                   </Col>
                 </Row>
@@ -364,28 +367,20 @@ const DischargePlanning = () => {
           </Col>
         </Form>
       </Row>
-      <div className='container-of-buttons-discharge'>
-        <MyButton
-          color="var(--deep-blue)"
-          width="80px"
-          height="32px"
-        >
+      <div className="container-of-buttons-discharge">
+        <MyButton>
+          <FaModx title="Generate Report" size={20} /> Generate Report
+        </MyButton>
+
+        <MyButton color="var(--deep-blue)" width="80px" height="32px">
           Save
         </MyButton>
 
-        <MyButton
-          color="var(--deep-blue)"
-          width="109px"
-          height="32px"
-        >
+        <MyButton color="var(--deep-blue)" width="109px" height="32px">
           Sign & Submit
         </MyButton>
 
-        <MyButton
-          color="var(--deep-blue)"
-          width="150px"
-          height="32px"
-        >
+        <MyButton color="var(--deep-blue)" width="150px" height="32px">
           Print Discharge Report
         </MyButton>
       </div>
