@@ -292,55 +292,63 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               )}
             </div>
           </AvatarGroup>
-          <Form fluid layout="inline">
-            <MyButton>Scan Document</MyButton>
-            <MyButton
-              prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-              onClick={handleSave}
-            >
-              Save
-            </MyButton>
-            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
-              Clear
-            </MyButton>
-            <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
-              Quick Appointment
-            </MyButton>
 
-            <AdministrativeWarningsModal
-              localPatient={localPatient}
-              validationResult={validationResult}
-            />
-            <Whisper
-              open={openMoreMenu}
-              onOpen={() => setOpenMoreMenu(true)}
-              onClose={() => setOpenMoreMenu(false)}
-              placement="bottom"
-              trigger="click"
-              speaker={contentOfMoreIconMenu}
-            >
-              <span>
-                <MyButton size="small" onClick={() => setOpenMoreMenu(!openMoreMenu)}>
-                  <FontAwesomeIcon icon={faEllipsisVertical} className="icons-style" />
-                </MyButton>
-              </span>
-            </Whisper>
-            <Whisper
-              open={openPrintMenu}
-              onOpen={() => setOpenPrintMenu(true)}
-              onClose={() => setOpenPrintMenu(false)}
-              placement="bottom"
-              trigger="click"
-              speaker={contentOfPrintIconMenu}
-            >
-              <span>
-                <MyButton size="small" onClick={() => setOpenPrintMenu(!openPrintMenu)}>
-                  <FontAwesomeIcon icon={faPrint} className="icons-style" />
-                </MyButton>
-              </span>
-            </Whisper>
-          </Form>
+<div className="button-group-left-align">
+  <Form fluid layout="inline" className='registration-header-buttons-section'>
+    <MyButton>Scan Document</MyButton>
+    <MyButton
+      prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+      onClick={handleSave}
+    >
+      Save
+    </MyButton>
+    <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
+      Clear
+    </MyButton>
+    <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
+      Quick Appointment
+    </MyButton>
+
+    <AdministrativeWarningsModal
+      localPatient={localPatient}
+      validationResult={validationResult}
+    />
+
+    <Whisper
+      open={openMoreMenu}
+      onOpen={() => setOpenMoreMenu(true)}
+      onClose={() => setOpenMoreMenu(false)}
+      placement="bottom"
+      trigger="click"
+      speaker={contentOfMoreIconMenu}
+    >
+      <span>
+        <MyButton size="small" onClick={() => setOpenMoreMenu(!openMoreMenu)}>
+          <FontAwesomeIcon icon={faEllipsisVertical} className="icons-style" />
+        </MyButton>
+      </span>
+    </Whisper>
+
+    <Whisper
+      open={openPrintMenu}
+      onOpen={() => setOpenPrintMenu(true)}
+      onClose={() => setOpenPrintMenu(false)}
+      placement="bottom"
+      trigger="click"
+      speaker={contentOfPrintIconMenu}
+    >
+      <span>
+        <MyButton size="small" onClick={() => setOpenPrintMenu(!openPrintMenu)}>
+          <FontAwesomeIcon icon={faPrint} className="icons-style" />
+        </MyButton>
+      </span>
+    </Whisper>
+  </Form>
+</div>
+
+          
         </Form>
+
       </Stack.Item>
     </Stack>
   );

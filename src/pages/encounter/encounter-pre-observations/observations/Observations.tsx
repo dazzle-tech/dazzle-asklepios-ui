@@ -256,23 +256,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
               <Col md={24}>
                 <div className="container-form">
                   <div className="title-div">
-                    <Text>Vital Signs</Text>
-                  </div>
-                  <Divider />
-                  <VitalSigns
-                    object={vital}
-                    setObject={setVital}
-                    disabled={true}
-                    width="28vw"
-                    showNoteField={true}
-                  />
-                </div>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={24}>
-                <div className="container-form">
-                  <div className="title-div">
                     <Text> Patient Observations & Complaints</Text>
                   </div>
                   <Divider />
@@ -308,7 +291,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                     <Col md={24}>
                       <MyInput
                         width="100%"
-                        fieldName="chiefComplaint"
+                        fieldName="ReasonOfVisit"
                         disabled={isEncounterStatusClosed || readOnly}
                         fieldType="textarea"
                         record={localEncounter}
@@ -330,10 +313,25 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                         setRecord={setLocalEncounter}
                         disabled={isEncounterStatusClosed || readOnly}
                         searchable={false}
-                      />
-                    </Col>
-                  </Row>
+                      /></Col></Row>
                 </div>{' '}
+              </Col>
+            </Row>
+            <Row>
+              <Col md={24}>
+                <div className="container-form">
+                  <div className="title-div">
+                    <Text>Vital Signs</Text>
+                  </div>
+                  <Divider />
+                    <VitalSigns
+                      object={vital}
+                      setObject={setVital}
+                      disabled={true}
+                      width="28vw"
+                      showNoteField={true}
+                    />
+                </div>
               </Col>
             </Row>
           </Col>
