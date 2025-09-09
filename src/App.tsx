@@ -177,15 +177,18 @@ const App = () => {
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
   const [navigationMap, setNavigationMap] = useState([]);
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
+const user = JSON.parse(localStorage.getItem('user') || 'null');
 
 const {
   data: navigationMapRawData,
   isLoading: isLoadingNavigationMap,
   isFetching: isFetchingNavigationMap
 } = useLoadNavigationMapQuery(String(user?.id || ''), {
+  // Using user ID here because in the old backend, the key matches the value of the new user ID.
+  // This ensures proper mapping and allows the UI team to work smoothly.
   skip: !user?.id, 
 });
+
 
 
   const [screenKeys, setScreenKeys] = useState({});

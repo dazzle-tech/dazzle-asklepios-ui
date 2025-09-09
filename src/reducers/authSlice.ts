@@ -1,14 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // ==================
-// دالة لفحص صلاحية التوكن (JWT)
+// Helper functions for JWT
 // ==================
+
+// Decode base64Url string (used to decode JWT payload)
 function base64UrlDecode(str: string): string {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
   const padded = str.padEnd(str.length + (4 - (str.length % 4)) % 4, '=');
   return atob(padded);
 }
 
+// Check if a JWT token is expired
 function isTokenExpired(token: string): boolean {
   try {
     const payloadBase64 = token.split('.')[1];
@@ -19,24 +22,25 @@ function isTokenExpired(token: string): boolean {
 
     if (!exp) return true;
 
-    const now = Math.floor(Date.now() / 1000); // الوقت الحالي بالثواني
-    return exp < now;
+    const now = Math.floor(Date.now() / 1000); // current time in seconds
+    return exp < now; // return true if token expired
   } catch (error) {
     console.error('Invalid token:', error);
-    return true; // لو التوكن فاسد نعتبره منتهي
+    return true; // treat invalid token as expired
   }
 }
 
 // ==================
-// تعريف الـ Slice
+// State definition
 // ==================
 interface AuthState {
-  user: any | null;
-  token: string | null;
-  tenant: any | null;
-  sessionExpiredBackdrop: boolean;
+  user: any | null;                 // logged-in user object
+  token: string | null;             // JWT token
+  tenant: any | null;               // tenant (organization) info
+  sessionExpiredBackdrop: boolean;  // flag for showing session expired modal/backdrop
 }
 
+// Initial state, pulling values from localStorage if available
 const initialState: AuthState = {
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   token: localStorage.getItem('id_token') || null,
@@ -44,13 +48,19 @@ const initialState: AuthState = {
   sessionExpiredBackdrop: false
 };
 
+// ==================
+// Auth slice definition
+// ==================
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    // Set or clear session expired backdrop flag
     setSessionExpiredBackdrop: (state, action: PayloadAction<boolean>) => {
       state.sessionExpiredBackdrop = action.payload;
     },
+
+    // Save user object to state and localStorage
     setUser: (state, action: PayloadAction<any | null>) => {
       state.user = action.payload;
       if (action.payload) {
@@ -59,6 +69,8 @@ const authSlice = createSlice({
         localStorage.removeItem('user');
       }
     },
+
+    // Save token to state and localStorage
     setToken: (state, action: PayloadAction<string | null>) => {
       state.token = action.payload;
       if (action.payload) {
@@ -67,6 +79,8 @@ const authSlice = createSlice({
         localStorage.removeItem('id_token');
       }
     },
+
+    // Save tenant info to state and localStorage
     setTenant: (state, action: PayloadAction<any | null>) => {
       state.tenant = action.payload;
       if (action.payload) {
@@ -75,6 +89,8 @@ const authSlice = createSlice({
         localStorage.removeItem('tenant');
       }
     },
+
+    // Clear all authentication data (logout)
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -83,7 +99,8 @@ const authSlice = createSlice({
       localStorage.removeItem('user');
       localStorage.removeItem('tenant');
     },
-    // 👇 يفحص صلاحية التوكن ويفرغ كل شيء إذا انتهى
+
+    // Check token validity and clear state if expired
     checkTokenValidity: (state) => {
       const token = state.token;
       if (token && isTokenExpired(token)) {
@@ -98,6 +115,7 @@ const authSlice = createSlice({
   }
 });
 
+// Export actions for use in components
 export const {
   setSessionExpiredBackdrop,
   setUser,
@@ -107,4 +125,5 @@ export const {
   checkTokenValidity
 } = authSlice.actions;
 
+// Export reducer to be added to store
 export default authSlice.reducer;
