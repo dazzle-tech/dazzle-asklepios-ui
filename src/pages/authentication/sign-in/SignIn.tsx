@@ -39,7 +39,6 @@ const SignIn = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // ⬇️ الخدمات الجديدة
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
 
@@ -50,7 +49,7 @@ const SignIn = () => {
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
   const [saveUser] = useSaveUserMutation();
 
-  // ⬇️ الدالة الجديدة (من الكود الثاني)
+  // Handle login
   const handleLogin = async () => {
     if (!credentials.username || !credentials.password || !credentials.orgKey) {
       setErrText('Please fill all required fields.');
@@ -82,7 +81,7 @@ const SignIn = () => {
       setErrText('Login failed. Please check your credentials.');
     }
   };
-
+  // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -90,13 +89,7 @@ const SignIn = () => {
     }
   };
 
-  useEffect(() => {
-    setErrText(' ');
-  }, [newPassword, newPasswordConfirm]);
-  const token = localStorage.getItem('id_token');
-  const user = localStorage.getItem('user');
-  console.log('Current token0:', token);
-  console.log('Current user 0:', user);
+  // Handle saving new password
   const handleSaveNewPassword = () => {
     if (changePasswordView) {
       if (!newPassword || newPassword === '') {
@@ -112,6 +105,11 @@ const SignIn = () => {
       }
     }
   };
+
+  // Effect to clear error text when password fields change
+  useEffect(() => {
+    setErrText(' ');
+  }, [newPassword, newPasswordConfirm]);
 
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
