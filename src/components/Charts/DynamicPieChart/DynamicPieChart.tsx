@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Pie } from "react-chartjs-2";
-import type { ChartOptions, ChartData } from "chart.js";
-import "chart.js/auto";
-import { Button } from "rsuite";
+import React, { useState, useRef, useEffect } from 'react';
+import { Pie } from 'react-chartjs-2';
+import type { ChartOptions, ChartData } from 'chart.js';
+import 'chart.js/auto';
+import { Button } from 'rsuite';
 
 type PieChartDataPoint = {
   label: string;
@@ -15,6 +15,8 @@ interface DynamicPieChartProps {
   colors?: string[];
   selectable?: boolean;
   refreshButton?: boolean;
+  width?: number;
+  height?: number;
 }
 
 const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
@@ -23,6 +25,8 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
   colors,
   selectable,
   refreshButton,
+  width = 350,
+  height = 350
 }) => {
   const chartRef = useRef<any>(null);
   const [selectedSegment, setSelectedSegment] = useState<{
@@ -30,26 +34,25 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
     value: number;
   } | null>(null);
 
-  const [data, setData] = useState<ChartData<"pie">>({
+  const [data, setData] = useState<ChartData<'pie'>>({
     labels: [],
-    datasets: [],
+    datasets: []
   });
 
   const updateData = () => {
-    const labels = chartData.map((d) => d.label);
-    const values = chartData.map((d) => d.value);
+    const labels = chartData.map(d => d.label);
+    const values = chartData.map(d => d.value);
 
     setData({
       labels,
       datasets: [
         {
           data: values,
-          backgroundColor:
-            colors || ["#2264E5", "#93C6FA", "#FF6384", "#FFCE56", "#4BC0C0"],
-          borderColor: "#fff",
-          borderWidth: 2,
-        },
-      ],
+          backgroundColor: colors || ['#2264E5', '#93C6FA', '#FF6384', '#FFCE56', '#4BC0C0'],
+          borderColor: '#fff',
+          borderWidth: 2
+        }
+      ]
     });
   };
 
@@ -57,16 +60,18 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
     updateData();
   }, [chartData, colors]);
 
-  const chartOptions: ChartOptions<"pie"> = {
+  const chartOptions: ChartOptions<'pie'> = {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       title: {
         display: true,
-        text: title || "Pie Chart",
+        text: title || 'Pie Chart'
       },
       legend: {
         display: true,
-        position: "top", // ✅ typed correctly
-      },
+        position: 'top'
+      }
     },
     onClick: (_event, elements) => {
       if (elements.length > 0) {
@@ -75,7 +80,7 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
         const value = data.datasets[0].data[index] as number;
         setSelectedSegment({ label, value });
       }
-    },
+    }
   };
 
   return (
@@ -83,9 +88,9 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
       {selectable && (
         <div style={{ marginBottom: 10 }}>
           {selectedSegment ? (
-            <span style={{ fontSize: "large" }}>
-              {selectedSegment.label}:{" "}
-              <b style={{ color: "rebeccapurple" }}>{selectedSegment.value}</b>
+            <span style={{ fontSize: 'large' }}>
+              {selectedSegment.label}:{' '}
+              <b style={{ color: 'rebeccapurple' }}>{selectedSegment.value}</b>
             </span>
           ) : (
             <span>No Selection</span>
@@ -93,8 +98,9 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
         </div>
       )}
 
-      <Pie data={data} options={chartOptions} ref={chartRef} />
-
+      <div style={{ width, height, margin: '0 auto'}}>
+        <Pie data={data} options={chartOptions} ref={chartRef} style={{ maxHeight: '400px' }}/>
+      </div>
       {refreshButton && (
         <Button appearance="primary" style={{ marginTop: 10 }} onClick={updateData}>
           Refresh Data
