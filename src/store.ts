@@ -3,7 +3,7 @@ import uiSlice from './reducers/uiSlice';
 import { uiService } from '@/services/uiService';
 import { authService } from '@/services/authService';
 import authSlice from '@/reducers/authSlice';
-import { authServiceApi } from '@/services/authServiceApi'; // ✅ إضافة authServiceApi
+import { authServiceApi } from '@/services/authServiceApi'; 
 import { patientService } from '@/services/patientService';
 import patientSlice from '@/reducers/patientSlice';
 import { setupService } from '@/services/setupService';
@@ -33,10 +33,10 @@ export const store = configureStore({
     [uiService.reducerPath]: uiService.reducer,
 
     // auth
-        auth: authReducer, // 👈 هنا صار صحيح
+        auth: authReducer, 
 
     [authService.reducerPath]: authService.reducer,
-    [authServiceApi.reducerPath]: authServiceApi.reducer, // ✅ إضافة authServiceApi
+    [authServiceApi.reducerPath]: authServiceApi.reducer, 
 
     // patient
     [patientSlice.name]: patientSlice.reducer,
