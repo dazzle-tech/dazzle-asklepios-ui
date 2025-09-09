@@ -166,7 +166,8 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
               {selectedBar.label}: <b style={{ color: 'rebeccapurple' }}>{selectedBar.value}</b>
             </span>
           ) : (
-            <span>Click on a bar to select</span>
+            // <span>Click on a bar to select</span>
+            <span className="font-12">Admissions, discharges, and emergency visits</span>
           )}
         </div>
       )}

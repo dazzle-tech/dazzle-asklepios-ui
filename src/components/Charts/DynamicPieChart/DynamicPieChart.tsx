@@ -66,7 +66,7 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
     plugins: {
       title: {
         display: true,
-        text: title || 'Pie Chart'
+        text: title
       },
       legend: {
         display: true,
@@ -93,13 +93,13 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
               <b style={{ color: 'rebeccapurple' }}>{selectedSegment.value}</b>
             </span>
           ) : (
-            <span>No Selection</span>
+            <span className="font-12">Current patient allocation</span>
           )}
         </div>
       )}
 
-      <div style={{ width, height, margin: '0 auto'}}>
-        <Pie data={data} options={chartOptions} ref={chartRef} style={{ maxHeight: '400px' }}/>
+      <div style={{ width, height, margin: '0 auto' }}>
+        <Pie data={data} options={chartOptions} ref={chartRef} style={{ maxHeight: '400px' }} />
       </div>
       {refreshButton && (
         <Button appearance="primary" style={{ marginTop: 10 }} onClick={updateData}>
