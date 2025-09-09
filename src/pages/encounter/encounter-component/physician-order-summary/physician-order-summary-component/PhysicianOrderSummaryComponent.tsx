@@ -90,14 +90,14 @@ const PhysicianOrderSummaryComponent = () => {
   //declares
   const totalCount = data.length;
   const paginatedData = data.slice(pageIndex * rowsPerPage, (pageIndex + 1) * rowsPerPage);
-  const [ record, setRecord ] = useState({});
+  const [record, setRecord] = useState({});
   const handlePageChange = (_: any, newPageIndex: number) => {
     setPageIndex(newPageIndex);
   };
-//table coulmns
+  //table coulmns
   const columns = [
-    {title :  'Patient Name', dataIndex:'patientname', key: 'patientname'},
-    {title :  'MRN', dataIndex:'mrn', key: 'mrn'},
+    { title: 'Patient Name', dataIndex: 'patientname', key: 'patientname' },
+    { title: 'MRN', dataIndex: 'mrn', key: 'mrn' },
     { title: 'Order Type', dataIndex: 'orderType', key: 'orderType' },
     { title: 'Order Name', dataIndex: 'orderName', key: 'orderName' },
     { title: 'Priority', dataIndex: 'priority', key: 'priority' },
@@ -211,83 +211,86 @@ const PhysicianOrderSummaryComponent = () => {
     Pending: data.filter(d => d.status === 'Pending').length,
     Completed: data.filter(d => d.status === 'Completed').length
   };
-//table filters
-  const tablefilters = (<> <Form fluid>
-      <div className="from-to-input-position">
-        <MyInput
-          width={'100%'}
-          fieldLabel="Order Date From"
-          fieldType="date"
-          fieldName="key0"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          width={'100%'}
-          fieldLabel="To"
-          fieldType="date"
-          fieldName="key1"
-          record={record}
-          setRecord={setRecord}
-        />
-
- <MyInput
-          width="10vw"
-          fieldLabel="Patient Search"
-          fieldName="selectfilter"
-          fieldType="select"
-          selectData={[
-            { key: 'MRN', value: 'MRN' },
-            { key: 'Document Number', value: 'Document Number' },
-            { key: 'Full Name', value: 'Full Name' },
-            { key: 'Archiving Number', value: 'Archiving Number' },
-            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-            { key: 'Date of Birth', value: 'Date of Birth' }
-          ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-
- <MyInput
-          fieldLabel='Search by'
-          fieldName="searchCriteria"
-          fieldType="text"
-          placeholder="Search"
-          width="10vw"
-          record={record}
-          setRecord={setRecord}
+  //table filters
+  const tablefilters = (
+    <>
+      {' '}
+      <Form fluid>
+        <div className="from-to-input-position">
+          <MyInput
+            width={'100%'}
+            fieldLabel="Order Date From"
+            fieldType="date"
+            fieldName="key0"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            width={'100%'}
+            fieldLabel="To"
+            fieldType="date"
+            fieldName="key1"
+            record={record}
+            setRecord={setRecord}
           />
 
-         <MyInput
-          width="10vw"
-          fieldLabel="Order Type"
-          fieldName="selectfilter"
-          fieldType="checkPicker"
-          selectData={[
-            { key: 'medication', value: 'Medication' },
-            { key: 'laboratory', value: 'Laboratory' },
-            { key: 'radiology', value: 'Radiology' },
-            { key: 'patholoy', value: 'Patholoy' },
-            { key: 'proceduer', value: 'Proceduer' },
-            { key: 'operation', value: 'Operation' },
-            { key: 'blood', value: 'Blood' },
-            { key: 'ivfluid', value: 'Iv Fluid' },
-            { key: 'bedsideprocedure', value: 'Bedside Procedure' },
-            { key: 'diet', value: 'Diet' },
-            { key: 'phyaicianrequest', value: 'Phyaician Request' }
-          ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
+          <MyInput
+            width="10vw"
+            fieldLabel="Patient Search"
+            fieldName="selectfilter"
+            fieldType="select"
+            selectData={[
+              { key: 'MRN', value: 'MRN' },
+              { key: 'Document Number', value: 'Document Number' },
+              { key: 'Full Name', value: 'Full Name' },
+              { key: 'Archiving Number', value: 'Archiving Number' },
+              { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+              { key: 'Date of Birth', value: 'Date of Birth' }
+            ]}
+            selectDataLabel="value"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
 
+          <MyInput
+            fieldLabel="Search by"
+            fieldName="searchCriteria"
+            fieldType="text"
+            placeholder="Search"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+          />
 
-      </div>
-    </Form>
-      <AdvancedSearchFilters searchFilter={true}/></>);
+          <MyInput
+            width="10vw"
+            fieldLabel="Order Type"
+            fieldName="selectfilter"
+            fieldType="checkPicker"
+            selectData={[
+              { key: 'medication', value: 'Medication' },
+              { key: 'laboratory', value: 'Laboratory' },
+              { key: 'radiology', value: 'Radiology' },
+              { key: 'patholoy', value: 'Patholoy' },
+              { key: 'proceduer', value: 'Proceduer' },
+              { key: 'operation', value: 'Operation' },
+              { key: 'blood', value: 'Blood' },
+              { key: 'ivfluid', value: 'Iv Fluid' },
+              { key: 'bedsideprocedure', value: 'Bedside Procedure' },
+              { key: 'diet', value: 'Diet' },
+              { key: 'phyaicianrequest', value: 'Phyaician Request' }
+            ]}
+            selectDataLabel="value"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+        </div>
+      </Form>
+      <AdvancedSearchFilters searchFilter={true} />
+    </>
+  );
 
   return (
     <div className="main">
