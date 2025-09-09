@@ -90,6 +90,7 @@ import PatientHistory from './pages/encounter/encounter-component/patient-histor
 import MedicationsRecord from './pages/encounter/encounter-component/medications-record';
 import VaccineReccord from './pages/encounter/encounter-component/vaccine-reccord';
 import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics-result/DiagnosticsResult';
+import DialysisRequest from './pages/encounter/encounter-component/dialysis-request/DialysisRequest';
 import InpatientList from './pages/Inpatient/inpatientList';
 import ReviewResults from './pages/review-results/ReviewResults';
 import Room from './pages/setup/bed-room-setup';
@@ -369,6 +370,7 @@ const App = () => {
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
+                <Route path="dialysis-request" element={<DialysisRequest />} />
                 <Route path="operation-request" element={<OperationRequest />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route
