@@ -1,3 +1,4 @@
-import NeonatesPainAssessment from './NeonatesPainAssessment';
+
+import NeonatesPainAssessment from "./NeonatesPainAssessment";
 
 export default NeonatesPainAssessment;

@@ -1,16 +1,16 @@
 import React from 'react';
 import { Tabs } from 'rsuite';
-import FlaccTab from './FlaccTab';
-import NeonatalTab from './NeonatalTab';
+import Flacc from './flacc/Flacc';
+import Neonatal from './neontes/Neonatal';
 
 const NeonatesPainAssessment = () => {
   return (
     <Tabs defaultActiveKey="flacc">
       <Tabs.Tab eventKey="flacc" title="FLACC Pain Scale">
-        <FlaccTab />
+        <Flacc />
       </Tabs.Tab>
       <Tabs.Tab eventKey="neonatal" title="Neonatal Pain Scale">
-        <NeonatalTab />
+        <Neonatal />
       </Tabs.Tab>
     </Tabs>
   );
