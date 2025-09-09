@@ -43,8 +43,8 @@ import TemporaryDischarge from './temporaryDischarge/TemporaryDischarge';
 import { faPersonWalkingArrowLoopLeft } from '@fortawesome/free-solid-svg-icons';
 import ReturnFromTemporary from './temporaryDischarge/ReturnFromTemporary';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import {faBarcode, faUserGroup} from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { faBarcode, faUserGroup } from '@fortawesome/free-solid-svg-icons';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from './EncounterLogsTable';
 
@@ -53,7 +53,7 @@ const InpatientList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className="display-flex">
       <h5>Inpatient Visit List</h5>
     </div>
   );
@@ -72,7 +72,7 @@ const InpatientList = () => {
   const [switchDepartment, setSwitchDepartment] = useState(false);
   const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
   const [record, setRecord] = useState({});
-  const [encounterStatus, setEncounterStatus] = useState({ key: '' }); 
+  const [encounterStatus, setEncounterStatus] = useState({ key: '' });
   const [cancelEncounter] = useCancelEncounterMutation();
   const [openReturnFromTemporaryModal, setOpenReturnFromTemporaryModal] = useState(false);
   const tooltipWrist = <Tooltip>Wrist Band</Tooltip>;
@@ -93,7 +93,9 @@ const InpatientList = () => {
       {
         fieldName: 'encounter_status_lkey',
         operator: 'in',
-        value: ['91063195286200', '91084250213000','6130571996160318'].map(key => `(${key})`).join(' ')
+        value: ['91063195286200', '91084250213000', '6130571996160318']
+          .map(key => `(${key})`)
+          .join(' ')
       },
       {
         fieldName: 'discharge',
@@ -191,69 +193,68 @@ const InpatientList = () => {
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
-  const filters = () => (<>
-    <Form layout="inline" fluid>
-      <div className="switch-dep-dev ">
-        {' '}
-        <MyInput
-          require
-          column
-          fieldLabel="Select Department"
-          fieldType="select"
-          fieldName="key"
-          selectData={departmentListResponse?.data?.object ?? []}
-          selectDataLabel="name"
-          selectDataValue="key"
-          record={departmentFilter}
-          setRecord={value => {
-            setDepartmentFilter(value);
-            setSwitchDepartment(false);
-          }}
-          searchable={false}
-          width={200}
-        />
-
-        <MyButton
-          size="small"
-          backgroundColor="gray"
-          onClick={() => {
-            setSwitchDepartment(true);
-          }}
-          prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
-        >
-          Switch Department
-        </MyButton>
-        
-        <MyInput
-          column
-          width="10vw"
-          fieldLabel="Select Filter"
-          fieldName="selectfilter"
-          fieldType="select"
-          selectData={[
-            { key: 'MRN', value: 'MRN' },
-            { key: 'Document Number', value: 'Document Number' },
-            { key: 'Full Name', value: 'Full Name' },
-            { key: 'Archiving Number', value: 'Archiving Number' },
-            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-            { key: 'Date of Birth', value: 'Date of Birth'}
-        ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          column
-          fieldLabel='Search by'
-          fieldName="searchCriteria"
-          fieldType="text"
-          placeholder="Search"
-          width="15vw"
-          record={record}
-          setRecord={setRecord}
+  const filters = () => (
+    <>
+      <Form layout="inline" fluid>
+        <div className="switch-dep-dev ">
+          {' '}
+          <MyInput
+            require
+            column
+            fieldLabel="Select Department"
+            fieldType="select"
+            fieldName="key"
+            selectData={departmentListResponse?.data?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            record={departmentFilter}
+            setRecord={value => {
+              setDepartmentFilter(value);
+              setSwitchDepartment(false);
+            }}
+            searchable={false}
+            width={200}
           />
-            <MyInput
+          <MyButton
+            size="small"
+            backgroundColor="gray"
+            onClick={() => {
+              setSwitchDepartment(true);
+            }}
+            prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
+          >
+            Switch Department
+          </MyButton>
+          <MyInput
+            column
+            width="10vw"
+            fieldLabel="Select Filter"
+            fieldName="selectfilter"
+            fieldType="select"
+            selectData={[
+              { key: 'MRN', value: 'MRN' },
+              { key: 'Document Number', value: 'Document Number' },
+              { key: 'Full Name', value: 'Full Name' },
+              { key: 'Archiving Number', value: 'Archiving Number' },
+              { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+              { key: 'Date of Birth', value: 'Date of Birth' }
+            ]}
+            selectDataLabel="value"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            column
+            fieldLabel="Search by"
+            fieldName="searchCriteria"
+            fieldType="text"
+            placeholder="Search"
+            width="15vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
             column
             width={200}
             fieldType="select"
@@ -264,52 +265,40 @@ const InpatientList = () => {
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
-            />
-
-      </div>
-    </Form>
-    <AdvancedSearchFilters searchFilter={true}/>
-
-</>
+          />
+        </div>
+      </Form>
+      <AdvancedSearchFilters searchFilter={true} />
+    </>
   );
 
-  const tablebuttons = (<><div className='companion-wrist-icons-position-handles'>
-    <Whisper trigger="hover" placement="top" speaker={tooltipWrist}>
-                <div>
-                  <MyButton
-                    size="small"
-                      disabled={!encounter?.key}>
-                    <FontAwesomeIcon icon={faBarcode} />
-                  </MyButton>
-                </div>
-              </Whisper>
+  const tablebuttons = (
+    <>
+      <div className="companion-wrist-icons-position-handles">
+        <Whisper trigger="hover" placement="top" speaker={tooltipWrist}>
+          <div>
+            <MyButton size="small" disabled={!encounter?.key}>
+              <FontAwesomeIcon icon={faBarcode} />
+            </MyButton>
+          </div>
+        </Whisper>
 
-<Whisper trigger="hover" placement="top" speaker={tooltipCompanion}>
-                <div>
-                  <MyButton
-                    size="small"
-                    disabled={!encounter?.key}>
-                    <FontAwesomeIcon icon={faUserGroup} />
-                  </MyButton>
-                </div>
-              </Whisper>
-                          <MyButton onClick={() => setOpenRefillModal(true)}>
-            Refill
-          </MyButton>
-        <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
-            Task Management
-        </MyButton>
+        <Whisper trigger="hover" placement="top" speaker={tooltipCompanion}>
+          <div>
+            <MyButton size="small" disabled={!encounter?.key}>
+              <FontAwesomeIcon icon={faUserGroup} />
+            </MyButton>
+          </div>
+        </Whisper>
+        <MyButton onClick={() => setOpenRefillModal(true)}>Refill</MyButton>
+        <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>Task Management</MyButton>
 
-<MyButton onClick={() => setOpenEncounterLogsModal(true)}>
-  Encounter Logs
-</MyButton>
+        <MyButton onClick={() => setOpenEncounterLogsModal(true)}>Encounter Logs</MyButton>
 
-          <MyButton onClick={() => setOpenDischargeTracking(true)}>
-            Discharge Tracking
-          </MyButton> 
-        </div>
-        
-</>);
+        <MyButton onClick={() => setOpenDischargeTracking(true)}>Discharge Tracking</MyButton>
+      </div>
+    </>
+  );
 
   //useEffect
   useEffect(() => {
@@ -702,56 +691,66 @@ const InpatientList = () => {
       />
 
       <MyModal
-      open={openRefillModal}
-      setOpen={setOpenRefillModal}
-      title="Refill"
-      size="90vw"
-      content={<><RefillModalComponent></RefillModalComponent></>}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => {
-        console.log('Save refill clicked');
-      }}
-      cancelButtonLabel="Close"
-/>
+        open={openRefillModal}
+        setOpen={setOpenRefillModal}
+        title="Refill"
+        size="90vw"
+        content={
+          <>
+            <RefillModalComponent></RefillModalComponent>
+          </>
+        }
+        actionButtonLabel="Save"
+        actionButtonFunction={() => {
+          console.log('Save refill clicked');
+        }}
+        cancelButtonLabel="Close"
+      />
 
       <MyModal
-      open={openDischargeTracking}
-      setOpen={setOpenDischargeTracking}
-      title="Discharge Tracking"
-      size="55vw"
-      content={<><DischargeTrackingModal/></>}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => {
-        console.log('Save Discharge Tracking');
-      }}
-      cancelButtonLabel="Close"
-/>
+        open={openDischargeTracking}
+        setOpen={setOpenDischargeTracking}
+        title="Discharge Tracking"
+        size="55vw"
+        content={
+          <>
+            <DischargeTrackingModal />
+          </>
+        }
+        actionButtonLabel="Save"
+        actionButtonFunction={() => {
+          console.log('Save Discharge Tracking');
+        }}
+        cancelButtonLabel="Close"
+      />
 
-<MyModal
-      open={openPhysicianOrderSummaryModal}
-      setOpen={setOpenPhysicianOrderSummaryModal}
-      title="Task Management"
-      size="90vw"
-      content={<><PhysicianOrderSummaryModal></PhysicianOrderSummaryModal></>}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => {
-        console.log('Save refill clicked');
-      }}
-      cancelButtonLabel="Close"
-  />
+      <MyModal
+        open={openPhysicianOrderSummaryModal}
+        setOpen={setOpenPhysicianOrderSummaryModal}
+        title="Task Management"
+        size="90vw"
+        content={
+          <>
+            <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
+          </>
+        }
+        actionButtonLabel="Save"
+        actionButtonFunction={() => {
+          console.log('Save refill clicked');
+        }}
+        cancelButtonLabel="Close"
+      />
 
-<MyModal
-  open={openEncounterLogsModal}
-  setOpen={setOpenEncounterLogsModal}
-  title="Encounter Logs"
-  size="70vw"
-  content={<EncounterLogsTable/>
-  }
-  actionButtonLabel="Close"
-  actionButtonFunction={() => setOpenEncounterLogsModal(false)}
-  cancelButtonLabel="Cancel"
-/>
-
+      <MyModal
+        open={openEncounterLogsModal}
+        setOpen={setOpenEncounterLogsModal}
+        title="Encounter Logs"
+        size="70vw"
+        content={<EncounterLogsTable />}
+        actionButtonLabel="Close"
+        actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+        cancelButtonLabel="Cancel"
+      />
     </Panel>
   );
 };

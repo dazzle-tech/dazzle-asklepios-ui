@@ -36,7 +36,6 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 
-
 const EncounterList = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -411,7 +410,7 @@ const EncounterList = () => {
               </Whisper>
             )}
 
-                        <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
+            <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
               <div>
                 <MyButton
                   size="small"
@@ -459,202 +458,203 @@ const EncounterList = () => {
   };
 
   const filters = () => {
-    return (<>
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
-        <MyInput
-          width={180}
-          column
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
-        <MyInput
-          width="10vw"
-          column
-          fieldLabel="Select Filter"
-          fieldName="selectfilter"
-          fieldType="select"
-          selectData={[
-            { key: 'MRN', value: 'MRN' },
-            { key: 'Document Number', value: 'Document Number' },
-            { key: 'Full Name', value: 'Full Name' },
-            { key: 'Archiving Number', value: 'Archiving Number' },
-            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-            { key: 'Date of Birth', value: 'Date of Birth' }
-          ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          fieldLabel="Search by"
-          column
-          fieldName="searchCriteria"
-          fieldType="text"
-          placeholder="Search"
-          width="15vw"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          column
-          width={200}
-          fieldType="select"
-          fieldLabel="Encounter Status"
-          fieldName="key"
-          selectData={encounterStatusLov?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={encounterStatus}
-          setRecord={setEncounterStatus}
-        />
-      </Form>
+    return (
+      <>
+        <Form layout="inline" fluid className="date-filter-form">
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="From Date"
+            fieldName="fromDate"
+            record={dateFilter}
+            setRecord={setDateFilter}
+          />
+          <MyInput
+            width={180}
+            column
+            fieldType="date"
+            fieldLabel="To Date"
+            fieldName="toDate"
+            record={dateFilter}
+            setRecord={setDateFilter}
+          />
+          <MyInput
+            width="10vw"
+            column
+            fieldLabel="Select Filter"
+            fieldName="selectfilter"
+            fieldType="select"
+            selectData={[
+              { key: 'MRN', value: 'MRN' },
+              { key: 'Document Number', value: 'Document Number' },
+              { key: 'Full Name', value: 'Full Name' },
+              { key: 'Archiving Number', value: 'Archiving Number' },
+              { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+              { key: 'Date of Birth', value: 'Date of Birth' }
+            ]}
+            selectDataLabel="value"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            fieldLabel="Search by"
+            column
+            fieldName="searchCriteria"
+            fieldType="text"
+            placeholder="Search"
+            width="15vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            column
+            width={200}
+            fieldType="select"
+            fieldLabel="Encounter Status"
+            fieldName="key"
+            selectData={encounterStatusLov?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={encounterStatus}
+            setRecord={setEncounterStatus}
+          />
+        </Form>
 
-      <AdvancedSearchFilters searchFilter={true}/>
-    </>);
+        <AdvancedSearchFilters searchFilter={true} />
+      </>
+    );
   };
-return (<>
+  return (
+    <>
+      <div className="count-div-on-top-of-page-visit-list">
+        <DetailsCard
+          title="Total Patients"
+          number={4}
+          color="--primary-blue"
+          backgroundClassName="result-ready-section"
+          position="center"
+          width={'15vw'}
+        />
+        <DetailsCard
+          title="Active Cases"
+          number={3}
+          color="--green-600"
+          backgroundClassName="sample-collected-section"
+          position="center"
+          width={'15vw'}
+        />
+        <DetailsCard
+          title="Completed"
+          number={1}
+          color="--primary-purple "
+          backgroundClassName="new-section"
+          position="center"
+          width={'15vw'}
+        />
+        <DetailsCard
+          title="Avg Progress"
+          number={'80%'}
+          color="--primary-yellow"
+          backgroundClassName="total-test-section"
+          position="center"
+          width={'15vw'}
+        />
+      </div>
 
-    <div className="count-div-on-top-of-page-visit-list">
-      <DetailsCard
-        title="Total Patients"
-        number={4}
-        color="--primary-blue"
-        backgroundClassName="result-ready-section"
-        position='center'
-        width={'15vw'}
+      <Panel>
+        <MyTable
+          filters={filters()}
+          tableButtons={
+            <div className="out-patient-list-table-buttons-position-handle">
+              <MyButton onClick={() => setOpenRefillModal(true)}>Refill Stock</MyButton>
+              <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
+                Task Management
+              </MyButton>
 
-      />
-      <DetailsCard
-        title="Active Cases"
-        number={3}
-        color="--green-600"
-        backgroundClassName="sample-collected-section"
-        position='center'
-        width={'15vw'}
-      />
-      <DetailsCard
-        title="Completed"
-        number={1}
-        color="--primary-purple "
-        backgroundClassName="new-section"
-        position='center'
-        width={'15vw'}
-      />
-      <DetailsCard
-        title="Avg Progress"
-        number={'80%'}
-        color="--primary-yellow"
-        backgroundClassName="total-test-section"
-        position='center'
-        width={'15vw'}
-      />
-    </div>
+              <MyButton onClick={() => setOpenEncounterLogsModal(true)}>Encounter Logs</MyButton>
+            </div>
+          }
+          height={600}
+          data={encounterListResponse?.object ?? []}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          loading={isLoading || (manualSearchTriggered && isFetching)}
+          onRowClick={rowData => {
+            setLocalEncounter(rowData);
+          }}
+          sortColumn={listRequest.sortBy}
+          sortType={listRequest.sortType}
+          onSortChange={(sortBy, sortType) => {
+            setListRequest({ ...listRequest, sortBy, sortType });
+          }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
 
+        {/* Refill Modal */}
+        <MyModal
+          open={openRefillModal}
+          setOpen={setOpenRefillModal}
+          title="Refill"
+          size="90vw"
+          content={
+            <>
+              <RefillModalComponent></RefillModalComponent>
+            </>
+          }
+          actionButtonLabel="Save"
+          actionButtonFunction={() => {
+            console.log('Save refill clicked');
+          }}
+          cancelButtonLabel="Close"
+        />
 
-  <Panel>
-    <MyTable
-      filters={filters()}
-      tableButtons={
-<div className='out-patient-list-table-buttons-position-handle'>
-            <MyButton onClick={() => setOpenRefillModal(true)}>
-                       Refill
-                  </MyButton>
-                  <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
-                            Task Management
-                        </MyButton>
+        {/* Existing deletion modal */}
+        <DeletionConfirmationModal
+          open={open}
+          setOpen={setOpen}
+          actionButtonFunction={handleCancelEncounter}
+          actionType="Deactivate"
+          confirmationQuestion="Do you want to cancel this Encounter ?"
+          actionButtonLabel="Cancel"
+          cancelButtonLabel="Close"
+        />
 
-                        <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
-  Encounter Logs
-</MyButton>
+        <MyModal
+          open={openPhysicianOrderSummaryModal}
+          setOpen={setOpenPhysicianOrderSummaryModal}
+          title="Task Management"
+          size="90vw"
+          content={
+            <>
+              <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
+            </>
+          }
+          actionButtonLabel="Save"
+          actionButtonFunction={() => {
+            console.log('Save refill clicked');
+          }}
+          cancelButtonLabel="Close"
+        />
 
-
-         </div>
-      }
-      height={600}
-      data={encounterListResponse?.object ?? []}
-      columns={tableColumns}
-      rowClassName={isSelected}
-      loading={isLoading || (manualSearchTriggered && isFetching)}
-      onRowClick={rowData => {
-        setLocalEncounter(rowData);
-      }}
-      sortColumn={listRequest.sortBy}
-      sortType={listRequest.sortType}
-      onSortChange={(sortBy, sortType) => {
-        setListRequest({ ...listRequest, sortBy, sortType });
-      }}
-      page={pageIndex}
-      rowsPerPage={rowsPerPage}
-      totalCount={totalCount}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-    />
-
-    {/* Refill Modal */}
-    <MyModal
-      open={openRefillModal}
-      setOpen={setOpenRefillModal}
-      title="Refill"
-      size="90vw"
-      content={<><RefillModalComponent></RefillModalComponent></>}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => {
-        console.log('Save refill clicked');
-      }}
-      cancelButtonLabel="Close"
-    />
-
-
-    {/* Existing deletion modal */}
-    <DeletionConfirmationModal
-      open={open}
-      setOpen={setOpen}
-      actionButtonFunction={handleCancelEncounter}
-      actionType="Deactivate"
-      confirmationQuestion="Do you want to cancel this Encounter ?"
-      actionButtonLabel="Cancel"
-      cancelButtonLabel="Close"
-    />
-
-    <MyModal
-      open={openPhysicianOrderSummaryModal}
-      setOpen={setOpenPhysicianOrderSummaryModal}
-      title="Task Management"
-      size="90vw"
-      content={<><PhysicianOrderSummaryModal></PhysicianOrderSummaryModal></>}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => {
-        console.log('Save refill clicked');
-      }}
-      cancelButtonLabel="Close"
-  />
-
-  <MyModal
-  open={openEncounterLogsModal}
-  setOpen={setOpenEncounterLogsModal}
-  title="Encounter Logs"
-  size="70vw"
-  content={<EncounterLogsTable/>
-  }
-  actionButtonLabel="Close"
-  actionButtonFunction={() => setOpenEncounterLogsModal(false)}
-  cancelButtonLabel="Cancel"
-/>
-  </Panel>
-</>);
+        <MyModal
+          open={openEncounterLogsModal}
+          setOpen={setOpenEncounterLogsModal}
+          title="Encounter Logs"
+          size="70vw"
+          content={<EncounterLogsTable />}
+          actionButtonLabel="Close"
+          actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+          cancelButtonLabel="Cancel"
+        />
+      </Panel>
+    </>
+  );
 };
 
 export default EncounterList;
