@@ -23,21 +23,12 @@ const DispenseSelectedOrdersTable = () => {
   // Create state for selected rows data in modal
   const [dispenseData, setDispenseData] = useState<any[]>([]);
   const [openDispenseModal, setOpenDispenseModal] = useState(false);
+  const [openOneDispenseModal, setOpenOneDispenseModal] = useState(false);
+  const [openChat, setOpenChat] = useState(false);
 
   // Fetch orders tatus Lov response
   const { data: orderstatusLovQueryResponse } = useGetLovValuesByCodeQuery('PHARMACY_ORDER_STATUS');
 
-  // Icons column (start)
-  const iconsForActionsOrders = () => (
-    <div className="container-of-icons">
-      <FontAwesomeIcon
-        className="icons-style"
-        title="Start"
-        color="var(--primary-gray)"
-        icon={faPlay}
-      />
-    </div>
-  );
   // dummy data
   const data = [
     {
@@ -275,12 +266,6 @@ const DispenseSelectedOrdersTable = () => {
     {
       key: 'dispenseUOM',
       title: <Translate>Dispense UOM</Translate>
-    },
-    {
-      key: 'icons',
-      title: <Translate></Translate>,
-      flexGrow: 3,
-      render: () => iconsForActionsOrders()
     }
   ];
   //Table columns
@@ -541,7 +526,7 @@ const DispenseSelectedOrdersTable = () => {
       prev.map(row => (row.key === rowKey ? { ...row, status: 'Dispensed' } : row))
     );
   };
-  
+
   return (
     <div className="container-of-tables-int width-100">
       <MyNestedTable
@@ -577,6 +562,7 @@ const DispenseSelectedOrdersTable = () => {
         dispenseData={dispenseData}
         handleDispenseChange={handleDispenseChange}
         handleCompleteDispense={handleCompleteDispense}
+        setDispenseData={setDispenseData}
       />
     </div>
   );
