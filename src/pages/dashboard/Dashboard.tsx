@@ -33,11 +33,11 @@ const Dashboard = () => {
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
           <Panel
             bordered
-            header={<Translate>Number of No-Shows per Day</Translate>}
+            header={<Translate>Weekly Patient Flow</Translate>}
             className="margin-bottom-10"
           >
             <DynamicBarChart
-              title="Weekly Patient Flow"
+              title=""
               selectable
               refreshButton={false}
               multiColumns={true}
@@ -57,7 +57,7 @@ const Dashboard = () => {
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
           <Panel
             bordered
-            header="Number of Appointments Scheduled per Day"
+            header={<Translate>Patient Distribution by Department</Translate>}
             className="margin-bottom-10"
           >
             <DynamicPieChart
