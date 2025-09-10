@@ -1,11 +1,11 @@
 import MyTable from '@/components/MyTable';
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckToSlot, faListCheck, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { faCheckToSlot, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import TableModal from './tableModal';
+import TableModalManagment from '../table-task-managment/TableTaskManagment';
 
-import './style.less';
+import '../style.less';
 
 const PhysicianOrderSummary = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -224,17 +224,17 @@ const PhysicianOrderSummary = () => {
           page={pageIndex}
           rowsPerPage={rowsPerPage}
           totalCount={totalCount}
-          onPageChange={handlePageChange} // ✅ صار يستقبل event, newPageIndex
+          onPageChange={handlePageChange}
         />
 
-        <TableModal openModal={openModal} setOpenModal={setOpenModal} />
+        <TableModalManagment openModal={openModal} setOpenModal={setOpenModal} />
       </div>
 
       {/* Side Panel */}
       <div className="side-panel">
         {/* Refresh Button */}
         <div id="button-1">
-          <FontAwesomeIcon icon={faArrowsRotate} className='font-aws' />
+          <FontAwesomeIcon icon={faArrowsRotate} className="font-aws" />
         </div>
         {/* Task Summary */}
         <div className="summary">

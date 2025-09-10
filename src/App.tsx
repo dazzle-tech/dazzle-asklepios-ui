@@ -151,7 +151,7 @@ import GlasgowComaScale from './pages/encounter/encounter-component/glasgow-coma
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-assessment';
-import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary';
+import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component';
 import MedicationSchedule from './pages/setup/medication-schedule-setup';
 import NutritionStateAsssessment from './pages/encounter/encounter-component/nutrition-state-asssessment';
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
