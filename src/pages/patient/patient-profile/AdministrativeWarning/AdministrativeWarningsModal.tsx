@@ -347,7 +347,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         appearance="ghost"
         disabled={!localPatient.key}
         onClick={() => setOpen(true)}
-        color={warnings?.extraNumeric > 0 ? "orange" : "blue"}
+        color={warnings?.extraNumeric > 0 ? "orange" : "var(--primary-blue)"}
       >Administrative Warnings</MyButton>
       <ChildModal
         open={open}
