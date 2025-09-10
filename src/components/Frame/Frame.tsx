@@ -12,6 +12,7 @@ import Logo from '../../images/Logo_BLUE_New.svg';
 import { setScreenKey } from '@/utils/uiReducerActions';
 import MyInput from '../MyInput';
 import './styles.less';
+import { useSelector } from 'react-redux';
 import UserStickyNotes from '../UserStickyNotes/UserStickyNotes';
 const { getHeight, on } = DOMHelper;
 const NavItem = props => {
@@ -24,7 +25,8 @@ const NavItem = props => {
 };
 export interface NavItemData {
   eventKey: string;
-  title: string;
+  title: JSX.Element;
+  titleValue: string,
   icon?: any;
   to?: string;
   target?: string;
@@ -33,9 +35,12 @@ export interface NavItemData {
 export interface FrameProps {
   navs: NavItemData[];
   children?: React.ReactNode;
+  mode: string
 }
 const Frame = (props: FrameProps) => {
   const { navs } = props;
+  const { mode } = props;
+   
   const [expand, setExpand] = useState(false);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
   const [recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({ screen: '' });
@@ -74,7 +79,7 @@ const Frame = (props: FrameProps) => {
   const screenExist: (module: NavItemData) => boolean = (module: NavItemData) => {
     for (const screen of module?.children) {
       if (
-        screen.title
+        screen.titleValue
           .toLocaleLowerCase()
           .includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())
       ) {
@@ -84,7 +89,7 @@ const Frame = (props: FrameProps) => {
     return false;
   };
   return (
-    <Container className="frame">
+    <Container className={`frame ${mode === 'light' ? 'light' : 'dark'}`}>
       <Sidebar
         className={`sidebar ${expand === true ? 'sidebar-expanded' : 'sidebar-unexpanded'}`}
         collapsible
@@ -132,7 +137,7 @@ const Frame = (props: FrameProps) => {
                 if (children && screenExist(item)) {
                   return (
                     <Nav.Menu
-                      className={`nav-menu ${expand ? 'expanded' : ''}`}
+                      className={`nav-menu ${expand ? 'expanded' : ''} ${mode === 'light' ? 'light' : 'dark'}`}
                       key={item.eventKey}
                       placement={expand ? 'bottomStart' : 'rightStart'}
                       trigger="hover"
@@ -148,7 +153,7 @@ const Frame = (props: FrameProps) => {
                       >
                         {children.map(child => {
                           if (
-                            child.title
+                            child.titleValue
                               .toLocaleLowerCase()
                               .includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())
                           ) {
@@ -181,6 +186,7 @@ const Frame = (props: FrameProps) => {
           </Sidenav.Body>
         </Sidenav>
         <NavToggle
+          mode={mode}
           expand={expand}
           onChange={() => {
             width <= 950 ? setExpand(false) : setExpand(!expand);

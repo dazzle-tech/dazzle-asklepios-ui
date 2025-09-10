@@ -15,7 +15,7 @@ import {
 import MyLabel from '../MyLabel';
 import Translate from '../Translate';
 import clsx from 'clsx';
-
+import { useSelector } from 'react-redux';
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -68,7 +68,7 @@ const MyInput = ({
 }) => {
   // <<< Added this line here to fix the error
   const inputColor = props.inputColor || record?.inputColor || '';
-
+  const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult, setValidationResult] = useState(undefined);
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -332,7 +332,7 @@ const MyInput = ({
         const inputControl = (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}
-            style={{ width: inputWidth, height: props?.height ?? 30 }}
+            style={{ width: inputWidth, height: props?.height ?? 30}}
             disabled={props.disabled}
             name={fieldName}
             type={fieldType}
@@ -400,9 +400,9 @@ const MyInput = ({
   };
 
   return (
-    <Form.Group className={clsx(`my-input-container ${className}`)}>
+    <Form.Group className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}>
       <Form.ControlLabel>
-        {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
+        {showLabel && <MyLabel label={fieldLabel} error={validationResult} color={mode === "light" ? 'var(--black)' : "var(--white)"} />}
         {props.required && <span className="required-field ">*</span>}
       </Form.ControlLabel>
       {props.column && <br />}

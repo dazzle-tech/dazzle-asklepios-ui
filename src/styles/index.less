@@ -282,6 +282,7 @@ aside {
   white-space: wrap;
 }
 :root {
+  --white: #fff;
   --primary-blue: #415be7;
   --light-blue: #60afff;
   --very-light-blue: #b6d9fc;
@@ -309,6 +310,7 @@ aside {
   --icon-gray: #8f98ab;
   --gray-dark: #666;
   --black: #000000;
+  --dark-black: #2d2828;
   --light-gray: #f9fafc;
 
   --primary-green: #45b887;
@@ -446,4 +448,8 @@ input[disabled] {
   color: rgb(161, 169, 184) !important;
   background-color: rgb(224, 224, 224) !important;
   opacity: 1;
+}
+
+.dark .rs-nav-horizontal {
+    background-color: var(--black) !important;
 }

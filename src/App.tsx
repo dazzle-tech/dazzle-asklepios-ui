@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
-import { CustomProvider } from 'rsuite';
+import { CustomProvider, Text } from 'rsuite';
 import enGB from 'rsuite/locales/en_GB';
 import locales from './locales';
 import Frame from './components/Frame';
@@ -169,11 +169,15 @@ import ResetPassword from './pages/reset-password/ResetPassword';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import AuthGuard from './pages/authentication/AuthGuard';
-
-
+import { useSelector } from 'react-redux';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
+  const user = useAppSelector(state => state.auth.user);
+  const mode = useSelector((state: any) => state.ui.mode);
+  useEffect(() => {
+     console.log("Apmode: " + mode);
+  },[mode]);
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
   const [navigationMap, setNavigationMap] = useState([]);
@@ -221,8 +225,10 @@ const {
     const navs = [];
     navs.push({
       eventKey: 'dashboard',
-      icon: <Icon fill="var(--gray-dark)" as={MdDashboard} />,
-      title: 'Dashboard',
+      icon: <Icon
+      fill={mode === "light" ? "var(--gray-dark)" : "var(--white)"}
+        as={MdDashboard} />,
+      title: <Text>Dashboard</Text>,
       to: '/'
     });
 
@@ -232,7 +238,7 @@ const {
         eventKey: screenWithoutModule.key,
         icon: (
           <Icon
-            fill="var(--gray-dark)"
+            fill={mode === "light" ? "var(--gray-dark)" : "var(--white)"}
             as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']}
           />
         ),
@@ -251,8 +257,11 @@ const {
       childrenScreens.map(screen => {
         chidlrenNavs.push({
           eventKey: screen.key,
-          icon: <Icon fill="var(--gray-dark)" as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
-          title: screen.name,
+          icon: <Icon
+          fill={mode === "light" ? "var(--gray-dark)" : "var(--white)"}
+           as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
+          title: <Text>{screen.name}</Text>,
+          titleValue: screen.name,
           to: '/'.concat(screen.navPath)
         });
 
@@ -261,8 +270,10 @@ const {
 
       navs.push({
         eventKey: module.key,
-        icon: <Icon fill="var(--gray-dark)" as={icons[module?.iconImagePath ?? 'FaBox']} />,
-        title: module.name,
+        icon: <Icon
+        fill={mode === "light" ? "var(--gray-dark)" : "var(--white)"}
+          as={icons[module?.iconImagePath ?? 'FaBox']} />,
+        title: <Text>{module.name}</Text>,
         children: chidlrenNavs
       });
     });
@@ -332,7 +343,7 @@ const {
           >
             {/* {/* protected routes (needs authintication) */}
             {/* TODO load them dynamically based on user authorization matrix */}
-            <Route path="/" element={<Frame navs={navigationMap} />}>
+            <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />
               <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />

@@ -6,6 +6,7 @@ const initialState = {
   msg: null,
   msgLife: 2000,
   lang: 'en',
+  mode: 'light',
   translations: {},
   screenKey: '',
   loading: false,
@@ -55,6 +56,9 @@ export const uiSlice = createSlice({
     closeEditProfile: state => {
       state.showEditProfile = false;
     },
+    setMode: (state, action) => {
+    state.mode = action.payload;
+  }
   },
   extraReducers: builder => {
     /* changeLang */
@@ -67,5 +71,5 @@ export const uiSlice = createSlice({
     );
   }
 });
-
+export const { setMode } = uiSlice.actions;
 export default uiSlice;

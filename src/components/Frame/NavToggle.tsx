@@ -6,15 +6,17 @@ import './styles.less';
 interface NavToggleProps {
   expand?: boolean;
   onChange?: () => void;
+  mode: string
 }
 
-const NavToggle = ({ expand, onChange }: NavToggleProps) => {
+const NavToggle = ({ expand, onChange, mode }: NavToggleProps) => {
   return (
     <Navbar appearance="subtle" className="nav-toggle">
       <Nav pullRight>
         <Nav.Item
           onClick={onChange}
-          className='nav-item'
+          className={`nav-item ${mode == 'light' ? 'light' : 'dark'}`}
+          // style={{backgroundColor: "red"}}
           icon={expand ? <ArrowLeftLineIcon /> : <ArrowRightLineIcon/>}
         />
       </Nav>

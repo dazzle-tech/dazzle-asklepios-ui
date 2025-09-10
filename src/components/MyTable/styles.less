@@ -1,10 +1,10 @@
 .MuiTablePagination-root {
-  overflow-x: auto; 
-  scrollbar-width: none; 
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .MuiTablePagination-root::-webkit-scrollbar {
-  height: 0px; 
+  height: 0px;
 }
 
 .MuiTablePagination-root:hover {
@@ -21,28 +21,27 @@
 }
 
 .my-table-container {
-  overflow-y: auto;  
-  scrollbar-width: none; 
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .my-table-container::-webkit-scrollbar {
-  width: 0px;  
+  width: 0px;
   background: transparent;
 }
 
 .my-table-container:hover {
-  scrollbar-width: thin; 
+  scrollbar-width: thin;
 }
 
 .my-table-container:hover::-webkit-scrollbar {
-  width: 6px; 
+  width: 6px;
 }
 
 .my-table-container:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.4); 
+  background: rgba(0, 0, 0, 0.4);
   border-radius: 4px;
 }
-
 
 .my-table-wrapper {
   border-radius: 8px;
@@ -55,14 +54,15 @@
     border-radius: 8px;
   }
 
-.my-table-filters {
-  padding: 0.5vw;
-}
+  .my-table-filters {
+    padding: 0.5vw;
+  }
 
-.my-table-content-wrapper{border: 1px solid #dcdcdc;
-      border-radius: 8px;
-margin-top: 0.3vw;
-}
+  .my-table-content-wrapper {
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    margin-top: 0.3vw;
+  }
 
   .no-data-label {
     font-size: var(--medium-font-size);
@@ -76,7 +76,6 @@ margin-top: 0.3vw;
 .my-table-container {
   overflow-y: auto;
 
-
   &.MuiPaper-root {
     border: none;
     box-shadow: none;
@@ -85,9 +84,11 @@ margin-top: 0.3vw;
       .MuiTableRow-root {
         .MuiTableCell-root {
           background: var(--table-header-bg);
+          // background-color: #2c2c2c;
           font-size: var(--smallest-font-size);
           font-weight: var(--text-weight-extra-bold);
           color: #464f60;
+          // color: #b0c4de;
           border: none;
           white-space: nowrap;
           text-transform: uppercase;
@@ -102,24 +103,29 @@ margin-top: 0.3vw;
           border: none;
           padding: 0 16px;
           background-color: transparent;
+          // background-color: #242424;
+          // color: #e0e0e0; // من عندددددددي
           height: 60px;
         }
 
         &.even-row {
           .MuiTableCell-root {
             background-color: var(--light-gray);
+            // background-color: #1a1a1a;
           }
         }
 
         &:hover {
           .MuiTableCell-root {
             background-color: rgba(#415be7, 0.05);
+            // background-color: #3a3a3a;
           }
         }
 
         &.selected-row {
           .MuiTableCell-root {
             background-color: #dfe9fc;
+            // background-color: #555555;
           }
         }
       }
@@ -172,11 +178,11 @@ margin-top: 0.3vw;
   }
 
   &:active {
-    color: #1976d2; 
+    color: #1976d2;
   }
 }
-.my-table-buttons-wrapper{
-  padding-top:  5px !important;
+.my-table-buttons-wrapper {
+  padding-top: 5px !important;
   display: flex;
   flex-direction: row;
   justify-content: end;
@@ -186,4 +192,45 @@ margin-top: 0.3vw;
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+.my-table-wrapper.dark {
+  .MuiTableHead-root {
+    .MuiTableRow-root {
+      .MuiTableCell-root {
+        color: #b0c4de;
+        background-color: #2c2c2c;
+      }
+    }
+  }
+  .MuiTableBody-root {
+    // Main data rows only
+    .MuiTableRow-root.main-row {
+      .MuiTableCell-root {
+        background-color: #242424;
+        color: #e0e0e0;
+      }
+       &.even-row {
+          .MuiTableCell-root {
+            background-color: #1a1a1a;
+          }
+        }
+         &:hover {
+          .MuiTableCell-root {
+            background-color: #3a3a3a;
+          }
+        }
+
+        &.selected-row {
+          .MuiTableCell-root {
+            background-color: #555555;
+          }
+        }
+    }
+    
+        
+  }
+  .MuiTablePagination-root {
+  background: #2c2c2c;
+  }
 }
