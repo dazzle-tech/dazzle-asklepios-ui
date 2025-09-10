@@ -11,6 +11,7 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { useGetProductQuery, useGetServicesQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 // Local fallback service list
 const servicesList = [
@@ -48,6 +49,8 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const state = location.state || {};
   const edit = propEdit ?? state.edit;
 
+  const [openModal, setOpenModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   // Modal state
   const [popupOpen, setPopupOpen] = useState(false);
 
@@ -63,16 +66,18 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   // Base unit of measurement for selected item
   const [baseUOM, setBaseUOM] = useState('');
 
-  // Remove row from table
-  const handleDelete = id => {
-    setData(prev => prev.filter(item => item.id !== id));
-  };
-
   // Open modal for adding new entry
   const handleAddNewService = () => {
     setFormData({ category: '', itemId: '', quantity: '' });
     setBaseUOM('');
     setPopupOpen(true);
+  };
+  const handleDelete = () => {
+    if (itemToDelete) {
+      setData(prev => prev.filter(item => item.id !== itemToDelete.id));
+      setItemToDelete(null);
+      setOpenModal(false);
+    }
   };
 
   // Save new service or product to table
@@ -118,7 +123,24 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   // Table columns
   const columns = [
     { key: 'category', title: 'Category ' },
-    { key: 'name', title: 'Name' },
+    {
+      key: 'name',
+      title: 'Name',
+      isLink: true,
+      render: rowData => {
+        if (rowData.category === 'Product') {
+          return (
+            <a
+              href={`#/products/${rowData.id}`}
+              style={{ color: 'var(--primary-blue)', textDecoration: 'underline' }}
+            >
+              {rowData.name}
+            </a>
+          );
+        }
+        return rowData.name;
+      }
+    },
     { key: 'type', title: 'Type' },
     { key: 'quantity', title: 'Quantity' },
     {
@@ -127,8 +149,11 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       render: rowData => (
         <FontAwesomeIcon
           icon={faTrash}
-          style={{ cursor: 'pointer', color: 'red' }}
-          onClick={() => handleDelete(rowData.id)}
+          style={{ cursor: 'pointer', color: 'var(--primary-pink)' }}
+          onClick={() => {
+            setItemToDelete(rowData);
+            setOpenModal(true);
+          }}
           title="Delete"
         />
       )
@@ -235,6 +260,16 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
             )}
           </Form>
         )}
+      />
+      <DeletionConfirmationModal
+        open={openModal}
+        setOpen={setOpenModal}
+        itemToDelete={itemToDelete?.category}
+        actionButtonFunction={handleDelete}
+        actionType="delete"
+        confirmationQuestion=""
+        actionButtonLabel="Delete"
+        cancelButtonLabel="Cancel"
       />
     </div>
   );
