@@ -1,9 +1,9 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { baseQuery } from '../api';
+import {BaseQuery } from '../newApi';
 
 export const userService = createApi({
   reducerPath: 'newApi',
-  baseQuery: baseQuery,
+  baseQuery: BaseQuery,
   endpoints: builder => ({
     getUser: builder.query({
       query: (_: void) => '/api/admin/users',
