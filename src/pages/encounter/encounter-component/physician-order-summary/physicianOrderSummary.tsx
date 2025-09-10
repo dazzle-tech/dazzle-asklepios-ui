@@ -1,9 +1,9 @@
 import MyTable from '@/components/MyTable';
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckToSlot, faListCheck, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { faCheckToSlot, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import TableModal from './tableModal';
+import TableModal from './TableModal';
 
 import './style.less';
 
