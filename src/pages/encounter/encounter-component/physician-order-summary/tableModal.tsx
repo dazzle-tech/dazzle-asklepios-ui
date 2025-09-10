@@ -31,8 +31,73 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useLocation } from 'react-router-dom';
 import { Form, HStack, Text, Tooltip, Whisper } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { Popover, Dropdown } from 'rsuite';
 import './style.less';
 
+const icons = [
+  {
+    key: '8632641360936162',
+    title: 'On Hold',
+    icon: (
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>On Hold</Tooltip>}>
+        <FontAwesomeIcon
+          icon={faCirclePause}
+          color="var(--primary-orange)"
+          className="icons-style"
+        />
+      </Whisper>
+    )
+  },
+  {
+    key: '8632624584925141',
+    title: 'Administered',
+    icon: (
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Administered</Tooltip>}>
+        <FontAwesomeIcon
+          icon={faCircleCheck}
+          color="var(--primary-green)"
+          className="icons-style"
+        />
+      </Whisper>
+    )
+  },
+  {
+    key: '8632633074146151',
+    title: 'DC',
+    icon: (
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>D/C</Tooltip>}>
+        <FontAwesomeIcon icon={faCircleStop} color="var(--primary-pink)" className="icons-style" />
+      </Whisper>
+    )
+  },
+  {
+    key: '8632651909869906',
+    title: 'Missed',
+    icon: (
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Missed</Tooltip>}>
+        <FontAwesomeIcon icon={faClock} className="icons-style" />
+      </Whisper>
+    )
+  },
+  {
+    key: '8632666911581391',
+    title: 'Cancelled',
+    icon: (
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Cancelled</Tooltip>}>
+        <FontAwesomeIcon icon={faBan} color="var(--gray-dark)" className="icons-style" />
+      </Whisper>
+    )
+  },
+  {
+    key: '8632772055422992',
+    title: 'DiscardedReturned',
+    icon: (
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Discarded/Returned</Tooltip>}>
+        <FontAwesomeIcon icon={faTrash} color="var(--primary-purple)" className="icons-style" />
+      </Whisper>
+    )
+  }
+];
 const TableModal = ({ openModal, setOpenModal }) => {
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -160,7 +225,7 @@ const TableModal = ({ openModal, setOpenModal }) => {
       key: 'actions',
       render: (rowData: any) => (
         <div className="container-icons">
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Action</Tooltip>}>
+          <Whisper placement="right" trigger="click" speaker={actionContent}>
             <FontAwesomeIcon icon={faPills} className="font-aws" />
           </Whisper>
         </div>
@@ -178,6 +243,21 @@ const TableModal = ({ openModal, setOpenModal }) => {
       orderNotes: 'Routine CBC'
     }
   ];
+
+  const actionContent = (
+    <Popover full>
+      <Dropdown.Menu>
+        {icons.map(item => (
+          <Dropdown.Item key={item.key} onClick={() => console.log('Selected:', item.title)}>
+            <div className="container-of-icon-and-key">
+              {item.icon}
+              {item.title}
+            </div>
+          </Dropdown.Item>
+        ))}
+      </Dropdown.Menu>
+    </Popover>
+  );
 
   const column_two = [
     {
@@ -281,75 +361,6 @@ const TableModal = ({ openModal, setOpenModal }) => {
           </Form>
         );
       }
-    }
-  ];
-
-  const icons = [
-    {
-      key: '8632641360936162',
-      title: 'On Hold',
-      icon: (
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>On Hold</Tooltip>}>
-          <FontAwesomeIcon
-            icon={faCirclePause}
-            color="var(--primary-orange)"
-            className="icons-style"
-          />
-        </Whisper>
-      )
-    },
-    {
-      key: '8632624584925141',
-      title: 'Administered',
-      icon: (
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Administered</Tooltip>}>
-          <FontAwesomeIcon
-            icon={faCircleCheck}
-            color="var(--primary-green)"
-            className="icons-style"
-          />
-        </Whisper>
-      )
-    },
-    {
-      key: '8632633074146151',
-      title: 'DC',
-      icon: (
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>D/C</Tooltip>}>
-          <FontAwesomeIcon
-            icon={faCircleStop}
-            color="var(--primary-pink)"
-            className="icons-style"
-          />
-        </Whisper>
-      )
-    },
-    {
-      key: '8632651909869906',
-      title: 'Missed',
-      icon: (
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Missed</Tooltip>}>
-          <FontAwesomeIcon icon={faClock} className="icons-style" />
-        </Whisper>
-      )
-    },
-    {
-      key: '8632666911581391',
-      title: 'Cancelled',
-      icon: (
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Cancelled</Tooltip>}>
-          <FontAwesomeIcon icon={faBan} color="var(--gray-dark)" className="icons-style" />
-        </Whisper>
-      )
-    },
-    {
-      key: '8632772055422992',
-      title: 'DiscardedReturned',
-      icon: (
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Discarded/Returned</Tooltip>}>
-          <FontAwesomeIcon icon={faTrash} color="var(--primary-purple)" className="icons-style" />
-        </Whisper>
-      )
     }
   ];
 
