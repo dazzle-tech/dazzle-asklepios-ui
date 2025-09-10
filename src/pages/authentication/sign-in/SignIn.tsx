@@ -1,7 +1,4 @@
 import MyInput from '@/components/MyInput';
-import Translate from '@/components/Translate';
-import { useAppSelector } from '@/hooks';
-import { useLoginMutation } from '@/services/authService';
 import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
@@ -12,95 +9,94 @@ import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Form,
-  Message,
   Modal,
-  Panel,
-  SelectPicker,
-  Text
+  Panel
 } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.svg';
 import './styles.less';
 
+import { useLoginMutation } from '@/services/authServiceApi';
+import { useDispatch } from 'react-redux';
+import { useLazyGetAccountQuery } from '@/services/accountService';
+import { setToken, setUser } from '@/reducers/authSlice';
+
 const SignIn = () => {
-  const [login, { isLoading: isLoggingIn, data: loginResult, error: loginError }] =
-    useLoginMutation();
-  const authSlice = useAppSelector(state => state.auth);
   const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
   const [newPassword, setNewPassword] = useState();
   const [newPasswordConfirm, setNewPasswordConfirm] = useState();
   const [errText, setErrText] = useState(' ');
   const [resetPasswordView, setResetPasswordView] = useState(false);
- const {data:langdefult} = useGetLovDefultByCodeQuery('SYSTEM_LANG');
+  const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
 
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
     orgKey: ''
   });
+
   const navigate = useNavigate();
-  const [saveUser, saveUserMutation] = useSaveUserMutation();
+  const dispatch = useDispatch();
+
+  const [login, { isLoading: isLoggingIn }] = useLoginMutation();
+  const [getAccount] = useLazyGetAccountQuery();
 
   const {
     data: facilityListResponse,
-    isLoading: isGettingFacilities,
-    isFetching: isFetchingFacilities
   } = useGetFacilitiesQuery({ ...initialListRequest });
+
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
+  const [saveUser] = useSaveUserMutation();
 
-  const handleLogin = () => {
-    login(credentials).unwrap();
+  // Handle login
+  const handleLogin = async () => {
+    if (!credentials.username || !credentials.password || !credentials.orgKey) {
+      setErrText('Please fill all required fields.');
+      return;
+    }
+
+    try {
+      const resp = await login({
+        username: credentials.username,
+        password: credentials.password,
+        facilityId: Number(credentials.orgKey),
+        rememberMe: true
+      }).unwrap();
+
+      console.log('Login Response:', resp);
+      dispatch(setToken(resp.id_token));
+      const userResp = await getAccount().unwrap();
+      dispatch(setUser(userResp));
+
+      console.log('User Info:', userResp);
+
+      localStorage.setItem('id_token', resp.id_token);
+      localStorage.setItem('user', JSON.stringify(userResp));
+
+      setErrText(' ');
+      navigate('/');
+    } catch (err: any) {
+      console.error(err);
+      setErrText('Login failed. Please check your credentials.');
+    }
   };
-
+  // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent default form submission behavior
+      e.preventDefault();
       handleLogin();
     }
   };
 
-  useEffect(() => {
-    console.log('loginResult:', loginResult);
-    console.log('authSlice.user:', authSlice.user);
-
-    const user = loginResult?.user || authSlice.user;
-
-    if (user && !user.mustChangePassword) {
-      console.log('Navigating to dashboard...');
-      navigate('/');
-    } else if (user && user.mustChangePassword) {
-      console.log('User must change password, showing modal...');
-      setChangePasswordView(true);
-    } else {
-      console.log('No user found, stay on login page.');
-    }
-  }, [loginResult, authSlice.user, navigate]);
-
-  useEffect(() => {
-
-  }, [changePasswordView]);
-
-  const [user, setUser] = useState<ApUser>({
-    ...newApUser
-  });
-
-  const resetUserPasswordModal = () => {
-    return <h3>test</h3>;
-  };
-
-  useEffect(() => {
-    setErrText(' ');
-  }, [newPassword, newPasswordConfirm]);
-
+  // Handle saving new password
   const handleSaveNewPassword = () => {
     if (changePasswordView) {
       if (!newPassword || newPassword === '') {
         setErrText('Please ensure both fields are filled.');
       } else {
         if (newPassword === newPasswordConfirm) {
-       
-          saveUser({ ...authSlice?.user, password: newPassword, mustChangePassword: false })
+          saveUser({ password: newPassword, mustChangePassword: false })
             .unwrap()
             .then(() => {
               navigate('/');
@@ -110,46 +106,23 @@ const SignIn = () => {
     }
   };
 
-  // useEffect(() => {
-  //   document.body.style.backgroundImage = `url(${Background})`;
-  //   document.body.style.backgroundSize = 'cover';
-  //   document.body.style.backgroundPosition = 'center';
-  //   document.body.style.backgroundRepeat = 'no-repeat';
+  // Effect to clear error text when password fields change
+  useEffect(() => {
+    setErrText(' ');
+  }, [newPassword, newPasswordConfirm]);
 
-  //   return () => {
-  //     document.body.style.backgroundImage = '';
-  //   };
-  // }, [Background]);
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
       <Panel bordered style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '10px' }}>
         <div className="bodySignInDiv">
-          {/* Logo Panel */}
-
           <Panel className="logo-panel">
-            <img
-              src={
-                authSlice.tenant && authSlice.tenant.tenantLogoPath
-                  ? authSlice.tenant.tenantLogoPath
-                  : Logo
-              }
-              alt="Tenant Logo"
-            />
+            <img src={Logo} alt="Tenant Logo" />
           </Panel>
 
-          {/* Sign In Panel */}
           {!resetPasswordView && (
             <Panel className="sign-in-panel ">
-
-              {!authSlice.tenant && (
-                <Message type="warning" showIcon>
-                  <Translate>No Tenant Configured</Translate>
-                </Message>
-              )}
-
               <Form fluid onKeyPress={handleKeyPress}>
                 <MyInput
-                  disabled={!authSlice.tenant}
                   placeholder="Select Facility"
                   width="100%"
                   fieldType='select'
@@ -160,7 +133,9 @@ const SignIn = () => {
                   fieldName="orgKey"
                   record={credentials}
                   setRecord={setCredentials}
-                  showLabel={false} />
+                  showLabel={false}
+                />
+
                 <MyInput
                   width="100%"
                   fieldName="lang"
@@ -173,12 +148,11 @@ const SignIn = () => {
                   setRecord={() => { }}
                   placeholder="Select Language"
                   showLabel={false}
-
                 />
+
                 <MyInput
                   width="100%"
                   placeholder="Enter User Name"
-                  disabled={!authSlice.tenant}
                   fieldLabel="User Name"
                   fieldName="username"
                   record={credentials}
@@ -186,26 +160,26 @@ const SignIn = () => {
                   showLabel={false}
                 />
 
-
                 <Form.Group>
-
                   <Form.Control
                     placeholder='Enter Password'
-                    disabled={!authSlice.tenant}
                     name="password"
                     type="password"
                     value={credentials.password}
                     onChange={e => setCredentials({ ...credentials, password: e })}
                   />
                 </Form.Group>
+
                 <a className="forgot-password">Forgot password?</a>
+
+                <p style={{ color: 'red', marginBottom: 10 }}>{errText}</p>
 
                 <Form.Group>
                   <Button
                     style={{ backgroundColor: 'var(--primary-blue)' }}
                     appearance="primary"
                     onClick={handleLogin}
-                    disabled={!authSlice.tenant}
+                    loading={isLoggingIn}
                     className="submit-button"
                   >
                     Sign in
@@ -216,46 +190,11 @@ const SignIn = () => {
           )}
         </div>
 
-        {/* Reset Password Panel */}
-        {resetPasswordView && (
-          <Panel bordered className="reset-password-panel" header={<h3>Sign In</h3>}>
-            <Form fluid>
-              <Form.Group>
-                <Form.ControlLabel>Organization</Form.ControlLabel>
-                <Form.Control
-                  block
-                  accepter={SelectPicker}
-                  name="organization"
-                  data={organizations}
-                  value={credentials.orgKey}
-                  onChange={e => setCredentials({ ...credentials, orgKey: e })}
-                />
-              </Form.Group>
-
-              <Form.Group>
-                <Form.ControlLabel>Username</Form.ControlLabel>
-                <Form.Control
-                  name="username"
-                  value={credentials.username}
-                  onChange={e => setCredentials({ ...credentials, username: e })}
-                />
-              </Form.Group>
-
-              <Form.Group>
-                <Button appearance="primary" onClick={handleLogin}>
-                  Send OTP
-                </Button>
-              </Form.Group>
-            </Form>
-          </Panel>
-        )}
-
         {/* Modal for Password Change */}
         <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
           <Modal.Body>
             <RemindIcon className="remind-icon" />
             {'New password required!'}
-
             <Form fluid>
               <Form.Group>
                 <Form.ControlLabel>New Password</Form.ControlLabel>
@@ -283,7 +222,8 @@ const SignIn = () => {
             <Button appearance="subtle">Cancel</Button>
           </Modal.Footer>
         </Modal>
-      </Panel></Panel>
+      </Panel>
+    </Panel>
   );
 };
 

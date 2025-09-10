@@ -3,6 +3,7 @@ import uiSlice from './reducers/uiSlice';
 import { uiService } from '@/services/uiService';
 import { authService } from '@/services/authService';
 import authSlice from '@/reducers/authSlice';
+import { authServiceApi } from '@/services/authServiceApi'; 
 import { patientService } from '@/services/patientService';
 import patientSlice from '@/reducers/patientSlice';
 import { setupService } from '@/services/setupService';
@@ -23,7 +24,8 @@ import { inventoryService } from './services/inventoryTransactionService';
 import refetchReducer from './reducers/refetchEncounterState';
 import { recoveryService } from './services/RecoveryService';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
-
+import { accountApi } from './services/accountService';
+import authReducer from './reducers/authSlice';
 export const store = configureStore({
   reducer: {
     // ui
@@ -31,8 +33,10 @@ export const store = configureStore({
     [uiService.reducerPath]: uiService.reducer,
 
     // auth
-    [authSlice.name]: authSlice.reducer,
+        auth: authReducer, 
+
     [authService.reducerPath]: authService.reducer,
+    [authServiceApi.reducerPath]: authServiceApi.reducer, 
 
     // patient
     [patientSlice.name]: patientSlice.reducer,
@@ -47,7 +51,10 @@ export const store = configureStore({
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
 
-    //medication
+    //account
+    [accountApi.reducerPath]: accountApi.reducer,
+
+    //appointment
     [appointmentService.reducerPath]: appointmentService.reducer,
 
     //dvm
@@ -64,7 +71,7 @@ export const store = configureStore({
 
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
-    //;ab module
+    //lab module
     [labService.reducerPath]: labService.reducer,
     //operation
     [operationService.reducerPath]: operationService.reducer,
@@ -81,6 +88,7 @@ export const store = configureStore({
     [procedureService.reducerPath]: procedureService.reducer,
 
     //recovery
+
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
 
@@ -90,6 +98,8 @@ export const store = configureStore({
     getDefaultMiddleware().concat([
       uiService.middleware,
       authService.middleware,
+      authServiceApi.middleware, 
+      accountApi.middleware,
       patientService.middleware,
       inventoryService.middleware,
       setupService.middleware,
@@ -108,9 +118,7 @@ export const store = configureStore({
       userService.middleware
 
     ])
-
 });
-
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;

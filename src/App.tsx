@@ -168,20 +168,29 @@ import UsersNew from './pages/setup/users-setup-new';
 import ResetPassword from './pages/reset-password/ResetPassword';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
+import AuthGuard from './pages/authentication/AuthGuard';
+
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
-  const user = useAppSelector(state => state.auth.user);
-
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
   const [navigationMap, setNavigationMap] = useState([]);
-  const {
-    data: navigationMapRawData,
-    isLoading: isLoadingNavigationMap,
-    isFetching: isFetchingNavigationMap
-  } = useLoadNavigationMapQuery(user?.key || '');
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+const {
+  data: navigationMapRawData,
+  isLoading: isLoadingNavigationMap,
+  isFetching: isFetchingNavigationMap
+} = useLoadNavigationMapQuery(String(user?.id || ''), {
+  // Using user ID here because in the old backend, the key matches the value of the new user ID.
+  // This ensures proper mapping and allows the UI team to work smoothly.
+  skip: !user?.id, 
+});
+
+
+
   const [screenKeys, setScreenKeys] = useState({});
   const location = useLocation();
 
@@ -190,6 +199,8 @@ const App = () => {
     console.log(config.tenantId);
     console.log(location.pathname);
   }, []);
+
+
 
   useEffect(() => {
     if (navigationMapRawData && !isLoadingNavigationMap && !isFetchingNavigationMap) {
@@ -295,6 +306,7 @@ const App = () => {
         <Routes>
           <Route
             element={
+            <AuthGuard>
               <ProtectedRoute>
                 <BlockUI
                   template={
@@ -315,6 +327,7 @@ const App = () => {
                   <Outlet />
                 </BlockUI>
               </ProtectedRoute>
+              </AuthGuard>
             }
           >
             {/* {/* protected routes (needs authintication) */}
