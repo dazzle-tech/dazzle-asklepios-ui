@@ -158,16 +158,16 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
 
   return (
     <div style={{ position: 'relative' }}>
+      <span className="font-12">Admissions, discharges, and emergency visits</span>
       {selectable && (
         <div style={{ marginBottom: 10 }}>
           {selectedBar ? (
-            <span style={{ fontSize: 'large' }}>
+            <span>
               {selectedBar.dataset ? `${selectedBar.dataset} - ` : ''}
               {selectedBar.label}: <b style={{ color: 'rebeccapurple' }}>{selectedBar.value}</b>
             </span>
           ) : (
-            // <span>Click on a bar to select</span>
-            <span className="font-12">Admissions, discharges, and emergency visits</span>
+            <span>Click on a bar to select</span>
           )}
         </div>
       )}

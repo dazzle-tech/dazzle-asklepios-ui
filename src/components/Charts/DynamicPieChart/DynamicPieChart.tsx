@@ -85,15 +85,16 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
 
   return (
     <div>
+      <span className="font-12">Current patient allocation</span>
       {selectable && (
         <div style={{ marginBottom: 10 }}>
           {selectedSegment ? (
-            <span style={{ fontSize: 'large' }}>
-              {selectedSegment.label}:{' '}
+            <span>
+              {selectedSegment.label}
               <b style={{ color: 'rebeccapurple' }}>{selectedSegment.value}</b>
             </span>
           ) : (
-            <span className="font-12">Current patient allocation</span>
+            <span>Click on a segment to select</span>
           )}
         </div>
       )}
