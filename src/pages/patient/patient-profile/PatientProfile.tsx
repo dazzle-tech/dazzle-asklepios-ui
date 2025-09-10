@@ -1223,6 +1223,7 @@ const isSelectedRelation = rowData => {
             >
               <Translate>Visit History</Translate>
             </IconButton>
+            
             <IconButton
               onClick={() => {
                 setAdministrativeWarningsModalOpen(true);

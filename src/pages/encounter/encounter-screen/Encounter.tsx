@@ -244,6 +244,7 @@ const Encounter = () => {
     '/encounter/glasgow-coma-scale': 'Glasgow Coma Scale (GCS)',
     '/encounter/pressure-ulce-risk-assessment': 'Pressure Ulcer Risk Assessment',
     '/encounter/vte-risk-assessment': 'VTE Risk Assessment',
+    '/encounter/johns-hopkins-tool': 'Johns Hopkins Tool',
     '/encounter/nutrition-state-asssessment': 'Nutrition State',
     '/encounter/dietary-request': 'Dietary Request',
     '/encounter/medication-administration-record': 'MAR',

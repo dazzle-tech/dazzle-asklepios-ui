@@ -59,6 +59,7 @@ const InformationDesk = () => {
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
   const [open, setOpen] = useState(false);
   const [responsiblePhysicians, setResponsiblePhysicians] = useState<any[]>([]);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [sortColumn, setSortColumn] = useState('fullName');
   type SortType = 'asc' | 'desc';
   const [sortType, setSortType] = useState<SortType>('asc');
@@ -68,7 +69,7 @@ const [rowsPerPage, setRowsPerPage] = useState(10);
 const companionDummyRow = {
   companioncard:'test',
   fullName: 'Jane Smith',
-  patientMrn: 'MRN987654',
+  patientMrn: '1005',
   visitTypeLkey: 'INPATIENT',
   visitTypeLvalue: { lovDisplayVale: 'Inpatient' },
   visitId: 'VIS123456',
@@ -258,33 +259,27 @@ const sortedData = [...[companionDummyRow]].sort((a, b) => {
 });
 const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-const tablefilters = (<div className="field-btn-div">
-        <Form layout="inline" fluid>
-          <MyInput
-            column
-            fieldLabel="From Date"
-            fieldType="date"
-            fieldName="fromDate"
-            record={dateFilter}
-            setRecord={setDateFilter}
-          />
-          <MyInput
-            column
-            fieldLabel="To Date"
-            fieldType="date"
-            fieldName="toDate"
-            record={dateFilter}
-            setRecord={setDateFilter}
-          />
-          <MyInput
-            column
-            fieldLabel="Date of Birth"
-            fieldType="date"
-            fieldName="dob"
-            record={searchPatient}
-            setRecord={setSearchPatient}
-          />
-          <MyInput
+const tablefilters = (
+  <div className="field-btn-div">
+    <Form layout="inline" fluid>
+      {/* Basic filters */}
+      <MyInput
+        column
+        fieldLabel="From Date"
+        fieldType="date"
+        fieldName="fromDate"
+        record={dateFilter}
+        setRecord={setDateFilter}
+      />
+      <MyInput
+        column
+        fieldLabel="To Date"
+        fieldType="date"
+        fieldName="toDate"
+        record={dateFilter}
+        setRecord={setDateFilter}
+      />
+      <MyInput
             column
             fieldLabel="Sex at Birth"
             fieldType="select"
@@ -295,30 +290,18 @@ const tablefilters = (<div className="field-btn-div">
             record={searchPatient}
             setRecord={setSearchPatient}
             searchable={false}
-          />
+      />
+
+      {/* Advanced filters (conditionally shown) */}
+      {showAdvancedFilters && (
+        <>
           <MyInput
             column
-            fieldLabel="Document Type"
-            fieldType="select"
-            fieldName="documentTypeLkey"
-            selectData={documentTypeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
+            fieldLabel="Date of Birth"
+            fieldType="date"
+            fieldName="dob"
             record={searchPatient}
             setRecord={setSearchPatient}
-            searchable={false}
-          />
-          <MyInput
-            column
-            fieldLabel="Primary Insurance Provider"
-            fieldType="select"
-            fieldName="insuranceProviderLkey"
-            selectData={primaryInsuranceProviderLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={insurancePatient}
-            setRecord={setInsurancePatient}
-            searchable={false}
           />
           <MyInput
             column
@@ -356,7 +339,6 @@ const tablefilters = (<div className="field-btn-div">
             setRecord={val => setSelectedRooms(val.selectedRooms)}
             searchable={false}
           />
-
           <MyInput
             column
             fieldLabel="Select Bed"
@@ -369,7 +351,6 @@ const tablefilters = (<div className="field-btn-div">
             setRecord={val => setSelectedBeds(val.selectedBeds)}
             searchable={false}
           />
-
           <MyInput
             column
             fieldLabel="Bed Status"
@@ -394,9 +375,17 @@ const tablefilters = (<div className="field-btn-div">
             setRecord={val => setResponsiblePhysicians(val.responsiblePhysicians)}
             searchable={false}
           />
+        </>
+      )}
+    </Form>
 
-        </Form>
-             <AdvancedSearchFilters searchFilter={false}/></div>);
+    <AdvancedSearchFilters
+      searchFilter={false}
+      advancedOnClick={() => setShowAdvancedFilters(prev => !prev)}
+    />
+  </div>
+);
+
 
 
 
