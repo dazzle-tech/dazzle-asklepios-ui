@@ -2,14 +2,13 @@
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckToSlot, faListCheck, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { faCheckToSlot, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import TableModal from '../tableModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import '../style.less';
-import { title } from 'process';
 
 //declares
 const PhysicianOrderSummaryComponent = () => {

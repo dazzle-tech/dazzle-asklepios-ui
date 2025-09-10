@@ -15,7 +15,6 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import './style.less';
 import { Tooltip, Whisper, Text, Form } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
 
 const TableModal = ({ openModal, setOpenModal }) => {
   const data_one = [

@@ -1,10 +1,9 @@
 import MyTable from '@/components/MyTable';
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckToSlot, faListCheck, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { faCheckToSlot, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import TableModal from './tableModal';
-
+import TableModal from './TableModal';
 import './style.less';
 
 const PhysicianOrderSummary = () => {
@@ -234,7 +233,7 @@ const PhysicianOrderSummary = () => {
       <div className="side-panel">
         {/* Refresh Button */}
         <div id="button-1">
-          <FontAwesomeIcon icon={faArrowsRotate} className='font-aws' />
+          <FontAwesomeIcon icon={faArrowsRotate} className="font-aws" />
         </div>
         {/* Task Summary */}
         <div className="summary">
