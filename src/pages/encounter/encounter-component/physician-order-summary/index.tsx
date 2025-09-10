@@ -1,2 +1,2 @@
-import PhysicianOrderSummary from './physicianOrderSummary';
+import PhysicianOrderSummary from './PhysicianOrderSummary';
 export default PhysicianOrderSummary;
