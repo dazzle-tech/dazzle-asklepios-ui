@@ -224,7 +224,7 @@ const PhysicianOrderSummary = () => {
           page={pageIndex}
           rowsPerPage={rowsPerPage}
           totalCount={totalCount}
-          onPageChange={handlePageChange} // ✅ صار يستقبل event, newPageIndex
+          onPageChange={handlePageChange}
         />
 
         <TableModal openModal={openModal} setOpenModal={setOpenModal} />
@@ -234,7 +234,7 @@ const PhysicianOrderSummary = () => {
       <div className="side-panel">
         {/* Refresh Button */}
         <div id="button-1">
-          <FontAwesomeIcon icon={faArrowsRotate} className='font-aws' />
+          <FontAwesomeIcon icon={faArrowsRotate} className="font-aws" />
         </div>
         {/* Task Summary */}
         <div className="summary">
