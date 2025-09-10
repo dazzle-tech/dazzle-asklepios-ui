@@ -1,34 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import './styles.less';
-import { Checkbox } from 'rsuite';
-import MyTable from '@/components/MyTable';
-import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
 import CancellationModal from '@/components/CancellationModal';
-import { useAppSelector, useAppDispatch } from '@/hooks';
 import MyButton from '@/components/MyButton/MyButton';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import MyStepper from '@/components/MyStepper';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import PlusIcon from '@rsuite/icons/Plus';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { notify } from '@/utils/uiReducerActions';
-import { MdModeEdit } from 'react-icons/md';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
-  useSaveEncounterVaccineMutation,
-  useGetEncounterVaccineQuery
+  useGetEncounterVaccineQuery,
+  useSaveEncounterVaccineMutation
 } from '@/services/observationService';
-import { ApVaccine, ApVaccineBrands, ApEncounterVaccination } from '@/types/model-types';
+import { ApEncounterVaccination, ApVaccine, ApVaccineBrands } from '@/types/model-types';
 import {
+  newApEncounterVaccination,
   newApVaccine,
   newApVaccineBrands,
-  newApVaccineDose,
-  newApEncounterVaccination
+  newApVaccineDose
 } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds } from '@/utils';
-import AddEncounterVaccine from './AddEncounterVaccine';
-import { useLocation } from 'react-router-dom';
-import MyStepper from '@/components/MyStepper';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { notify } from '@/utils/uiReducerActions';
 import { faCakeCandles, faSyringe } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useState } from 'react';
+import { MdModeEdit } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
+import AddEncounterVaccine from './AddEncounterVaccine';
+import './styles.less';
 
 const VaccinationTab = ({
   disabled,
@@ -120,11 +116,11 @@ const VaccinationTab = ({
       doseNameLkey: null
     });
   };
-  // Handle Add New Vaccine Record
-  const handleAddNewVaccine = () => {
-    handleClearField();
-    setPopupOpen(true);
-  };
+  // // Handle Add New Vaccine Record
+  // const handleAddNewVaccine = () => {
+  //   handleClearField();
+  //   setPopupOpen(true);
+  // };
 
   // Change page event handler
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -153,21 +149,21 @@ const VaccinationTab = ({
       });
     setPopupCancelOpen(false);
   };
-  //handle Reviewe Vaccine
-  const handleReviewe = () => {
-    saveEncounterVaccine({
-      ...encounterVaccination,
-      statusLkey: '3721622082897301',
-      reviewedAt: reviewedAt,
-      reviewedBy: authSlice.user.key,
-      updatedBy: authSlice.user.key
-    })
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: 'Encounter Vaccine Reviewed Successfully', sev: 'success' }));
-        encounterVaccine();
-      });
-  };
+  // //handle Reviewe Vaccine
+  // const handleReviewe = () => {
+  //   saveEncounterVaccine({
+  //     ...encounterVaccination,
+  //     statusLkey: '3721622082897301',
+  //     reviewedAt: reviewedAt,
+  //     reviewedBy: authSlice.user.key,
+  //     updatedBy: authSlice.user.key
+  //   })
+  //     .unwrap()
+  //     .then(() => {
+  //       dispatch(notify({ msg: 'Encounter Vaccine Reviewed Successfully', sev: 'success' }));
+  //       encounterVaccine();
+  //     });
+  // };
   // Effects
   useEffect(() => {
     // TODO update status to be a LOV value
@@ -412,7 +408,7 @@ const VaccinationTab = ({
         edit={edit}
       />
 
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+      <div className="display-start-10">
         <MyTable
           data={encounterVaccineListResponseLoading?.object ?? []}
           columns={columns}
@@ -431,10 +427,8 @@ const VaccinationTab = ({
           onRowsPerPageChange={handleRowsPerPageChange}
         />
 
-        <div
-          style={{ minWidth: '280px', padding: '16px', border: '1px solid #eee', borderRadius: 8 }}
-        >
-          <h6 style={{ marginBottom: '16px' }}>Vaccine Schedule</h6>
+        <div className="vaccine-stepper">
+          <h6 className="margin-bottom-16">Vaccine Schedule</h6>
           <MyStepper
             activeStep={1}
             orientation="vertical"
@@ -444,27 +438,13 @@ const VaccinationTab = ({
                 value: 'HepB',
                 description: (
                   <div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: '5px'
-                      }}
-                    >
+                    <div className="flex-row-5">
                       <FontAwesomeIcon icon={faSyringe} />
-                      <p style={{ marginTop: '3px' }}>1st dose </p>
+                      <p className="margin-top-3">1st dose </p>
                     </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: '5px'
-                      }}
-                    >
+                    <div className="flex-row-5">
                       <FontAwesomeIcon icon={faCakeCandles} />
-                      <p style={{ marginTop: '3px' }}>0D</p>{' '}
+                      <p className="margin-top-3">0D</p>{' '}
                     </div>
                   </div>
                 ),
@@ -474,38 +454,15 @@ const VaccinationTab = ({
                 key: 2,
                 value: 'DTaP',
                 description: (
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: 8
-                    }}
-                  >
+                  <div className="display-flex-space">
                     <div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '5px'
-                        }}
-                      >
+                      <div className="flex-row-5">
                         <FontAwesomeIcon icon={faSyringe} />
-                        <p style={{ marginTop: '3px' }}>2nd dose</p>
+                        <p className="margin-top-3">2nd dose</p>
                       </div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '5px'
-                        }}
-                      >
+                      <div className="flex-row-5">
                         <FontAwesomeIcon icon={faCakeCandles} />
-                        <p style={{ marginTop: '3px' }}>2 Months</p>
+                        <p className="margin-top-3">2 Months</p>
                       </div>
                     </div>
 
@@ -518,38 +475,15 @@ const VaccinationTab = ({
                 key: 3,
                 value: 'HepB',
                 description: (
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: 8
-                    }}
-                  >
+                  <div className="display-flex-space">
                     <div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '5px'
-                        }}
-                      >
+                      <div className="flex-row-5">
                         <FontAwesomeIcon icon={faSyringe} />
-                        <p style={{ marginTop: '3px' }}>3nd dose</p>
+                        <p className="margin-top-3">3nd dose</p>
                       </div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '5px'
-                        }}
-                      >
+                      <div className="flex-row-5">
                         <FontAwesomeIcon icon={faCakeCandles} />
-                        <p style={{ marginTop: '3px' }}>6 Months</p>
+                        <p className="margin-top-3">6 Months</p>
                       </div>
                     </div>
 
