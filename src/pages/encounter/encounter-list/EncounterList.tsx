@@ -41,7 +41,7 @@ const EncounterList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className="display-flex">
       <h5>Patients Visit List</h5>
     </div>
   );
@@ -525,6 +525,7 @@ const EncounterList = () => {
             setRecord={setEncounterStatus}
           />
         </Form>
+
         <AdvancedSearchFilters
           searchFilter={true}
           content={
@@ -584,6 +585,35 @@ const EncounterList = () => {
                   placeholder="Select Priority"
                   fieldLabel="Priority"
                   searchable={false}
+                  />            
+                  <MyInput
+                  fieldType="select"
+                  fieldLabel="Priority "
+                  fieldName="priority"
+                  selectData={[]}
+                  selectDataLabel="fullName"
+                  selectDataValue="id"
+                  record={record}
+                  setRecord={setRecord}
+                  searchable={false}
+                  width={190}
+                />
+                <MyInput
+                  fieldName="scheduleDateTime"
+                  fieldType="datetime"
+                  record={record}
+                  setRecord={setRecord}
+                  fieldLabel="Schedule Date Time"
+                  width={190}
+                />
+                <MyInput
+                  fieldName="Status"
+                  fieldType="text"
+                  record={record}
+                  setRecord={setRecord}
+                  label="status"
+                  width={190}
+
                 />
               </Form>
             </div>

@@ -8,7 +8,7 @@ import {
 import MyButton from '../MyButton/MyButton';
 import './styles.less';
 
-const AdvancedSearchFilters = ({ searchFilter = true, content = '' }) => {
+const AdvancedSearchFilters = ({ searchFilter = true, content = {} }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (

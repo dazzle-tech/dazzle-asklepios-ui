@@ -1,23 +1,98 @@
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faListCheck,
-  faBarcode,
-  faPills,
-  faCirclePause,
-  faCircleCheck,
-  faCircleStop,
-  faClock,
-  faBan,
-  faTrash
-} from '@fortawesome/free-solid-svg-icons';
+import React, { useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
+import { useAppDispatch } from '@/hooks';
+import SampleModal from '@/pages/lab-module/SampleModal';
+import {
+  useGetDiagnosticOrderTestQuery,
+  useSaveDiagnosticOrderTestMutation
+} from '@/services/encounterService';
+import { ApDiagnosticOrderTests, ApDiagnosticTest } from '@/types/model-types';
+import {
+  newApDiagnosticOrders,
+  newApDiagnosticOrderTests,
+  newApDiagnosticTest
+} from '@/types/model-types-constructor';
+import { notify } from '@/utils/uiReducerActions';
+import {
+  faBan,
+  faBarcode,
+  faCircleCheck,
+  faCirclePause,
+  faCircleStop,
+  faClipboardList,
+  faClock,
+  faListCheck,
+  faPills,
+  faTrash,
+  faVialCircleCheck
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useLocation } from 'react-router-dom';
+import { Form, HStack, Text, Tooltip, Whisper } from 'rsuite';
+import { initialListRequest, ListRequest } from '@/types/types';
 import './style.less';
-import { Tooltip, Whisper, Text, Form } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
 
 const TableModal = ({ openModal, setOpenModal }) => {
+  const location = useLocation();
+  const dispatch = useAppDispatch();
+
+  const patient = location.state?.patient;
+  const encounter = location.state?.encounter;
+  const edit = location.state?.edit ?? false;
+  const [openSampleModal, setOpenSampleModal] = useState(false);
+  const [orders, setOrders] = useState<any>({ ...newApDiagnosticOrders });
+  const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
+  const [showCanceled, setShowCanceled] = useState(true);
+
+  const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({
+    ...newApDiagnosticOrderTests,
+    processingStatusLkey: '6055029972709625'
+  });
+  const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'patient_key',
+        operator: 'match',
+        value: patient?.key
+      },
+      {
+        fieldName: 'order_key',
+        operator: 'match',
+        value: orders?.key || undefined
+      },
+      {
+        fieldName: 'is_valid',
+        operator: 'match',
+        value: showCanceled
+      }
+    ]
+  });
+  const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
+  const [openDetailsModel, setOpenDetailsModel] = useState(false);
+  const {
+    data: orderTestList,
+    refetch: orderTestRefetch,
+    isLoading: loadTests
+  } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
+  const handleSaveTest = async () => {
+    try {
+      await saveOrderTests(orderTest).unwrap();
+      setOpenDetailsModel(false);
+      dispatch(notify({ msg: 'saved Successfully', sev: 'success' }));
+
+      orderTestRefetch()
+        .then(() => {
+          console.log('Refetch complete');
+        })
+        .catch(error => {
+          console.error('Refetch failed:', error);
+        });
+    } catch (error) {
+      dispatch(notify('Save Failed'));
+    }
+  };
   const data_one = [
     {
       drugName: 'Aspirin',
@@ -141,13 +216,23 @@ const TableModal = ({ openModal, setOpenModal }) => {
       title: 'Actions',
       key: 'actions',
       render: rowData => {
-        const tooltip = <Tooltip>parcode</Tooltip>;
+        const barcodeTooltip = <Tooltip>Print Barcode</Tooltip>;
+        const SampleTooltip = <Tooltip>Collect Sample</Tooltip>;
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            <Whisper trigger="hover" placement="top" speaker={tooltip}>
+            <Whisper trigger="hover" placement="top" speaker={barcodeTooltip}>
               <div>
                 <FontAwesomeIcon icon={faBarcode} className="font-aws" />
               </div>
+            </Whisper>
+            <Whisper placement="top" speaker={SampleTooltip}>
+              <HStack spacing={10}>
+                <FontAwesomeIcon
+                  icon={faVialCircleCheck}
+                  className="font-aws"
+                  onClick={() => setOpenSampleModal(true)}
+                />
+              </HStack>
             </Whisper>
           </Form>
         );
@@ -179,15 +264,19 @@ const TableModal = ({ openModal, setOpenModal }) => {
       dataIndex: 'confirmation',
       key: 'confirmation'
     },
+    ,
     {
       title: 'Actions',
       key: 'actions',
       render: rowData => {
-        const tooltip = <Tooltip>parcode</Tooltip>;
+        const SampleTooltip = <Tooltip>Assessment</Tooltip>;
+
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            <Whisper trigger="hover" placement="top" speaker={tooltip}>
-              <div></div>
+            <Whisper trigger="hover" placement="top" speaker={SampleTooltip}>
+              <div>
+                <FontAwesomeIcon icon={faClipboardList} className="font-aws" />
+              </div>
             </Whisper>
           </Form>
         );
@@ -196,15 +285,6 @@ const TableModal = ({ openModal, setOpenModal }) => {
   ];
 
   const icons = [
-    {
-      key: '1',
-      title: 'Action',
-      icon: (
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>Action</Tooltip>}>
-          <FontAwesomeIcon icon={faPills} className="icons-style" />
-        </Whisper>
-      )
-    },
     {
       key: '8632641360936162',
       title: 'On Hold',
@@ -298,6 +378,17 @@ const TableModal = ({ openModal, setOpenModal }) => {
           </div>
         }
         steps={[{ title: 'Order Comparison', icon: <FontAwesomeIcon icon={faListCheck} /> }]}
+      />
+      <SampleModal
+        open={openSampleModal}
+        setOpen={setOpenSampleModal}
+        order={orders}
+        test={test}
+        orderTest={orderTest}
+        patient={patient}
+        encounter={encounter}
+        edit={edit}
+        onSave={handleSaveTest}
       />
     </div>
   );
