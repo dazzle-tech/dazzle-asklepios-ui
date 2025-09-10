@@ -458,7 +458,7 @@ const Encounter = () => {
     {
       key: 'flaccNeonatesPainAssessment',
       label: 'FLACC Neonates Pain Assessment',
-      icon: faSyringe,
+      icon:  <FontAwesomeIcon icon={faSyringe} className="icon" />,
       path: 'FLACC-neonates-pain-assessment'
     }
   ];
