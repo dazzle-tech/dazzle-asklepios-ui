@@ -4,7 +4,7 @@ import MyTable from '@/components/MyTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckToSlot, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import TableModal from '../TableModal';
+import TableModalManagment from '../table-task-managment/TableTaskManagment';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
@@ -303,7 +303,7 @@ const PhysicianOrderSummaryComponent = () => {
           totalCount={totalCount}
           onPageChange={handlePageChange}
         />
-        <TableModal openModal={openModal} setOpenModal={setOpenModal} />
+        <TableModalManagment openModal={openModal} setOpenModal={setOpenModal} />
       </div>
 
       <div className="side-panel">

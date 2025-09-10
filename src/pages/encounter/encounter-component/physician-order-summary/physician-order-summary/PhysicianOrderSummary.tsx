@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckToSlot, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import TableModal from './TableModal';
+import TableModalManagment from '../table-task-managment/TableTaskManagment';
 
-import './style.less';
+import '../style.less';
 
 const PhysicianOrderSummary = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -227,7 +227,7 @@ const PhysicianOrderSummary = () => {
           onPageChange={handlePageChange}
         />
 
-        <TableModal openModal={openModal} setOpenModal={setOpenModal} />
+        <TableModalManagment openModal={openModal} setOpenModal={setOpenModal} />
       </div>
 
       {/* Side Panel */}

@@ -32,7 +32,7 @@ import { useLocation } from 'react-router-dom';
 import { Form, HStack, Text, Tooltip, Whisper } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { Popover, Dropdown } from 'rsuite';
-import './style.less';
+import '../style.less';
 
 const icons = [
   {
@@ -98,7 +98,7 @@ const icons = [
     )
   }
 ];
-const TableModal = ({ openModal, setOpenModal }) => {
+const TableTaskManagment = ({ openModal, setOpenModal }) => {
   const location = useLocation();
   const dispatch = useAppDispatch();
 
@@ -405,4 +405,4 @@ const TableModal = ({ openModal, setOpenModal }) => {
   );
 };
 
-export default TableModal;
+export default TableTaskManagment;
