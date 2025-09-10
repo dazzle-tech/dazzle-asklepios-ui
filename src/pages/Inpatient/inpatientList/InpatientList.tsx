@@ -7,7 +7,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRepeat } from '@fortawesome/free-solid-svg-icons';
 import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
-import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
+import { Badge, Form, Panel, Tooltip, Whisper, Popover, Dropdown } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import DischargeTrackingModal from './dischargetracking/DischargeTrackingModal';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -29,6 +29,7 @@ import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import BedManagementModal from './bedBedManagementModal/BedManagementModal';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import ChangeBedModal from './changeBedModal/ChangeBedModal';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import './styles.less';
@@ -43,8 +44,8 @@ import TemporaryDischarge from './temporaryDischarge/TemporaryDischarge';
 import { faPersonWalkingArrowLoopLeft } from '@fortawesome/free-solid-svg-icons';
 import ReturnFromTemporary from './temporaryDischarge/ReturnFromTemporary';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { faBarcode, faUserGroup } from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import {faBarcode, faUserGroup} from '@fortawesome/free-solid-svg-icons';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from './EncounterLogsTable';
 
@@ -53,7 +54,7 @@ const InpatientList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const divContent = (
-    <div className="display-flex">
+    <div style={{ display: 'flex' }}>
       <h5>Inpatient Visit List</h5>
     </div>
   );
@@ -72,11 +73,9 @@ const InpatientList = () => {
   const [switchDepartment, setSwitchDepartment] = useState(false);
   const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
   const [record, setRecord] = useState({});
-  const [encounterStatus, setEncounterStatus] = useState({ key: '' });
+  const [encounterStatus, setEncounterStatus] = useState({ key: '' }); 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [openReturnFromTemporaryModal, setOpenReturnFromTemporaryModal] = useState(false);
-  const tooltipWrist = <Tooltip>Wrist Band</Tooltip>;
-  const tooltipCompanion = <Tooltip>Companion Card</Tooltip>;
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
@@ -93,9 +92,7 @@ const InpatientList = () => {
       {
         fieldName: 'encounter_status_lkey',
         operator: 'in',
-        value: ['91063195286200', '91084250213000', '6130571996160318']
-          .map(key => `(${key})`)
-          .join(' ')
+        value: ['91063195286200', '91084250213000','6130571996160318'].map(key => `(${key})`).join(' ')
       },
       {
         fieldName: 'discharge',
@@ -193,68 +190,69 @@ const InpatientList = () => {
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
-  const filters = () => (
-    <>
-      <Form layout="inline" fluid>
-        <div className="switch-dep-dev ">
-          {' '}
-          <MyInput
-            require
-            column
-            fieldLabel="Select Department"
-            fieldType="select"
-            fieldName="key"
-            selectData={departmentListResponse?.data?.object ?? []}
-            selectDataLabel="name"
-            selectDataValue="key"
-            record={departmentFilter}
-            setRecord={value => {
-              setDepartmentFilter(value);
-              setSwitchDepartment(false);
-            }}
-            searchable={false}
-            width={200}
+  const filters = () => (<>
+    <Form layout="inline" fluid>
+      <div className="switch-dep-dev ">
+        {' '}
+        <MyInput
+          require
+          column
+          fieldLabel="Select Department"
+          fieldType="select"
+          fieldName="key"
+          selectData={departmentListResponse?.data?.object ?? []}
+          selectDataLabel="name"
+          selectDataValue="key"
+          record={departmentFilter}
+          setRecord={value => {
+            setDepartmentFilter(value);
+            setSwitchDepartment(false);
+          }}
+          searchable={false}
+          width={200}
+        />
+
+        <MyButton
+          size="small"
+          backgroundColor="gray"
+          onClick={() => {
+            setSwitchDepartment(true);
+          }}
+          prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
+        >
+          Switch Department
+        </MyButton>
+        
+        <MyInput
+          column
+          width="10vw"
+          fieldLabel="Select Filter"
+          fieldName="selectfilter"
+          fieldType="select"
+          selectData={[
+            { key: 'MRN', value: 'MRN' },
+            { key: 'Document Number', value: 'Document Number' },
+            { key: 'Full Name', value: 'Full Name' },
+            { key: 'Archiving Number', value: 'Archiving Number' },
+            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+            { key: 'Date of Birth', value: 'Date of Birth'}
+        ]}
+          selectDataLabel="value"
+          selectDataValue="key"
+          record={record}
+          setRecord={setRecord}
+        />
+        <MyInput
+          column
+          fieldLabel='Search by'
+          fieldName="searchCriteria"
+          fieldType="text"
+          placeholder="Search"
+          width="15vw"
+          record={record}
+          setRecord={setRecord}
           />
-          <MyButton
-            size="small"
-            backgroundColor="gray"
-            onClick={() => {
-              setSwitchDepartment(true);
-            }}
-            prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
-          >
-            Switch Department
-          </MyButton>
-          <MyInput
-            column
-            width="10vw"
-            fieldLabel="Select Filter"
-            fieldName="selectfilter"
-            fieldType="select"
-            selectData={[
-              { key: 'MRN', value: 'MRN' },
-              { key: 'Document Number', value: 'Document Number' },
-              { key: 'Full Name', value: 'Full Name' },
-              { key: 'Archiving Number', value: 'Archiving Number' },
-              { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-              { key: 'Date of Birth', value: 'Date of Birth' }
-            ]}
-            selectDataLabel="value"
-            selectDataValue="key"
-            record={record}
-            setRecord={setRecord}
-          />
-          <MyInput
-            column
-            fieldLabel="Search by"
-            fieldName="searchCriteria"
-            fieldType="text"
-            placeholder="Search"
-            width="15vw"
-            record={record}
-            setRecord={setRecord}
-          />
-          <MyInput
+            <MyInput
             column
             width={200}
             fieldType="select"
@@ -265,40 +263,34 @@ const InpatientList = () => {
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
-          />
-        </div>
-      </Form>
-      <AdvancedSearchFilters searchFilter={true} />
-    </>
-  );
+            />
 
-  const tablebuttons = (
-    <>
-      <div className="companion-wrist-icons-position-handles">
-        <Whisper trigger="hover" placement="top" speaker={tooltipWrist}>
-          <div>
-            <MyButton size="small" disabled={!encounter?.key}>
-              <FontAwesomeIcon icon={faBarcode} />
-            </MyButton>
-          </div>
-        </Whisper>
-
-        <Whisper trigger="hover" placement="top" speaker={tooltipCompanion}>
-          <div>
-            <MyButton size="small" disabled={!encounter?.key}>
-              <FontAwesomeIcon icon={faUserGroup} />
-            </MyButton>
-          </div>
-        </Whisper>
-        <MyButton onClick={() => setOpenRefillModal(true)}>Refill</MyButton>
-        <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>Task Management</MyButton>
-
-        <MyButton onClick={() => setOpenEncounterLogsModal(true)}>Encounter Logs</MyButton>
-
-        <MyButton onClick={() => setOpenDischargeTracking(true)}>Discharge Tracking</MyButton>
       </div>
-    </>
+    </Form>
+    <AdvancedSearchFilters searchFilter={true}/>
+
+</>
   );
+
+  const tablebuttons = (<><div className='companion-wrist-icons-position-handles'>
+
+                          <MyButton onClick={() => setOpenRefillModal(true)}>
+            Refill
+          </MyButton>
+        <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
+            Task Management
+        </MyButton>
+
+<MyButton onClick={() => setOpenEncounterLogsModal(true)}>
+  Encounter Logs
+</MyButton>
+
+          <MyButton onClick={() => setOpenDischargeTracking(true)}>
+            Discharge Tracking
+          </MyButton> 
+        </div>
+        
+</>);
 
   //useEffect
   useEffect(() => {
@@ -456,18 +448,104 @@ const InpatientList = () => {
     },
     {
       key: 'actions',
-      title: <Translate> </Translate>,
+      title: <Translate>Actions</Translate>,
       render: rowData => {
         const tooltipNurse = <Tooltip>Nurse Anamnesis</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
-        const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
-        const toolTransferPatient = <Tooltip>Transfer Patient</Tooltip>;
-        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
-        const tooltipDischarge = <Tooltip>Temporary Discharge</Tooltip>;
-        const tooltipReturnFromDischarge = <Tooltip>Return from Temporary DC</Tooltip>;
+        const contentOfMoreIconMenu = (
+           <Popover full>
+    <Dropdown.Menu>
+      <Dropdown.Item
+        onClick={() => {
+          setOpenTransferPatientModal(true);
+          setLocalEncounter(rowData);
+        }}
+      >
+        <div className="container-of-icon-and-key1">
+          <FontAwesomeIcon icon={faArrowRightArrowLeft} />
+          Transfer Patient
+        </div>
+      </Dropdown.Item>
+
+      {/* ✅ Change Bed now inside dropdown */}
+      <Dropdown.Item
+        onClick={() => {
+          setOpenChangeBedModal(true);
+          setLocalEncounter(rowData);
+        }}
+      >
+        <div className="container-of-icon-and-key1">
+          <FontAwesomeIcon icon={faBed} />
+          Change Bed
+        </div>
+      </Dropdown.Item>
+
+      <Dropdown.Item>
+        <div className="container-of-icon-and-key1">
+          <FontAwesomeIcon icon={faBarcode} />
+          Wrist Band
+        </div>
+      </Dropdown.Item>
+
+      <Dropdown.Item>
+        <div className="container-of-icon-and-key1">
+          <FontAwesomeIcon icon={faUserGroup} />
+          Companion Card
+        </div>
+      </Dropdown.Item>
+
+              {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
+                <Dropdown.Item
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setOpen(true);
+                  }}
+                >
+                  <div className="container-of-icon-and-key1">
+                    <FontAwesomeIcon icon={faRectangleXmark} />
+                    Cancel Visit
+                  </div>
+                </Dropdown.Item>
+              )}
+
+              {rowData?.encounterStatusLvalue?.valueCode === 'ONGOING' && (
+                <Dropdown.Item
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setLocalPatient(rowData.patientObject);
+                    setOpenTemporaryDischargeModal(true);
+                  }}
+                >
+                  <div className="container-of-icon-and-key1">
+                    <FontAwesomeIcon icon={faPersonWalkingArrowRight} />
+                    Temporary Discharge
+                  </div>
+                </Dropdown.Item>
+              )}
+
+              {rowData?.encounterStatusLvalue?.valueCode === 'TEMP_DC' && (
+                <Dropdown.Item
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setLocalPatient(rowData.patientObject);
+                    setOpenReturnFromTemporaryModal(true);
+                  }}
+                >
+                  <div className="container-of-icon-and-key1">
+                    <FontAwesomeIcon icon={faPersonWalkingArrowLoopLeft} />
+                    Return from Temp DC
+                  </div>
+                </Dropdown.Item>
+              )}
+            </Dropdown.Menu>
+          </Popover>
+        );
+
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
+
+            {/* Doctor */}
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
               <div>
                 <MyButton
@@ -483,6 +561,8 @@ const InpatientList = () => {
                 </MyButton>
               </div>
             </Whisper>
+
+            {/* Nurse */}
             <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
               <div>
                 <MyButton
@@ -499,89 +579,31 @@ const InpatientList = () => {
                 </MyButton>
               </div>
             </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
+
+            {/* EMR outside the Popover */}
+            <Whisper trigger="hover" placement="top" speaker={<Tooltip>EMR</Tooltip>}>
               <div>
                 <MyButton
                   size="small"
-                  backgroundColor="gray"
                   onClick={() => {
-                    setOpenChangeBedModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faBed} />
-                </MyButton>
-              </div>
-            </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={toolTransferPatient}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="var(--deep-blue)"
-                  onClick={() => {
-                    setOpenTransferPatientModal(true);
                     setLocalEncounter(rowData);
+                    handleGoToVisit(rowData, rowData.patientObject);
                   }}
                 >
-                  <FontAwesomeIcon icon={faArrowRightArrowLeft} />
-                </MyButton>
-              </div>
-            </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
-              <div>
-                <MyButton size="small" backgroundColor="violet">
                   <FontAwesomeIcon icon={faFileWaveform} />
+                  EMR
                 </MyButton>
               </div>
             </Whisper>
-            {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
-                <div>
-                  <MyButton
-                    size="small"
-                    onClick={() => {
-                      setLocalEncounter(rowData);
-                      setOpen(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
-            {rowData?.encounterStatusLvalue?.valueCode === 'ONGOING' && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipDischarge}>
-                <div>
-                  <MyButton
-                    size="small"
-                    onClick={() => {
-                      const patientData = rowData.patientObject;
-                      setLocalEncounter(rowData);
-                      setLocalPatient(patientData);
-                      setOpenTemporaryDischargeModal(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faPersonWalkingArrowRight} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
-            {rowData?.encounterStatusLvalue?.valueCode === 'TEMP_DC' && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipReturnFromDischarge}>
-                <div>
-                  <MyButton
-                    size="small"
-                    onClick={() => {
-                      const patientData = rowData.patientObject;
-                      setLocalEncounter(rowData);
-                      setLocalPatient(patientData);
-                      setOpenReturnFromTemporaryModal(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faPersonWalkingArrowLoopLeft} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
+
+            {/* More Options Menu */}
+            <Whisper placement="bottom" trigger="click" speaker={contentOfMoreIconMenu}>
+              <div>
+                <MyButton size="small" backgroundColor="var(--note-blue)">
+                  <FontAwesomeIcon icon={faEllipsisVertical} />
+                </MyButton>
+              </div>
+            </Whisper>
           </Form>
         );
       },
@@ -691,66 +713,56 @@ const InpatientList = () => {
       />
 
       <MyModal
-        open={openRefillModal}
-        setOpen={setOpenRefillModal}
-        title="Refill"
-        size="90vw"
-        content={
-          <>
-            <RefillModalComponent></RefillModalComponent>
-          </>
-        }
-        actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
-        cancelButtonLabel="Close"
-      />
+      open={openRefillModal}
+      setOpen={setOpenRefillModal}
+      title="Refill"
+      size="90vw"
+      content={<><RefillModalComponent></RefillModalComponent></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+/>
 
       <MyModal
-        open={openDischargeTracking}
-        setOpen={setOpenDischargeTracking}
-        title="Discharge Tracking"
-        size="55vw"
-        content={
-          <>
-            <DischargeTrackingModal />
-          </>
-        }
-        actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save Discharge Tracking');
-        }}
-        cancelButtonLabel="Close"
-      />
+      open={openDischargeTracking}
+      setOpen={setOpenDischargeTracking}
+      title="Discharge Tracking"
+      size="55vw"
+      content={<><DischargeTrackingModal/></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save Discharge Tracking');
+      }}
+      cancelButtonLabel="Close"
+/>
 
-      <MyModal
-        open={openPhysicianOrderSummaryModal}
-        setOpen={setOpenPhysicianOrderSummaryModal}
-        title="Task Management"
-        size="90vw"
-        content={
-          <>
-            <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
-          </>
-        }
-        actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
-        cancelButtonLabel="Close"
-      />
+<MyModal
+      open={openPhysicianOrderSummaryModal}
+      setOpen={setOpenPhysicianOrderSummaryModal}
+      title="Task Management"
+      size="90vw"
+      content={<><PhysicianOrderSummaryModal></PhysicianOrderSummaryModal></>}
+      actionButtonLabel="Save"
+      actionButtonFunction={() => {
+        console.log('Save refill clicked');
+      }}
+      cancelButtonLabel="Close"
+  />
 
-      <MyModal
-        open={openEncounterLogsModal}
-        setOpen={setOpenEncounterLogsModal}
-        title="Encounter Logs"
-        size="70vw"
-        content={<EncounterLogsTable />}
-        actionButtonLabel="Close"
-        actionButtonFunction={() => setOpenEncounterLogsModal(false)}
-        cancelButtonLabel="Cancel"
-      />
+<MyModal
+  open={openEncounterLogsModal}
+  setOpen={setOpenEncounterLogsModal}
+  title="Encounter Logs"
+  size="70vw"
+  content={<EncounterLogsTable/>
+  }
+  actionButtonLabel="Close"
+  actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+  cancelButtonLabel="Cancel"
+/>
+
     </Panel>
   );
 };
