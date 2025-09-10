@@ -61,7 +61,7 @@ const Dashboard = () => {
             className="margin-bottom-10"
           >
             <DynamicPieChart
-              title="Scheduled Appointments"
+              title=""
               selectable={true}
               refreshButton={false}
               width={350}
@@ -90,12 +90,12 @@ const Dashboard = () => {
               }
               subtitle="Most common diagnoses this month"
               data={[
-                { name: 'Hypertension', value: 289, percentage: '17.1%', trend: 'up' },
-                { name: 'Type 2 Diabetes', value: 234, percentage: '8.9%', trend: 'down' },
-                { name: 'Pneumonia', value: 178, trend: 'up' },
-                { name: 'Coronary Artery Disease', value: 145, percentage: '12.1%', trend: 'up' },
-                { name: 'COPD', value: 123, percentage: '16.1%', trend: 'down' },
-                { name: 'Acute Myocardial Infarction', value: 98, percentage: '7.9%', trend: 'up' }
+                { name: 'Hypertension', value: 289, percentage: '27.1%', trend: 'up' },
+                { name: 'Type 2 Diabetes', value: 234, percentage: '21.9%', trend: 'down' },
+                { name: 'Pneumonia', value: 178, percentage: '16.7%', trend: 'up' },
+                { name: 'Coronary Artery Disease', value: 145, percentage: '13.6%', trend: 'up' },
+                { name: 'COPD', value: 123, percentage: '11.5%', trend: 'down' },
+                { name: 'Acute Myocardial Infarction', value: 98, percentage: '9.2%', trend: 'up' }
               ]}
               showHeader={false}
               columns={['name', 'value']}
@@ -117,12 +117,12 @@ const Dashboard = () => {
               }
               subtitle="Most prescribed medications this month"
               data={[
-                { name: 'Metformin', value: 342, percentage: '16.1%', trend: 'up' },
-                { name: 'Lisinopril', value: 298, percentage: '16.1%', trend: 'down' },
-                { name: 'Atorvastatin', value: 267, percentage: '14.6%', trend: 'up' },
-                { name: 'Ambolipine', value: 231, percentage: '12.5%', trend: 'down' },
-                { name: 'Amoxicillin', value: 189, percentage: '10.2%', trend: 'up' },
-                { name: 'Omeprazole', value: 156, percentage: '8.4%', trend: 'down' }
+                { name: 'Metformin', value: 342, percentage: '23.0%', trend: 'up' },
+                { name: 'Lisinopril', value: 298, percentage: '20.1%', trend: 'down' },
+                { name: 'Atorvastatin', value: 267, percentage: '18.0%', trend: 'up' },
+                { name: 'Ambolipine', value: 231, percentage: '15.6%', trend: 'down' },
+                { name: 'Amoxicillin', value: 189, percentage: '12.7%', trend: 'up' },
+                { name: 'Omeprazole', value: 156, percentage: '10.5%', trend: 'down' }
               ]}
               columns={['name', 'value']}
               columnWidths={['70%', '30%']}
@@ -146,9 +146,11 @@ const Dashboard = () => {
               }
               subtitle="Most frequent lab test findings"
               data={[
-                { name: 'Laptop Pro', value: 156, percentage: '7.6%', trend: 'up' },
-                { name: 'Smartphone X', value: 234, percentage: '55.2%', trend: 'up' },
-                { name: 'Tablet Lite', value: 189, percentage: '21.9%', trend: 'down' }
+                { name: 'Elevated Glucose', value: 156, percentage: '16.6%', trend: 'up' },
+                { name: 'High Cholesterol', value: 234, percentage: '24.8%', trend: 'up' },
+                { name: 'Low Hemoglobin', value: 189, percentage: '20.1%', trend: 'down' },
+                { name: 'Elevated Creatinine', value: 139, percentage: '14.8%', trend: 'down' },
+                { name: 'Abnormal Liver Enzymes', value: 224, percentage: '23.8%', trend: 'down' }
               ]}
               showHeader={false}
               columns={['name', 'value']}
