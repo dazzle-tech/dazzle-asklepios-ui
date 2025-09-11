@@ -11,7 +11,7 @@ import { ApConsultationOrder } from '@/types/model-types';
 import { newApConsultationOrder } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faPen, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faPen, faPrint, faClone } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
@@ -27,8 +27,10 @@ import { formatDateWithoutSeconds } from '@/utils';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+import PlusIcon from '@rsuite/icons/Plus';
 import DetailsTele from './DetailsTele';
+import { Whisper, Tooltip } from 'rsuite';
+
 
 // Download a base64 attachment as a file
 const handleDownload = attachment => {
@@ -418,11 +420,44 @@ const Consultation = props => {
       dataKey: 'cancellationReason',
       expandable: true
     },
-    {
-      key: 'actions',
-      title: <Translate>Actions</Translate>,
-      flexGrow: 4
-    }
+{
+  key: 'actions',
+  title: <Translate>Actions</Translate>,
+  flexGrow: 4,
+  render: (rowData: any) => (
+    <div style={{ display: 'flex', gap: '10px' }}>
+      {/* Edit Button with Tooltip */}
+      <Whisper placement="top" trigger="hover" speaker={<Tooltip>Edit</Tooltip>}>
+        <FontAwesomeIcon
+          icon={faPen}
+          className="icons-style font-aws"
+          onClick={() => {
+            setEditing(true);
+            setConsultationOrder(rowData);
+            setOpenDetailsModal(true);
+          }}
+          style={{ cursor: 'pointer' }}
+        />
+      </Whisper>
+
+      {/* Clone Button with Tooltip */}
+      <Whisper placement="top" trigger="hover" speaker={<Tooltip>Clone</Tooltip>}>
+        <FontAwesomeIcon
+          icon={faClone}
+          className="icons-style font-aws"
+          onClick={() => {
+            const cloned = { ...rowData, key: null, id: null };
+            setConsultationOrder(cloned);
+            setEditing(false);
+            setOpenDetailsModal(true);
+          }}
+          style={{ cursor: 'pointer' }}
+        />
+      </Whisper>
+    </div>
+  )
+}
+
   ];
 
   // Pagination helpers
@@ -555,8 +590,9 @@ const Consultation = props => {
                     'disabled-panel': edit
                   })}
                 >
-                  <MyButton onClick={handelAdd}>Add Consultation</MyButton>
-                </div>
+              <MyButton prefixIcon={() => <PlusIcon />} onClick={handelAdd}>
+                Add Consultation
+              </MyButton>                </div>
               </div>
             </div>
 

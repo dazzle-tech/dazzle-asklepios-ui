@@ -584,12 +584,7 @@ const InpatientList = () => {
             <Whisper trigger="hover" placement="top" speaker={<Tooltip>EMR</Tooltip>}>
               <div>
                 <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                    handleGoToVisit(rowData, rowData.patientObject);
-                  }}
-                >
+                  size="small">
                   <FontAwesomeIcon icon={faFileWaveform} />
                   EMR
                 </MyButton>

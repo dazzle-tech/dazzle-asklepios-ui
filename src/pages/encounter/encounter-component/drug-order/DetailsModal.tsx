@@ -34,7 +34,6 @@ const DetailsModal = ({
   setOpen,
   orderMedication,
   setOrderMedication,
-
   drugKey,
   editing,
   patient,
@@ -441,7 +440,9 @@ const DetailsModal = ({
         leftContent={
           <>
             <div className="left-content-wrapper">
+              <div className='left-content-active-ingrediant-list'>
               <ActiveIngrediantList selectedGeneric={selectedGeneric} />
+              </div>
               <MedicalTestsTable />
             </div>
           </>
@@ -482,7 +483,7 @@ const DetailsModal = ({
                             <div className="search-wrapper">
                               <InputGroup
                                 inside
-                                style={{ width: '150px' }}
+                                style={{ width: '350px' }}
                                 className="input-search-p"
                               >
                                 <Input
@@ -536,7 +537,7 @@ const DetailsModal = ({
                             {/* Order Type */}
                             <MyInput
                               fieldType="select"
-                              fieldLabel="Drug Order Type"
+                              fieldLabel="Medication Order Type"
                               selectData={orderTypeLovQueryResponse?.object ?? []}
                               selectDataLabel="lovDisplayVale"
                               selectDataValue="key"
@@ -558,10 +559,6 @@ const DetailsModal = ({
                               record={orderMedication}
                               setRecord={setOrderMedication}
                             />
-                            {/* Titration Button */}
-                            <div className="button-wrapper">
-                              <MyButton>Titration Plan</MyButton>
-                            </div>
                           </div>
                           {/*  */}
                           <div className="full-block">
@@ -607,11 +604,14 @@ const DetailsModal = ({
                               record={orderMedication}
                               setRecord={setOrderMedication}
                             />
-
-                            {/* Titration Button */}
                             <div className="button-wrapper-p">
+                            {/* Titration Button */}
                               <MyButton>Generate Instructions</MyButton>
                             </div>
+                            <div className="button-wrapper">
+                              <MyButton>Titration Plan</MyButton>
+                            </div>
+
                           </div>
                           <Col>
                             <Col style={{ marginRight: '12px' }}>
@@ -689,7 +689,7 @@ const DetailsModal = ({
                               fieldLabel="Start Time"
                               record={orderMedication}
                               setRecord={setOrderMedication}
-                              width={180}
+                              width={220}
                             />
 
                             {/* End Date */}
@@ -699,7 +699,7 @@ const DetailsModal = ({
                               fieldLabel="End Time"
                               record={orderMedication}
                               setRecord={setOrderMedication}
-                              width={180}
+                              width={220}
                             />
 
                             <MyInput
