@@ -262,6 +262,18 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   <Row>
                     <Col md={24}>
                       <MyInput
+                        width="100%"
+                        fieldName="ReasonOfVisit"
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType="textarea"
+                        record={localEncounter}
+                        setRecord={setLocalEncounter}
+                      />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={24}>
+                      <MyInput
                         fieldLabel="Functional Status"
                         width="100%"
                         fieldName="latestFunctionalStatus"
@@ -290,18 +302,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   <Row>
                     <Col md={24}>
                       <MyInput
-                        width="100%"
-                        fieldName="ReasonOfVisit"
-                        disabled={isEncounterStatusClosed || readOnly}
-                        fieldType="textarea"
-                        record={localEncounter}
-                        setRecord={setLocalEncounter}
-                      />
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={24}>
-                      <MyInput
                         width={'100%'}
                         fieldLabel="Priority"
                         fieldType="select"
@@ -313,7 +313,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                         setRecord={setLocalEncounter}
                         disabled={isEncounterStatusClosed || readOnly}
                         searchable={false}
-                      /></Col></Row>
+                      />
+                    </Col>
+                  </Row>
                 </div>{' '}
               </Col>
             </Row>
@@ -324,13 +326,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                     <Text>Vital Signs</Text>
                   </div>
                   <Divider />
-                    <VitalSigns
-                      object={vital}
-                      setObject={setVital}
-                      disabled={true}
-                      width="28vw"
-                      showNoteField={true}
-                    />
+                  <VitalSigns
+                    object={vital}
+                    setObject={setVital}
+                    disabled={true}
+                    width="28vw"
+                    showNoteField={true}
+                  />
                 </div>
               </Col>
             </Row>
