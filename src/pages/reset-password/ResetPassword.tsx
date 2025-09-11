@@ -87,9 +87,9 @@ const ResetPassword = () => {
         }}
       >
         <Header>
-          <h2 style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 20 }}>
+          <h4 style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 20 }}>
             Reset Your Password
-          </h2>
+          </h4>
           <Divider style={{ borderColor: 'rgba(255, 255, 255, 0.3)' }} />
         </Header>
 
@@ -141,7 +141,7 @@ const ResetPassword = () => {
             )}
 
             <Stack justifyContent="center" alignItems="center" spacing={10} style={{ marginTop: 30 }}>
-              <MyButton onClick={handleSubmit}>Reset Password</MyButton>
+              <MyButton onClick={handleSubmit} backgroundColor="#eee" color="#1153aaff">Reset Password</MyButton>
               
             </Stack>
           </Form>

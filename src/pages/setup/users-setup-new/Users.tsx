@@ -65,7 +65,7 @@ const Users = () => {
   // Save user
   const [saveUser, saveUserMutation] = useAddUserMutation();
   // Fetch users list response
-  const {data: userListResponse, refetch: refetchUsers, isFetching} = useGetUsersQuery(listRequest);
+
    const { data: users, isLoading  ,refetch} = useGetUserQuery();
    const [updateUser] = useUpdateUserMutation();
   // Fetch accessRoles list response
@@ -82,9 +82,22 @@ const Users = () => {
   const [deactivateActivateUser] = useDeactivateUserMutation();
 
    // Pagination values
-   const pageIndex = listRequest.pageNumber - 1;
-   const rowsPerPage = listRequest.pageSize;
-   const totalCount = userListResponse?.extraNumeric ?? 0;
+  const [pageIndex, setPageIndex] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPageIndex(newPage);
+    }
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPageIndex(0);
+
+    };
+    const totalCount = users?.length ?? 0;
+    const paginatedData = users?.slice(
+        pageIndex * rowsPerPage,
+        pageIndex * rowsPerPage + rowsPerPage
+    );
     // Available fields for filtering
   const filterFields = [
     { label: 'Full Name', value: 'fullName' },
@@ -213,18 +226,7 @@ const handleSave = async () => {
       dispatch(notify({ msg: 'Failed to ' + process + ' this User', sev: 'error' }));
     }
   };
-  // Change page
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-  // Change number of rows per pages
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
+ 
   //icons column (Edit, Privilege, Licenses & Certifications, Reset Password, Departments Active/Deactivate)
   const iconsForActions = (rowData: ApUser) => (
     <div className="container-of-icons">
@@ -322,11 +324,11 @@ const handleSave = async () => {
       title: <Translate>Email</Translate>,
       flexGrow: 4
     },
-    // {
-    //   key: 'phoneNumber',
-    //   title: <Translate>Phone Number</Translate>,
-    //   flexGrow: 4
-    // },
+    {
+      key: 'phoneNumber',
+      title: <Translate>Phone Number</Translate>,
+      flexGrow: 4
+    },
     // {
     //   key: 'jobRoleLvalue',
     //   title: <Translate>job Role</Translate>,
@@ -411,6 +413,7 @@ const handleSave = async () => {
       />
     </Form>
   );
+  
   return (
     <div>
       <div>
@@ -426,7 +429,7 @@ const handleSave = async () => {
             </MyButton>
           </div>
           <MyTable
-            data={users ?? []}
+            data={paginatedData ?? []}
             columns={tableColumns}
             rowClassName={isSelected}
             onRowClick={rowData => {
@@ -443,7 +446,7 @@ const handleSave = async () => {
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
             filters={filters()}
-            loading={isLoading|| isFetching}
+            loading={isLoading}
           />
           <AddEditUser
             open={popupOpen}

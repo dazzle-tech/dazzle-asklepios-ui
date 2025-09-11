@@ -22,7 +22,7 @@ const MyButton = ({
         color:
           appearance === 'ghost' || appearance === 'link' || appearance === 'subtle'
             ? props.color ?? 'var(--primary-blue)'
-            : 'white',
+            : props.color ?? 'white',
 
         width: props.width,
         borderRadius: props.radius,
