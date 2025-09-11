@@ -68,9 +68,9 @@ const columns: ColumnConfig[] = [
 const PaduaPredictionScore = () => {
   const [sortColumn, setSortColumn] = useState('totalScore');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-  
+
   //select row
-    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -82,7 +82,7 @@ const PaduaPredictionScore = () => {
     const aVal = a[sortColumn];
     const bVal = b[sortColumn];
     if (aVal === bVal) return 0;
-    return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+    return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
   });
 
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -102,19 +102,19 @@ const PaduaPredictionScore = () => {
   };
 
   const filters = (
-    <Form fluid>
-      <div className="bt-div">
+    <div className="table-buttons-container">
+      <div className="left-group">
         <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
         <Checkbox>Show Cancelled</Checkbox>
-        <div className="bt-right">
-          <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
-            Add
-          </MyButton>
-        </div>
       </div>
-    </Form>
+      <div className="right-group">
+        <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
+          Add
+        </MyButton>
+      </div>
+    </div>
   );
-//select row
+  //select row
   const isSelectedRow = rowData => {
     return rowData.id === selectedRowId ? 'selected-row' : '';
   };
@@ -124,11 +124,10 @@ const PaduaPredictionScore = () => {
         data={paginatedData}
         columns={columns}
         loading={false}
-        filters={filters}
         sortColumn={sortColumn}
         //select row
         rowClassName={isSelectedRow}
-        onRowClick={(rowData) => {
+        onRowClick={rowData => {
           setSelectedRowId(rowData.id);
         }}
         sortType={sortType}
@@ -144,6 +143,7 @@ const PaduaPredictionScore = () => {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
         }}
+        tableButtons={filters}
       />
 
       <PaduaPredictionScoreModal open={modalOpen} setOpen={setModalOpen} onSave={handleSave} />

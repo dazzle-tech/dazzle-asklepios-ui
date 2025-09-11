@@ -73,8 +73,8 @@ const GlasgowComaScale = () => {
   // Pagination states
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-//select row
-    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
+  //select row
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   // Modal open state
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -111,19 +111,19 @@ const GlasgowComaScale = () => {
 
   // Filters UI with Cancel button, Show Cancelled checkbox, Add button
   const filters = (
-    <Form fluid>
-      <div className="bt-div">
+    <div className="table-buttons-container">
+      <div className="left-group">
         <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
         <Checkbox>Show Cancelled</Checkbox>
-        <div className="bt-right">
-          <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
-            Add
-          </MyButton>
-        </div>
       </div>
-    </Form>
+      <div className="right-group">
+        <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
+          Add
+        </MyButton>
+      </div>
+    </div>
   );
-//select row
+  //select row
   const isSelectedRow = rowData => {
     return rowData.id === selectedRowId ? 'selected-row' : '';
   };
@@ -134,11 +134,11 @@ const GlasgowComaScale = () => {
         data={paginatedData}
         columns={columns}
         loading={false}
-        filters={filters}
         sortColumn={sortColumn}
         rowClassName={isSelectedRow}
-        onRowClick={(rowData) => {
-        setSelectedRowId(rowData.id);}}
+        onRowClick={rowData => {
+          setSelectedRowId(rowData.id);
+        }}
         sortType={sortType}
         onSortChange={(col, type) => {
           setSortColumn(col);
@@ -152,6 +152,7 @@ const GlasgowComaScale = () => {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
         }}
+        tableButtons={filters}
       />
 
       <GlasgowComaScaleModal open={modalOpen} setOpen={setModalOpen} onSave={handleSave} />

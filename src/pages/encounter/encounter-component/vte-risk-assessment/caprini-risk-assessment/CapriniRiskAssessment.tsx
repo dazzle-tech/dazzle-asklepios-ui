@@ -82,8 +82,7 @@ const CapriniRiskAssessment = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
   //select row
-    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
-
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
 
   // State for pagination
   const [page, setPage] = useState(0);
@@ -100,7 +99,7 @@ const CapriniRiskAssessment = () => {
     const aVal = a[sortColumn];
     const bVal = b[sortColumn];
     if (aVal === bVal) return 0;
-    return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+    return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
   });
 
   // Apply pagination to sorted data
@@ -125,19 +124,19 @@ const CapriniRiskAssessment = () => {
 
   // Filters section above the table
   const filters = (
-    <Form fluid>
-      <div className="bt-div">
+    <div className="table-buttons-container">
+      <div className="left-group">
         <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
         <Checkbox>Show Cancelled</Checkbox> {/* Not implemented yet */}
-        <div className="bt-right">
-          <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
-            Add
-          </MyButton>
-        </div>
       </div>
-    </Form>
+      <div className="right-group">
+        <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
+          Add
+        </MyButton>
+      </div>
+    </div>
   );
-//select row
+  //select row
   const isSelectedRow = rowData => {
     return rowData.id === selectedRowId ? 'selected-row' : '';
   };
@@ -148,13 +147,11 @@ const CapriniRiskAssessment = () => {
         data={paginatedData}
         columns={columns}
         loading={false}
-        filters={filters}
-//select row
+        //select row
         rowClassName={isSelectedRow}
-        onRowClick={(rowData) => {
+        onRowClick={rowData => {
           setSelectedRowId(rowData.id);
         }}
-
         sortColumn={sortColumn}
         sortType={sortType}
         onSortChange={(col, type) => {
@@ -169,6 +166,7 @@ const CapriniRiskAssessment = () => {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0); // Reset to first page
         }}
+        tableButtons={filters}
       />
 
       {/* Modal for adding new risk assessment */}

@@ -100,19 +100,17 @@ const PressureUlcerRiskAssessment = () => {
 
   // Filters UI - example with "Show Cancelled" checkbox
   const filters = (
-    <Form fluid>
-      <div>
-        <div className="bt-div">
-          <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
-          <Checkbox>Show Cancelled</Checkbox>
-          <div className="bt-right">
-            <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
-              Add
-            </MyButton>
-          </div>
-        </div>
+    <div className="table-buttons-container">
+      <div className="left-group">
+        <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
+        <Checkbox>Show Cancelled</Checkbox>
       </div>
-    </Form>
+      <div className="right-group">
+        <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
+          Add
+        </MyButton>
+      </div>
+    </div>
   );
 
   //select row
@@ -126,7 +124,6 @@ const PressureUlcerRiskAssessment = () => {
         data={paginatedData}
         columns={columns}
         loading={false}
-        filters={filters}
         sortColumn={sortColumn}
         rowClassName={isSelectedRow}
         onRowClick={rowData => {
@@ -145,6 +142,7 @@ const PressureUlcerRiskAssessment = () => {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
         }}
+        tableButtons={filters}
       />
 
       <PressureUlcerRiskAssessmentModal
