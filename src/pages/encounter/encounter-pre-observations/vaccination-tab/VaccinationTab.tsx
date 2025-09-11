@@ -411,66 +411,6 @@ const VaccinationTab = ({
         refetch={encounterVaccine}
         edit={edit}
       />
-      {/* <div className="bt-div">
-        <MyButton
-          prefixIcon={() => <CloseOutlineIcon />}
-          onClick={() => {
-            setPopupCancelOpen(true);
-          }}
-          disabled={
-            encounterVaccination.key === undefined ||
-            encounterVaccination.statusLkey === '3196709905099521' ||
-            isEncounterStatusClosed ||
-            disabled ||
-            encounterVaccination.key != undefined
-              ? encounter.key != encounterVaccination.encounterKey
-              : false
-          }
-        >
-          Cancel
-        </MyButton>
-        <MyButton
-          disabled={
-            encounterVaccination.key === undefined ||
-            encounterVaccination.statusLkey === '3721622082897301' ||
-            encounterVaccination.statusLkey === '3196709905099521' ||
-            encounterVaccination.key != undefined
-              ? encounter.key != encounterVaccination.encounterKey
-              : false || isEncounterStatusClosed || disabled
-          }
-          prefixIcon={() => <CheckOutlineIcon />}
-          onClick={handleReviewe}
-        >
-          Review
-        </MyButton>
-        <Checkbox
-          onChange={(value, checked) => {
-            if (checked) {
-              setEncounterStatus('3196709905099521');
-            } else {
-              setEncounterStatus('');
-            }
-          }}
-        >
-          Show Cancelled
-        </Checkbox>
-        <Checkbox
-          onChange={(value, checked) => {
-            if (checked) {
-              setAllDate(true);
-            } else {
-              setAllDate(false);
-            }
-          }}
-        >
-          Show All Vaccines
-        </Checkbox>
-        <div className="bt-right">
-          <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewVaccine} disabled={edit}>
-            Add
-          </MyButton>
-        </div>
-      </div> */}
       <div className="display-start-10">
         <MyTable
           data={encounterVaccineListResponseLoading?.object ?? []}
