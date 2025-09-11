@@ -11,7 +11,7 @@ const AdvancedSearchFilters = ({
   searchFilter = true,
   clearOnClick = () => {},
   searchOnClick = () => {},
-  content = {}
+  content = null
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
