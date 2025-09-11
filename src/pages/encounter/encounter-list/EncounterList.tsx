@@ -542,9 +542,11 @@ const EncounterList = () => {
                   record={record}
                   setRecord={setRecord}
                   searchable={false}
+                  width={150}
                 />
                 {/* Chief Complain Text */}
                 <MyInput
+                  width={150}
                   fieldName="chiefComplain"
                   fieldType="text"
                   record={record}
@@ -553,6 +555,7 @@ const EncounterList = () => {
                 />
                 {/* Checkboxes*/}
                 <MyInput
+                  width={110}
                   fieldName="withPrescription"
                   fieldType="checkbox"
                   record={record}
@@ -560,6 +563,7 @@ const EncounterList = () => {
                   label="With Prescription"
                 />
                 <MyInput
+                  width={80}
                   fieldName="hasOrders"
                   fieldType="checkbox"
                   record={record}
@@ -567,6 +571,7 @@ const EncounterList = () => {
                   label="Has Orders"
                 />
                 <MyInput
+                  width={80}
                   fieldName="isObserved"
                   fieldType="checkbox"
                   record={record}
@@ -575,6 +580,7 @@ const EncounterList = () => {
                 />
                 {/* Priority LOV */}
                 <MyInput
+                  width={150}
                   fieldName="priority"
                   fieldType="select"
                   record={record}
@@ -585,8 +591,9 @@ const EncounterList = () => {
                   placeholder="Select Priority"
                   fieldLabel="Priority"
                   searchable={false}
-                  />            
-                  <MyInput
+                />
+                <MyInput
+                  width={150}
                   fieldType="select"
                   fieldLabel="Priority "
                   fieldName="priority"
@@ -596,15 +603,14 @@ const EncounterList = () => {
                   record={record}
                   setRecord={setRecord}
                   searchable={false}
-                  width={190}
                 />
                 <MyInput
+                  width={190}
                   fieldName="scheduleDateTime"
                   fieldType="datetime"
                   record={record}
                   setRecord={setRecord}
                   fieldLabel="Schedule Date Time"
-                  width={190}
                 />
                 <MyInput
                   fieldName="Status"
@@ -612,8 +618,6 @@ const EncounterList = () => {
                   record={record}
                   setRecord={setRecord}
                   label="status"
-                  width={190}
-
                 />
               </Form>
             </div>
