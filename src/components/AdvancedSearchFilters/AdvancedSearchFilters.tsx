@@ -16,27 +16,28 @@ const AdvancedSearchFilters = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <div className="bt-right-group">
-      <MyButton appearance="ghost" onClick={() => setShowAdvanced(!showAdvanced)}>
-        <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
-        Advance
-      </MyButton>
-
-      {searchFilter && (
-        <MyButton
-          prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
-          onClick={searchOnClick}
-        >
-          Search
+    <>
+      <div className="bt-right-group">
+        <MyButton appearance="ghost" onClick={() => setShowAdvanced(!showAdvanced)}>
+          <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+          Advance
         </MyButton>
-      )}
 
-      <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={clearOnClick}>
-        Clear
-      </MyButton>
+        {searchFilter && (
+          <MyButton
+            prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
+            onClick={searchOnClick}
+          >
+            Search
+          </MyButton>
+        )}
 
+        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={clearOnClick}>
+          Clear
+        </MyButton>
+      </div>
       {showAdvanced && content}
-    </div>
+    </>
   );
 };
 

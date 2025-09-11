@@ -1,29 +1,33 @@
+import React, { useEffect, useState } from 'react';
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyStepper from '@/components/MyStepper';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { formatDateWithoutSeconds } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import { faCakeCandles, faSyringe } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { MdModeEdit } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
+import { Checkbox } from 'rsuite';
+import AddEncounterVaccine from './AddEncounterVaccine';
+import PlusIcon from '@rsuite/icons/Plus';
+import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
+import { ApEncounterVaccination, ApVaccine, ApVaccineBrands } from '@/types/model-types';
 import {
   useGetEncounterVaccineQuery,
   useSaveEncounterVaccineMutation
 } from '@/services/observationService';
-import { ApEncounterVaccination, ApVaccine, ApVaccineBrands } from '@/types/model-types';
 import {
   newApEncounterVaccination,
   newApVaccine,
   newApVaccineBrands,
   newApVaccineDose
 } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { formatDateWithoutSeconds } from '@/utils';
-import { notify } from '@/utils/uiReducerActions';
-import { faCakeCandles, faSyringe } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useState } from 'react';
-import { MdModeEdit } from 'react-icons/md';
-import { useLocation } from 'react-router-dom';
-import AddEncounterVaccine from './AddEncounterVaccine';
 import './styles.less';
 
 const VaccinationTab = ({
@@ -116,11 +120,11 @@ const VaccinationTab = ({
       doseNameLkey: null
     });
   };
-  // // Handle Add New Vaccine Record
-  // const handleAddNewVaccine = () => {
-  //   handleClearField();
-  //   setPopupOpen(true);
-  // };
+  // Handle Add New Vaccine Record
+  const handleAddNewVaccine = () => {
+    handleClearField();
+    setPopupOpen(true);
+  };
 
   // Change page event handler
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -150,20 +154,20 @@ const VaccinationTab = ({
     setPopupCancelOpen(false);
   };
   // //handle Reviewe Vaccine
-  // const handleReviewe = () => {
-  //   saveEncounterVaccine({
-  //     ...encounterVaccination,
-  //     statusLkey: '3721622082897301',
-  //     reviewedAt: reviewedAt,
-  //     reviewedBy: authSlice.user.key,
-  //     updatedBy: authSlice.user.key
-  //   })
-  //     .unwrap()
-  //     .then(() => {
-  //       dispatch(notify({ msg: 'Encounter Vaccine Reviewed Successfully', sev: 'success' }));
-  //       encounterVaccine();
-  //     });
-  // };
+  const handleReviewe = () => {
+    saveEncounterVaccine({
+      ...encounterVaccination,
+      statusLkey: '3721622082897301',
+      reviewedAt: reviewedAt,
+      reviewedBy: authSlice.user.key,
+      updatedBy: authSlice.user.key
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'Encounter Vaccine Reviewed Successfully', sev: 'success' }));
+        encounterVaccine();
+      });
+  };
   // Effects
   useEffect(() => {
     // TODO update status to be a LOV value
@@ -407,7 +411,6 @@ const VaccinationTab = ({
         refetch={encounterVaccine}
         edit={edit}
       />
-
       <div className="display-start-10">
         <MyTable
           data={encounterVaccineListResponseLoading?.object ?? []}
@@ -425,6 +428,80 @@ const VaccinationTab = ({
           totalCount={totalCount}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
+          tableButtons={
+            <div className="bt-div-2">
+              <div className="bt-left-2">
+                <MyButton
+                  prefixIcon={() => <CloseOutlineIcon />}
+                  onClick={() => {
+                    setPopupCancelOpen(true);
+                  }}
+                  disabled={
+                    encounterVaccination.key === undefined ||
+                    encounterVaccination.statusLkey === '3196709905099521' ||
+                    isEncounterStatusClosed ||
+                    disabled ||
+                    (encounterVaccination.key != undefined
+                      ? encounter.key != encounterVaccination.encounterKey
+                      : false)
+                  }
+                >
+                  Cancel
+                </MyButton>
+
+                <MyButton
+                  disabled={
+                    encounterVaccination.key === undefined ||
+                    encounterVaccination.statusLkey === '3721622082897301' ||
+                    encounterVaccination.statusLkey === '3196709905099521' ||
+                    (encounterVaccination.key != undefined
+                      ? encounter.key != encounterVaccination.encounterKey
+                      : false) ||
+                    isEncounterStatusClosed ||
+                    disabled
+                  }
+                  prefixIcon={() => <CheckOutlineIcon />}
+                  onClick={handleReviewe}
+                >
+                  Review
+                </MyButton>
+
+                <Checkbox
+                  onChange={(value, checked) => {
+                    if (checked) {
+                      setEncounterStatus('3196709905099521');
+                    } else {
+                      setEncounterStatus('');
+                    }
+                  }}
+                >
+                  Show Cancelled
+                </Checkbox>
+
+                <Checkbox
+                  onChange={(value, checked) => {
+                    if (checked) {
+                      setAllDate(true);
+                    } else {
+                      setAllDate(false);
+                    }
+                  }}
+                >
+                  Show All Vaccines
+                </Checkbox>
+              </div>
+
+              <div className="bt-right-2">
+                <MyButton
+                  prefixIcon={() => <PlusIcon />}
+                  onClick={handleAddNewVaccine}
+                  disabled={edit}
+                >
+                  Add
+                </MyButton>
+              </div>
+            </div>
+          }
         />
 
         <div className="vaccine-stepper">
@@ -466,7 +543,12 @@ const VaccinationTab = ({
                       </div>
                     </div>
 
-                    <MyButton>Give</MyButton>
+                    <MyButton
+                      prefixIcon={() => <FontAwesomeIcon icon={faSyringe} />}
+                      onClick={handleAddNewVaccine}
+                    >
+                      Give
+                    </MyButton>
                   </div>
                 ),
                 completed: true
@@ -486,8 +568,6 @@ const VaccinationTab = ({
                         <p className="margin-top-3">6 Months</p>
                       </div>
                     </div>
-
-                    <MyButton>Give</MyButton>
                   </div>
                 ),
                 completed: false
