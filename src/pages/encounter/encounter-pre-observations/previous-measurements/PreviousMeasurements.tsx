@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import './styles.less';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+
 import { Line } from 'react-chartjs-2';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
@@ -237,6 +238,32 @@ const PreviousMeasurements = ({ patient }) => {
     });
   }, [fromDate, toDate, sampleData]);
 
+  // pagination state — zero-based page index
+  const [pageIndex, setPageIndex] = useState(5); // 0 = first page
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  // ensure current page is valid if data length or rowsPerPage changes
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredData.length / rowsPerPage) - 1);
+    if (pageIndex > maxPage) setPageIndex(0);
+  }, [filteredData.length, rowsPerPage, pageIndex]);
+
+  // slice for current page
+  const paginatedData = useMemo(() => {
+    const start = pageIndex * rowsPerPage;
+    return filteredData.slice(start, start + rowsPerPage);
+  }, [filteredData, pageIndex, rowsPerPage]);
+
+  // handlers matching MyTable expectations
+  const handlePageChange = (_event, newPage) => {
+    setPageIndex(newPage); // newPage is zero-based
+  };
+
+  const handleRowsPerPageChange = event => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPageIndex(0); // go back to first page when page size changes
+  };
+
   const filters = () => {
     return (
       <Form layout="inline" fluid>
@@ -326,7 +353,17 @@ const PreviousMeasurements = ({ patient }) => {
 
   return (
     <div>
-      <MyTable data={filteredData} columns={columns} filters={filters()} />
+      <MyTable
+        height={600}
+        filters={filters()}
+        data={paginatedData}
+        columns={columns}
+        page={pageIndex} // zero-based
+        rowsPerPage={rowsPerPage}
+        totalCount={filteredData.length} // total (for pager)
+        onPageChange={handlePageChange} // (_ , newPage)
+        onRowsPerPageChange={handleRowsPerPageChange} // (event)
+      />
 
       {selectedMetric && (
         <div className="margin-top-100">
