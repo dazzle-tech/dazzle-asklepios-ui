@@ -12,21 +12,12 @@ import Logo from '../../images/Logo_BLUE_New.svg';
 import { setScreenKey } from '@/utils/uiReducerActions';
 import MyInput from '../MyInput';
 import './styles.less';
-import { useSelector } from 'react-redux';
 import UserStickyNotes from '../UserStickyNotes/UserStickyNotes';
 const { getHeight, on } = DOMHelper;
-const NavItem = props => {
-  const { title, eventKey, ...rest } = props;
-  return (
-    <Nav.Item eventKey={eventKey} as={NavLink} {...rest}>
-      {title}
-    </Nav.Item>
-  );
-};
+
 export interface NavItemData {
   eventKey: string;
-  title: JSX.Element;
-  titleValue: string,
+  title: string;
   icon?: any;
   to?: string;
   target?: string;
@@ -35,12 +26,19 @@ export interface NavItemData {
 export interface FrameProps {
   navs: NavItemData[];
   children?: React.ReactNode;
-  mode: string
+  mode: string;
 }
 const Frame = (props: FrameProps) => {
   const { navs } = props;
   const { mode } = props;
-   
+  const NavItem = props => {
+    const { title, eventKey, ...rest } = props;
+    return (
+      <Nav.Item eventKey={eventKey} as={NavLink} {...rest}>
+        {title}
+      </Nav.Item>
+    );
+  };
   const [expand, setExpand] = useState(false);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
   const [recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({ screen: '' });
@@ -79,7 +77,7 @@ const Frame = (props: FrameProps) => {
   const screenExist: (module: NavItemData) => boolean = (module: NavItemData) => {
     for (const screen of module?.children) {
       if (
-        screen.titleValue
+        screen.title
           .toLocaleLowerCase()
           .includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())
       ) {
@@ -96,7 +94,7 @@ const Frame = (props: FrameProps) => {
       >
         <Sidenav.Header></Sidenav.Header>
         <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
-          <Sidenav.Body style={navBodyStyle} >
+          <Sidenav.Body style={navBodyStyle}>
             <Nav className="sidebar-scroll">
               {expand && (
                 <img
@@ -137,13 +135,14 @@ const Frame = (props: FrameProps) => {
                 if (children && screenExist(item)) {
                   return (
                     <Nav.Menu
-                      className={`nav-menu ${expand ? 'expanded' : ''} ${mode === 'light' ? 'light' : 'dark'}`}
+                      className={`nav-menu ${expand ? 'expanded' : ''} ${
+                        mode === 'light' ? 'light' : 'dark'
+                      }`}
                       key={item.eventKey}
                       placement={expand ? 'bottomStart' : 'rightStart'}
                       trigger="hover"
                       {...rest}
                     >
-
                       {/* This inline style cannot be removed because it uses dynamic variables */}
                       <div
                         style={{
@@ -153,7 +152,7 @@ const Frame = (props: FrameProps) => {
                       >
                         {children.map(child => {
                           if (
-                            child.titleValue
+                            child.title
                               .toLocaleLowerCase()
                               .includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())
                           ) {
@@ -194,11 +193,7 @@ const Frame = (props: FrameProps) => {
         />
       </Sidebar>
       <Container className={containerClasses}>
-<Header
-  expand={expand}
-  setExpand={setExpand}
-  setExpandNotes={setExpandNotes}
-/>
+        <Header expand={expand} setExpand={setExpand} setExpandNotes={setExpandNotes} />
         <Content>
           <Stack
             id="fixedInfoBar"
@@ -209,22 +204,21 @@ const Frame = (props: FrameProps) => {
             divider={<Divider vertical />}
           ></Stack>
 
-<div className="content-with-sticky">
-  <div className="main-content-area">
-    <Outlet />
-  </div>
+          <div className="content-with-sticky">
+            <div className="main-content-area">
+              <Outlet />
+            </div>
 
-  {expandNotes && (
-    <div className="sticky-sidebar-area">
-      <UserStickyNotes
-        expand={expandNotes}
-        setExpand={setExpandNotes}
-        windowHeight={windowHeight}
-      />
-    </div>
-  )}
-</div>
-
+            {expandNotes && (
+              <div className="sticky-sidebar-area">
+                <UserStickyNotes
+                  expand={expandNotes}
+                  setExpand={setExpandNotes}
+                  windowHeight={windowHeight}
+                />
+              </div>
+            )}
+          </div>
         </Content>
       </Container>
     </Container>

@@ -28,6 +28,13 @@
       width: 1.3em !important;
     }
   }
+  .rs-sidenav-nav > .rs-sidenav-item > .rs-icon:not(.rs-dropdown-toggle-caret),
+  .rs-sidenav-nav > .rs-dropdown .rs-dropdown-toggle > .rs-icon:not(.rs-dropdown-toggle-caret) {
+    color: var(--gray-dark) !important;
+  }
+  .rs-dropdown-item > .rs-icon {
+    color: var(--gray-dark) !important;
+  }
 }
 .brand {
   padding: 10px 18px;
@@ -144,7 +151,6 @@
   .name {
     font-size: 13px;
     font-weight: bold;
-    color: '#333';
   }
   .location {
     font-size: 10px;
@@ -465,6 +471,22 @@
 
 // Keep this as the last style in the file to override styles when dark mode is active
 .frame.dark {
+  .nav-menu {
+    color: var(--white) !important;
+    .rs-sidenav-item,
+    .rs-dropdown-toggle {
+      color: var(--white) !important;
+    }
+    ul {
+      div {
+        li {
+          .rs-dropdown-item.rs-dropdown-item-with-icon {
+            color: var(--white) !important;
+          }
+        }
+      }
+    }
+  }
   .rs-sidebar {
     background-color: var(--black);
   }
@@ -475,5 +497,22 @@
     .rs-dropdown-menu {
       background-color: var(--black) !important;
     }
+  }
+  .rs-sidenav-nav > .rs-sidenav-item > .rs-icon:not(.rs-dropdown-toggle-caret),
+  .rs-sidenav-nav > .rs-dropdown .rs-dropdown-toggle > .rs-icon:not(.rs-dropdown-toggle-caret) {
+    color: var(--white) !important;
+  }
+  .rs-dropdown-item > .rs-icon {
+    color: var(--white) !important;
+  }
+  .container-of-organization-info {
+    .organization-img {
+    color: var(--white);
+    margin-right: 5.45%;
+  }
+  .location {
+    font-size: 10px;
+    color: #c4c0c0;
+  }
   }
 }
