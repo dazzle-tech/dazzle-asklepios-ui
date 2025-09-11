@@ -30,13 +30,6 @@ const FullViewTable = ({ open, setOpen, list }) => {
         return rowData?.latestheartrate ? `${rowData.latestheartrate} bpm` : '';
       }
     },
-    // {
-    //   key: "latestrespiratoryrate",
-    //   title: <Translate>R.R</Translate>,
-    //   render: (rowData: any) => {
-    //     return rowData?.latestrespiratoryrate ? `${rowData.latestrespiratoryrate} bpm` : "";
-    //   }
-    // },
     {
       key: 'latestoxygensaturation',
       title: <Translate>SpO2</Translate>,
