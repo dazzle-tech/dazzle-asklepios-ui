@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { Form } from 'rsuite';
+import { Checkbox } from 'rsuite';
+import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import MyButton from '@/components/MyButton/MyButton';
+import CancellationModal from '@/components/CancellationModal';
 import PlusIcon from '@rsuite/icons/Plus';
 import './styles.less';
 import { GiKidneys } from 'react-icons/gi';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperclip } from '@fortawesome/free-solid-svg-icons';
+import { faPaperclip,faCheck } from '@fortawesome/free-solid-svg-icons';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import MyModal from '@/components/MyModal/MyModal';
 import DialysisRequestModal from './DialysisRequestModal';
-// Sample data for Dialysis Requests
+
 const initialDialysisData = [
   {
     id: 1,
@@ -22,7 +24,12 @@ const initialDialysisData = [
     frequency: '3 times/week',
     priority: 'High',
     department: 'Nephrology',
-    scheduledDate: '2025-08-05'
+    scheduledDate: '2025-08-05',
+    submittedBy: 'Dr. Sarah',
+    submittedAt: '2025-08-01 10:00 AM',
+    cancelledBy: 'Admin',
+    cancelledAt: '2025-08-03 11:00 AM',
+    cancelReason: 'Patient discharged'
   },
   {
     id: 2,
@@ -33,11 +40,17 @@ const initialDialysisData = [
     frequency: 'Daily',
     priority: 'Medium',
     department: 'Internal Medicine',
-    scheduledDate: '2025-08-06'
+    scheduledDate: '2025-08-06',
+    submittedBy: '',
+    submittedAt: '',
+    cancelledBy: '',
+    cancelledAt: '',
+    cancelReason: ''
   }
 ];
 
 // Table column configuration
+
 const columns: ColumnConfig[] = [
   {
     key: 'createdByAt',
@@ -87,8 +100,55 @@ const columns: ColumnConfig[] = [
     title: 'Scheduled Date',
     dataKey: 'scheduledDate',
     width: 150
+  },
+
+  // ✅ Submitted By\At (Expanded)
+  {
+    key: 'submittedByAt',
+    title: 'Submitted By\\At',
+    dataKey: 'submittedByAt',
+    expandable: true,
+    render: row =>
+      row.submittedBy ? (
+        <>
+          {row.submittedBy}
+          <br />
+          <span className="date-table-style">{row.submittedAt}</span>
+        </>
+      ) : (
+        <i style={{ color: '#888' }}>Not submitted</i>
+      )
+  },
+
+  // ❌ Cancelled By\At (Expanded)
+  {
+    key: 'cancelledByAt',
+    title: 'Cancelled By\\At',
+    dataKey: 'cancelledByAt',
+    expandable: true,
+    render: row =>
+      row.cancelledBy ? (
+        <>
+          {row.cancelledBy}
+          <br />
+          <span className="date-table-style">{row.cancelledAt}</span>
+        </>
+      ) : (
+        <i style={{ color: '#888' }}>Not cancelled</i>
+      )
+  },
+
+  // ❌ Cancellation Reason (Expanded)
+  {
+    key: 'cancelReason',
+    title: 'Cancellation Reason',
+    dataKey: 'cancelReason',
+    expandable: true,
+    render: row =>
+      row.cancelReason ? row.cancelReason : <i style={{ color: '#888' }}>N/A</i>
   }
 ];
+
 
 const DialysisRequest = () => {
   const [sortColumn, setSortColumn] = useState('scheduledDate');
@@ -99,6 +159,8 @@ const DialysisRequest = () => {
   const [dialysisData, setDialysisData] = useState(initialDialysisData);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
+    const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [cancelObject, setCancelObject] = useState<any>({});
 
   const sortedData = [...dialysisData].sort((a, b) => {
     const aVal = a[sortColumn];
@@ -110,13 +172,36 @@ const DialysisRequest = () => {
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const tablebuttons = (
-    <Form fluid>
-      <div className="dialysis-request-buttons-right">
-        <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpenEncounterLogsModal(true)}>
-          Add
-        </MyButton>
-      </div>
-    </Form>
+  <div className="table-buttons-container">
+    <div className="left-group">
+      <MyButton
+        prefixIcon={() => <CloseOutlineIcon />}
+        onClick={() => {
+          setCancelObject({});
+          setOpenCancelModal(true);
+        }}
+      >
+        Cancel
+      </MyButton>
+
+      <Checkbox>Show Cancelled</Checkbox>
+    </div>
+
+    <div className="right-group-buttons-dialysis-request">
+<MyButton
+  color="green"
+  prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}>
+  Submit
+</MyButton>
+
+<MyButton
+  prefixIcon={() => <PlusIcon />}
+  onClick={() => setOpenEncounterLogsModal(true)}>
+        Add
+</MyButton>
+
+    </div>
+  </div>
   );
 
   const isSelectedRow = rowData => {
@@ -173,6 +258,20 @@ const DialysisRequest = () => {
         selectedPatientAttacment={null}
         setSelectedPatientAttacment={() => null}
       />
+
+      <CancellationModal
+  open={openCancelModal}
+  setOpen={setOpenCancelModal}
+  object={cancelObject}
+  setObject={setCancelObject}
+  handleCancle={() => {
+    console.log('Cancelled:', cancelObject);
+    setOpenCancelModal(false);
+  }}
+  title="Cancel Assessment"
+  fieldLabel="Reason for cancellation"
+  fieldName="cancelReason"
+/>
     </div>
   );
 };

@@ -12,12 +12,12 @@ import {
 } from '@/services/encounterService';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
 import { FaPills, FaSyringe } from 'react-icons/fa';
-import { faSyringe } from '@fortawesome/free-solid-svg-icons';
 import { newApDrugOrder, newApDrugOrderMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
+import DrugOrderPreview from './DrugOrderPreview';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useState } from 'react';
@@ -121,10 +121,34 @@ const DrugOrder = props => {
       }
     ]
   });
+
+
+  const [filteredList, setFilteredList] = useState([]);
+
+  const { data: orderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MEDCATION_ORDER_TYPE');
+  const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+  const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
+  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
+  const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
+  // Fetch route Lov response
+  const { data: routeLovQueryResponse } = useGetLovValuesByCodeQuery('FLUID_ROUTE');
+  // Fetch frequency Lov response
+  const { data: frequencyLovQueryResponse } = useGetLovValuesByCodeQuery('IV_FREQUENCY');
+  // Fetch infusion Device Lov response
+  const { data: infusionDeviceLovQueryResponse } = useGetLovValuesByCodeQuery('INFUSION_DEVICE');
+  // Fetch priority Lov response
+  const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+  // Fetch units OF TIME Lov response
+  const { data: unitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
+
+
+
   const [orderMedication, setOrderMedication] = useState<any>({
     ...newApDrugOrderMedications,
     drugOrderKey: drugKey
   });
+
+  const [showPreview, setShowPreview] = useState(false);
   const [saveDrugorder, saveDrugorderMutation] = useSaveDrugOrderMutation();
   const [saveDrugorderMedication, saveDrugorderMedicationMutation] =
     useSaveDrugOrderMedicationMutation();
@@ -318,6 +342,24 @@ const DrugOrder = props => {
         console.error('Refetch failed:', error);
       });
   };
+
+const handleCheckboxChangeRow = rowData => {
+  setSelectedRows(prev => {
+    let newSelected;
+    if (prev.includes(rowData)) {
+      newSelected = prev.filter(item => item !== rowData);
+      setShowPreview(false);
+    } else {
+      newSelected = [...prev, rowData];
+      setOrderMedication(rowData);
+      setShowPreview(true);
+    }
+    return newSelected;
+  });
+};
+
+
+
   const handleCleare = () => {
     setOrderMedication({
       ...newApDrugOrderMedications,
@@ -336,15 +378,7 @@ const DrugOrder = props => {
     });
     setSelectedGeneric(null);
   };
-  const handleCheckboxChange = key => {
-    setSelectedRows(prev => {
-      if (prev.includes(key)) {
-        return prev.filter(item => item !== key);
-      } else {
-        return [...prev, key];
-      }
-    });
-  };
+
   const CloseCancellationReasonModel = () => {
     setOpenCancellationReasonModel(false);
   };
@@ -361,7 +395,7 @@ const DrugOrder = props => {
             className="check-box"
             key={rowData.id}
             checked={selectedRows.includes(rowData)}
-            onChange={() => handleCheckboxChange(rowData)}
+            onChange={() => handleCheckboxChangeRow(rowData)}
             disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
           />
         );
@@ -381,7 +415,7 @@ const DrugOrder = props => {
     {
       key: 'drugOrderType',
       dataKey: 'drugOrderTypeLkey',
-      title: 'Drug Order Type',
+      title: 'medication Order Type',
       flexGrow: 1,
       render: (rowData: any) => {
         return rowData.drugOrderTypeLvalue
@@ -717,20 +751,44 @@ const DrugOrder = props => {
           title={'Cancellation'}
         />
 
-        <DetailsModal
-          edit={edit}
-          open={openDetailsModel}
-          setOpen={setOpenDetailsModel}
-          orderMedication={orderMedication}
-          setOrderMedication={setOrderMedication}
-          drugKey={drugKey}
-          editing={editing}
-          patient={patient}
-          encounter={encounter}
-          medicRefetch={medicRefetch}
-          openToAdd={openToAdd}
-          isFavorite={isFavorite}
-        />
+<DetailsModal
+  edit={edit}
+  open={openDetailsModel}
+  setOpen={setOpenDetailsModel}
+  orderMedication={orderMedication}
+  setOrderMedication={setOrderMedication}
+  drugKey={drugKey}
+  editing={editing}
+  patient={patient}
+  encounter={encounter}
+  medicRefetch={medicRefetch}
+  openToAdd={openToAdd}
+  isFavorite={isFavorite}
+/>
+
+{showPreview && orderMedication && orderTypeLovQueryResponse && (
+  <DrugOrderPreview
+    orderMedication={orderMedication}
+    fluidOrder={fluidOrder}
+    genericMedicationListResponse={genericMedicationListResponse}
+    orderTypeLovQueryResponse={orderTypeLovQueryResponse}
+    unitLovQueryResponse={unitLovQueryResponse}
+    unitsLovQueryResponse={unitsLovQueryResponse}
+    DurationTypeLovQueryResponse={DurationTypeLovQueryResponse}
+    filteredList={filteredList}
+    indicationLovQueryResponse={indicationLovQueryResponse}
+    administrationInstructionsLovQueryResponse={administrationInstructionsLovQueryResponse}
+    routeLovQueryResponse={routeLovQueryResponse}
+    frequencyLovQueryResponse={frequencyLovQueryResponse}
+    infusionDeviceLovQueryResponse={infusionDeviceLovQueryResponse}
+  />
+)}
+
+
+
+
+
+
 
         <AddEditFluidOrder
           open={openAddEditFluidOrderPopup}
