@@ -308,18 +308,6 @@ const PhysicianOrderSummaryComponent = () => {
                 fieldLabel="Priority"
                 searchable={false}
               />
-              {/* <MyInput
-                width={150}
-                fieldType="select"
-                fieldLabel="Priority"
-                fieldName="priority"
-                selectData={[]}
-                selectDataLabel="fullName"
-                selectDataValue="id"
-                record={record}
-                setRecord={setRecord}
-                searchable={false}
-              /> */}
               <MyInput
                 width={190}
                 fieldName="scheduleDateTime"
