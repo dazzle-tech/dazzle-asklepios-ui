@@ -5,7 +5,14 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserNurse, faUserDoctor, faPrint } from '@fortawesome/free-solid-svg-icons';
+import {
+  faUserNurse,
+  faUserDoctor,
+  faPrint,
+  faBoxOpen,
+  faListCheck,
+  faFile
+} from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
@@ -31,7 +38,6 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
@@ -58,7 +64,7 @@ const EncounterList = () => {
   const [encounterStatus, setEncounterStatus] = useState({ key: '' });
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
-  //
+  // lovs
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
@@ -592,33 +598,6 @@ const EncounterList = () => {
                   fieldLabel="Priority"
                   searchable={false}
                 />
-                <MyInput
-                  width={150}
-                  fieldType="select"
-                  fieldLabel="Priority "
-                  fieldName="priority"
-                  selectData={[]}
-                  selectDataLabel="fullName"
-                  selectDataValue="id"
-                  record={record}
-                  setRecord={setRecord}
-                  searchable={false}
-                />
-                <MyInput
-                  width={190}
-                  fieldName="scheduleDateTime"
-                  fieldType="datetime"
-                  record={record}
-                  setRecord={setRecord}
-                  fieldLabel="Schedule Date Time"
-                />
-                <MyInput
-                  fieldName="Status"
-                  fieldType="text"
-                  record={record}
-                  setRecord={setRecord}
-                  label="status"
-                />
               </Form>
             </div>
           }
@@ -668,12 +647,19 @@ const EncounterList = () => {
           filters={filters()}
           tableButtons={
             <div className="out-patient-list-table-buttons-position-handle">
-              <MyButton onClick={() => setOpenRefillModal(true)}>Refill Stock</MyButton>
+              <MyButton onClick={() => setOpenRefillModal(true)}>
+                <FontAwesomeIcon icon={faBoxOpen} />
+                Refill Stock
+              </MyButton>
               <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
+                <FontAwesomeIcon icon={faListCheck} />
                 Task Management
               </MyButton>
 
-              <MyButton onClick={() => setOpenEncounterLogsModal(true)}>Encounter Logs</MyButton>
+              <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
+                <FontAwesomeIcon icon={faFile} />
+                Encounter Logs
+              </MyButton>
             </div>
           }
           height={600}

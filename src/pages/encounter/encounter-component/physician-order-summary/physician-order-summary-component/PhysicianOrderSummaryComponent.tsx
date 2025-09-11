@@ -8,6 +8,7 @@ import TableModalManagment from '../table-task-managment/TableTaskManagment';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import '../style.less';
 
 //declares
@@ -15,12 +16,14 @@ const PhysicianOrderSummaryComponent = () => {
   const [openModal, setOpenModal] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
   const rowsPerPage = 5;
+  // lovs
+  const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
   //table samble data
   const data = [
     {
       patientname: 'Ali Ahmad',
-      mrn: 'MRN001',
+      mrn: '1001',
       orderType: 'Medication',
       orderName: 'Paracetamol 500mg PO',
       priority: 'High',
@@ -31,7 +34,7 @@ const PhysicianOrderSummaryComponent = () => {
     },
     {
       patientname: 'Sara Khaled',
-      mrn: 'MRN002',
+      mrn: '1002',
       orderType: 'Lab Test',
       orderName: 'Complete Blood Count (CBC)',
       priority: 'Medium',
@@ -42,7 +45,7 @@ const PhysicianOrderSummaryComponent = () => {
     },
     {
       patientname: 'Omar Zaid',
-      mrn: 'MRN004',
+      mrn: '1003',
       orderType: 'Radiology',
       orderName: 'Chest X-Ray',
       priority: 'Low',
@@ -53,7 +56,7 @@ const PhysicianOrderSummaryComponent = () => {
     },
     {
       patientname: 'Lina Saeed',
-      mrn: 'MRN005',
+      mrn: '1004',
       orderType: 'Medication',
       orderName: 'Ibuprofen 400mg PO',
       priority: 'Medium',
@@ -64,7 +67,7 @@ const PhysicianOrderSummaryComponent = () => {
     },
     {
       patientname: 'Majed Faris',
-      mrn: 'MRN006',
+      mrn: '1005',
       orderType: 'Lab Test',
       orderName: 'Urine Analysis',
       priority: 'Low',
@@ -75,7 +78,7 @@ const PhysicianOrderSummaryComponent = () => {
     },
     {
       patientname: 'Noor Adel',
-      mrn: 'MRN007',
+      mrn: '1006',
       orderType: 'Procedure',
       orderName: 'IV Cannulation',
       priority: 'High',
@@ -213,7 +216,6 @@ const PhysicianOrderSummaryComponent = () => {
   //table filters
   const tablefilters = (
     <>
-      {' '}
       <Form fluid>
         <div className="from-to-input-position">
           <MyInput
@@ -287,7 +289,56 @@ const PhysicianOrderSummaryComponent = () => {
           />
         </div>
       </Form>
-      <AdvancedSearchFilters searchFilter={true} />
+      <AdvancedSearchFilters
+        searchFilter={true}
+        content={
+          <div className="advanced-filters">
+            <Form fluid className="dissss">
+              {/* Priority LOV */}
+              <MyInput
+                width={150}
+                fieldName="priority"
+                fieldType="select"
+                record={record}
+                setRecord={setRecord}
+                selectData={EncPriorityLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                placeholder="Select Priority"
+                fieldLabel="Priority"
+                searchable={false}
+              />
+              {/* <MyInput
+                width={150}
+                fieldType="select"
+                fieldLabel="Priority"
+                fieldName="priority"
+                selectData={[]}
+                selectDataLabel="fullName"
+                selectDataValue="id"
+                record={record}
+                setRecord={setRecord}
+                searchable={false}
+              /> */}
+              <MyInput
+                width={190}
+                fieldName="scheduleDateTime"
+                fieldType="datetime"
+                record={record}
+                setRecord={setRecord}
+                fieldLabel="Schedule Date Time"
+              />
+              <MyInput
+                fieldName="Status"
+                fieldType="text"
+                record={record}
+                setRecord={setRecord}
+                label="status"
+              />
+            </Form>
+          </div>
+        }
+      />
     </>
   );
 
