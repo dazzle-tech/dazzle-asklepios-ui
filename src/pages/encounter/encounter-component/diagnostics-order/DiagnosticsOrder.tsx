@@ -5,8 +5,9 @@ import { notify } from '@/utils/uiReducerActions';
 import {
   faLandMineOn,
   faListCheck,
-  faClipboardCheck,
-  faCreditCard
+  faCreditCard,
+  faVial,
+  faPlus
 } from '@fortawesome/free-solid-svg-icons';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -1040,10 +1041,14 @@ const DiagnosticsOrder = props => {
           <div className="header-third-row">
             {/* Request New Test Setup */}
             <MyButton onClick={handleRequestNewTestSetup} appearance="ghost">
+              <FontAwesomeIcon icon={faVial} />
               <Translate>Request New TestSetup</Translate>
             </MyButton>
             {/* Recall Favorite */}
-            <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
+            <MyButton onClick={() => setOpenFavoritesModal(true)}>
+              <FontAwesomeIcon icon={faStar} />
+              Recall Favorite
+            </MyButton>
             {/* Sign and Submit */}
             <MyButton
               onClick={handleSubmitPres}
@@ -1071,6 +1076,7 @@ const DiagnosticsOrder = props => {
                 Show canceled test
               </Checkbox>
               <MyButton disabled={orders.key == null} onClick={() => setOpenTestsModal(true)}>
+                <FontAwesomeIcon icon={faPlus} />
                 Add Test
               </MyButton>
               <MyButton
