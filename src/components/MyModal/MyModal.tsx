@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import MyButton from '../MyButton/MyButton';
 import MyStepper from '../MyStepper';
+import { useSelector } from 'react-redux';
 const MyModal = ({
   open,
   setOpen,
@@ -29,7 +30,7 @@ const MyModal = ({
   const [internalStep, setInternalStep] = useState(0);
   const activeStep = internalStep;
   const updateStep = setInternalStep;
-
+  const mode = useSelector((state: any) => state.ui.mode);
   const computedPagesCount = steps.length > pagesCount ? steps.length : pagesCount;
   const modalClass = position === 'left' ? 'left-modal' : position === 'right' ? 'rigth-modal' : '';
   const handleNext = () => {
@@ -52,7 +53,7 @@ const MyModal = ({
       open={open}
       onClose={handleCancel}
       size={size}
-      className={`${modalClass} ${customClassName}`}
+      className={`${modalClass} ${customClassName} ${mode === 'light' ? 'modal-light' : 'modal-dark'}`}
     >
       <Modal.Header>
         <Modal.Title>

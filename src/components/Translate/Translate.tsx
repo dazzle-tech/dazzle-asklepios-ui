@@ -1,9 +1,11 @@
 import { useAppSelector } from '@/hooks';
 import React, { useEffect, useState } from 'react';
-
+import { useSelector } from 'react-redux';
+import "./styles.less";
 const Translate = props => {
   const lang = useAppSelector(state => state.ui.lang);
   const translations = useAppSelector(state => state.ui.translations);
+  const mode = useSelector((state: any) => state.ui.mode);
   const [text, setText] = useState('');
 
   useEffect(() => {
@@ -32,7 +34,9 @@ const Translate = props => {
     }
   }, [lang, props.children]);
 
-  return <>{text}</>;
+  return(
+   <span className={`translate ${mode === 'light' ? 'light' : 'dark'}`}>{text}</span>
+  );
 };
 
 export default Translate;

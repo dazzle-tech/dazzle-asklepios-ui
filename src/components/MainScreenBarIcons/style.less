@@ -34,6 +34,9 @@
 }
 
 .main-screen-bar-buttons-main-container {
+  .rs-toggle-presentation{
+    border: solid 1px var(--white) !important;
+  }
   .rs-toggle .rs-toggle-presentation::after {
     width: 18px;
     height: 18px;
@@ -57,5 +60,13 @@
     background-color: var(--rs-toggle-checked-bg) !important;
     color: var(--rs-toggle-checked-thumb);
     box-shadow: none;
+  }
+}
+
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.main-screen-bar-icons-main-container.dark{
+  .header-screen-bar-icon-size-handle{
+    color: var(--white) !important;
   }
 }

@@ -14,14 +14,7 @@ import MyInput from '../MyInput';
 import './styles.less';
 import UserStickyNotes from '../UserStickyNotes/UserStickyNotes';
 const { getHeight, on } = DOMHelper;
-const NavItem = props => {
-  const { title, eventKey, ...rest } = props;
-  return (
-    <Nav.Item eventKey={eventKey} as={NavLink} {...rest}>
-      {title}
-    </Nav.Item>
-  );
-};
+
 export interface NavItemData {
   eventKey: string;
   title: string;
@@ -33,9 +26,19 @@ export interface NavItemData {
 export interface FrameProps {
   navs: NavItemData[];
   children?: React.ReactNode;
+  mode: string;
 }
 const Frame = (props: FrameProps) => {
   const { navs } = props;
+  const { mode } = props;
+  const NavItem = props => {
+    const { title, eventKey, ...rest } = props;
+    return (
+      <Nav.Item eventKey={eventKey} as={NavLink} {...rest}>
+        {title}
+      </Nav.Item>
+    );
+  };
   const [expand, setExpand] = useState(false);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
   const [recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({ screen: '' });
@@ -84,14 +87,14 @@ const Frame = (props: FrameProps) => {
     return false;
   };
   return (
-    <Container className="frame">
+    <Container className={`frame ${mode === 'light' ? 'light' : 'dark'}`}>
       <Sidebar
         className={`sidebar ${expand === true ? 'sidebar-expanded' : 'sidebar-unexpanded'}`}
         collapsible
       >
         <Sidenav.Header></Sidenav.Header>
         <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
-          <Sidenav.Body style={navBodyStyle} >
+          <Sidenav.Body style={navBodyStyle}>
             <Nav className="sidebar-scroll">
               {expand && (
                 <img
@@ -132,13 +135,14 @@ const Frame = (props: FrameProps) => {
                 if (children && screenExist(item)) {
                   return (
                     <Nav.Menu
-                      className={`nav-menu ${expand ? 'expanded' : ''}`}
+                      className={`nav-menu ${expand ? 'expanded' : ''} ${
+                        mode === 'light' ? 'light' : 'dark'
+                      }`}
                       key={item.eventKey}
                       placement={expand ? 'bottomStart' : 'rightStart'}
                       trigger="hover"
                       {...rest}
                     >
-
                       {/* This inline style cannot be removed because it uses dynamic variables */}
                       <div
                         style={{
@@ -181,6 +185,7 @@ const Frame = (props: FrameProps) => {
           </Sidenav.Body>
         </Sidenav>
         <NavToggle
+          mode={mode}
           expand={expand}
           onChange={() => {
             width <= 950 ? setExpand(false) : setExpand(!expand);
@@ -188,11 +193,7 @@ const Frame = (props: FrameProps) => {
         />
       </Sidebar>
       <Container className={containerClasses}>
-<Header
-  expand={expand}
-  setExpand={setExpand}
-  setExpandNotes={setExpandNotes}
-/>
+        <Header expand={expand} setExpand={setExpand} setExpandNotes={setExpandNotes} />
         <Content>
           <Stack
             id="fixedInfoBar"
@@ -203,22 +204,21 @@ const Frame = (props: FrameProps) => {
             divider={<Divider vertical />}
           ></Stack>
 
-<div className="content-with-sticky">
-  <div className="main-content-area">
-    <Outlet />
-  </div>
+          <div className="content-with-sticky">
+            <div className="main-content-area">
+              <Outlet />
+            </div>
 
-  {expandNotes && (
-    <div className="sticky-sidebar-area">
-      <UserStickyNotes
-        expand={expandNotes}
-        setExpand={setExpandNotes}
-        windowHeight={windowHeight}
-      />
-    </div>
-  )}
-</div>
-
+            {expandNotes && (
+              <div className="sticky-sidebar-area">
+                <UserStickyNotes
+                  expand={expandNotes}
+                  setExpand={setExpandNotes}
+                  windowHeight={windowHeight}
+                />
+              </div>
+            )}
+          </div>
         </Content>
       </Container>
     </Container>

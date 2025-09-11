@@ -1,10 +1,10 @@
 .MuiTablePagination-root {
-  overflow-x: auto; 
-  scrollbar-width: none; 
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .MuiTablePagination-root::-webkit-scrollbar {
-  height: 0px; 
+  height: 0px;
 }
 
 .MuiTablePagination-root:hover {
@@ -21,28 +21,27 @@
 }
 
 .my-table-container {
-  overflow-y: auto;  
-  scrollbar-width: none; 
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .my-table-container::-webkit-scrollbar {
-  width: 0px;  
+  width: 0px;
   background: transparent;
 }
 
 .my-table-container:hover {
-  scrollbar-width: thin; 
+  scrollbar-width: thin;
 }
 
 .my-table-container:hover::-webkit-scrollbar {
-  width: 6px; 
+  width: 6px;
 }
 
 .my-table-container:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.4); 
+  background: rgba(0, 0, 0, 0.4);
   border-radius: 4px;
 }
-
 
 .my-table-wrapper {
   border-radius: 8px;
@@ -55,14 +54,15 @@
     border-radius: 8px;
   }
 
-.my-table-filters {
-  padding: 0.5vw;
-}
+  .my-table-filters {
+    padding: 0.5vw;
+  }
 
-.my-table-content-wrapper{border: 1px solid #dcdcdc;
-      border-radius: 8px;
-margin-top: 0.3vw;
-}
+  .my-table-content-wrapper {
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    margin-top: 0.3vw;
+  }
 
   .no-data-label {
     font-size: var(--medium-font-size);
@@ -75,7 +75,6 @@ margin-top: 0.3vw;
 
 .my-table-container {
   overflow-y: auto;
-
 
   &.MuiPaper-root {
     border: none;
@@ -172,11 +171,11 @@ margin-top: 0.3vw;
   }
 
   &:active {
-    color: #1976d2; 
+    color: #1976d2;
   }
 }
-.my-table-buttons-wrapper{
-  padding-top:  5px !important;
+.my-table-buttons-wrapper {
+  padding-top: 5px !important;
   display: flex;
   flex-direction: row;
   justify-content: end;
@@ -186,4 +185,47 @@ margin-top: 0.3vw;
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.my-table-wrapper.dark {
+  .MuiTableHead-root {
+    .MuiTableRow-root {
+      .MuiTableCell-root {
+        color: #b0c4de;
+        background-color: var(--table-header-bg-dark);
+      }
+    }
+  }
+  .MuiTableBody-root {
+    // Main data rows only
+    .MuiTableRow-root.main-row {
+      .MuiTableCell-root {
+        background-color: var(--dark-black);
+        color: var(--white);
+      }
+       &.even-row {
+          .MuiTableCell-root {
+            background-color: var(--extra-dark-black);
+          }
+        }
+         &:hover {
+          .MuiTableCell-root {
+            background-color: #3a3a3a;
+          }
+        }
+
+        &.selected-row {
+          .MuiTableCell-root {
+            background-color: #555555;
+          }
+        }
+    }
+    
+        
+  }
+  .MuiTablePagination-root {
+  background: var(--table-header-bg-dark);
+  }
 }

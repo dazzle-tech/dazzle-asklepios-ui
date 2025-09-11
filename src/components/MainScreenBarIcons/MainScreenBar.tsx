@@ -1,5 +1,4 @@
 import React from 'react';
-import { useState } from 'react';
 import { IconButton, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -13,54 +12,100 @@ import {
   faNoteSticky
 } from '@fortawesome/free-solid-svg-icons';
 import './style.less';
+import { useSelector } from 'react-redux';
 const MainScreenBar = ({ setExpandNotes }) => {
+  const mode = useSelector(state => state.ui.mode);
   return (
-    <div className='main-screen-bar-icons-main-container'>
+    <div className={`main-screen-bar-icons-main-container ${mode === 'light' ? 'light' : 'dark'}`}>
       {/* Dashboard Customizing */}
-      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Dashboard Customizing</Tooltip>}>
-        <IconButton icon={<FontAwesomeIcon className='header-screen-bar-icon-size-handle' icon={faChartColumn} />} appearance="subtle" circle />
+      <Whisper
+        placement="bottom"
+        trigger="hover"
+        speaker={<Tooltip>Dashboard Customizing</Tooltip>}
+      >
+        <IconButton
+          icon={
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faChartColumn} />
+          }
+          appearance="subtle"
+          circle
+        />
       </Whisper>
 
       {/* Secure Messaging */}
       <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Secure Messaging</Tooltip>}>
-        <IconButton icon={<FontAwesomeIcon className='header-screen-bar-icon-size-handle' icon={faCommentDots} />} appearance="subtle" circle />
+        <IconButton
+          icon={
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCommentDots} />
+          }
+          appearance="subtle"
+          circle
+        />
       </Whisper>
 
       {/* My Appointments */}
       <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>My Appointments</Tooltip>}>
-        <IconButton icon={<FontAwesomeIcon className='header-screen-bar-icon-size-handle' icon={faCalendarDays} />} appearance="subtle" circle />
+        <IconButton
+          icon={
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCalendarDays} />
+          }
+          appearance="subtle"
+          circle
+        />
       </Whisper>
 
       {/* Bookmarks */}
       <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Bookmarks</Tooltip>}>
-        <IconButton icon={<FontAwesomeIcon className='header-screen-bar-icon-size-handle' icon={faBookmark} />} appearance="subtle" circle />
+        <IconButton
+          icon={
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBookmark} />
+          }
+          appearance="subtle"
+          circle
+        />
       </Whisper>
 
       {/* Announcements */}
       <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Announcements</Tooltip>}>
-        <IconButton icon={<FontAwesomeIcon className='header-screen-bar-icon-size-handle' icon={faBullhorn} />} appearance="subtle" circle />
+        <IconButton
+          icon={
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
+          }
+          appearance="subtle"
+          circle
+        />
       </Whisper>
 
       {/* Department Switch */}
       <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Department Switch</Tooltip>}>
-        <IconButton icon={<FontAwesomeIcon className='header-screen-bar-icon-size-handle' icon={faRepeat} />} appearance="subtle" circle />
+        <IconButton
+          icon={<FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faRepeat} />}
+          appearance="subtle"
+          circle
+        />
       </Whisper>
 
       {/* Help & Support */}
       <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Help & Support</Tooltip>}>
-        <IconButton icon={<FontAwesomeIcon className='header-screen-bar-icon-size-handle' icon={faHeadset} />} appearance="subtle" circle />
+        <IconButton
+          icon={<FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faHeadset} />}
+          appearance="subtle"
+          circle
+        />
       </Whisper>
 
-<Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Sticky Notes</Tooltip>}>
-      <IconButton
-        icon={<FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faNoteSticky} />}
-        appearance="subtle"
-        circle
-        onClick={() => setExpandNotes(true)}
-      />
-    </Whisper>
-    
-</div>);
+      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Sticky Notes</Tooltip>}>
+        <IconButton
+          icon={
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faNoteSticky} />
+          }
+          appearance="subtle"
+          circle
+          onClick={() => setExpandNotes(true)}
+        />
+      </Whisper>
+    </div>
+  );
 };
 
 export default MainScreenBar;

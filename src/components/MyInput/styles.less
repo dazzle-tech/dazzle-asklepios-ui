@@ -16,7 +16,6 @@
     font-size: 110%;
     margin: 3px;
   }
- 
 
   .my-input.rs-picker-block {
     .rs-stack {
@@ -32,57 +31,88 @@
 .rs-picker-popup {
   z-index: 2000 !important;
 }
-.arrow-number-style{
- // padding-left: 10px;
+.arrow-number-style {
+  // padding-left: 10px;
   .rs-input-number .rs-btn .rs-icon {
     height: 15px !important;
   }
-  .rs-input-number-btn-group-vertical{
+  .rs-input-number-btn-group-vertical {
     position: relative;
     width: 15px;
     flex: 0 0 15px !important;
     display: block;
   }
-  .rs-input-number-touchspin-down .rs-btn .rs-btn-subtle{
+  .rs-input-number-touchspin-down .rs-btn .rs-btn-subtle {
     height: 15px !important;
     width: 15px !important ;
   }
-  .rs-input-number-touchspin-up .rs-btn .rs-btn-subtle{
+  .rs-input-number-touchspin-up .rs-btn .rs-btn-subtle {
     height: 15px !important;
     width: 15px !important ;
   }
-  .rs-input-number-touchspin-up, .rs-input-number-touchspin-down{
+  .rs-input-number-touchspin-up,
+  .rs-input-number-touchspin-down {
     height: 15px !important;
     width: 15px !important ;
   }
-  .rs-input{
+  .rs-input {
     padding-right: 0px !important;
     padding-left: 0px !important;
   }
 }
 .custom-time-input .rs-input-group {
- border: none  !important;
- height: var(--custom-time-input)!important;
+  border: none !important;
+  height: var(--custom-time-input) !important;
 }
 .input-danger .rs-input {
-  background: #fdecea !important;  
-  color: #b71c1c !important;       
-  box-shadow: 0 0 0 1px #f44336 !important; 
-  border: 1px solid #f44336 !important;     
+  background: #fdecea !important;
+  color: #b71c1c !important;
+  box-shadow: 0 0 0 1px #f44336 !important;
+  border: 1px solid #f44336 !important;
 }
 .rs-input-number > .rs-input {
-    border-bottom-left-radius: 6px !important;
-    border-top-left-radius: 6px !important;
-    padding-left: 10px !important;
+  border-bottom-left-radius: 6px !important;
+  border-top-left-radius: 6px !important;
+  padding-left: 10px !important;
 }
 
-.rs-input-group .rs-input-number, .rs-input-group .rs-input-group-addon, .rs-input-group .rs-input-group-btn, .rs-input-group .rs-picker-date .rs-picker-toggle {
-    border: none !important;
-    border-radius: 0px 3px 3px 0px !important;
-    outline: none !important;
+.rs-input-group .rs-input-number,
+.rs-input-group .rs-input-group-addon,
+.rs-input-group .rs-input-group-btn,
+.rs-input-group .rs-picker-date .rs-picker-toggle {
+  border: none !important;
+  border-radius: 0px 3px 3px 0px !important;
+  outline: none !important;
 }
 
-.rs-checkbox-label{
+.rs-checkbox-label {
   font-size: 13px;
 }
 
+.rs-form-group.dark .rs-input {
+  background-color: var(--dark-black) !important;
+}
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.my-input-container.dark {
+  .required-field {
+    color: red;    
+  }
+  .rs-picker-input-group.rs-input-group.rs-input-group-inside {
+    background-color: var(--dark-black) !important;
+  }
+
+  .rs-input-group input.rs-input ~ .rs-input-group-addon,
+  .rs-input-group .rs-form-control-wrapper ~ .rs-input-group-addon {
+    background-color: var(--gray-dark) !important;
+  }
+  svg:not(:root) {
+    color: var(--white);
+  }
+  .rs-picker-default .rs-picker-toggle.rs-btn {
+    background-color:  var(--dark-black) !important;
+  }
+  .rs-picker.rs-picker-select.rs-picker-default.rs-picker-toggle-wrapper.rs-picker-cleanable {
+    background-color:  var(--dark-black) !important;
+  }
+}

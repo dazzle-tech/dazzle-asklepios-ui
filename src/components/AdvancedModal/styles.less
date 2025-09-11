@@ -1,135 +1,158 @@
 .custom-advanced-modal .modal-header-flex {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .custom-advanced-modal .rs-modal-content {
-    padding: 0 !important;
-    background-color: #f9f9f9 !important;
-    border-radius: 22px !important;
+  padding: 0 !important;
+  background-color: #f9f9f9 !important;
+  border-radius: 22px !important;
 }
 
 .modal-header-left,
 .modal-header-right {
-    width: 50%;
-    text-align: start;
+  width: 50%;
+  text-align: start;
 }
 
 .modal-body-flex {
-    display: flex;
-    gap: 8px;
-
+  display: flex;
+  gap: 8px;
 }
 
 .modal-left-content {
-    background-color: #F5F7FB;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: all 0.3s ease;
+  background-color: #f5f7fb;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 .modal-left-content.closed {
-    width: 0 !important;
-    opacity: 0;
-    padding: 0;
-    overflow: hidden;
-    transition: width 0.3s ease ;
-  }
+  width: 0 !important;
+  opacity: 0;
+  padding: 0;
+  overflow: hidden;
+  transition: width 0.3s ease;
+}
 
-  .modal-right-content {
-    background-color: white;
-    border-radius: 22px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: width 0.3s ease  ;
+.modal-right-content {
+  background-color: white;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.3s ease;
 }
 
 .divider-line {
-    margin: 0;
+  margin: 0;
 }
 
 .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    padding: 16px;
-    gap: 10px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px;
+  gap: 10px;
 }
 
 .custom-advanced-modal .rs-modal-body {
-
-    padding: 0px !important;
-    background-color: #F5F7FB;
-    border-radius: 22px;
+  padding: 0px !important;
+  background-color: #f5f7fb;
+  border-radius: 22px;
 }
 
 .modal-right-title {
-    font-family: 'Inter Semi Bold';
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+  font-family: 'Inter Semi Bold';
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .modal-left-title {
-    font-family: 'Inter Medium';
-    font-size: 18px;
+  font-family: 'Inter Medium';
+  font-size: 18px;
 }
 
 .modal-right-main-title {
-    color: #969FB0;
+  color: #969fb0;
 }
 
 .modal-right-sub-title {
-    color: #1C2836;
+  color: #1c2836;
 }
 
 .modal-right-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 54px;
-    border-bottom: 1px solid #EDEDF0;
-    padding: 0px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 54px;
+  border-bottom: 1px solid #ededf0;
+  padding: 0px 10px;
 }
 
 .modal-left-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 54px;
-    padding: 0px 15px;
-    color: #1C2836;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 54px;
+  padding: 0px 15px;
+  color: #1c2836;
 }
 
 .modal-right-body {
-    padding: 20px 10px;
-    flex: 1;
-    overflow-y: auto;
-
+  padding: 20px 10px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .modal-left-body {
-    padding: 20px 20px;
-    flex: 1;
-    overflow-y: auto;
+  padding: 20px 20px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .modal-right-footer {
-    display: flex;
-    align-items: center;
-    height: 54px;
-    border-top: 1px solid #EDEDF0;
-    padding: 0px 10px;
-    bottom: 0px;
-    background: #fff;
-    position: sticky;
-    bottom: 0;
-    z-index: 2;
+  display: flex;
+  align-items: center;
+  height: 54px;
+  border-top: 1px solid #ededf0;
+  padding: 0px 10px;
+  bottom: 0px;
+  background: #fff;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
 }
 
 .modal-right-footer-buttons {
-    display: flex;
-    margin-left: auto !important;
-    gap: 5px;
+  display: flex;
+  margin-left: auto !important;
+  gap: 5px;
+}
+
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.custom-advanced-modal.dark {
+  .modal-left-content {
+    background-color: var(--extra-dark-black) !important;
+  }
+  .modal-right-content {
+    background-color: var(--dark-black) !important;
+  }
+  .modal-left-title{
+    color: var(--white);
+  }
+  .modal-right-title{
+    .modal-right-main-title{
+     color: var(--white) !important;
+    }
+     
+  }
+  .modal-right-footer {
+    background: var(--dark-black) !important;
+  }
+}
+.custom-advanced-modal.dark .rs-modal-body{
+    background-color: var(--extra-dark-black) !important;
 }

@@ -169,38 +169,28 @@ import ResetPassword from './pages/reset-password/ResetPassword';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import AuthGuard from './pages/authentication/AuthGuard';
-
-
+import { useSelector } from 'react-redux';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
+  const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
   const [navigationMap, setNavigationMap] = useState([]);
-const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
 
-const {
-  data: navigationMapRawData,
-  isLoading: isLoadingNavigationMap,
-  isFetching: isFetchingNavigationMap
-} = useLoadNavigationMapQuery(String(user?.id || ''), {
-  // Using user ID here because in the old backend, the key matches the value of the new user ID.
-  // This ensures proper mapping and allows the UI team to work smoothly.
-  skip: !user?.id, 
-});
-
-
+  const {
+    data: navigationMapRawData,
+    isLoading: isLoadingNavigationMap,
+    isFetching: isFetchingNavigationMap
+  } = useLoadNavigationMapQuery(String(user?.id || ''), {
+    // Using user ID here because in the old backend, the key matches the value of the new user ID.
+    // This ensures proper mapping and allows the UI team to work smoothly.
+    skip: !user?.id
+  });
 
   const [screenKeys, setScreenKeys] = useState({});
   const location = useLocation();
-
-  useEffect(() => {
-    console.log(config.backendBaseURL);
-    console.log(config.tenantId);
-    console.log(location.pathname);
-  }, []);
-
-
 
   useEffect(() => {
     if (navigationMapRawData && !isLoadingNavigationMap && !isFetchingNavigationMap) {
@@ -221,7 +211,7 @@ const {
     const navs = [];
     navs.push({
       eventKey: 'dashboard',
-      icon: <Icon fill="var(--gray-dark)" as={MdDashboard} />,
+      icon: <Icon as={MdDashboard} />,
       title: 'Dashboard',
       to: '/'
     });
@@ -230,12 +220,7 @@ const {
     navigationMapRawData.screens.map(screenWithoutModule => {
       navs.push({
         eventKey: screenWithoutModule.key,
-        icon: (
-          <Icon
-            fill="var(--gray-dark)"
-            as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']}
-          />
-        ),
+        icon: <Icon as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
         title: screenWithoutModule.name,
         to: '/'.concat(screenWithoutModule.navPath)
       });
@@ -251,7 +236,7 @@ const {
       childrenScreens.map(screen => {
         chidlrenNavs.push({
           eventKey: screen.key,
-          icon: <Icon fill="var(--gray-dark)" as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
+          icon: <Icon as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
           title: screen.name,
           to: '/'.concat(screen.navPath)
         });
@@ -261,7 +246,7 @@ const {
 
       navs.push({
         eventKey: module.key,
-        icon: <Icon fill="var(--gray-dark)" as={icons[module?.iconImagePath ?? 'FaBox']} />,
+        icon: <Icon as={icons[module?.iconImagePath ?? 'FaBox']} />,
         title: module.name,
         children: chidlrenNavs
       });
@@ -274,10 +259,9 @@ const {
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
-      <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
-        {/* @ {authSlice.tenant ? authSlice.tenant.tenantName : 'No-Tenant'} */}
-      </div>
-
+      <div
+        style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}
+      ></div>
       <div
         id="blocker-error"
         style={{
@@ -306,33 +290,33 @@ const {
         <Routes>
           <Route
             element={
-            <AuthGuard>
-              <ProtectedRoute>
-                <BlockUI
-                  template={
-                    <h3
-                      style={{
-                        textAlign: 'center',
-                        color: 'white',
+              <AuthGuard>
+                <ProtectedRoute>
+                  <BlockUI
+                    template={
+                      <h3
+                        style={{
+                          textAlign: 'center',
+                          color: 'white',
 
-                        top: '10%',
-                        position: 'absolute'
-                      }}
-                    >
-                      <Translate>Loading</Translate>...
-                    </h3>
-                  }
-                  blocked={uiSlice.loading}
-                >
-                  <Outlet />
-                </BlockUI>
-              </ProtectedRoute>
+                          top: '10%',
+                          position: 'absolute'
+                        }}
+                      >
+                        <Translate>Loading</Translate>...
+                      </h3>
+                    }
+                    blocked={uiSlice.loading}
+                  >
+                    <Outlet />
+                  </BlockUI>
+                </ProtectedRoute>
               </AuthGuard>
             }
           >
             {/* {/* protected routes (needs authintication) */}
             {/* TODO load them dynamically based on user authorization matrix */}
-            <Route path="/" element={<Frame navs={navigationMap} />}>
+            <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />
               <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />

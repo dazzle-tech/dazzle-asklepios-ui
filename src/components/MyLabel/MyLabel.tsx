@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Tooltip, Whisper } from 'rsuite';
 import Translate from '../Translate';
-
+import { useSelector } from 'react-redux';
 const MyLabel = props => {
   const [errorType, setErrorType] = useState(undefined);
-
+  const mode = useSelector((state: any) => state.ui.mode);
   useEffect(() => {
     if (props.error) {
       if (props.error === 'ERROR') {

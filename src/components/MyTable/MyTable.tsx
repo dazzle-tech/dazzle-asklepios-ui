@@ -19,6 +19,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import clsx from 'clsx';
 import './styles.less';
+import { useSelector } from 'react-redux';
 
 export interface ColumnConfig {
   key: string;
@@ -70,7 +71,7 @@ const MyTable: React.FC<MyTableProps> = ({
   onRowsPerPageChange
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
-
+  const mode = useSelector((state: any) => state.ui.mode);
   const visibleColumns = columns.filter(col => !col.expandable);
   const expandableColumns = columns.filter(col => col.expandable);
 
@@ -92,7 +93,7 @@ const MyTable: React.FC<MyTableProps> = ({
   );
 
   return (
-    <Box className="my-table-wrapper">
+    <Box className={`my-table-wrapper ${mode === 'light' ? 'light' : 'dark'}`}>
       {filters && <Box className="my-table-filters">{filters}</Box>}
 
       {tableButtons && <Box className="my-table-buttons-wrapper">{tableButtons}</Box>}
