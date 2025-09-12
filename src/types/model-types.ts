@@ -2031,6 +2031,7 @@ export interface ApMedicalSheets {
 	sofa:boolean;
 	medicalCalculators:boolean;
 	cpoeResultsManager:boolean;
+	orderDetails:boolean;
 } 
 
 export interface ApMedicationCategories { 
