@@ -427,6 +427,14 @@ const ChooseDepartment = ({
                     setRecord={setShowScreen}
                     fieldLabel={'CPOE Results Manager'}
                   />
+                  <MyInput
+                    fieldType="check"
+                    fieldName={'orderDetails'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen}
+                    fieldLabel={'Order Details'}
+                  />
                 </div>
               </div>
               <div className="container-of-specific-sheets">

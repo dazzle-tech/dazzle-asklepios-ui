@@ -2032,6 +2032,7 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	sofa:undefined,
 	medicalCalculators:undefined,
 	cpoeResultsManager:undefined,
+	orderDetails:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
