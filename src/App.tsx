@@ -169,7 +169,7 @@ import ResetPassword from './pages/reset-password/ResetPassword';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import AuthGuard from './pages/authentication/AuthGuard';
-import OrderDetails from './pages/encounter/encounter-component/order-details';
+import SlidingScale from './pages/encounter/encounter-component/order-details';
 import { useSelector } from 'react-redux';
 
 const App = () => {
@@ -396,7 +396,7 @@ const App = () => {
                 <Route path="iv-fluid-Administration" element={<IVFluidAdministration />} />
                 <Route path="continuous-observation" element={<ContinuousObservations />} />
                 <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
-                <Route path="order-details" element={<OrderDetails />} />
+                <Route path="sliding-scale" element={<SlidingScale />} />
               </Route>
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />

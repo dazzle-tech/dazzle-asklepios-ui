@@ -255,7 +255,7 @@ const Encounter = () => {
     '/encounter/iv-fluid-administration': 'IV Fluid Administration',
     '/encounter/continuous-observation': 'Continuous Observation',
     '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment',
-    '/encounter/order-details': 'Order Details'
+    '/encounter/sliding-scale ': 'Sliding Scale'
   };
 
   const menuItems = [
@@ -560,10 +560,10 @@ const Encounter = () => {
       path: 'FLACC-neonates-pain-assessment'
     },
     {
-      key: 'orderDetails',
-      label: 'Order Details',
+      key: 'slidingScale',
+      label: 'Sliding Scale',
       icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
-      path: 'order-details'
+      path: 'sliding-scale'
     }
   ];
   const [currentHeader, setCurrentHeader] = useState();
