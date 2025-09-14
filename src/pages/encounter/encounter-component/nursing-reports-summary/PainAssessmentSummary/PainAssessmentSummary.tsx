@@ -122,6 +122,7 @@ const PainAssessmentSummary = ({ patient, encounter }) => {
 
   return (
     <Section
+      isContainOnlyTable
       title="Pain Assessment"
       content={
         <MyTable
@@ -151,6 +152,7 @@ const PainAssessmentSummary = ({ patient, encounter }) => {
           handleRowsPerPageChange={handleRowsPerPageChange}
           />
       }
+      isContainOnlyTable={true}
     />
   );
 };

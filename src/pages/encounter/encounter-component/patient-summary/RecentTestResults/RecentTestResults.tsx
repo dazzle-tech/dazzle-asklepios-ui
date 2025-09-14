@@ -30,6 +30,7 @@ const RecentTestResults = ({ patient }) => {
   ];
   return (
     <Section
+      isContainOnlyTable
       title="Recent Test Results"
       content={<MyTable data={[]} columns={orderColumns} height={250} onRowClick={rowData => {}} />}
       rightLink="Full view"

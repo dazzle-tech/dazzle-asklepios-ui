@@ -113,7 +113,8 @@ const GeneralAssessmentSummary = ({ patient, encounter }) => {
   ];
 
   return (
-    <Section
+    <Section 
+      isContainOnlyTable
       title="General Assessment"
       content={
         <MyTable

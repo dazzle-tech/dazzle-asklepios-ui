@@ -149,6 +149,7 @@ const FunctionalAssessmentSummary = ({ patient, encounter }) => {
 
   return (
     <Section
+      isContainOnlyTable
       title="Functional Assessment"
       content={
         <MyTable

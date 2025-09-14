@@ -65,6 +65,7 @@ const PreObservation = ({ patient }) => {
 
   return (
     <Section
+    isContainOnlyTable
       title="Patient Observation"
       content={
         <MyTable data={getObservationSummaries?.object ?? []} columns={columns} height={250} />

@@ -30,6 +30,7 @@ const IntakeOutputs = ({ patient }) => {
   ];
   return (
     <Section
+      isContainOnlyTable
       title="Intake Outputs"
       content={<MyTable data={[]} columns={orderColumns} height={250} onRowClick={rowData => {}} />}
       rightLink="Full view"

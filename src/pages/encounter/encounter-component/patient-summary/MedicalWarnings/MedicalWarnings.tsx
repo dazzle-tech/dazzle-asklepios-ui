@@ -50,6 +50,7 @@ const MedicalWarnings = ({ patient }) => {
   ];
   return (
     <Section
+      isContainOnlyTable
       title="Medical Warnings"
       content={
         <MyTable

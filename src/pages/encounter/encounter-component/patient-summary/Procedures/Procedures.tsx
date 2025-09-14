@@ -46,6 +46,7 @@ const Procedures = ({ patient }) => {
   return (
     <Section
       title="Procedures"
+      isContainOnlyTable
       content={<MyTable data={procedures?.object || []} columns={columns} height={250} />}
       rightLink="Full view"
       setOpen={setOpen}
