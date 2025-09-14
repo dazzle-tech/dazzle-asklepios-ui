@@ -206,6 +206,7 @@ const PatientChronicMedication = ({ patient, title = null }) => {
   };
   return (
     <Section
+    isContainOnlyTable
       title={title ? title : ' Patient Chronic Medication'}
       content={
         <MyTable

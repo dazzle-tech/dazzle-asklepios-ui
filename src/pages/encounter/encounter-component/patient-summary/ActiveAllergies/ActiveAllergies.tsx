@@ -60,6 +60,7 @@ const ActiveAllergies = ({ patient }) => {
   ];
   return (
     <Section
+      isContainOnlyTable
       title="Active Allergies"
       content={
         <MyTable

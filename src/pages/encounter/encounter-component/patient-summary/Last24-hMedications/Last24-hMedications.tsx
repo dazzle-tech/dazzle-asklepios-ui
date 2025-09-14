@@ -206,6 +206,7 @@ const Last24HMedications = ({ patient, title = null }) => {
   };
   return (
     <Section
+      isContainOnlyTable
       title={title ? title : 'Last 24-h Medications'}
       content={
         <MyTable

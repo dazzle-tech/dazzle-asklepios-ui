@@ -106,7 +106,8 @@ const ChiefComplainSummary = ({ patient, encounter }) => {
   ];
 
   return (
-    <Section
+    <Section 
+      isContainOnlyTable
       title="Chief Complain"
       content={
         <MyTable
