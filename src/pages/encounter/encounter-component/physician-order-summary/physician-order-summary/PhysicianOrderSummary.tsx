@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckToSlot, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import TableModalManagment from '../table-task-managment/TableTaskManagment';
+import TableTaskManagment from '../table-task-managment/TableTaskManagment';
 
 import '../style.less';
 
@@ -227,7 +227,7 @@ const PhysicianOrderSummary = () => {
           onPageChange={handlePageChange}
         />
 
-        <TableModalManagment openModal={openModal} setOpenModal={setOpenModal} />
+        <TableTaskManagment openModal={openModal} setOpenModal={setOpenModal} />
       </div>
 
       {/* Side Panel */}

@@ -12,7 +12,8 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 const sampleData = [
   {
     id: 1,
-    date: '2025-06-15',
+    createdBy: 'Dr. Ali',
+    createdAt: '2025-06-15',
     weeks: 2,
     weight: 60,
     bloodPressure: '120/80',
@@ -24,7 +25,8 @@ const sampleData = [
   },
   {
     id: 2,
-    date: '2025-06-22',
+    createdBy: 'Nurse Sara',
+    createdAt: '2025-06-22',
     weeks: 3,
     weight: 61,
     bloodPressure: '118/75',
@@ -35,6 +37,7 @@ const sampleData = [
     cancelled: false
   }
 ];
+
 
 const CurrentVisit = () => {
   // State for all visit records
@@ -68,7 +71,19 @@ const CurrentVisit = () => {
 
   // Define table columns and how each column renders
   const columns = [
-    { key: 'date', title: 'Date', dataKey: 'date', width: 120 },
+{
+    key: 'createdByAt',
+    title: 'Created By/At',
+    dataKey: 'createdByAt',
+    width: 120,
+    render: row => (
+      <>
+        {row.createdBy}
+        <br />
+        <span className="date-table-style">{row.createdAt}</span>
+      </>
+    )
+  },
     { key: 'weeks', title: 'Weeks', dataKey: 'weeks', width: 80 },
     { key: 'weight', title: 'Weight (kg)', dataKey: 'weight', width: 100 },
     { key: 'bloodPressure', title: 'Blood Pressure', dataKey: 'bloodPressure', width: 130 },
@@ -107,13 +122,10 @@ const CurrentVisit = () => {
   ];
 
   // Filter section above the table
-  const filters = (
-    <Form fluid>
-      <div className="bt-div">
-        {/* Cancel button (you can implement functionality as needed) */}
+const tablebuttons = (
+  <div className="table-buttons-container">
+    <div className="left-group">
         <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
-
-        {/* Checkbox to toggle showing cancelled visits */}
         <Checkbox
           checked={showCancelled}
           onChange={(value, checked, event) => {
@@ -125,17 +137,13 @@ const CurrentVisit = () => {
           }}
         >
           Show Cancelled
-        </Checkbox>
-
-        <div className="bt-right">
-          {/* Button to open modal to add a new visit */}
+        </Checkbox>    </div>
+    <div className="right-group">
           <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>
             Add New
-          </MyButton>
-        </div>
-      </div>
-    </Form>
-  );
+          </MyButton>    </div>
+  </div>
+);
 //select row
   const isSelectedRow = rowData => {
     return rowData.id === selectedRowId ? 'selected-row' : '';
@@ -150,14 +158,14 @@ const CurrentVisit = () => {
         loading={false}
         page={0}
         rowsPerPage={20}
-        filters={filters}
+        tableButtons={tablebuttons}
         rowClassName={isSelectedRow}
         onRowClick={(rowData) => {
         setSelectedRowId(rowData.id);}}
         totalCount={displayedRecords.length}
         onPageChange={() => {}}
         onRowsPerPageChange={() => {}}
-        sortColumn="date"
+        sortColumn="createdAt"
         sortType="desc"
         onSortChange={() => {}}
       />
