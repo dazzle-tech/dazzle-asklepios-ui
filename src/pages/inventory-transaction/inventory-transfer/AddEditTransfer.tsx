@@ -1,62 +1,51 @@
-import React, { useEffect, useState } from 'react';
-import {
-    useDeactiveActivVaccineBrandsMutation,
-    useGetDepartmentsQuery,
-    useGetIcdListQuery,
-    useGetLovValuesByCodeQuery,
-    useGetProductQuery,
-    useGetVaccineBrandsListQuery,
-    useGetWarehouseQuery,
-    useSaveVaccineBrandMutation,
-    useSaveVaccineMutation
-} from '@/services/setupService';
-import SearchIcon from '@rsuite/icons/Search';
-import MyInput from '@/components/MyInput';
-import { Dropdown, Form } from 'rsuite';
-import './styles.less';
-import ChildModal from '@/components/ChildModal';
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { MdVaccines } from 'react-icons/md';
-import { MdMedication } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
-import { MdModeEdit } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
-import { initialListRequest, ListRequest } from '@/types/types';
-import MyButton from '@/components/MyButton/MyButton';
-import { ApInventoryTransferProduct } from '@/types/model-types';
-import { newApInventoryTransferProduct } from '@/types/model-types-constructor';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyModal from '@/components/MyModal/MyModal';
-import { FaBabyCarriage, FaInbox, FaProductHunt } from 'react-icons/fa6';
-import { useConfirmTransProductStockInMutation, useGetInventoryTransactionsProductQuery, useGetInventoryTransferProductQuery, useSaveInventoryTransactionMutation, useSaveInventoryTransactionProductMutation, useSaveInventoryTransferMutation, useSaveInventoryTransferProductMutation } from '@/services/inventoryTransactionService';
-import { create, set } from 'lodash';
-import authSlice from '@/reducers/authSlice';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faIdCard, faInbox, faList, faListCheck, faPaperclip } from '@fortawesome/free-solid-svg-icons';
-import ProductList from './ProductList';
-import AddEditProduct from './AddEditProduct';
+import React, { useEffect, useState } from "react";
+import { Panel, Form, Stack, Divider } from "rsuite";
+import { Uploader } from "rsuite";
+import MyButton from "@/components/MyButton/MyButton";
+import MyInput from "@/components/MyInput";
+import AdvancedModal from "@/components/AdvancedModal";
+import { FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
+import { FaPaperclip, FaUser, FaWarehouse } from "react-icons/fa6";
+import authSlice from "@/reducers/authSlice";
+import { useAppSelector } from "@/hooks";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import AddEditWarehouse from "@/pages/setup/warehouse-setup/AddEditWarehouse";
+import { ApWarehouse } from "@/types/model-types";
+import { newApWarehouse } from "@/types/model-types-constructor";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { useGetLovValuesByCodeQuery, useGetWarehouseQuery } from "@/services/setupService";
+import { Plus } from "@rsuite/icons";
+import { initialListRequest, ListRequest } from "@/types/types";
+import AddEditTransferProduct from "./AddEditTransferProduct";
 
-const AddEditTransfer = ({ open, setOpen, transfer, setTransfer, refetch }) => {
-    const dispatch = useAppDispatch();
+interface AddEditTransferProps {
+    open: boolean;
+    setOpen: (open: boolean) => void;
+    transfer: any;
+    setTransfer: (t: any) => void;
+    refetch: () => void;
+}
+
+const AddEditTransfer: React.FC<AddEditTransferProps> = ({
+    open,
+    setOpen,
+    transfer,
+    setTransfer,
+    refetch,
+}) => {
+    const [attachments, setAttachments] = useState<any[]>([]);
+    const [edit_new, setEdit_new] = useState(false);
+    const [warehouse, setWarehouse] = useState<ApWarehouse>({ ...newApWarehouse });
+    const [generateCode, setGenerateCode] = useState();
+    const [recordOfTransferCode, setRecordOfTransferCode] = useState({ transNo: '' });
+    // Generate code for transfer
+    const generateFiveDigitCode = () => {
+        const code = Math.floor(10000 + Math.random() * 90000);
+        setTransfer({ ...transfer, transNo: code })
+    };
     const authSlice = useAppSelector(state => state.auth);
-    const [openNextDocument, setOpenNextDocument] = useState(false);
-    const [openChildModal, setOpenChildModal] = useState(false);
-    const [showSubChildModal, setShowSubChildModal] = useState(false);
-    const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined,
-            },
-        ],
-    });
-
+    const [openAddEditWarehousePopup, setOpenAddEditWarehousePopup] = useState(false);
+    const { data: transTypeListResponse } = useGetLovValuesByCodeQuery('STOCK_TRANSACTION_TYPES');
     const [warehouseListRequest, setWarehouseListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -68,163 +57,16 @@ const AddEditTransfer = ({ open, setOpen, transfer, setTransfer, refetch }) => {
         ],
     });
 
-
-    const [transProductListRequest, setTransProductListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined,
-            },
-            {
-                fieldName: 'transfer_key',
-                operator: 'match',
-                value: transfer?.key
-            }
-        ],
-    });
-
-    const { data: transProductListResponse, refetch: refetchTransProductList } = useGetInventoryTransferProductQuery(transProductListRequest);
-
-
-    const [saveTransferProduct, saveTransferProductMutation] = useSaveInventoryTransferProductMutation();
-    const [saveTransfer, saveTransferMutation] = useSaveInventoryTransferMutation();
-    const [confirmProductStockIn, confirmProductStockInMutation] = useConfirmTransProductStockInMutation();
-
-    const [transProduct, setTransProduct] = useState<ApInventoryTransferProduct>({ ...newApInventoryTransferProduct });
-
-    const now = new Date();
-
-    const [generateCode, setGenerateCode] = useState();
-    const [recordOfTransferCode, setRecordOfTransferCode] = useState({ transNo: '' });
-    // Generate code for transfer
-    const generateFiveDigitCode = () => {
-        const code = Math.floor(10000 + Math.random() * 90000);
-        setTransfer({ ...transfer, transNo: code })
-    };
-
     const { data: warehouseListResponse } = useGetWarehouseQuery(warehouseListRequest);
-
-
-    const { data: transTypeListResponse } = useGetLovValuesByCodeQuery('STOCK_TRANSACTION_TYPES');
-
-    const { data: transReasonInListResponse } = useGetLovValuesByCodeQuery('STOCK_IN_REASONS');
-
-    const { data: transReasonOutListResponse } = useGetLovValuesByCodeQuery('STOCK_OUT_REASONS');
-
-    const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-
-    const [transferProductListRequest, setTransferProductListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        pageSize: 15,
-        filters: [
-            {
-                fieldName: 'transfer_key',
-                operator: 'match',
-                value: transfer?.key
-            }
-        ]
-    });
-
-
-
-    // Fetch transfer product list response
-    const {
-        data: transferProductListResponseLoading,
-        refetch: transferProductRefetch,
-        isFetching: transferProductIsFetching
-    } = useGetInventoryTransferProductQuery(transferProductListRequest);
-
     const handleSave = () => {
-        saveTransfer({
-            ...transfer,
-            statusLkey: '6053140045975671', // Assuming '6053140045975671' is the status for 'New transfer'
-            createdBy: authSlice.user.key,
-            createdAt: null
-        }).unwrap().then((result) => {
-            setTransfer(result);
-            console.log(result);
-            refetch();
-            setOpenNextDocument(true);
-            dispatch(
-                notify({
-                    msg: 'The transfer Added/Edited successfully ',
-                    sev: 'success'
-                })
-            );
-        }).catch((e) => {
-            if (e.status === 422) {
-                console.log("Validation error: Unprocessable Entity", e);
-            } else {
-                console.log("An unexpected error occurred", e);
-                dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-            }
-        });
-    };
-    // const handleSave = () => {
-    //     const response = saveTransaction({
-    //         ...transfer,
-    //         createdBy: authSlice.user.key,
-    //         createdAt: null
-    //     }).unwrap().then(() => {
-    //         setTransfer(response );
-    //         console.log(response);
-    //         refetch();
-    //         setOpenNextDocument(true);
-    //         dispatch(
-    //             notify({
-    //                 msg: 'The transfer Added/Edited successfully ',
-    //                 sev: 'success'
-    //             })
-    //         );
-    //     }).catch((e) => {
-
-    //         if (e.status === 422) {
-    //             console.log("Validation error: Unprocessable Entity", e);
-
-    //         } else {
-    //             console.log("An unexpected error occurred", e);
-    //             dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-    //         }
-    //     });;
-
-    // };
-
-
-    // Handle Go To Patient Profile 
-    const goToPatientProfile = () => {
-        // setOpen(false);
-        // const privatePatientPath = '/patient-profile';
-        // navigate(privatePatientPath, { state: { patient: localPatient } });
-        // setLocalPatient({ ...newApPatient });
-        // setPatientInsurance({ ...newApPatientInsurance });
+        // TODO: call API and refetch
+        refetch();
+        setOpen(false);
     };
 
-
-    useEffect(() => {
-        setTransfer({ ...transfer, createdBy: authSlice.user.username, createdAt: now.toString() });
-        setOpenNextDocument(false);
-    }, [transfer?.key]);
-
-    useEffect(() => {
-        setTransProductListRequest(prev => ({
-            ...prev,
-            filters: [
-                {
-                    fieldName: 'deleted_at',
-                    operator: 'isNull',
-                    value: undefined,
-                },
-                {
-                    fieldName: 'transfer_key',
-                    operator: 'match',
-                    value: transfer?.key
-                }
-            ]
-        }));
-    }, [transProduct?.productKey]);
-
+    const handleUploadChange = (fileList: File[]) => {
+        setAttachments(fileList);
+    };
 
     useEffect(() => {
         if (transfer?.transNo) {
@@ -236,25 +78,102 @@ const AddEditTransfer = ({ open, setOpen, transfer, setTransfer, refetch }) => {
         console.log(recordOfTransferCode);
     }, [transfer?.transNo?.length]);
 
-    // Main modal content
-    const conjureFormContent = stepNumber => {
-        switch (stepNumber) {
-            case 0:
-                return (
+    const leftContent = () => {
+
+        return (
+            <>
+                {/* Transfer Details */}
+                <Stack alignItems="center" spacing={8}>
+                    <FaInfoCircle color="#2264E5" />
+                    <h4 style={{ margin: 0, fontWeight: '600', fontSize: '1.1rem', color: '#333' }}>
+                        Transfer Details
+                    </h4>
+                </Stack>
+                <Divider style={{ margin: '10px 0' }} />
+                <p><b>Transfer ID:</b> {transfer.transNo}</p>
+                <p><b>Performed By:</b> <FaUser style={{ marginRight: 5, color: '#666' }} /> {authSlice.user.username}</p>
+                <p><b>Date & Time:</b> <FaCalendarAlt style={{ marginRight: 5, color: '#666' }} /> {new Date().toLocaleString()}</p>
+
+                {/* Attachments */}
+                <Divider style={{ margin: '20px 0' }} />
+                <Stack alignItems="center" spacing={8}>
+                    <FaPaperclip color="#FF6384" />
+                    <h5 style={{ margin: 0, fontWeight: '600', color: '#444' }}>Attachments</h5>
+                </Stack>
+                <Uploader
+                    action=""
+                    autoUpload={false}
+                    multiple
+                    fileListVisible
+                    onChange={handleUploadChange}
+                    listType="picture-text"
+                    style={{ marginTop: 10 }}
+                />
+                <Stack style={{ marginTop: 10 }}>
+                    {attachments.map((file, idx) => (
+                        <div key={idx} style={{ fontSize: '0.9rem', color: '#555' }}>
+                            {file.name}
+                        </div>
+                    ))}
+                </Stack>
+
+                {/* Warehouse Details Section - Conditional */}
+                {transfer?.warehouseKey !== null && (
+                    <>
+                        <Divider style={{ margin: "20px 0" }} />
+                        <Stack alignItems="center" spacing={8}>
+                            <FaWarehouse color="#c7be0eff" />
+                            <h4
+                                style={{
+                                    margin: 0,
+                                    fontWeight: "600",
+                                    fontSize: "1.1rem",
+                                    color: "#333",
+                                }}
+                            >
+                                Warehouse Details
+                            </h4>
+                        </Stack>
+                        <Divider style={{ margin: "10px 0" }} />
+                        <p>
+                            <b>Warehouse Key:</b> {transfer.warehouseKey}
+                        </p>
+                        <p>
+                            <b>Warehouse Name:</b> {"N/A"}
+                        </p>
+                    </>
+                )}
+
+            </>
+        );
+    }
+
+    const topContent = () => {
+
+        return (
+            <>
+                <Panel
+                    header="Transfer Information"
+                    bordered
+                    style={{ marginBottom: 20, backgroundColor: "white", padding: 20, borderRadius: 6, height: 350, overflowY: "auto" }}
+                >
+
+                    <div className="table-buttons-right">
+                        <AddEditWarehouse
+                            open={openAddEditWarehousePopup}
+                            setOpen={setOpenAddEditWarehousePopup}
+                            warehouse={warehouse}
+                            setWarehouse={setWarehouse}
+                            edit_new={edit_new}
+                            setEdit_new={setEdit_new}
+                            refetch={refetch}
+                        />
+                    </div>
                     <Form fluid>
+
                         <div className='container-of-three-fields' >
                             <div className='container-of-field' >
-                                <MyInput
-                                    width="100%"
-                                    fieldLabel="Transfer Number"
-                                    fieldName="transNo"
-                                    record={recordOfTransferCode}
-                                    setRecord={setRecordOfTransferCode}
-                                    disabled={true}
-                                />
-                            </div>
-                            <div className='container-of-field' >
-                                <MyInput
+                                     <MyInput
                                     width="100%"
                                     fieldLabel="From Warehouse"
                                     fieldName="fromWarehouseKey"
@@ -266,11 +185,8 @@ const AddEditTransfer = ({ open, setOpen, transfer, setTransfer, refetch }) => {
                                     setRecord={setTransfer}
                                 />
                             </div>
-
-                        </div>
-                        <div className='container-of-three-fields' >
                             <div className='container-of-field' >
-                                <MyInput
+                               <MyInput
                                     width="100%"
                                     fieldLabel="To Warehouse"
                                     fieldName="toWarehouseKey"
@@ -283,8 +199,7 @@ const AddEditTransfer = ({ open, setOpen, transfer, setTransfer, refetch }) => {
                                 />
                             </div>
                             <div className='container-of-field' >
-
-                                <MyInput
+                                    <MyInput
                                     width="100%"
                                     fieldLabel="Reason"
                                     fieldName="transReason"
@@ -293,161 +208,116 @@ const AddEditTransfer = ({ open, setOpen, transfer, setTransfer, refetch }) => {
                                 />
                             </div>
                         </div>
-                        <div className='container-of-two-fields'>
+                        <div className='container-of-three-fields' >
                             <div className='container-of-field' >
-
-                                <MyInput width="100%" fieldLabel="Performed By" disabled fieldName="createdBy" record={transfer} setRecord={setTransfer} />
+                                <MyInput
+                                    width="100%"
+                                    disabled={transfer?.key}
+                                    fieldLabel="Reference Doc Num."
+                                    fieldName="docNum"
+                                    record={transfer}
+                                    setRecord={setTransfer}
+                                />
                             </div>
                             <div className='container-of-field' >
 
-                                <MyInput width="100%" fieldLabel="Date & Times" disabled fieldName="createdAt" record={transfer} setRecord={setTransfer} />
+                                <MyInput width="100%" fieldLabel="Approved By" disabled fieldName="updateBy" record={transfer} setRecord={setTransfer} />
+                            </div>
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled
+                                    fieldLabel="Approval Status "
+                                    fieldName="docNum"
+                                    record={transfer}
+                                    setRecord={setTransfer}
+                                />
+                            </div>
+
+                        </div>
+                        <div className='container-of-three-fields' >
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled
+                                    fieldLabel="Vender"
+                                    fieldName="remarks"
+                                    hight="50%"
+                                    record={transfer}
+                                    setRecord={setTransfer}
+                                />
+                            </div>
+
+                            <div className='container-of-field' >
+
+                                <MyInput width="100%" fieldLabel="Serial Number" disabled fieldName="serialNumber" record={transfer} setRecord={setTransfer} />
+                            </div>
+                            <div className='container-of-field' >
+
+                                <MyInput width="100%" fieldLabel="Invoice Number" disabled fieldName="InvoiceNumber" record={transfer} setRecord={setTransfer} />
+                            </div>
+
+                        </div>
+                        <div className='container-of-three-fields' >
+                            <div className='container-of-field' >
+                                <MyInput
+                                    width="100%"
+                                    disabled={transfer?.key}
+                                    fieldLabel="Remarks"
+                                    fieldName="remarks"
+                                    fieldType="textarea"
+                                    hight="50%"
+                                    record={transfer}
+                                    setRecord={setTransfer}
+                                />
+                            </div>
+
+                            <div className="table-buttons-right">
+                                <MyButton appearance="primary" onClick={handleSave} disabled={transfer?.key}>
+                                    Save Transfer
+                                </MyButton>
+                                <MyButton
+                                    appearance="ghost"
+                                    title="Add New Warehouse"
+                                    disabled={transfer?.key}
+                                    onClick={() => setOpenAddEditWarehousePopup(true)}
+                                >
+                                    <FontAwesomeIcon icon={faPlus} /> Add New Warehouse
+                                </MyButton>
+
                             </div>
                         </div>
-                        <div >
-
-                            <MyInput
-                                width="100%"
-                                fieldLabel="Note"
-                                fieldName="note"
-                                fieldType="textarea"
-                                record={transfer}
-                                setRecord={setTransfer}
-                            />
-
-                        </div>
-
-                        <br />
-                        <div className="container-of-add-new-button">
-                            <MyButton
-                                prefixIcon={() => <AddOutlineIcon />}
-                                color="var(--deep-blue)"
-                                disabled={!transfer?.key && !openNextDocument}
-                                onClick={() => {
-                                    setOpenChildModal(true);
-
-                                }}
-                                width="109px"
-                            >
-                                Add Product
-                            </MyButton>
-                        </div>
                     </Form>
-                );
-            case 1:
-                return (
-                    <Form fluid>
-
-
-                    </Form>
-                );
-        }
-    };
-
-    const childContent = (
-        <Form fluid>
-            <ProductList open={openChildModal} setOpen={setOpenChildModal} showSubChildModal={showSubChildModal} setShowSubChildModal={setShowSubChildModal} transfer={transfer} setTransfer={setTransfer} transferProductListRequest={transferProductListRequest} setTransferProductListRequest={setTransferProductListRequest} transferProductListResponseLoading={transferProductListResponseLoading} transferProductRefetch={refetchTransProductList} transferProductIsFetching={transferProductIsFetching} />
-        </Form>
-    );
-
-
-    const subChildContent = () => {
-        return (
-            <AddEditProduct
-                open={showSubChildModal}
-                setOpen={setShowSubChildModal}
-                transferProduct={transProduct}
-                setTransferProduct={setTransProduct}
-                transfer={transfer}
-                setTransfer={setTransfer}
-                refetch={refetchTransProductList}
-            />
+                </Panel>
+            </>
         );
-    };
-    const handleSaveSubchild = () => {
-        const response = saveTransferProduct({
-            ...transProduct,
-            transferKey: transfer.key,
+    }
 
-        }).unwrap().then((result) => {
-            console.log(result)
-            setTransProduct(result);
-            refetchTransProductList();
-            refetch();
-            refetchTransProductList();
-            setTransProduct({ ...newApInventoryTransferProduct, productKey: null });
-            dispatch(
-                notify({
-                    msg: 'The Inventory Transfer Product Added/Edited successfully ',
-                    sev: 'success'
-                })
-            );
-        }).catch((e) => {
+    const rightContent = () => {
+        return (
+            <div>
+                {topContent()}
+              
 
-            if (e.status === 422) {
-                console.log("Validation error: Unprocessable Entity", e);
-
-            } else {
-                console.log("An unexpected error occurred", e);
-                dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-            }
-        });;
-
-    };
-
-    const handleSavechild = () => {
-        setOpenChildModal(false);
-        confirmProductStockIn({
-            key: transfer?.key
-        })
-            .unwrap()
-            .then(() => {
-                dispatch(
-                    notify({
-                        msg: 'The product was successfully Added to stock',
-                        sev: 'success'
-                    })
-                );
-            }).catch(() => {
-                dispatch(
-                    notify({
-                        msg: 'Fail',
-                        sev: 'error'
-                    })
-                );
-            });
-    };
+                <div style={{ marginTop: 20 }}>
+              <AddEditTransferProduct transProduct={null} setTransProduct={null} transaction={transfer} setTransaction={setTransfer} refetch={refetch} />
+                </div>
+            </div>
 
 
-
+        );
+    }
     return (
-
-        <ChildModal
+        <AdvancedModal
             open={open}
             setOpen={setOpen}
-            showChild={openChildModal}
-            setShowChild={setOpenChildModal}
-            showSubChild={showSubChildModal}
-            setShowSubChild={setShowSubChildModal}
-            title={transfer?.key ? 'Edit Transfer' : 'New Transfer'}
-            mainStep={[
-                { title: 'Transfer Info', icon: <FontAwesomeIcon icon={faInbox} /> },
-            ]}
-            mainContent={conjureFormContent}
-            actionButtonLabel='Save'
-            actionButtonFunction={handleSave}
-            childTitle="Product Transfer"
-            childContent={childContent}
-            subChildTitle="Add Product Details"
-            subChildContent={subChildContent}
-            actionSubChildButtonFunction={handleSaveSubchild}
-            childStep={[{ title: "Product Transfer", icon: <FontAwesomeIcon icon={faList} /> }]}
-            subChildStep={[{ title: "Add Product Details", icon: <FontAwesomeIcon icon={faListCheck} /> }]}
-            mainSize="xs"
-            childSize="sm"
-            subChildSize="xs"
-        // actionChildButtonLabel="Confirm"
-        // actionChildButtonFunction={handleSavechild}
+            //   title={transfer?.key ? "Edit Inventory Transfer" : "New Inventory Transfer"}
+            leftContent={leftContent()}
+            rightContent={rightContent()}
+            leftWidth="20%"
+            rightWidth="80%"
         />
     );
 };
+
 export default AddEditTransfer;
