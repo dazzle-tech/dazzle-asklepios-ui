@@ -245,6 +245,7 @@ const Encounter = () => {
     '/encounter/pressure-ulce-risk-assessment': 'Pressure Ulcer Risk Assessment',
     '/encounter/vte-risk-assessment': 'VTE Risk Assessment',
     '/encounter/johns-hopkins-tool': 'Johns Hopkins Tool',
+    '/encounter/pregnancy-follow-up': 'Pregnancy Follow Up',
     '/encounter/nutrition-state-asssessment': 'Nutrition State',
     '/encounter/dietary-request': 'Dietary Request',
     '/encounter/medication-administration-record': 'MAR',

@@ -85,7 +85,7 @@ const sampleRequests: TeleconsultationRequest[] = [
     status: 'Pending'
   }
 ];
-  // State variables
+// State variables
 const TeleconsultationRequests = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -125,7 +125,7 @@ const TeleconsultationRequests = () => {
       }
     }
 
-// Reset modal state
+    // Reset modal state
     setOpenConfirmModal(false);
     setSelectedRequestId(null);
     setPendingAction(null);
@@ -147,30 +147,117 @@ const TeleconsultationRequests = () => {
     setSelectedRequestId(null);
     setCancelObject({});
   };
+  const physicianList = [
+    { label: 'Dr. Ahmed Ali', value: '1' },
+    { label: 'Dr. Sara Youssef', value: '2' },
+    { label: 'Dr. Khalid Mansour', value: '3' }
+  ];
 
-  const filterstable = (<>  
-    <Form fluid>
-      <div className="from-to-input-position">
-        <MyInput
-          width={'100%'}
-          fieldLabel="Request From"
-          fieldType="date"
-          fieldName="key0"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          width={'100%'}
-          fieldLabel="To"
-          fieldType="date"
-          fieldName="key1"
-          record={record}
-          setRecord={setRecord}
-        />
-      </div>
+const contents = (
+  <div className="advanced-filters">
+    <Form fluid className="dissss">
+      <MyInput
+        width="100%"
+        fieldLabel="Select Search Criteria"
+        fieldType="select"
+        fieldName="searchByField"
+        record={record}
+        setRecord={setRecord}
+        selectData={[
+          { label: 'MRN', value: 'patientMrn' },
+          { label: 'Document Number', value: 'documentNo' },
+          { label: 'Full Name', value: 'fullName' },
+          { label: 'Archiving Number', value: 'archivingNumber' },
+          { label: 'Primary Phone Number', value: 'phoneNumber' },
+          { label: 'Date of Birth', value: 'dob' }
+        ]}
+        selectDataLabel="label"
+        selectDataValue="value"
+      />
+
+      <MyInput
+        width="100%"
+        fieldLabel="Search Patients"
+        fieldType="text"
+        fieldName="patientName"
+        record={record}
+        setRecord={setRecord}
+      />
+
+<MyInput
+  width="100%"
+  fieldLabel="Physician"
+  fieldType="select"
+  fieldName="physicianId"
+  record={record}
+  setRecord={setRecord}
+  selectData={physicianList}
+  selectDataLabel="label"
+  selectDataValue="value"
+/>
+
+
+      <MyInput
+        width="100%"
+        fieldLabel="Priority"
+        fieldType="select"
+        fieldName="priority"
+        record={record}
+        setRecord={setRecord}
+        selectData={[
+          { label: 'low', value: 'Low' },
+          { label: 'medium', value: 'Medium' },
+          { label: 'urgent', value: 'Urgent' }
+        ]}
+        selectDataLabel="label"
+        selectDataValue="value"
+      />
+
+      <MyInput
+        width="100%"
+        fieldLabel="Status"
+        fieldType="select"
+        fieldName="status"
+        record={record}
+        setRecord={setRecord}
+        selectData={[
+          { label: 'Pending', value: 'Pending' },
+          { label: 'Cancelled', value: 'Cancelled' },
+          { label: 'Ongoing', value: 'Ongoing' }
+        ]}
+        selectDataLabel="label"
+        selectDataValue="value"
+      />
     </Form>
-<AdvancedSearchFilters searchFilter={true}/>
-  </>);
+  </div>
+);
+
+
+  const filterstable = (
+    <>
+      <Form fluid>
+        <div className="from-to-input-position">
+          <MyInput
+            width={'100%'}
+            fieldLabel="Request From"
+            fieldType="date"
+            fieldName="key0"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            width={'100%'}
+            fieldLabel="To"
+            fieldType="date"
+            fieldName="key1"
+            record={record}
+            setRecord={setRecord}
+          />
+        </div>
+      </Form>
+      <AdvancedSearchFilters searchFilter={true} content={contents} />
+    </>
+  );
 
   const columns = [
     {

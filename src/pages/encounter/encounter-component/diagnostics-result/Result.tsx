@@ -13,11 +13,12 @@ import { faArrowDown, faArrowUp, faCircleExclamation, faComment, faPrint, faTria
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { set } from "lodash";
 import React, { useEffect, useState } from "react";
+import './styles.less';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
 const Result = ({ patient, user }) => {
     const dispatch = useAppDispatch();
     const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
-
+      const [record, setRecord] = useState({});
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
     const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
     const [dateOrderFilter, setDateOrderFilter] = useState({
@@ -341,19 +342,6 @@ const Result = ({ patient, user }) => {
                 );
             },
         },
-
-
-
-        {
-            key: "resultStatus",
-            title: <Translate>RESULT SATUTS</Translate>,
-            flexGrow: 1,
-            fullText: true,
-            render: (rowData: any) => {
-                return rowData.statusLvalue ? rowData.statusLvalue.lovDisplayVale : rowData.statusLkey
-
-            },
-        },
         {
             key: "action",
             title: <Translate>Print</Translate>,
@@ -437,6 +425,16 @@ const Result = ({ patient, user }) => {
                     fieldName="toDate"
                     record={dateOrderFilter}
                     setRecord={setDateOrderFilter}
+                />
+
+                <MyInput
+                    width={'100%'}
+                    column
+                    fieldLabel="Test Name"
+                    fieldType="text"
+                    fieldName="testName"
+                    record={record}
+                    setRecord={setRecord}
                 />
 
                 <Checkbox

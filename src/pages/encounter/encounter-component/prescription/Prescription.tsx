@@ -5,6 +5,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { formatDateWithoutSeconds } from '@/utils';
+import PrescriptionPreview from './PrescriptionPreview';
 import {
   useGetCustomeInstructionsQuery,
   useGetPrescriptionMedicationsQuery,
@@ -87,6 +88,8 @@ const Prescription = props => {
     numberOfRefills: null
   });
 
+
+const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null);
   const [favoriteMedications, setFavoriteMedications] = useState([]);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
 
@@ -252,15 +255,20 @@ const Prescription = props => {
   }, [showCanceled]);
 
   // Functions
-  const handleCheckboxChange = key => {
-    setSelectedRows(prev => {
-      if (prev.includes(key)) {
-        return prev.filter(item => item !== key);
-      } else {
-        return [...prev, key];
-      }
-    });
-  };
+const handleCheckboxChange = (rowData: any) => {
+  setSelectedRows(prev => {
+    let updatedRows;
+    if (prev.includes(rowData)) {
+      updatedRows = prev.filter(item => item !== rowData);
+      setSelectedPreviewMedication(null);
+    } else {
+      updatedRows = [...prev, rowData];
+      setSelectedPreviewMedication(rowData);
+    }
+    return updatedRows;
+  });
+};
+
 
   const handleCancle = async () => {
     try {
@@ -731,6 +739,28 @@ const Prescription = props => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+
+{selectedPreviewMedication && (
+  <div className="mt-4">
+    <PrescriptionPreview
+      orderMedication={selectedPreviewMedication}
+      fluidOrder={selectedPreviewMedication?.fluidOrder ?? {}}
+      genericMedicationListResponse={genericMedicationListResponse}
+      orderTypeLovQueryResponse={{ object: [] }}
+      unitLovQueryResponse={{ object: [] }}
+      unitsLovQueryResponse={{ object: [] }}
+      DurationTypeLovQueryResponse={{ object: [] }}
+      filteredList={[]}
+      indicationLovQueryResponse={{ object: [] }}
+      administrationInstructionsLovQueryResponse={{ object: [] }}
+      routeLovQueryResponse={{ object: [] }}
+      frequencyLovQueryResponse={{ object: [] }}
+      infusionDeviceLovQueryResponse={{ object: [] }}
+    />
+  </div>
+)}
+
+
 
       <DetailsModal
         edit={edit}
