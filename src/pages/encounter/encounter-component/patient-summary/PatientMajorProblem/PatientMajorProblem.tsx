@@ -6,6 +6,7 @@ import MyTable from '@/components/MyTable';
 import { useGetPatientDiagnosisQuery } from '@/services/encounterService';
 import { initialListRequest } from '@/types/types';
 import FullViewTable from './FullViewTable';
+import Section from '@/components/Section';
 const PatientMajorProblem = ({ patient }) => {
     const [open, setOpen] = useState(false);
 
@@ -48,28 +49,18 @@ const PatientMajorProblem = ({ patient }) => {
         }
     ];
     return (
-        <div className='medical-dashboard-main-container'>
-            <div className='medical-dashboard-container-div'>
-                <div className='medical-dashboard-header-div'>
-                    <div className='medical-dashboard-title-div'>
-                        Patient Major Problem
-                    </div>
-                    <div className='bt-right'>
-                      <Text onClick={() => setOpen(true)} className="clickable-link"> Full View </Text>
-                    </div>
-                </div>
-                <Divider className="divider-line" />
-                <div className='medical-dashboard-table-div'>
-                    <MyTable
+        <Section
+        title="Patient Major Problem"
+         content={<MyTable
                         data={majorDiagnosesCodes ?? []}
                         columns={diagnosesColumns}
                         height={250}
                         onRowClick={(rowData) => { }}
-                    />
-                </div>
-            </div>
-            <FullViewTable open={open} setOpen={setOpen} data={majorDiagnosesCodes}/>
-        </div>
+                    />}
+         setOpen={setOpen}
+          rightLink="Full View"
+           openedContent={<FullViewTable open={open} setOpen={setOpen} data={majorDiagnosesCodes}/>}
+        />
     );
 };
 export default PatientMajorProblem;

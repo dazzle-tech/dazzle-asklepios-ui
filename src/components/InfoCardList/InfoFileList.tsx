@@ -4,6 +4,7 @@ import { Text, IconButton, Button } from 'rsuite';
 import { FaHandBackFist } from 'react-icons/fa6';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFingerprint, faHandPointUp } from '@fortawesome/free-solid-svg-icons';
+import { useSelector } from 'react-redux';
 // import OthersIcon from '@rsuite/icons/legacy/Others'; 
 
 const InfoCardList = ({
@@ -17,6 +18,7 @@ const InfoCardList = ({
   showOpenButton = false
 }) => {
   const containerClass = `div-list ${variant === 'product-grid' ? 'product-card-grid' : ''}`;
+  const mode = useSelector((state: any) => state.ui.mode);
   const getFieldValue = (item, field) => {
     if (computedFields[field]) {
       return computedFields[field](item);
@@ -35,7 +37,7 @@ const InfoCardList = ({
   return (
     <div className={containerClass}>
       {list?.map((item, index) => (
-        <div key={index} className='card-style' onClick={() => onCardClick(item)}>
+        <div key={index} className={`card-style ${mode === 'light' ? 'light' : 'dark'}`} onClick={() => onCardClick(item)}>
           <Text className='title-style'>
             {getFieldValue(item, titleField)}
           </Text>

@@ -20,12 +20,18 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
           <Section
             title="Drug-Drug Interactions"
             content={<DrugDrugInteractions activeIngredients={activeIngredient} />}
+            setOpen={() => {}}
+            rightLink=""
+            openedContent=""
           />
         </Col>
         <Col md={10}>
           <Section
             title="Drug-Food Interactions"
             content={<DrugFoodInteractions activeIngredients={activeIngredient} />}
+            setOpen={() => {}}
+            rightLink=""
+            openedContent=""
           />
         </Col>
       </Row>
@@ -36,11 +42,17 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
         <Section
           title="Drug-Drug Interactions"
           content={<DrugDrugInteractions activeIngredients={activeIngredient} />}
+          setOpen={() => {}}
+          rightLink=""
+          openedContent=""
         />
         <br />
         <Section
           title="Drug-Food Interactions"
           content={<DrugFoodInteractions activeIngredients={activeIngredient} />}
+          setOpen={() => {}}
+          rightLink=""
+          openedContent=""
         />
       </div>
     );

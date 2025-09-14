@@ -44,3 +44,12 @@
     justify-content:'space-between';
     align-items:'center'
 }
+
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.my-card.dark{
+    box-shadow: var(--dark-mode-box-shadow);
+    .title-style{
+         color: var(--white) !important;
+    }
+}

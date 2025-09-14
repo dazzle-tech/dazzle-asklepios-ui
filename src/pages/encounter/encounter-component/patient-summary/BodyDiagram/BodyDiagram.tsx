@@ -7,6 +7,7 @@ import Female from '../../../../../images/Chart_Female.svg';
 import Male from '../../../../../images/Chart_Male.svg';
 import { useGetAgeGroupValueQuery } from '@/services/patientService';
 import FullViewChart from './FullViewChart';
+import Section from '@/components/Section';
 
 const BodyDiagram = ({ patient }) => {
     const [chartModelIsOpen, setChartModelIsOpen] = useState(false);
@@ -55,20 +56,13 @@ const BodyDiagram = ({ patient }) => {
         </>
     );
     return (
-        <div className='medical-dashboard-main-container'>
-            <div className='medical-dashboard-container-div'>
-                <div className='medical-dashboard-header-div'>
-                    <div className='medical-dashboard-title-div'>
-                        Body Diagram
-                    </div>
-                </div>
-                <Divider className="divider-line" />
-                <div className='medical-dashboard-table-div'>
-                    {content}
-                </div>
-            </div>
-            <FullViewChart open={chartModelIsOpen} setOpen={setChartModelIsOpen} content={content} />
-        </div>
+        <Section
+         title="Body Diagram"
+         content={content}
+         setOpen={() => {}}
+         openedContent={<FullViewChart open={chartModelIsOpen} setOpen={setChartModelIsOpen} content={content} />}
+         rightLink=""
+        />
     );
 };
 export default BodyDiagram;

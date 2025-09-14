@@ -79,3 +79,9 @@
 .delete-modal {
   top: 20% !important;
 }
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.delete-modal.dark .rs-modal-content {
+  background: var(--dark-black) !important;
+  box-shadow: var(--dark-mode-box-shadow);
+}

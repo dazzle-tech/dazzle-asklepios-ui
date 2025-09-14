@@ -21,12 +21,18 @@ const PregnancyLactationAndSpecialPopulation = ({ activeIngredient }) => {
           <Section
             title="Pregnancy & Lactation"
             content={<PregnancyLactation activeIngredients={activeIngredient} />}
+            setOpen={() => {}}
+            rightLink=""
+            openedContent=""
           />
         </Col>
         <Col md={12}>
           <Section
             title="Special Population"
             content={<SpecialPopulation activeIngredients={activeIngredient} />}
+            setOpen={() => {}}
+            rightLink=""
+            openedContent=""
           />
         </Col>
       </Row>
@@ -37,11 +43,17 @@ const PregnancyLactationAndSpecialPopulation = ({ activeIngredient }) => {
         <Section
           title="Pregnancy & Lactation"
           content={<PregnancyLactation activeIngredients={activeIngredient} />}
+          setOpen={() => {}}
+          rightLink=""
+          openedContent=""
         />
         <br />
         <Section
           title="Special Population"
           content={<SpecialPopulation activeIngredients={activeIngredient} />}
+          setOpen={() => {}}
+          rightLink=""
+          openedContent=""
         />
       </div>
     );

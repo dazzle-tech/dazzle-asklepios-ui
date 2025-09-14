@@ -3,17 +3,19 @@ import { Avatar, Button, Panel, Text } from 'rsuite';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import MemberIcon from '@rsuite/icons/Member';
 import './styles.less';
+import { useSelector } from 'react-redux';
 
 interface PatientInfoCard {
   patient: any;
 }
 
-const PatientInfoCard = ({ patient}: PatientInfoCard) => (
-
-  <Panel bordered>
+const PatientInfoCard = ({ patient}: PatientInfoCard) => {
+  const mode = useSelector((state: any) => state.ui.mode);
+  return(
+  <Panel bordered className={`patient-info-card-container ${mode === 'light' ? 'light' : 'dark'}`}>
   {/* Header (MRN) */}
   <div className="mrn">
-    <MemberIcon style={{ marginRight: 10 , marginLeft: 20, marginBottom : 20 , marginTop: 20  }} />
+    <MemberIcon style={{ marginRight: 10 , marginLeft: 20, marginBottom : 20 , marginTop: 20 }} />
     MRN
   </div>
 
@@ -34,8 +36,8 @@ const PatientInfoCard = ({ patient}: PatientInfoCard) => (
 
     <div style={{ display: 'grid', gridTemplateColumns: '1fr  1fr 1fr', rowGap: 20, columnGap: 25 }}>
     <div>
-    <div className="div-data">Patient Name</div>
-    <div className="patient-info">{(patient?.firstName || '') + "  "+ (patient?.lastName || '')}</div>
+    <div className='div-data'>Patient Name</div>
+    <div className="patient-info">{(patient?.firstName || '') + "  " + (patient?.lastName || '')}</div>
      </div>
       <div>
         <div className="div-data"> Gender & Age</div>
@@ -60,8 +62,9 @@ const PatientInfoCard = ({ patient}: PatientInfoCard) => (
     </div>
   </div>
 </Panel>
+  );
  
-);
+};
 
 export default PatientInfoCard;
 export const calculateAgeFormat = dateOfBirth => {
