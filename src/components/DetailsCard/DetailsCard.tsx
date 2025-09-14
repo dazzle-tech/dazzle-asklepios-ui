@@ -5,6 +5,7 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { Panel } from 'rsuite';
 
 import './styles.less';
+import { useSelector } from 'react-redux';
 //props
 interface DetailsCardProps {
   title: string;
@@ -25,12 +26,13 @@ const DetailsCard: React.FC<DetailsCardProps> = ({
   position = 'left',
   width = 240,
 }) => {
+  const mode = useSelector((state: any) => state.ui.mode);
   return (
     <Panel
       shaded
       bordered
       bodyFill
-      className={`details-card ${backgroundClassName}`}
+      className={`details-card ${backgroundClassName} ${mode === 'light' ? 'light' : 'dark'}`}
       style={{ width }}
     >
       <div className={`details-card-content position-${position}`}>

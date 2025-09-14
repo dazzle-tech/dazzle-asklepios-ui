@@ -47,3 +47,18 @@
     }
   }
 }
+
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.patient-card-container.dark.rs-panel{
+  background-color: var(--dark-black) !important;
+  .actions {
+    .arrow-button {
+      background: rgb(65, 65, 65) !important;
+      box-shadow: var(--dark-mode-box-shadow) !important;
+      svg {
+        color: var(--white);
+      }
+    }
+  }
+}

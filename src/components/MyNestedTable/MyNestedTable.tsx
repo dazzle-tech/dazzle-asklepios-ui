@@ -19,6 +19,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import clsx from 'clsx';
 import './styles.less';
+import { useSelector } from 'react-redux';
 
 export interface ColumnConfig {
   key: string;
@@ -79,7 +80,7 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
   getNestedTable
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
-
+  const mode = useSelector((state: any) => state.ui.mode);
   const handleExpandClick = (index: number) => {
     setExpandedRow(prev => (prev === index ? null : index));
   };
@@ -95,7 +96,7 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
   );
 
   return (
-    <Box className="my-table-wrapper">
+    <Box className={`my-table-wrapper ${mode === 'light' ? 'light' : 'dark'}`}>
       {filters && <Box className="my-table-filters">{filters}</Box>}
 
       {tableButtons && <Box className="my-table-buttons-wrapper">{tableButtons}</Box>}

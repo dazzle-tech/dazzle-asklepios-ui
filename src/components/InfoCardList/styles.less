@@ -1,41 +1,39 @@
-.title-style{
-    font-family:'Inter Semi Bold';
-    font-size: 16px;
-    line-height: 20;
-    color: #1C2836;
-    margin-bottom:15px !important;
+.title-style {
+  font-family: 'Inter Semi Bold';
+  font-size: 16px;
+  line-height: 20;
+  color: #1c2836;
+  margin-bottom: 15px !important;
 }
-.label-style{
-    font-family:'Inter Semi Bold' !important;
-    font-size: 12px !important;
-    color: #A1A9B8 !important;
-   
+.label-style {
+  font-family: 'Inter Semi Bold' !important;
+  font-size: 12px !important;
+  color: #a1a9b8 !important;
 }
-.value-style{
-    font-family:'Inter Medium' !important;
-    font-size: 14px !important;
-    color: #0C0C0C !important; 
+.value-style {
+  font-family: 'Inter Medium' !important;
+  font-size: 14px !important;
+  color: #0c0c0c !important;
 }
-.card-style{
-    box-shadow: 0 2px 8px rgba(130, 128, 128, 0.1);
-    border-radius: 8px;
-    padding: 15px;
-    background-color: white,
+.card-style {
+  box-shadow: 0 2px 8px rgba(130, 128, 128, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  background-color: white;
 }
-.div-layout{
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
-    gap:10px;
+.div-layout {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+  gap: 10px;
 }
-.field-contant{
-    text-align: center;
-    min-height:30px;
-
+.field-contant {
+  text-align: center;
+  min-height: 30px;
 }
-.div-list{
-    display:flex;
-     flex-direction: column;
-     gap:10px !important
+.div-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px !important;
 }
 .product-card-grid.div-list {
   display: grid;
@@ -44,19 +42,38 @@
   padding: 10px;
 }
 
-     .actions {
-    display: flex;
-    // flex-direction: column;
-    justify-content: space-between;
+.actions {
+  display: flex;
+  // flex-direction: column;
+  justify-content: space-between;
 
-    .arrow-button {
-      background: #ffffff;
-      box-shadow: 0px 0px 0px 1px rgba(152, 161, 178, 0.1), 0px 1px 4px rgba(69, 75, 87, 0.12),
-        0px 0px 2px rgba(0, 0, 0, 0.08);
-      border-radius: 8px;
+  .arrow-button {
+    background: #ffffff;
+    box-shadow: 0px 0px 0px 1px rgba(152, 161, 178, 0.1), 0px 1px 4px rgba(69, 75, 87, 0.12),
+      0px 0px 2px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
 
-      svg {
-        color: var(--icon-gray);
-      }
+    svg {
+      color: var(--icon-gray);
     }
   }
+}
+
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.card-style.dark {
+  background-color: var(--dark-black) !important;
+  .title-style {
+    color: var(--white) !important;
+  }
+  .label-style {
+    color: #a0a0a0 !important;
+  }
+  .value-style {
+    color: #cccccc !important;
+  }
+  .arrow-button {
+    background-color: var(--dark-black) !important;
+    box-shadow: var(--dark-mode-box-shadow);
+  }
+}

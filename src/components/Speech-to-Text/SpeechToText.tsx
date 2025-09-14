@@ -12,7 +12,8 @@ import { notify } from '@/utils/uiReducerActions';
 
 const SpeechToText = ({ record, setRecord, fieldName, ...props }) => {
   const dispatch = useAppDispatch();
-   const uiSlice = useAppSelector(state => state.ui);
+  const uiSlice = useAppSelector(state => state.ui);
+  const mode = useAppSelector((state: any) => state.ui.mode);
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
   const [recording, setRecording] = useState(false);
   const recognitionRef = useRef(null);
@@ -26,16 +27,15 @@ const SpeechToText = ({ record, setRecord, fieldName, ...props }) => {
 
   // start speech recognition
   const startListening = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      dispatch(notify({msg: 'Your browser does not support Speech Recognition', sev: 'error'}));
+      dispatch(notify({ msg: 'Your browser does not support Speech Recognition', sev: 'error' }));
       return;
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = uiSlice.lang === 'en' ? 'en-US' : 'ar-SA'; 
+    recognition.lang = uiSlice.lang === 'en' ? 'en-US' : 'ar-SA';
     recognition.interimResults = true;
     recognition.continuous = true;
 
@@ -59,19 +59,19 @@ const SpeechToText = ({ record, setRecord, fieldName, ...props }) => {
 
   // change recording state
   const changeRecordingState = () => {
-    if(!props.disabled){
-    if (recording) {
-      stopListening();
-    } else {
-      startListening();
+    if (!props.disabled) {
+      if (recording) {
+        stopListening();
+      } else {
+        startListening();
+      }
+      setRecording(!recording);
     }
-    setRecording(!recording);
-  }
   };
 
   return (
     <div
-      className="container-of-speech-to-text"
+      className={`container-of-speech-to-text ${mode === 'light' ? 'light' : 'dark'}`}
       style={{
         width: props?.width ?? 200
       }}
@@ -81,7 +81,7 @@ const SpeechToText = ({ record, setRecord, fieldName, ...props }) => {
         <div className="container-of-icons-speech-to-text">
           <Whisper placement="top" trigger="hover" speaker={<Tooltip>Clear</Tooltip>}>
             <FontAwesomeIcon
-              className={props.disabled ? "disabled-icon" : "active-icon"}
+              className={props.disabled ? 'disabled-icon' : 'active-icon'}
               icon={faBroom}
               onClick={handleClear}
             />
@@ -94,13 +94,13 @@ const SpeechToText = ({ record, setRecord, fieldName, ...props }) => {
           >
             <FontAwesomeIcon
               icon={faMicrophone}
-              className={props.disabled ? "disabled-icon" : "active-icon"}
+              className={props.disabled ? 'disabled-icon' : 'active-icon'}
             />
             {recording && <span className="pulse-ring"></span>}
           </div>
         </div>
       </div>
-      <div>
+      <div className='container-of-text-area-speech-to-text'>
         <MyInput
           fieldType="textarea"
           fieldName={fieldName}

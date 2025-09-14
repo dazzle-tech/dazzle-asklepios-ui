@@ -7,9 +7,11 @@ import { Form } from "rsuite";
 import MyModal from "../MyModal/MyModal";
 import "./styles.less";
 import { formatDateWithoutSeconds } from "@/utils";
+import { useSelector } from "react-redux";
 const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowName }) => {
     const [newMessage, setNewMessage] = useState({ message: "" });
     const endOfMessagesRef = useRef(null);
+    const mode = useSelector((state: any) => state.ui.mode);
     useEffect(() => {
 
         const timeout = setTimeout(() => {
@@ -22,7 +24,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
     }, [list]);
 
     return (
-        <div >
+        <div className='chat-modal'>
             <MyModal
                 hideCancel
                 hideActionBtn
@@ -54,7 +56,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
 
                             <div ref={endOfMessagesRef}></div>
                         </div>
-                        <div className="send-message-box">
+                        <div className={`send-message-box ${mode === 'light' ? 'light' : 'dark'}`}>
                             <Form fluid className="fill-width">
                                 <MyInput
                                     placeholder="write note.."

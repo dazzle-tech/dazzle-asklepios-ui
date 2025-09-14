@@ -5,6 +5,7 @@ import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { useSelector } from 'react-redux';
 
 
 const actionConfig = {
@@ -56,14 +57,14 @@ const DeletionConfirmationModal = ({
   cancelButtonLabel = 'Cancel'
 }) => {
   const config = actionConfig[actionType] || actionConfig.delete;
-
+  const mode = useSelector((state: any) => state.ui.mode);
   const defaultMessage =
     actionType === 'confirm'
       ? 'Are you sure you want to proceed?'
       : `Are you sure you want to ${config.text.toLowerCase()} this ${itemToDelete}?`;
 
   return (
-    <Modal open={open} onClose={() => setOpen(false)} size="30vw" className="delete-modal">
+    <Modal open={open} onClose={() => setOpen(false)} size="30vw" className={`delete-modal ${mode === 'light' ? 'light' : 'dark'}`}>
       <Modal.Header>
         <div className="delete-circle-wrapper" style={{ ['--circle-color' as any]: config.color }}>
           <div className="delete-circle-inner" style={{ backgroundColor: config.color }}>

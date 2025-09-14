@@ -20,10 +20,19 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
           <Section
             title="Pharmacokinetics"
             content={<Pharmacokinetics activeIngredients={activeIngredient} />}
+            setOpen={() => {}}
+            rightLink=""
+            openedContent=""
           />
         </Col>
         <Col md={10}>
-          <Section title="MOA" content={<MOA activeIngredients={activeIngredient} />} />
+          <Section
+            title="MOA"
+            content={<MOA activeIngredients={activeIngredient} />}
+            setOpen={() => {}}
+            rightLink=""
+            openedContent=""
+          />
         </Col>
       </Row>
     );
@@ -33,9 +42,18 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
         <Section
           title="Pharmacokinetics"
           content={<Pharmacokinetics activeIngredients={activeIngredient} />}
+          setOpen={() => {}}
+          rightLink=""
+          openedContent=""
         />
         <br />
-        <Section title="MOA" content={<MOA activeIngredients={activeIngredient} />} />
+        <Section
+          title="MOA"
+          content={<MOA activeIngredients={activeIngredient} />}
+          setOpen={() => {}}
+          rightLink=""
+          openedContent=""
+        />
       </div>
     );
   }

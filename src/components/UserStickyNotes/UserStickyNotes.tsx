@@ -9,6 +9,7 @@ import { RadioGroup } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { Button, Form, Nav, Panel, Sidebar, Sidenav } from 'rsuite';
 import './style.less';
+import { useAppSelector } from '@/hooks';
 
 interface StickyNote {
   id: number;
@@ -35,6 +36,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   direction = 'left',
   showButton = true
 }) => {
+  const mode = useAppSelector((state: any) => state.ui.mode);
   const [noteInput, setNoteInput] = useState({
     note: '',
     level: '',
@@ -174,7 +176,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   );
 
   return (
-    <div className={clsx('user-sticky-sidebar-wrapper', { expanded: expand, 'not-expanded': !expand })}>
+    <div className={clsx(`user-sticky-sidebar-wrapper ${mode === 'light' ? 'light' : 'dark'}`, { expanded: expand, 'not-expanded': !expand })}>
       <Sidebar width={expand ? 370 : 56} collapsible className="profile-sidebar">
         <Sidenav expanded={expand} appearance="subtle" className="profile-sidenav">
           <Sidenav.Body>

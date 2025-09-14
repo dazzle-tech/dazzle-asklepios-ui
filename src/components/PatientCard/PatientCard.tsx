@@ -2,6 +2,7 @@ import React from 'react';
 import { Avatar, Button, Panel, Text } from 'rsuite';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import './styles.less';
+import { useSelector } from 'react-redux';
 
 interface PatientCard {
   patient: any;
@@ -10,8 +11,10 @@ interface PatientCard {
   arrowDirection?: 'left' | 'right';
 }
 
-const PatientCard = ({ patient, onClick, actions, arrowDirection = 'left' }: PatientCard) => (
-  <Panel className="patient-card-container">
+const PatientCard = ({ patient, onClick, actions, arrowDirection = 'left' }: PatientCard) => {
+  const mode = useSelector((state: any) => state.ui.mode);
+  return(
+  <Panel className={`patient-card-container ${mode === 'light' ? 'light' : 'dark'}`}>
     <div className="patient-info">
       <Avatar
         circle
@@ -35,6 +38,6 @@ const PatientCard = ({ patient, onClick, actions, arrowDirection = 'left' }: Pat
       </Button>
     </div>
   </Panel>
-);
-
+  );
+}
 export default PatientCard;

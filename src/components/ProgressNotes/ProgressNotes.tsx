@@ -72,7 +72,7 @@ const AddProgressNotes: React.FC<ProgressNotesTabProps> = ({
       key: 'audit',
       title: <Translate>Audit</Translate>,
       render: (row: any) => (
-        <Box sx={{ color: '#444' }}>
+        <Box>
           {row.createAudit}
           {row.updatedAudit && ` / ${row.updatedAudit}`}
         </Box>
