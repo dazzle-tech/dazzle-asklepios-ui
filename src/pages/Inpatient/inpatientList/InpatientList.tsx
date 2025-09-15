@@ -321,6 +321,7 @@ const InpatientList = () => {
     }
   }, [departmentFilter, isFetching]);
 
+const [openPopover, setOpenPopover] = useState<{ [key: string]: boolean }>({});
   // table columns
   const tableColumns = [
     {
@@ -446,164 +447,190 @@ const InpatientList = () => {
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
-    {
-      key: 'actions',
-      title: <Translate>Actions</Translate>,
-      render: rowData => {
-        const tooltipNurse = <Tooltip>Nurse Anamnesis</Tooltip>;
-        const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
-        const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
-        const contentOfMoreIconMenu = (
-           <Popover full>
-    <Dropdown.Menu>
-      <Dropdown.Item
-        onClick={() => {
-          setOpenTransferPatientModal(true);
-          setLocalEncounter(rowData);
-        }}
-      >
-        <div className="container-of-icon-and-key1">
-          <FontAwesomeIcon icon={faArrowRightArrowLeft} />
-          Transfer Patient
-        </div>
-      </Dropdown.Item>
+{
+  key: 'actions',
+  title: <Translate>Actions</Translate>,
+  render: rowData => {
+    const tooltipNurse = <Tooltip>Nurse Anamnesis</Tooltip>;
+    const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
 
-      {/* ✅ Change Bed now inside dropdown */}
-      <Dropdown.Item
-        onClick={() => {
-          setOpenChangeBedModal(true);
-          setLocalEncounter(rowData);
-        }}
-      >
-        <div className="container-of-icon-and-key1">
-          <FontAwesomeIcon icon={faBed} />
-          Change Bed
-        </div>
-      </Dropdown.Item>
+    const contentOfMoreIconMenu = (
+      <Popover full>
+        <Dropdown.Menu>
+          {/* Transfer Patient */}
+          <Dropdown.Item
+            onClick={() => {
+              setLocalEncounter(rowData);
+              setOpenTransferPatientModal(true);
+              setOpenPopover(false);
+            }}
+          >
+            <div className="container-of-icon-and-key1">
+              <FontAwesomeIcon icon={faArrowRightArrowLeft} />
+              Transfer Patient
+            </div>
+          </Dropdown.Item>
 
-      <Dropdown.Item>
-        <div className="container-of-icon-and-key1">
-          <FontAwesomeIcon icon={faBarcode} />
-          Wrist Band
-        </div>
-      </Dropdown.Item>
+          {/* Change Bed */}
+          <Dropdown.Item
+            onClick={() => {
+              setLocalEncounter(rowData);
+              setOpenChangeBedModal(true);
+              setOpenPopover(false);
+            }}
+          >
+            <div className="container-of-icon-and-key1">
+              <FontAwesomeIcon icon={faBed} />
+              Change Bed
+            </div>
+          </Dropdown.Item>
 
-      <Dropdown.Item>
-        <div className="container-of-icon-and-key1">
-          <FontAwesomeIcon icon={faUserGroup} />
-          Companion Card
-        </div>
-      </Dropdown.Item>
+          {/* Wrist Band */}
+          <Dropdown.Item
+            onClick={() => setOpenPopover(false)}
+          >
+            <div className="container-of-icon-and-key1">
+              <FontAwesomeIcon icon={faBarcode} />
+              Wrist Band
+            </div>
+          </Dropdown.Item>
 
-              {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
-                <Dropdown.Item
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                    setOpen(true);
-                  }}
-                >
-                  <div className="container-of-icon-and-key1">
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                    Cancel Visit
-                  </div>
-                </Dropdown.Item>
-              )}
+          {/* Companion Card */}
+          <Dropdown.Item
+            onClick={() => setOpenPopover(false)}
+          >
+            <div className="container-of-icon-and-key1">
+              <FontAwesomeIcon icon={faUserGroup} />
+              Companion Card
+            </div>
+          </Dropdown.Item>
 
-              {rowData?.encounterStatusLvalue?.valueCode === 'ONGOING' && (
-                <Dropdown.Item
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                    setLocalPatient(rowData.patientObject);
-                    setOpenTemporaryDischargeModal(true);
-                  }}
-                >
-                  <div className="container-of-icon-and-key1">
-                    <FontAwesomeIcon icon={faPersonWalkingArrowRight} />
-                    Temporary Discharge
-                  </div>
-                </Dropdown.Item>
-              )}
-
-              {rowData?.encounterStatusLvalue?.valueCode === 'TEMP_DC' && (
-                <Dropdown.Item
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                    setLocalPatient(rowData.patientObject);
-                    setOpenReturnFromTemporaryModal(true);
-                  }}
-                >
-                  <div className="container-of-icon-and-key1">
-                    <FontAwesomeIcon icon={faPersonWalkingArrowLoopLeft} />
-                    Return from Temp DC
-                  </div>
-                </Dropdown.Item>
-              )}
-            </Dropdown.Menu>
-          </Popover>
-        );
-
-        return (
-          <Form layout="inline" fluid className="nurse-doctor-form">
-
-            {/* Doctor */}
-            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
-              <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    const patientData = rowData.patientObject;
-                    setLocalEncounter(rowData);
-                    setLocalPatient(patientData);
-                    handleGoToVisit(rowData, patientData);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserDoctor} />
-                </MyButton>
+          {/* Cancel Visit */}
+          {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
+            <Dropdown.Item
+              onClick={() => {
+                setLocalEncounter(rowData);
+                setOpen(true);
+                setOpenPopover(false);
+              }}
+            >
+              <div className="container-of-icon-and-key1">
+                <FontAwesomeIcon icon={faRectangleXmark} />
+                Cancel Visit
               </div>
-            </Whisper>
+            </Dropdown.Item>
+          )}
 
-            {/* Nurse */}
-            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="black"
-                  onClick={() => {
-                    const patientData = rowData.patientObject;
-                    setLocalEncounter(rowData);
-                    setLocalPatient(patientData);
-                    handleGoToPreVisitObservations(rowData, patientData);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserNurse} />
-                </MyButton>
+          {/* Temporary Discharge */}
+          {rowData?.encounterStatusLvalue?.valueCode === 'ONGOING' && (
+            <Dropdown.Item
+              onClick={() => {
+                setLocalEncounter(rowData);
+                setLocalPatient(rowData.patientObject);
+                setOpenTemporaryDischargeModal(true);
+                setOpenPopover(false);
+              }}
+            >
+              <div className="container-of-icon-and-key1">
+                <FontAwesomeIcon icon={faPersonWalkingArrowRight} />
+                Temporary Discharge
               </div>
-            </Whisper>
+            </Dropdown.Item>
+          )}
 
-            {/* EMR outside the Popover */}
-            <Whisper trigger="hover" placement="top" speaker={<Tooltip>EMR</Tooltip>}>
-              <div>
-                <MyButton
-                  size="small">
-                  <FontAwesomeIcon icon={faFileWaveform} />
-                  EMR
-                </MyButton>
+          {/* Return from Temp DC */}
+          {rowData?.encounterStatusLvalue?.valueCode === 'TEMP_DC' && (
+            <Dropdown.Item
+              onClick={() => {
+                setLocalEncounter(rowData);
+                setLocalPatient(rowData.patientObject);
+                setOpenReturnFromTemporaryModal(true);
+                setOpenPopover(false);
+              }}
+            >
+              <div className="container-of-icon-and-key1">
+                <FontAwesomeIcon icon={faPersonWalkingArrowLoopLeft} />
+                Return from Temp DC
               </div>
-            </Whisper>
+            </Dropdown.Item>
+          )}
+        </Dropdown.Menu>
+      </Popover>
+    );
 
-            {/* More Options Menu */}
-            <Whisper placement="bottom" trigger="click" speaker={contentOfMoreIconMenu}>
-              <div>
-                <MyButton size="small" backgroundColor="var(--note-blue)">
-                  <FontAwesomeIcon icon={faEllipsisVertical} />
-                </MyButton>
-              </div>
-            </Whisper>
-          </Form>
-        );
-      },
-      expandable: false
-    }
+    return (
+      <Form layout="inline" fluid className="nurse-doctor-form">
+        {/* Doctor Button */}
+        <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+          <div>
+            <MyButton
+              size="small"
+              onClick={() => {
+                const patientData = rowData.patientObject;
+                setLocalEncounter(rowData);
+                setLocalPatient(patientData);
+                handleGoToVisit(rowData, patientData);
+              }}
+            >
+              <FontAwesomeIcon icon={faUserDoctor} />
+            </MyButton>
+          </div>
+        </Whisper>
+
+        {/* Nurse Button */}
+        <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+          <div>
+            <MyButton
+              size="small"
+              backgroundColor="black"
+              onClick={() => {
+                const patientData = rowData.patientObject;
+                setLocalEncounter(rowData);
+                setLocalPatient(patientData);
+                handleGoToPreVisitObservations(rowData, patientData);
+              }}
+            >
+              <FontAwesomeIcon icon={faUserNurse} />
+            </MyButton>
+          </div>
+        </Whisper>
+
+        {/* EMR Button */}
+        <Whisper trigger="hover" placement="top" speaker={<Tooltip>EMR</Tooltip>}>
+          <div>
+            <MyButton size="small" backgroundColor="violet">
+              <FontAwesomeIcon icon={faFileWaveform} />
+            </MyButton>
+          </div>
+        </Whisper>
+
+        {/* More Options Dropdown */}
+      <Whisper
+  placement="bottom"
+  trigger="click"
+  open={!!openPopover[rowData.key]}
+  speaker={contentOfMoreIconMenu}
+>
+  <div>
+    <MyButton
+      size="small"
+      backgroundColor="var(--note-blue)"
+      onClick={() => setOpenPopover(prev => ({
+        ...prev,
+        [rowData.key]: !prev[rowData.key]
+      }))}
+    >
+      <FontAwesomeIcon icon={faEllipsisVertical} />
+    </MyButton>
+  </div>
+</Whisper>
+
+      </Form>
+    );
+  },
+  expandable: false
+}
+
   ];
 
   const pageIndex = listRequest.pageNumber - 1;
