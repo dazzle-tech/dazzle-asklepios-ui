@@ -16,7 +16,7 @@ const MyTagInput = ({ tags = [], setTags, labelText = '', width = '100%', fontSi
         freeSolo
         fullWidth
         options={[]}
-        value={tags}
+        value={tags || []}
         onChange={(event, newValue) => {
           setTags(newValue);
         }}

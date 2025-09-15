@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Panel } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import MyTable from '@/components/MyTable';
+import DragDropTable from './DragDropTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { IconButton, Tooltip, Whisper } from 'rsuite';
@@ -402,7 +402,7 @@ const contents = (
 
   return (
     <Panel>
-      <MyTable
+      <DragDropTable
         data={paginatedData}
         columns={columns}
         loading={false}

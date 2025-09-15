@@ -16,7 +16,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Divider, Panel } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
-
+import SectionContainer from '@/components/SectionsoContainer';
+import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
+import AddProgressNotes from '@/components/ProgressNotes/ProgressNotes';
+import IntraoperativeMonitoring from '@/pages/operation-module/StartedDetails/IntraoperativeMonitoring';
+import IntakeOutputBalanceTeleConsultation from './in-take-out-put-balance-tele-consultation/IntakeOutputBalanceteleconsultation';
 // Import patient summary and other modules
 import RecentTestResults from '../../encounter-component/patient-summary/RecentTestResults';
 import PatientChronicMedication from '../../encounter-component/patient-summary/PatientChronicMedication';
@@ -25,7 +29,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import BackButton from '@/components/BackButton/BackButton';
 import PatientSide from '../../encounter-main-info-section/PatienSide';
 import MyModal from '@/components/MyModal/MyModal';
-import Prescription from '../../encounter-component/prescription';
+import DetailsModal from '../../encounter-component/prescription/DetailsModal';
 import DrugOrder from '../../encounter-component/drug-order';
 import DiagnosticsOrder from '../../encounter-component/diagnostics-order';
 import Procedures from '../../encounter-component/patient-summary/Procedures/Procedures';
@@ -34,6 +38,7 @@ import TeleScreenOperationRequests from './TeleScreenOperationRequests';
 import TeleScreenConsultation from './TeleScreenConsultation';
 import TeleScreenSelectTests from './TeleScreenDiagnosticsOrder';
 import TeleScreenMedicationOrder from './TeleScreenMedicationOrder';
+import ContinuousObservations from '../../continuous-observations/ContinuousObservations';
 // Import custom styles
 import './styles.less';
 
@@ -46,6 +51,24 @@ const [showOperationRequest, setShowOperationRequest] = useState(false);
 const [showConsultationModal, setShowConsultationModal] = useState(false);
 const [showSelectTestsModal, setShowSelectTestsModal] = useState(false);
 const [showMedicationOrderModal, setShowMedicationOrderModal] = useState(false);
+
+
+const [vital, setVital] = useState({
+  temperature: '',
+  pulse: '',
+  bloodPressure: '',
+  respiratoryRate: '',
+  oxygenSaturation: '',
+});
+
+const [progressNotes, setProgressNotes] = useState<any[]>([]);
+
+const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
+const noop = () => {};
+
+const handleOpenPrescription = () => {
+  setShowPrescriptionModal(true);
+};
 
 
   // State to control edit mode (currently unused)
@@ -72,9 +95,15 @@ const [showMedicationOrderModal, setShowMedicationOrderModal] = useState(false);
   // Function to handle opening modal based on button label
 const handleOpenModal = (label: string) => {
   switch (label) {
-    case 'Prescription':
-      setSelectedModalContent(<Prescription patient={dummyPatient} encounter={dummyEncounter} />);
+    case 'Observation':
+      setSelectedModalContent(<ContinuousObservations />);
       break;
+        case 'Prescription':
+      setShowPrescriptionModal(true);
+      return;
+    case 'Prescription':
+      setShowPrescriptionModal(true);
+      return;
     case 'Medication Order':
       setShowMedicationOrderModal(true);
       return;
@@ -98,7 +127,7 @@ case 'Operation Requests':
 };
 
 
-  return (
+  return (<>
     <div className="container">
       {/* Left section of the screen */}
       <div className="left-box">
@@ -185,6 +214,33 @@ case 'Operation Requests':
         handleCancelFunction={() => setSelectedModalContent(null)}
       />
 
+{showPrescriptionModal && (
+<DetailsModal
+  edit={true}
+  open={showPrescriptionModal}
+  setOpen={setShowPrescriptionModal}
+  prescriptionMedication={{
+    medicationItems: [],
+    instructions: '',
+    dosage: '',
+  }}
+  setPrescriptionMedications={noop}
+  preKey={null}
+  patient={dummyPatient}
+  encounter={dummyEncounter}
+  medicRefetch={noop}
+  openToAdd={false}
+  setOrderMedication={noop}
+  drugKey={null}
+  editing={false}
+/>
+
+)}
+
+
+
+
+
 {showProcedureDetails && (
   <TeleScreenProcedures
     open={showProcedureDetails}
@@ -226,10 +282,48 @@ case 'Operation Requests':
     medicRefetch={() => {}}
   />
 )}
-
-
     </div>
-  );
+    <div className='coulmns-part-tele-consultation-screen'>
+    <div className='vital-sign-progress-notes-handle-position'>
+ <div className='vital-sign-section-size-tele-consultation'>
+<SectionContainer
+  title="Vital Signs"
+  content={
+    <VitalSigns
+      object={vital}
+      setObject={setVital}
+      disabled={true}
+      width="28vw"
+      showNoteField={true}
+    />
+  }
+/>
+</div>
+<SectionContainer
+  title="Patient Details"
+  content={<AddProgressNotes
+        progressNotes={progressNotes}
+        setProgressNotes={setProgressNotes}
+        currentChart={{ key: 'dummy-chart-key' }}
+        dispatch={(action) => console.log(action)}
+      />}/>
+</div>
+<div style={{marginLeft:'0.1vw',marginRight:'0.1vw'}}>
+  <SectionContainer
+    title="Intraoperative Monitoring"
+    content={
+      <IntraoperativeMonitoring
+        operation={dummyEncounter}
+        editable={dummyEncounter.editable}
+      />
+    }
+  />
+</div>
+<div style={{marginLeft:'0.1vw',marginRight:'0.1vw'}}>
+<IntakeOutputBalanceTeleConsultation/>
+</div>
+</div>
+  </>);
 };
 
 export default StartTeleconsultation;
