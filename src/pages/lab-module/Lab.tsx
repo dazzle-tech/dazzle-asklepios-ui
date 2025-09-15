@@ -4,7 +4,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetDiagnosticsTestLaboratoryListQuery } from '@/services/setupService';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { DatePicker, Row, Table } from 'rsuite';
+import { DatePicker, Form, Row, Table } from 'rsuite';
 import './styles.less';
 import { useGetOrderTestSamplesByTestIdQuery } from '@/services/labService';
 import { addFilterToListRequest, getNumericTimestamp } from '@/utils';
@@ -35,6 +35,7 @@ import MyStepper from '@/components/MyStepper';
 import Orders from './Orders';
 import Result from './Result';
 import Tests from './Tests';
+import MyInput from '@/components/MyInput';
 const Lab = () => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.auth);
@@ -288,32 +289,26 @@ const Lab = () => {
             </Col>
             <Col xs={10}>
               <Row>
-                <DatePicker
-                  oneTap
-                  placeholder="From Date"
-                  value={dateFilter.fromDate}
-                  onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
-                  style={{
-                    width: '230px',
-                    marginRight: '5px',
-                    fontFamily: 'Inter',
-                    fontSize: '14px',
-                    height: '30px'
-                  }}
+                <Form fluid layout='inline'>
+                <MyInput 
+                width={230}
+                placeholder="From Date"
+                fieldType='date'
+                fieldName="fromDate"
+                record={dateFilter}
+                setRecord={setDateFilter}
+                showLabel={false}
                 />
-                <DatePicker
-                  oneTap
-                  placeholder="To Date"
-                  value={dateFilter.toDate}
-                  onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
-                  style={{
-                    width: '230px',
-                    marginRight: '5px',
-                    fontFamily: 'Inter',
-                    fontSize: '14px',
-                    height: '30px'
-                  }}
+                 <MyInput 
+                width={230}
+                placeholder="To Date"
+                fieldType='date'
+                fieldName="toDate"
+                record={dateFilter}
+                setRecord={setDateFilter}
+                showLabel={false}
                 />
+                </Form>
               </Row>
 
               {test.key && (
