@@ -9,6 +9,7 @@ import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import AddNewModal from './AddNewModal';
 import RiskLevelExtraForm from './RiskLevelExtraForm';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
 const MorseFallScale = () => {
@@ -92,10 +93,30 @@ const MorseFallScale = () => {
       key: 'score',
       title: <Translate>Score</Translate>
     },
-    {
-      key: 'riskLevel',
-      title: <Translate>Risk Level</Translate>
-    },
+{
+  key: 'riskLevel',
+  title: <Translate>Risk Level</Translate>,
+  render: row => (
+    <MyBadgeStatus
+      backgroundColor={
+        row.riskLevel === 'High'
+          ? 'var(--light-pink)'
+          : row.riskLevel === 'Moderate'
+          ? 'var(--light-orange)'
+          : 'var(--light-green)'
+      }
+      color={
+        row.riskLevel === 'High'
+          ? 'var(--primary-pink)'
+          : row.riskLevel === 'Moderate'
+          ? 'var(--primary-orange)'
+          : 'var(--primary-green)'
+      }
+      contant={row.riskLevel}
+    />
+  )
+},
+
     {
       key: '',
       title: <Translate>Created At\By</Translate>,

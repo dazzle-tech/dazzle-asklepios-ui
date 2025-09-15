@@ -3,6 +3,9 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form, RadioGroup, Radio } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPersonPregnant } from '@fortawesome/free-solid-svg-icons';
+import SectionContainer from '@/components/SectionsoContainer';
 import './Style.less';
 
 interface BabyData {
@@ -120,6 +123,197 @@ const EndPregnancyModal: React.FC<EndPregnancyModalProps> = ({
     setData(prev => ({ ...prev, babies: copy }));
   };
 
+const modalContent = (
+  <Form fluid layout="vertical" className="end-pregnancy-form">
+    <div className='end-pregnanct-main-container-coulmns'>
+    {/* Section 1 */}
+    <SectionContainer
+      title="Pregnancy Info"
+      content={
+        <div className="flex-row-each-one">
+          <MyInput
+            width="14vw"
+            fieldName="reason"
+            fieldType="select"
+            fieldLabel="Reason"
+            record={data}
+            setRecord={setData}
+            selectData={reasonOptions}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="valueCode"
+          />
+          <MyInput
+            width="14vw"
+            fieldName="date"
+            fieldType="datetime"
+            fieldLabel="Date"
+            record={data}
+            setRecord={setData}
+          />
+          <MyInput
+            width="14vw"
+            fieldName="weeks"
+            fieldType="number"
+            fieldLabel="Weeks"
+            record={data}
+            setRecord={setData}
+            disabled
+          />
+        </div>
+      }
+    />
+
+    {/* Section 2 */}
+    <SectionContainer
+      title="Delivery Info"
+      content={
+        <div className="flex-row-each-one">
+<MyInput
+  width="14vw"
+  fieldName="deliveryMethod"
+  fieldType="select"
+  fieldLabel="Delivery Method"
+  record={data}
+  setRecord={setData}
+  selectData={deliveryOptions}
+  selectDataLabel="lovDisplayVale"
+  selectDataValue="valueCode"
+/>
+
+{data.deliveryMethod === 'C_SECTION_DLV' && (
+  <MyInput
+    width="14vw"
+    fieldName="anesthesia"
+    fieldType="select"
+    fieldLabel="Anesthesia"
+    record={data}
+    setRecord={setData}
+    selectData={anesthesiaOptions}
+    selectDataLabel="lovDisplayVale"
+    selectDataValue="valueCode"
+  />
+)}
+
+          <MyInput
+            width="14vw"
+            fieldName="additionalInfo"
+            fieldType="textarea"
+            fieldLabel="Additional Info"
+            record={data}
+            setRecord={setData}
+          />
+        </div>
+      }
+    />
+
+    {/* Section 3 */}
+    <SectionContainer
+      title="Babies Info"
+      content={
+        <>
+          <MyInput
+            width="20vw"
+            fieldName="numberOfBabies"
+            fieldType="number"
+            fieldLabel="Number of Babies"
+            record={data}
+            setRecord={setData}
+            min={0}
+            max={20}
+          />
+
+          {data.babies.map((baby, idx) => (
+            <div key={idx} className="baby-info-block">
+              <h5 className="baby-title">Baby {idx + 1}</h5>
+              <div className="flex-row-each-one">
+                <Form.Group controlId={`liveDead-${idx}`}>
+                  <RadioGroup
+                    name={`liveDead-${idx}`}
+                    value={baby.liveDead || ''}
+                    onChange={val =>
+                      updateBabyField(idx, { liveDead: val === 'live' ? 'live' : 'dead' })
+                    }
+                    inline
+                  >
+                    <Radio value="live">Live</Radio>
+                    <Radio value="dead">Dead</Radio>
+                  </RadioGroup>
+                </Form.Group>
+                <MyInput
+                  width="10vw"
+                  fieldName="gender"
+                  fieldType="select"
+                  fieldLabel="Gender"
+                  record={baby as any}
+                  setRecord={(newBaby: any) =>
+                    updateBabyField(idx, { ...baby, ...newBaby })
+                  }
+                  selectData={genderOptions}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="valueCode"
+                />
+                <MyInput
+                  width="10vw"
+                  fieldName="weight"
+                  fieldType="number"
+                  fieldLabel="Weight"
+                  rightAddon="g"
+                  record={baby as any}
+                  setRecord={(newBaby: any) =>
+                    updateBabyField(idx, { ...baby, ...newBaby })
+                  }
+                  min={0}
+                />
+              </div>
+
+              <div className="flex-row-each-one">
+                <MyInput
+                  width="10vw"
+                  fieldName="height"
+                  fieldType="number"
+                  fieldLabel="Height"
+                  rightAddon="cm"
+                  record={baby as any}
+                  setRecord={(newBaby: any) =>
+                    updateBabyField(idx, { ...baby, ...newBaby })
+                  }
+                  min={0}
+                />
+                <MyInput
+                  width="10vw"
+                  fieldName="headCircumference"
+                  fieldType="number"
+                  fieldLabel="Head Circumference"
+                  rightAddon="cm"
+                  record={baby as any}
+                  setRecord={(newBaby: any) =>
+                    updateBabyField(idx, { ...baby, ...newBaby })
+                  }
+                  min={0}
+                />
+                <MyInput
+                  width="10vw"
+                  fieldName="length"
+                  fieldType="number"
+                  fieldLabel="Length"
+                  rightAddon="cm"
+                  record={baby as any}
+                  setRecord={(newBaby: any) =>
+                    updateBabyField(idx, { ...baby, ...newBaby })
+                  }
+                  min={0}
+                />
+              </div>
+            </div>
+          ))}
+        </>
+      }
+    />
+    </div>
+  </Form>
+);
+
+
   const handleSave = () => {
     if (onSave) onSave(data);
     setOpen(false);
@@ -133,166 +327,9 @@ const EndPregnancyModal: React.FC<EndPregnancyModalProps> = ({
       size="50vw"
       position="center"
       actionButtonLabel="Save"
+      steps={[{ title: 'End Pregnancy',icon:<FontAwesomeIcon icon={faPersonPregnant}/> }]}
       actionButtonFunction={handleSave}
-      content={
-        <Form fluid layout="vertical" className="end-pregnancy-form">
-          <div className="flex-row-each-one">
-            <MyInput
-              width={'20vw'}
-              fieldName="reason"
-              fieldType="select"
-              fieldLabel="Reason"
-              record={data}
-              setRecord={setData}
-              selectData={reasonOptions}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="valueCode"
-            />
-
-            <MyInput
-              width={'20vw'}
-              fieldName="date"
-              fieldType="datetime"
-              fieldLabel="Date"
-              record={data}
-              setRecord={setData}
-            />
-          </div>
-
-          <div className="flex-row-each-one">
-            <MyInput
-              width={'20vw'}
-              fieldName="weeks"
-              fieldType="number"
-              fieldLabel="Weeks"
-              record={data}
-              setRecord={setData}
-              disabled
-            />
-
-            <MyInput
-              width={'20vw'}
-              fieldName="deliveryMethod"
-              fieldType="select"
-              fieldLabel="Delivery Method"
-              record={data}
-              setRecord={setData}
-              selectData={deliveryOptions}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="valueCode"
-            />
-          </div>
-
-          <div className="flex-row-each-one">
-            <MyInput
-              width={'20vw'}
-              fieldName="anesthesia"
-              fieldType="select"
-              fieldLabel="Anesthesia"
-              record={data}
-              setRecord={setData}
-              selectData={anesthesiaOptions}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="valueCode"
-            />
-
-            <MyInput
-              width={'20vw'}
-              fieldName="additionalInfo"
-              fieldType="textarea"
-              fieldLabel="Additional Info"
-              record={data}
-              setRecord={setData}
-            />
-          </div>
-          <MyInput
-            width={'20vw'}
-            fieldName="numberOfBabies"
-            fieldType="number"
-            fieldLabel="Number of Babies"
-            record={data}
-            setRecord={setData}
-            min={0}
-            max={20}
-          />
-          {data.babies.map((baby, idx) => (
-            <div key={idx} className="baby-info-block">
-              <h5 className="baby-title">Baby {idx + 1}</h5>
-              <div className='row-each-position-handler'>
-                                           <div className='coulmn-each-position-handler-gndr-status'>
-                   <Form.Group controlId={`liveDead-${idx}`}>
-                  <RadioGroup
-                  name={`liveDead-${idx}`}
-                  value={baby.liveDead || ''}
-                  onChange={val =>
-                    updateBabyField(idx, { liveDead: val === 'live' ? 'live' : 'dead' })
-                  }
-                  inline
-                >
-                  <Radio value="live">Live</Radio>
-                  <Radio value="dead">Dead</Radio>
-                </RadioGroup>
-              </Form.Group>
-              <MyInput
-                width={'13vw'}
-                fieldName="gender"
-                fieldType="select"
-                fieldLabel="Gender"
-                record={baby as any}
-                setRecord={(newBaby: any) => updateBabyField(idx, { ...baby, ...newBaby })}
-                selectData={genderOptions}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="valueCode"
-              /></div>
-                                                       <div className='coulmn-each-position-handler'>
-
-              <MyInput
-                width={'10vw'}
-                fieldName="weight"
-                fieldType="number"
-                fieldLabel="Weight"
-                rightAddon="g"
-                record={baby as any}
-                setRecord={(newBaby: any) => updateBabyField(idx, { ...baby, ...newBaby })}
-                min={0}
-              />
-              <MyInput
-                width={'10vw'}
-                fieldName="height"
-                fieldType="number"
-                fieldLabel="Height"
-                rightAddon="cm"
-                record={baby as any}
-                setRecord={(newBaby: any) => updateBabyField(idx, { ...baby, ...newBaby })}
-                min={0}
-              /></div>
-                                           <div className='coulmn-each-position-handler'>
-
-              <MyInput
-                width={'10vw'}
-                fieldName="headCircumference"
-                fieldType="number"
-                fieldLabel="Head Circumference"
-                rightAddon="cm"
-                record={baby as any}
-                setRecord={(newBaby: any) => updateBabyField(idx, { ...baby, ...newBaby })}
-                min={0}
-              />
-              <MyInput
-                width={'10vw'}
-                fieldName="length"
-                fieldType="number"
-                fieldLabel="Length"
-                rightAddon="cm"
-                record={baby as any}
-                setRecord={(newBaby: any) => updateBabyField(idx, { ...baby, ...newBaby })}
-                min={0}
-              /></div>
-
-           </div> </div>
-          ))}
-        </Form>
-      }
+      content={modalContent}
     />
   );
 };

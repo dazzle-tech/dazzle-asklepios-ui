@@ -5,6 +5,8 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import { IconButton, Tooltip, Whisper } from 'rsuite';
+import MyButton from '@/components/MyButton/MyButton';
 import { Form } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import CancellationModal from '@/components/CancellationModal';
@@ -19,7 +21,7 @@ import {
 import ReactDOMServer from 'react-dom/server';
 import { useDispatch } from 'react-redux';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
-
+import './start-tele-consultation/styles.less';
 // Define request type
 type TeleconsultationRequest = {
   id: number;
@@ -280,7 +282,6 @@ const contents = (
       dataKey: 'patientName',
       width: 200
     },
-    { key: 'mrn', title: 'MRN', dataKey: 'mrn', width: 80 },
     { key: 'gender', title: 'Gender', dataKey: 'gender', width: 80 },
     { key: 'age', title: 'Age', dataKey: 'age', width: 60 },
     { key: 'reason', title: 'Reason', dataKey: 'reason', width: 180 },
@@ -321,29 +322,35 @@ const contents = (
         />
       )
     },
-    {
-      key: 'actions',
-      title: 'Actions',
-      width: 120,
-      align: 'center',
-      render: (rowData: TeleconsultationRequest) => (
-        <div className="actions-icons">
-          <FontAwesomeIcon
-            icon={faCirclePlay}
-            title="Start Teleconsultation"
-            className="action-icon start-icon"
+{
+  key: 'actions',
+  title: 'Actions',
+  width: 120,
+  align: 'center',
+  render: (rowData: TeleconsultationRequest) => (
+    <div className="actions-icons-tele-consultation-screen">
+      {/* Start Teleconsultation */}
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Start Teleconsultation</Tooltip>}>
+        <div>
+          <MyButton
+            size="small"
             onClick={() => {
               setSelectedRequestId(rowData.id);
               setPendingAction('confirm');
               setCustomConfirmMessage(`Start The Call With ${rowData.patientName}?`);
               setOpenConfirmModal(true);
             }}
-          />
+          >
+            <FontAwesomeIcon icon={faCirclePlay} />
+          </MyButton>
+        </div>
+      </Whisper>
 
-          <FontAwesomeIcon
-            icon={faCircleXmark}
-            title="Reject Request"
-            className="action-icon reject-icon"
+      {/* Reject Request */}
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Reject Request</Tooltip>}>
+        <div>
+          <MyButton
+            size="small"
             onClick={() => {
               setSelectedRequestId(rowData.id);
               setCancelObject({
@@ -353,16 +360,25 @@ const contents = (
               });
               setOpenCancelModal(true);
             }}
-          />
-
-          <FontAwesomeIcon
-            icon={faFileWaveform}
-            title="View EMR File"
-            className="action-icon emr-icon"
-          />
+          >
+            <FontAwesomeIcon icon={faCircleXmark} />
+          </MyButton>
         </div>
-      )
-    }
+      </Whisper>
+
+      {/* View EMR File */}
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>View EMR File</Tooltip>}>
+        <div>
+          <MyButton size="small">
+            <FontAwesomeIcon icon={faFileWaveform} />
+          </MyButton>
+        </div>
+      </Whisper>
+    </div>
+  )
+}
+
+
   ];
 
   const sortedData = [...requests].sort((a, b) => {

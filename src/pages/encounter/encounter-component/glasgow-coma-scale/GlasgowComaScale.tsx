@@ -6,6 +6,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import GlasgowComaScaleModal from './GlasgowComaScaleModal';
 import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './Style.less';
 
 // Initial sample data for the table
@@ -44,12 +45,36 @@ const columns: ColumnConfig[] = [
     dataKey: 'gcsScore',
     width: 100
   },
-  {
-    key: 'levelOfInjury',
-    title: 'Level of Injury',
-    dataKey: 'levelOfInjury',
-    width: 180
-  },
+{
+  key: 'levelOfInjury',
+  title: 'Level of Injury',
+  dataKey: 'levelOfInjury',
+  width: 200,
+  render: row => (
+    <MyBadgeStatus
+      backgroundColor={
+        row.levelOfInjury === 'Mild brain injury'
+          ? 'var(--light-green)'
+          : row.levelOfInjury === 'Moderate brain injury'
+          ? 'var(--light-orange)'
+          : row.levelOfInjury === 'Severe brain injury (coma)'
+          ? 'var(--light-pink)'
+          : 'var(--background-gray)'
+      }
+      color={
+        row.levelOfInjury === 'Mild brain injury'
+          ? 'var(--primary-green)'
+          : row.levelOfInjury === 'Moderate brain injury'
+          ? 'var(--primary-orange)'
+          : row.levelOfInjury === 'Severe brain injury (coma)'
+          ? 'var(--primary-pink)'
+          : 'var(--primary-gray)'
+      }
+      contant={row.levelOfInjury}
+    />
+  )
+},
+
   {
     key: 'addedByAt',
     title: 'Added By\\At',
