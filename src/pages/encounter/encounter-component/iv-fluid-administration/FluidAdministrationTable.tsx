@@ -1,6 +1,7 @@
 // FluidAdministrationTable.tsx
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { faStop, faPause, faPlay, faFile } from '@fortawesome/free-solid-svg-icons';
 import { Whisper, Tooltip } from 'rsuite';
 import MyTable from '@/components/MyTable';
@@ -135,18 +136,19 @@ const FluidAdministrationTable: React.FC<Props> = ({ fluidOrder, setFluidOrder, 
       <MyTable height={300} data={mockAdministrationData} columns={administrationColumns} />
 
       <div className="margin-top-but">
-        <MyButton
-          color="green"
-          onClick={() => {
-            if (fluidOrder?.status !== 'Completed') {
-              setFluidOrder(prev => ({ ...prev, status: 'Completed' }));
-              addLog('Complete');
-            }
-          }}
-          disabled={fluidOrder?.status === 'Completed'}
-        >
-          Complete
-        </MyButton>
+       <MyButton
+  color="green"
+  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+  onClick={() => {
+    if (fluidOrder?.status !== 'Completed') {
+      setFluidOrder(prev => ({ ...prev, status: 'Completed' }));
+      addLog('Complete');
+    }
+  }}
+  disabled={fluidOrder?.status === 'Completed'}
+>
+  Complete
+</MyButton>
       </div>
 
       <MyModal

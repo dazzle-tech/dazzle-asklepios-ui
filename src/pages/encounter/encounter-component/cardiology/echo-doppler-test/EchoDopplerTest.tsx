@@ -147,7 +147,9 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
   
 
 
-  const tablebuttons = (<>              <MyButton
+  const tablebuttons = (<>
+  
+  <MyButton
         onClick={() => {
           console.log('Cancel clicked');
         }}
