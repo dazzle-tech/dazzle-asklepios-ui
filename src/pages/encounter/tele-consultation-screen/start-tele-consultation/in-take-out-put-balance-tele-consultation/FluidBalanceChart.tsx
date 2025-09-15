@@ -26,7 +26,7 @@ const FluidBalanceChart: React.FC<FluidBalanceChartProps> = ({ chartData, title 
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // مهم جداً
+    maintainAspectRatio: false, 
     plugins: {
       legend: { display: true },
       title: { display: true, text: title }
