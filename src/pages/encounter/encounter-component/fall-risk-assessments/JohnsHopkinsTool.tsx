@@ -198,7 +198,12 @@ const tablebuttons = (
       <Checkbox>Show Cancelled</Checkbox>
     </div>
     <div className="right-group">
-      <MyButton prefixIcon={() => <PlusIcon onClick={() => setOpenJohnsHopkinsModal(true)}/>}>Add</MyButton>
+<MyButton
+  prefixIcon={() => <PlusIcon />}
+  onClick={() => setOpenJohnsHopkinsModal(true)}
+>
+  Add
+</MyButton>
     </div>
   </div>
 );

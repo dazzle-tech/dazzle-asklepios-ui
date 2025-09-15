@@ -40,29 +40,24 @@ const Flacc = () => {
     }
   ];
   //
-  const tableButtons = (
-    <div className="actions-bar">
-      <Checkbox
-        checked={!showCanceled}
+  const tableButtons = (<>
+
+      <div className='table-buttons-left-part-handle-positions'>
+        <MyButton onClick={() => setOpenFlaccModal(true)}>
+          <FontAwesomeIcon icon={faPlus} /> Cancel</MyButton>
+        <Checkbox checked={!showCanceled}
         onChange={() => {
           setShowCanceled(!showCanceled);
-        }}
-      >
-        Show canceled test
-      </Checkbox>
-      <div className="gap-5">
-        <MyButton onClick={() => setOpenFlaccModal(false)}>
-          <FontAwesomeIcon icon={faBan} />
-          Cancel
-        </MyButton>
-
+        }}>
+          Show Cancelled</Checkbox>
+        </div>
+        
+        <div className="bt-right">
         <MyButton onClick={() => setOpenFlaccModal(true)}>
           <FontAwesomeIcon icon={faPlus} />
           Add
-        </MyButton>
-      </div>
-    </div>
-  );
+        </MyButton></div>
+  </>);
 
   return (
     <>
