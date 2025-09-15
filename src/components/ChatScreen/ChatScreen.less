@@ -71,7 +71,6 @@
 }
 
 //
-
 .chat-screen-container {
   display: flex;
   height: 100%;
@@ -148,208 +147,197 @@
   padding: 10px;
   border-top: 1px solid #eee;
 }
-
-.rs-modal-body {
-  padding: 0;
-}
-// dialog
-.chat-modal-paper {
-  height: 80vh !important;
-  border-radius: 16px !important;
+.big-button {
+  font-size: 16px !important;
+  padding: 12px 32px !important; /* ↑↓ و ←→ */
 }
 
-.chat-modal-title {
-  padding: 16px !important;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.chat-modal-title-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.chat-modal-content {
-  padding: 0 !important;
-}
-
-//
-.chat-screen {
+////
+/* Root Layout */
+.chatScreen {
   display: flex;
   height: 600px;
   background-color: #f5f5f5;
 }
 
 /* Sidebar */
-.chat-sidebar {
+.sidebar {
   width: 35%;
   display: flex;
   flex-direction: column;
 }
 
-.chat-sidebar-header {
+/* Sidebar Header */
+.sidebarHeader {
   padding: 16px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #f8f9fa;
 }
 
-.chat-sidebar-header-top {
+.headerRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
 }
 
-.chat-sidebar-title {
+.headerTitle {
   font-weight: 350;
 }
 
-.chat-search-input .MuiOutlinedInput-root {
-  border-radius: 8px;
+.searchField {
+  .MuiOutlinedInput-root {
+    border-radius: 8px;
+  }
 }
 
-.chat-options {
+/* Chat Options */
+.chatOptions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
 }
 
-.chat-options-left {
+.chatOptionsLeft {
   display: flex;
   gap: 8px;
 }
 
-.chat-options-label .MuiFormControlLabel-label {
-  font-size: 0.75rem;
+.smallLabel {
+  .MuiFormControlLabel-label {
+    font-size: 0.75rem;
+  }
 }
 
-.chat-list {
+.chatList {
   flex: 1;
   overflow: auto;
   padding: 0;
 }
 
-.chat-item.selected {
-  background-color: #e8f5e8;
-  border-right: 3px solid #4caf50;
+.chatListItem {
+  &.Mui-selected {
+    background-color: #e8f5e8 !important;
+    border-right: 3px solid #4caf50;
+  }
 }
 
-.chat-badge .MuiBadge-badge {
-  width: 12px;
-  height: 12px;
+.avatarBadge {
+  .MuiBadge-badge {
+    width: 12px;
+    height: 12px;
+  }
+
+  &.offline {
+    .MuiBadge-badge {
+      display: none;
+    }
+  }
 }
 
-.chat-avatar {
-  width: 40px;
-  height: 40px;
-}
-
-.chat-name {
+.chatName {
   font-weight: 500;
 }
 
-.chat-last-message {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chat-meta {
+.listItemRight {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+
+  .unreadChip {
+    margin-top: 4px;
+    min-width: 20px;
+    height: 20px;
+  }
 }
 
-.chat-unread-chip {
-  margin-top: 4px;
-  min-width: 20px;
-  height: 20px;
-}
-
-/* Main Chat Area */
-.chat-main {
+/* Main Area */
+.mainArea {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.chat-main-header {
+/* Chat Header */
+.chatHeader {
   padding: 16px;
   border-bottom: 1px solid #e0e0e0;
 }
 
-.chat-main-header-top {
+.chatHeaderRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.chat-main-header-info {
+.userInfo {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.chat-main-avatar {
-  width: 40px;
-  height: 40px;
+.userMeta {
+  .chatTitle {
+    font-weight: 350;
+  }
 }
 
-.chat-main-name {
-  font-weight: 350;
-}
-
-.chat-main-header-actions {
+.actionBtns {
   display: flex;
   gap: 8px;
 }
 
-/* Messages */
-.chat-messages {
+/* Messages Area */
+.messagesArea {
   flex: 1;
   overflow: auto;
   padding: 16px;
   background-color: #f0f2f5;
 }
 
-.chat-messages-list {
+.messagesColumn {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.message {
+.messageRow {
   display: flex;
+
+  &.me {
+    justify-content: flex-end;
+  }
+
+  &.other {
+    justify-content: flex-start;
+  }
 }
 
-.message-me {
-  justify-content: flex-end;
-}
-
-.message-other {
-  justify-content: flex-start;
-}
-
-.message-paper {
+.messageBubble {
   max-width: 70%;
   padding: 12px;
   background-color: #fff;
   word-break: break-word;
   white-space: pre-wrap;
   position: relative;
-  transition: 0.2s;
+
+  &.me {
+    background-color: #e3f2fd;
+  }
+
+  &.flagged {
+    border: 2px solid #f44336;
+  }
+
+  &:hover {
+    .flagButton {
+      opacity: 1;
+    }
+  }
 }
 
-.message-paper.flagged {
-  border: 2px solid #f44336;
-}
-
-.message-paper:hover .flag-button {
-  opacity: 1;
-}
-
-.message-meta {
+.metaRow {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -357,82 +345,212 @@
   gap: 4px;
 }
 
-.double-check {
+/* Double-check read status */
+.doubleCheck {
   position: relative;
   width: 24px;
   height: 24px;
+
+  .checkIcon {
+    position: absolute;
+    top: 4px;
+
+    &.first {
+      left: 0px;
+    }
+    &.second {
+      left: 6px;
+    }
+  }
 }
 
-.double-check svg:first-child {
-  position: absolute;
-  left: 0;
-  top: 4px;
-}
-
-.double-check svg:last-child {
-  position: absolute;
-  left: 6px;
-  top: 4px;
-}
-
-.flagged-chip {
+.flaggedChip {
   margin-top: 8px;
 }
 
-.flag-button {
-  position: absolute;
+/* Flag button on each bubble */
+.flagButton {
+  position: absolute !important;
   top: -8px;
   right: -8px;
   opacity: 0;
-  transition: opacity 0.2s;
-  background-color: #fff;
+  transition: opacity 0.2s ease;
+  background-color: var(--mui-palette-background-paper, #fff);
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
 }
 
-.flag-button:hover {
-  background-color: #f5f5f5;
-}
-
-/* Input Area */
-.chat-input-area {
+/* Message Input */
+.messageInput {
   padding: 16px;
   border-top: 1px solid #e0e0e0;
 }
 
-.chat-input-wrapper {
+.inputRow {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.chat-input .MuiOutlinedInput-root {
-  border-radius: 8px;
+.messageTextField {
+  .MuiOutlinedInput-root {
+    border-radius: 8px;
+  }
 }
 
-.chat-send-button {
-  color: white;
+/* Send button states */
+.sendButton {
+  color: #fff;
+
+  &.enabled {
+    background-color: var(--mui-palette-primary-main, #1976d2);
+
+    &:hover {
+      background-color: var(--mui-palette-primary-dark, #115293);
+    }
+  }
+
+  &.disabled {
+    background-color: #e0e0e0;
+
+    &:hover {
+      background-color: #d5d5d5;
+    }
+  }
 }
 
-.chat-send-button.enabled {
-  background-color: #1976d2;
-}
-
-.chat-send-button.enabled:hover {
-  background-color: #115293;
-}
-
-.chat-send-button.disabled {
-  background-color: #ccc;
-}
-
-.chat-send-button.disabled:hover {
-  background-color: #aaa;
-}
-
-/* Placeholder */
-.chat-placeholder {
+/* Empty state */
+.emptyState {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #f0f2f5;
+}
+
+/* Hidden inputs */
+.hiddenInput {
+  display: none;
+}
+
+/* Group Modal */
+.groupModal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  padding: 32px;
+  border-radius: 16px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.groupNameField {
+  margin-bottom: 16px;
+
+  .MuiOutlinedInput-root {
+    border-radius: 8px;
+  }
+}
+
+.addMembersTitle {
+  margin-bottom: 8px;
+}
+
+.membersList {
+  max-height: 200px;
+  overflow: auto;
+  margin-bottom: 24px;
+}
+
+.memberRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+
+  &.selected {
+    background-color: #e3f2fd;
+  }
+}
+
+.memberAvatar {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.modalActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 16px;
+}
+
+/* Flag Modal */
+.flagModal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 350px;
+  padding: 32px;
+  border-radius: 16px;
+}
+
+.flagInfo {
+  margin-bottom: 16px;
+}
+
+.flagReasons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flagReasonBtn {
+  justify-content: flex-start !important;
+  width: 100%;
+}
+.css-18x6di2-MuiPaper-root-MuiDialog-paper {
+  overflow-y: none !important;
+}
+
+/* Prevent the outer shell from creating a second scrollbar */
+.chatScreen {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+/* Allow internal scrollers to work inside flex parents */
+.sidebar,
+.mainArea {
+  min-height: 0; /* critical for flex children with overflow */
+}
+
+/* Make the long lists/threads scroll smoothly without bubbling */
+.chatList,
+.messagesArea {
+  overscroll-behavior: contain;
+}
+
+/* Keep modals within the viewport and make their content scroll */
+.groupModal,
+.flagModal {
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }

@@ -1,110 +1,102 @@
-import React from 'react';
-import { IconButton, Tooltip, Whisper } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faChartColumn,
-  faCommentDots,
-  faCalendarDays,
   faBookmark,
   faBullhorn,
-  faRepeat,
+  faCalendarDays,
+  faChartColumn,
+  faCommentDots,
   faHeadset,
-  faNoteSticky
+  faNoteSticky,
+  faRepeat
 } from '@fortawesome/free-solid-svg-icons';
-import './style.less';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  Close as CloseIcon
+} from '@mui/icons-material';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Tooltip,
+  Typography
+} from '@mui/material';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
+import ChatScreen from '../ChatScreen/ChatScreen';
+import './style.less';
+
 const MainScreenBar = ({ setExpandNotes }) => {
   const mode = useSelector(state => state.ui.mode);
+  const [showChatModal, setShowChatModal] = useState(false);
+
   return (
-    <div className={`main-screen-bar-icons-main-container ${mode === 'light' ? 'light' : 'dark'}`}>
-      {/* Dashboard Customizing */}
-      <Whisper
-        placement="bottom"
-        trigger="hover"
-        speaker={<Tooltip>Dashboard Customizing</Tooltip>}
+    <>
+      <div
+        className={`main-screen-bar-icons-main-container ${mode === 'light' ? 'light' : 'dark'}`}
       >
-        <IconButton
-          icon={
+        <Tooltip title="Customize Dashboard">
+          <IconButton size="small">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faChartColumn} />
-          }
-          appearance="subtle"
-          circle
-        />
-      </Whisper>
-
-      {/* Secure Messaging */}
-      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Secure Messaging</Tooltip>}>
-        <IconButton
-          icon={
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Secure Messaging">
+          <IconButton size="small" onClick={() => setShowChatModal(true)}>
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCommentDots} />
-          }
-          appearance="subtle"
-          circle
-        />
-      </Whisper>
-
-      {/* My Appointments */}
-      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>My Appointments</Tooltip>}>
-        <IconButton
-          icon={
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="My Appointments">
+          <IconButton size="small">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCalendarDays} />
-          }
-          appearance="subtle"
-          circle
-        />
-      </Whisper>
-
-      {/* Bookmarks */}
-      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Bookmarks</Tooltip>}>
-        <IconButton
-          icon={
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Bookmarks">
+          <IconButton size="small">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBookmark} />
-          }
-          appearance="subtle"
-          circle
-        />
-      </Whisper>
-
-      {/* Announcements */}
-      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Announcements</Tooltip>}>
-        <IconButton
-          icon={
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Announcements">
+          <IconButton size="small">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
-          }
-          appearance="subtle"
-          circle
-        />
-      </Whisper>
-
-      {/* Department Switch */}
-      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Department Switch</Tooltip>}>
-        <IconButton
-          icon={<FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faRepeat} />}
-          appearance="subtle"
-          circle
-        />
-      </Whisper>
-
-      {/* Help & Support */}
-      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Help & Support</Tooltip>}>
-        <IconButton
-          icon={<FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faHeadset} />}
-          appearance="subtle"
-          circle
-        />
-      </Whisper>
-
-      <Whisper placement="bottom" trigger="hover" speaker={<Tooltip>Sticky Notes</Tooltip>}>
-        <IconButton
-          icon={
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Switch Department">
+          <IconButton size="small">
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faRepeat} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Help & Support">
+          <IconButton size="small">
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faHeadset} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Sticky Notes">
+          <IconButton size="small" onClick={() => setExpandNotes(true)}>
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faNoteSticky} />
-          }
-          appearance="subtle"
-          circle
-          onClick={() => setExpandNotes(true)}
-        />
-      </Whisper>
-    </div>
+          </IconButton>
+        </Tooltip>
+      </div>
+
+      {/* Chat Screen Modal */}
+      <Dialog
+        open={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        maxWidth="lg"
+        fullWidth
+        classes={{ paper: 'chat-modal-paper' }}
+      >
+        <DialogTitle className="chat-modal-title">
+          <div className="chat-modal-title-inner">
+            <Typography variant="h6">Secure Messaging</Typography>
+            <IconButton onClick={() => setShowChatModal(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </div>
+        </DialogTitle>
+        <DialogContent className="chat-modal-content">
+          <ChatScreen />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
