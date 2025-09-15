@@ -5,7 +5,7 @@ import MyInput from '@/components/MyInput';
 import DragDropTable from './DragDropTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { IconButton, Tooltip, Whisper } from 'rsuite';
+import { Tooltip, Whisper } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import { Form } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
