@@ -20,7 +20,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const handlePageChange = (_, newPage) => setPage(newPage);
-  const handleRowsPerPageChange = (e) => {
+  const handleRowsPerPageChange = e => {
     setRowsPerPage(parseInt(e.target.value, 10));
     setPage(0);
   };
@@ -31,36 +31,35 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
   };
 
   const [echoData, setEchoData] = useState([
-  {
-    key: 1,
-    testIndication: 'Chest Pain',
-    echotype: 'Transthoracic Echo',
-    referringphysician: 'Dr. Smith',
-    finalimpression: 'Normal function',
-    recommendation: 'Follow-up in 6 months',
-    cardiologist: 'Dr. Heart',
-    createdBy: 'Nurse Jane',
-    createdAt: '2025-08-20 10:30 AM',
-    canceledBy: 'Admin Joe',
-    canceledAt: '2025-08-21 09:15 AM',
-    cancellationResult: 'Patient rescheduled'
-  },
-  {
-    key: 2,
-    testIndication: 'Shortness of breath',
-    echotype: 'Transesophageal Echo',
-    referringphysician: 'Dr. Adams',
-    finalimpression: 'Mild regurgitation',
-    recommendation: 'Cardiology consult',
-    cardiologist: 'Dr. Valve',
-    createdBy: 'Nurse Sam',
-    createdAt: '2025-08-19 11:45 AM',
-    canceledBy: '',
-    canceledAt: '',
-    cancellationResult: ''
-  }
-]);
-
+    {
+      key: 1,
+      testIndication: 'Chest Pain',
+      echotype: 'Transthoracic Echo',
+      referringphysician: 'Dr. Smith',
+      finalimpression: 'Normal function',
+      recommendation: 'Follow-up in 6 months',
+      cardiologist: 'Dr. Heart',
+      createdBy: 'Nurse Jane',
+      createdAt: '2025-08-20 10:30 AM',
+      canceledBy: 'Admin Joe',
+      canceledAt: '2025-08-21 09:15 AM',
+      cancellationResult: 'Patient rescheduled'
+    },
+    {
+      key: 2,
+      testIndication: 'Shortness of breath',
+      echotype: 'Transesophageal Echo',
+      referringphysician: 'Dr. Adams',
+      finalimpression: 'Mild regurgitation',
+      recommendation: 'Cardiology consult',
+      cardiologist: 'Dr. Valve',
+      createdBy: 'Nurse Sam',
+      createdAt: '2025-08-19 11:45 AM',
+      canceledBy: '',
+      canceledAt: '',
+      cancellationResult: ''
+    }
+  ]);
 
   const columns: ColumnConfig[] = [
     {
@@ -81,102 +80,87 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
       dataKey: 'referringphysician',
       width: 200
     },
-        {
+    {
       key: 'finalimpression',
       title: 'Final Impression',
       dataKey: 'finalimpression',
       width: 200
     },
-        {
+    {
       key: 'recommendation',
       title: 'Recommendation',
       dataKey: 'recommendation',
       width: 200
     },
-{
-  key: 'cardiologist',
-  title: 'Cardiologist',
-  dataKey: 'cardiologist',
-  width: 200
-},
-{
-  key: 'createdByAt',
-  title: 'Created By/At',
-  dataKey: 'createdByAt',
-  expandable: true,
-  width: 220,
-  render: row => (
-    <>
-      {row.createdBy}
-      <br />
-      <span className="date-table-style">{row.createdAt}</span>
-    </>
-  )
-},
-{
-  key: 'canceledByAt',
-  title: 'Canceled By/At',
-  dataKey: 'canceledByAt',
-  expandable: true,
-  width: 220,
-  render: row => (
-    <>
-      {row.canceledBy}
-      <br />
-      <span className="date-table-style">{row.canceledAt}</span>
-    </>
-  )
-},
-{
-  key: 'cancellationResult',
-  title: 'Cancellation Result',
-  expandable: true,
-  dataKey: 'cancellationResult',
+    {
+      key: 'cardiologist',
+      title: 'Cardiologist',
+      dataKey: 'cardiologist',
+      width: 200
+    },
+    {
+      key: 'createdByAt',
+      title: 'Created By/At',
+      dataKey: 'createdByAt',
+      expandable: true,
+      width: 220,
+      render: row => (
+        <>
+          {row.createdBy}
+          <br />
+          <span className="date-table-style">{row.createdAt}</span>
+        </>
+      )
+    },
+    {
+      key: 'canceledByAt',
+      title: 'Canceled By/At',
+      dataKey: 'canceledByAt',
+      expandable: true,
+      width: 220,
+      render: row => (
+        <>
+          {row.canceledBy}
+          <br />
+          <span className="date-table-style">{row.canceledAt}</span>
+        </>
+      )
+    },
+    {
+      key: 'cancellationResult',
+      title: 'Cancellation Result',
+      expandable: true,
+      dataKey: 'cancellationResult',
 
-  width: 220,
-  render: row => (
-    <>
-      {row.cancellationResult}
-    </>
-  )
-}
+      width: 220,
+      render: row => <>{row.cancellationResult}</>
+    }
   ];
 
-
-
-  
-
-
-  const tablebuttons = (<>
-  
-  <MyButton
-        onClick={() => {
-          console.log('Cancel clicked');
-        }}
-        prefixIcon={() => <CloseOutlineIcon />}
-        disabled={!edit ? !selectedRow : false}
-      >
-        <Translate>Cancel</Translate>
-      </MyButton>
-
-      <Checkbox checked={showCancelled} onChange={(_, checked) => setShowCancelled(checked)}>
-        Show Cancelled
-      </Checkbox>
-
-      
-      <div className="bt-right">
+  const tablebuttons = (
+    <div className="bt-div-2">
+      <div className="bt-left-2">
         <MyButton
-          prefixIcon={() => <PlusIcon />}
-          disabled={edit}
-          onClick={handleAddClick}
+          onClick={() => {
+            console.log('Cancel clicked');
+          }}
+          prefixIcon={() => <CloseOutlineIcon />}
+          disabled={!edit ? !selectedRow : false}
         >
-          Add
+          <Translate>Cancel</Translate>
         </MyButton>
-
-
+        <Checkbox checked={showCancelled} onChange={(_, checked) => setShowCancelled(checked)}>
+          Show Cancelled
+        </Checkbox>
       </div>
 
-      </>);
+      <div className="bt-right-2">
+        <MyButton prefixIcon={() => <PlusIcon />} disabled={edit} onClick={handleAddClick}>
+          Add
+        </MyButton>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -185,8 +169,8 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         columns={columns}
         loading={false}
         tableButtons={tablebuttons}
-        rowClassName={(row) => (row?.key === selectedRow?.key ? 'selected-row' : '')}
-        onRowClick={(row) => setSelectedRow(row)}
+        rowClassName={row => (row?.key === selectedRow?.key ? 'selected-row' : '')}
+        onRowClick={row => setSelectedRow(row)}
         page={page}
         rowsPerPage={rowsPerPage}
         totalCount={echoData.length}
@@ -201,7 +185,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         encounter={encounter}
         echoTestObject={echoTestObject}
         refetch={() => {
-          console.log("Refetch after save");
+          console.log('Refetch after save');
         }}
         edit={false}
       />
