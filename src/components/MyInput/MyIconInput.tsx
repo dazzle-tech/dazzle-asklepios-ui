@@ -7,8 +7,10 @@ import * as icons from 'react-icons/fa6';
 import {iconsAsText} from '../../styles/icons-as-text';
 import { Icon } from '@rsuite/icons';
 import './styles.less';
+import { useSelector } from 'react-redux';
 
 const MyIconInput = ({ fieldName, fieldType = 'text', record, setRecord, ...props }) => {
+  const mode = useSelector((state: any) => state.ui.mode);
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
   const handleValueChange = value => {
@@ -17,7 +19,7 @@ const MyIconInput = ({ fieldName, fieldType = 'text', record, setRecord, ...prop
   
   return (
     <>
-      <Form.Group>
+      <Form.Group className={`my-icon-input ${mode === 'light' ? 'light' : 'dark'}`}>
         <Form.ControlLabel>
           <MyLabel label={fieldLabel} />
         </Form.ControlLabel>
