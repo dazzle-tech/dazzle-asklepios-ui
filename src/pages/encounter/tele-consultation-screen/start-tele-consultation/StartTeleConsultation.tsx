@@ -30,8 +30,6 @@ import BackButton from '@/components/BackButton/BackButton';
 import PatientSide from '../../encounter-main-info-section/PatienSide';
 import MyModal from '@/components/MyModal/MyModal';
 import DetailsModal from '../../encounter-component/prescription/DetailsModal';
-import DrugOrder from '../../encounter-component/drug-order';
-import DiagnosticsOrder from '../../encounter-component/diagnostics-order';
 import Procedures from '../../encounter-component/patient-summary/Procedures/Procedures';
 import TeleScreenProcedures from './TeleScreenProcedures';
 import TeleScreenOperationRequests from './TeleScreenOperationRequests';
@@ -42,7 +40,7 @@ import ContinuousObservations from '../../continuous-observations/ContinuousObse
 // Import custom styles
 import './styles.less';
 
-const StartTeleconsultation = () => {
+const StartTeleConsultation = () => {
   const navigate = useNavigate();
 
 //
@@ -66,9 +64,6 @@ const [progressNotes, setProgressNotes] = useState<any[]>([]);
 const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
 const noop = () => {};
 
-const handleOpenPrescription = () => {
-  setShowPrescriptionModal(true);
-};
 
 
   // State to control edit mode (currently unused)
@@ -326,4 +321,4 @@ case 'Operation Requests':
   </>);
 };
 
-export default StartTeleconsultation;
+export default StartTeleConsultation;
