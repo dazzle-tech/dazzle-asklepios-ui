@@ -311,7 +311,7 @@ aside {
   --icon-gray: #8f98ab;
   --gray-dark: #666;
   --black: #000000;
-  --dark-black:#242424;
+  --dark-black: #242424;
   --extra-dark-black: #1a1a1a;
   --light-gray: #f9fafc;
 
@@ -320,18 +320,17 @@ aside {
 
   --primary-orange: #f29a4d;
   --light-orange: #fbe5bf;
-    --primary-yellow: #f2cb4d;
+  --primary-yellow: #f2cb4d;
   --light-yellow: #fbf5bf;
 
   --table-header-bg: #f4f7fe;
   --table-header-bg-dark: #2c2c2c;
 
---note-purple:rgba(255, 146, 255, 0.5);
---note-red:rgba(255, 118, 118, 0.5);
---note-blue:rgb(148, 148, 255,0.5);
---note-green:rgba(144, 255, 144, 0.5);
---note-yellow:rgb(255, 255, 126,0.5);
-
+  --note-purple: rgba(255, 146, 255, 0.5);
+  --note-red: rgba(255, 118, 118, 0.5);
+  --note-blue: rgb(148, 148, 255, 0.5);
+  --note-green: rgba(144, 255, 144, 0.5);
+  --note-yellow: rgb(255, 255, 126, 0.5);
 
   // Font size
   --smallest-font-size: 11px;
@@ -456,5 +455,17 @@ input[disabled] {
 }
 
 .dark .rs-nav-horizontal {
-    background-color: var(--black) !important;
+  background-color: var(--black) !important;
 }
+.dark .rs-input-group.rs-input-group-inside .rs-input {
+  background-color: var(--dark-black) !important;
+}
+.dark .rs-input-group.rs-input-group-inside input.rs-input ~ .rs-input-group-btn,
+.rs-input-group.rs-input-group-inside .rs-auto-complete ~ .rs-input-group-addon,
+.rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-addon,
+.rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-btn {
+  background-color: var(--gray-dark) !important;
+}
+.dark svg:not(:root) {
+    color: var(--white) !important;
+  }

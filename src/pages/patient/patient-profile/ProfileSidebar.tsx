@@ -10,6 +10,7 @@ import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
 import React, { useState, useEffect } from 'react';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
+import { useSelector } from 'react-redux';
 import {
   Button,
   Form,
@@ -45,6 +46,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   showButton : showButton = true,
 }) => {
   const [open, setOpen] = useState(false);
+  const mode = useSelector((state: any) => state.ui.mode);
   const [labelTitle, setLabelTitle] = useState('Full Name');
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -168,7 +170,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   }, [refetchData]);
   return (
     <div
-      className={clsx('profile-sidebar-container', {
+      className={clsx(`profile-sidebar-container ${mode === 'light' ? 'light' : 'dark'}`, {
         expanded: expand,
         'not-expanded': !expand
       })}

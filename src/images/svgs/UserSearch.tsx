@@ -1,6 +1,9 @@
 import React from "react";
+import { useSelector } from "react-redux";
 
-const UserSearch = () => (
+const UserSearch = () => {
+   const mode = useSelector((state: any) => state.ui.mode);
+  return(
   <svg
     version="1.0"
     xmlns="http://www.w3.org/2000/svg"
@@ -11,7 +14,7 @@ const UserSearch = () => (
   >
     <g
       transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)"
-      fill="#000000"
+      fill={mode === 'light' ? "#000000" : 'var(--white)'}
       stroke="none"
     >
       <path
@@ -43,6 +46,7 @@ const UserSearch = () => (
       />
     </g>
   </svg>
-);
+  );
+};
 
 export default UserSearch;
