@@ -96,7 +96,7 @@
 // Keep this as the last style in the file to override styles when dark mode is active
 .my-input-container.dark {
   .required-field {
-    color: red;    
+    color: red;
   }
   .rs-picker-input-group.rs-input-group.rs-input-group-inside {
     background-color: var(--dark-black) !important;
@@ -110,14 +110,31 @@
     color: var(--white);
   }
   .rs-picker-default .rs-picker-toggle.rs-btn {
-    background-color:  var(--dark-black) !important;
+    background-color: var(--dark-black) !important;
   }
   .rs-picker.rs-picker-select.rs-picker-default.rs-picker-toggle-wrapper.rs-picker-cleanable {
-    background-color:  var(--dark-black) !important;
+    background-color: var(--dark-black) !important;
   }
-  
+
+  .rs-picker-toggle-wrapper {
+    background: var(--dark-black) !important;
+  }
+  .rs-picker-tag .rs-picker-tag-list .rs-tag-md,
+  .rs-picker-tag-md .rs-picker-tag-list .rs-tag-md {
+    background-color: #444444 !important;
+  }
 }
 
-.my-input-container.dark .rs-picker-has-value .rs-btn .rs-picker-toggle-value, .my-input-container .rs-picker-has-value .rs-picker-toggle .rs-picker-toggle-value {
-    color: var(--white) !important;
+.my-input-container.dark .rs-picker-has-value .rs-btn .rs-picker-toggle-value {
+  color: var(--white) !important;
+}
+
+.my-icon-input.dark{
+   .rs-picker-toggle-wrapper {
+    background: var(--dark-black) !important;
+  }
+  .rs-picker-toggle-wrapper .rs-picker-toggle.rs-btn{
+  background: var(--dark-black) !important;
+}
+
 }

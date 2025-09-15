@@ -454,6 +454,8 @@ input[disabled] {
   opacity: 1;
 }
 
+
+
 .dark .rs-nav-horizontal {
   background-color: var(--black) !important;
 }
@@ -467,5 +469,17 @@ input[disabled] {
   background-color: var(--gray-dark) !important;
 }
 .dark svg:not(:root) {
-    color: var(--white) !important;
+  color: var(--white) !important;
+}
+
+// To style the Search Input inside the SelectPicker dropdown to match dark mode
+.rs-theme-dark{
+  .rs-input-group.rs-input-group-inside .rs-input {
+    background-color: var(--dark-black) !important;
   }
+ .rs-input-group input.rs-input ~ .rs-input-group-addon,
+  .rs-input-group .rs-form-control-wrapper ~ .rs-input-group-addon {
+    background-color: var(--gray-dark) !important;
+  }
+}
+
