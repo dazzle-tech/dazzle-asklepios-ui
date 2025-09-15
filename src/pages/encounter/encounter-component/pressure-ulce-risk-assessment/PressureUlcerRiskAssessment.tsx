@@ -4,6 +4,7 @@ import { Checkbox, Form } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import PressureUlcerRiskAssessmentModal from './PressureUlcerRiskAssessmentModal';
 import PlusIcon from '@rsuite/icons/Plus';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import './Style.less';
 
@@ -38,7 +39,31 @@ const initialSampleData = [
 // Table columns config
 const columns = [
   { key: 'totalScore', title: 'Total Score', dataKey: 'totalScore', width: 120 },
-  { key: 'riskLevel', title: 'Risk Level', dataKey: 'riskLevel', width: 160 },
+ {
+    key: 'riskLevel',
+    title: 'Risk Level',
+    dataKey: 'riskLevel',
+    width: 160,
+    render: row => (
+      <MyBadgeStatus
+        backgroundColor={
+          row.riskLevel === 'No Risk'
+            ? 'var(--light-green)'
+            : row.riskLevel === 'Moderate Risk'
+            ? 'var(--light-orange)'
+            : 'var(--light-pink)'
+        }
+        color={
+          row.riskLevel === 'No Risk'
+            ? 'var(--primary-green)'
+            : row.riskLevel === 'Moderate Risk'
+            ? 'var(--primary-orange)'
+            : 'var(--primary-pink)'
+        }
+        contant={row.riskLevel}
+      />
+    )
+  },
   {
     key: 'createdByAt',
     title: 'Created By\\At',

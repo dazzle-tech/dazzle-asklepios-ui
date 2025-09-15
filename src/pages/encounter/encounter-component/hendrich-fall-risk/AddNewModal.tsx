@@ -4,6 +4,7 @@ import { faPersonFallingBurst } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Radio, RadioGroup, Row, Text } from 'rsuite';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 const AddNewModal = ({
   open,
@@ -35,6 +36,18 @@ const AddNewModal = ({
       setOpenRiskLevelExtraFormModal(true);
     }
   };
+
+const getRiskInfo = (riskLevelKey) => {
+  if (riskLevelKey === '6830244509957984') {
+    return { label: 'High', backgroundColor: 'var(--light-orange)', color: 'var(--primary-orange)' };
+  } else if (riskLevelKey === '6830230146334591') {
+    return { label: 'Low', backgroundColor: 'var(--light-green)', color: 'var(--primary-green)' };
+  }
+  return { label: '', backgroundColor: '', color: '' };
+};
+
+const riskInfo = getRiskInfo(recordOfRiskLevel.riskLevel);
+
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -148,33 +161,28 @@ const AddNewModal = ({
                 <Radio value="MultipleAttemptsOrUnable">Multiple attempts or unable</Radio>
             </RadioGroup>
             <br />
-            <Row>
-              <Col md={12}>
-                <MyInput
-                  width="100%"
-                  fieldName="score"
-                  fieldType="number"
-                  fieldLabel="Total Score"
-                  record={recordOfScore}
-                  setRecord={setRecordOfScore}
-                  disabled
-                />
-              </Col>
-              <Col md={12}>
-                <MyInput
-                  width="100%"
-                  fieldName="riskLevel"
-                  fieldLabel="Risk Level"
-                  fieldType="select"
-                  selectData={riskLevelsLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={recordOfRiskLevel}
-                  setRecord={setRecordOfRiskLevel}
-                  disabled
-                />
-              </Col>
-            </Row>
+<Row>
+  <Col md={12}>
+    <MyInput
+      width="100%"
+      fieldName="score"
+      fieldType="number"
+      fieldLabel="Total Score"
+      record={recordOfScore}
+      setRecord={setRecordOfScore}
+      disabled
+    />
+  </Col>
+  <Col md={12}>
+    <div style={{ marginTop: '1.5vw' }}>
+      <MyBadgeStatus
+        contant={riskInfo.label}
+        backgroundColor={riskInfo.backgroundColor}
+        color={riskInfo.color}
+      />
+    </div>
+  </Col>
+</Row>
           </Form>
         );
     }

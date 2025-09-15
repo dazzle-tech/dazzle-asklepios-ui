@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPersonPregnant } from '@fortawesome/free-solid-svg-icons';
 import './Style.less';
 
 // Define the shape of the form data
@@ -81,6 +83,7 @@ const StartNewPregnancyModal: React.FC<StartNewPregnancyModalProps> = ({
       size="30vw"
       position="right"
       actionButtonLabel="Save"
+        steps={[{ title: 'Start New Pregnancy',icon:<FontAwesomeIcon icon={faPersonPregnant}/> }]}
       actionButtonFunction={handleSave}
       content={
         <Form fluid layout="vertical" className="start-new-pregnancy-form">

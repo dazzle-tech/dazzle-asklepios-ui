@@ -4,6 +4,7 @@ import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { Checkbox, Form } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import CapriniRiskAssessmentModal from './CapriniRiskAssessmentModal';
 import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
@@ -48,11 +49,30 @@ const columns: ColumnConfig[] = [
     dataKey: 'totalScore',
     width: 100
   },
-  {
+ {
     key: 'riskLevel',
     title: 'Risk Level',
     dataKey: 'riskLevel',
-    width: 160
+    width: 160,
+    render: row => (
+      <MyBadgeStatus
+        backgroundColor={
+          row.riskLevel === 'High Risk'
+            ? 'var(--light-pink)'
+            : row.riskLevel === 'Moderate Risk'
+            ? 'var(--light-yellow)'
+            : 'var(--light-green)'
+        }
+        color={
+          row.riskLevel === 'High Risk'
+            ? 'var(--primary-pink)'
+            : row.riskLevel === 'Moderate Risk'
+            ? 'var(--primary-yellow)'
+            : 'var(--primary-green)'
+        }
+        contant={row.riskLevel}
+      />
+    )
   },
   {
     key: 'recommendedAction',

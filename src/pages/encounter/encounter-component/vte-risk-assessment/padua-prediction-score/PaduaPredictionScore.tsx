@@ -4,6 +4,7 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { Checkbox, Form } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import PaduaPredictionScoreModal from './PaduaPredictionScoreModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import './style.less';
@@ -44,11 +45,26 @@ const columns: ColumnConfig[] = [
     dataKey: 'totalScore',
     width: 100
   },
-  {
+ {
     key: 'riskLevel',
     title: 'Risk Level',
     dataKey: 'riskLevel',
-    width: 180
+    width: 180,
+    render: row => (
+      <MyBadgeStatus
+        backgroundColor={
+          row.riskLevel === 'High Risk'
+            ? 'var(--light-pink)'
+            : 'var(--light-green)'
+        }
+        color={
+          row.riskLevel === 'High Risk'
+            ? 'var(--primary-pink)'
+            : 'var(--primary-green)'
+        }
+        contant={row.riskLevel}
+      />
+    )
   },
   {
     key: 'createdByAt',

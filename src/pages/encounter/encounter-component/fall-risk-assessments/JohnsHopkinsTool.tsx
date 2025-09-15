@@ -9,6 +9,7 @@ import JohnsHopkinsToolModal from './JhonsHopkinsToolModal';
 import CancellationModal from '@/components/CancellationModal';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import JhonsHopkinsToolSecondModal from './JhonsHopkinsToolSecondModal';
 import MyButton from '@/components/MyButton/MyButton';
 import './Style.less';
@@ -60,11 +61,30 @@ const columns: ColumnConfig[] = [
     width: 100
   },
   {
-    key: 'riskLevel',
-    title: 'Risk Level',
-    dataKey: 'riskLevel',
-    width: 120
-  },
+  key: 'riskLevel',
+  title: 'Risk Level',
+  dataKey: 'riskLevel',
+  width: 160,
+  render: (row: any) => (
+    <MyBadgeStatus
+      backgroundColor={
+        row.riskLevel === 'High Risk'
+          ? 'var(--light-pink)'
+          : row.riskLevel === 'Moderate Risk'
+          ? 'var(--light-orange)'
+          : 'var(--light-green)'
+      }
+      color={
+        row.riskLevel === 'High Risk'
+          ? 'var(--primary-pink)'
+          : row.riskLevel === 'Moderate Risk'
+          ? 'var(--primary-orange)'
+          : 'var(--primary-green)'
+      }
+      contant={row.riskLevel}
+    />
+  )
+},
   {
     key: 'createdByAt',
     title: 'Created By\\At',

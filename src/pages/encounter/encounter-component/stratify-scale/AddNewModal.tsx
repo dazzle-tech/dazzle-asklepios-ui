@@ -5,6 +5,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 const AddNewModal = ({
   open,
   setOpen,
@@ -107,33 +108,28 @@ const AddNewModal = ({
               </Col>
             </Row>
             <br />
-            <Row>
-              <Col md={12}>
-                <MyInput
-                  width="100%"
-                  fieldName="score"
-                  fieldType="number"
-                  fieldLabel="Total Score"
-                  record={recordOfScore}
-                  setRecord={setRecordOfScore}
-                  disabled
-                />
-              </Col>
-              <Col md={12}>
-                <MyInput
-                  width="100%"
-                  fieldName="riskLevel"
-                  fieldLabel="Risk Level"
-                  fieldType="select"
-                  selectData={riskLevelsLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={recordOfRiskLevel}
-                  setRecord={setRecordOfRiskLevel}
-                  disabled
-                />
-              </Col>
-            </Row>
+<Row>
+  <Col md={12}>
+    <MyInput
+      width="100%"
+      fieldName="score"
+      fieldType="number"
+      fieldLabel="Total Score"
+      record={recordOfScore}
+      setRecord={setRecordOfScore}
+      disabled
+    />
+  </Col>
+  <Col md={12}>
+    <div style={{ marginTop: '1.5vw' }}>
+      <MyBadgeStatus
+        contant={recordOfRiskLevel.riskLevel === '6830244509957984' ? 'High' : 'Low'}
+        backgroundColor={recordOfRiskLevel.riskLevel === '6830244509957984' ? 'var(--light-pink)' : 'var(--light-green)'}
+        color={recordOfRiskLevel.riskLevel === '6830244509957984' ? 'var(--primary-pink)' : 'var(--primary-green)'}
+      />
+    </div>
+  </Col>
+</Row>
           </Form>
         );
     }

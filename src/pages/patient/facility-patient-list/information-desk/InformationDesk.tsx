@@ -259,7 +259,85 @@ const sortedData = [...[companionDummyRow]].sort((a, b) => {
 });
 const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-const tablefilters = (
+const content = (
+            <div className="advanced-filters">
+              <Form fluid className="dissss">
+                          <MyInput
+            fieldLabel="Date of Birth"
+            fieldType="date"
+            fieldName="dob"
+            record={searchPatient}
+            setRecord={setSearchPatient}
+          />
+          <MyInput
+            fieldLabel="Select Department"
+            fieldType="checkPicker"
+            selectData={departmentsResponse?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            fieldName="selectedDepartments"
+            record={{ selectedDepartments }}
+            setRecord={value => setSelectedDepartments(value.selectedDepartments)}
+            searchable={false}
+          />
+          <MyInput
+            fieldLabel="Encounter Type"
+            fieldType="select"
+            fieldName="encounterTypeLkey"
+            selectData={encounterTypeLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={searchPatient}
+            setRecord={setSearchPatient}
+            searchable={false}
+          />
+          <MyInput
+            fieldLabel="Select Room"
+            fieldType="checkPicker"
+            fieldName="selectedRooms"
+            selectData={roomListResponseLoading?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            record={{ selectedRooms }}
+            setRecord={val => setSelectedRooms(val.selectedRooms)}
+            searchable={false}
+          />
+          <MyInput
+            fieldLabel="Select Bed"
+            fieldType="checkPicker"
+            fieldName="selectedBeds"
+            selectData={bedListResponse?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            record={{ selectedBeds }}
+            setRecord={val => setSelectedBeds(val.selectedBeds)}
+            searchable={false}
+          />
+          <MyInput
+            fieldLabel="Bed Status"
+            fieldType="select"
+            fieldName="bedStatusLkey"
+            selectData={bedStatusLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={searchPatient}
+            setRecord={setSearchPatient}
+            searchable={false}
+          />
+          <MyInput
+            fieldLabel="Responsible Physician"
+            fieldType="checkPicker"
+            fieldName="responsiblePhysicians"
+            selectData={practitionerListResponse?.object ?? []}
+            selectDataLabel="practitionerFullName"
+            selectDataValue="key"
+            record={{ responsiblePhysicians }}
+            setRecord={val => setResponsiblePhysicians(val.responsiblePhysicians)}
+            searchable={false}
+          />
+        </Form></div>);
+
+const tablefilters = (<>
   <div className="field-btn-div">
     <Form layout="inline" fluid>
       {/* Basic filters */}
@@ -292,99 +370,19 @@ const tablefilters = (
             searchable={false}
       />
 
-      {/* Advanced filters (conditionally shown) */}
-      {showAdvancedFilters && (
-        <>
-          <MyInput
-            column
-            fieldLabel="Date of Birth"
-            fieldType="date"
-            fieldName="dob"
-            record={searchPatient}
-            setRecord={setSearchPatient}
-          />
-          <MyInput
-            column
-            fieldLabel="Select Department"
-            fieldType="checkPicker"
-            selectData={departmentsResponse?.object ?? []}
-            selectDataLabel="name"
-            selectDataValue="key"
-            fieldName="selectedDepartments"
-            record={{ selectedDepartments }}
-            setRecord={value => setSelectedDepartments(value.selectedDepartments)}
-            searchable={false}
-          />
-          <MyInput
-            column
-            fieldLabel="Encounter Type"
-            fieldType="select"
-            fieldName="encounterTypeLkey"
-            selectData={encounterTypeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={searchPatient}
-            setRecord={setSearchPatient}
-            searchable={false}
-          />
-          <MyInput
-            column
-            fieldLabel="Select Room"
-            fieldType="checkPicker"
-            fieldName="selectedRooms"
-            selectData={roomListResponseLoading?.object ?? []}
-            selectDataLabel="name"
-            selectDataValue="key"
-            record={{ selectedRooms }}
-            setRecord={val => setSelectedRooms(val.selectedRooms)}
-            searchable={false}
-          />
-          <MyInput
-            column
-            fieldLabel="Select Bed"
-            fieldType="checkPicker"
-            fieldName="selectedBeds"
-            selectData={bedListResponse?.object ?? []}
-            selectDataLabel="name"
-            selectDataValue="key"
-            record={{ selectedBeds }}
-            setRecord={val => setSelectedBeds(val.selectedBeds)}
-            searchable={false}
-          />
-          <MyInput
-            column
-            fieldLabel="Bed Status"
-            fieldType="select"
-            fieldName="bedStatusLkey"
-            selectData={bedStatusLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={searchPatient}
-            setRecord={setSearchPatient}
-            searchable={false}
-          />
-          <MyInput
-            column
-            fieldLabel="Responsible Physician"
-            fieldType="checkPicker"
-            fieldName="responsiblePhysicians"
-            selectData={practitionerListResponse?.object ?? []}
-            selectDataLabel="practitionerFullName"
-            selectDataValue="key"
-            record={{ responsiblePhysicians }}
-            setRecord={val => setResponsiblePhysicians(val.responsiblePhysicians)}
-            searchable={false}
-          />
-        </>
-      )}
-    </Form>
+
+        </Form>
+
+
+  </div>
 
     <AdvancedSearchFilters
       searchFilter={false}
-      advancedOnClick={() => setShowAdvancedFilters(prev => !prev)}
+      content={content}
     />
-  </div>
-);
+    
+
+</>);
 
 
 

@@ -8,6 +8,7 @@ import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import MyLabel from '@/components/MyLabel';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FaModx } from 'react-icons/fa';
+import { faUserPlus,faPills,faCheck, faCheckDouble, faPrint} from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
 
 const DischargePlanning = () => {
@@ -208,7 +209,9 @@ const DischargePlanning = () => {
                     <Text>Medications to Continue</Text>
                   </Col>
                   <Col md={12}>
-                    <MyButton>Prescription</MyButton>
+                    <MyButton
+                                      prefixIcon={() => <FontAwesomeIcon icon={faPills} />}>
+                      Prescription</MyButton>
                   </Col>
                 </Row>
                 <Row>
@@ -265,8 +268,12 @@ const DischargePlanning = () => {
                     <Text>Follow-up Plan</Text>
                   </Col>
                   <Col md={12}>
-                    <MyButton>Create follow-up</MyButton>
-                  </Col>
+
+                   <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
+                >
+                  Create Follow-up
+                </MyButton>                  </Col>
                 </Row>
               </div>
             </Row>
@@ -372,17 +379,32 @@ const DischargePlanning = () => {
           <FaModx title="Generate Report" size={20} /> Generate Report
         </MyButton>
 
-        <MyButton color="var(--deep-blue)" width="80px" height="32px">
-          Save
-        </MyButton>
+<MyButton
+  color="var(--deep-blue)"
+  width="80px"
+  height="32px"
+  prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
+>
+  Save
+</MyButton>
 
-        <MyButton color="var(--deep-blue)" width="109px" height="32px">
-          Sign & Submit
-        </MyButton>
+<MyButton
+  color="var(--deep-blue)"
+  width="119px"
+  height="32px"
+  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+>Sign & Submit
+</MyButton>
 
-        <MyButton color="var(--deep-blue)" width="150px" height="32px">
-          Print Discharge Report
-        </MyButton>
+<MyButton
+  color="var(--deep-blue)"
+  width="120px"
+  height="32px"
+  prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+>
+ Print Report
+</MyButton>
+
       </div>
     </>
   );
