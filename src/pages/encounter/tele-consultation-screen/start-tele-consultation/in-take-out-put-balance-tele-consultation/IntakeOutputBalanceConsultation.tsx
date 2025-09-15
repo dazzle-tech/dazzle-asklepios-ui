@@ -6,7 +6,7 @@ import OutputsTable from './OutputsTable';
 import SectionContainer from '@/components/SectionsoContainer';
 import './style.less'; 
 
-const IntakeOutputBalanceTeleConsultation = () => {
+const IntakeOutputBalanceConsultation = () => {
   const balanceData = [
     { key: '1', date: '2025-02-15', totalIntake: 2500, totalOutput: 1800 },
     { key: '2', date: '2025-02-16', totalIntake: 2800, totalOutput: 2200 },
@@ -55,4 +55,4 @@ const IntakeOutputBalanceTeleConsultation = () => {
   );
 };
 
-export default IntakeOutputBalanceTeleConsultation;
+export default IntakeOutputBalanceConsultation;

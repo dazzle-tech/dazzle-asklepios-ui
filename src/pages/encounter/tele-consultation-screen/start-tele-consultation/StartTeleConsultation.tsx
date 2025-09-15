@@ -20,7 +20,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import AddProgressNotes from '@/components/ProgressNotes/ProgressNotes';
 import IntraoperativeMonitoring from '@/pages/operation-module/StartedDetails/IntraoperativeMonitoring';
-import IntakeOutputBalanceTeleConsultation from './in-take-out-put-balance-tele-consultation/IntakeOutputBalanceteleconsultation';
+import IntakeOutputBalanceConsultation from './in-take-out-put-balance-tele-consultation/IntakeOutputBalanceConsultation';
 // Import patient summary and other modules
 import RecentTestResults from '../../encounter-component/patient-summary/RecentTestResults';
 import PatientChronicMedication from '../../encounter-component/patient-summary/PatientChronicMedication';
@@ -315,7 +315,7 @@ case 'Operation Requests':
   />
 </div>
 <div style={{marginLeft:'0.1vw',marginRight:'0.1vw'}}>
-<IntakeOutputBalanceTeleConsultation/>
+<IntakeOutputBalanceConsultation></IntakeOutputBalanceConsultation>
 </div>
 </div>
   </>);
