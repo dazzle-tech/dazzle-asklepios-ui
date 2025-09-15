@@ -10,7 +10,7 @@ import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
-import { GiKidneys } from "react-icons/gi";
+import { GiKidneys } from 'react-icons/gi';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faLeaf } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -254,214 +254,316 @@ const Encounter = () => {
     '/encounter/speech-therapy': 'Speech Therapy',
     '/encounter/iv-fluid-administration': 'IV Fluid Administration',
     '/encounter/continuous-observation': 'Continuous Observation',
-    '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment'
+    '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment',
+    '/encounter/sliding-scale ': 'Sliding Scale'
   };
 
   const menuItems = [
     {
       key: 'pregnancyFollowUp',
       label: 'Pregnancy Follow-up',
-      icon:  <FontAwesomeIcon icon={faBed} className="icon" />,
+      icon: <FontAwesomeIcon icon={faBed} className="icon" />,
       path: 'pregnancy-follow-up'
     },
     {
       key: 'vteRiskAssessment',
       label: 'VTE Risk Assessment',
-      icon:<FontAwesomeIcon icon={faBraille} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faBraille} className="icon" />,
       path: 'vte-risk-assessment'
     },
     {
       key: 'bradenScaleForPressureUlcer',
       label: 'Pressure Ulcer Risk Assessment',
-      icon: <FontAwesomeIcon icon={faBed} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faBed} className="icon" />,
       path: 'pressure-ulce-risk-assessment'
     },
-    { key: 'glasgowComaScale', label: 'Glasgow Coma Scale', icon: <FontAwesomeIcon icon={faG} className="icon" /> , path: 'glasgow-coma-scale' },
-    { key: 'clinicalVisit', label: 'Clinical Visit', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" /> , path: 'clinical-visit' },
-    { key: 'observation', label: 'Observation', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" /> , path: 'observations' },
-    { key: 'allergies', label: 'Allergies', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" /> , path: 'allergies' },
+    {
+      key: 'glasgowComaScale',
+      label: 'Glasgow Coma Scale',
+      icon: <FontAwesomeIcon icon={faG} className="icon" />,
+      path: 'glasgow-coma-scale'
+    },
+    {
+      key: 'clinicalVisit',
+      label: 'Clinical Visit',
+      icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
+      path: 'clinical-visit'
+    },
+    {
+      key: 'observation',
+      label: 'Observation',
+      icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />,
+      path: 'observations'
+    },
+    {
+      key: 'allergies',
+      label: 'Allergies',
+      icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />,
+      path: 'allergies'
+    },
     {
       key: 'medicalWarnings',
       label: 'Medical Warnings',
-      icon:<FontAwesomeIcon icon={faTriangleExclamation} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />,
       path: 'medical-warnings'
     },
     {
       key: 'diagnosticsResult',
       label: 'Diagnostics Test Result',
-      icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />,
       path: 'diagnostics-result'
     },
     {
       key: 'dialysisRequest',
       label: 'Dialysis Request',
-      icon: <GiKidneys/>,
+      icon: <GiKidneys />,
       path: 'dialysis-request'
     },
-    { key: 'vaccination', label: 'Vaccination', icon: <FontAwesomeIcon icon={faSyringe} className="icon" /> , path: 'vaccination' },
-    { key: 'prescription', label: 'Prescription', icon: <FontAwesomeIcon icon={faFilePrescription} className="icon" /> , path: 'prescription' },
-    { key: 'drugOrder', label: 'Medication Order', icon: <FontAwesomeIcon icon={faPills} className="icon" /> , path: 'medication-order' },
+    {
+      key: 'vaccination',
+      label: 'Vaccination',
+      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
+      path: 'vaccination'
+    },
+    {
+      key: 'prescription',
+      label: 'Prescription',
+      icon: <FontAwesomeIcon icon={faFilePrescription} className="icon" />,
+      path: 'prescription'
+    },
+    {
+      key: 'drugOrder',
+      label: 'Medication Order',
+      icon: <FontAwesomeIcon icon={faPills} className="icon" />,
+      path: 'medication-order'
+    },
     {
       key: 'diagnosticsOrder',
       label: 'Diagnostics Order',
-      icon:<FontAwesomeIcon icon={faVials} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faVials} className="icon" />,
       path: 'diagnostics-order'
     },
-    { key: 'consultation', label: 'Consultation', icon:<FontAwesomeIcon icon={faStethoscope} className="icon" /> , path: 'consultation' },
+    {
+      key: 'consultation',
+      label: 'Consultation',
+      icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />,
+      path: 'consultation'
+    },
     {
       key: 'operationRequests',
       label: 'Operation Requests',
-      icon:<FontAwesomeIcon icon={faBedPulse} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />,
       path: 'operation-request'
     },
-    { key: 'procedures', label: 'Procedures', icon:<FontAwesomeIcon icon={faNotesMedical} className="icon" /> , path: 'procedures' },
+    {
+      key: 'procedures',
+      label: 'Procedures',
+      icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
+      path: 'procedures'
+    },
     {
       key: 'patientHistory',
       label: 'Patient History',
-      icon:<FontAwesomeIcon icon={faClockRotateLeft} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />,
       path: 'patient-history'
     },
     {
       key: 'referralRequest',
       label: 'Referral Request',
-      icon:<FontAwesomeIcon icon={faUserDoctor} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
       path: 'referral-request'
     },
     {
       key: 'multidisciplinaryTeamNotes',
       label: 'Multidisciplinary Team Notes',
-      icon:<FontAwesomeIcon icon={faComment} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faComment} className="icon" />,
       path: 'multidisciplinary-team-notes'
     },
 
     {
       key: 'dischargePlanning',
       label: 'Discharge Planning',
-      icon:<FontAwesomeIcon icon={faRightFromBracket} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faRightFromBracket} className="icon" />,
       path: 'discharge-planning'
     },
     {
       key: 'bedsideProceduresRequest',
       label: 'Bedside Procedures',
-      icon:<FontAwesomeIcon icon={faSuitcaseMedical} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faSuitcaseMedical} className="icon" />,
       path: 'bedside-procedures-requests'
     },
-    { key: 'bloodOrder', label: 'Blood Order', icon:<FontAwesomeIcon icon={faDroplet} className="icon" /> , path: 'blood-order' },
+    {
+      key: 'bloodOrder',
+      label: 'Blood Order',
+      icon: <FontAwesomeIcon icon={faDroplet} className="icon" />,
+      path: 'blood-order'
+    },
     {
       key: 'intakeOutputBalance',
       label: 'Intake Output Balance',
-      icon:<FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />,
       path: 'intake-output-balance'
     },
 
     {
       key: 'carePlanAndGoals',
       label: 'Care Plan & Goals',
-      icon:<FontAwesomeIcon icon={faNotesMedical} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
       path: 'care-plan-and-goals'
     },
 
     {
       key: 'johnsHopkinsFallRiskAssessmentTool',
       label: 'Johns Hopkins Tool',
-      icon:<FontAwesomeIcon icon={faPersonFallingBurst} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
       path: 'johns-hopkins-tool'
     },
 
     {
       key: 'medicationsRecord',
       label: 'Medications Record',
-      icon:<FontAwesomeIcon icon={faPills} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faPills} className="icon" />,
       path: 'medications-record'
     },
-    { key: 'vaccineReccord', label: 'Vaccine Record', icon:<FontAwesomeIcon icon={faSyringe} className="icon" /> , path: 'vaccine-record' },
+    {
+      key: 'vaccineReccord',
+      label: 'Vaccine Record',
+      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
+      path: 'vaccine-record'
+    },
 
-    { key: 'cardiology', label: 'Cardiology', icon:<FontAwesomeIcon icon={faHeartPulse} className="icon" /> , path: 'cardiology' },
-    { key: 'dentalCare', label: 'Dental Care', icon:<FontAwesomeIcon icon={faTooth} className="icon" /> , path: 'dental-care' },
-    { key: 'optometricExam', label: 'Optometric Exam', icon:<FontAwesomeIcon icon={faEye} className="icon" /> , path: 'optometric-exam' },
-    { key: 'audiometryPuretone', label: 'ENT', icon:<FontAwesomeIcon icon={faEarListen} className="icon" /> , path: 'audiometry' },
-    { key: 'progressNotes', label: 'Progress Notes', icon:<FontAwesomeIcon icon={faFileLines} className="icon" /> , path: 'progress-notes' },
+    {
+      key: 'cardiology',
+      label: 'Cardiology',
+      icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />,
+      path: 'cardiology'
+    },
+    {
+      key: 'dentalCare',
+      label: 'Dental Care',
+      icon: <FontAwesomeIcon icon={faTooth} className="icon" />,
+      path: 'dental-care'
+    },
+    {
+      key: 'optometricExam',
+      label: 'Optometric Exam',
+      icon: <FontAwesomeIcon icon={faEye} className="icon" />,
+      path: 'optometric-exam'
+    },
+    {
+      key: 'audiometryPuretone',
+      label: 'ENT',
+      icon: <FontAwesomeIcon icon={faEarListen} className="icon" />,
+      path: 'audiometry'
+    },
+    {
+      key: 'progressNotes',
+      label: 'Progress Notes',
+      icon: <FontAwesomeIcon icon={faFileLines} className="icon" />,
+      path: 'progress-notes'
+    },
     {
       key: 'psychologicalExam',
       label: 'Psychological Exam',
-      icon:<FontAwesomeIcon icon={faBrain} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faBrain} className="icon" />,
       path: 'psychological-exam'
     },
-    { key: 'dayCase', label: 'DayCase', icon:<FontAwesomeIcon icon={faBed} className="icon" /> , path: 'day-case' },
-    { key: 'ivFluidOrder', label: 'IV Fluid Order', icon:<FontAwesomeIcon icon={faSyringe} className="icon" /> , path: 'iv-fluid-order' },
+    {
+      key: 'dayCase',
+      label: 'DayCase',
+      icon: <FontAwesomeIcon icon={faBed} className="icon" />,
+      path: 'day-case'
+    },
+    {
+      key: 'ivFluidOrder',
+      label: 'IV Fluid Order',
+      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
+      path: 'iv-fluid-order'
+    },
     {
       key: 'morseFallScale',
       label: 'Morse Fall Scale (MFS)',
-      icon:<FontAwesomeIcon icon={faPersonFallingBurst} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
       path: 'morse-fall-scale'
     },
     {
       key: 'stratifyScale',
       label: 'STRATIFY Scale',
-      icon:<FontAwesomeIcon icon={faPersonFallingBurst} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
       path: 'stratify-scale'
     },
     {
       key: 'hendrichFallRisk',
       label: 'Hendrich II Fall Risk Model',
-      icon:<FontAwesomeIcon icon={faPersonFallingBurst} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
       path: 'hendrich-fall-risk'
     },
-    { key: 'doctorRound', label: 'Doctor Round', icon:<FontAwesomeIcon icon={faUserDoctor} className="icon" /> , path: 'doctor-round' },
+    {
+      key: 'doctorRound',
+      label: 'Doctor Round',
+      icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
+      path: 'doctor-round'
+    },
 
     {
       key: 'nutritionStateAssessment',
       label: 'Nutrition State',
-      icon:<FontAwesomeIcon icon={faLeaf} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faLeaf} className="icon" />,
       path: 'nutrition-state-asssessment'
     },
     {
       key: 'dietaryRequest',
       label: 'Dietary Request',
-      icon:<FontAwesomeIcon icon={faLeaf} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faLeaf} className="icon" />,
       path: 'dietary-request'
     },
     {
       key: 'medicationAdministrationRecord',
       label: 'MAR',
-      icon:<FontAwesomeIcon icon={faCapsules} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faCapsules} className="icon" />,
       path: 'medication-administration-record'
     },
     {
       key: 'physiotherapyPlan',
       label: 'Physiotherapy Plan',
-      icon:<FontAwesomeIcon icon={faPersonWalking} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />,
       path: 'physiotherapy-plan'
     },
     {
       key: 'occupationalTherapy',
       label: 'Occupational Therapy',
-      icon:<FontAwesomeIcon icon={faPersonWalking} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />,
       path: 'occupational-therapy'
     },
     {
       key: 'speechTherapy',
       label: 'Speech Therapy',
-      icon:<FontAwesomeIcon icon={faPersonWalking} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />,
       path: 'speech-therapy'
     },
     {
       key: 'ivFluidAdministration',
       label: 'IV Fluid Administration',
-      icon:<FontAwesomeIcon icon={faSyringe} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
       path: 'iv-fluid-administration'
     },
     {
       key: 'continuousObservations',
       label: 'Continuous Observation',
-      icon:<FontAwesomeIcon icon={faSyringe} className="icon" /> ,
+      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
       path: 'continuous-observation'
     },
     {
       key: 'flaccNeonatesPainAssessment',
       label: 'FLACC Neonates Pain Assessment',
-      icon:  <FontAwesomeIcon icon={faSyringe} className="icon" />,
+      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
       path: 'FLACC-neonates-pain-assessment'
+    },
+    {
+      key: 'slidingScale',
+      label: 'Sliding Scale',
+      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
+      path: 'sliding-scale'
     }
   ];
   const [currentHeader, setCurrentHeader] = useState();
