@@ -231,6 +231,7 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
       steps={[{ title: 'Assessment',icon:<FontAwesomeIcon icon={faListCheck}/>}]}
       size="33vw"
       position="right"
+      bodyheight='82vh'
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       content={ModalContent}

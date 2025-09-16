@@ -17,6 +17,7 @@ const LaboratoryResultComparison = ({ patient, testKey = null }) => {
         ]
     });
 
+const [record, setRecord] = useState<any>({});
     const { data: testGroup } = useGetGroupTestsQuery(listRequest);
     const [pivotData, setPivotData] = useState({ tests: [] });
 
@@ -90,10 +91,21 @@ const LaboratoryResultComparison = ({ patient, testKey = null }) => {
                 record={dateFilter}
                 setRecord={setDateFilter}
             />
+
+                <MyInput
+                    width={'100%'}
+                    column
+                    fieldLabel="Test Name"
+                    fieldType="text"
+                    fieldName="testName"
+                    record={record}
+                    setRecord={setRecord}
+                />
+
         </Form>
     );
 
-    return (
+    return (<div style={{ overflowX: 'hidden' }}>
         <Row>
             <Col md={24}>
                 {filters()}
@@ -137,7 +149,7 @@ const LaboratoryResultComparison = ({ patient, testKey = null }) => {
                 })}
             </Col>
         </Row>
-    );
-}
+    </div>);
+};
 
 export default LaboratoryResultComparison;

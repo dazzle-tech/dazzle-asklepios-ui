@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+// import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { Checkbox } from 'rsuite';
 import JohnsHopkinsToolModal from './JhonsHopkinsToolModal';
 import CancellationModal from '@/components/CancellationModal';
@@ -13,6 +14,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import JhonsHopkinsToolSecondModal from './JhonsHopkinsToolSecondModal';
 import MyButton from '@/components/MyButton/MyButton';
 import './Style.less';
+import { Whisper, Tooltip } from 'rsuite';
 
 //Table Data
 const sampleData = [
@@ -104,21 +106,22 @@ const columns: ColumnConfig[] = [
     dataKey: 'nextAssessment',
     width: 180
   },
-  {
-    key: 'viewPlan',
-    title: 'View Prevention Plan',
-    dataKey: 'viewPlan',
-    width: 180,
-    align: 'center',
-    render: () => (
+{
+  key: 'viewPlan',
+  title: 'View Prevention Plan',
+  dataKey: 'viewPlan',
+  width: 180,
+  align: 'center',
+  render: () => (
+    <Whisper placement="top" speaker={<Tooltip>Prevention Plan</Tooltip>}>
       <FontAwesomeIcon
-        icon={faEye}
+        icon={faListCheck}
         style={{ cursor: 'pointer', fontSize: '16px' }}
-        title="View Plan"
+        title="Prevention Plan"
       />
-    )
-  },
-
+    </Whisper>
+  )
+},
   {
     key: 'cancelledByAt',
     title: 'Cancelled By\\At',

@@ -6,6 +6,8 @@ import MyTable from '@/components/MyTable';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
+import BlockIcon from '@rsuite/icons/Block';
+import { Checkbox } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import { Radio, RadioGroup, Text } from 'rsuite';
 import { ApPatient } from '@/types/model-types';
@@ -63,6 +65,12 @@ const sampleRequests = [
     repeatEvery: '1',
     repeatUnit: 'week',
     orderedBy: 'Dr. Smith',
+    orderedAt: '2025-08-10 17:45',
+    createdBy: 'Nurse Alice',
+    createdAt: '2025-08-10 17:30',
+    cancelledBy: '',
+    cancelledAt: '',
+    cancellationReason: '',
     status: 'Active',
     mealType: 'all',
     portionSize: 'medium',
@@ -84,7 +92,13 @@ const sampleRequests = [
     repeatEvery: '',
     repeatUnit: '',
     orderedBy: 'Dr. Johnson',
-    status: 'Active',
+    orderedAt: '2025-08-09 09:10',
+    createdBy: 'Nurse David',
+    createdAt: '2025-08-09 09:00',
+    cancelledBy: 'Dr. Johnson',
+    cancelledAt: '2025-08-12 11:00',
+    cancellationReason: 'Patient developed allergic reaction',
+    status: 'Cancelled',
     dietCategory: 'diabetic',
     calorieTarget: '1800',
     proteinTarget: '80',
@@ -96,6 +110,7 @@ const sampleRequests = [
     attachments: []
   }
 ];
+
 
 const DietaryRequests = () => {
   const [requests, setRequests] = useState(sampleRequests);
@@ -836,6 +851,22 @@ const DietaryRequests = () => {
     }
   };
 
+  const tablebuttons = (<>
+  <div className='table-buttons-left-part-handle-positions'>
+        <MyButton prefixIcon={() => <BlockIcon />}>Cancel</MyButton>
+        <Checkbox>Show Cancelled</Checkbox>
+</div>
+        <div className="bt-right">
+                  <MyButton
+          prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+          onClick={handleAddNewRequest}
+        >
+          Add New Request
+        </MyButton>
+        </div>
+      </>);
+  
+
   const renderModalFooter = (
     <div className="render-modal-footer">
       <div>
@@ -853,81 +884,130 @@ const DietaryRequests = () => {
 
   return (
     <>
-      <div className="div-button">
-        <MyButton
-          prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
-          onClick={handleAddNewRequest}
-        >
-          Add New Request
-        </MyButton>
-      </div>
+
 
       <MyTable
         data={requests}
-        columns={[
-          {
-            key: 'dietOrderType',
-            title: 'Diet Order Type',
-            dataKey: 'dietOrderType',
-            width: 160
-          },
-          {
-            key: 'startDateTime',
-            title: 'Start Date Time',
-            dataKey: 'startDateTime',
-            width: 160,
-            render: rowData =>
-              rowData?.startDateTime ? (
-                <>
-                  {rowData.startDate}
-                  <br />
-                  <span className="date-table-style">{rowData.startTime}</span>
-                </>
-              ) : (
-                ' '
-              )
-          },
-          {
-            key: 'duration',
-            title: 'Duration',
-            dataKey: 'duration',
-            width: 100,
-            render: row => `${row.duration} ${row.durationUnit}`
-          },
-          {
-            key: 'repeat',
-            title: 'Repeat',
-            dataKey: 'repeat',
-            width: 120,
-            render: row =>
-              row.repeatEvery && row.repeatUnit
-                ? `Every ${row.repeatEvery} ${row.repeatUnit}${row.repeatEvery > 1 ? 's' : ''}`
-                : 'No repeat'
-          },
-          { key: 'orderedBy', title: 'Ordered By\\At', dataKey: 'orderedBy', width: 160 },
-          { key: 'status', title: 'Status', dataKey: 'status', width: 100 },
-          {
-            key: 'view',
-            title: 'View',
-            width: 80,
-            render: row => (
-              <div className="render-aws">
-                <FontAwesomeIcon
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleViewRequest(row);
-                  }}
-                  icon={faEye}
-                  className="font-aws"
-                />
-                <FontAwesomeIcon icon={faPrint} className="font-aws" />
-                <FontAwesomeIcon icon={faClone} className="font-aws" />
-              </div>
-            )
-          }
-        ]}
+columns={[
+  {
+    key: 'dietOrderType',
+    title: 'Diet Order Type',
+    dataKey: 'dietOrderType',
+    width: 160
+  },
+  {
+    key: 'startDateTime',
+    title: 'Start Date Time',
+    dataKey: 'startDateTime',
+    width: 160,
+    render: rowData =>
+      rowData?.startDateTime ? (
+        <>
+          {rowData.startDate}
+          <br />
+          <span className="date-table-style">{rowData.startTime}</span>
+        </>
+      ) : (
+        ' '
+      )
+  },
+  {
+    key: 'duration',
+    title: 'Duration',
+    dataKey: 'duration',
+    width: 100,
+    render: row => `${row.duration} ${row.durationUnit}`
+  },
+  {
+    key: 'repeat',
+    title: 'Repeat',
+    dataKey: 'repeat',
+    width: 120,
+    render: row =>
+      row.repeatEvery && row.repeatUnit
+        ? `Every ${row.repeatEvery} ${row.repeatUnit}${row.repeatEvery > 1 ? 's' : ''}`
+        : 'No repeat'
+  },
+{
+  key: 'orderedBy',
+  title: 'Ordered By\\At',
+  dataKey: 'orderedBy',
+  width: 160,
+  render: row => (
+    <>
+      {row.orderedBy}
+      <br />
+      <span className="date-table-style">{row.orderedAt}</span>
+    </>
+  )
+},
+  {
+    key: 'createdBy',
+    title: 'Created By\\At',
+    dataKey: 'createdBy',
+    width: 160,
+    render: row => (
+      <>
+        {row.createdBy}
+        <br />
+        <span className="date-table-style">{row.createdAt}</span>
+      </>
+    ),
+expandable: true},
+  {
+    key: 'cancelledBy',
+    title: 'Cancelled By\\At',
+    dataKey: 'cancelledBy',
+    width: 160,
+    render: row =>
+      row.cancelledBy ? (
+        <>
+          {row.cancelledBy}
+          <br />
+          <span className="date-table-style">{row.cancelledAt}</span>
+        </>
+      ) : (
+        '-'
+      ),
+expandable: true},
+  {
+    key: 'cancellationReason',
+    title: 'Cancellation Reason',
+    dataKey: 'cancellationReason',
+    width: 200,
+    render: row => row.cancellationReason || '-',
+expandable: true},
+
+  {
+    key: 'status',
+    title: 'Status',
+    dataKey: 'status',
+    width: 100
+  },
+  {
+    key: 'view',
+    title: 'View',
+    width: 80,
+    render: row => (
+      <div className="render-aws">
+        <FontAwesomeIcon
+          onClick={e => {
+            e.stopPropagation();
+            handleViewRequest(row);
+          }}
+          icon={faEye}
+          className="font-aws"
+        />
+        <FontAwesomeIcon icon={faPrint} className="font-aws" />
+        <FontAwesomeIcon icon={faClone} className="font-aws" />
+      </div>
+    )
+  }
+]}
+
         height={470}
         loading={false}
+        tableButtons={tablebuttons}
       />
 
       <MyModal

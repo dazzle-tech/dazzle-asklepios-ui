@@ -305,7 +305,7 @@ case 'Operation Requests':
 </div>
 <div style={{marginLeft:'0.1vw',marginRight:'0.1vw'}}>
   <SectionContainer
-    title="Intraoperative Monitoring"
+    title="Monitoring"
     content={
       <IntraoperativeMonitoring
         operation={dummyEncounter}

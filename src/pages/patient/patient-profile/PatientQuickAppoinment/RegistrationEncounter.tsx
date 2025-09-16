@@ -145,6 +145,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
+        searchable={false}
       />
       <MyInput
         column
@@ -209,6 +210,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         record={localEncounter}
         setRecord={() => {}} // No updates allowed
         disabled={isReadOnly}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -222,6 +224,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -234,6 +237,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -246,6 +250,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
