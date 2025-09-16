@@ -729,9 +729,7 @@ const Encounter = () => {
               </div>
             </div>
             <Divider />
-            {/*  */}
-            <MedicalTimeline />
-            {/*  */}
+            
             <Drawer
               open={isDrawerOpen}
               onClose={() => setIsDrawerOpen(false)}

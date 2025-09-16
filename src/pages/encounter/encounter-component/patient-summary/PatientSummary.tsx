@@ -19,6 +19,7 @@ import ChiefComplainSummary from '../nursing-reports-summary/ChiefComplainSummar
 import PainAssessmentSummary from '../nursing-reports-summary/PainAssessmentSummary';
 import GeneralAssessmentSummary from '../nursing-reports-summary/GeneralAssessmentSummary';
 import FunctionalAssessmentSummary from '../nursing-reports-summary/FunctionalAssessmentSummary';
+import MedicalTimeline from '../../encounter-screen/MedicalTimeLine';
 
 const PatientSummary = () => {
   const location = useLocation();
@@ -122,6 +123,9 @@ const PatientSummary = () => {
 
   return (
     <>
+    {/*  */}
+            <MedicalTimeline />
+            {/*  */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="patient-summary-container">
           {Object.entries(columns).map(([colId, items]) => (
