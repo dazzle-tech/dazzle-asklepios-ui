@@ -17,17 +17,15 @@ import ReloadIcon from '@rsuite/icons/Reload';
 import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
-import {
-  Checkbox
-} from 'rsuite';
+import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-const Warning = (props) => {
- const location = useLocation();
- 
-   const patient = props.patient || location.state?.patient;
-   const encounter = props.encounter || location.state?.encounter;
-   const edit = props.edit ?? location.state?.edit ?? false;
+const Warning = props => {
+  const location = useLocation();
+
+  const patient = props.patient || location.state?.patient;
+  const encounter = props.encounter || location.state?.encounter;
+  const edit = props.edit ?? location.state?.edit ?? false;
 
   const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
   const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
@@ -54,7 +52,11 @@ const Warning = (props) => {
     ]
   });
 
-  const { data: warningsListResponse, refetch: fetchwarnings, isLoading } = useGetWarningsQuery({
+  const {
+    data: warningsListResponse,
+    refetch: fetchwarnings,
+    isLoading
+  } = useGetWarningsQuery({
     ...listRequest
   });
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
@@ -66,10 +68,7 @@ const Warning = (props) => {
     } else return '';
   };
 
-
-
   useEffect(() => {
-
     if (showPrev) {
       const updatedFilters = [
         {
@@ -201,7 +200,7 @@ const Warning = (props) => {
         isValid: false,
         deletedAt: Date.now()
       }).unwrap();
-      dispatch(notify({ msg: ' Deleted successfully', sev: "success" }));
+      dispatch(notify({ msg: ' Deleted successfully', sev: 'success' }));
 
       await fetchwarnings()
         .then(() => {
@@ -212,7 +211,7 @@ const Warning = (props) => {
         });
 
       CloseCancellationReasonModel();
-    } catch { }
+    } catch {}
   };
   const handleResolved = async () => {
     try {
@@ -245,9 +244,7 @@ const Warning = (props) => {
       dispatch(notify('Undo Resolved successfully'));
       setShowPrev(!showPrev);
       await fetchwarnings()
-        .then(() => {
-
-        })
+        .then(() => {})
         .catch(error => {
           console.error('Refetch failed:', error);
         });
@@ -256,12 +253,12 @@ const Warning = (props) => {
     } catch {
       dispatch(notify('Undo Resolved Fill'));
     }
-  }
+  };
 
   const tableColumns = [
     {
-      key: "warningTypeLkey",
-      dataKey: "warningTypeLkey",
+      key: 'warningTypeLkey',
+      dataKey: 'warningTypeLkey',
       title: <Translate>Warning Type</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -269,8 +266,8 @@ const Warning = (props) => {
       }
     },
     {
-      key: "severityLkey",
-      dataKey: "severityLkey",
+      key: 'severityLkey',
+      dataKey: 'severityLkey',
       title: <Translate>Severity</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -278,8 +275,8 @@ const Warning = (props) => {
       }
     },
     {
-      key: "firstTimeRecorded",
-      dataKey: "firstTimeRecorded",
+      key: 'firstTimeRecorded',
+      dataKey: 'firstTimeRecorded',
       title: <Translate>First Time Recorded</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -289,8 +286,8 @@ const Warning = (props) => {
       }
     },
     {
-      key: "sourceOfInformationLkey",
-      dataKey: "sourceOfInformationLkey",
+      key: 'sourceOfInformationLkey',
+      dataKey: 'sourceOfInformationLkey',
       title: <Translate>Source of information</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -298,8 +295,8 @@ const Warning = (props) => {
       }
     },
     {
-      key: "warning",
-      dataKey: "warning",
+      key: 'warning',
+      dataKey: 'warning',
       title: <Translate>Warning</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -307,8 +304,8 @@ const Warning = (props) => {
       }
     },
     {
-      key: "actionTake",
-      dataKey: "actionTake",
+      key: 'actionTake',
+      dataKey: 'actionTake',
       title: <Translate>Action Taken</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -316,8 +313,8 @@ const Warning = (props) => {
       }
     },
     {
-      key: "notes",
-      dataKey: "notes",
+      key: 'notes',
+      dataKey: 'notes',
       title: <Translate>Notes</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -325,8 +322,8 @@ const Warning = (props) => {
       }
     },
     {
-      key: "statusLkey",
-      dataKey: "statusLkey",
+      key: 'statusLkey',
+      dataKey: 'statusLkey',
       title: <Translate>Status</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -334,89 +331,99 @@ const Warning = (props) => {
       }
     },
     {
-      key: "#",
-      dataKey: "",
+      key: '#',
+      dataKey: '',
       title: <Translate>Edit</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return <MdModeEdit
-          title="Edit"
-          size={24}
-          fill="var(--primary-gray)"
-          onClick={() => setOpenDetailsModal(true)}
-        />
+        return (
+          <MdModeEdit
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => setOpenDetailsModal(true)}
+          />
+        );
       }
     },
 
     {
-      key: "",
+      key: '',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.createdBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.createdBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
     {
-      key: "",
+      key: '',
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.updatedBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.updatedBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
 
     {
-      key: "",
+      key: '',
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.deletedBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.deletedBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
     {
-      key: "",
+      key: '',
       title: <Translate>Resolved At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
         if (rowData.statusLkey != '9766169155908512') {
-          return (<>
-
-            <span>{rowData.resolvedBy}</span>
-            <br />
-            <span className='date-table-style'>{rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}</span>
-          </>)
-        }
-        else {
+          return (
+            <>
+              <span>{rowData.resolvedBy}</span>
+              <br />
+              <span className="date-table-style">
+                {rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}
+              </span>
+            </>
+          );
+        } else {
           return null;
         }
       }
-
     },
     {
-      key: "cancellationReason",
-      dataKey: "cancellationReason",
+      key: 'cancellationReason',
+      dataKey: 'cancellationReason',
       title: <Translate>Cancelliton Reason</Translate>,
       flexGrow: 1,
       expandable: true
-
     }
-
-  ]
+  ];
   const pageIndex = listRequest.pageNumber - 1;
 
   // how many rows per page:
@@ -442,54 +449,7 @@ const Warning = (props) => {
     });
   };
   return (
-    <div >
-      {/* buttons actions section */}
-      <div className='bt-div'>
-        <MyButton
-          disabled={!edit ? warning.key ? warning?.statusLvalue.valueCode == 'ARS_CANCEL' ? true : false : true : true}
-          prefixIcon={() => <CloseOutlineIcon />}
-          onClick={OpenCancellationReasonModel}
-        >Cancel</MyButton>
-        <MyButton
-          disabled={!edit ? warning?.statusLkey != '9766169155908512' ? true : false : true}
-          prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
-          onClick={OpenConfirmResolvedModel}
-        >
-          Resolved</MyButton>
-        <MyButton
-          prefixIcon={() => <ReloadIcon />}
-          disabled={!edit ? warning?.statusLkey != '9766179572884232' ? true : false : true}
-          onClick={OpenConfirmUndoResolvedModel}
-        >Undo Resolved</MyButton>
-
-
-        <Checkbox
-          checked={!showCanceled}
-          onChange={() => {
-            setShowCanceled(!showCanceled);
-          }}
-        >
-          Show Cancelled
-        </Checkbox>
-        <Checkbox
-          checked={!showPrev}
-          onChange={() => {
-            setShowPrev(!showPrev);
-          }}
-        >
-          Show Previous Warnings
-        </Checkbox>
-        <div className='bt-right'>
-          <MyButton
-            prefixIcon={() => <PlusIcon />}
-            disabled={edit}
-            onClick={() => {
-              setOpenDetailsModal(true);
-              handleClear();
-            }}
-          >Add Warning</MyButton>
-        </div>
-      </div>
+    <div>
       <MyTable
         columns={tableColumns}
         data={warningsListResponse?.object || []}
@@ -509,18 +469,82 @@ const Warning = (props) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={isLoading}
-      />
+        tableButtons={
+          <div className="bt-div-2">
+            <div className="bt-left-2">
+              {' '}
+              <MyButton
+                disabled={
+                  !edit
+                    ? warning.key
+                      ? warning?.statusLvalue.valueCode == 'ARS_CANCEL'
+                        ? true
+                        : false
+                      : true
+                    : true
+                }
+                prefixIcon={() => <CloseOutlineIcon />}
+                onClick={OpenCancellationReasonModel}
+              >
+                Cancel
+              </MyButton>
+              <MyButton
+                disabled={!edit ? (warning?.statusLkey != '9766169155908512' ? true : false) : true}
+                prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
+                onClick={OpenConfirmResolvedModel}
+              >
+                Resolved
+              </MyButton>
+              <MyButton
+                prefixIcon={() => <ReloadIcon />}
+                disabled={!edit ? (warning?.statusLkey != '9766179572884232' ? true : false) : true}
+                onClick={OpenConfirmUndoResolvedModel}
+              >
+                Undo Resolved
+              </MyButton>
+              <Checkbox
+                checked={!showCanceled}
+                onChange={() => {
+                  setShowCanceled(!showCanceled);
+                }}
+              >
+                Show Cancelled
+              </Checkbox>
+              <Checkbox
+                checked={!showPrev}
+                onChange={() => {
+                  setShowPrev(!showPrev);
+                }}
+              >
+                Show Previous Warnings
+              </Checkbox>
+            </div>
 
+            <div className="bt-right-2">
+              <MyButton
+                prefixIcon={() => <PlusIcon />}
+                disabled={edit}
+                onClick={() => {
+                  setOpenDetailsModal(true);
+                  handleClear();
+                }}
+              >
+                Add Warning
+              </MyButton>
+            </div>
+          </div>
+        }
+      />
 
       {/* modal for esolve warning */}
       <MyModal
         open={openConfirmResolvedModel}
         setOpen={setOpenConfirmResolvedModel}
         actionButtonFunction={handleResolved}
-        actionButtonLabel='Yes'
+        actionButtonLabel="Yes"
         title="Resolve"
         bodyheight="30vh"
-        steps={[{ title: "Is this Warning resolved?", icon: <FontAwesomeIcon icon={faCheck} /> }]}
+        steps={[{ title: 'Is this Warning resolved?', icon: <FontAwesomeIcon icon={faCheck} /> }]}
         content={<></>}
       ></MyModal>
       {/* modal for undo resolve for warning */}
@@ -528,10 +552,12 @@ const Warning = (props) => {
         open={openConfirmUndoResolvedModel}
         setOpen={setOpenConfirmUndoResolvedModel}
         actionButtonFunction={handleUndoResolved}
-        actionButtonLabel='Yes'
+        actionButtonLabel="Yes"
         title="Undo Resolve"
         bodyheight="30vh"
-        steps={[{ title: "Is this Warning active?", icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }]}
+        steps={[
+          { title: 'Is this Warning active?', icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }
+        ]}
         content={<></>}
       ></MyModal>
 
@@ -543,17 +569,21 @@ const Warning = (props) => {
         setObject={setWarning}
         handleCancle={handleCancle}
         fieldName="cancellationReason"
-        title={"Cancellation"}
-        fieldLabel={"Cancellation Reason"}
+        title={'Cancellation'}
+        fieldLabel={'Cancellation Reason'}
       ></CancellationModal>
 
-
-
-      <DetailsModal patient={patient}
-        open={openDetailsModal} setOpen={setOpenDetailsModal}
-        warning={warning} setWarning={setWarning}
-        encounter={encounter} editing={editing}
-        fetchwarnings={fetchwarnings} edit={edit} />
+      <DetailsModal
+        patient={patient}
+        open={openDetailsModal}
+        setOpen={setOpenDetailsModal}
+        warning={warning}
+        setWarning={setWarning}
+        encounter={encounter}
+        editing={editing}
+        fetchwarnings={fetchwarnings}
+        edit={edit}
+      />
     </div>
   );
 };

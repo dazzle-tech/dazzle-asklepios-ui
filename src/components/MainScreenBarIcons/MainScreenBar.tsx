@@ -83,6 +83,7 @@ const MainScreenBar = ({ setExpandNotes }) => {
         maxWidth="lg"
         fullWidth
         classes={{ paper: 'chat-modal-paper' }}
+        
       >
         <DialogTitle className="chat-modal-title">
           <div className="chat-modal-title-inner">

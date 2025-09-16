@@ -1,7 +1,6 @@
-import MyButton from '@/components/MyButton/MyButton';
+import React from 'react';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import React from 'react';
 import { Col, Row, Text } from 'rsuite';
 const NutritionInterventionPlan = ({ object, setObject }) => {
   // Fetch fluid intake types Lov Response
@@ -45,7 +44,7 @@ const NutritionInterventionPlan = ({ object, setObject }) => {
       </Row>
       <Row>
         <Row>
-          <Text className='title-nutrition-state'>Nutrition Prescription:</Text>
+          <Text className="title-nutrition-state">Nutrition Prescription:</Text>
           <Col md={8}>
             <MyInput
               width="100%"
@@ -77,12 +76,6 @@ const NutritionInterventionPlan = ({ object, setObject }) => {
             />
           </Col>
         </Row>
-      </Row>
-      <Row>
-        <br/>
-        <div className='container-of-add-new-button'>
-          <MyButton>Create Diet Order</MyButton>
-          </div>
       </Row>
     </div>
   );
