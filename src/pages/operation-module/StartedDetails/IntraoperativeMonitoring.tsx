@@ -3,10 +3,12 @@ import MyInput from "@/components/MyInput";
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { useGetIntraoperativeMonitoringListQuery, useGetOperationAnesthesiaInductionMonitoringListQuery, useSaveIntraoperativeMonitoringMutation, useSaveOperationRequestsMutation } from "@/services/operationService";
 import { newApOperationIntraoperativeMonitoring, newApOperationRequests } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
-import { CheckOutline } from "@rsuite/icons";
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { Col, Form, Row, Text } from "rsuite";
@@ -138,8 +140,12 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
             /></Col>
                 <Col md={2}>
                 <br/>
-             
-                 <CheckOutline color="green" onClick={saveOperationSlot}/>
+<div className="button-check-intraoperative-monitoring">
+    <MyButton onClick={saveOperationSlot}>
+      <FontAwesomeIcon icon={faCircleCheck} />
+    </MyButton>
+</div>
+                 
                 </Col>
             </Row>
            
@@ -147,9 +153,13 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
             <div
                 className="bt-right"
             >
-                <MyButton
-                    disabled={!operationReq.monitorSlot}
-                    onClick={() => setOpen(true)} >Add</MyButton>
+<MyButton
+  disabled={!operationReq.monitorSlot}
+  onClick={() => setOpen(true)}
+>
+  <AddOutlineIcon style={{ marginRight: 8 }} />
+  Add
+</MyButton>
 
             </div>
         </div>
@@ -228,8 +238,51 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                             setRecord={setMonitor}
                         /></Col>
                 </Row>
+
+
                 <Row className="rows-gap">
-                    <Col md={12}>
+                         <Col md={8}>
+                        <MyInput
+                            width="100%"
+                            fieldType="number"
+                            rightAddon="mmHg"
+                            rightAddonwidth={60}
+                            fieldName="cvp"
+                            fieldLabel="CVP"
+                            record={monitor}
+                            setRecord={setMonitor}
+                        /></Col>
+
+                    <Col md={8}>
+                        <MyInput
+                            width="100%"
+                            fieldType="number"
+                            rightAddon="mmHg"
+                            rightAddonwidth={60}
+                            fieldLabel="IAP"
+                            fieldName="iap"
+                            record={monitor}
+                            setRecord={setMonitor}
+                        /></Col>
+
+                    <Col md={8}>
+                        <MyInput
+                            width="100%"
+                            fieldType="number"
+                            rightAddon="mmHg"
+                            rightAddonwidth={60}
+                            fieldLabel="EVD"
+                            fieldName="evd"
+                            record={monitor}
+                            setRecord={setMonitor}
+                        /></Col>
+
+
+                </Row>
+
+
+                <Row className="rows-gap">
+                    <Col md={8}>
                         <MyInput
                             width="100%"
                             fieldType="number"
@@ -239,7 +292,7 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                             record={monitor}
                             setRecord={setMonitor}
                         /></Col>
-                    <Col md={12}>
+                    <Col md={8}>
                         <MyInput
                             width="100%"
                             fieldType="number"
@@ -248,7 +301,20 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                             record={monitor}
                             setRecord={setMonitor}
                         /></Col>
+
+                    <Col md={8}>
+                        <MyInput
+                            width="100%"
+                            fieldType="number"
+                            rightAddon="%"
+                            fieldName="ppv"
+                            fieldLabel="PPV"
+                            record={monitor}
+                            setRecord={setMonitor}
+                        /></Col>
+
                 </Row>
+
                <Row className="rows-gap">
                     <Col md={10}>
                         <MyInput
@@ -259,7 +325,12 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                             record={monitor}
                             setRecord={setMonitor}
                         /></Col>
-                        <Col md={1}>
+                       <Col md={2}>
+                        <br/>
+                        <Text></Text>
+                        </Col>
+
+                        <Col md={2}>
                         <br/>
                         <Text>/</Text>
                         </Col>

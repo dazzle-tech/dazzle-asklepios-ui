@@ -277,7 +277,10 @@ const IntakeOutputBalance = () => {
             <br />
             <FlexboxGrid>
               <FlexboxGrid.Item className="chart" as={Col} colspan={24} lg={8} md={12} sm={24}>
-                <Panel bordered header={<Translate>Total Balance Change per Date</Translate>}>
+                <div className="title-div">
+              <Text>Total Balance Change per Date</Text>
+            </div>
+                <Panel>
                   <DynamicLineChart
                     maxValue={7000}
                     title="Balance Change"

@@ -19,6 +19,7 @@ const Reports = ({ patient, user }) => {
     const [openReportModal, setOpenReportModal] = useState(false);
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [report, setReport] = useState<any>({ ...newApDiagnosticOrderTestsRadReport });
+    const [record, setRecord] = useState({});
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
     const [dateOrderFilter, setDateOrderFilter] = useState({
         fromDate: new Date(),
@@ -322,6 +323,16 @@ const Reports = ({ patient, user }) => {
                     fieldName="toDate"
                     record={dateOrderFilter}
                     setRecord={setDateOrderFilter}
+                />
+
+                <MyInput
+                    width={'100%'}
+                    column
+                    fieldLabel="Test Name"
+                    fieldType="text"
+                    fieldName="testName"
+                    record={record}
+                    setRecord={setRecord}
                 />
             </Form>
         );
