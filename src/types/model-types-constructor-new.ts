@@ -22,7 +22,17 @@ export const newApUser: modelTypes.ApUser = {
   jobDescription: null,
 };
 
+export const newCandidate: modelTypes.Candidate = {
+  id: undefined,
+  role: '',
+  dob: false,
+  lastName: false,
+  documentNo: false,
+  mobileNumber: false,
+  gender: false,
+  isActive: true,
 
+};
 
 
 

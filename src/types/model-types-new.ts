@@ -22,3 +22,22 @@ export interface ApUser {
 }
 
 
+export interface Candidate {
+  id?: number;
+
+  role?: string;
+  dob?: boolean;
+  lastName?: boolean;
+  documentNo?: boolean;
+  mobileNumber?: boolean;
+  gender?: boolean;
+
+  createdBy?: string;
+  createdDate?: string; 
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+  isActive?: boolean;
+}
+
+
+

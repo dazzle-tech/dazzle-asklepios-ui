@@ -1,10 +1,11 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import {BaseQuery } from '../newApi';
+import { BaseQuery } from '../newApi';
 
 export const userService = createApi({
   reducerPath: 'newApi',
   baseQuery: BaseQuery,
   endpoints: builder => ({
+    // ==== Users APIs ====
     getUser: builder.query({
       query: (_: void) => '/api/admin/users',
     }),
@@ -45,12 +46,11 @@ export const userService = createApi({
         method: 'GET',
       }),
     }),
-
     saveAccount: builder.mutation({
       query: (accountData) => ({
         url: '/api/account',
         method: 'POST',
-        body: accountData
+        body: accountData,
       }),
     }),
     finishPasswordReset: builder.mutation({
@@ -74,11 +74,45 @@ export const userService = createApi({
       }),
     }),
 
+    // ==== Duplication Candidates APIs ====
+  getDuplicationCandidates: builder.query({
+  query: (role?: string) =>
+    role
+      ? `/api/setup/duplication-candidates?role=${role}`
+      : '/api/setup/duplication-candidates',
+}),
 
+    
+    createDuplicationCandidate: builder.mutation({
+      query: (candidate) => ({
+        url: '/api/setup/duplication-candidates',
+        method: 'POST',
+        body: candidate,
+      }),
+    }),
+    updateDuplicationCandidate: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/api/setup/duplication-candidates/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+    }),
+    deactivateDuplicationCandidate: builder.mutation({
+      query: (id) => ({
+        url: `/api/setup/duplication-candidates/deactivate/${id}`,
+        method: 'PUT',
+      }),
+    }),
+
+     reactivateDuplicationCandidate: builder.mutation({
+      query: (id) => ({
+        url: `/api/setup/duplication-candidates/reactivate/${id}`,
+        method: 'PUT',
+      }),
+    }),
   }),
-
-
 });
+
 export const {
   useGetUserQuery,
   useAddUserMutation,
@@ -88,5 +122,12 @@ export const {
   useGetAccountQuery,
   useSaveAccountMutation,
   useFinishPasswordResetMutation,
-  useChangePasswordMutation
+  useChangePasswordMutation,
+
+  // Hooks for duplication candidates
+  useGetDuplicationCandidatesQuery,
+  useCreateDuplicationCandidateMutation,
+  useUpdateDuplicationCandidateMutation,
+  useDeactivateDuplicationCandidateMutation,
+  useReactivateDuplicationCandidateMutation
 } = userService;
