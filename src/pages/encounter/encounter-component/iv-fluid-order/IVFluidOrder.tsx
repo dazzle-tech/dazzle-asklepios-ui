@@ -1,27 +1,26 @@
-import MyButton from '@/components/MyButton/MyButton';
 import React, { useEffect, useState } from 'react';
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import PlusIcon from '@rsuite/icons/Plus';
+import { Form, Checkbox, Text } from 'rsuite';
+import { CloseOutline } from '@rsuite/icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSprayCanSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faEdit, faSprayCanSparkles } from '@fortawesome/free-solid-svg-icons';
+import PlusIcon from '@rsuite/icons/Plus';
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
+import SectionContainer from '@/components/SectionsoContainer';
+import MyInput from '@/components/MyInput';
+import Translate from '@/components/Translate';
 import AddEditFluidOrder from './AddEditFluidOrder';
-import './styles.less';
 import Additives from './additives';
-const IVFluidOrder = () => {
-  const [fluidOrder, setFluidOrder] = useState({});
-  const [openAddEditFluidOrderPopup, setOpenAddEditFluidOrderPopup] = useState<boolean>(false);
-  const [openAdditivesPopup, setOpenAdditivesPopup] = useState<boolean>(false);
-  const [width, setWidth] = useState<number>(window.innerWidth);
+import './styles.less';
 
-  // Class name of selected row
-  const isSelected = rowData => {
-    if (rowData && fluidOrder && rowData.key === fluidOrder.key) {
-      return 'selected-row';
-    } else return '';
-  };
+const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
+  const [fluidOrder, setFluidOrder] = useState<any>({});
+  const [record, setRecord] = useState<any>(selectedOrder || {});
+  const [openAddEditFluidOrderPopup, setOpenAddEditFluidOrderPopup] = useState(false);
+  const [openAdditivesPopup, setOpenAdditivesPopup] = useState(false);
+  const [width, setWidth] = useState(window.innerWidth);
 
-  //dummy data
+  // Dummy data
   const data = [
     {
       key: '1',
@@ -29,7 +28,7 @@ const IVFluidOrder = () => {
       volume: '1000',
       route: 'Peripheral IV',
       infusionRate: '125',
-      frequency: 1,
+      frequency: 'Once',
       duration: 'Until Complete',
       untilComplete: true,
       device: 'IV Pump',
@@ -40,7 +39,12 @@ const IVFluidOrder = () => {
       startTime: '08:30',
       estimatedEndTime: '16:30',
       createdBy: 'Dr. Sarah Johnson',
-      createdAt: '08:00'
+      createdAt: '08:00',
+      submittedBy: 'Nurse Anna',
+      submittedAt: '08:10',
+      cancelledBy: '',
+      cancelledAt: '',
+      cancellationReason: ''
     },
     {
       key: '2',
@@ -59,50 +63,18 @@ const IVFluidOrder = () => {
       startTime: '14:00',
       estimatedEndTime: '20:00',
       createdBy: 'Dr. Michael Chen',
-      createdAt: '13:45'
-    },
-    {
-      key: '3',
-      fluidType: 'D5W',
-      volume: '250',
-      route: 'Peripheral IV',
-      infusionRate: '42',
-      frequency: 1,
-      duration: 'Until Complete',
-      untilComplete: true,
-      device: 'IV Pump',
-      indication: 'Maintenance fluids',
-      notesToNurse: 'Monitor blood glucose',
-      priority: 'low',
-      allergyChecked: 'yes',
-      startTime: '22:00',
-      estimatedEndTime: '06:00',
-      createdBy: 'Dr. Emily Rodriguez',
-      createdAt: '21:30'
-    },
-    {
-      key: '4',
-      fluidType: 'Normal Saline 0.9%',
-      volume: '750',
-      route: 'Peripheral IV',
-      infusionRate: '150',
-      frequency: 1,
-      duration: '5',
-      untilComplete: false,
-      device: 'IV Pump',
-      indication: 'Blood pressure support',
-      notesToNurse: 'Monitor BP every 2 hours',
-      priority: 'high',
-      allergyChecked: 'yes',
-      startTime: '16:30',
-      estimatedEndTime: '21:30',
-      createdBy: 'Dr. David Thompson',
-      createdAt: '16:15'
+      createdAt: '13:45',
+      submittedBy: 'Nurse Kate',
+      submittedAt: '13:50',
+      cancelledBy: '',
+      cancelledAt: '',
+      cancellationReason: ''
     }
   ];
 
-  //icons column (Additives)
-  const iconsForActions = () => (
+  const isSelected = (rowData: any) => (rowData?.key === fluidOrder?.key ? 'selected-row' : '');
+
+  const iconsForActions = (rowData: any) => (
     <div className="container-of-icons">
       <FontAwesomeIcon
         title="Additives"
@@ -111,85 +83,94 @@ const IVFluidOrder = () => {
         icon={faSprayCanSparkles}
         onClick={() => setOpenAdditivesPopup(true)}
       />
+      <FontAwesomeIcon
+        title="Edit"
+        color="var(--primary-gray)"
+        className="icons-style"
+        icon={faEdit}
+        onClick={() => handleEdit(rowData)}
+      />
     </div>
   );
 
-  //table columns
   const tableColumns = [
+    { key: 'fluidType', title: <Translate>Fluid Type</Translate> },
+    { key: 'volume', title: <Translate>Volume</Translate> },
+    { key: 'route', title: <Translate>Route</Translate> },
+    { key: 'infusionRate', title: <Translate>Infusion Rate</Translate> },
+    { key: 'frequency', title: <Translate>Frequency</Translate> },
+    { key: 'duration', title: <Translate>Duration</Translate> },
+    { key: 'device', title: <Translate>Device</Translate> },
+    { key: 'indication', title: <Translate>Indication</Translate> },
     {
-      key: 'fluidType',
-      title: <Translate>Fluid Type</Translate>
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      render: (rowData: any) => iconsForActions(rowData)
     },
+    { key: 'notesToNurse', title: <Translate>Notes to Nurse</Translate>, expandable: true },
+    { key: 'priority', title: <Translate>Priority</Translate>, expandable: true },
+    { key: 'allergyChecked', title: <Translate>Allergy Checked</Translate>, expandable: true },
+    { key: 'startTime', title: <Translate>Start Time</Translate>, expandable: true },
+    { key: 'estimatedEndTime', title: <Translate>Estimated End Time</Translate>, expandable: true },
     {
-      key: 'volume',
-      title: <Translate>Volume</Translate>
-    },
-    {
-      key: 'route',
-      title: <Translate>Route</Translate>
-    },
-    {
-      key: 'infusionRate',
-      title: <Translate>Infusion Rate</Translate>
-    },
-    {
-      key: 'frequency',
-      title: <Translate>Frequency</Translate>
-    },
-    {
-      key: 'duration',
-      title: <Translate>Duration</Translate>
-    },
-    {
-      key: 'device',
-      title: <Translate>Device</Translate>
-    },
-    {
-      key: 'indication',
-      title: <Translate>Indication</Translate>
-    },
-    {
-      key: 'additives',
-      title: <Translate>Additives</Translate>,
-      render: () => iconsForActions()
-    },
-    {
-      key: 'notesToNurse',
-      title: <Translate>Notes to Nurse</Translate>,
-      expandable: true
-    },
-    {
-      key: 'priority',
-      title: <Translate>Priority</Translate>,
-      expandable: true
-    },
-    {
-      key: 'allergyChecked',
-      title: <Translate>Allergy Checked</Translate>,
-      expandable: true
-    },
-    {
-      key: 'startTime',
-      title: <Translate>Start Time</Translate>,
-      expandable: true
-    },
-    {
-      key: 'estimatedEndTime',
-      title: <Translate>Estimated end time</Translate>,
-      expandable: true
-    },
-    {
-      key: '',
+      key: 'createdByAt',
       title: <Translate>Created By\At</Translate>,
-      expandable: true
+      expandable: true,
+      render: (rowData: any) =>
+        rowData.createdBy ? (
+          <>
+            {rowData.createdBy}
+            <br />
+            <span className="date-table-style">{rowData.createdAt}</span>
+          </>
+        ) : null
+    },
+    {
+      key: 'submittedByAt',
+      title: <Translate>Submitted By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) =>
+        rowData.submittedBy ? (
+          <>
+            {rowData.submittedBy}
+            <br />
+            <span className="date-table-style">{rowData.submittedAt}</span>
+          </>
+        ) : null
+    },
+    {
+      key: 'cancelledByAt',
+      title: <Translate>Cancelled By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) =>
+        rowData.cancelledBy ? (
+          <>
+            {rowData.cancelledBy}
+            <br />
+            <span className="date-table-style">{rowData.cancelledAt}</span>
+          </>
+        ) : null
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>Cancellation Reason</Translate>,
+      expandable: true,
+      render: (rowData: any) =>
+        rowData.cancellationReason ? <span>{rowData.cancellationReason}</span> : null
     }
   ];
-
+  // handles
   const handleNew = () => {
     setOpenAddEditFluidOrderPopup(true);
     setFluidOrder({ untilCompleted: true });
+    setRecord({});
   };
 
+  const handleEdit = (rowData: any) => {
+    setFluidOrder(rowData);
+    setRecord(rowData);
+    setOpenAddEditFluidOrderPopup(true);
+  };
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -199,19 +180,6 @@ const IVFluidOrder = () => {
 
   return (
     <div>
-      <div className="container-of-buttons-iv">
-        <MyButton color="var(--deep-blue)" width="90px">
-          Submit
-        </MyButton>
-        <MyButton
-          color="var(--deep-blue)"
-          prefixIcon={() => <PlusIcon />}
-          onClick={handleNew}
-          width="100px"
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         height={450}
         data={data}
@@ -219,8 +187,182 @@ const IVFluidOrder = () => {
         rowClassName={isSelected}
         onRowClick={rowData => {
           setFluidOrder(rowData);
+          setRecord({
+            ...rowData,
+            createdByAt: rowData.createdBy ? `${rowData.createdBy} (${rowData.createdAt})` : '',
+            submittedByAt: rowData.submittedBy
+              ? `${rowData.submittedBy} (${rowData.submittedAt})`
+              : '',
+            cancelledByAt: rowData.cancelledBy
+              ? `${rowData.cancelledBy} (${rowData.cancelledAt})`
+              : '',
+            cancellationReason: rowData.cancellationReason || ''
+          });
         }}
+        tableButtons={
+          <div className="bt-div-2">
+            <div className="bt-left-2">
+              <MyButton prefixIcon={() => <CloseOutline />}>
+                <Translate>Cancel</Translate>
+              </MyButton>
+              <Checkbox>Show Cancelled</Checkbox>
+            </div>
+
+            <div className="bt-right-2">
+              <MyButton
+                color="var(--deep-blue)"
+                prefixIcon={() => <PlusIcon />}
+                onClick={handleNew}
+                width="100px"
+              >
+                Add New
+              </MyButton>
+              <MyButton
+                color="var(--deep-blue)"
+                prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
+                width="100px"
+              >
+                Submit
+              </MyButton>
+            </div>
+          </div>
+        }
       />
+
+      {/* Order Details Section */}
+      {fluidOrder?.key && (
+        <div className="my-order-details-margin">
+          <SectionContainer
+            title={<Text>Order Details</Text>}
+            content={
+              <Form className="order-details-row">
+                <MyInput
+                  fieldName="fluidType"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="volume"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="route"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="infusionRate"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="frequency"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="duration"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="device"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="indication"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="notesToNurse"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="priority"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="allergyChecked"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="startTime"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="estimatedEndTime"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+
+                {/* Columns combined with date */}
+                <MyInput
+                  fieldName="createdByAt"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="submittedByAt"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="cancelledByAt"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+                <MyInput
+                  fieldName="cancellationReason"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled={true}
+                  width={160}
+                />
+              </Form>
+            }
+          />
+        </div>
+      )}
+
       <AddEditFluidOrder
         open={openAddEditFluidOrderPopup}
         setOpen={setOpenAddEditFluidOrderPopup}
@@ -232,4 +374,5 @@ const IVFluidOrder = () => {
     </div>
   );
 };
+
 export default IVFluidOrder;
