@@ -67,6 +67,7 @@ import { FaSearch } from 'react-icons/fa';
 import { faCapsules } from '@fortawesome/free-solid-svg-icons';
 import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 import SideSummaryScreen from './SideSummaryScreen';
+import MedicalTimeline from './MedicalTimeLine';
 
 const Encounter = () => {
   // create the action for the Customize Dashboard that we defined it in Patient summary page
@@ -605,18 +606,25 @@ const Encounter = () => {
                 <Form fluid>
                   <MyInput
                     width="100%"
-                    placeholder="Search screens..."
+                    placeholder="Medical Sheets"
                     fieldName={'term'}
                     record={searchTerm}
                     setRecord={setSearchTerm}
                     showLabel={false}
                     enterClick={() => setIsDrawerOpen(true)}
-                    rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
+                    rightAddon={
+                      <FaSearch
+                        className="icons-style-2"
+                        onClick={() => {
+                          setIsDrawerOpen(true);
+                        }}
+                      />
+                    }
                   />
                 </Form>
               </div>
               <div className="right">
-                <MyButton
+                {/* <MyButton
                   prefixIcon={() => <BarChartHorizontalIcon />}
                   backgroundColor={'var(--deep-blue)'}
                   onClick={() => {
@@ -624,7 +632,7 @@ const Encounter = () => {
                   }}
                 >
                   Medical Sheets
-                </MyButton>
+                </MyButton> */}
                 <MyButton
                   disabled={edit}
                   prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
@@ -721,6 +729,9 @@ const Encounter = () => {
               </div>
             </div>
             <Divider />
+            {/*  */}
+            <MedicalTimeline />
+            {/*  */}
             <Drawer
               open={isDrawerOpen}
               onClose={() => setIsDrawerOpen(false)}
