@@ -308,39 +308,6 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
   ];
   return (
     <>
-      <div className="bt-div">
-        <MyButton
-          disabled={request?.statusLvalue?.valueCode !== 'PROC_REQ'}
-          onClick={() => setOpenCancelModal(true)}
-          prefixIcon={() => <BlockIcon />}
-        >
-          Cancel
-        </MyButton>
-
-        <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-          Show Cancelled
-        </Checkbox>
-
-        <div className="bt-right">
-          <MyButton
-            onClick={() => {
-              handleClear();
-              setOpen(true);
-            }}
-          >
-            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 5 }} />
-            Add Request
-          </MyButton>
-
-          <MyButton
-            disabled={request?.statusLvalue?.valueCode !== 'PROC_REQ'}
-            onClick={handleSubmit}
-          >
-            <FontAwesomeIcon icon={faCheck} style={{ marginRight: 5 }} />
-            Submit
-          </MyButton>
-        </div>
-      </div>
       <Row>
         <MyTable
           columns={columns}
@@ -350,6 +317,41 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
           onRowClick={rowData => {
             setRequest(rowData);
           }}
+          tableButtons={
+            <div className="bt-div-2">
+              <div className="bt-left-2">
+                <MyButton
+                  disabled={request?.statusLvalue?.valueCode !== 'PROC_REQ'}
+                  onClick={() => setOpenCancelModal(true)}
+                  prefixIcon={() => <BlockIcon />}
+                >
+                  Cancel
+                </MyButton>
+                <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+                  Show Cancelled
+                </Checkbox>
+              </div>
+              <div className="bt-right-2">
+                <MyButton
+                  onClick={() => {
+                    handleClear();
+                    setOpen(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPlus} style={{ marginRight: 5 }} />
+                  Add Request
+                </MyButton>
+
+                <MyButton
+                  disabled={request?.statusLvalue?.valueCode !== 'PROC_REQ'}
+                  onClick={handleSubmit}
+                >
+                  <FontAwesomeIcon icon={faCheck} style={{ marginRight: 5 }} />
+                  Submit
+                </MyButton>
+              </div>
+            </div>
+          }
         />
       </Row>
       <Details

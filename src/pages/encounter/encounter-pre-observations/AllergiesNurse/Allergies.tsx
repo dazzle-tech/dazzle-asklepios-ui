@@ -496,60 +496,7 @@ const Allergies = props => {
   return (
     <div>
       {/* buttons actions section */}
-      <div className="bt-div">
-        <MyButton
-          prefixIcon={() => <CloseOutlineIcon />}
-          onClick={OpenCancellationReasonModel}
-          disabled={!edit ? (allerges?.key == null ? true : false) : true}
-        >
-          Cancel
-        </MyButton>
 
-        <MyButton
-          disabled={!edit ? (allerges?.statusLkey != '9766169155908512' ? true : false) : true}
-          prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
-          onClick={OpenConfirmResolvedModel}
-        >
-          Resolved
-        </MyButton>
-        <MyButton
-          prefixIcon={() => <ReloadIcon />}
-          disabled={!edit ? (allerges?.statusLkey != '9766179572884232' ? true : false) : true}
-          onClick={OpenConfirmUndoResolvedModel}
-        >
-          Undo Resolved
-        </MyButton>
-
-        <Checkbox
-          checked={!showCanceled}
-          onChange={() => {
-            setShowCanceled(!showCanceled);
-          }}
-        >
-          Show Cancelled
-        </Checkbox>
-        <Checkbox
-          checked={!showPrev}
-          onChange={() => {
-            setShowPrev(!showPrev);
-          }}
-        >
-          Show Previous Allergies
-        </Checkbox>
-        <div className="bt-right">
-          <MyButton
-            disabled={edit}
-            prefixIcon={() => <PlusIcon />}
-            onClick={() => {
-              handleClear();
-              setOpenDetailsModal(true);
-              setOpenToAdd(true);
-            }}
-          >
-            Add Allergy
-          </MyButton>
-        </div>
-      </div>
       <MyTable
         columns={tableColumns}
         data={allergiesListResponse?.object || []}
@@ -570,6 +517,66 @@ const Allergies = props => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={isLoading}
+        tableButtons={
+          <div className="bt-div-2">
+            <div className="bt-left-2">
+              <MyButton
+                prefixIcon={() => <CloseOutlineIcon />}
+                onClick={OpenCancellationReasonModel}
+                disabled={!edit ? (allerges?.key == null ? true : false) : true}
+              >
+                Cancel
+              </MyButton>
+              <MyButton
+                disabled={
+                  !edit ? (allerges?.statusLkey != '9766169155908512' ? true : false) : true
+                }
+                prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
+                onClick={OpenConfirmResolvedModel}
+              >
+                Resolved
+              </MyButton>
+              <MyButton
+                prefixIcon={() => <ReloadIcon />}
+                disabled={
+                  !edit ? (allerges?.statusLkey != '9766179572884232' ? true : false) : true
+                }
+                onClick={OpenConfirmUndoResolvedModel}
+              >
+                Undo Resolved
+              </MyButton>
+              <Checkbox
+                checked={!showCanceled}
+                onChange={() => {
+                  setShowCanceled(!showCanceled);
+                }}
+              >
+                Show Cancelled
+              </Checkbox>
+              <Checkbox
+                checked={!showPrev}
+                onChange={() => {
+                  setShowPrev(!showPrev);
+                }}
+              >
+                Show Previous Allergies
+              </Checkbox>
+            </div>
+            <div className="bt-right-2">
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <PlusIcon />}
+                onClick={() => {
+                  handleClear();
+                  setOpenDetailsModal(true);
+                  setOpenToAdd(true);
+                }}
+              >
+                Add Allergy
+              </MyButton>
+            </div>
+          </div>
+        }
       />
 
       {/* modal for cancell the allergy and write the reason */}
@@ -621,8 +628,6 @@ const Allergies = props => {
         fetchallerges={fetchallerges}
         openToAdd={openToAdd}
       />
-
-
     </div>
   );
 };

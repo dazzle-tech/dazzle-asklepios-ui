@@ -1,19 +1,13 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import React, { useEffect, useState } from 'react';
-import { FaBedPulse, FaFileArrowDown } from "react-icons/fa6";
+import { FaBedPulse, FaFileArrowDown } from 'react-icons/fa6';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
-import {
-  Checkbox,
-  HStack,
-  Table
-} from 'rsuite';
+import { Checkbox, HStack, Table } from 'rsuite';
 import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
 
-import {
-  useGetPatientAttachmentsListQuery
-} from '@/services/attachmentService';
+import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 
@@ -22,11 +16,8 @@ import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
-import {
- 
-  useSaveProceduresMutation
-} from '@/services/procedureService';
-  import{useGetProceduresQuery} from '@/services/procedureService';
+import { useSaveProceduresMutation } from '@/services/procedureService';
+import { useGetProceduresQuery } from '@/services/procedureService';
 
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -54,12 +45,12 @@ const handleDownload = attachment => {
   a.click();
   window.URL.revokeObjectURL(url);
 };
-const Referrals = (props) => {
- const location = useLocation();
- 
-   const patient = props.patient || location.state?.patient;
-   const encounter = props.encounter || location.state?.encounter;
-   const edit = props.edit ?? location.state?.edit ?? false;
+const Referrals = props => {
+  const location = useLocation();
+
+  const patient = props.patient || location.state?.patient;
+  const encounter = props.encounter || location.state?.encounter;
+  const edit = props.edit ?? location.state?.edit ?? false;
 
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(true);
@@ -74,7 +65,7 @@ const Referrals = (props) => {
   const [procedure, setProcedure] = useState<any>({
     ...newApProcedure,
     encounterKey: encounter.key,
-     patientKey: patient.key,
+    patientKey: patient.key,
     currentDepartment: true
   });
 
@@ -101,7 +92,11 @@ const Referrals = (props) => {
       }
     ]
   });
-  const { data: procedures, refetch: proRefetch, isLoading: procedureLoding } = useGetProceduresQuery(listRequest);
+  const {
+    data: procedures,
+    refetch: proRefetch,
+    isLoading: procedureLoding
+  } = useGetProceduresQuery(listRequest);
   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -109,45 +104,44 @@ const Referrals = (props) => {
         fieldName: 'deleted_at',
         operator: 'isNull',
         value: undefined
-      }
+      },
 
-      ,
       {
         fieldName: 'attachment_type',
-        operator: "match",
-        value: "PROCEDURE"
+        operator: 'match',
+        value: 'PROCEDURE'
       }
     ]
   });
 
-  const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
+  const {
+    data: fetchPatintAttachmentsResponce,
+    refetch: attachmentRefetch,
+    isLoading: loadAttachment
+  } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
 
   useEffect(() => {
-
     if (!attachmentsModalOpen) {
-
       const updatedFilters = [
         {
           fieldName: 'deleted_at',
           operator: 'isNull',
           value: undefined
-        }
+        },
 
-        ,
         {
           fieldName: 'attachment_type',
-          operator: "match",
-          value: "PROCEDURE"
+          operator: 'match',
+          value: 'PROCEDURE'
         }
       ];
-      setAttachmentsListRequest((prevRequest) => ({
+      setAttachmentsListRequest(prevRequest => ({
         ...prevRequest,
-        filters: updatedFilters,
+        filters: updatedFilters
       }));
     }
-    attachmentRefetch()
-
-  }, [attachmentsModalOpen])
+    attachmentRefetch();
+  }, [attachmentsModalOpen]);
 
   useEffect(() => {
     const upateFilter = [
@@ -161,10 +155,10 @@ const Referrals = (props) => {
         operator: showCanceled ? 'notMatch' : 'match',
         value: '3621690096636149'
       }
-    ]
-    setListRequest((prevRequest) => ({
+    ];
+    setListRequest(prevRequest => ({
       ...prevRequest,
-      filters: upateFilter,
+      filters: upateFilter
     }));
   }, [showCanceled]);
   useEffect(() => {
@@ -177,22 +171,19 @@ const Referrals = (props) => {
         },
         {
           fieldName: 'reference_object_key',
-          operator: "match",
+          operator: 'match',
           value: procedure?.key
         }
       ];
-      setAttachmentsListRequest((prevRequest) => ({
+      setAttachmentsListRequest(prevRequest => ({
         ...prevRequest,
-        filters: updatedFilters,
+        filters: updatedFilters
       }));
-
     }
-
-  }, [attachmentsModalOpen])
+  }, [attachmentsModalOpen]);
   const OpenPerformModel = () => {
     setOpenPerformModal(true);
   };
-
 
   const handleSave = async () => {
     try {
@@ -201,7 +192,7 @@ const Referrals = (props) => {
         statusLkey: '3621653475992516',
         indications: indicationsDescription,
         encounterKey: encounter.key,
-        patientKey: patient.key,
+        patientKey: patient.key
       })
         .unwrap()
         .then(() => {
@@ -233,7 +224,6 @@ const Referrals = (props) => {
     });
   };
 
-
   const handleCancle = async () => {
     try {
       await saveProcedures({ ...procedure, statusLkey: '3621690096636149', deletedAt: Date.now() })
@@ -242,7 +232,7 @@ const Referrals = (props) => {
           proRefetch();
         });
 
-      dispatch(notify({ msg: ' procedure deleted successfully', sev: "success" }));
+      dispatch(notify({ msg: ' procedure deleted successfully', sev: 'success' }));
       CloseCancellationReasonModel();
     } catch (error) {
       dispatch(notify({ msg: ' deleted failed', sev: 'error' }));
@@ -251,12 +241,12 @@ const Referrals = (props) => {
 
   const handelAddNew = () => {
     handleClear();
-    setOpenDetailsModal(true)
-  }
+    setOpenDetailsModal(true);
+  };
   const tableColumns = [
     {
-      key: "procedureId",
-      dataKey: "procedureId",
+      key: 'procedureId',
+      dataKey: 'procedureId',
       title: <Translate>PROCEDURE ID</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -264,24 +254,25 @@ const Referrals = (props) => {
       }
     },
     {
-      key: "procedureName",
-      dataKey: "procedureName",
+      key: 'procedureName',
+      dataKey: 'procedureName',
       title: <Translate>Procedure Name</Translate>,
-      flexGrow: 1,
-
+      flexGrow: 1
     },
     {
-      key: "scheduledDateTime",
-      dataKey: "scheduledDateTime",
+      key: 'scheduledDateTime',
+      dataKey: 'scheduledDateTime',
       title: <Translate>SCHEDULED DATE TIME</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return rowData.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
+        return rowData.scheduledDateTime
+          ? formatDateWithoutSeconds(rowData.scheduledDateTime)
+          : ' ';
       }
     },
     {
-      key: "categoryKey",
-      dataKey: "categoryKey",
+      key: 'categoryKey',
+      dataKey: 'categoryKey',
       title: <Translate>CATEGORY</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -293,44 +284,43 @@ const Referrals = (props) => {
       }
     },
     {
-      key: "priorityLkey",
-      dataKey: "priorityLkey",
+      key: 'priorityLkey',
+      dataKey: 'priorityLkey',
       title: <Translate>PRIORITY</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return rowData.priorityLkey ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
+        return rowData.priorityLkey ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey;
       }
     },
     {
-      key: "procedureLevelLkey",
-      dataKey: "procedureLevelLkey",
+      key: 'procedureLevelLkey',
+      dataKey: 'procedureLevelLkey',
       title: <Translate>LEVEL</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
         return rowData.procedureLevelLkey
           ? rowData.procedureLevelLvalue?.lovDisplayVale
-          : rowData.procedureLevelLkey
+          : rowData.procedureLevelLkey;
       }
     },
     {
-      key: "indications",
-      dataKey: "indications",
+      key: 'indications',
+      dataKey: 'indications',
       title: <Translate>INDICATIONS</Translate>,
-      flexGrow: 1,
-
+      flexGrow: 1
     },
     {
-      key: "statusLkey",
-      dataKey: "statusLkey",
+      key: 'statusLkey',
+      dataKey: 'statusLkey',
       title: <Translate>STATUS</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return rowData.statusLvalue?.lovDisplayVale ?? null
+        return rowData.statusLvalue?.lovDisplayVale ?? null;
       }
     },
     {
-      key: "",
-      dataKey: "",
+      key: '',
+      dataKey: '',
       title: <Translate>ATTACHED FILE</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -361,58 +351,63 @@ const Referrals = (props) => {
       }
     },
     {
-      key: "",
-      dataKey: "",
+      key: '',
+      dataKey: '',
       title: <Translate>PERFORM</Translate>,
       flexGrow: 1,
-       render: (rowData: any) => {
-                     const isDisabled =! rowData.currentDepartment;
-     
-                     return (
-                         <FaBedPulse
-                             size={22}
-                             fill={isDisabled ? "#ccc" : "var(--primary-gray)"}
-                             style={{ cursor: isDisabled ? "not-allowed" : "pointer" }}
-                             onClick={!isDisabled ? OpenPerformModel : undefined}
-                         />
-                     );
-                 }
-    },
-    {
-      key: "",
-      dataKey: "",
-      title: <Translate>EDIT</Translate>,
-      flexGrow: 1,
       render: (rowData: any) => {
-        return <MdModeEdit
-          size={24}
-          fill="var(--primary-gray)"
-          onClick={() => setOpenDetailsModal(true)}
-        />
+        const isDisabled = !rowData.currentDepartment;
 
+        return (
+          <FaBedPulse
+            size={22}
+            fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
+            style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
+            onClick={!isDisabled ? OpenPerformModel : undefined}
+          />
+        );
       }
     },
     {
-      key: "facilityKey",
-      dataKey: "facilityKey",
+      key: '',
+      dataKey: '',
+      title: <Translate>EDIT</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return (
+          <MdModeEdit
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => setOpenDetailsModal(true)}
+          />
+        );
+      }
+    },
+    {
+      key: 'facilityKey',
+      dataKey: 'facilityKey',
       title: <Translate>FACILITY</Translate>,
       flexGrow: 1,
       expandable: true,
-      render: (rowData: any) => { return rowData.facilityKey ? rowData.facility?.facilityName : "" }
+      render: (rowData: any) => {
+        return rowData.facilityKey ? rowData.facility?.facilityName : '';
+      }
     },
     {
-      key: "departmentTypeLkey",
-      dataKey: "departmentTypeLkey",
+      key: 'departmentTypeLkey',
+      dataKey: 'departmentTypeLkey',
       title: <Translate>DEPARTMENT</Translate>,
       flexGrow: 1,
       expandable: true,
       render: (rowData: any) => {
-        return rowData.departmentKey ? rowData.department?.departmentTypeLvalue?.lovDisplayVale : ""
+        return rowData.departmentKey
+          ? rowData.department?.departmentTypeLvalue?.lovDisplayVale
+          : '';
       }
     },
     {
-      key: "currentDepartment",
-      dataKey: "currentDepartment",
+      key: 'currentDepartment',
+      dataKey: 'currentDepartment',
       title: <Translate>CURRENT DEPARTMENT</Translate>,
       flexGrow: 1,
       expandable: true,
@@ -421,18 +416,18 @@ const Referrals = (props) => {
       }
     },
     {
-      key: "bodyPartLkey",
-      dataKey: "bodyPartLkey",
+      key: 'bodyPartLkey',
+      dataKey: 'bodyPartLkey',
       title: <Translate>BODY PART</Translate>,
       flexGrow: 1,
       expandable: true,
       render: (rowData: any) => {
-        return rowData.bodyPartLkey ? rowData.bodyPartLvalue.lovDisplayVale : rowData.bodyPartLkey
+        return rowData.bodyPartLkey ? rowData.bodyPartLvalue.lovDisplayVale : rowData.bodyPartLkey;
       }
     },
     {
-      key: "sideLkey",
-      dataKey: "sideLkey",
+      key: 'sideLkey',
+      dataKey: 'sideLkey',
       title: <Translate>SIDE</Translate>,
       flexGrow: 1,
       expandable: true,
@@ -441,62 +436,69 @@ const Referrals = (props) => {
       }
     },
     {
-      key: "notes",
-      dataKey: "notes",
+      key: 'notes',
+      dataKey: 'notes',
       title: <Translate>NOTE</Translate>,
       flexGrow: 1,
-      expandable: true,
-
+      expandable: true
     },
     ,
     {
-      key: "",
+      key: '',
       title: <Translate>CREATED AT/BY</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.createdBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.createdBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
     {
-      key: "",
+      key: '',
       title: <Translate>UPDATED AT/BY</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.updatedBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.updatedAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.updatedBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.createdAt ? formatDateWithoutSeconds(rowData.updatedAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
     {
-      key: "",
+      key: '',
       title: <Translate>CANCELLED AT/BY</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return (<>
-          <span>{rowData.deletedBy}</span>
-          <br />
-          <span className='date-table-style'>{rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}</span>
-        </>)
+        return (
+          <>
+            <span>{rowData.deletedBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}
+            </span>
+          </>
+        );
       }
-
     },
     {
-      key: "cancellationReason",
-      dataKey: "cancellationReason",
+      key: 'cancellationReason',
+      dataKey: 'cancellationReason',
       title: <Translate>CANCELLITON REASON</Translate>,
       flexGrow: 1,
       expandable: true
     }
-
-  ]
+  ];
   const pageIndex = listRequest.pageNumber - 1;
 
   // how many rows per page:
@@ -523,30 +525,6 @@ const Referrals = (props) => {
   };
   return (
     <>
-
-      <div className='bt-div'>
-        <MyButton
-          onClick={() => setOpenCancellationReasonModel(true)}
-          disabled={!edit ? procedure.key ? procedure.statusLvalue.lovCode == "PROC_CANCL" ? true : false : true : true}
-          prefixIcon={() => <BlockIcon />}
-        >Cancle</MyButton>
-        <Checkbox
-          checked={!showCanceled}
-          onChange={() => {
-            setShowCanceled(!showCanceled);
-            if (showCanceled == false) setEditing(true);
-          }}
-        >
-          Show Cancelled
-        </Checkbox>
-        <div className='bt-right'>
-          <MyButton
-            disabled={edit}
-            onClick={handelAddNew}
-          >Add Procedure</MyButton>
-        </div>
-      </div>
-
       <MyTable
         columns={tableColumns}
         data={procedures?.object ?? []}
@@ -566,33 +544,77 @@ const Referrals = (props) => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+        tableButtons={
+          <div className="bt-div-2">
+            <div className="bt-left-2">
+              <MyButton
+                onClick={() => setOpenCancellationReasonModel(true)}
+                disabled={
+                  !edit
+                    ? procedure.key
+                      ? procedure.statusLvalue.lovCode == 'PROC_CANCL'
+                        ? true
+                        : false
+                      : true
+                    : true
+                }
+                prefixIcon={() => <BlockIcon />}
+              >
+                Cancle
+              </MyButton>
+              <Checkbox
+                checked={!showCanceled}
+                onChange={() => {
+                  setShowCanceled(!showCanceled);
+                  if (showCanceled == false) setEditing(true);
+                }}
+              >
+                Show Cancelled
+              </Checkbox>
+            </div>
+
+            <div className="bt-right-2">
+              <MyButton disabled={edit} onClick={handelAddNew}>
+                Add Procedure
+              </MyButton>
+            </div>
+          </div>
+        }
       />
 
       <MyModal
         open={openPerformModal}
         setOpen={setOpenPerformModal}
-        title='Perform Details'
+        title="Perform Details"
         actionButtonFunction={handleSave}
-        size='full'
-        content={<Perform proRefetch={proRefetch} encounter={encounter} patient={patient} procedure={procedure} setProcedure={setProcedure} edit={edit} />}
+        size="full"
+        content={
+          <Perform
+            proRefetch={proRefetch}
+            encounter={encounter}
+            patient={patient}
+            procedure={procedure}
+            setProcedure={setProcedure}
+            edit={edit}
+          />
+        }
       ></MyModal>
 
-
-
-      <Details patient={patient}
+      <Details
+        patient={patient}
         proRefetch={proRefetch}
         encounter={encounter}
         edit={edit}
         procedure={procedure}
         setProcedure={setProcedure}
         openDetailsModal={openDetailsModal}
-        setOpenDetailsModal={setOpenDetailsModal} />
-
+        setOpenDetailsModal={setOpenDetailsModal}
+      />
 
       <CancellationModal
         open={openCancellationReasonModel}
         setOpen={setOpenCancellationReasonModel}
-        fieldName='cancellationReason'
+        fieldName="cancellationReason"
         fieldLabel="Cancellation Reason"
         title="Cancellation "
         object={procedure}
@@ -606,9 +628,9 @@ const Referrals = (props) => {
         actionType={'add'}
         refecthData={attachmentRefetch}
         attachmentSource={procedure}
-        attatchmentType="PROCEDURE" 
-        patientKey={patient?.key}/>
-
+        attatchmentType="PROCEDURE"
+        patientKey={patient?.key}
+      />
     </>
   );
 };
