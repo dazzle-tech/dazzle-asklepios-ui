@@ -10,7 +10,8 @@ import {
   faClipboardList,
   faBullseye,
   faPaperclip,
-  faFileAlt
+  faFileAlt,
+  faCalendarDays
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyButton from '@/components/MyButton/MyButton';
@@ -162,8 +163,15 @@ const Physiotherapy = () => {
   const iconsForActions = rowData => (
     <div className="container-of-icons">
       <FontAwesomeIcon
-        title="Follow-up"
+        title="View"
         icon={faEye}
+        color="var(--primary-gray)"
+        className="icons-style"
+        onClick={() => console.log('Follow-up for:', rowData)}
+      />
+      <FontAwesomeIcon
+        title="Follow-up"
+        icon={faCalendarDays}
         color="var(--primary-gray)"
         className="icons-style"
         onClick={() => console.log('Follow-up for:', rowData)}
