@@ -1,0 +1,56 @@
+.animation-emr-card-patient-emr:hover{
+
+  transition: transform 0.2s ease;
+  transform: scale(1.03);
+}
+
+.emr-main-row-handle{display: flex;
+flex-direction: row;
+gap: 0.8vw;
+flex-wrap: wrap;
+box-sizing: border-box;
+margin-bottom: 1vw;
+}
+
+
+
+
+
+.emr-container {
+  display: flex;
+  gap: 10px;
+  height: 100%;
+}
+
+.emr-content {
+  width: 100%;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.emr-right {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  transition: all 0.3s ease;
+  overflow-y: hidden;
+}
+
+.emr-right .profile-sidebar {
+  width: 0;
+  transition: width 0.3s ease;
+}
+
+.emr-right .profile-sidebar.expanded {
+  width: 300px;
+}
+
+.emr-right .patient-side {
+  flex: 1;
+  transition: margin 0.3s ease;
+  border: solid 1px #e4e3e3;
+}
+.patient-side-main-container-handle{
+    border: solid 1px #e4e3e3;
+}
