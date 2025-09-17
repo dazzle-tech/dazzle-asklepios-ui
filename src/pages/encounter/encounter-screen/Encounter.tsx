@@ -68,8 +68,10 @@ import { faCapsules } from '@fortawesome/free-solid-svg-icons';
 import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 import SideSummaryScreen from './SideSummaryScreen';
 import MedicalTimeline from './MedicalTimeLine';
+import { useSelector } from 'react-redux';
 
 const Encounter = () => {
+    const mode = useSelector((state: any) => state.ui.mode);
   // create the action for the Customize Dashboard that we defined it in Patient summary page
   const [action, setAction] = useState(() => () => {});
 
@@ -601,7 +603,7 @@ const Encounter = () => {
         <div className="left-box">
           <Panel>
             <div className="container-bt">
-              <div className="left">
+              <div className='left'>
                 <BackButton onClick={handleGoBack} />
                 <Form fluid>
                   <MyInput
@@ -734,12 +736,12 @@ const Encounter = () => {
               open={isDrawerOpen}
               onClose={() => setIsDrawerOpen(false)}
               placement="left"
-              className="drawer-style"
+              className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
             >
-              <Drawer.Header>
+              <Drawer.Header className="header-drawer">
                 <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
               </Drawer.Header>
-              <Drawer.Body className="drawer-body">
+              <Drawer.Body className='drawer-body'>
                 <Form fluid>
                   <Row>
                     <Col md={24}>

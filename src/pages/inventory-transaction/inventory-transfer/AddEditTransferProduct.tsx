@@ -41,9 +41,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalculator, faDeleteLeft, faEye, faSave } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { ColumnConfig } from '@/components/MyNestedTable/MyNestedTable';
+import { useSelector } from 'react-redux';
 const AddEditTransferProduct = ({ transProduct, setTransProduct, transaction, setTransaction, refetch }) => {
     const dispatch = useAppDispatch();
-
+     const mode = useSelector((state: any) => state.ui.mode); 
     const [selectedProduct, setSelectedProduct] = useState<ApProducts>({ ...newApProducts });
     const [triggerGetQty, { data: qtyInBaseUomResponse, isLoading }] = useLazyGetQtyInBaseUomQuery();
     const [generateCode, setGenerateCode] = useState();
@@ -887,8 +888,8 @@ const AddEditTransferProduct = ({ transProduct, setTransProduct, transaction, se
             />
             <div style={{
                 display: "flex",
-                borderTop: "2px solid #e5e5e5",
-                background: "#fafafa",
+                borderTop:  mode === "light" ? "2px solid #e5e5e5" : "2px solid #888888ff",
+                background: mode === "light" ? "#fafafa" : "var(--extra-dark-black)",
                 fontWeight: "bold",
                 padding: "8px 16px"
             }}>

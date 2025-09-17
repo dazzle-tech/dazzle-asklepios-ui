@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import AddEditOutput from '@/pages/encounter/encounter-component/intake-output-balance/AddEditOutput';
 import Translate from '@/components/Translate';
+import SectionContainer from '@/components/SectionsoContainer';
 
 interface OutputsTableProps {
   data: any[];
@@ -20,12 +21,11 @@ const OutputsTable: React.FC<OutputsTableProps> = ({ data, totalOutput = 0 }) =>
   const isSelectedOutput = (rowData: any) => (rowData?.key === output?.key ? 'selected-row' : '');
 
   return (
-    <div className="container-form-outputs-table">
-      <div className="title-div">
-        <Text>Outputs</Text>
-      </div>
-      <Divider />
-      <Form fluid layout="inline" className="container-of-header-intake">
+    <SectionContainer 
+    title="Outputs"
+    content={
+      <>
+       <Form fluid layout="inline" className="container-of-header-intake">
         <MyInput
           fieldName="date"
           fieldType="date"
@@ -51,11 +51,13 @@ const OutputsTable: React.FC<OutputsTableProps> = ({ data, totalOutput = 0 }) =>
           { key: 'volume', title: <Translate>Volume</Translate> }
         ]}
         rowClassName={isSelectedOutput}
-        onRowClick={(rowData) => setOutput(rowData)}
+        onRowClick={rowData => setOutput(rowData)}
       />
       <label>Total Output: {totalOutput}</label>
       <AddEditOutput open={popupAddOutputOpen} setOpen={setPopupAddOutputOpen} width={window.innerWidth} />
-    </div>
+      </>
+    }
+    />
   );
 };
 
