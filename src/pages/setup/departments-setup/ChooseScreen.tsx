@@ -427,13 +427,13 @@ const ChooseDepartment = ({
                     setRecord={setShowScreen}
                     fieldLabel={'CPOE Results Manager'}
                   />
-                  <MyInput
+                 <MyInput
                     fieldType="check"
-                    fieldName={'orderDetails'}
+                    fieldName={'icu'}
                     showLabel={false}
                     record={showScreen}
                     setRecord={setShowScreen}
-                    fieldLabel={'Order Details'}
+                    fieldLabel={'ICU'}
                   />
                 </div>
               </div>
@@ -539,6 +539,7 @@ const ChooseDepartment = ({
                     record={showScreen}
                     setRecord={setShowScreen}
                   />
+                  
                 </div>
               </div>
             </div>
