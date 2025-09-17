@@ -1,31 +1,28 @@
 import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
-import { Form, Panel } from 'rsuite';
+import { Form, Panel, Text } from 'rsuite';
 import MyTable from '@/components/MyTable';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faCircleInfo, faPen, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPen } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
 import PlusIcon from '@rsuite/icons/Plus';
 import CancellationModal from '@/components/CancellationModal';
 import './styles.less';
 import MyInput from '@/components/MyInput';
 import AddEditBloodOrder from './AddEditBloodOrder';
-import DetailsModal from './detailsModal';
+import SectionContainer from '@/components/SectionsoContainer';
+
 const BloodOrder = () => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
-  const [openDetailsModal, setOpenDetailsModal] = useState(false);
-  const [bloodOrder, setBloodOreder] = useState({});
+  const [bloodOrder, setBloodOrder] = useState<any>({});
+  const [record, setRecord] = useState<any>({});
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && bloodOrder && rowData.key === bloodOrder.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  const isSelected = (rowData: any) =>
+    rowData && bloodOrder && rowData.key === bloodOrder.key ? 'selected-row' : '';
 
   // dummy data
   const data = [
@@ -37,38 +34,39 @@ const BloodOrder = () => {
       requestBy: 'Dr. Rawan',
       requestAt: '2025-02-15 10:30',
       previousReaction: true,
-      status: 'new'
+      status: 'new',
+      submittedBy: 'Nurse Rana',
+      submittedAt: '2025-02-15 10:45',
+      cancelledBy: '',
+      cancelledAt: '',
+      cancellationReason: ''
     },
     {
       key: '2',
       productType: 'Fresh Frozen Plasma',
       amount: 300,
       reason: 'Coagulation disorder treatment',
-      previousReaction: false,
       requestBy: 'Dr. Batool',
       requestAt: '2025-02-16 14:15',
-      status: 'new'
-    },
-    {
-      key: '3',
-      productType: 'Platelets',
-      amount: 250,
-      reason: 'Thrombocytopenia management',
-      requestBy: 'Dr. Hanan',
-      requestAt: '2025-02-17 16:45',
-      previousReaction: true,
-      status: 'new'
+      previousReaction: false,
+      status: 'new',
+      submittedBy: 'Nurse Hadeel',
+      submittedAt: '2025-02-16 14:30',
+      cancelledBy: '',
+      cancelledAt: '',
+      cancellationReason: ''
     }
   ];
 
   // Handle click on Add New Button
   const handleNew = () => {
     setPopupOpen(true);
-    setBloodOreder({});
+    setBloodOrder({});
+    setRecord({});
   };
 
-  //icons column ( Edite, Cancel, Details)
-  const iconsForActions = () => (
+  //icons column ( Edit, Cancel, Submit )
+  const iconsForActions = (rowData: any) => (
     <div className="container-of-icons">
       <FontAwesomeIcon
         title="Edit"
@@ -76,6 +74,8 @@ const BloodOrder = () => {
         color="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
+          setBloodOrder(rowData);
+          setRecord(rowData);
           setPopupOpen(true);
         }}
       />
@@ -85,16 +85,17 @@ const BloodOrder = () => {
         color="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
+          setBloodOrder(rowData);
           setOpenCancellationReasonModel(true);
         }}
       />
       <FontAwesomeIcon
-        title="Details"
-        icon={faCircleInfo}
+        title="Submit"
+        icon={faCheckDouble}
         color="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
-          setOpenDetailsModal(true);
+          console.log('Submit clicked', rowData);
         }}
       />
     </div>
@@ -102,13 +103,6 @@ const BloodOrder = () => {
 
   // table Columns
   const tableColumns = [
-    {
-      key: '',
-      title: <Translate></Translate>,
-      render: (rowData: any) => {
-        return <MyInput fieldName="" fieldType="check" record={rowData} setRecord="" />;
-      }
-    },
     {
       key: 'productType',
       title: <Translate>Product Type</Translate>
@@ -129,31 +123,57 @@ const BloodOrder = () => {
           <>
             {rowData?.requestBy}
             <br />
-            <span className="date-table-style">
-              {rowData?.requestAt.split(' ')[0]}
-              <br />
-              {rowData?.requestAt.split(' ')[1]}
-            </span>
+            <span className="date-table-style">{rowData?.requestAt}</span>
           </>
-        ) : (
-          ' '
-        )
+        ) : null
     },
-
     {
-      key: 'status ',
+      key: 'status',
       title: <Translate>Status</Translate>
     },
     {
+      key: 'submittedByAt',
+      title: <Translate>Submitted By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) =>
+        rowData.submittedBy ? (
+          <>
+            {rowData.submittedBy}
+            <br />
+            <span className="date-table-style">{rowData.submittedAt}</span>
+          </>
+        ) : null
+    },
+    {
+      key: 'cancelledByAt',
+      title: <Translate>Cancelled By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) =>
+        rowData.cancelledBy ? (
+          <>
+            {rowData.cancelledBy}
+            <br />
+            <span className="date-table-style">{rowData.cancelledAt}</span>
+          </>
+        ) : null
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>Cancellation Reason</Translate>,
+      expandable: true,
+      render: (rowData: any) =>
+        rowData.cancellationReason ? <span>{rowData.cancellationReason}</span> : null
+    },
+    {
       key: 'icons',
-      title: <Translate></Translate>,
+      title: <Translate>Actions</Translate>,
       flexGrow: 4,
-      render: () => iconsForActions()
+      render: (rowData: any) => iconsForActions(rowData)
     }
   ];
 
   // handle cancel
-  const handleCancle = async () => {
+  const handleCancel = async () => {
     setOpenCancellationReasonModel(false);
   };
 
@@ -186,32 +206,73 @@ const BloodOrder = () => {
           </div>
         </div>
       </Form>
+
+      {/* Table */}
       <MyTable
         data={data}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={rowData => {
-          setBloodOreder(rowData);
+        expandedRowKeys={[expandedRow || '']}
+        onRowClick={(rowData: any) => {
+          setBloodOrder(rowData);
+          setRecord({
+            ...rowData,
+            submittedByAt: rowData.submittedBy
+              ? `${rowData.submittedBy} (${rowData.submittedAt})`
+              : '',
+            cancelledByAt: rowData.cancelledBy
+              ? `${rowData.cancelledBy} (${rowData.cancelledAt})`
+              : '',
+            cancellationReason: rowData.cancellationReason || ''
+          });
+          setExpandedRow(rowData.key);
         }}
       />
+
+      {/* Order Details Section */}
+      {bloodOrder?.key && (
+        <div className="my-order-details-margin">
+          <SectionContainer
+            title={<Text>Order Details</Text>}
+            content={
+              <Form className="order-details-row">
+                <MyInput fieldName="productType" record={record} setRecord={setRecord} disabled />
+                <MyInput fieldName="amount" record={record} setRecord={setRecord} disabled />
+                <MyInput fieldName="reason" record={record} setRecord={setRecord} disabled />
+                <MyInput fieldName="status" record={record} setRecord={setRecord} disabled />
+                <MyInput fieldName="submittedByAt" record={record} setRecord={setRecord} disabled />
+                <MyInput fieldName="cancelledByAt" record={record} setRecord={setRecord} disabled />
+                <MyInput
+                  fieldName="cancellationReason"
+                  record={record}
+                  setRecord={setRecord}
+                  disabled
+                />
+              </Form>
+            }
+          />
+        </div>
+      )}
+
+      {/* Modals */}
       <CancellationModal
         open={openCancellationReasonModel}
         setOpen={setOpenCancellationReasonModel}
         object={bloodOrder}
-        setObject={setBloodOreder}
-        handleCancle={handleCancle}
+        setObject={setBloodOrder}
+        handleCancle={handleCancel}
         fieldName="cancelledReason"
         fieldLabel={'Cancelled Reason'}
         title={'Cancellation'}
-      ></CancellationModal>
+      />
+
       <AddEditBloodOrder
         open={popupOpen}
         setOpen={setPopupOpen}
         width={width}
         bloodorder={bloodOrder}
-        setBloodOrder={setBloodOreder}
+        setBloodOrder={setBloodOrder}
       />
-      <DetailsModal open={openDetailsModal} setOpen={setOpenDetailsModal} width={width} />
     </Panel>
   );
 };
