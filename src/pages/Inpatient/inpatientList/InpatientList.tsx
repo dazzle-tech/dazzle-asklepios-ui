@@ -5,7 +5,14 @@ import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRepeat } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBoxOpen,
+  faDoorOpen,
+  faFile,
+  faListCheck,
+  faRepeat,
+  faRightFromBracket
+} from '@fortawesome/free-solid-svg-icons';
 import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper, Popover, Dropdown } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
@@ -44,8 +51,8 @@ import TemporaryDischarge from './temporaryDischarge/TemporaryDischarge';
 import { faPersonWalkingArrowLoopLeft } from '@fortawesome/free-solid-svg-icons';
 import ReturnFromTemporary from './temporaryDischarge/ReturnFromTemporary';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import {faBarcode, faUserGroup} from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { faBarcode, faUserGroup } from '@fortawesome/free-solid-svg-icons';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from './EncounterLogsTable';
 
@@ -73,7 +80,7 @@ const InpatientList = () => {
   const [switchDepartment, setSwitchDepartment] = useState(false);
   const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
   const [record, setRecord] = useState({});
-  const [encounterStatus, setEncounterStatus] = useState({ key: '' }); 
+  const [encounterStatus, setEncounterStatus] = useState({ key: '' });
   const [cancelEncounter] = useCancelEncounterMutation();
   const [openReturnFromTemporaryModal, setOpenReturnFromTemporaryModal] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
@@ -92,7 +99,9 @@ const InpatientList = () => {
       {
         fieldName: 'encounter_status_lkey',
         operator: 'in',
-        value: ['91063195286200', '91084250213000','6130571996160318'].map(key => `(${key})`).join(' ')
+        value: ['91063195286200', '91084250213000', '6130571996160318']
+          .map(key => `(${key})`)
+          .join(' ')
       },
       {
         fieldName: 'discharge',
@@ -118,6 +127,8 @@ const InpatientList = () => {
   // Fetch department list response
   const departmentListResponse = useGetResourceTypeQuery('4217389643435490');
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
+  const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+  const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
 
   //Functions
   const isSelected = rowData => {
@@ -190,69 +201,68 @@ const InpatientList = () => {
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
-  const filters = () => (<>
-    <Form layout="inline" fluid>
-      <div className="switch-dep-dev ">
-        {' '}
-        <MyInput
-          require
-          column
-          fieldLabel="Select Department"
-          fieldType="select"
-          fieldName="key"
-          selectData={departmentListResponse?.data?.object ?? []}
-          selectDataLabel="name"
-          selectDataValue="key"
-          record={departmentFilter}
-          setRecord={value => {
-            setDepartmentFilter(value);
-            setSwitchDepartment(false);
-          }}
-          searchable={false}
-          width={200}
-        />
-
-        <MyButton
-          size="small"
-          backgroundColor="gray"
-          onClick={() => {
-            setSwitchDepartment(true);
-          }}
-          prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
-        >
-          Switch Department
-        </MyButton>
-        
-        <MyInput
-          column
-          width="10vw"
-          fieldLabel="Select Filter"
-          fieldName="selectfilter"
-          fieldType="select"
-          selectData={[
-            { key: 'MRN', value: 'MRN' },
-            { key: 'Document Number', value: 'Document Number' },
-            { key: 'Full Name', value: 'Full Name' },
-            { key: 'Archiving Number', value: 'Archiving Number' },
-            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-            { key: 'Date of Birth', value: 'Date of Birth'}
-        ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          column
-          fieldLabel='Search by'
-          fieldName="searchCriteria"
-          fieldType="text"
-          placeholder="Search"
-          width="15vw"
-          record={record}
-          setRecord={setRecord}
+  const filters = () => (
+    <>
+      <Form layout="inline" fluid>
+        <div className="switch-dep-dev ">
+          {' '}
+          <MyInput
+            require
+            column
+            fieldLabel="Select Department"
+            fieldType="select"
+            fieldName="key"
+            selectData={departmentListResponse?.data?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            record={departmentFilter}
+            setRecord={value => {
+              setDepartmentFilter(value);
+              setSwitchDepartment(false);
+            }}
+            searchable={false}
+            width={200}
           />
-            <MyInput
+          <MyButton
+            size="small"
+            backgroundColor="gray"
+            onClick={() => {
+              setSwitchDepartment(true);
+            }}
+            prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
+          >
+            Switch Department
+          </MyButton>
+          <MyInput
+            column
+            width="10vw"
+            fieldLabel="Select Filter"
+            fieldName="selectfilter"
+            fieldType="select"
+            selectData={[
+              { key: 'MRN', value: 'MRN' },
+              { key: 'Document Number', value: 'Document Number' },
+              { key: 'Full Name', value: 'Full Name' },
+              { key: 'Archiving Number', value: 'Archiving Number' },
+              { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+              { key: 'Date of Birth', value: 'Date of Birth' }
+            ]}
+            selectDataLabel="value"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            column
+            fieldLabel="Search by"
+            fieldName="searchCriteria"
+            fieldType="text"
+            placeholder="Search"
+            width="15vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
             column
             width={200}
             fieldType="select"
@@ -263,34 +273,107 @@ const InpatientList = () => {
             selectDataValue="key"
             record={encounterStatus}
             setRecord={setEncounterStatus}
-            />
-
-      </div>
-    </Form>
-    <AdvancedSearchFilters searchFilter={true}/>
-
-</>
+          />
+        </div>
+      </Form>
+      <AdvancedSearchFilters
+        searchFilter={true}
+        content={
+          <div className="advanced-filters">
+            <Form fluid className="dissss">
+              {/* Visit Type LOV */}
+              <MyInput
+                fieldName="accessTypeLkey"
+                fieldType="select"
+                selectData={bookVisitLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                fieldLabel="Visit Type"
+                selectDataValue="key"
+                record={record}
+                setRecord={setRecord}
+                searchable={false}
+                width={150}
+              />
+              {/* Chief Complain Text */}
+              <MyInput
+                width={150}
+                fieldName="chiefComplain"
+                fieldType="text"
+                record={record}
+                setRecord={setRecord}
+                fieldLabel="Chief Complain"
+              />
+              {/* Checkboxes*/}
+              <MyInput
+                width={110}
+                fieldName="withPrescription"
+                fieldType="checkbox"
+                record={record}
+                setRecord={setRecord}
+                label="With Prescription"
+              />
+              <MyInput
+                width={80}
+                fieldName="hasOrders"
+                fieldType="checkbox"
+                record={record}
+                setRecord={setRecord}
+                label="Has Orders"
+              />
+              <MyInput
+                width={80}
+                fieldName="isObserved"
+                fieldType="checkbox"
+                record={record}
+                setRecord={setRecord}
+                label="Is Observed"
+              />
+              {/* Priority LOV */}
+              <MyInput
+                width={150}
+                fieldName="priority"
+                fieldType="select"
+                record={record}
+                setRecord={setRecord}
+                selectData={EncPriorityLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                placeholder="Select Priority"
+                fieldLabel="Priority"
+                searchable={false}
+              />
+            </Form>
+          </div>
+        }
+      />
+    </>
   );
 
-  const tablebuttons = (<><div className='companion-wrist-icons-position-handles'>
-
-                          <MyButton onClick={() => setOpenRefillModal(true)}>
-            Refill
-          </MyButton>
+  const tablebuttons = (
+    <>
+      <div className="companion-wrist-icons-position-handles">
+        <MyButton onClick={() => setOpenRefillModal(true)}>
+          <FontAwesomeIcon icon={faBoxOpen} />
+          Refill Stock
+        </MyButton>
         <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
-            Task Management
+          {' '}
+          <FontAwesomeIcon icon={faListCheck} />
+          Task Management
         </MyButton>
 
-<MyButton onClick={() => setOpenEncounterLogsModal(true)}>
-  Encounter Logs
-</MyButton>
+        <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
+          <FontAwesomeIcon icon={faFile} />
+          Encounter Logs
+        </MyButton>
 
-          <MyButton onClick={() => setOpenDischargeTracking(true)}>
-            Discharge Tracking
-          </MyButton> 
-        </div>
-        
-</>);
+        <MyButton onClick={() => setOpenDischargeTracking(true)}>
+          <FontAwesomeIcon icon={faRightFromBracket} />
+          Discharge Tracking
+        </MyButton>
+      </div>
+    </>
+  );
 
   //useEffect
   useEffect(() => {
@@ -321,7 +404,7 @@ const InpatientList = () => {
     }
   }, [departmentFilter, isFetching]);
 
-const [openPopover, setOpenPopover] = useState<{ [key: string]: boolean }>({});
+  const [openPopover, setOpenPopover] = useState<{ [key: string]: boolean }>({});
   // table columns
   const tableColumns = [
     {
@@ -447,190 +530,186 @@ const [openPopover, setOpenPopover] = useState<{ [key: string]: boolean }>({});
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
-{
-  key: 'actions',
-  title: <Translate>Actions</Translate>,
-  render: rowData => {
-    const tooltipNurse = <Tooltip>Nurse Anamnesis</Tooltip>;
-    const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+    {
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      render: rowData => {
+        const tooltipNurse = <Tooltip>Nurse Anamnesis</Tooltip>;
+        const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
 
-    const contentOfMoreIconMenu = (
-      <Popover full>
-        <Dropdown.Menu>
-          {/* Transfer Patient */}
-          <Dropdown.Item
-            onClick={() => {
-              setLocalEncounter(rowData);
-              setOpenTransferPatientModal(true);
-              setOpenPopover(false);
-            }}
-          >
-            <div className="container-of-icon-and-key1">
-              <FontAwesomeIcon icon={faArrowRightArrowLeft} />
-              Transfer Patient
-            </div>
-          </Dropdown.Item>
+        const contentOfMoreIconMenu = (
+          <Popover full>
+            <Dropdown.Menu>
+              {/* Transfer Patient */}
+              <Dropdown.Item
+                onClick={() => {
+                  setLocalEncounter(rowData);
+                  setOpenTransferPatientModal(true);
+                  setOpenPopover(false);
+                }}
+              >
+                <div className="container-of-icon-and-key1">
+                  <FontAwesomeIcon icon={faArrowRightArrowLeft} />
+                  Transfer Patient
+                </div>
+              </Dropdown.Item>
 
-          {/* Change Bed */}
-          <Dropdown.Item
-            onClick={() => {
-              setLocalEncounter(rowData);
-              setOpenChangeBedModal(true);
-              setOpenPopover(false);
-            }}
-          >
-            <div className="container-of-icon-and-key1">
-              <FontAwesomeIcon icon={faBed} />
-              Change Bed
-            </div>
-          </Dropdown.Item>
+              {/* Change Bed */}
+              <Dropdown.Item
+                onClick={() => {
+                  setLocalEncounter(rowData);
+                  setOpenChangeBedModal(true);
+                  setOpenPopover(false);
+                }}
+              >
+                <div className="container-of-icon-and-key1">
+                  <FontAwesomeIcon icon={faBed} />
+                  Change Bed
+                </div>
+              </Dropdown.Item>
 
-          {/* Wrist Band */}
-          <Dropdown.Item
-            onClick={() => setOpenPopover(false)}
-          >
-            <div className="container-of-icon-and-key1">
-              <FontAwesomeIcon icon={faBarcode} />
-              Wrist Band
-            </div>
-          </Dropdown.Item>
+              {/* Wrist Band */}
+              <Dropdown.Item onClick={() => setOpenPopover(false)}>
+                <div className="container-of-icon-and-key1">
+                  <FontAwesomeIcon icon={faBarcode} />
+                  Wrist Band
+                </div>
+              </Dropdown.Item>
 
-          {/* Companion Card */}
-          <Dropdown.Item
-            onClick={() => setOpenPopover(false)}
-          >
-            <div className="container-of-icon-and-key1">
-              <FontAwesomeIcon icon={faUserGroup} />
-              Companion Card
-            </div>
-          </Dropdown.Item>
+              {/* Companion Card */}
+              <Dropdown.Item onClick={() => setOpenPopover(false)}>
+                <div className="container-of-icon-and-key1">
+                  <FontAwesomeIcon icon={faUserGroup} />
+                  Companion Card
+                </div>
+              </Dropdown.Item>
 
-          {/* Cancel Visit */}
-          {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
-            <Dropdown.Item
-              onClick={() => {
-                setLocalEncounter(rowData);
-                setOpen(true);
-                setOpenPopover(false);
-              }}
-            >
-              <div className="container-of-icon-and-key1">
-                <FontAwesomeIcon icon={faRectangleXmark} />
-                Cancel Visit
+              {/* Cancel Visit */}
+              {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
+                <Dropdown.Item
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setOpen(true);
+                    setOpenPopover(false);
+                  }}
+                >
+                  <div className="container-of-icon-and-key1">
+                    <FontAwesomeIcon icon={faRectangleXmark} />
+                    Cancel Visit
+                  </div>
+                </Dropdown.Item>
+              )}
+
+              {/* Temporary Discharge */}
+              {rowData?.encounterStatusLvalue?.valueCode === 'ONGOING' && (
+                <Dropdown.Item
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setLocalPatient(rowData.patientObject);
+                    setOpenTemporaryDischargeModal(true);
+                    setOpenPopover(false);
+                  }}
+                >
+                  <div className="container-of-icon-and-key1">
+                    <FontAwesomeIcon icon={faPersonWalkingArrowRight} />
+                    Temporary Discharge
+                  </div>
+                </Dropdown.Item>
+              )}
+
+              {/* Return from Temp DC */}
+              {rowData?.encounterStatusLvalue?.valueCode === 'TEMP_DC' && (
+                <Dropdown.Item
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setLocalPatient(rowData.patientObject);
+                    setOpenReturnFromTemporaryModal(true);
+                    setOpenPopover(false);
+                  }}
+                >
+                  <div className="container-of-icon-and-key1">
+                    <FontAwesomeIcon icon={faPersonWalkingArrowLoopLeft} />
+                    Return from Temp DC
+                  </div>
+                </Dropdown.Item>
+              )}
+            </Dropdown.Menu>
+          </Popover>
+        );
+
+        return (
+          <Form layout="inline" fluid className="nurse-doctor-form">
+            {/* Doctor Button */}
+            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+              <div>
+                <MyButton
+                  size="small"
+                  onClick={() => {
+                    const patientData = rowData.patientObject;
+                    setLocalEncounter(rowData);
+                    setLocalPatient(patientData);
+                    handleGoToVisit(rowData, patientData);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faUserDoctor} />
+                </MyButton>
               </div>
-            </Dropdown.Item>
-          )}
+            </Whisper>
 
-          {/* Temporary Discharge */}
-          {rowData?.encounterStatusLvalue?.valueCode === 'ONGOING' && (
-            <Dropdown.Item
-              onClick={() => {
-                setLocalEncounter(rowData);
-                setLocalPatient(rowData.patientObject);
-                setOpenTemporaryDischargeModal(true);
-                setOpenPopover(false);
-              }}
-            >
-              <div className="container-of-icon-and-key1">
-                <FontAwesomeIcon icon={faPersonWalkingArrowRight} />
-                Temporary Discharge
+            {/* Nurse Button */}
+            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="black"
+                  onClick={() => {
+                    const patientData = rowData.patientObject;
+                    setLocalEncounter(rowData);
+                    setLocalPatient(patientData);
+                    handleGoToPreVisitObservations(rowData, patientData);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faUserNurse} />
+                </MyButton>
               </div>
-            </Dropdown.Item>
-          )}
+            </Whisper>
 
-          {/* Return from Temp DC */}
-          {rowData?.encounterStatusLvalue?.valueCode === 'TEMP_DC' && (
-            <Dropdown.Item
-              onClick={() => {
-                setLocalEncounter(rowData);
-                setLocalPatient(rowData.patientObject);
-                setOpenReturnFromTemporaryModal(true);
-                setOpenPopover(false);
-              }}
-            >
-              <div className="container-of-icon-and-key1">
-                <FontAwesomeIcon icon={faPersonWalkingArrowLoopLeft} />
-                Return from Temp DC
+            {/* EMR Button */}
+            <Whisper trigger="hover" placement="top" speaker={<Tooltip>EMR</Tooltip>}>
+              <div>
+                <MyButton size="small" backgroundColor="violet">
+                  <FontAwesomeIcon icon={faFileWaveform} />
+                </MyButton>
               </div>
-            </Dropdown.Item>
-          )}
-        </Dropdown.Menu>
-      </Popover>
-    );
+            </Whisper>
 
-    return (
-      <Form layout="inline" fluid className="nurse-doctor-form">
-        {/* Doctor Button */}
-        <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
-          <div>
-            <MyButton
-              size="small"
-              onClick={() => {
-                const patientData = rowData.patientObject;
-                setLocalEncounter(rowData);
-                setLocalPatient(patientData);
-                handleGoToVisit(rowData, patientData);
-              }}
+            {/* More Options Dropdown */}
+            <Whisper
+              placement="bottom"
+              trigger="click"
+              open={!!openPopover[rowData.key]}
+              speaker={contentOfMoreIconMenu}
             >
-              <FontAwesomeIcon icon={faUserDoctor} />
-            </MyButton>
-          </div>
-        </Whisper>
-
-        {/* Nurse Button */}
-        <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
-          <div>
-            <MyButton
-              size="small"
-              backgroundColor="black"
-              onClick={() => {
-                const patientData = rowData.patientObject;
-                setLocalEncounter(rowData);
-                setLocalPatient(patientData);
-                handleGoToPreVisitObservations(rowData, patientData);
-              }}
-            >
-              <FontAwesomeIcon icon={faUserNurse} />
-            </MyButton>
-          </div>
-        </Whisper>
-
-        {/* EMR Button */}
-        <Whisper trigger="hover" placement="top" speaker={<Tooltip>EMR</Tooltip>}>
-          <div>
-            <MyButton size="small" backgroundColor="violet">
-              <FontAwesomeIcon icon={faFileWaveform} />
-            </MyButton>
-          </div>
-        </Whisper>
-
-        {/* More Options Dropdown */}
-      <Whisper
-  placement="bottom"
-  trigger="click"
-  open={!!openPopover[rowData.key]}
-  speaker={contentOfMoreIconMenu}
->
-  <div>
-    <MyButton
-      size="small"
-      backgroundColor="var(--note-blue)"
-      onClick={() => setOpenPopover(prev => ({
-        ...prev,
-        [rowData.key]: !prev[rowData.key]
-      }))}
-    >
-      <FontAwesomeIcon icon={faEllipsisVertical} />
-    </MyButton>
-  </div>
-</Whisper>
-
-      </Form>
-    );
-  },
-  expandable: false
-}
-
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="var(--note-blue)"
+                  onClick={() =>
+                    setOpenPopover(prev => ({
+                      ...prev,
+                      [rowData.key]: !prev[rowData.key]
+                    }))
+                  }
+                >
+                  <FontAwesomeIcon icon={faEllipsisVertical} />
+                </MyButton>
+              </div>
+            </Whisper>
+          </Form>
+        );
+      },
+      expandable: false
+    }
   ];
 
   const pageIndex = listRequest.pageNumber - 1;
@@ -735,56 +814,66 @@ const [openPopover, setOpenPopover] = useState<{ [key: string]: boolean }>({});
       />
 
       <MyModal
-      open={openRefillModal}
-      setOpen={setOpenRefillModal}
-      title="Refill"
-      size="90vw"
-      content={<><RefillModalComponent></RefillModalComponent></>}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => {
-        console.log('Save refill clicked');
-      }}
-      cancelButtonLabel="Close"
-/>
+        open={openRefillModal}
+        setOpen={setOpenRefillModal}
+        title="Refill"
+        size="90vw"
+        content={
+          <>
+            <RefillModalComponent></RefillModalComponent>
+          </>
+        }
+        actionButtonLabel="Save"
+        actionButtonFunction={() => {
+          console.log('Save refill clicked');
+        }}
+        cancelButtonLabel="Close"
+      />
 
       <MyModal
-      open={openDischargeTracking}
-      setOpen={setOpenDischargeTracking}
-      title="Discharge Tracking"
-      size="55vw"
-      content={<><DischargeTrackingModal/></>}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => {
-        console.log('Save Discharge Tracking');
-      }}
-      cancelButtonLabel="Close"
-/>
+        open={openDischargeTracking}
+        setOpen={setOpenDischargeTracking}
+        title="Discharge Tracking"
+        size="55vw"
+        content={
+          <>
+            <DischargeTrackingModal />
+          </>
+        }
+        actionButtonLabel="Save"
+        actionButtonFunction={() => {
+          console.log('Save Discharge Tracking');
+        }}
+        cancelButtonLabel="Close"
+      />
 
-<MyModal
-      open={openPhysicianOrderSummaryModal}
-      setOpen={setOpenPhysicianOrderSummaryModal}
-      title="Task Management"
-      size="90vw"
-      content={<><PhysicianOrderSummaryModal></PhysicianOrderSummaryModal></>}
-      actionButtonLabel="Save"
-      actionButtonFunction={() => {
-        console.log('Save refill clicked');
-      }}
-      cancelButtonLabel="Close"
-  />
+      <MyModal
+        open={openPhysicianOrderSummaryModal}
+        setOpen={setOpenPhysicianOrderSummaryModal}
+        title="Task Management"
+        size="90vw"
+        content={
+          <>
+            <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
+          </>
+        }
+        actionButtonLabel="Save"
+        actionButtonFunction={() => {
+          console.log('Save refill clicked');
+        }}
+        cancelButtonLabel="Close"
+      />
 
-<MyModal
-  open={openEncounterLogsModal}
-  setOpen={setOpenEncounterLogsModal}
-  title="Encounter Logs"
-  size="70vw"
-  content={<EncounterLogsTable/>
-  }
-  actionButtonLabel="Close"
-  actionButtonFunction={() => setOpenEncounterLogsModal(false)}
-  cancelButtonLabel="Cancel"
-/>
-
+      <MyModal
+        open={openEncounterLogsModal}
+        setOpen={setOpenEncounterLogsModal}
+        title="Encounter Logs"
+        size="70vw"
+        content={<EncounterLogsTable />}
+        actionButtonLabel="Close"
+        actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+        cancelButtonLabel="Cancel"
+      />
     </Panel>
   );
 };
