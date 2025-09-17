@@ -39,10 +39,11 @@ import TeleScreenMedicationOrder from './TeleScreenMedicationOrder';
 import ContinuousObservations from '../../continuous-observations/ContinuousObservations';
 // Import custom styles
 import './styles.less';
+import { useSelector } from 'react-redux';
 
 const StartTeleConsultation = () => {
   const navigate = useNavigate();
-
+   const mode = useSelector((state: any) => state.ui.mode);
 //
 const [showProcedureDetails, setShowProcedureDetails] = useState(false);
 const [showOperationRequest, setShowOperationRequest] = useState(false);
@@ -167,7 +168,7 @@ case 'Operation Requests':
           <Divider />
 
           {/* Main content area */}
-          <div className="page-content-main-container">
+          <div className={`page-content-main-container ${mode === 'light' ? 'light' : 'dark'}`}>
             {/* Patient summary section */}
             <div className="patient-summary-section">
               <PatientMajorProblem patient={dummyPatient} />

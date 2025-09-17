@@ -1,15 +1,12 @@
 .container-bt {
   display: flex;
   width: 100%;
-
 }
 
 .left {
-  background-color: #ffffff;
   display: flex;
   align-items: center;
   gap: 10px;
-
 }
 
 .right {
@@ -20,19 +17,19 @@
   border-radius: 5px;
   height: auto;
   flex-wrap: wrap;
- margin-left: auto;
+  margin-left: auto;
 }
 
-.drawer-style{
-  width:240px !important; 
+.drawer-style {
+  width: 240px !important;
   background-color: #fff;
-   box-shadow:2px 0 8px rgba(164, 199, 223, 0.1);
-  opacity:0.9
+  box-shadow: 2px 0 8px rgba(164, 199, 223, 0.1);
+  opacity: 0.9;
 }
-.title-drawer{
-  font-family:'Inter Semi Bold';
-  font-size:18px;
-  color: #1C2836;
+.title-drawer {
+  font-family: 'Inter Semi Bold';
+  font-size: 18px;
+  color: #1c2836;
 }
 .drawer-item {
   display: flex;
@@ -42,7 +39,7 @@
   cursor: pointer;
   border-radius: 8px;
   margin-bottom: 3px;
- 
+
   transition: background-color 0.3s ease;
 }
 
@@ -57,7 +54,7 @@
   list-style: none;
   font-family: 'Manrope SemiBold';
   font-size: 14px;
-  color: #2D3B4C;
+  color: #2d3b4c;
 }
 
 .drawer-body {
@@ -77,37 +74,49 @@
 .table-style {
   width: '100%';
   margin-top: '5px';
-  margin-bottom: '5px'
+  margin-bottom: '5px';
 }
 
-.title-font-style{
-  font-family:"Manrope Bold";
+.title-font-style {
+  font-family: 'Manrope Bold';
   font-size: 20px;
 }
 
-
-
 //sidebarsummary
-  .summary-list-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 8px 0;
-    max-height: calc(100vh - 150px); 
-    overflow-y: auto;
-    padding-right: 10px;
-    padding-bottom: 5vw;
+.summary-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  padding-right: 10px;
+  padding-bottom: 5vw;
 
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background-color: #c1c1c1;
-      border-radius: 3px;
-    }
+  &::-webkit-scrollbar {
+    width: 6px;
   }
+  &::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 3px;
+  }
+}
+
+.content-with-sticky {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+}
 
 
-.content-with-sticky{display: flex;
-flex-direction: row;
-gap: 15px;}
+.drawer-style.dark {
+  .drawer-body {
+    background-color: var(--dark-black) !important;
+  }
+  .title-drawer {
+    background-color: var(--dark-black) !important;
+  }
+  .header-drawer{
+    background-color: var(--dark-black) !important;
+  }
+}

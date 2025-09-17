@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import AddEditIntake from '@/pages/encounter/encounter-component/intake-output-balance/AddEditIntake';
 import Translate from '@/components/Translate';
+import SectionContainer from '@/components/SectionsoContainer';
 
 interface IntakesTableProps {
   data: any[];
@@ -20,11 +21,10 @@ const IntakesTable: React.FC<IntakesTableProps> = ({ data, totalIntake = 0 }) =>
   const isSelectedIntake = (rowData: any) => (rowData?.key === intake?.key ? 'selected-row' : '');
 
   return (
-    <div className="container-form-intakes-table">
-      <div className="title-div">
-        <Text>Intakes</Text>
-      </div>
-      <Divider />
+    <SectionContainer 
+    title="Intakes"
+    content={
+      <>
       <Form fluid layout="inline" className="container-of-header-intake">
         <MyInput
           fieldName="date"
@@ -52,11 +52,13 @@ const IntakesTable: React.FC<IntakesTableProps> = ({ data, totalIntake = 0 }) =>
           { key: 'volume', title: <Translate>Volume</Translate> }
         ]}
         rowClassName={isSelectedIntake}
-        onRowClick={(rowData) => setIntake(rowData)}
+        onRowClick={rowData => setIntake(rowData)}
       />
       <label>Total Intake: {totalIntake}</label>
       <AddEditIntake open={popupAddIntakeOpen} setOpen={setPopupAddIntakeOpen} width={window.innerWidth} />
-    </div>
+      </>
+    }
+    />
   );
 };
 

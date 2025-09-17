@@ -18,8 +18,7 @@ const AdvancedSearchFilters = ({
   return (
     <>
       <div className="bt-right-group">
-        <MyButton appearance="ghost" onClick={() => setShowAdvanced(!showAdvanced)}>
-          <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+        <MyButton appearance="ghost" onClick={() => setShowAdvanced(!showAdvanced)} prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}>
           Advance
         </MyButton>
 
