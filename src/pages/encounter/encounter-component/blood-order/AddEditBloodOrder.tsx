@@ -10,45 +10,49 @@ import OrderDetails from './OrderDetails';
 import PatientInformation from './PatientInformation';
 import NotesAndHistory from './NotesAndHistory';
 const AddEditBloodOrder = ({ open, setOpen, bloodorder, setBloodOrder }) => {
-  
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
         return (
-            <Row gutter={15} className="d container-of-blood-card-questions">
-           <Form>
-           <Col md={12}>
-           <Row>
-            <SectionContainer
-              title={<Text>Patient Information</Text>}
-              content={<PatientInformation bloodorder={bloodorder} setBloodOrder={setBloodOrder} />}
-            />
-            </Row>
-            <Row>
-            <SectionContainer
-              title={<Text>Notes & History</Text>}
-              content={<NotesAndHistory bloodorder={bloodorder} setBloodOrder={setBloodOrder} />}
-            />
-            </Row>
-            </Col>
-             <Col md={12}>
-             <Row>
-              <SectionContainer
-              title={<Text>Order Details</Text>}
-              content={<OrderDetails bloodorder={bloodorder} setBloodOrder={setBloodOrder} />}
-            />
-            </Row>
-            <Row>
-            <SectionContainer
-              title={<Text>Blood Card Questions</Text>}
-              content={<BloodCardQuestions bloodorder={bloodorder} setBloodOrder={setBloodOrder}/>}
-            />
-            </Row>
-            </Col>  
-            </Form>        
-             </Row>
-      
+          <Row gutter={15} className="d container-of-blood-card-questions">
+            <Form>
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Text>Patient Information</Text>}
+                    content={
+                      <PatientInformation bloodorder={bloodorder} setBloodOrder={setBloodOrder} />
+                    }
+                  />
+                </Row>
+                <Row>
+                  <SectionContainer
+                    title={<Text>Notes & History</Text>}
+                    content={
+                      <NotesAndHistory bloodorder={bloodorder} setBloodOrder={setBloodOrder} />
+                    }
+                  />
+                </Row>
+              </Col>
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Text>Order Details</Text>}
+                    content={<OrderDetails bloodorder={bloodorder} setBloodOrder={setBloodOrder} />}
+                  />
+                </Row>
+                <Row>
+                  <SectionContainer
+                    title={<Text>Blood Card Questions</Text>}
+                    content={
+                      <BloodCardQuestions bloodorder={bloodorder} setBloodOrder={setBloodOrder} />
+                    }
+                  />
+                </Row>
+              </Col>
+            </Form>
+          </Row>
         );
     }
   };
@@ -62,7 +66,7 @@ const AddEditBloodOrder = ({ open, setOpen, bloodorder, setBloodOrder }) => {
       actionButtonLabel={bloodorder?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
       steps={[{ title: 'Blood Order Info', icon: <FontAwesomeIcon icon={faDroplet} /> }]}
-      size='80vw'
+      size="80vw"
     />
   );
 };
