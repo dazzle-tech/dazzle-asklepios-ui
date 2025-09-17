@@ -92,6 +92,9 @@ const PatientEMR = () => {
 
   const [activeCard, setActiveCard] = useState<string | null>(null);
 
+  const [activeSectionCard, setActiveSectionCard] = useState<string | null>(null);
+
+
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Patients EMR</h5>
@@ -232,265 +235,488 @@ return (
 
     <div className="emr-content">
 
-        {/* <div className='emr-main-coulmn-handle'> */}
           <div className='emr-main-row-handle'>
+
+
+
+
+
+
+<div className='animation-emr-card-patient-emr'>
+  <EMRCard
+    number={3}
+    footerText="History"
+    icon={faHouseChimneyMedical}
+    backgroundColor="var(--card-purple)"
+    footerBackgroundColor="#F3F3F3"
+    textColor="#fff"
+    width={170}
+    height={100}
+    onClick={() => setActiveSectionCard(activeSectionCard === 'history' ? null : 'history')}
+  />
+</div>
+
+
+            <div className='animation-emr-card-patient-emr'>
+            <EMRCard
+              number={3}
+              footerText="Visits"
+              icon={faBed}
+   backgroundColor="var(--card-blue)"
+              footerBackgroundColor="#F3F3F3"
+              textColor="#fff"
+              width={170}
+              height={100}
+  onClick={() => setActiveSectionCard(activeSectionCard === 'visits' ? null : 'visits')}
+            /></div>
+
+
+            <div className='animation-emr-card-patient-emr'>
+            <EMRCard
+              number={3}
+              footerText="Clinical"
+              icon={faTriangleExclamation}
+  backgroundColor="var(--card-green)"
+              footerBackgroundColor="#F3F3F3"
+              textColor="#fff"
+              width={170}
+              height={100}
+  onClick={() => setActiveSectionCard(activeSectionCard === 'clinical' ? null : 'clinical')}
+            /></div>
+
+
+<div className='animation-emr-card-patient-emr'>
+  <EMRCard
+    number={3}
+    footerText="Diagnostics"
+    icon={faPersonShelter}
+    backgroundColor="var(--card-light-blue)"
+    footerBackgroundColor="#F3F3F3"
+    textColor="#fff"
+    width={170}
+    height={100}
+    onClick={() => setActiveSectionCard(activeSectionCard === 'diagnostics' ? null : 'diagnostics')}
+  />
+</div>
+
+
+
+            <div className='animation-emr-card-patient-emr'>
+            <EMRCard
+              number={3}
+              footerText="Treatment"
+              icon={faUserNurse}
+  backgroundColor="var(--card-dark-blue)"
+              footerBackgroundColor="#F3F3F3"
+              textColor="#fff"
+              width={170}
+              height={100}
+  onClick={() => setActiveSectionCard(activeSectionCard === 'treatment' ? null : 'treatment')}
+            /></div>
+
+
+            <div className='animation-emr-card-patient-emr'>
+            <EMRCard
+              number={3}
+              footerText="Documentation"
+              icon={faUserInjured}
+  backgroundColor="var(--card-dark-pink)"
+              footerBackgroundColor="#F3F3F3"
+              textColor="#fff"
+              width={170}
+              height={100}
+  onClick={() => setActiveSectionCard(activeSectionCard === 'documents' ? null : 'documents')}
+            /></div>
+
+
+
+<div className='animation-emr-card-patient-emr'>
+  <EMRCard
+    number={3}
+    footerText="Services"
+    icon={faBedPulse}
+    backgroundColor="var(--card-gray)"
+    footerBackgroundColor="#F3F3F3"
+    textColor="#fff"
+    width={170}
+    height={100}
+    onClick={() =>
+      setActiveSectionCard(activeSectionCard === 'services' ? null : 'services')
+    }
+  />
+</div></div>
+
+          <div className='emr-main-row-handle'>
+
+  {activeSectionCard === 'history' && (
+      <div className='emr-main-row-handle'>
             <div className='animation-emr-card-patient-emr'>
             <EMRCard
               number={10}
               footerText="60s"
               icon={faBarsProgress}
-  backgroundColor="var(--card-pink)"
+   backgroundColor="var(--card-purple)"
               footerBackgroundColor="#F3F3F3"
               textColor="#fff"
-              width={100}
+              width={150}
               height={100}
   onClick={() => alert('Clicked')}
             />
             </div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={4}
-              footerText="P.M.H"
-              icon={faUserLock}
-  backgroundColor="var(--card-green)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'pastmedicalhistory' ? null : 'pastmedicalhistory')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-  number={4}
-  footerText="Appointments"
-  icon={faCalendar}
-  backgroundColor="var(--card-blue)"
-  footerBackgroundColor="#F3F3F3"
-  textColor="#fff"
-  width={100}
-  height={100}
-  onClick={() => setActiveCard(activeCard === 'appointments' ? null : 'appointments')}
-/>
-</div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Clinic Visits"
-              icon={faHouseChimneyMedical}
-  backgroundColor="var(--card-green)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'clinicvisits' ? null : 'clinicvisits')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Inpatient"
-              icon={faBed}
-  backgroundColor="var(--card-dark-green)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'inpatient' ? null : 'inpatient')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Emergency"
-              icon={faTriangleExclamation}
-  backgroundColor="var(--card-dark-pink)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'emergency' ? null : 'emergency')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Day Case"
-              icon={faPersonShelter}
-  backgroundColor="var(--card-green)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'daycase' ? null : 'daycase')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Nurse Assessments"
-              icon={faUserNurse}
-  backgroundColor="var(--card-purple)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'nurseassessments' ? null : 'nurseassessments')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Procedures"
-              icon={faUserInjured}
-  backgroundColor="var(--card-light-blue)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'procedures' ? null : 'procedures')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Operations"
-              icon={faBedPulse}
-  backgroundColor="var(--card-dark-pink)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'operations' ? null : 'operations')}
-            /></div>
+              <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={4}
+        footerText="P.M.H"
+        icon={faUserLock}
+        backgroundColor="var(--card-purple)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'pastmedicalhistory' ? null : 'pastmedicalhistory')
+        }
+      />
+    </div></div>)}
+
+{activeSectionCard === 'visits' && (
+  <div className='emr-main-row-handle'>
+
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={4}
+        footerText="Appointments"
+        icon={faCalendar}
+        backgroundColor="var(--card-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'appointments' ? null : 'appointments')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Clinic Visits"
+        icon={faHouseChimneyMedical}
+        backgroundColor="var(--card-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'clinicvisits' ? null : 'clinicvisits')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Inpatient"
+        icon={faBed}
+        backgroundColor="var(--card-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'inpatient' ? null : 'inpatient')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Emergency"
+        icon={faTriangleExclamation}
+        backgroundColor="var(--card-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'emergency' ? null : 'emergency')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Day Case"
+        icon={faPersonShelter}
+        backgroundColor="var(--card-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'daycase' ? null : 'daycase')
+        }
+      />
+    </div>
+  </div>
+)}
+
+{activeSectionCard === 'clinical' && (
+  <div className='emr-main-row-handle'>
             <div className='animation-emr-card-patient-emr'>
             <EMRCard
               number={3}
               footerText="Consultations"
               icon={faUserDoctor}
-  backgroundColor="var(--card-purple)"
+   backgroundColor="var(--card-green)"
               footerBackgroundColor="#F3F3F3"
               textColor="#fff"
-              width={100}
+              width={150}
               height={100}
   onClick={() => setActiveCard(activeCard === 'consultations' ? null : 'consultations')}
             /></div>
-          {/* </div> */}
-          {/* <div className='emr-main-row-handle'> */}
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={5}
-              footerText="Laboratory"
-              icon={faVial}
-  backgroundColor="var(--card-green)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'laboratory' ? null : 'laboratory')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Radiology"
-              icon={faXRay}
-  backgroundColor="var(--card-light-blue)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'radiology' ? null : 'radiology')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Pathology"
-              icon={faMicroscope}
-              backgroundColor="var(--card-purple)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'pathology' ? null : 'pathology')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={3}
-              footerText="Medications"
-              icon={faPills}
-  backgroundColor="var(--card-pink)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'medications' ? null : 'medications')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={4}
-              footerText="Vaccines"
-              icon={faSyringe}
-              backgroundColor="var(--card-green) "
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-              onClick={() => setActiveCard(activeCard === 'vaccines' ? null : 'vaccines')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={4}
-              footerText="Reports"
-              icon={faFileInvoice}
-              backgroundColor="var(--card-dark-pink)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'reports' ? null : 'reports')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={4}
-              footerText="Attachments"
-              icon={faPaperclip}
-              backgroundColor="var(--card-gray)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'attachments' ? null : 'attachments')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={4}
-              footerText="Applied Services"
-              icon={faConciergeBell}
-              backgroundColor="var(--card-blue)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'appliedservices' ? null : 'appliedservices')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={5}
-              footerText="Dental Charts"
-              icon={faTooth}
-              backgroundColor="var(--card-yellow)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'dentalcharts' ? null : 'dentalcharts')}
-            /></div>
-            <div className='animation-emr-card-patient-emr'>
-            <EMRCard
-              number={5}
-              footerText="Ledger Account"
-              icon={faMoneyBillTransfer}
-              backgroundColor="var(--card-dark-green)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
-              width={100}
-              height={100}
-  onClick={() => setActiveCard(activeCard === 'ledgeraccount' ? null : 'ledgeraccount')}
-            /></div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Nurse Assessments"
+        icon={faUserNurse}
+   backgroundColor="var(--card-green)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'nurseassessments' ? null : 'nurseassessments')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Procedures"
+        icon={faUserInjured}
+   backgroundColor="var(--card-green)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'procedures' ? null : 'procedures')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Operations"
+        icon={faBedPulse}
+   backgroundColor="var(--card-green)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'operations' ? null : 'operations')
+        }
+      />
+    </div>
+  </div>
+)}
+
+
+{activeSectionCard === 'diagnostics' && (
+  <div className='emr-main-row-handle'>
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={5}
+        footerText="Laboratory"
+        icon={faVial}
+        backgroundColor="var(--card-light-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'laboratory' ? null : 'laboratory')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Radiology"
+        icon={faXRay}
+        backgroundColor="var(--card-light-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'radiology' ? null : 'radiology')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Pathology"
+        icon={faMicroscope}
+        backgroundColor="var(--card-light-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'pathology' ? null : 'pathology')
+        }
+      />
+    </div>
+  </div>
+)}
+
+
+{activeSectionCard === 'treatment' && (
+  <div className='emr-main-row-handle'>
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={3}
+        footerText="Medications"
+        icon={faPills}
+        backgroundColor="var(--card-dark-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'medications' ? null : 'medications')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={4}
+        footerText="Vaccines"
+        icon={faSyringe}
+        backgroundColor="var(--card-dark-blue)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'vaccines' ? null : 'vaccines')
+        }
+      />
+    </div>
+  </div>
+)}
+
+
+
+
+
+{activeSectionCard === 'documents' && (
+  <div className='emr-main-row-handle'>
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={4}
+        footerText="Reports"
+        icon={faFileInvoice}
+        backgroundColor="var(--card-dark-pink)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'reports' ? null : 'reports')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={4}
+        footerText="Attachments"
+        icon={faPaperclip}
+        backgroundColor="var(--card-dark-pink)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'attachments' ? null : 'attachments')
+        }
+      />
+    </div>
+  </div>
+)}
+
+
+
+{activeSectionCard === 'services' && (
+  <div className='emr-main-row-handle'>
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={4}
+        footerText="Applied Services"
+        icon={faConciergeBell}
+        backgroundColor="var(--card-gray)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'appliedservices' ? null : 'appliedservices')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={5}
+        footerText="Dental Charts"
+        icon={faTooth}
+        backgroundColor="var(--card-gray)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'dentalcharts' ? null : 'dentalcharts')
+        }
+      />
+    </div>
+
+    <div className='animation-emr-card-patient-emr'>
+      <EMRCard
+        number={5}
+        footerText="Ledger Account"
+        icon={faMoneyBillTransfer}
+        backgroundColor="var(--card-gray)"
+        footerBackgroundColor="#F3F3F3"
+        textColor="#fff"
+        width={150}
+        height={100}
+        onClick={() =>
+          setActiveCard(activeCard === 'ledgeraccount' ? null : 'ledgeraccount')
+        }
+      />
+    </div>
+  </div>
+)}
+
+
           </div>
+
         {/* </div> */}
 
         {/* Active Tables */}
