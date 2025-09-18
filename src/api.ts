@@ -7,14 +7,18 @@ import config from '../app-config';
  */
 export const baseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080',
-  prepareHeaders: (headers: Headers) => {
+  prepareHeaders: (headers: Headers, { endpoint, type, getState }) => {
+  
+    headers.set('screenKey', getState().ui.screenKey);
     return headers;
   }
 });
 
 export const dummyBaseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080',
-  prepareHeaders: (headers: Headers) => {
+  prepareHeaders: (headers: Headers, { endpoint, type, getState }) => {
+    
+    headers.set('screenKey', getState().ui.screenKey);
     return headers;
   }
 });
