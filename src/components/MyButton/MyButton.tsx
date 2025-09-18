@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button } from 'rsuite';
 import './styles.less';
+import { Box } from '@mui/material';
+import { useSelector } from 'react-redux';
 type Appearance = 'primary' | 'default' | 'link' | 'subtle' | 'ghost';
 const MyButton = ({
   prefixIcon: Prefix = null,
@@ -12,23 +14,23 @@ const MyButton = ({
    loading = false,
   ...props
 }) => {
-
+ const mode = useSelector((state: any) => state.ui.mode);
   return (
     <Button
-      className={`bt ${size}`}
+      className={`bt ${size} ${mode}`}
       appearance={appearance}
       disabled={props.disabled}
       style={{
         color:
           appearance === 'ghost' || appearance === 'link' || appearance === 'subtle'
             ? props.color ?? 'var(--primary-blue)'
-            :  'white',
+            : 'white',
 
         width: props.width,
         borderRadius: props.radius,
         backgroundColor:
           appearance === 'ghost' || appearance === 'link' || appearance === 'subtle'
-            ? 'white'
+            ? 'transparent'
             : props.backgroundColor ?? 'var(--primary-blue)',
         border:
           appearance === 'ghost' ? `2px solid ${props.color ?? 'var(--primary-blue)'}` : 'none',
@@ -38,11 +40,11 @@ const MyButton = ({
       onClick={onClick}
        loading={loading}
     >
-      {Prefix && <Prefix style={{ marginRight: '8px' }} />}
+      {Prefix && <Prefix c style={{ marginRight: '8px', color: 'inherit' }} />}
 
       {children && children}
 
-      {Postfix && <Postfix style={{ marginLeft: '8px' }} />}
+      {Postfix && <Postfix style={{ marginLeft: '8px', color: 'inherit' }} />}
     </Button>
   );
 };
