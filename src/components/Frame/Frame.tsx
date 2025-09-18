@@ -9,6 +9,7 @@ import Header from '../Header';
 import NavLink from '../NavLink';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import Logo from '../../images/Logo_BLUE_New.svg';
+import DLogo from '../../images/Logo_Dark.svg';
 import { setScreenKey } from '@/utils/uiReducerActions';
 import MyInput from '../MyInput';
 import './styles.less';
@@ -105,7 +106,7 @@ const Frame = (props: FrameProps) => {
                   src={
                     authSlice.tenant && authSlice.tenant.tenantLogoPath
                       ? authSlice.tenant.tenantLogoPath
-                      : Logo
+                      : (mode === 'light' ? Logo : DLogo)
                   }
                 />
               )}
