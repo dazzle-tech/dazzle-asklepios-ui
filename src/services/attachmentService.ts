@@ -1,34 +1,50 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { onQueryStarted, baseQuery } from '@/api';
+// src/services/attachmentService.ts
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { BaseQuery, onQueryStarted } from '@/newApi'; // ⬅️ use the new base query + handler
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
 import { ApAttachment } from '@/types/model-types';
+
 export const attachmentService = createApi({
   reducerPath: 'attachmentApi',
-  baseQuery: baseQuery,
-  endpoints: builder => ({
-    upload: builder.mutation({
-      query: (data: { formData: FormData; type: string; refKey: string, details:string ,accessType:string ,createdBy:string ,patientKey:string}) => ({
+  baseQuery: BaseQuery, // ⬅️ switched
+  endpoints: (builder) => ({
+    upload: builder.mutation<
+      ApAttachment,
+      {
+        formData: FormData;
+        type: string;
+        refKey: string;
+        details: string;
+        accessType: string;
+        createdBy: string;
+        patientKey: string;
+      }
+    >({
+      query: (data) => ({
         url: `/attachment/upload`,
         method: 'POST',
         body: data.formData,
+        // custom headers expected by your backend:
         headers: {
           type: data.type,
           ref_key: data.refKey,
-          details:data.details,
-          access_type:data.accessType,
-          created_by:data.createdBy,
-          patient_key:data.patientKey
-        }
+          details: data.details,
+          access_type: data.accessType,
+          created_by: data.createdBy,
+          patient_key: data.patientKey,
+        },
       }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
+      onQueryStarted,
+      transformResponse: (response: any) => response.object,
     }),
-    fetchAttachmentsList: builder.query<ApAttachment[], { type: string; refKeys: string[] }>({
+
+    fetchAttachmentsList: builder.query<
+      ApAttachment[],
+      { type: string; refKeys: string[] }
+    >({
       query: (data) => ({
-        url: '/attachment/fetch-attachments-list', 
+        url: '/attachment/fetch-attachments-list',
         method: 'POST',
         headers: {
           type: data.type,
@@ -36,97 +52,99 @@ export const attachmentService = createApi({
         },
         body: data.refKeys,
       }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
+      onQueryStarted,
+      transformResponse: (response: any) => response.object,
       keepUnusedDataFor: 0,
     }),
-    fetchAttachment: builder.query({
-      query: (data: { type: string; refKey: string }) => ({
-        url: `/attachment/fetch-attachment`,
-        headers: {
-          type: data.type,
-          ref_key: data.refKey
-        }
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-      keepUnusedDataFor: 0
-    }),
-    FetchAttachmentLight: builder.query({
-      query: (data: { refKey: string }) => ({
+
+    fetchAttachment: builder.query<ApAttachment, { type: string; refKey: string }>(
+      {
+        query: (data) => ({
+          url: `/attachment/fetch-attachment`,
+          headers: {
+            type: data.type,
+            ref_key: data.refKey,
+          },
+        }),
+        onQueryStarted,
+        transformResponse: (response: any) => response.object,
+        keepUnusedDataFor: 0,
+      }
+    ),
+
+    fetchAttachmentLight: builder.query<ApAttachment, { refKey: string }>({
+      query: (data) => ({
         url: `/attachment/fetch-attachment-light`,
         headers: {
-          ref_key: data.refKey
-        }
+          ref_key: data.refKey,
+        },
       }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-      keepUnusedDataFor: 0
+      onQueryStarted,
+      transformResponse: (response: any) => response.object,
+      keepUnusedDataFor: 0,
     }),
-    fetchAttachmentByKey: builder.query({
-      query: (data: { key: string }) => ({
+
+    fetchAttachmentByKey: builder.query<ApAttachment, { key: string }>({
+      query: (data) => ({
         url: `/attachment/fetch-attachment-bykey`,
         headers: {
-          key: data.key
-        }
+          key: data.key,
+        },
       }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-      keepUnusedDataFor: 0
+      onQueryStarted,
+      transformResponse: (response: any) => response.object,
+      keepUnusedDataFor: 0,
     }),
-    deleteAttachment: builder.mutation({
-      query: (data: { key: string }) => ({
+
+    deleteAttachment: builder.mutation<boolean, { key: string }>({
+      query: (data) => ({
         url: `/attachment/delete`,
         method: 'DELETE',
         headers: {
-          key: data.key
-        }
+          key: data.key,
+        },
       }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }) ,
-    updateAttachmentDetails: builder.mutation({
-      query: (data: { key: string, attachmentDetails: string ,updatedBy:string ,accessType:string }) => ({
+      onQueryStarted,
+      transformResponse: (response: any) => response.object,
+    }),
+
+    updateAttachmentDetails: builder.mutation<
+      ApAttachment,
+      { key: string; attachmentDetails: string; updatedBy: string; accessType: string }
+    >({
+      query: (data) => ({
         url: `/attachment/update-Attachment-details`,
         method: 'PUT',
         headers: {
           key: data.key,
           attachmentDetails: data.attachmentDetails,
-          updatedBy:data.updatedBy,
-          accessType:data.accessType
-        }
+          updatedBy: data.updatedBy,
+          accessType: data.accessType,
+        },
       }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
+      onQueryStarted,
+      transformResponse: (response: any) => response.object,
     }),
-      getPatientAttachmentsList: builder.query({
-          query: (listRequest: ListRequest) => ({
-             url: `/attachment/patient-attachment-list?${fromListRequestToQueryParams(listRequest)}`
-          }),
-          onQueryStarted: onQueryStarted,
-          keepUnusedDataFor: 5
-        }),
-  })
+
+    getPatientAttachmentsList: builder.query<any, ListRequest>({
+      query: (listRequest) => ({
+        url: `/attachment/patient-attachment-list?${fromListRequestToQueryParams(
+          listRequest
+        )}`,
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5,
+    }),
+  }),
 });
 
-export const { useUploadMutation,
+export const {
+  useUploadMutation,
   useFetchAttachmentsListQuery,
-   useFetchAttachmentQuery,
-   useFetchAttachmentLightQuery,
-   useFetchAttachmentByKeyQuery,
-   useDeleteAttachmentMutation,
-   useUpdateAttachmentDetailsMutation,
-   useGetPatientAttachmentsListQuery
+  useFetchAttachmentQuery,
+  useFetchAttachmentLightQuery,
+  useFetchAttachmentByKeyQuery,
+  useDeleteAttachmentMutation,
+  useUpdateAttachmentDetailsMutation,
+  useGetPatientAttachmentsListQuery,
 } = attachmentService;
