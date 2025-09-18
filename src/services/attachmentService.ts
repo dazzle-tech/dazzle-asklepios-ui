@@ -57,20 +57,19 @@ export const attachmentService = createApi({
       keepUnusedDataFor: 0,
     }),
 
-    fetchAttachment: builder.query<ApAttachment, { type: string; refKey: string }>(
-      {
-        query: (data) => ({
-          url: `/attachment/fetch-attachment`,
-          headers: {
-            type: data.type,
-            reKey: data.refKey,
-          },
-        }),
-        onQueryStarted,
-        transformResponse: (response: any) => response.object,
-        keepUnusedDataFor: 0,
-      }
-    ),
+fetchAttachment: builder.query<ApAttachment, { type: string; refKey: string }>({
+  query: (data) => ({
+    url: `/attachment/fetch-attachment`,
+    headers: {
+      type: data.type,
+      refKey: data.refKey, 
+    },
+  }),
+  onQueryStarted,
+  transformResponse: (response: any) => response.object,
+  keepUnusedDataFor: 0,
+}),
+
 
     fetchAttachmentLight: builder.query<ApAttachment, { refKey: string }>({
       query: (data) => ({
