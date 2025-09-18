@@ -13,23 +13,32 @@ import { notify } from '@/utils/uiReducerActions';
 import { faArrowRotateRight, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
 import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
-import { Checkbox, IconButton, Table } from 'rsuite';
+import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import { formatDateWithoutSeconds } from '@/utils';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
-const Allergies = props => {
+
+interface AllergiesProps {
+  patient?: any;
+  encounter?: any;
+  edit?: boolean;
+  showTableActions?: boolean;
+  showTableButtons?: boolean;
+}
+
+const Allergies = (props: AllergiesProps) => {
   const location = useLocation();
 
-  const patient = props.patient || location.state?.patient;
-  const encounter = props.encounter || location.state?.encounter;
+  const patient = props.patient ?? location.state?.patient ?? {};
+  const encounter = props.encounter ?? location.state?.encounter ?? {};
   const edit = props.edit ?? location.state?.edit ?? false;
+  const { showTableActions = true, showTableButtons = true } = props;
+
   const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -39,11 +48,7 @@ const Allergies = props => {
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key
-      },
+      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
       {
         fieldName: 'status_lkey',
         operator: showCanceled ? 'notMatch' : 'match',
@@ -56,77 +61,51 @@ const Allergies = props => {
     data: allergiesListResponse,
     refetch: fetchallerges,
     isLoading
-  } = useGetAllergiesQuery({
-    ...listRequest
-  });
+  } = useGetAllergiesQuery({ ...listRequest });
+
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
-
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
-
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
 
-  const { data: allergensListToGetName } = useGetAllergensQuery({
-    ...initialListRequest
-  });
+  const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
   const [saveAllergies, saveAllergiesMutation] = useSaveAllergiesMutation();
   const dispatch = useAppDispatch();
 
-  const isSelected = rowData => {
-    if (rowData && allerges && rowData.key === allerges.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  const isSelected = (rowData: any) =>
+    rowData && allerges && rowData.key === allerges.key ? 'selected-row' : '';
 
   useEffect(() => {
     if (showPrev) {
-      const updatedFilters = [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '3196709905099521'
-        },
-        {
-          fieldName: 'visit_key',
-          operator: 'match',
-          value: encounter.key
-        }
-      ];
-      setListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
+      setListRequest(prev => ({
+        ...prev,
+        filters: [
+          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+          {
+            fieldName: 'status_lkey',
+            operator: showCanceled ? 'notMatch' : 'match',
+            value: '3196709905099521'
+          },
+          { fieldName: 'visit_key', operator: 'match', value: encounter.key }
+        ]
       }));
     } else {
-      const updatedFilters = [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '3196709905099521'
-        }
-      ];
-      setListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
+      setListRequest(prev => ({
+        ...prev,
+        filters: [
+          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+          {
+            fieldName: 'status_lkey',
+            operator: showCanceled ? 'notMatch' : 'match',
+            value: '3196709905099521'
+          }
+        ]
       }));
     }
-  }, [showPrev]);
-  //Effect when do save allergy , refetch allergies
-  useEffect(() => {
-    fetchallerges();
-  }, [saveAllergiesMutation]);
+  }, [showPrev, showCanceled]);
 
   useEffect(() => {
     fetchallerges();
-  }, [listRequest]);
+  }, [saveAllergiesMutation, listRequest]);
 
   useEffect(() => {
     if (showPrev) {
@@ -213,16 +192,10 @@ const Allergies = props => {
         deletedAt: Date.now()
       }).unwrap();
       dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-
-      fetchallerges()
-        .then(() => {})
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
-
-      CloseCancellationReasonModel();
+      fetchallerges().catch(error => console.error('Refetch failed:', error));
+      setOpenCancellationReasonModel(false);
     } catch {
-      dispatch(notify({ msg: ' Deleted Faild', sev: 'error' }));
+      dispatch(notify({ msg: 'Deleted Failed', sev: 'error' }));
     }
   };
 
@@ -236,45 +209,31 @@ const Allergies = props => {
       }).unwrap();
       dispatch(notify('Resolved Successfully'));
       setShowPrev(false);
-      await fetchallerges()
-        .then(() => {
-          console.log('Refetch complete');
-        })
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
-
-      CloseConfirmResolvedModel();
+      await fetchallerges().catch(error => console.error('Refetch failed:', error));
+      setOpenConfirmResolvedModel(false);
       setShowPrev(true);
       setAllerges({ ...newApVisitAllergies });
     } catch {
-      dispatch(notify('Resolved Fill'));
+      dispatch(notify('Resolved Fail'));
     }
   };
 
   const handleUndoResolved = async () => {
     setShowPrev(true);
     try {
-      await saveAllergies({
-        ...allerges,
-        statusLkey: '9766169155908512'
-      }).unwrap();
+      await saveAllergies({ ...allerges, statusLkey: '9766169155908512' }).unwrap();
       dispatch(notify('Undo Resolved Successfully'));
       setShowPrev(false);
-      await fetchallerges()
-        .then(() => {})
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
-
-      CloseConfirmUndoResolvedModel();
+      await fetchallerges().catch(error => console.error('Refetch failed:', error));
+      setOpenConfirmUndoResolvedModel(false);
       setShowPrev(true);
       setAllerges({ ...newApVisitAllergies });
     } catch {
-      dispatch(notify('Undo Resolved Fill'));
+      dispatch(notify('Undo Resolved Fail'));
     }
   };
-  const tableColumns = [
+
+  const tableColumns: any[] = [
     {
       key: 'allergyTypeLvalue',
       dataKey: 'allergyTypeLvalue',
@@ -289,7 +248,9 @@ const Allergies = props => {
       flexGrow: 2,
       render: (rowData: any) => {
         if (!allergensListToGetName?.object) return 'Loading...';
-        const found = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
+        const found = allergensListToGetName.object.find(
+          (item: any) => item.key === rowData.allergenKey
+        );
         return found?.allergenName || 'No Name';
       }
     },
@@ -363,24 +324,22 @@ const Allergies = props => {
       flexGrow: 1,
       render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale
     },
-    {
-      key: '#',
-      dataKey: '',
-      title: <Translate>Edit</Translate>,
+    showTableActions && {
+      key: 'actions',
+      dataKey: 'actions',
+      title: <Translate>Actions</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return (
-          <MdModeEdit
-            title="Edit"
-            size={24}
-            fill="var(--primary-gray)"
-            onClick={() => {
-              setOpenDetailsModal(true);
-              setOpenToAdd(false);
-            }}
-          />
-        );
-      }
+      render: (rowData: any) => (
+        <MdModeEdit
+          title="Edit"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setOpenDetailsModal(true);
+            setOpenToAdd(false);
+          }}
+        />
+      )
     },
     {
       key: 'notes',
@@ -399,186 +358,93 @@ const Allergies = props => {
       dataKey: 'cancellationReason',
       title: <Translate>Cancellation Reason</Translate>,
       expandable: true
-    },
-    {
-      key: '',
-      title: <Translate>Created At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.createdBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
-            </span>
-          </>
-        );
-      }
-    },
-    {
-      key: '',
-      title: <Translate>Updated At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.updatedBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
-            </span>
-          </>
-        );
-      }
-    },
-
-    {
-      key: '',
-      title: <Translate>Cancelled At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.deletedBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}
-            </span>
-          </>
-        );
-      }
-    },
-    {
-      key: '',
-      title: <Translate>Resolved At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        if (rowData.statusLkey != '9766169155908512') {
-          return (
-            <>
-              <span>{rowData.resolvedBy}</span>
-              <br />
-              <span className="date-table-style">
-                {rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}
-              </span>
-            </>
-          );
-        } else {
-          return null;
-        }
-      }
     }
-  ];
+  ].filter(Boolean);
+
   const pageIndex = listRequest.pageNumber - 1;
-
-  // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
   const totalCount = allergiesListResponse?.extraNumeric ?? 0;
 
-  // handler when the user clicks a new page number:
-  const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-
+  const handlePageChange = (_: unknown, newPage: number) =>
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) =>
+    setListRequest({ ...listRequest, pageSize: parseInt(event.target.value, 10), pageNumber: 1 });
 
-  // handler when the user chooses a different rows-per-page:
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
-  };
   return (
     <div>
-      {/* buttons actions section */}
+      <div className="bt-div-2">
+        <div className="bt-left-2">
+          {showTableButtons && (
+            <>
+              <MyButton
+                prefixIcon={() => <CloseOutlineIcon />}
+                onClick={() => setOpenCancellationReasonModel(true)}
+                disabled={!edit ? (allerges?.key == null ? true : false) : true}
+              >
+                Cancel
+              </MyButton>
+              <MyButton
+                disabled={!edit ? (allerges?.statusLkey != '9766169155908512' ? true : false) : true}
+                prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
+                onClick={() => setOpenConfirmResolvedModel(true)}
+              >
+                Resolved
+              </MyButton>
+              <MyButton
+                prefixIcon={() => <ReloadIcon />}
+                disabled={!edit ? (allerges?.statusLkey != '9766179572884232' ? true : false) : true}
+                onClick={() => setOpenConfirmUndoResolvedModel(true)}
+              >
+                Undo Resolved
+              </MyButton>
+              <Checkbox checked={!showPrev} onChange={() => setShowPrev(!showPrev)}>
+                Show Previous Warnings
+              </Checkbox>
+            </>
+          )}
+
+          {/* Show Cancelled always showed*/}
+          <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+            Show Cancelled
+          </Checkbox>
+        </div>
+
+        {showTableButtons && (
+          <div className="bt-right-2">
+            <MyButton
+              disabled={edit}
+              prefixIcon={() => <PlusIcon />}
+              onClick={() => {
+                handleClear();
+                setOpenDetailsModal(true);
+                setOpenToAdd(true);
+              }}
+            >
+              Add Warning
+            </MyButton>
+          </div>
+        )}
+      </div>
 
       <MyTable
         columns={tableColumns}
         data={allergiesListResponse?.object || []}
         onRowClick={rowData => {
           setAllerges(rowData);
-          setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
+          setEditing(rowData.statusLkey == '3196709905099521');
           setOpenToAdd(false);
         }}
         rowClassName={isSelected}
         sortColumn={listRequest.sortBy}
         sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          setListRequest({ ...listRequest, sortBy, sortType });
-        }}
+        onSortChange={(sortBy, sortType) => setListRequest({ ...listRequest, sortBy, sortType })}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={isLoading}
-        tableButtons={
-          <div className="bt-div-2">
-            <div className="bt-left-2">
-              <MyButton
-                prefixIcon={() => <CloseOutlineIcon />}
-                onClick={OpenCancellationReasonModel}
-                disabled={!edit ? (allerges?.key == null ? true : false) : true}
-              >
-                Cancel
-              </MyButton>
-              <MyButton
-                disabled={
-                  !edit ? (allerges?.statusLkey != '9766169155908512' ? true : false) : true
-                }
-                prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
-                onClick={OpenConfirmResolvedModel}
-              >
-                Resolved
-              </MyButton>
-              <MyButton
-                prefixIcon={() => <ReloadIcon />}
-                disabled={
-                  !edit ? (allerges?.statusLkey != '9766179572884232' ? true : false) : true
-                }
-                onClick={OpenConfirmUndoResolvedModel}
-              >
-                Undo Resolved
-              </MyButton>
-              <Checkbox
-                checked={!showCanceled}
-                onChange={() => {
-                  setShowCanceled(!showCanceled);
-                }}
-              >
-                Show Cancelled
-              </Checkbox>
-              <Checkbox
-                checked={!showPrev}
-                onChange={() => {
-                  setShowPrev(!showPrev);
-                }}
-              >
-                Show Previous Allergies
-              </Checkbox>
-            </div>
-            <div className="bt-right-2">
-              <MyButton
-                disabled={edit}
-                prefixIcon={() => <PlusIcon />}
-                onClick={() => {
-                  handleClear();
-                  setOpenDetailsModal(true);
-                  setOpenToAdd(true);
-                }}
-              >
-                Add Allergy
-              </MyButton>
-            </div>
-          </div>
-        }
       />
-
       {/* modal for cancell the allergy and write the reason */}
       <CancellationModal
         open={openCancellationReasonModel}
@@ -589,7 +455,7 @@ const Allergies = props => {
         fieldName="cancellationReason"
         fieldLabel={'Cancellation Reason'}
         title={'Cancellation'}
-      ></CancellationModal>
+      />
       {/* open modal to resolve allergy */}
       <MyModal
         open={openConfirmResolvedModel}
@@ -600,8 +466,7 @@ const Allergies = props => {
         bodyheight="30vh"
         steps={[{ title: 'Is this allergy resolved?', icon: <FontAwesomeIcon icon={faCheck} /> }]}
         content={<></>}
-      ></MyModal>
-
+      />
       <MyModal
         open={openConfirmUndoResolvedModel}
         setOpen={setOpenConfirmUndoResolvedModel}
@@ -613,8 +478,7 @@ const Allergies = props => {
           { title: 'Is this allergy active?', icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }
         ]}
         content={<></>}
-      ></MyModal>
-
+      />
       {/*modal for add details for allergy and save it */}
       <DetailsModal
         open={openDetailsModal}
@@ -631,4 +495,5 @@ const Allergies = props => {
     </div>
   );
 };
+
 export default Allergies;

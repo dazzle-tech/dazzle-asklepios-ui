@@ -25,10 +25,10 @@ import { useLocation } from 'react-router-dom';
 import DispenseModal from './DispenseModal';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
 import SearchIcon from '@rsuite/icons/Search';
-import AllergiesTable from './Allergies';
-import WarningiesTable from './Warning';
 import Result from '@/pages/encounter/encounter-component/diagnostics-result/Result';
 import { useAppSelector } from '@/hooks';
+import Allergies from '@/pages/encounter/encounter-pre-observations/AllergiesNurse';
+import Warning from '@/pages/encounter/encounter-pre-observations/warning';
 
 const InternalDrugOrder = () => {
   const dispatch = useAppDispatch();
@@ -701,11 +701,23 @@ const InternalDrugOrder = () => {
                 </div>
               </Tabs.Tab>
               <Tabs.Tab eventKey="2" title="Allergies">
-                <AllergiesTable patient={propsData?.patient || {}} />
+                <Allergies
+                  patient={propsData?.patient}
+                  encounter={propsData?.encounter}
+                  edit={true}
+                  showTableActions={false}
+                  showTableButtons={false}
+                />
               </Tabs.Tab>
 
               <Tabs.Tab eventKey="3" title="Medical Warnings">
-                <WarningiesTable patient={propsData?.patient || {}} />
+                <Warning
+                  patient={propsData?.patient}
+                  encounter={propsData?.encounter}
+                  edit={true}
+                  showTableActions={false}
+                  showTableButtons={false}
+                />
               </Tabs.Tab>
               <Tabs.Tab eventKey="4" title="Diagnostics Results">
                 <Result patient={propsData?.patient || {}} user={authSlice.user.key} />

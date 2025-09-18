@@ -7,7 +7,6 @@ import { useAppDispatch } from '@/hooks';
 import { useGetWarningsQuery, useSaveWarningsMutation } from '@/services/observationService';
 import { newApVisitWarning } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { formatDateWithoutSeconds } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faArrowRotateRight, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -20,30 +19,35 @@ import { useLocation } from 'react-router-dom';
 import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-const Warning = props => {
-  const location = useLocation();
 
-  const patient = props.patient || location.state?.patient;
-  const encounter = props.encounter || location.state?.encounter;
+interface WarningProps {
+  patient?: any;
+  encounter?: any;
+  edit?: boolean;
+  showTableActions?: boolean;
+  showTableButtons?: boolean;
+}
+
+const Warning = (props: WarningProps) => {
+  const location = useLocation();
+  const patient = props.patient ?? location.state?.patient ?? {};
+  const encounter = props.encounter ?? location.state?.encounter ?? {};
   const edit = props.edit ?? location.state?.edit ?? false;
+  const { showTableActions = true, showTableButtons = true } = props;
 
   const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
-  const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
+  const [openDetailsModal, setOpenDetailsModal] = useState(false);
+  const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
-  const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [showCanceled, setShowCanceled] = useState(true);
-  const [editing, setEditing] = useState(false);
   const [showPrev, setShowPrev] = useState(true);
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key
-      },
+      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
       {
         fieldName: 'status_lkey',
         operator: showCanceled ? 'notMatch' : 'match',
@@ -54,114 +58,50 @@ const Warning = props => {
 
   const {
     data: warningsListResponse,
-    refetch: fetchwarnings,
+    refetch: fetchWarnings,
     isLoading
   } = useGetWarningsQuery({
     ...listRequest
   });
-  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+
+  const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
   const dispatch = useAppDispatch();
 
-  const isSelected = rowData => {
-    if (rowData && warning && rowData.key === warning.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  const isSelected = (rowData: any) =>
+    rowData && warning && rowData.key === warning.key ? 'selected-row' : '';
 
   useEffect(() => {
     if (showPrev) {
-      const updatedFilters = [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '3196709905099521'
-        },
-        {
-          fieldName: 'visit_key',
-          operator: 'match',
-          value: encounter.key
-        }
-      ];
-      setListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
+      setListRequest(prev => ({
+        ...prev,
+        filters: [
+          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+          {
+            fieldName: 'status_lkey',
+            operator: showCanceled ? 'notMatch' : 'match',
+            value: '3196709905099521'
+          },
+          { fieldName: 'visit_key', operator: 'match', value: encounter.key }
+        ]
       }));
     } else {
-      const updatedFilters = [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '3196709905099521'
-        }
-      ];
-      setListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
+      setListRequest(prev => ({
+        ...prev,
+        filters: [
+          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+          {
+            fieldName: 'status_lkey',
+            operator: showCanceled ? 'notMatch' : 'match',
+            value: '3196709905099521'
+          }
+        ]
       }));
     }
-    fetchwarnings();
-  }, [showPrev]);
+  }, [showPrev, showCanceled]);
 
   useEffect(() => {
-    if (showPrev) {
-      const updatedFilters = [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '3196709905099521'
-        },
-        {
-          fieldName: 'visit_key',
-          operator: 'match',
-          value: encounter.key
-        }
-      ];
-      setListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
-      }));
-    } else {
-      const updatedFilters = [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient.key
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '3196709905099521'
-        }
-      ];
-      setListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
-      }));
-    }
-  }, [showCanceled]);
-
-  useEffect(() => {
-    fetchwarnings();
-  }, [saveWarningMutation]);
-
-  useEffect(() => {
-    fetchwarnings();
-  }, [listRequest]);
+    fetchWarnings();
+  }, [saveWarningMutation, listRequest]);
 
   const handleClear = () => {
     setWarning({
@@ -170,28 +110,8 @@ const Warning = props => {
       severityLkey: null,
       warningTypeLkey: null
     });
-    setSelectedFirstDate(null);
-    setEditDate({ editdate: true });
-    seteditSourceof({ editSource: true });
   };
-  const OpenCancellationReasonModel = () => {
-    setOpenCancellationReasonModel(true);
-  };
-  const CloseCancellationReasonModel = () => {
-    setOpenCancellationReasonModel(false);
-  };
-  const OpenConfirmUndoResolvedModel = () => {
-    setOpenConfirmUndoResolvedModel(true);
-  };
-  const CloseConfirmUndoResolvedModel = () => {
-    setOpenConfirmUndoResolvedModel(false);
-  };
-  const OpenConfirmResolvedModel = () => {
-    setOpenConfirmResolvedModel(true);
-  };
-  const CloseConfirmResolvedModel = () => {
-    setOpenConfirmResolvedModel(false);
-  };
+
   const handleCancle = async () => {
     try {
       await saveWarning({
@@ -200,19 +120,14 @@ const Warning = props => {
         isValid: false,
         deletedAt: Date.now()
       }).unwrap();
-      dispatch(notify({ msg: ' Deleted successfully', sev: 'success' }));
-
-      await fetchwarnings()
-        .then(() => {
-          console.log('Refetch complete');
-        })
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
-
-      CloseCancellationReasonModel();
-    } catch {}
+      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
+      await fetchWarnings();
+      setOpenCancellationReasonModel(false);
+    } catch {
+      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
+    }
   };
+
   const handleResolved = async () => {
     try {
       await saveWarning({
@@ -220,323 +135,202 @@ const Warning = props => {
         statusLkey: '9766179572884232',
         resolvedAt: Date.now()
       }).unwrap();
-      dispatch(notify('Resolved successfully'));
-      setShowPrev(!showPrev);
-      await fetchwarnings()
-        .then(() => {
-          console.log('Refetch complete');
-        })
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
-
-      CloseConfirmResolvedModel();
+      dispatch(notify('Resolved Successfully'));
+      setShowPrev(false);
+      await fetchWarnings();
+      setOpenConfirmResolvedModel(false);
+      setShowPrev(true);
+      setWarning({ ...newApVisitWarning });
     } catch {
-      dispatch(notify('Resolved Fill'));
+      dispatch(notify('Resolved Failed'));
     }
   };
+
   const handleUndoResolved = async () => {
     try {
-      await saveWarning({
-        ...warning,
-        statusLkey: '9766169155908512'
-      }).unwrap();
-      dispatch(notify('Undo Resolved successfully'));
-      setShowPrev(!showPrev);
-      await fetchwarnings()
-        .then(() => {})
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
-
-      CloseConfirmUndoResolvedModel();
+      await saveWarning({ ...warning, statusLkey: '9766169155908512' }).unwrap();
+      dispatch(notify('Undo Resolved Successfully'));
+      setShowPrev(false);
+      await fetchWarnings();
+      setOpenConfirmUndoResolvedModel(false);
+      setShowPrev(true);
+      setWarning({ ...newApVisitWarning });
     } catch {
-      dispatch(notify('Undo Resolved Fill'));
+      dispatch(notify('Undo Resolved Failed'));
     }
   };
 
-  const tableColumns = [
+  const tableColumns: any[] = [
     {
-      key: 'warningTypeLkey',
-      dataKey: 'warningTypeLkey',
+      key: 'warningTypeLvalue',
+      dataKey: 'warningTypeLvalue',
       title: <Translate>Warning Type</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.warningTypeLvalue?.lovDisplayVale;
-      }
+      flexGrow: 2,
+      render: (rowData: any) => rowData.warningTypeLvalue?.lovDisplayVale
     },
     {
-      key: 'severityLkey',
-      dataKey: 'severityLkey',
+      key: 'severityLvalue',
+      dataKey: 'severityLvalue',
       title: <Translate>Severity</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.severityLvalue?.lovDisplayVale;
-      }
+      flexGrow: 2,
+      render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
     },
     {
       key: 'firstTimeRecorded',
       dataKey: 'firstTimeRecorded',
       title: <Translate>First Time Recorded</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.firstTimeRecorded
-          ? new Date(rowData.firstTimeRecorded).toISOString().split('T')[0]
-          : 'Undefined';
-      }
+      flexGrow: 2,
+      render: (rowData: any) =>
+        rowData.firstTimeRecorded
+          ? new Date(rowData.firstTimeRecorded).toLocaleDateString('en-GB')
+          : 'Undefined'
     },
     {
-      key: 'sourceOfInformationLkey',
-      dataKey: 'sourceOfInformationLkey',
+      key: 'sourceOfInformationLvalue',
+      dataKey: 'sourceOfInformationLvalue',
       title: <Translate>Source of information</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient';
-      }
+      flexGrow: 2,
+      render: (rowData: any) => rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient'
     },
     {
       key: 'warning',
       dataKey: 'warning',
       title: <Translate>Warning</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.warning;
-      }
+      flexGrow: 2,
+      render: (rowData: any) => rowData.warning
     },
     {
       key: 'actionTake',
       dataKey: 'actionTake',
       title: <Translate>Action Taken</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => rowData.actionTake
+    },
+    {
+      key: 'statusLvalue',
+      dataKey: 'statusLvalue',
+      title: <Translate>Status</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.actionTake;
-      }
+      render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale
+    },
+    showTableActions && {
+      key: 'actions',
+      dataKey: 'actions',
+      title: <Translate>Actions</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => (
+        <MdModeEdit
+          title="Edit"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setOpenDetailsModal(true);
+            setOpenToAdd(false);
+          }}
+        />
+      )
     },
     {
       key: 'notes',
       dataKey: 'notes',
       title: <Translate>Notes</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.notes;
-      }
-    },
-    {
-      key: 'statusLkey',
-      dataKey: 'statusLkey',
-      title: <Translate>Status</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.statusLvalue?.lovDisplayVale;
-      }
-    },
-    {
-      key: '#',
-      dataKey: '',
-      title: <Translate>Edit</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return (
-          <MdModeEdit
-            title="Edit"
-            size={24}
-            fill="var(--primary-gray)"
-            onClick={() => setOpenDetailsModal(true)}
-          />
-        );
-      }
-    },
-
-    {
-      key: '',
-      title: <Translate>Created At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.createdBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
-            </span>
-          </>
-        );
-      }
-    },
-    {
-      key: '',
-      title: <Translate>Updated At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.updatedBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
-            </span>
-          </>
-        );
-      }
-    },
-
-    {
-      key: '',
-      title: <Translate>Cancelled At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.deletedBy}</span>
-            <br />
-            <span className="date-table-style">
-              {rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}
-            </span>
-          </>
-        );
-      }
-    },
-    {
-      key: '',
-      title: <Translate>Resolved At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        if (rowData.statusLkey != '9766169155908512') {
-          return (
-            <>
-              <span>{rowData.resolvedBy}</span>
-              <br />
-              <span className="date-table-style">
-                {rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}
-              </span>
-            </>
-          );
-        } else {
-          return null;
-        }
-      }
-    },
-    {
-      key: 'cancellationReason',
-      dataKey: 'cancellationReason',
-      title: <Translate>Cancelliton Reason</Translate>,
-      flexGrow: 1,
       expandable: true
     }
-  ];
+  ].filter(Boolean);
+
   const pageIndex = listRequest.pageNumber - 1;
-
-  // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
   const totalCount = warningsListResponse?.extraNumeric ?? 0;
 
-  // handler when the user clicks a new page number:
-  const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-    setManualSearchTriggered(true);
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-
-  // handler when the user chooses a different rows-per-page:
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setManualSearchTriggered(true);
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
-  };
   return (
     <div>
-      <MyTable
-        columns={tableColumns}
-        data={warningsListResponse?.object || []}
-        onRowClick={rowData => {
-          setWarning(rowData);
-          setEditing(rowData.statusLvalue.valueCode == 'ARS_CANCEL' ? true : false);
-        }}
-        rowClassName={isSelected}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          setListRequest({ ...listRequest, sortBy, sortType });
-        }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        loading={isLoading}
-        tableButtons={
-          <div className="bt-div-2">
-            <div className="bt-left-2">
-              {' '}
+      <div className="bt-div-2">
+        <div className="bt-left-2">
+          {showTableButtons && (
+            <>
               <MyButton
-                disabled={
-                  !edit
-                    ? warning.key
-                      ? warning?.statusLvalue.valueCode == 'ARS_CANCEL'
-                        ? true
-                        : false
-                      : true
-                    : true
-                }
                 prefixIcon={() => <CloseOutlineIcon />}
-                onClick={OpenCancellationReasonModel}
+                onClick={() => setOpenCancellationReasonModel(true)}
+                disabled={!edit ? (warning?.key == null ? true : false) : true}
               >
                 Cancel
               </MyButton>
               <MyButton
                 disabled={!edit ? (warning?.statusLkey != '9766169155908512' ? true : false) : true}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
-                onClick={OpenConfirmResolvedModel}
+                onClick={() => setOpenConfirmResolvedModel(true)}
               >
                 Resolved
               </MyButton>
               <MyButton
                 prefixIcon={() => <ReloadIcon />}
                 disabled={!edit ? (warning?.statusLkey != '9766179572884232' ? true : false) : true}
-                onClick={OpenConfirmUndoResolvedModel}
+                onClick={() => setOpenConfirmUndoResolvedModel(true)}
               >
                 Undo Resolved
               </MyButton>
-              <Checkbox
-                checked={!showCanceled}
-                onChange={() => {
-                  setShowCanceled(!showCanceled);
-                }}
-              >
-                Show Cancelled
-              </Checkbox>
-              <Checkbox
-                checked={!showPrev}
-                onChange={() => {
-                  setShowPrev(!showPrev);
-                }}
-              >
+              <Checkbox checked={!showPrev} onChange={() => setShowPrev(!showPrev)}>
                 Show Previous Warnings
               </Checkbox>
-            </div>
+            </>
+          )}
+          {/* Show Cancelled always showed*/}
+          <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+            Show Cancelled
+          </Checkbox>
+        </div>
 
-            <div className="bt-right-2">
-              <MyButton
-                prefixIcon={() => <PlusIcon />}
-                disabled={edit}
-                onClick={() => {
-                  setOpenDetailsModal(true);
-                  handleClear();
-                }}
-              >
-                Add Warning
-              </MyButton>
-            </div>
+        {showTableButtons && (
+          <div className="bt-right-2">
+            <MyButton
+              disabled={edit}
+              prefixIcon={() => <PlusIcon />}
+              onClick={() => {
+                handleClear();
+                setOpenDetailsModal(true);
+                setOpenToAdd(true);
+              }}
+            >
+              Add Warning
+            </MyButton>
           </div>
+        )}
+      </div>
+
+      <MyTable
+        columns={tableColumns}
+        data={warningsListResponse?.object || []}
+        onRowClick={rowData => {
+          setWarning(rowData);
+          setOpenToAdd(false);
+        }}
+        rowClassName={isSelected}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => setListRequest({ ...listRequest, sortBy, sortType })}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={(_, newPage) => setListRequest({ ...listRequest, pageNumber: newPage + 1 })}
+        onRowsPerPageChange={e =>
+          setListRequest({ ...listRequest, pageSize: parseInt(e.target.value, 10), pageNumber: 1 })
         }
+        loading={isLoading}
       />
 
-      {/* modal for esolve warning */}
+      {/* Cancel modal */}
+      <CancellationModal
+        open={openCancellationReasonModel}
+        setOpen={setOpenCancellationReasonModel}
+        object={warning}
+        setObject={setWarning}
+        handleCancle={handleCancle}
+        fieldName="cancellationReason"
+        fieldLabel={'Cancellation Reason'}
+        title={'Cancellation'}
+      />
+
+      {/* Resolve modal */}
       <MyModal
         open={openConfirmResolvedModel}
         setOpen={setOpenConfirmResolvedModel}
@@ -544,10 +338,11 @@ const Warning = props => {
         actionButtonLabel="Yes"
         title="Resolve"
         bodyheight="30vh"
-        steps={[{ title: 'Is this Warning resolved?', icon: <FontAwesomeIcon icon={faCheck} /> }]}
+        steps={[{ title: 'Is this warning resolved?', icon: <FontAwesomeIcon icon={faCheck} /> }]}
         content={<></>}
-      ></MyModal>
-      {/* modal for undo resolve for warning */}
+      />
+
+      {/* Undo resolve modal */}
       <MyModal
         open={openConfirmUndoResolvedModel}
         setOpen={setOpenConfirmUndoResolvedModel}
@@ -556,35 +351,26 @@ const Warning = props => {
         title="Undo Resolve"
         bodyheight="30vh"
         steps={[
-          { title: 'Is this Warning active?', icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }
+          { title: 'Is this warning active?', icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }
         ]}
         content={<></>}
-      ></MyModal>
+      />
 
-      {/* moodal for cancel warning and write reason */}
-      <CancellationModal
-        open={openCancellationReasonModel}
-        setOpen={setOpenCancellationReasonModel}
-        object={warning}
-        setObject={setWarning}
-        handleCancle={handleCancle}
-        fieldName="cancellationReason"
-        title={'Cancellation'}
-        fieldLabel={'Cancellation Reason'}
-      ></CancellationModal>
-
+      {/* Details modal */}
       <DetailsModal
-        patient={patient}
         open={openDetailsModal}
         setOpen={setOpenDetailsModal}
         warning={warning}
         setWarning={setWarning}
-        encounter={encounter}
-        editing={editing}
-        fetchwarnings={fetchwarnings}
+        handleClear={handleClear}
         edit={edit}
+        patient={patient}
+        encounter={encounter}
+        fetchWarnings={fetchWarnings}
+        openToAdd={openToAdd}
       />
     </div>
   );
 };
+
 export default Warning;
