@@ -25,6 +25,8 @@ import { useLocation } from 'react-router-dom';
 import DispenseModal from './DispenseModal';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
 import SearchIcon from '@rsuite/icons/Search';
+import AllergiesTable from './Allergies';
+import WarningiesTable from './Warning';
 import Result from '@/pages/encounter/encounter-component/diagnostics-result/Result';
 import { useAppSelector } from '@/hooks';
 import Allergies from '@/pages/encounter/encounter-pre-observations/AllergiesNurse';
