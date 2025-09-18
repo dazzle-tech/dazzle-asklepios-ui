@@ -45,19 +45,6 @@ const MyButton = ({
       {children && children}
 
       {Postfix && <Postfix style={{ marginLeft: '8px', color: 'inherit' }} />}
-       {/* {Prefix &&
-      <Box sx={{color: 'inherit'}}>  
-       <Prefix style={{ marginRight: '8px', color: 'red' }} />
-        </Box>
-       }
-
-      {children && children}
-
-      {Postfix &&
-      <Box sx={{color: 'inherit'}}> 
-       <Postfix style={{ marginLeft: '8px', color: 'red' }} />
-         </Box>
-       } */}
     </Button>
   );
 };
