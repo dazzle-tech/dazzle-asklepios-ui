@@ -28,11 +28,11 @@ export const attachmentService = createApi({
         // custom headers expected by your backend:
         headers: {
           type: data.type,
-          ref_key: data.refKey,
+          refKey: data.refKey,
           details: data.details,
-          access_type: data.accessType,
-          created_by: data.createdBy,
-          patient_key: data.patientKey,
+          accessType: data.accessType,
+          createdBy: data.createdBy,
+          patientKey: data.patientKey,
         },
       }),
       onQueryStarted,
@@ -63,7 +63,7 @@ export const attachmentService = createApi({
           url: `/attachment/fetch-attachment`,
           headers: {
             type: data.type,
-            ref_key: data.refKey,
+            reKey: data.refKey,
           },
         }),
         onQueryStarted,
@@ -76,7 +76,7 @@ export const attachmentService = createApi({
       query: (data) => ({
         url: `/attachment/fetch-attachment-light`,
         headers: {
-          ref_key: data.refKey,
+          refKey: data.refKey,
         },
       }),
       onQueryStarted,
@@ -111,7 +111,7 @@ export const attachmentService = createApi({
     updateAttachmentDetails: builder.mutation<
       ApAttachment,
       { key: string; attachmentDetails: string; updatedBy: string; accessType: string }
-    >({
+>({
       query: (data) => ({
         url: `/attachment/update-Attachment-details`,
         method: 'PUT',
