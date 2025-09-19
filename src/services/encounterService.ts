@@ -570,7 +570,7 @@ export const encounterService = createApi({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/inpatient-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
-          department_key: department_key
+          departmentKey: department_key
         }
       }),
       onQueryStarted: onQueryStarted,
