@@ -167,16 +167,12 @@ const handleSave = async () => {
   try {
     if (user.id !== undefined) {
     
-      await updateUser({ ...user ,
-        genderLkey:user.genderLkey?parseInt(user.genderLkey.toString(), 10):null
-      ,jobRoleLkey: user.jobRoleLkey != null ? parseInt(user.jobRoleLkey.toString(), 10) : null}).unwrap();
+      await updateUser({ ...user } ).unwrap();
       dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
       refetch();
     } else {
    
-      await saveUser({ ...user ,
-        genderLkey:user.genderLkey?parseInt(user.genderLkey.toString(), 10):null
-      ,jobRoleLkey: user.jobRoleLkey != null ? parseInt(user.jobRoleLkey.toString(), 10) : null}).unwrap();
+      await saveUser({ ...user}).unwrap();
       dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
       refetch();
     }
