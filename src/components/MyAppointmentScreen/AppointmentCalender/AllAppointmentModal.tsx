@@ -14,17 +14,15 @@ const AllAppointmentModal = () => {
     <>
       <AppointmentCalender />
 
-      <div className="icons-2" style={{ textAlign: 'center', margin: '20px 0' }}>
+      <div className="icons-2">
         <FontAwesomeIcon
           icon={faIdCard}
           className={`fa-icon ${viewMode === 'card' ? 'active' : ''}`}
-          style={{ cursor: 'pointer', fontSize: 20, marginRight: 10 }}
           onClick={() => setViewMode('card')}
         />
         <FontAwesomeIcon
           icon={faTable}
           className={`fa-icon ${viewMode === 'table' ? 'active' : ''}`}
-          style={{ cursor: 'pointer', fontSize: 20 }}
           onClick={() => setViewMode('table')}
         />
       </div>

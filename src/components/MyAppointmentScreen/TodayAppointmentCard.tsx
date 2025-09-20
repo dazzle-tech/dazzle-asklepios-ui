@@ -1,35 +1,26 @@
 import React from 'react';
 import './MyAppointmentScreen.less';
+import MyCard from '@/components/MyCard/MyCard';
 
 const sampleMiniAppointments = [
-  {
-    time: '09:00 AM',
-    duration: '30 min',
-    patientName: 'Sarah Johnson',
-    visitType: 'Consultation'
-  },
-  {
-    time: '10:30 AM',
-    duration: '45 min',
-    patientName: 'Michael Smith',
-    visitType: 'Follow-up'
-  }
+  { time: '09:00 AM', duration: '30 min', patientName: 'Sarah Johnson', visitType: 'Consultation' },
+  { time: '10:30 AM', duration: '45 min', patientName: 'Michael Smith', visitType: 'Follow-up' }
 ];
 
 const TodayAppointmentCard = () => {
   return (
     <div className="mini-appointments-list">
       {sampleMiniAppointments.map((appt, index) => (
-        <div className="mini-appointment-card" key={index}>
-          <div className="mini-appointment-time">
-            <strong>{appt.time}</strong>
-            <span>{appt.duration}</span>
-          </div>
-          <div className="mini-appointment-info">
-            <h4>{appt.patientName}</h4>
-            <p>{appt.visitType}</p>
-          </div>
-        </div>
+        <MyCard
+          key={index}
+          cardType="todayAppointment"
+          time={appt.time}
+          duration={appt.duration}
+          patientName={appt.patientName}
+          visitType={appt.visitType}
+          width="100%"
+          margin="0 0 15px 0"
+        />
       ))}
     </div>
   );
