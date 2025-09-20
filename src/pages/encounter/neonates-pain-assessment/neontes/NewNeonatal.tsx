@@ -22,117 +22,105 @@ const NewNeonatal = ({ open, setOpen, patient, encounter, edit, refetch }) => {
 
   // Modal Content
   const content = (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Add Neonatal Record"
-      actionButtonLabel="Save"
-      position="right"
-      size="27vw"
-      actionButtonFunction={handleAddNeonatal}
-      content={() => (
-        <Form fluid>
-          <div className="flex-row-5 ">
-            <MyInput
-              width={120}
-              fieldName="type"
-              fieldType="select"
-              record={record}
-              setRecord={setRecord}
-              selectData={[
-                { label: 'Acute', value: 'Acute' },
-                { label: 'Chronic', value: 'Chronic' }
-              ]}
-              selectDataLabel="label"
-              selectDataValue="value"
-            />
-            <MyInput
-              width={120}
-              fieldName="cryingIrritability"
-              fieldType="select"
-              record={record}
-              setRecord={setRecord}
-              selectData={[
-                { label: 'None', value: 'None' },
-                { label: 'Irritable', value: 'Irritable' }
-              ]}
-              selectDataLabel="label"
-              selectDataValue="value"
-            />
-            <MyInput
-              width={120}
-              fieldName="behaviorState"
-              fieldType="select"
-              record={record}
-              setRecord={setRecord}
-              selectData={[
-                { label: 'Calm', value: 'Calm' },
-                { label: 'Disturbed', value: 'Disturbed' }
-              ]}
-              selectDataLabel="label"
-              selectDataValue="value"
-            />
-          </div>
-          <div className="flex-row-5">
-            <MyInput
-              width={120}
-              fieldName="facialExpression"
-              fieldType="select"
-              record={record}
-              setRecord={setRecord}
-              selectData={[
-                { label: 'Relaxed', value: 'Relaxed' },
-                { label: 'Tense', value: 'Tense' }
-              ]}
-              selectDataLabel="label"
-              selectDataValue="value"
-            />
-            <MyInput
-              width={120}
-              fieldName="extremities"
-              fieldType="select"
-              record={record}
-              setRecord={setRecord}
-              selectData={[
-                { label: 'Normal', value: 'Normal' },
-                { label: 'Rigid', value: 'Rigid' }
-              ]}
-              selectDataLabel="label"
-              selectDataValue="value"
-            />
-            <MyInput
-              width={120}
-              fieldName="vitalSigns"
-              fieldType="select"
-              record={record}
-              setRecord={setRecord}
-              selectData={[
-                { label: 'Stable', value: 'Stable' },
-                { label: 'Unstable', value: 'Unstable' }
-              ]}
-              selectDataLabel="label"
-              selectDataValue="value"
-            />
-          </div>
-          <MyInput
-            width={'100%'}
-            fieldName="totalScore"
-            fieldType="number"
-            record={record}
-            setRecord={setRecord}
-            disabled={true}
-          />
-        </Form>
-      )}
-      steps={[{ title: 'Add Neonatal Record', icon: <FontAwesomeIcon icon={faBaby} /> }]}
-    />
+    <Form fluid>
+      <div className="flex-row-5-1 ">
+        <MyInput
+          width={120}
+          fieldName="type"
+          fieldType="select"
+          record={record}
+          setRecord={setRecord}
+          selectData={[
+            { label: 'Acute', value: 'Acute' },
+            { label: 'Chronic', value: 'Chronic' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+        />
+        <MyInput
+          width={120}
+          fieldName="cryingIrritability"
+          fieldType="select"
+          record={record}
+          setRecord={setRecord}
+          selectData={[
+            { label: 'None', value: 'None' },
+            { label: 'Irritable', value: 'Irritable' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+        />
+        <MyInput
+          width={120}
+          fieldName="behaviorState"
+          fieldType="select"
+          record={record}
+          setRecord={setRecord}
+          selectData={[
+            { label: 'Calm', value: 'Calm' },
+            { label: 'Disturbed', value: 'Disturbed' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+        />
+      </div>
+      <div className="flex-row-5-1 ">
+        <MyInput
+          width={120}
+          fieldName="facialExpression"
+          fieldType="select"
+          record={record}
+          setRecord={setRecord}
+          selectData={[
+            { label: 'Relaxed', value: 'Relaxed' },
+            { label: 'Tense', value: 'Tense' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+        />
+        <MyInput
+          width={120}
+          fieldName="extremities"
+          fieldType="select"
+          record={record}
+          setRecord={setRecord}
+          selectData={[
+            { label: 'Normal', value: 'Normal' },
+            { label: 'Rigid', value: 'Rigid' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+        />
+        <MyInput
+          width={120}
+          fieldName="vitalSigns"
+          fieldType="select"
+          record={record}
+          setRecord={setRecord}
+          selectData={[
+            { label: 'Stable', value: 'Stable' },
+            { label: 'Unstable', value: 'Unstable' }
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
+        />
+      </div>
+      <MyInput
+        width={'100%'}
+        fieldName="totalScore"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        disabled={true}
+      />
+    </Form>
   );
 
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Add FLACC Record"
+      title="Add Neonatal Assessment"
       actionButtonLabel="Save"
       size="27vw"
       actionButtonFunction={handleAddNeonatal}
@@ -140,7 +128,7 @@ const NewNeonatal = ({ open, setOpen, patient, encounter, edit, refetch }) => {
       isDisabledActionBtn={edit}
       steps={[
         {
-          title: 'Add FLACC Record',
+          title: 'Add Neonatal Assessment',
           icon: <FontAwesomeIcon icon={faBaby} />
         }
       ]}

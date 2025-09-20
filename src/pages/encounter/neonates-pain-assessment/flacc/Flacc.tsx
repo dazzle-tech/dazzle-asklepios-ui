@@ -4,7 +4,6 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBan, faPlus } from '@fortawesome/free-solid-svg-icons';
-import '../style.less';
 import NewFlacc from './NewFlacc';
 import '../style.less';
 
@@ -40,24 +39,30 @@ const Flacc = () => {
     }
   ];
   //
-  const tableButtons = (<>
+  const tableButtons = (
+    <>
+      <div className="table-buttons-left-part-handle-positions">
+        <Checkbox
+          checked={!showCanceled}
+          onChange={() => {
+            setShowCanceled(!showCanceled);
+          }}
+        >
+          Show Cancelled
+        </Checkbox>
+      </div>
 
-      <div className='table-buttons-left-part-handle-positions'>
+      <div className="bt-right">
         <MyButton onClick={() => setOpenFlaccModal(true)}>
-          <FontAwesomeIcon icon={faPlus} /> Cancel</MyButton>
-        <Checkbox checked={!showCanceled}
-        onChange={() => {
-          setShowCanceled(!showCanceled);
-        }}>
-          Show Cancelled</Checkbox>
-        </div>
-        
-        <div className="bt-right">
+          <FontAwesomeIcon icon={faBan} /> Cancel
+        </MyButton>
         <MyButton onClick={() => setOpenFlaccModal(true)}>
           <FontAwesomeIcon icon={faPlus} />
           Add
-        </MyButton></div>
-  </>);
+        </MyButton>
+      </div>
+    </>
+  );
 
   return (
     <>
