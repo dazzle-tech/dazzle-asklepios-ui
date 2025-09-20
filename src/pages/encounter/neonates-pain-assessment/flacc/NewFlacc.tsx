@@ -24,7 +24,7 @@ const NewFlacc = ({ open, setOpen, patient, encounter, edit, refetch }) => {
   // Modal Content
   const content = (
     <Form fluid>
-      <div className="flex-row-5 ">
+      <div className="flex-row-5-1  ">
         <MyInput
           width={120}
           fieldName="face"
@@ -66,7 +66,7 @@ const NewFlacc = ({ open, setOpen, patient, encounter, edit, refetch }) => {
         />
       </div>
 
-      <div className="flex-row-5 ">
+      <div className="flex-row-5-1  ">
         <MyInput
           width={120}
           fieldName="cry"

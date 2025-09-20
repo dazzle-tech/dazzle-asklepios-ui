@@ -1042,7 +1042,7 @@ const DiagnosticsOrder = props => {
             {/* Request New Test Setup */}
             <MyButton onClick={handleRequestNewTestSetup} appearance="ghost">
               <FontAwesomeIcon icon={faVial} />
-              <Translate>Request New TestSetup</Translate>
+              Request New TestSetup
             </MyButton>
             {/* Recall Favorite */}
             <MyButton onClick={() => setOpenFavoritesModal(true)}>
@@ -1055,7 +1055,7 @@ const DiagnosticsOrder = props => {
               disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
               prefixIcon={() => <CheckIcon />}
             >
-              <Translate>Sign & Submit</Translate>
+              Sign & Submit
             </MyButton>
           </div>
         </div>

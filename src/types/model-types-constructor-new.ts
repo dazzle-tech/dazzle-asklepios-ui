@@ -17,8 +17,8 @@ export const newApUser: modelTypes.ApUser = {
   lastModifiedDate: null,
   phoneNumber: null,
   birthDate: null,
-  genderLkey: null,
-  jobRoleLkey: null,
+  gender: null,
+
   jobDescription: null,
 };
 

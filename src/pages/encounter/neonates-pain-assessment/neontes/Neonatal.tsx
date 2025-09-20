@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Checkbox} from 'rsuite';
+import { Checkbox } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -48,7 +48,7 @@ const Neonatal = () => {
           setShowCanceled(!showCanceled);
         }}
       >
-        Show canceled test
+        Show Cancelled
       </Checkbox>
       <div className="gap-5">
         <MyButton onClick={() => setOpenNeonatalModal(false)}>
