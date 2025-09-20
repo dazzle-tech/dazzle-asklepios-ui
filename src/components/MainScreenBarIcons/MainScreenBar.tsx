@@ -24,10 +24,14 @@ import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import ChatScreen from '../ChatScreen/ChatScreen';
 import './style.less';
+import MyAppointmentScreen from '../MyAppointmentScreen/MyAppointmentScreen';
+import MyModal from '../MyModal/MyModal';
 
 const MainScreenBar = ({ setExpandNotes }) => {
   const mode = useSelector(state => state.ui.mode);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
+
 
   return (
     <>
@@ -45,7 +49,7 @@ const MainScreenBar = ({ setExpandNotes }) => {
           </IconButton>
         </Tooltip>
         <Tooltip title="My Appointments">
-          <IconButton size="small">
+          <IconButton size="small" onClick={() => setShowAppointmentsModal(true)}>
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCalendarDays} />
           </IconButton>
         </Tooltip>
@@ -97,6 +101,18 @@ const MainScreenBar = ({ setExpandNotes }) => {
           <ChatScreen />
         </DialogContent>
       </Dialog>
+
+
+    <MyModal
+      open={showAppointmentsModal}
+      setOpen={setShowAppointmentsModal}
+      title="My Appointments"
+      size="90vw"
+      bodyheight="83vh"
+      content={<MyAppointmentScreen/>}
+      hideBack={true}
+      actionButtonLabel="Save"
+    />
     </>
   );
 };
