@@ -107,66 +107,40 @@ const DynamicCard: React.FC<MyCardProps> = ({
   return (
     <Card
       width={width || 280}
-      style={{ minHeight: '45px', height, margin }}
+      height={height}
+      margin={margin}
       shaded
       className={`dynamic-card ${mode === 'light' ? 'light' : 'dark'}`}
       {...props}
     >
       {/* Header */}
       {(avatar || showMore) && (
-        <Card.Header>
-          <HStack alignItems="center" justifyContent="space-between">
-            {avatar && <Avatar circle src={avatar} />}
-            {showMore && (
-              <MyButton
-                style={{ marginLeft: 'auto' }}
-                appearance="subtle"
-                size="xsmall"
-                color="var(--primary-gray)"
-                onClick={moreClick}
-                radius="8px"
-              >
-                <FontAwesomeIcon icon={faEllipsis} />
-              </MyButton>
-            )}
-          </HStack>
+        <Card.Header className="card-header">
+          {avatar && <Avatar circle src={avatar} className="avatar" />}
+          {showMore && (
+            <MyButton
+              className="more-button"
+              appearance="subtle"
+              size="xsmall"
+              color="var(--primary-gray)"
+              onClick={moreClick}
+              radius="8px"
+            >
+              <FontAwesomeIcon icon={faEllipsis} />
+            </MyButton>
+          )}
         </Card.Header>
       )}
 
       {/* Body */}
-      <Card.Body
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '8px'
-        }}
-      >
-        {/* Left section */}
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-          {leftItems.map(renderItem)}
-        </div>
-
-        {/* Center section */}
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center' }}>
-          {centerItems.map(renderItem)}
-        </div>
-
-        {/* Right section */}
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'flex-end' }}>
-          {rightItems.map(renderItem)}
-        </div>
+      <Card.Body className="card-body">
+        <div className="card-body-left">{leftItems.map(renderItem)}</div>
+        <div className="card-body-center">{centerItems.map(renderItem)}</div>
+        <div className="card-body-right">{rightItems.map(renderItem)}</div>
       </Card.Body>
 
       {/* Footer */}
-      <Card.Footer
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
-      >
+      <Card.Footer className="card-footer">
         {showArrow && (
           <MyButton
             onClick={arrowClick}

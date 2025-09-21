@@ -1,63 +1,52 @@
-/* MyNewCard.styles.less */
+.dynamic-card {
+  min-height: 45px;
+  width: 280px;
+  &.light {
+    background-color: #fff;
+    color: #000;
+  }
+  &.dark {
+    background-color: #1c1c1c;
+    color: #fff;
+  }
 
-/* Card body padding */
-.rs-card-body-new {
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-}
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-/* Card footer padding */
-.rs-card-footer-new {
-  padding-top: 6px !important;
-  padding-bottom: 6px !important;
-}
+    .more-button {
+      margin-left: auto;
+    }
+  }
 
-/* Title */
-.card-title-new {
-  font-family: 'Manrope Medium', sans-serif !important;
-  font-size: 15px !important;
-  color: #111 !important;
-  line-height: 18px !important;
-}
+  .card-body {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
 
-/* Content text */
-.card-content-new-basic {
-  font-family: 'Manrope', sans-serif;
-  font-size: 13px;
-  color: #333;
-}
+    .card-body-left,
+    .card-body-center,
+    .card-body-right {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
 
-.card-content-new-secondary {
-  font-family: 'Manrope', sans-serif;
-  font-size: 13px;
-  color: #666;
-}
+    .card-body-center {
+      align-items: center;
+    }
 
-/* Footer */
-.card-footer-new {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: 'Manrope Medium', sans-serif;
-  font-size: 13px;
-  color: #555;
-}
+    .card-body-right {
+      align-items: flex-end;
+    }
+  }
 
-/* Arrow button */
-.card-arrow-new {
-  margin-left: auto;
-  box-shadow: 0px 0px 0px 1px rgba(152, 161, 178, 0.1), 0px 1px 4px rgba(69, 75, 87, 0.12),
-    0px 0px 2px rgba(0, 0, 0, 0.08);
-}
-
-.title-style-dynamic-card {
-  color: #111;
-}
-
-/* Dark mode */
-.dynamic-card.dark {
-  box-shadow: var(--dark-mode-box-shadow);
-  .title-style-dynamic-card {
-    color: var(--white) !important;
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 }
