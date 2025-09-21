@@ -1,13 +1,13 @@
 // src/services/attachmentService.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { BaseQuery, onQueryStarted } from '@/newApi'; // ⬅️ use the new base query + handler
+import { BaseQuery, onQueryStarted } from '@/newApi'; 
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
 import { ApAttachment } from '@/types/model-types';
 
 export const attachmentService = createApi({
   reducerPath: 'attachmentApi',
-  baseQuery: BaseQuery, // ⬅️ switched
+  baseQuery: BaseQuery, 
   endpoints: (builder) => ({
     upload: builder.mutation<
       ApAttachment,
@@ -25,14 +25,14 @@ export const attachmentService = createApi({
         url: `/attachment/upload`,
         method: 'POST',
         body: data.formData,
-        // custom headers expected by your backend:
+        // custom headers with dashes:
         headers: {
-          type: data.type,
-          refKey: data.refKey,
-          details: data.details,
-          accessType: data.accessType,
-          createdBy: data.createdBy,
-          patientKey: data.patientKey,
+          'type': data.type,
+          'ref-key': data.refKey,
+          'details': data.details,
+          'access-type': data.accessType,
+          'created-by': data.createdBy,
+          'patient-key': data.patientKey,
         },
       }),
       onQueryStarted,
@@ -57,25 +57,25 @@ export const attachmentService = createApi({
       keepUnusedDataFor: 0,
     }),
 
-fetchAttachment: builder.query<ApAttachment, { type: string; refKey: string }>({
-  query: (data) => ({
-    url: `/attachment/fetch-attachment`,
-    headers: {
-      type: data.type,
-      refKey: data.refKey, 
-    },
-  }),
-  onQueryStarted,
-  transformResponse: (response: any) => response.object,
-  keepUnusedDataFor: 0,
-}),
+    fetchAttachment: builder.query<ApAttachment, { type: string; refKey: string }>({
+      query: (data) => ({
+        url: `/attachment/fetch-attachment`,
+        headers: {
+          type: data.type,
+          'ref-key': data.refKey,
+        },
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object,
+      keepUnusedDataFor: 0,
+    }),
 
 
     fetchAttachmentLight: builder.query<ApAttachment, { refKey: string }>({
       query: (data) => ({
         url: `/attachment/fetch-attachment-light`,
         headers: {
-          refKey: data.refKey,
+          'ref-key': data.refKey,
         },
       }),
       onQueryStarted,
@@ -110,15 +110,15 @@ fetchAttachment: builder.query<ApAttachment, { type: string; refKey: string }>({
     updateAttachmentDetails: builder.mutation<
       ApAttachment,
       { key: string; attachmentDetails: string; updatedBy: string; accessType: string }
->({
+    >({
       query: (data) => ({
         url: `/attachment/update-Attachment-details`,
         method: 'PUT',
         headers: {
-          key: data.key,
-          attachmentDetails: data.attachmentDetails,
-          updatedBy: data.updatedBy,
-          accessType: data.accessType,
+          'key': data.key,
+          'attachment-details': data.attachmentDetails,
+          'updated-by': data.updatedBy,
+          'access-type': data.accessType,
         },
       }),
       onQueryStarted,
