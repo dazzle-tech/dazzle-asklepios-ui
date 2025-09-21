@@ -2,6 +2,7 @@ import React from 'react';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { formatDateWithoutSeconds } from '@/utils';
+import Section from '@/components/Section';
 
 interface SidePanelsProps {
   mostUsedProductsData: any[];
@@ -104,48 +105,56 @@ const SidePanels: React.FC<SidePanelsProps> = ({
     <div className="patient-side-internal-drug-order">
       <div className="side-panel-tables">
         {/* Most Used Products table */}
-        <div className="side-panel-table">
-          <div className="side-panel-header-div">
-            <div className="side-panel-title-div">Most Used Product</div>
-          </div>
-          <div>
+        <Section
+          title="Most Used Product"
+          content={
             <MyTable data={mostUsedProductsData} columns={mostUsedProductsColumns} height={120} />
-          </div>
-        </div>
+          }
+          rightLink=""
+          setOpen={() => {}}
+          openedContent=""
+          isContainOnlyTable
+        />
 
         {/* Recently Expired Stock table */}
-        <div className="side-panel-table">
-          <div className="side-panel-header-div">
-            <div className="side-panel-title-div">Recently Expired Stock</div>
-          </div>
-          <div>
+        <Section
+          title="Recently Expired Stock"
+          content={
             <MyTable
               data={recentlyExpiredStockData}
               columns={recentlyExpiredStockColumns}
               height={120}
             />
-          </div>
-        </div>
+          }
+          setOpen={() => {}}
+          rightLink=""
+          openedContent=""
+          isContainOnlyTable
+        />
 
         {/* Incoming Transfers table */}
-        <div className="side-panel-table">
-          <div className="side-panel-header-div">
-            <div className="side-panel-title-div">Incoming Transfers</div>
-          </div>
-          <div>
+        <Section
+          title="Incoming Transfers"
+          content={
             <MyTable data={incomingTransfersData} columns={incomingTransfersColumns} height={120} />
-          </div>
-        </div>
+          }
+          rightLink=""
+          setOpen={() => {}}
+          openedContent=""
+          isContainOnlyTable
+        />
 
         {/* Product Near Expiry table */}
-        <div className="side-panel-table">
-          <div className="side-panel-header-div">
-            <div className="side-panel-title-div">Product Near Expiry</div>
-          </div>
-          <div>
+        <Section
+          title="Product Near Expiry"
+          content={
             <MyTable data={productNearExpiryData} columns={productNearExpiryColumns} height={120} />
-          </div>
-        </div>
+          }
+          setOpen={() => {}}
+          rightLink=""
+          openedContent=""
+          isContainOnlyTable
+        />
       </div>
     </div>
   );

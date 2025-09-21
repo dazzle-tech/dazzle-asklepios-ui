@@ -15,7 +15,7 @@ const Section = ({ title, content, setOpen, rightLink, openedContent, ...props }
             </Text>
           </div>
         </div>
-        <Divider className="divider-line" />
+        <Divider className="divider-line-section-comp" />
         <div style={{padding: !props?.isContainOnlyTable ? "5px" : "0px"}} className="medical-dashboard-table-div">{content}</div>
       </div>
       {openedContent}

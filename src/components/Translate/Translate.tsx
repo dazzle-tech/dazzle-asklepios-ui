@@ -35,7 +35,7 @@ const Translate = props => {
   }, [lang, props.children]);
 
   return(
-   <span className={`translate ${mode === 'light' ? 'light' : 'dark'}`}>{text}</span>
+   <>{text}</>
   );
 };
 
