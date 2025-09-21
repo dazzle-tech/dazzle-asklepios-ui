@@ -33,7 +33,7 @@ export const radService = createApi({
         getDiagnosticOrderTestReportNotesByReportId: builder.query({
             query: (reportid: string) => ({
                 headers: {
-                    reportid
+                    "report-id": reportid
                 },
                 url: `/rad/diagnostic-order-tests-report-notes-list`
             }),

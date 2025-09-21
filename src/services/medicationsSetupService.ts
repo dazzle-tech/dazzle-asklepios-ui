@@ -392,7 +392,7 @@ export const medicationsSetupService = createApi({
       query: (activeKey: any) => ({
         url: `/medications/active-ingredient-drug-interaction-by-key-list`,
         headers: {
-          activeKey: activeKey
+          "active-key": activeKey
         }
       }),
       onQueryStarted: onQueryStarted,

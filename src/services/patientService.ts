@@ -83,7 +83,7 @@ export const patientService = createApi({
         url: `/pas/send-verification-otp`,
         method: 'POST',
         headers: {
-          patientId
+          "patient-id": patientId
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -96,7 +96,7 @@ export const patientService = createApi({
         url: `/pas/verify-verification-otp`,
         method: 'POST',
         headers: {
-          patientId: data.patientId,
+          "patient-id": data.patientId,
           otp: data.otp
         }
       }),
@@ -162,7 +162,7 @@ export const patientService = createApi({
       query: (data: { patientKey: string }) => ({
         url: `/pas/fetch-patient-insurance`,
         headers: {
-          patientKey: data.patientKey,
+          "patient-key": data.patientKey,
         },
       }),
       onQueryStarted: onQueryStarted,
@@ -316,7 +316,7 @@ export const patientService = createApi({
         body: data.user,
         headers: {
           reason: data.reason,
-          patientKey: data.patientKey
+          "patient-key": data.patientKey
         },
       }),
       transformResponse: (response) => {

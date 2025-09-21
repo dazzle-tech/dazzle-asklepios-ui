@@ -213,7 +213,7 @@ export const setupService = createApi({
       query: (data: { userId: string }) => ({
         url: `/setup/get-user-record`,
         headers: {
-          userId: data.userId,
+          "user-id": data.userId,
         },
       }),
       onQueryStarted: onQueryStarted,
@@ -521,7 +521,7 @@ export const setupService = createApi({
       query: (treatmentKey: any) => ({
         url: `/setup/cdt-list-by-treatment`,
         headers: {
-          treatmentKey: treatmentKey
+          "treatment-key": treatmentKey
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -659,7 +659,7 @@ export const setupService = createApi({
     getDiagnosticsTestType: builder.query({
       query: (testTypeKey: string) => ({
         headers: {
-          testTypeKey
+          "test-type-key": testTypeKey
         },
         url: `/setup/diagnostic-test-type`
       }),
@@ -712,7 +712,7 @@ export const setupService = createApi({
         method: 'POST',
         body: data.diagnosticTest,
         headers: {
-          catalogKey: data.catalogKey
+          "catalog-key": data.catalogKey
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -792,7 +792,7 @@ export const setupService = createApi({
     getCatalogDiagnosticsTestList: builder.query({
       query: (catalogKey: string) => ({
         headers: {
-          catalogKey
+          "catalog-key": catalogKey
         },
         url: `/setup/catalog-diagnostic-test-list`
       }),
@@ -814,7 +814,7 @@ export const setupService = createApi({
     getDiagnosticsTestNotSelectedList: builder.query({
       query: (data: { catalogKey: string, type: string }) => ({
         headers: {
-          catalogKey: data.catalogKey,
+          "catalog-key": data.catalogKey,
           type: data.type
         },
         url: `/setup/diagnostic-test-no-catalog-list`
@@ -1155,7 +1155,7 @@ export const setupService = createApi({
     getMedicalSheetsByDepartmentId: builder.query({
       query: (departmentid: string) => ({
         headers: {
-          departmentid
+          "department-id": departmentid
         },
         url: `/setup/medical-sheets-by-department-id`
       }),
@@ -1166,7 +1166,7 @@ export const setupService = createApi({
     getDepartmentListByType: builder.query({
       query: (departmentTypeKey: string) => ({
         headers: {
-          departmentTypeKey
+          "department-type-key": departmentTypeKey
         },
         url: `/setup/department-list-by-type`
       }),
@@ -1308,7 +1308,7 @@ export const setupService = createApi({
       query: (data: { resourceKey: string}) => ({
         url: `/setup/room-beds-list`,
         headers: {
-          resourceKey: data.resourceKey,
+          "resource-key": data.resourceKey,
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -1396,7 +1396,7 @@ export const setupService = createApi({
           query: (data: { department_key: string }) => ({
             url: `/setup/get-bed-count-by-department`,
             headers: {
-             department_key: data.department_key
+             "department-key": data.department_key
             }
           }),
           onQueryStarted: onQueryStarted,

@@ -96,8 +96,8 @@ export const observationService = createApi({
       query: (data: { key: string, isCanelled: string }) => ({
         url: `/observation/patient-vaccination-record`,
         headers: {
-          patient_key: data.key,
-          is_cancelled: data.isCanelled
+          "patient-key": data.key,
+          "is-cancelled": data.isCanelled
         }
       }),
       onQueryStarted: onQueryStarted,

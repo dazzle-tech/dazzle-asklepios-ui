@@ -22,7 +22,7 @@ export const dentalService = createApi({
     getDentalChartsByEncounter: builder.query({
       query: (encounterKey: any) => ({
         headers: {
-          encounterKey: encounterKey
+          "encounter-key": encounterKey
         },
         url: `/dental/dental-charts-by-encounter`
       }),
@@ -76,7 +76,7 @@ export const dentalService = createApi({
     getChartData: builder.query({
       query: (chartKey: any) => ({
         headers: {
-          chartKey: chartKey
+          "chart-key": chartKey
         },
         url: `/dental/fetch-chart-data`
       }),
@@ -97,7 +97,7 @@ export const dentalService = createApi({
     fetchTreatmentPlan: builder.query({
       query: (data: any) => ({
         headers: {
-          encounterKey: data.encounterKey
+          "encounter-key": data.encounterKey
         },
         url: `/dental/fetch-treatment-plan`
       }),
