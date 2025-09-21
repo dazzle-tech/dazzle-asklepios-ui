@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { formatDateWithoutSeconds } from '@/utils';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import DynamicCard from '@/components/DynamicCard/DynamicCard';
 import '../MyAppointmentScreen.less';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { IconButton } from '@mui/material';
 
 const sampleAppointmentsData = [
   {
@@ -39,37 +36,8 @@ const sampleAppointmentsData = [
     phone: '+962799000003',
     age: 28,
     visitType: 'Home Visit'
-  },
-  {
-    appointmentId: 'APT-1004',
-    date: '2025-09-18T13:00:00Z',
-    time: '01:00 PM',
-    patientName: 'Charlie Brown',
-    patientImage: '',
-    status: 'Scheduled',
-    phone: '+962799000003',
-    age: 28,
-    visitType: 'Home Visit'
   }
 ];
-
-const getAvatarFromName = (name: string) => {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name
-  )}&background=random&color=ffffff&length=2&size=128`;
-};
-
-const ImageWithFallback = ({ name, imageSrc }: { name: string; imageSrc?: string }) => {
-  const [src, setSrc] = useState(imageSrc || getAvatarFromName(name));
-
-  const handleError = () => {
-    if (src !== getAvatarFromName(name)) {
-      setSrc(getAvatarFromName(name));
-    }
-  };
-
-  return <img src={src} alt={name} onError={handleError} className="appointment-avatar" />;
-};
 
 const getStatusColor = (status: string) => {
   if (status === 'Scheduled') return '#ff8902ff';
@@ -78,46 +46,65 @@ const getStatusColor = (status: string) => {
   return '#808080';
 };
 
+const getAvatarFromName = (name: string) => {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    name
+  )}&background=random&color=ffffff&length=2&size=128`;
+};
+
+const getFinalAvatar = (name: string, imageSrc?: string) => {
+  return imageSrc && imageSrc.trim() !== '' ? imageSrc : getAvatarFromName(name);
+};
+
 const MyAppointmentScreenCard = () => {
   return (
     <div className="appointments-grid">
       {sampleAppointmentsData.map((appt, index) => (
-        <div className="appointment-card" key={appt.appointmentId + index}>
-          {/* Header */}
-          <div className="appointment-header">
-            <ImageWithFallback name={appt.patientName} imageSrc={appt.patientImage} />
-            <div className="appointment-header-text">
-              <h3>{appt.patientName}</h3>
-              <p>
-                {formatDateWithoutSeconds(appt.date)} at {appt.time}
-              </p>
-            </div>
-            <div className="appointment-info-btn" />
-            <IconButton onClick={() => alert(`Details for ${appt.patientName}`)}>
-              <FontAwesomeIcon icon={faInfoCircle} />
-            </IconButton>
-          </div>
-
-          <div className="appointment-body">
-            <div className="detail-item">
-              <span className="label">Phone:</span>
-              <span className="value">{appt.phone}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Age:</span>
-              <span className="value">{appt.age}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Visit Type:</span>
-              <span className="value">{appt.visitType}</span>
-            </div>
-
-            <div className="detail-item">
-              <span className="label">Status:</span>
-              <MyBadgeStatus color={getStatusColor(appt.status)} contant={appt.status} />
-            </div>
-          </div>
-        </div>
+        <DynamicCard
+          key={appt.appointmentId + index}
+          avatar={getFinalAvatar(appt.patientName, appt.patientImage)}
+          showMore
+          moreClick={() => alert(`Details for ${appt.patientName}`)}
+          data={[
+            {
+              type: 'strong',
+              value: appt.patientName,
+              section: 'left',
+              showLabel: false
+            },
+            {
+              type: 'text',
+              label: 'Date',
+              value: `${formatDateWithoutSeconds(appt.date)} at ${appt.time}`,
+              section: 'left',
+              labelGap: 230
+            },
+            { type: 'text', label: 'Phone', value: appt.phone, section: 'left', labelGap: 340 },
+            {
+              type: 'text',
+              label: 'Age',
+              value: appt.age.toString(),
+              section: 'left',
+              labelGap: 460
+            },
+            {
+              type: 'text',
+              label: 'Visit Type',
+              value: appt.visitType,
+              section: 'left',
+              labelGap: 365
+            },
+            {
+              type: 'badge',
+              label: 'Status',
+              value: appt.status,
+              color: getStatusColor(appt.status),
+              section: 'left',
+              showLabel: true,
+              labelGap: 370
+            }
+          ]}
+        />
       ))}
     </div>
   );

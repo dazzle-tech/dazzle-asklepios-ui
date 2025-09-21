@@ -92,8 +92,14 @@
 
 .appointments-grid {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.appointments-grid .dynamic-card {
+  width: calc(49% - 10px);
+  margin: 0;
 }
 
 .appointment-card {
@@ -358,6 +364,9 @@
   margin-top: 20px;
 }
 
-
-
-
+.dynamic-card.dark {
+  box-shadow: var(--dark-mode-box-shadow);
+  .title-style {
+    color: var(--white) !important;
+  }
+}
