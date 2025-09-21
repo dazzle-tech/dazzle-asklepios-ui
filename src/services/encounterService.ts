@@ -91,7 +91,7 @@ export const encounterService = createApi({
     getEncounterReviewOfSystems: builder.query({
       query: (encounterKey: any) => ({
         headers: {
-          encounterKey
+          "encounter-key": encounterKey
         },
         url: `/encounter/encounter-review-of-systems`
       }),
@@ -123,7 +123,7 @@ export const encounterService = createApi({
     getEncounterPhysicalExamAreas: builder.query({
       query: (encounterKey: any) => ({
         headers: {
-          encounterKey
+          'encounter-key': encounterKey
         },
         url: `/encounter/encounter-physical-exam-areas`
       }),
@@ -376,7 +376,7 @@ export const encounterService = createApi({
     getOrderTestNotesByTestId: builder.query({
       query: (testid: string) => ({
         headers: {
-          testid
+         'test-id': testid
         },
         url: `/encounter/diagnostic-order-test-notes-list`
       }),
@@ -398,7 +398,7 @@ export const encounterService = createApi({
     getOrderTestSamplesByTestId: builder.query({
       query: (testid: string) => ({
         headers: {
-          testid
+         'test-id': testid
         },
         url: `/encounter/diagnostic-order-test-samples-list`
       }),
@@ -570,7 +570,7 @@ export const encounterService = createApi({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/inpatient-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
-          departmentKey: department_key
+          "department-key": department_key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -856,8 +856,8 @@ export const encounterService = createApi({
         method: 'POST',
         body: data.encounter,
         headers: {
-          triage_key: data.triageKey,
-          destination_key: data.destinationKey,
+          "triage-key": data.triageKey,
+          "destination-key": data.destinationKey,
         }
       }),
     }),
@@ -867,8 +867,8 @@ export const encounterService = createApi({
         method: 'POST',
         body: data.encounter,
         headers: {
-          triage_key: data.triageKey,
-          destination_key: data.destinationKey,
+          "triage-key": data.triageKey,
+          "destination-key": data.destinationKey,
         }
       }),
     }),
@@ -883,7 +883,7 @@ export const encounterService = createApi({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/emergency-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
-          department_key: department_key
+          "department-key": department_key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -935,7 +935,7 @@ export const encounterService = createApi({
         method: 'POST',
         body: patientTemporaryDischarge,
         headers: {
-          department_key: department_key
+          "department-key": department_key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -947,7 +947,7 @@ export const encounterService = createApi({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/day-case-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
-          department_key: department_key
+          "department-key": department_key
         }
       }),
       onQueryStarted: onQueryStarted,

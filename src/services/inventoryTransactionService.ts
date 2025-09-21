@@ -196,9 +196,9 @@ export const inventoryService = createApi({
         method: 'GET',
         params: {
           quantity,
-          transUnit,
-          toBaseUnit,
-          uomGroup
+          "trans-unit": transUnit,
+          "to-base-unit": toBaseUnit,
+          "uom-group": uomGroup
         },
       }),
     }),

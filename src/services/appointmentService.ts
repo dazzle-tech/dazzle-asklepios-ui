@@ -35,7 +35,7 @@ export const appointmentService = createApi({
       query: (resourceKey: string) => ({
         url: `/appointment/resource-by-key`,
         params: {
-          resourceKey
+         'resource-key' : resourceKey
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -52,7 +52,7 @@ export const appointmentService = createApi({
       query: ({ resource_type, facility_id, resources }) => {
         const resourcesParam = resources;
         return {
-          url: `/appointment/appointments-list?resource_type=${resource_type}&facility_id=${facility_id}&resources=${resourcesParam}`,
+          url: `/appointment/appointments-list?resource-type=${resource_type}&facility-id=${facility_id}&resources=${resourcesParam}`,
         };
       },
       onQueryStarted: onQueryStarted,
@@ -61,7 +61,7 @@ export const appointmentService = createApi({
     getResourceType: builder.query({
       query: (resource_type: string) => ({
         headers: {
-          resource_type
+         'resource-type': resource_type
         },
         url: `/appointment/resource-type-list`
       }),

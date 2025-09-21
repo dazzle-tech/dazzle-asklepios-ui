@@ -15,7 +15,7 @@ export const labService = createApi({
         getOrderTestNotesByTestId: builder.query({
             query: (testid: string) => ({
                 headers: {
-                    testid
+                    "test-id":testid
                 },
                 url: `/lab/diagnostic-order-test-notes-list`
             }),
@@ -37,7 +37,7 @@ export const labService = createApi({
         getOrderTestSamplesByTestId: builder.query({
             query: (testid: string) => ({
                 headers: {
-                    testid
+                   "test-id": testid
                 },
                 url: `/lab/diagnostic-order-test-samples-list`
             }),
@@ -59,7 +59,7 @@ export const labService = createApi({
         getOrderTestResultNotesByResultId: builder.query({
             query: (resultid: string) => ({
                 headers: {
-                    resultid
+                   "result-id": resultid
                 },
                 url: `/lab/diagnostic-order-tests-result-notes-list`
             }),
