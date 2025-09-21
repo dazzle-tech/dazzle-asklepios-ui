@@ -768,6 +768,7 @@ return (
       encounter={encounter}
     />
 </div>
+<div className='profile-sidebar-main-container-handle'>
     <ProfileSidebar
       expand={expand}
       setExpand={setExpand}
@@ -776,7 +777,7 @@ return (
       setRefetchData={setRefetchData}
       refetchData={refetchData}
     />
-
+</div>
   </div>
 </div>
   );

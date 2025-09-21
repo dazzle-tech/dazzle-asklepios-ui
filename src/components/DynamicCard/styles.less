@@ -1,0 +1,52 @@
+.dynamic-card {
+  min-height: 45px;
+  width: 280px;
+  &.light {
+    background-color: #fff;
+    color: #000;
+  }
+  &.dark {
+    background-color: #1c1c1c;
+    color: #fff;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .more-button {
+      margin-left: auto;
+    }
+  }
+
+  .card-body {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+
+    .card-body-left,
+    .card-body-center,
+    .card-body-right {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .card-body-center {
+      align-items: center;
+    }
+
+    .card-body-right {
+      align-items: flex-end;
+    }
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
