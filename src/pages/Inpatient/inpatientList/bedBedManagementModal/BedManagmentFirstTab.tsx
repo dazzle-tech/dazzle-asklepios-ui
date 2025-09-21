@@ -1,22 +1,43 @@
-import React, { useState } from 'react';
-import { useAppDispatch } from '@/hooks';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStopCircle, faThumbsUp, faTable } from '@fortawesome/free-solid-svg-icons';
-import { faIdCard } from '@fortawesome/free-solid-svg-icons';
-import { notify } from '@/utils/uiReducerActions';
-import { Form, Tooltip, Whisper } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
-import BedCards from './BedCards';
-import { useSaveBedMutation, useFetchBedsRelatedToDepartmentQuery } from '@/services/setupService';
 import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import { useFetchBedsRelatedToDepartmentQuery, useSaveBedMutation } from '@/services/setupService';
+import { notify } from '@/utils/uiReducerActions';
+import {
+  faBed,
+  faExclamationTriangle,
+  faIdCard,
+  faStopCircle,
+  faTable,
+  faThumbsUp,
+  faUser,
+  faBroom
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState } from 'react';
+import { Form, Tooltip, Whisper } from 'rsuite';
+import BedCards from './BedCards';
 import './BedManagmentFirstTab.less';
 
-const BedManagmentFirstTab = ({ departmentKey }) => {
+const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   const dispatch = useAppDispatch();
   const [saveBed] = useSaveBedMutation();
   const [viewMode, setViewMode] = useState('table'); // view mode state
 
+  // Sort data to show occupied beds first
+  const sortedData = [...data].sort((a, b) => {
+    const statusA = a?.bed?.statusLvalue?.lovDisplayVale || a?.bed?.statusLkey || '';
+    const statusB = b?.bed?.statusLvalue?.lovDisplayVale || b?.bed?.statusLkey || '';
+
+    if (statusA.toLowerCase() === 'occupied' && statusB.toLowerCase() !== 'occupied') {
+      return -1;
+    }
+    if (statusA.toLowerCase() !== 'occupied' && statusB.toLowerCase() === 'occupied') {
+      return 1;
+    }
+    return 0;
+  });
   const {
     data: fetchBedsRelatedToDepartmentResponse,
     refetch,
@@ -128,8 +149,30 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
     }
   ];
 
+    // Calculate statistics (use latest fetched data)
+  const bedsData = fetchBedsRelatedToDepartmentResponse ?? [];
+
+  const totalBeds = bedsData.length;
+  const occupiedBeds = bedsData.filter(item => {
+    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
+    return status.toLowerCase() === 'occupied';
+  }).length;
+  const availableBeds = bedsData.filter(item => {
+    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
+    return status.toLowerCase() === 'empty';
+  }).length;
+  const outOfServiceBeds = bedsData.filter(item => {
+    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
+    return status.toLowerCase() === 'out of service';
+  }).length;
+  const inCleaning = bedsData.filter(item => {
+    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
+    return status.toLowerCase() === 'in cleaning';
+  }).length;
+
+
   return (
-    <div>
+    <>
       {/* Toggle view icons */}
       <div className="icons-2">
         <FontAwesomeIcon
@@ -144,6 +187,68 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
           style={{ cursor: 'pointer', fontSize: 18 }}
           onClick={() => setViewMode('table')}
         />
+      </div>
+      {/* Statistics Cards */}
+      <div className="statistics-container">
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-text">
+              <span className="stat-label">Total Beds</span>
+              <span className="stat-value total">{totalBeds}</span>
+            </div>
+            <div className="stat-icon total">
+              <FontAwesomeIcon icon={faBed} />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-text">
+              <span className="stat-label">Occupied</span>
+              <span className="stat-value occupied">{occupiedBeds}</span>
+            </div>
+            <div className="stat-icon occupied">
+              <FontAwesomeIcon icon={faUser} />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-text">
+              <span className="stat-label">Empty</span>
+              <span className="stat-value available">{availableBeds}</span>
+            </div>
+            <div className="stat-icon available">
+              <FontAwesomeIcon icon={faBed} />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-text">
+              <span className="stat-label">Out of service</span>
+              <span className="stat-value critical">{outOfServiceBeds}</span>
+            </div>
+            <div className="stat-icon critical">
+              <FontAwesomeIcon icon={faExclamationTriangle} />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-content">
+            <div className="stat-text">
+              <span className="stat-label">In cleaning</span>
+              <span className="stat-value cleaning">{inCleaning}</span>
+            </div>
+            <div className="stat-icon cleaning">
+              <FontAwesomeIcon icon={faBroom} />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* View mode switch */}
@@ -161,7 +266,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
           handleChangeToOutService={handleChangeToOutService}
         />
       )}
-    </div>
+    </>
   );
 };
 
