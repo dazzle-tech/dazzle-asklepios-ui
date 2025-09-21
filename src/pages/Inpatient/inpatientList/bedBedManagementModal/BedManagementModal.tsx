@@ -25,8 +25,8 @@ const BedManagementModal = ({ open, setOpen, departmentKey }) => {
       setOpen={setOpen}
       title="Bed Management"
       steps={[{ title: 'Bed Management', icon: <FontAwesomeIcon icon={faBed} /> }]}
-      size="90vw"
-      bodyheight="75vh"
+      size="95vw"
+      bodyheight="85vh"
       actionButtonFunction={null}
       content={modalContent}
       hideActionBtn={true}
