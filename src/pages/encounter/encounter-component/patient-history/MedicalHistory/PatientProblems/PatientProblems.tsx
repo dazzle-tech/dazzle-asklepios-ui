@@ -7,6 +7,7 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import { MdModeEdit } from 'react-icons/md';
 import AddPatientProblem from './AddPatientProblem';
+import SectionContainer from '@/components/SectionsoContainer';
 const PatientProblems = ({ patient, encounter, edit }) => {
   const [open, setOpen] = useState(false);
 
@@ -29,19 +30,22 @@ const PatientProblems = ({ patient, encounter, edit }) => {
   ];
   return (
     <div className="medical-container-div">
-      <div className="medical-header-div">
-        <div className="medical-title-div">Patient’s Problems</div>
-        <div className="bt-right">
-          <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+    <SectionContainer 
+     title={
+      <>
+      Patient’s Problems
+      <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
             Add
           </MyButton>
-        </div>
-      </div>
-      <Divider className="divider-line" />
-      <div className="medical-table-div">
-        <MyTable data={[]} columns={columns} height={800} loading={false} />
-      </div>
-      <AddPatientProblem open={open} setOpen={setOpen} />
+      </>
+     }
+     content={
+      <>
+       <MyTable data={[]} columns={columns} height={800} loading={false} />
+       <AddPatientProblem open={open} setOpen={setOpen} />
+       </>
+     }
+    />
     </div>
   );
 };

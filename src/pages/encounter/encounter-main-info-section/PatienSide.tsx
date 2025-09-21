@@ -114,7 +114,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
 
       <Text className="main-info-patient-side">
         <FontAwesomeIcon icon={faIdCard} className="icon-color" />{' '}
-        <span className="section-title">Document Information</span>
+        <span className="section-title-patient-side">Document Information</span>
       </Text>
       <br />
 
@@ -133,7 +133,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
 
       <Text className="main-info-patient-side">
         <FontAwesomeIcon icon={faUser} className="icon-color" />{' '}
-        <span className="section-title">Patient Information</span>
+        <span className="section-title-patient-side">Patient Information</span>
       </Text>
       <br />
 
@@ -151,7 +151,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
       <Divider className="divider-style" />
       <Text className="main-info-patient-side">
         <FaWeight className="icon-color" />{' '}
-        <span className="section-title">Physical Measurements</span>
+        <span className="section-title-patient-side">Physical Measurements</span>
       </Text>
       <div className="details-sections">
         <br />
@@ -198,7 +198,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
 
       <Text className="main-info-patient-side">
         <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
-        <span className="section-title">
+        <span className="section-title-patient-side">
           {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT'
             ? 'Visit Details'
             : 'Admission Details'}

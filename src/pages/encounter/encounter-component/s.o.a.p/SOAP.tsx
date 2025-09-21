@@ -25,6 +25,7 @@ import { newApPatientObservationSummary } from '@/types/model-types-constructor'
 import { notify } from '@/utils/uiReducerActions';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -137,28 +138,31 @@ const SOAP = props => {
         <Tabs.Tab eventKey="1" title="Chief Complain">
           <div className={clsx('column-container', { 'disabled-panel': edit })}>
             <div className="top-section">
-              <div className="flex1 chief-complaint-section-handle">
-                <div className="title-div">
-                  <Text>Chief Complaint </Text>
-                  <MyButton size="small" onClick={saveChanges}>
-                    Save
-                  </MyButton>
-                </div>
-                <Divider />
-                <Form fluid>
-                  <MyInput
-                    width="100%"
-                    height="95px"
-                    showLabel={false}
-                    fieldType="textarea"
-                    fieldName="chiefComplaint"
-                    record={localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                </Form>
-              </div>
+              <SectionContainer
+                title={
+                  <>
+                    Chief Complaint
+                    <MyButton size="small" onClick={saveChanges}>
+                      Save
+                    </MyButton>
+                  </>
+                }
+                content={
+                  <Form fluid>
+                    <MyInput
+                      width="100%"
+                      height="95px"
+                      showLabel={false}
+                      fieldType="textarea"
+                      fieldName="chiefComplaint"
+                      record={localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                  </Form>
+                }
+              />
 
-              <div className="flex1 chief-complaint-section-handle">
+              {/* <div className="flex1 chief-complaint-section-handle">
                 <div className="title-div">
                   <Text>Assessment</Text>
                   <MyButton size="small" onClick={saveChanges}>
@@ -178,19 +182,81 @@ const SOAP = props => {
                     setRecord={setLocalEncounter}
                   />
                 </Form>
-              </div>
+              </div> */}
+              <SectionContainer
+                title={
+                  <>
+                    Assessment
+                    <MyButton size="small" onClick={saveChanges}>
+                      Save
+                    </MyButton>
+                  </>
+                }
+                content={
+                  <Form fluid>
+                  <MyInput
+                    width="100%"
+                    height="95px"
+                    showLabel={false}
+                    placeholder={'Only you can see this Assessment'}
+                    fieldType="textarea"
+                    fieldName="assessmentSummery"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter}
+                  />
+                </Form>
+                }
+              />
             </div>
 
-            <div className="flex1 chief-complaint-section-handle">
+            {/* <div className="flex1 chief-complaint-section-handle">
               <div className="title-div">
                 <Text>Patient Diagnosis </Text>
               </div>
               <Divider />
               <PatientDiagnosis patient={patient} encounter={encounter} />
-            </div>
+            </div> */}
+            <SectionContainer 
+            title="Patient Diagnosis"
+            content={
+              <PatientDiagnosis patient={patient} encounter={encounter} />
+            }
+            />
 
             <div className="last-section-clinical-visit">
-              <div className="clinical-section-box">
+              <SectionContainer 
+               title={
+                <>
+                 Plan
+                  <MyButton size="small" onClick={saveChanges}>
+                    Save
+                  </MyButton>
+                </>
+               }
+               content={
+                <Form fluid>
+                  <MyInput
+                    width="100%"
+                    fieldType="select"
+                    selectData={planLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    fieldName="planInstructionsLkey"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter}
+                  />
+                  <MyInput
+                    width="100%"
+                    fieldType="textarea"
+                    fieldName="planInstructionsNote"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter}
+                    row={4}
+                  />
+                </Form>
+               }
+              />
+              {/* <div className="clinical-section-box">
                 <div className="clinical-section-header">
                   <Text>Plan</Text>
                   <MyButton size="small" onClick={saveChanges}>
@@ -218,9 +284,33 @@ const SOAP = props => {
                     row={4}
                   />
                 </Form>
-              </div>
+              </div> */}
 
-              <div className="clinical-section-box">
+                <SectionContainer 
+                 title={
+                  <>
+                 Summary of Patient History
+                  <MyButton size="small" onClick={saveChanges}>
+                    Save
+                  </MyButton>
+                  </>
+                 }
+                 content={
+                  <Form fluid>
+                  <MyInput
+                    width="100%"
+                    height="150px"
+                    showLabel={false}
+                    placeholder="Summary of Patient History"
+                    fieldType="textarea"
+                    fieldName="assessmentSummery"
+                    record={record}
+                    setRecord={setRecord}
+                  />
+                </Form>
+                 }
+                />
+              {/* <div className="clinical-section-box">
                 <div className="clinical-section-header">
                   <Text>Summary of Patient History</Text>
                   <MyButton size="small" onClick={saveChanges}>
@@ -240,7 +330,7 @@ const SOAP = props => {
                     setRecord={setRecord}
                   />
                 </Form>
-              </div>
+              </div> */}
             </div>
           </div>
         </Tabs.Tab>
