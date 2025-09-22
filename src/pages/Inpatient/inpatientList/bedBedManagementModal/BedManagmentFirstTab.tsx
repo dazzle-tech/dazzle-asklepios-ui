@@ -1,22 +1,44 @@
-import React, { useState } from 'react';
-import { useAppDispatch } from '@/hooks';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStopCircle, faThumbsUp, faTable } from '@fortawesome/free-solid-svg-icons';
-import { faIdCard } from '@fortawesome/free-solid-svg-icons';
-import { notify } from '@/utils/uiReducerActions';
-import { Form, Tooltip, Whisper } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
-import BedCards from './BedCards';
-import { useSaveBedMutation, useFetchBedsRelatedToDepartmentQuery } from '@/services/setupService';
 import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import { useFetchBedsRelatedToDepartmentQuery, useSaveBedMutation } from '@/services/setupService';
+import { notify } from '@/utils/uiReducerActions';
+import {
+  faBed,
+  faExclamationTriangle,
+  faIdCard,
+  faStopCircle,
+  faTable,
+  faThumbsUp,
+  faUser,
+  faBroom
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState } from 'react';
+import { Form, Tooltip, Whisper } from 'rsuite';
+import BedCards from './BedCards';
 import './BedManagmentFirstTab.less';
+import DetailsCard from '@/components/DetailsCard';
 
-const BedManagmentFirstTab = ({ departmentKey }) => {
+const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   const dispatch = useAppDispatch();
   const [saveBed] = useSaveBedMutation();
   const [viewMode, setViewMode] = useState('table'); // view mode state
 
+  // Sort data to show occupied beds first
+  const sortedData = [...data].sort((a, b) => {
+    const statusA = a?.bed?.statusLvalue?.lovDisplayVale || a?.bed?.statusLkey || '';
+    const statusB = b?.bed?.statusLvalue?.lovDisplayVale || b?.bed?.statusLkey || '';
+
+    if (statusA.toLowerCase() === 'occupied' && statusB.toLowerCase() !== 'occupied') {
+      return -1;
+    }
+    if (statusA.toLowerCase() !== 'occupied' && statusB.toLowerCase() === 'occupied') {
+      return 1;
+    }
+    return 0;
+  });
   const {
     data: fetchBedsRelatedToDepartmentResponse,
     refetch,
@@ -128,21 +150,93 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
     }
   ];
 
+  // Calculate statistics (use latest fetched data)
+  const bedsData = fetchBedsRelatedToDepartmentResponse ?? [];
+
+   console.log("bedsData==>",bedsData);
+  const totalBeds = bedsData.length;
+  const occupiedBeds = bedsData.filter(item => {
+    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
+    return status.toLowerCase() === 'occupied';
+  }).length;
+  const availableBeds = bedsData.filter(item => {
+    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
+    return status.toLowerCase() === 'empty';
+  }).length;
+  const outOfServiceBeds = bedsData.filter(item => {
+    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
+    return status.toLowerCase() === 'out of service';
+  }).length;
+  const inCleaning = bedsData.filter(item => {
+    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
+    return status.toLowerCase() === 'in cleaning';
+  }).length;
+
   return (
-    <div>
+    <>
       {/* Toggle view icons */}
       <div className="icons-2">
         <FontAwesomeIcon
           icon={faIdCard}
           className={`fa-table-cells-row-lock-icon ${viewMode === 'card' ? 'active' : ''}`}
-          style={{ cursor: 'pointer', fontSize: 18 }}
           onClick={() => setViewMode('card')}
         />
         <FontAwesomeIcon
           icon={faTable}
           className={`fa-table-cells-row-unlock-icon ${viewMode === 'table' ? 'active' : ''}`}
-          style={{ cursor: 'pointer', fontSize: 18 }}
           onClick={() => setViewMode('table')}
+        />
+      </div>
+      {/* Statistics Cards */}
+      <div className="statistics-container">
+        <DetailsCard
+          title="Total Beds"
+          number={totalBeds}
+          icon={faBed}
+          color="black"
+          backgroundClassName="total"
+          position="left"
+          width={250}
+        />
+
+        <DetailsCard
+          title="Occupied"
+          number={occupiedBeds}
+          icon={faUser}
+          color="#1b9cd7"
+          backgroundClassName="occupied"
+          position="left"
+          width={250}
+        />
+
+        <DetailsCard
+          title="Empty"
+          number={availableBeds}
+          icon={faBed}
+          color="#28a745"
+          backgroundClassName="available"
+          position="left"
+          width={250}
+        />
+
+        <DetailsCard
+          title="Out of service"
+          number={outOfServiceBeds}
+          icon={faExclamationTriangle}
+          color="#dc3545"
+          backgroundClassName="critical"
+          position="left"
+          width={250}
+        />
+
+        <DetailsCard
+          title="In cleaning"
+          number={inCleaning}
+          icon={faBroom}
+          color="var(--primary-orange)"
+          backgroundClassName="cleaning"
+          position="left"
+          width={250}
         />
       </div>
 
@@ -161,7 +255,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
           handleChangeToOutService={handleChangeToOutService}
         />
       )}
-    </div>
+    </>
   );
 };
 

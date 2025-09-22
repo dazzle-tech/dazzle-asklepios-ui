@@ -75,7 +75,7 @@ const DynamicCard: React.FC<MyCardProps> = ({
               : item.vertical === 'bottom'
               ? 'flex-end'
               : 'flex-start',
-          margin: '0 4px',
+          margin: '0',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',

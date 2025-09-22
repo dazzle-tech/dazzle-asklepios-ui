@@ -69,6 +69,7 @@
   font-size: 12px;
   text-transform: capitalize;
 }
+
 .bedcard-footer {
   display: flex;
   justify-content: space-between;
@@ -84,4 +85,505 @@
 .bed-icon {
   font-size: 28px;
   margin-bottom: 10px;
+}
+
+.bedcards-container {
+  display: flex;
+  flex-direction: column;
+  max-height: 54px;
+}
+
+.statistics-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 0 10px;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  color: #515050;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+.dark {
+  .stat-label {
+    color: #ffffff !important;
+  }
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: bolder;
+}
+
+.total {
+  color: black;
+}
+
+.occupied {
+  color: #1b9cd7;
+}
+
+.available {
+  color: #28a745;
+}
+
+.critical {
+  color: #dc3545;
+}
+
+.cleaning {
+  color: var(--primary-orange);
+}
+
+.icu-floor-plan-wrapper {
+  display: flex;
+  flex: 1;
+}
+
+.bed-row {
+  margin-bottom: 20px;
+}
+
+.row-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.beds-in-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.bed-card {
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 15px;
+  position: relative;
+  min-height: 150px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.bed-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-headers {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.card-headers-2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.card-headers-3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.bed-number {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  color: black;
+}
+
+.patient-info-bed {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  align-items: start;
+}
+
+.patient-icon {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.patient-name-1 {
+  font-size: 14px;
+}
+
+.condition {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.vital-signs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  font-size: 12px;
+  justify-content: space-between;
+}
+
+.vital {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.vital-separator {
+  font-size: 10px;
+  color: #666;
+}
+
+.maintenance-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  color: #666;
+}
+
+.available-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  color: #666;
+}
+
+.card-actions {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.bed-detail-sidebar {
+  width: 400px;
+  height: 71vh;
+  border: 1px solid var(--icon-gray);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+  border-radius: 6px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--icon-gray);
+}
+
+.sidebar-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.bed-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+}
+
+.bed-location {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.patient-section,
+.equipment-section {
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.section-header-equipment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.patient-details {
+  margin: 15px 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.label {
+  color: var(--icon-gray) !important;
+}
+
+.dark {
+  .label {
+    color: #ffffff !important;
+  }
+  .detail-row {
+    color: #ffffff !important;
+  }
+}
+
+.value {
+  font-weight: bold;
+  color: var(--icon-gray) !important;
+}
+
+.vital-signs {
+  margin: 20px 0;
+}
+
+.vital-signs h4 {
+  margin-bottom: 10px;
+}
+
+.vitals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.vital-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vital-icon {
+  font-size: 16px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.primary-btn,
+.secondary-btn,
+.admit-btn {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.primary-btn,
+.admit-btn {
+  background: #007bff;
+  color: white;
+}
+
+.secondary-btn {
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid #dee2e6;
+}
+
+.equipment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equipment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.status-dot.active {
+  background: #28a745;
+}
+
+.bottom-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.configure-btn,
+.maintenance-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  background: #f8f9fa;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.empty-bed-content,
+.maintenance-content-detail {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.empty-icon,
+.maintenance-icon {
+  margin-bottom: 20px;
+}
+
+.empty-bed-content h3,
+.maintenance-content-detail h3 {
+  margin-bottom: 10px;
+}
+
+.empty-bed-content p,
+.maintenance-content-detail p {
+  // color: #666;
+  margin-bottom: 20px;
+}
+
+.sidebar-section {
+  margin-left: 15px;
+}
+
+.tag-style-blue {
+  background-color: var(--light-blue) !important;
+  color: #fff !important;
+  border: none;
+  font-size: 11px;
+}
+
+.tag-style-green {
+  background-color: var(--primary-green) !important;
+  color: #fff !important;
+}
+
+.tag-style-red {
+  background-color: var(--primary-red) !important;
+  color: #fff !important;
+}
+
+.bed-card-content-wrapper {
+  width: 230px;
+}
+
+////
+.bed-card-dynamic {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &.selected {
+    border-width: 3px !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+}
+.card-actions,
+.card-actions * {
+  pointer-events: auto;
+  transform: none;
+}
+
+.dark {
+  .bed-detail-sidebar {
+    background-color: black !important;
+  }
+  .rs-nav-horizontal {
+    background-color: black !important;
+  }
+}
+
+.bed-text {
+  color: var(--icon-gray) !important;
+}
+.dark {
+  .bed-text {
+    color: var(--icon-gray) !important;
+  }
+  .bed-text {
+    font-weight: 500 !important;
+  }
 }

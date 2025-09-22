@@ -1,37 +1,33 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
-import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { Form, Panel } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
-import { formatDateWithoutSeconds } from "@/utils";
+import { formatDateWithoutSeconds } from '@/utils';
 import { addFilterToListRequest } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetBedTransactionsListQuery } from '@/services/encounterService';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
-import ReactDOMServer from 'react-dom/server';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 
 const BedTransactionsSecondTab = ({ departmentKey }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
+
   const dispatch = useDispatch();
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
   // State to manage the list request used for filtering and pagination
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    filters: [{
-      fieldName: 'department_key',
-      operator: 'match',
-      value: departmentKey
-
-    }]
+    filters: [
+      {
+        fieldName: 'department_key',
+        operator: 'match',
+        value: departmentKey
+      }
+    ]
   });
   // State to store the selected date range for filtering (fromDate and toDate default to today)
   const [dateFilter, setDateFilter] = useState({
@@ -39,7 +35,11 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
     toDate: new Date()
   });
   // Fetch bed transaction data from the backend using the current listRequest as filters
-  const { data: bedTransactionsListResponse, isFetching, isLoading } = useGetBedTransactionsListQuery(listRequest);
+  const {
+    data: bedTransactionsListResponse,
+    isFetching,
+    isLoading
+  } = useGetBedTransactionsListQuery(listRequest);
 
   //Functions
 
@@ -72,19 +72,17 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
       );
     } else {
       setListRequest({
-        ...listRequest, filters: [
+        ...listRequest,
+        filters: [
           {
             fieldName: 'department_key',
             operator: 'match',
             value: departmentKey
-
           }
         ]
       });
     }
   };
-
-
 
   //useEffect
   useEffect(() => {
@@ -99,14 +97,13 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
   useEffect(() => {
     if (isLoading || (manualSearchTriggered && isFetching)) {
       dispatch(showSystemLoader());
-    } else if ((isFetching && isLoading)) {
+    } else if (isFetching && isLoading) {
       dispatch(hideSystemLoader());
     }
     return () => {
       dispatch(hideSystemLoader());
     };
   }, [isLoading, isFetching, dispatch]);
-
 
   // table columns
   const tableColumns = [
@@ -144,27 +141,35 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
     {
       key: 'admitSource',
       title: <Translate>Admit Source</Translate>,
-      render: rowData => rowData?.admitOutpatientInpatient?.admitSourceLvalue ?
-        rowData?.admitOutpatientInpatient?.admitSourceLvalue?.lovDisplayVale : rowData?.admitOutpatientInpatient?.admitSourceLkey
+      render: rowData =>
+        rowData?.admitOutpatientInpatient?.admitSourceLvalue
+          ? rowData?.admitOutpatientInpatient?.admitSourceLvalue?.lovDisplayVale
+          : rowData?.admitOutpatientInpatient?.admitSourceLkey
     },
     {
-      key: "admissionDate",
+      key: 'admissionDate',
       title: <Translate>Admission Date</Translate>,
       render: (rowData: any) => {
-        return (<span className='date-table-style'>{formatDateWithoutSeconds(rowData?.admitOutpatientInpatient?.createdAt)}</span>)
+        return (
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(rowData?.admitOutpatientInpatient?.createdAt)}
+          </span>
+        );
       }
     },
     {
-      key: "",
+      key: '',
       title: <Translate>Moved By\At</Translate>,
       render: (rowData: any) => {
-        return (<>
-          <span>Current User</span>
-          <br />
-          <span className='date-table-style'>{formatDateWithoutSeconds(rowData?.createdAt)}</span>
-        </>)
+        return (
+          <>
+            <span>Current User</span>
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData?.createdAt)}</span>
+          </>
+        );
       }
-    },
+    }
   ];
 
   const pageIndex = listRequest.pageNumber - 1;
