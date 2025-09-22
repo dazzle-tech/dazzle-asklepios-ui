@@ -1,4 +1,4 @@
-import { Card, Avatar, HStack } from 'rsuite';
+import { Card, Avatar } from 'rsuite';
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faArrowLeft, faEllipsis } from '@fortawesome/free-solid-svg-icons';
@@ -32,6 +32,7 @@ interface MyCardProps {
   margin?: string | number | null;
   data?: CardItem[];
   variant?: 'basic' | 'secondary';
+  backgroundColor?: string;
 }
 
 const DynamicCard: React.FC<MyCardProps> = ({
@@ -47,6 +48,7 @@ const DynamicCard: React.FC<MyCardProps> = ({
   margin = '0px',
   data = [],
   variant = 'basic',
+  backgroundColor,
   ...props
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -82,7 +84,16 @@ const DynamicCard: React.FC<MyCardProps> = ({
       >
         {item.type === 'badge' ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: item.labelGap || 4 }}>
-            {item.showLabel !== false && item.label && <span>{item.label}:</span>}
+            {item.showLabel !== false && item.label && (
+  <>
+    {typeof item.label === 'string' ? (
+      <span style={{ color: item.color}}>{item.label}:</span>
+    ) : (
+      React.cloneElement(item.label as React.ReactElement, {}, `${(item.label as React.ReactElement).props.children}:`)
+    )}
+  </>
+)}
+
             <MyBadgeStatus contant={item.value} color={item.color || '#555'} />
           </div>
         ) : item.type === 'strong' ? (
@@ -96,7 +107,16 @@ const DynamicCard: React.FC<MyCardProps> = ({
           </>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: item.labelGap || 4 }}>
-            {item.showLabel !== false && item.label && <span>{item.label}:</span>}
+            {item.showLabel !== false && item.label && (
+  <>
+    {typeof item.label === 'string' ? (
+      <span style={{ color: item.color}}>{item.label}:</span>
+    ) : (
+      React.cloneElement(item.label as React.ReactElement, {}, `${(item.label as React.ReactElement).props.children}:`)
+    )}
+  </>
+)}
+
             {item.value}
           </div>
         )}
@@ -108,8 +128,7 @@ const DynamicCard: React.FC<MyCardProps> = ({
     <Card
       width={width || 280}
       height={height}
-      margin={margin}
-      shaded
+      style={{ backgroundColor: backgroundColor || 'inherit' }}
       className={`dynamic-card ${mode === 'light' ? 'light' : 'dark'}`}
       {...props}
     >

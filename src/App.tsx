@@ -108,6 +108,7 @@ import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
 import MedicationMatrix from './pages/setup/med-matrix-setup';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
+import ICU from './pages/encounter/encounter-component/i.c.u/ICU'
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import Shifts from './pages/setup/shift-setup';
 import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescription';
@@ -372,6 +373,7 @@ const App = () => {
                 <Route path="dialysis-request" element={<DialysisRequest />} />
                 <Route path="operation-request" element={<OperationRequest />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
+                <Route path="icu" element={<ICU />} />
                 <Route
                   path="multidisciplinary-team-notes"
                   element={<MultidisciplinaryTeamNotes />}
