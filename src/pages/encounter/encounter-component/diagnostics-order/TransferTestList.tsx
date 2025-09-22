@@ -3,8 +3,10 @@ import { Button, Checkbox, List, ListItemButton, ListItemIcon, ListItemText, Pap
 import Grid from '@mui/material/Grid';
 import { Col, Row } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
+import { useSelector } from 'react-redux';
 
 const TransferTestList = ({ leftItems = [], rightItems = [], setLeftItems, setRightItems,searchTerm,setSearchTerm}) => {
+    const mode = useSelector((state: any) => state.ui.mode);
     const [checked, setChecked] = React.useState([]);
     const [left, setLeft] = React.useState(leftItems || []);
     const [right, setRight] = React.useState(rightItems || []);
@@ -110,7 +112,7 @@ const TransferTestList = ({ leftItems = [], rightItems = [], setLeftItems, setRi
                     /></Col>
 
             </Row>
-            <Row style={{backgroundColor:'#F8FAFE' ,padding: '10px', borderRadius: '5px'}}>
+            <Row style={{backgroundColor: mode === 'light' ? '#F8FAFE' : 'var(--extra-dark-black)' ,padding: '10px', borderRadius: '5px'}}>
                 <Col md={10}> {customList(filteredLeft)}</Col>
                 <Col md={4}>
                     <div style={{
