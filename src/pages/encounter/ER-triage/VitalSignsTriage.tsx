@@ -16,6 +16,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { newApPatientObservationSummary } from '@/types/model-types-constructor';
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations ,readOnly=false}) => {
     const dispatch = useAppDispatch();
@@ -164,11 +165,10 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations ,r
         }
     }, [vital?.bloodPressureSystolic, vital?.bloodPressureDiastolic]);
     return (
-        <div className='container-form'>
-            <div className='title-div'>
-                <Text>Vital Signs</Text>
-            </div>
-            <Divider />
+        <SectionContainer 
+         title="Vital Signs"
+         content={
+            <>
             <Form fluid >
                 <Row>
                     <Col md={7}>
@@ -246,7 +246,9 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations ,r
                     </Col>} 
                 </Row>
             </Form>
-        </div>
+            </>
+         }
+        />
     );
 };
 

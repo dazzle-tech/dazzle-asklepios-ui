@@ -3,14 +3,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 import './styles.less';
+import { useSelector } from 'react-redux';
 
 interface EMRCardProps {
   number: number | string;
   footerText: string;
   icon?: IconDefinition;
   backgroundColor?: string;
-  footerBackgroundColor?: string;
-  textColor?: string;
+  // footerBackgroundColor?: string;
+  // textColor?: string;
   width?: number | string;
   height?: number | string;
   onClick?: () => void;
@@ -21,18 +22,19 @@ const EMRCard: React.FC<EMRCardProps> = ({
   footerText,
   icon,
   backgroundColor = '#FF5B5B',
-  footerBackgroundColor = '#F0F0F0',
-  textColor = '#fff',
+  // footerBackgroundColor = '#F0F0F0',
+  // textColor = '#fff',
   width = 140,
   height = 90,
   onClick,
 }) => {
+  const mode = useSelector((state: any) => state.ui.mode);
   return (
     <div
       className="emr-card"
       style={{
         backgroundColor,
-        color: textColor,
+        color: mode === 'light' ? '#fff' : 'var(--light-gray)',
         width,
         height,
         cursor: onClick ? 'pointer' : 'default',
@@ -53,7 +55,7 @@ const EMRCard: React.FC<EMRCardProps> = ({
       <div
         className="emr-card-footer"
         style={{
-          backgroundColor: footerBackgroundColor,
+          backgroundColor: mode === 'light' ? '#F0F0F0' : '#BBBCBD',
         }}
       >
         {footerText}

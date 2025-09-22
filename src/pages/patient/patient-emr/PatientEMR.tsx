@@ -248,8 +248,8 @@ return (
     footerText="History"
     icon={faHouseChimneyMedical}
     backgroundColor="var(--card-purple)"
-    footerBackgroundColor="#F3F3F3"
-    textColor="#fff"
+    // footerBackgroundColor="#F3F3F3"
+    // textColor="#fff"
     width={170}
     height={100}
     onClick={() => setActiveSectionCard(activeSectionCard === 'history' ? null : 'history')}
@@ -263,8 +263,8 @@ return (
               footerText="Visits"
               icon={faBed}
    backgroundColor="var(--card-blue)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
+              // footerBackgroundColor="#F3F3F3"
+              // textColor="#fff"
               width={170}
               height={100}
   onClick={() => setActiveSectionCard(activeSectionCard === 'visits' ? null : 'visits')}
@@ -277,8 +277,8 @@ return (
               footerText="Clinical"
               icon={faTriangleExclamation}
   backgroundColor="var(--card-green)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
+              // footerBackgroundColor="#F3F3F3"
+              // textColor="#fff"
               width={170}
               height={100}
   onClick={() => setActiveSectionCard(activeSectionCard === 'clinical' ? null : 'clinical')}
@@ -291,8 +291,8 @@ return (
     footerText="Diagnostics"
     icon={faPersonShelter}
     backgroundColor="var(--card-light-blue)"
-    footerBackgroundColor="#F3F3F3"
-    textColor="#fff"
+    // footerBackgroundColor="#F3F3F3"
+    // textColor="#fff"
     width={170}
     height={100}
     onClick={() => setActiveSectionCard(activeSectionCard === 'diagnostics' ? null : 'diagnostics')}
@@ -307,8 +307,8 @@ return (
               footerText="Treatment"
               icon={faUserNurse}
   backgroundColor="var(--card-dark-blue)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
+              // footerBackgroundColor="#F3F3F3"
+              // textColor="#fff"
               width={170}
               height={100}
   onClick={() => setActiveSectionCard(activeSectionCard === 'treatment' ? null : 'treatment')}
@@ -321,8 +321,8 @@ return (
               footerText="Documentation"
               icon={faUserInjured}
   backgroundColor="var(--card-dark-pink)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
+              // footerBackgroundColor="#F3F3F3"
+              // textColor="#fff"
               width={170}
               height={100}
   onClick={() => setActiveSectionCard(activeSectionCard === 'documents' ? null : 'documents')}
@@ -336,8 +336,8 @@ return (
     footerText="Services"
     icon={faBedPulse}
     backgroundColor="var(--card-gray)"
-    footerBackgroundColor="#F3F3F3"
-    textColor="#fff"
+    // footerBackgroundColor="#F3F3F3"
+    // textColor="#fff"
     width={170}
     height={100}
     onClick={() =>
@@ -356,8 +356,8 @@ return (
               footerText="60s"
               icon={faBarsProgress}
    backgroundColor="var(--card-purple)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
+              // footerBackgroundColor="#F3F3F3"
+              // textColor="#fff"
               width={150}
               height={100}
   onClick={() => alert('Clicked')}
@@ -369,8 +369,8 @@ return (
         footerText="P.M.H"
         icon={faUserLock}
         backgroundColor="var(--card-purple)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -389,8 +389,8 @@ return (
         footerText="Appointments"
         icon={faCalendar}
         backgroundColor="var(--card-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -405,8 +405,8 @@ return (
         footerText="Clinic Visits"
         icon={faHouseChimneyMedical}
         backgroundColor="var(--card-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -421,8 +421,8 @@ return (
         footerText="Inpatient"
         icon={faBed}
         backgroundColor="var(--card-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -437,8 +437,8 @@ return (
         footerText="Emergency"
         icon={faTriangleExclamation}
         backgroundColor="var(--card-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -453,8 +453,8 @@ return (
         footerText="Day Case"
         icon={faPersonShelter}
         backgroundColor="var(--card-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -473,8 +473,8 @@ return (
               footerText="Consultations"
               icon={faUserDoctor}
    backgroundColor="var(--card-green)"
-              footerBackgroundColor="#F3F3F3"
-              textColor="#fff"
+              // footerBackgroundColor="#F3F3F3"
+              // textColor="#fff"
               width={150}
               height={100}
   onClick={() => setActiveCard(activeCard === 'consultations' ? null : 'consultations')}
@@ -486,8 +486,8 @@ return (
         footerText="Nurse Assessments"
         icon={faUserNurse}
    backgroundColor="var(--card-green)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -502,8 +502,8 @@ return (
         footerText="Procedures"
         icon={faUserInjured}
    backgroundColor="var(--card-green)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -518,8 +518,8 @@ return (
         footerText="Operations"
         icon={faBedPulse}
    backgroundColor="var(--card-green)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -539,8 +539,8 @@ return (
         footerText="Laboratory"
         icon={faVial}
         backgroundColor="var(--card-light-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -555,8 +555,8 @@ return (
         footerText="Radiology"
         icon={faXRay}
         backgroundColor="var(--card-light-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -571,8 +571,8 @@ return (
         footerText="Pathology"
         icon={faMicroscope}
         backgroundColor="var(--card-light-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -592,8 +592,8 @@ return (
         footerText="Medications"
         icon={faPills}
         backgroundColor="var(--card-dark-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -608,8 +608,8 @@ return (
         footerText="Vaccines"
         icon={faSyringe}
         backgroundColor="var(--card-dark-blue)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -632,8 +632,8 @@ return (
         footerText="Reports"
         icon={faFileInvoice}
         backgroundColor="var(--card-dark-pink)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -648,8 +648,8 @@ return (
         footerText="Attachments"
         icon={faPaperclip}
         backgroundColor="var(--card-dark-pink)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -670,8 +670,8 @@ return (
         footerText="Applied Services"
         icon={faConciergeBell}
         backgroundColor="var(--card-gray)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -686,8 +686,8 @@ return (
         footerText="Dental Charts"
         icon={faTooth}
         backgroundColor="var(--card-gray)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>
@@ -702,8 +702,8 @@ return (
         footerText="Ledger Account"
         icon={faMoneyBillTransfer}
         backgroundColor="var(--card-gray)"
-        footerBackgroundColor="#F3F3F3"
-        textColor="#fff"
+        // footerBackgroundColor="#F3F3F3"
+        // textColor="#fff"
         width={150}
         height={100}
         onClick={() =>

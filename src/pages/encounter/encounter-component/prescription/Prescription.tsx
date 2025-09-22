@@ -80,10 +80,10 @@ const Prescription = props => {
   const filteredPrescriptions =
     prescriptions?.object?.filter(item => item.statusLkey === '1804482322306061') ?? [];
 
-  const [preKey, setPreKey] = useState(null);
+  const [preKeyRecord, setPreKeyRecord] = useState({preKey : null});
   const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>({
     ...newApPrescriptionMedications,
-    prescriptionKey: preKey,
+    prescriptionKey: preKeyRecord['preKey'],
     duration: null,
     numberOfRefills: null
   });
@@ -134,7 +134,7 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
 
     setPrescriptionMedications({
       ...rowData,
-      prescriptionKey: preKey,
+      prescriptionKey: preKeyRecord['preKey'],
       genericName: genericMedication?.genericName || ''
     });
 
@@ -158,7 +158,7 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
       {
         fieldName: 'prescription_key',
         operator: '',
-        value: preKey
+        value: preKeyRecord['preKey']
       },
       {
         fieldName: 'status_lkey',
@@ -183,18 +183,18 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
   });
 
   const [isdraft, setIsDraft] = useState(
-    prescriptions?.object?.find(prescription => prescription.key === preKey)?.saveDraft
+    prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])?.saveDraft
   );
 
   // Effects
   useEffect(() => {
     const foundPrescription = prescriptions?.object?.find(
-      prescription => prescription.key === preKey
+      prescription => prescription.key === preKeyRecord['preKey']
     );
     if (foundPrescription?.saveDraft !== isdraft) {
       setIsDraft(foundPrescription?.saveDraft);
     }
-  }, [prescriptions, preKey]);
+  }, [prescriptions, preKeyRecord['preKey']]);
 
   useEffect(() => {
     setListRequest(prev => ({
@@ -203,7 +203,7 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
         {
           fieldName: 'prescription_key',
           operator: '',
-          value: preKey
+          value: preKeyRecord['preKey']
         },
         {
           fieldName: 'status_lkey',
@@ -212,7 +212,7 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
         }
       ]
     }));
-  }, [preKey, showCanceled]);
+  }, [preKeyRecord['preKey'], showCanceled]);
 
   useEffect(() => {
     if (prescriptions?.object) {
@@ -221,7 +221,7 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
       );
 
       if (foundPrescription?.key != null) {
-        setPreKey(foundPrescription?.key);
+        setPreKeyRecord({preKey: foundPrescription?.key});
       }
     }
   }, [prescriptions]);
@@ -243,10 +243,10 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
   }, [selectedRowoMedicationKey]);
 
   useEffect(() => {
-    if (preKey == null) {
+    if (preKeyRecord['preKey'] == null) {
       handleCleare();
     }
-  }, [preKey]);
+  }, [preKeyRecord['preKey']]);
 
   useEffect(() => {
     if (showCanceled) {
@@ -302,7 +302,7 @@ const handleCheckboxChange = (rowData: any) => {
   const handleSubmitPres = async () => {
     try {
       await savePrescription({
-        ...prescriptions?.object?.find(prescription => prescription.key === preKey),
+        ...prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey']),
 
         statusLkey: '1804482322306061',
         saveDraft: false,
@@ -310,7 +310,7 @@ const handleCheckboxChange = (rowData: any) => {
       }).unwrap();
       dispatch(notify('submetid  Successfully'));
       await handleCleare();
-      setPreKey(null);
+      setPreKeyRecord({preKey: null});
       preRefetch().then(() => '');
       medicRefetch().then(() => '');
     } catch (error) {
@@ -341,7 +341,7 @@ const handleCheckboxChange = (rowData: any) => {
   const saveDraft = async () => {
     try {
       await savePrescription({
-        ...prescriptions?.object?.find(prescription => prescription.key === preKey),
+        ...prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey']),
         saveDraft: true
       }).then(() => {
         dispatch(notify({ msg: 'Saved Draft successfully', sev: 'success' }));
@@ -353,7 +353,7 @@ const handleCheckboxChange = (rowData: any) => {
   const cancleDraft = async () => {
     try {
       await savePrescription({
-        ...prescriptions?.object?.find(prescription => prescription.key === preKey),
+        ...prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey']),
         saveDraft: false
       }).then(() => {
         dispatch(notify({ msg: 'Draft Cancelled', sev: 'success' }));
@@ -364,7 +364,7 @@ const handleCheckboxChange = (rowData: any) => {
 
   const handleSavePrescription = async () => {
     await handleCleare();
-    setPreKey(null);
+    setPreKeyRecord({preKey: null});
 
     if (patient && encounter) {
       try {
@@ -377,7 +377,7 @@ const handleCheckboxChange = (rowData: any) => {
 
         dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
 
-        setPreKey(response?.data?.key);
+        setPreKeyRecord({preKey: response?.data?.key});
 
         preRefetch().then(() => '');
       } catch (error) {
@@ -390,7 +390,7 @@ const handleCheckboxChange = (rowData: any) => {
 
   const handleNewPrescriptionAndAddMedication = async () => {
     try {
-      if (!preKey) {
+      if (!preKeyRecord['preKey']) {
         await handleSavePrescription();
       }
 
@@ -400,7 +400,7 @@ const handleCheckboxChange = (rowData: any) => {
       setOpenDetailsModal(true);
       setOpenToAdd(true);
 
-      if (preKey || prescriptions?.object?.some(p => p.saveDraft === true)) {
+      if (preKeyRecord['preKey'] || prescriptions?.object?.some(p => p.saveDraft === true)) {
         await saveDraft();
       }
     } catch (error) {
@@ -624,17 +624,19 @@ const handleCheckboxChange = (rowData: any) => {
     <>
       <div className="bt-div">
         <div style={{ width: '500px' }}>
-          <SelectPicker
-            className="fill-width"
-            data={filteredPrescriptions ?? []}
-            labelKey="prescriptionId"
-            valueKey="key"
-            placeholder="Prescription"
-            value={preKey ?? null}
-            onChange={e => {
-              setPreKey(e);
-            }}
+          <Form fluid>
+          <MyInput
+          placeholder="Prescription"
+          fieldName="preKey"
+          fieldType='select'
+          record={preKeyRecord}
+          setRecord={setPreKeyRecord}
+          selectData={filteredPrescriptions ?? []}
+          selectDataLabel="prescriptionId"
+          selectDataValue="key"
+          showLabel={false}
           />
+          </Form>
         </div>
         <div className="icon-style">
           <FaFilePrescription size={18} />
@@ -642,7 +644,7 @@ const handleCheckboxChange = (rowData: any) => {
         <div>
           <div className="prescripton-word-style">Prescription</div>
           <div className="prescripton-number-style">
-            {prescriptions?.object?.find(prescription => prescription.key === preKey)
+            {prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
               ?.prescriptionId || '_'}
           </div>
         </div>
@@ -680,8 +682,8 @@ const handleCheckboxChange = (rowData: any) => {
           <MyButton
             onClick={handleSubmitPres}
             disabled={
-              preKey
-                ? prescriptions?.object?.find(prescription => prescription.key === preKey)
+              preKeyRecord['preKey']
+                ? prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
                     ?.statusLkey === '1804482322306061'
                 : true
             }
@@ -695,8 +697,8 @@ const handleCheckboxChange = (rowData: any) => {
               onClick={cancleDraft}
               prefixIcon={() => <DocPassIcon />}
               disabled={
-                preKey
-                  ? prescriptions?.object?.find(prescription => prescription.key === preKey)
+                preKeyRecord['preKey']
+                  ? prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
                       ?.statusLkey === '1804482322306061'
                   : true
               }
@@ -770,7 +772,7 @@ const handleCheckboxChange = (rowData: any) => {
         encounter={encounter}
         prescriptionMedication={prescriptionMedication}
         setPrescriptionMedications={setPrescriptionMedications}
-        preKey={preKey}
+        preKey={preKeyRecord['preKey']}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
       />
