@@ -69,6 +69,7 @@
   font-size: 12px;
   text-transform: capitalize;
 }
+
 .bedcard-footer {
   display: flex;
   justify-content: space-between;
@@ -85,8 +86,6 @@
   font-size: 28px;
   margin-bottom: 10px;
 }
-
-//
 
 .bedcards-container {
   display: flex;
@@ -132,64 +131,29 @@
   font-weight: bolder;
 }
 
-.stat-value.total {
+.total {
   color: black;
 }
 
-.stat-value.occupied {
+.occupied {
   color: #1b9cd7;
 }
 
-.stat-value.available {
+.available {
   color: #28a745;
 }
 
-.stat-value.critical {
-  color: #dc3545;
-}
-.stat-value.cleaning {
-  color: var(--primary-orange);
-}
-
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.stat-icon.total {
-  background-color: var(--background-gray);
-  color: black;
-}
-
-.stat-icon.occupied {
-  background: var(--very-light-blue);
-  color: var(--primary-blue);
-}
-
-.stat-icon.available {
-  background: #e8f5e8;
-  color: #28a745;
-}
-
-.stat-icon.critical {
-  background: #ffebee;
+.critical {
   color: #dc3545;
 }
 
-.stat-icon.cleaning {
-  background: var(--light-orange);
+.cleaning {
   color: var(--primary-orange);
 }
 
 .icu-floor-plan-wrapper {
   display: flex;
   flex: 1;
-  // overflow: hidden; /* يمنع Scroll كامل الصفحة */
 }
 
 .bed-row {
@@ -204,9 +168,9 @@
 }
 
 .beds-in-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .bed-card {
@@ -224,11 +188,28 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.card-header {
+.card-headers {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  width: 100%;
+}
+
+.card-headers-2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.card-headers-3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
 }
 
 .bed-number {
@@ -237,23 +218,6 @@
   gap: 5px;
   font-size: 16px;
   color: black;
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-.status-indicator.occupied {
-  background-color: var(--light-blue);
-}
-
-.status-indicator.available {
-  background-color: #28a745;
 }
 
 .patient-info-bed {
@@ -272,7 +236,6 @@
 
 .patient-name-1 {
   font-size: 14px;
-  // font-weight: 100;
 }
 
 .condition {
@@ -287,6 +250,7 @@
   gap: 10px;
   margin: 10px 0;
   font-size: 12px;
+  justify-content: space-between;
 }
 
 .vital {
@@ -329,7 +293,7 @@
 .bed-detail-sidebar {
   width: 400px;
   height: 71vh;
-  background: white;
+  // background: white;
   border: 1px solid #e0e0e0;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
@@ -538,7 +502,7 @@
 
 .empty-bed-content p,
 .maintenance-content-detail p {
-  color: #666;
+  // color: #666;
   margin-bottom: 20px;
 }
 
@@ -547,27 +511,63 @@
 }
 
 .tag-style-blue {
-  background-color: var(--light-blue);
-  color: #fff;
-  font-weight: bold;
+  background-color: var(--light-blue) !important;
+  color: #fff !important;
+  border: none;
+  font-size: 11px;
 }
 
 .tag-style-green {
-  background-color: var(--primary-green);
-  color: #fff;
-  font-weight: bold;
+  background-color: var(--primary-green) !important;
+  color: #fff !important;
 }
 
 .tag-style-red {
-  background-color: var(--primary-red);
-  color: #fff;
-  font-weight: bold;
+  background-color: var(--primary-red) !important;
+  color: #fff !important;
 }
 
-.tag-style-blue {
-  background-color: var(--light-blue) !important;
-  color: #fff;
-  border: none;
-  font-size: 11px;
-  font-weight: bold;
+.bed-card-content-wrapper {
+  width: 230px;
+}
+
+////
+.bed-card-dynamic {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &.selected {
+    border-width: 3px !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+}
+.card-actions,
+.card-actions * {
+  pointer-events: auto;
+  transform: none;
+}
+
+.dark {
+  .bed-detail-sidebar {
+    background-color: black !important;
+  }
+  .rs-nav-horizontal {
+    background-color: black !important;
+  }
+}
+
+.dark {
+  .bed-text {
+    color: var(--icon-gray) !important;
+  }
+  .bed-text {
+    font-weight: 500 !important;
+  }
 }

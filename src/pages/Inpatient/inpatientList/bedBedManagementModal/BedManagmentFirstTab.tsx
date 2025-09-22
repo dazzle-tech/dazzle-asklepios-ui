@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 import { Form, Tooltip, Whisper } from 'rsuite';
 import BedCards from './BedCards';
 import './BedManagmentFirstTab.less';
+import DetailsCard from '@/components/DetailsCard';
 
 const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   const dispatch = useAppDispatch();
@@ -149,9 +150,10 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
     }
   ];
 
-    // Calculate statistics (use latest fetched data)
+  // Calculate statistics (use latest fetched data)
   const bedsData = fetchBedsRelatedToDepartmentResponse ?? [];
 
+   console.log("bedsData==>",bedsData);
   const totalBeds = bedsData.length;
   const occupiedBeds = bedsData.filter(item => {
     const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
@@ -170,7 +172,6 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
     return status.toLowerCase() === 'in cleaning';
   }).length;
 
-
   return (
     <>
       {/* Toggle view icons */}
@@ -178,77 +179,65 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
         <FontAwesomeIcon
           icon={faIdCard}
           className={`fa-table-cells-row-lock-icon ${viewMode === 'card' ? 'active' : ''}`}
-          style={{ cursor: 'pointer', fontSize: 18 }}
           onClick={() => setViewMode('card')}
         />
         <FontAwesomeIcon
           icon={faTable}
           className={`fa-table-cells-row-unlock-icon ${viewMode === 'table' ? 'active' : ''}`}
-          style={{ cursor: 'pointer', fontSize: 18 }}
           onClick={() => setViewMode('table')}
         />
       </div>
       {/* Statistics Cards */}
       <div className="statistics-container">
-        <div className="stat-card">
-          <div className="stat-content">
-            <div className="stat-text">
-              <span className="stat-label">Total Beds</span>
-              <span className="stat-value total">{totalBeds}</span>
-            </div>
-            <div className="stat-icon total">
-              <FontAwesomeIcon icon={faBed} />
-            </div>
-          </div>
-        </div>
+        <DetailsCard
+          title="Total Beds"
+          number={totalBeds}
+          icon={faBed}
+          color="black"
+          backgroundClassName="total"
+          position="left"
+          width={250}
+        />
 
-        <div className="stat-card">
-          <div className="stat-content">
-            <div className="stat-text">
-              <span className="stat-label">Occupied</span>
-              <span className="stat-value occupied">{occupiedBeds}</span>
-            </div>
-            <div className="stat-icon occupied">
-              <FontAwesomeIcon icon={faUser} />
-            </div>
-          </div>
-        </div>
+        <DetailsCard
+          title="Occupied"
+          number={occupiedBeds}
+          icon={faUser}
+          color="#1b9cd7"
+          backgroundClassName="occupied"
+          position="left"
+          width={250}
+        />
 
-        <div className="stat-card">
-          <div className="stat-content">
-            <div className="stat-text">
-              <span className="stat-label">Empty</span>
-              <span className="stat-value available">{availableBeds}</span>
-            </div>
-            <div className="stat-icon available">
-              <FontAwesomeIcon icon={faBed} />
-            </div>
-          </div>
-        </div>
+        <DetailsCard
+          title="Empty"
+          number={availableBeds}
+          icon={faBed}
+          color="#28a745"
+          backgroundClassName="available"
+          position="left"
+          width={250}
+        />
 
-        <div className="stat-card">
-          <div className="stat-content">
-            <div className="stat-text">
-              <span className="stat-label">Out of service</span>
-              <span className="stat-value critical">{outOfServiceBeds}</span>
-            </div>
-            <div className="stat-icon critical">
-              <FontAwesomeIcon icon={faExclamationTriangle} />
-            </div>
-          </div>
-        </div>
+        <DetailsCard
+          title="Out of service"
+          number={outOfServiceBeds}
+          icon={faExclamationTriangle}
+          color="#dc3545"
+          backgroundClassName="critical"
+          position="left"
+          width={250}
+        />
 
-        <div className="stat-card">
-          <div className="stat-content">
-            <div className="stat-text">
-              <span className="stat-label">In cleaning</span>
-              <span className="stat-value cleaning">{inCleaning}</span>
-            </div>
-            <div className="stat-icon cleaning">
-              <FontAwesomeIcon icon={faBroom} />
-            </div>
-          </div>
-        </div>
+        <DetailsCard
+          title="In cleaning"
+          number={inCleaning}
+          icon={faBroom}
+          color="var(--primary-orange)"
+          backgroundClassName="cleaning"
+          position="left"
+          width={250}
+        />
       </div>
 
       {/* View mode switch */}
