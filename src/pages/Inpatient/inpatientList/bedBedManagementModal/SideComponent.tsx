@@ -23,12 +23,10 @@ const BedDetailSidebar = ({
 }) => {
   if (!selectedBed) {
     return (
-      <div
-        className="bed-detail-sidebar"
-      >
+      <div className="bed-detail-sidebar">
         <div className="default-sidebar-content">
           <div className="bed-icon-large">
-            <FontAwesomeIcon icon={faBed} size="4x" color="#ccc" />
+            <FontAwesomeIcon icon={faBed} size="4x" color="var(--gray-dark)" />
           </div>
           <h6>Select a Bed</h6>
           <p>Click on any bed in the layout to view detailed information and patient data.</p>
@@ -58,7 +56,7 @@ const BedDetailSidebar = ({
       </div>
 
       <div className="bed-location">
-        <span>{roomNumber}</span>
+        <span className="bed-text">{roomNumber}</span>
       </div>
 
       {/* Patient Info */}
@@ -108,10 +106,10 @@ const BedDetailSidebar = ({
       {status === 'empty' && (
         <div className="empty-bed-content">
           <div className="empty-icon">
-            <FontAwesomeIcon icon={faUser} size="4x" color="#ccc" />
+            <FontAwesomeIcon icon={faUser} size="4x" color="var(--icon-gray)" />
           </div>
-          <Text className='bed-text'>Bed Available</Text>
-          <p className='bed-text'>This bed is ready for patient admission.</p>
+          <Text className="bed-text">Bed Available</Text>
+          <p className="bed-text">This bed is ready for patient admission.</p>
 
           <MyButton className="admit-btn">👤 Admit Patient</MyButton>
         </div>
@@ -121,10 +119,12 @@ const BedDetailSidebar = ({
       {(status === 'out of service' || status === 'in cleaning') && (
         <div className="maintenance-content-detail">
           <div className="maintenance-icon">
-            <FontAwesomeIcon icon={faWrench} size="4x" color="#6c757d" />
+            <FontAwesomeIcon icon={faWrench} size="4x" color="var(--icon-gray)" />
           </div>
-          <Text>Out of Service</Text>
-          <p>This bed is currently out of service and is not available for patients.</p>
+          <Text className="bed-text">Out of Service</Text>
+          <p className="bed-text">
+            This bed is currently out of service and is not available for patients.
+          </p>
         </div>
       )}
 

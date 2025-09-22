@@ -121,11 +121,15 @@
 }
 
 .stat-label {
-  color: #666;
+  color: #515050;
   font-size: 14px;
   margin-bottom: 5px;
 }
-
+.dark {
+  .stat-label {
+    color: #ffffff !important;
+  }
+}
 .stat-value {
   font-size: 28px;
   font-weight: bolder;
@@ -293,8 +297,7 @@
 .bed-detail-sidebar {
   width: 400px;
   height: 71vh;
-  // background: white;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--icon-gray);
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   padding: 20px;
@@ -317,7 +320,7 @@
   align-items: center;
   margin-bottom: 15px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--icon-gray);
 }
 
 .sidebar-header-row {
@@ -382,11 +385,21 @@
 }
 
 .label {
-  color: #666;
+  color: var(--icon-gray) !important;
+}
+
+.dark {
+  .label {
+    color: #ffffff !important;
+  }
+  .detail-row {
+    color: #ffffff !important;
+  }
 }
 
 .value {
   font-weight: bold;
+  color: var(--icon-gray) !important;
 }
 
 .vital-signs {
@@ -563,6 +576,9 @@
   }
 }
 
+.bed-text {
+  color: var(--icon-gray) !important;
+}
 .dark {
   .bed-text {
     color: var(--icon-gray) !important;

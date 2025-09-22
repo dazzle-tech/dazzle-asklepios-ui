@@ -89,8 +89,6 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
     setSelectedBed(bedData);
   };
 
-
-
   // Get text color for status
   const getStatusColor = status => {
     if (!status) return 'var(--primary-gray)';
@@ -172,7 +170,7 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
     const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || 'available';
     const bedNumber = item?.bed?.name || `10${index + 1}`;
     const bedId = item?.bed?.id || bedNumber;
-    const patientName = item?.patientName || 'qais';
+    const patientName = item?.patientName || 'Qais';
     const condition = item?.condition || 'Condition';
     const statusInfo = getStatusInfo(status);
 
@@ -248,7 +246,7 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
                   <FontAwesomeIcon icon={faExclamationTriangle} color="#dc3545" />
                   <span className="patient-name-1">{patientName}</span>
                 </div>
-                <div className="condition">{condition}</div>
+                <Text className="condition">{condition}</Text>
               </div>
 
               {/* Vital Signs */}
@@ -310,7 +308,7 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
               </div>
 
               <div className="maintenance-content">
-                <FontAwesomeIcon icon={faWrench} />
+                <FontAwesomeIcon icon={faWrench} size="2x" color="var(--gray-dark)" />
                 <span>Out of Service</span>
               </div>
 
@@ -356,7 +354,7 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
               </div>
 
               <div className="available-content">
-                <FontAwesomeIcon icon={faUser} size="2x" color="#ccc" />
+                <FontAwesomeIcon icon={faUser} size="2x" color="var(--gray-dark)" />
                 <span>Empty</span>
               </div>
 
@@ -385,14 +383,14 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
   };
 
   const patientInfo = {
-    Name: 'Robert Williams',
+    Name: 'Qais',
     'Patient ID': 'P004',
     Age: '71',
     Condition: 'Stroke with intracranial pressure'
   };
 
   const vitals = [
-    { label: '♥', value: '68 bpm' },
+    { label: <FontAwesomeIcon icon={faHeart} size="lg" color="red" />, value: ' 68 bpm' },
     { label: '🩸', value: '160/95 mmHg' },
     { label: '🌡️', value: '37°C' },
     { label: '💨', value: '96% O₂' }
@@ -423,10 +421,8 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
         ></SectionContainer>
 
         {/* Sidebar */}
-        <div className="sidebar-section" 
-        >
+        <div className="sidebar-section">
           <BedDetailSidebar
-          
             selectedBed={
               selectedBed
                 ? {
