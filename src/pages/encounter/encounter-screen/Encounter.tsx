@@ -258,10 +258,17 @@ const Encounter = () => {
     '/encounter/iv-fluid-administration': 'IV Fluid Administration',
     '/encounter/continuous-observation': 'Continuous Observation',
     '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment',
-    '/encounter/sliding-scale ': 'Sliding Scale'
+    '/encounter/sliding-scale ': 'Sliding Scale',
+    '/encounter/icu': 'ICU',
   };
 
   const menuItems = [
+        {
+      key: 'icu',
+      label: 'ICU',
+      icon: <FontAwesomeIcon icon={faBed} className="icon" />,
+      path: 'icu'
+    },
     {
       key: 'pregnancyFollowUp',
       label: 'Pregnancy Follow-up',
