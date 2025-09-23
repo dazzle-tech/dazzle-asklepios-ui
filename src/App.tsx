@@ -170,6 +170,10 @@ import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
+import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
+import { useGetScreensQuery } from './services/userService';
+import { MODULES } from "@/config/modules-config";
+import RoleManegment from './pages/setup/role-managemen';
 
 import CallOverlay from './components/Overlay/CallOverlay';
 import IncidentPortal from './pages/Incident/IncidentPortal';
@@ -613,7 +617,7 @@ const loadNavs = () => {
               <Route path="icd10-setup" element={<ICD10Setup />} />
               <Route path="cpt-setup" element={<CPTSetup />} />
               <Route path="loinc-setup" element={<LOINCSetup />} />
-              <Route path="services-setup" element={<ServiceSetup />} />
+              <Route path="services-setup" element={<RoleManegment />} />
               <Route path="surgical-kits-setup" element={<SurgicalKitsSetup />} />
               <Route path="error-404" element={<Error404Page />} />
               <Route path="error-403" element={<Error403Page />} />
