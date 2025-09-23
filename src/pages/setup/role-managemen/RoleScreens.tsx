@@ -66,7 +66,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
       return [...filtered, ...additions];
     });
   };
-
   // الجدول الرئيسي للموديولات
   const columns = [
     {

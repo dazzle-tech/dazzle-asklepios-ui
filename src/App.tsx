@@ -170,18 +170,19 @@ import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
-import CallOverlay from './components/Overlay/CallOverlay';
-import NewDepartments from './pages/setup/departments-setup/Departments-new';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import { useGetScreensQuery } from './services/userService';
 import { MODULES } from "@/config/modules-config";
 import RoleManegment from './pages/setup/role-managemen';
+import CallOverlay from './components/Overlay/CallOverlay';
+import NewDepartments from './pages/setup/departments-setup/Departments-new';
+
 
 
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
-  console.log("User Screens from APP",authSlice.user)
+  console.log("User Screens from APP",authSlice)
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
