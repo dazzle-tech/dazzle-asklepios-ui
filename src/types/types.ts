@@ -29,7 +29,7 @@ export const initialListRequest: ListRequest = {
   filters: [],
   pageNumber: 1,
   pageSize: 15,
-  sortBy: 'key',
+  sortBy: 'id',
   sortType: 'asc',
   timestamp: 0,
   ignore: false,

@@ -179,7 +179,6 @@ import NewDepartments from './pages/setup/departments-setup/Departments-new';
 
 
 
-
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   console.log("User Screens from APP",authSlice)
