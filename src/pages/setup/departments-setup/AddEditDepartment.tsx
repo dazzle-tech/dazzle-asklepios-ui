@@ -38,23 +38,23 @@ const AddEditDepartment = ({
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
-                fieldName="facilityKey"
+                fieldName="facilityId"
                 required
                 fieldType="select"
                 selectData={facilityListResponse?.object ?? []}
                 selectDataLabel="facilityName"
-                selectDataValue="key"
+                selectDataValue="Id"
                 record={department}
                 setRecord={setDepartment}
               />
               <MyInput
                 width={250}
-                fieldName="departmentTypeLkey"
+                fieldName="departmentType"
                 fieldLabel="Department Type"
                 fieldType="select"
                 selectData={depTTypesLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectDataValue="Id"
                 record={department}
                 setRecord={setDepartment}
               />
@@ -118,10 +118,10 @@ const AddEditDepartment = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={department?.key ? 'Edit Department' : 'New Department'}
+      title={department?.id ? 'Edit Department' : 'New Department'}
       position="right"
       content={conjureFormContent}
-      actionButtonLabel={department?.key ? 'Save' : 'Create'}
+      actionButtonLabel={department?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Department Info', icon:<FontAwesomeIcon icon={ faLaptop }/>}]}
       size={width > 600 ? '36vw' : '25vw'}
