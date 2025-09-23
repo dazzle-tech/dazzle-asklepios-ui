@@ -3,6 +3,7 @@ import { MODULES } from "@/config/modules-config";
 import Translate from "@/components/Translate";
 import MyNestedTable from "@/components/MyNestedTable";
 import { SelectPicker } from "rsuite";
+
 import {
   useGetRolePermissionsQuery,
   useUpdateRolePermissionsMutation,
@@ -12,17 +13,22 @@ import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 
 interface Permission {
+
   screen: string;
+
   permission: "VIEW" | "EDIT";
 }
 
 const RoleScreens = ({ roleId }: { roleId: number }) => {
   const dispatch = useAppDispatch();
+
   const { data: initialPermissions = [], isLoading, refetch } =
+
     useGetRolePermissionsQuery(roleId);
   const [updatePermissions] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
+
   console.log("Selected",selected)
 
   // sync from backend
@@ -63,12 +69,13 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
       const additions = screens.map((scr) => ({
         screen: scr.name,
         permission: value,
+
       }));
       return [...filtered, ...additions];
     });
   };
 
-  
+
   const columns = [
     {
       key: "module",
@@ -76,6 +83,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
       render: (rowData: any) => <div>{rowData.name}</div>,
     },
     {
+
       key: "permission",
       title: <Translate>Permission</Translate>,
       render: (rowData: any) => {
@@ -100,13 +108,14 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
             value={current}
             onChange={(value) => setModulePermissions(screens, value)}
             style={{ width: 150 }}
+
           />
         );
       },
     },
   ];
 
-  
+
   const screenColumns = (moduleRow: any) => [
     {
       key: "screen",
@@ -131,6 +140,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
           />
         );
       },
+
     },
   ];
 
@@ -149,6 +159,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
       dispatch(
         notify({ sev: "error", msg: "Failed to update permissions" })
       );
+
     }
   };
 
@@ -160,7 +171,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
         data={MODULES}
         columns={columns}
         getNestedTable={getNestedTable}
-       
 
       />
       <br />

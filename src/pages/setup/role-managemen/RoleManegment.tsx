@@ -57,10 +57,12 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
               )
             }
           />
+
         </Col>
       </Row>
     </Grid>
   );
+
 
   return (
     <MyModal
@@ -80,3 +82,4 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
 };
 
 export default RoleManegment;
+

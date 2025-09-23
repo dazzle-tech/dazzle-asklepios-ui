@@ -53,6 +53,7 @@ export const MODULES: Module[] =
       { name: "Questionnaire Setup", description: "", icon: "FaClipboardQuestion", viewOrder: 5, navPath: "questionnaire-setup" },
       { name: "Medication Schedule Setup", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
       { name: "Visit Duration", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
+
       { name: "Clinical Protocols Setup", description: "where to define clinical protocols dynamically", icon: "FaStethoscope", viewOrder: 1, navPath: "" },
       { name: "Shift Setup", description: "", icon: "FaClock", viewOrder: 13, navPath: "shift-setup" },
       { name: "Supplier Setup", description: "Supplier Setup", icon: "FaRedRiver", viewOrder: 15, navPath: "supplier-setup" },
@@ -72,6 +73,7 @@ export const MODULES: Module[] =
       { name: "Loinc", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
       { name: "Cdt Codes", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
       { name: "Snomed Ct", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "" },
+
     ],
   },
   {name: "Front Desk Office",
