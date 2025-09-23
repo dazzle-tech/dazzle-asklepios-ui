@@ -60,17 +60,16 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
       </Row>
     </Grid>
   );
-
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Role Management"
-      size="full"
-     
+      size="70%"
+      bodyheight="70vh"
       content={content}
       hideBack={true}
-     
+      steps={[{ title: "Roles", icon: <FontAwesomeIcon icon={faUserShield} /> }]}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       isDisabledActionBtn={!selected} // disable until a role is selected
