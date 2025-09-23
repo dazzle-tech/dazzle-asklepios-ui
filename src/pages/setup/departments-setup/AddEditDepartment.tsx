@@ -57,6 +57,7 @@ const AddEditDepartment = ({
                 fieldLabel="Department Type"
                 fieldType="select"
                 selectData={depTTypesEnum ?? []}
+
                 record={department}
                 setRecord={setDepartment}
                 required
@@ -126,6 +127,7 @@ const AddEditDepartment = ({
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
       actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
       steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
+
       size={width > 600 ? '36vw' : '25vw'}
     />
   );

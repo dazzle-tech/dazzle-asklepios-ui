@@ -30,18 +30,21 @@ const Departments = () => {
 
   const [department, setDepartment] = useState<Department>({ ...newDepartment });
   const [load, setLoad] = useState(false);
+
   const [popupOpen, setPopupOpen] = useState(false);
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
+
   const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
   const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
 
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
+
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -61,6 +64,7 @@ const Departments = () => {
     diagnosticsResult: true,
     observation: true
   });
+
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequestId,
@@ -104,6 +108,7 @@ const Departments = () => {
   }, [dispatch]);
 
   // Handle window resize
+
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
@@ -121,6 +126,7 @@ const Departments = () => {
   useEffect(() => {
     if (addDepartmentMutation.data) {
       setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
+
     }
   }, [addDepartmentMutation.data]);
 
@@ -134,6 +140,7 @@ const Departments = () => {
   useEffect(() => {
     if (medicalSheet?.object?.key) {
       setShowScreen({ ...medicalSheet.object });
+
     } else {
       setShowScreen({
         ...newApMedicalSheets,
@@ -155,6 +162,7 @@ const Departments = () => {
         observation: true
       });
     }
+
   }, [medicalSheet, department.id, department.facilityId]);
   //handle get facility and department type data for search
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
@@ -181,11 +189,13 @@ const Departments = () => {
 
   // add department
   const handleAdd = () => {
+
     setPopupOpen(false);
     setLoad(true);
     addDepartment(department)
       .unwrap()
       .then(() => {
+
         dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
       })
       .catch(() => {
@@ -259,6 +269,7 @@ const Departments = () => {
         );
       });
   };
+
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -292,6 +303,7 @@ const Departments = () => {
         icon={faSheetPlastic}
         title="Medical Sheets"
         size="lg"
+
         style={{
           cursor: [
             '5673990729647001',
@@ -303,6 +315,7 @@ const Departments = () => {
             : 'not-allowed',
           color: 'var(--primary-gray)'
         }}
+
         onClick={() => {
           if (
             ['5673990729647001', '5673990729647002', '5673990729647005', '5673990729647004'].includes(
@@ -312,10 +325,12 @@ const Departments = () => {
             setDepartment(rowData);
             setOpenScreensPopup(true);
           }
+
         }}
       />
     </div>
   );
+
 
 
   const tableColumns = [
@@ -334,6 +349,7 @@ const Departments = () => {
       )
     },
 
+
     {
       key: 'name',
       title: <Translate>Department Name</Translate>,
@@ -344,6 +360,7 @@ const Departments = () => {
       title: <Translate>Department Type</Translate>,
       flexGrow: 4,
       render: rowData => <p>{rowData?.departmentType}</p>
+
     },
     {
       key: 'phoneNumber',
@@ -363,6 +380,7 @@ const Departments = () => {
     {
       key: 'appointable',
       title: <Translate>Appointable</Translate>,
+
       render: rowData => <p>{rowData?.appointable ? 'Yes' : 'No'}</p>
     },
     {
@@ -370,6 +388,7 @@ const Departments = () => {
       title: <Translate>Status</Translate>,
       flexGrow: 4,
       render: rowData => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
+
     },
     {
       key: 'icons',
@@ -378,6 +397,7 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
+
 
   const getFilterWidth = (filter: string): string => {
     switch (filter) {
@@ -475,6 +495,7 @@ const Departments = () => {
   };
 
 
+
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
@@ -516,6 +537,7 @@ const Departments = () => {
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
+
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
@@ -529,8 +551,10 @@ const Departments = () => {
         recordOfDepartmentCode={recordOfDepartmentCode}
         setRecordOfDepartmentCode={setRecordOfDepartmentCode}
         width={width}
+
         handleAddNew={handleAdd}
         handleUpdate={handleUpdate}
+
       />
       <ChooseDepartment
         open={openScreensPopup}
@@ -544,4 +568,6 @@ const Departments = () => {
   );
 };
 
+
 export default Departments;
+
