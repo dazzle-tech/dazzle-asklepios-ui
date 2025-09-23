@@ -34,6 +34,11 @@ import { CreateFacility, Facility } from '@/types/model-types-new';
 import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
 import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQuery, useUpdateFacilityMutation } from '@/services/security/facilityService';
 import { set } from 'lodash';
+import { Key, KeyOff, KeySharp } from '@mui/icons-material';
+import { FaKey } from 'react-icons/fa6';
+import Role from '../role-managemen/Role';
+import RoleScreens from '../role-managemen/RoleScreens';
+import RoleManegment from '../role-managemen';
 const Facilities = () => {
 
   const dispatch = useAppDispatch();
@@ -42,6 +47,7 @@ const Facilities = () => {
   const [address, setAddress] = useState<ApAddresses>({ ...newApAddresses });
   const [departments, setDepartments] = useState<ApDepartment>({ ...newApDepartment });
   const [popupOpen, setPopupOpen] = useState(false);
+  const [popupOpenRole, setPopupOpenRole] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [facilityDepartmentPopupOpen, setFacilityDepartmentPopupOpen] = useState<boolean>(false);
   const [openConfirmDeleteModel, setOpenConfirmDeleteModel] = useState<boolean>(false);
@@ -116,12 +122,13 @@ const Facilities = () => {
         }}
         className='icons-style'
       />
-      <RiInformationFill
-        title="Add Details"
+      <FaKey
+        title="Facility Roles"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
           setFacility(rowData);
+          setPopupOpenRole(true);
         }}
         className='icons-style'
       />
@@ -319,6 +326,12 @@ const Facilities = () => {
               setAddress={setAddress}
               handleSave = {handleSave}
               width={width}
+            />
+            <RoleManegment
+              open={popupOpenRole}
+              setOpen={setPopupOpenRole}
+              facility={createFacility}
+              setFacility={setCreateFacility}
             />
             <FacilityDepartment
              open={facilityDepartmentPopupOpen}
