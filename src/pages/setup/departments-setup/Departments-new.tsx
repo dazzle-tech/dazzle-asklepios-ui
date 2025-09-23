@@ -481,7 +481,6 @@ const Departments = () => {
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
-
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setListRequest({
       ...listRequest,
@@ -503,27 +502,20 @@ const Departments = () => {
         </MyButton>
       </div>
       <MyTable
-        data={
-          isFiltered
-            ? departmentList.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage)
-            : departmentListResponse?.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage) ?? []
-        }
-        totalCount={
-          isFiltered
-            ? departmentList.length
-            : departmentListResponse?.length ?? 0
-        }
+        data={departmentListResponse?.object ?? []}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={rowData => setDepartment(rowData)}
+        onRowClick={rowData => {
+          setDepartment(rowData);
+        }}
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
       />
-
       <AddEditDepartment
         open={popupOpen}
         setOpen={setPopupOpen}
