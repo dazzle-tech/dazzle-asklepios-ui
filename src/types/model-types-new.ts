@@ -76,9 +76,6 @@ export interface CreateFacility {
 	defaultCurrency:string;
   isActive?: boolean;
 } 
-
-
-
 export interface Role { 
 	id?:string;
 	name?:string;
