@@ -41,8 +41,6 @@ const Departments = () => {
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
-
-
   const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
   const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
@@ -550,6 +548,7 @@ const Departments = () => {
           isFiltered
             ? departmentList.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage)
             : departmentListResponse?.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage) ?? []
+
         }
         totalCount={
           isFiltered
@@ -557,13 +556,13 @@ const Departments = () => {
             : departmentListResponse?.length ?? 0
         }
 
+
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => setDepartment(rowData)}
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
-
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
