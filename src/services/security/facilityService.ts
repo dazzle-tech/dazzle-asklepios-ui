@@ -45,7 +45,6 @@ export const facilityService = createApi({
         method: 'GET',
       }),
     }),
-
   }),
 
 
