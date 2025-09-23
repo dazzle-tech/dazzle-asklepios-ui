@@ -50,6 +50,7 @@ import StockOut from './StockOut';
 
 const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetch, refetchAttachmentList }) => {
     const dispatch = useAppDispatch();
+    const mode = useAppSelector((state: any) => state.ui.mode);
     const authSlice = useAppSelector(state => state.auth);
     const [saveTransaction, saveTransactionMutation] = useSaveInventoryTransactionMutation();
     const [openNextDocument, setOpenNextDocument] = useState(false);
@@ -500,7 +501,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                 <Panel
                     header="Transaction Information"
                     bordered
-                    style={{ marginBottom: 20, backgroundColor: "white", padding: 20, borderRadius: 6, height: 350, overflowY: "auto" }}
+                    style={{ marginBottom: 20, backgroundColor: mode === 'light' ? "white" : 'var(--dark-black)', padding: 20, borderRadius: 6, height: 350, overflowY: "auto" }}
                 >
 
                     <div className="table-buttons-right">
@@ -689,7 +690,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                 {/* Transaction Details */}
                 <Stack alignItems="center" spacing={8}>
                     <FaInfoCircle color="#2264E5" />
-                    <h4 style={{ margin: 0, fontWeight: '600', fontSize: '1.1rem', color: '#333' }}>
+                    <h4 style={{ margin: 0, fontWeight: '600', fontSize: '1.1rem', color: mode === 'light' ? '#333' : 'var(--white)' }}>
                         Transaction Details
                     </h4>
                 </Stack>
@@ -702,7 +703,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                 <Divider style={{ margin: '20px 0' }} />
                 <Stack alignItems="center" spacing={8}>
                     <FaPaperclip color="#FF6384" />
-                    <h5 style={{ margin: 0, fontWeight: '600', color: '#444' }}>Attachments</h5>
+                    <h5 style={{ margin: 0, fontWeight: '600', color: mode === 'light' ? '#444' : 'var(--white)' }}>Attachments</h5>
                 </Stack>
                 <Uploader
                     action=""
@@ -732,7 +733,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                                     margin: 0,
                                     fontWeight: "600",
                                     fontSize: "1.1rem",
-                                    color: "#333",
+                                    color: mode === 'light' ? "#333" : 'var(--white)',
                                 }}
                             >
                                 Warehouse Details

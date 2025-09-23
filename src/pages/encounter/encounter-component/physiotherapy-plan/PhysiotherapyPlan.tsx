@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
-import { Form, Panel, Slider, Divider, Checkbox } from 'rsuite';
+import { Form, Panel, Slider, Divider, Checkbox, Row } from 'rsuite';
 import MyNestedTable from '@/components/MyNestedTable';
 import Section from '@/components/Section';
 import {
@@ -356,16 +356,19 @@ const Physiotherapy = () => {
 
     if (activeStep === 0) {
       return (
-        <div className="plan-form-container">
+        // <div className="plan-form-container">
+         <Row gutter={15} className="d">
+      
           <Form fluid>
             {/* Sections for treatment goals and physiotherapy plan details */}
-            <div className="section-column">
+            {/* <div className="section-column"> */}
               {/* Treatment Goals */}
+              <Row>
               <SectionContainer
                 title={
-                  <div className="title-div">
+                  <div>
                     <FontAwesomeIcon icon={faBullseye} className="font-small title-div-s" />
-                    <p className="font-small title-div-p">Treatment Goals</p>
+                    Treatment Goals
                   </div>
                 }
                 content={
@@ -399,12 +402,14 @@ const Physiotherapy = () => {
                   </>
                 }
               />
+              </Row>
               {/* Physiotherapy Plan Details */}
+              <Row>
               <SectionContainer
                 title={
-                  <div className="title-div">
+                  <div>
                     <FontAwesomeIcon icon={faClipboardList} className="font-small title-div-s" />
-                    <p className="font-small title-div-p">Physiotherapy Plan Details</p>
+                    Physiotherapy Plan Details
                   </div>
                 }
                 content={
@@ -537,15 +542,17 @@ const Physiotherapy = () => {
                   </>
                 }
               />
-            </div>
+              </Row>
+            {/* </div> */}
 
             {/* Sections for progress notes and attachments */}
-            <div className="section-column">
+            {/* <div className="section-column"> */}
+            <Row>
               <SectionContainer
                 title={
-                  <div className="title-div">
+                  <div>
                     <FontAwesomeIcon icon={faFileAlt} className="font-small title-div-s" />{' '}
-                    <p className="font-small title-div-p">Progress Notes</p>
+                    Progress Notes
                   </div>
                 }
                 content={
@@ -616,13 +623,13 @@ const Physiotherapy = () => {
                   </div>
                 }
               />
-
+              </Row>
               {/* Attachments section */}
               <SectionContainer
                 title={
-                  <div className="title-div">
+                  <div>
                     <FontAwesomeIcon icon={faPaperclip} className="font-small title-div-s" />
-                    <p className="font-small title-div-p">Attachments</p>
+                    Attachments
                   </div>
                 }
                 content={
@@ -633,9 +640,10 @@ const Physiotherapy = () => {
                   />
                 }
               />
-            </div>
+            {/* </div> */}
           </Form>
-        </div>
+        {/* </div> */}
+        </Row>
       );
     }
 

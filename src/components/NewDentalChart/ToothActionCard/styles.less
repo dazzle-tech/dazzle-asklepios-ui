@@ -1,6 +1,6 @@
 .tooth-action-card {
   display: flex;
-  border: 1px solid #efefef;
+  border: 1px solid var(--rs-border-primary);
   border-radius: 10px;
   padding: 16px;
   gap: 20px;
@@ -68,5 +68,26 @@
         font-weight: 500;
       }
     }
+  }
+}
+
+
+.dark{
+  .tooth-action-card{
+    background-color: var(--dark-black) !important;
+     .tooth-action-info-value {
+        color: var(--white) !important;
+         &.treatment {
+          color: var(--primary-green) !important;
+        }
+
+        &.condition {
+          color: var(--rs-color-red) !important;
+        }
+     }
+     .tooth-action-note {
+      background-color: var(--extra-dark-black) !important;
+      box-shadow: var(--dark-mode-box-shadow) !important;
+     }
   }
 }
