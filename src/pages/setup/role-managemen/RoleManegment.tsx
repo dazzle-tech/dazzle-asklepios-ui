@@ -33,7 +33,6 @@ console.log("Facility in RoleManagement:", facility);
     // close after save (optional)
     setOpen(false);
   };
-
   const content = (
     <Grid fluid className="role-management">
       <Row className="role-row">
@@ -42,6 +41,7 @@ console.log("Facility in RoleManagement:", facility);
             selected={selected}
             setSelected={setSelected}
             facilityId={facility.id}
+
           />
         </Col>
 
@@ -80,4 +80,3 @@ console.log("Facility in RoleManagement:", facility);
 };
 
 export default RoleManegment;
-
