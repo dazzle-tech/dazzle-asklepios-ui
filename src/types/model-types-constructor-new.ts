@@ -49,6 +49,7 @@ export const newDepartment:modelTypes.Department = {
   isActive:true,
 }
 
+
 export const newFacility:modelTypes.Facility = { 
   id:undefined,
   name:'',
@@ -80,11 +81,11 @@ export const newRole:modelTypes.Role = {
 	type:'',
 	facilityId: null,
 } 
-
 export const newUserRole:modelTypes.UserRole = { 
   roleId:undefined,
   userId:undefined,
 }
+
 
 
 

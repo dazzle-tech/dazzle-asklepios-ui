@@ -16,7 +16,6 @@ import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
 import { setToken, setUser } from '@/reducers/authSlice';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-
 // import store + enumsApi to prefetch after auth
 import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';

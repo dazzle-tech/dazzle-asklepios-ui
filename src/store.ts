@@ -3,7 +3,7 @@ import uiSlice from './reducers/uiSlice';
 import { uiService } from '@/services/uiService';
 import { authService } from '@/services/authService';
 import authSlice from '@/reducers/authSlice';
-import { authServiceApi } from '@/services/authServiceApi'; 
+import { authServiceApi } from '@/services/authServiceApi';
 import { patientService } from '@/services/patientService';
 import patientSlice from '@/reducers/patientSlice';
 import { setupService } from '@/services/setupService';
@@ -14,7 +14,7 @@ import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
-import {userService} from '@/services/userService';
+import { userService } from '@/services/userService';
 import divSlice from './reducers/divSlice';
 import { labService } from './services/labService';
 import { radService } from '@/services/radService';
@@ -40,10 +40,10 @@ export const store = configureStore({
     [uiService.reducerPath]: uiService.reducer,
 
     // auth
-        auth: authReducer, 
+    auth: authReducer,
 
     [authService.reducerPath]: authService.reducer,
-    [authServiceApi.reducerPath]: authServiceApi.reducer, 
+    [authServiceApi.reducerPath]: authServiceApi.reducer,
 
     // patient
     [patientSlice.name]: patientSlice.reducer,
@@ -90,7 +90,7 @@ export const store = configureStore({
     [userRoleService.reducerPath]: userRoleService.reducer,
 
     [enumsApi.reducerPath]: enumsApi.reducer,
- 
+
     //refetch Encounters
     refetch: refetchReducer,
     //refetch Patient Side Information
@@ -105,10 +105,10 @@ export const store = configureStore({
     [userService.reducerPath]: userService.reducer,
     call: callReducer,
 
-    [facilityService.reducerPath]: facilityService.reducer ,
-     [departmentService.reducerPath]: departmentService.reducer ,
-     
-      [enumService.reducerPath]: enumService.reducer ,
+    [facilityService.reducerPath]: facilityService.reducer,
+    [departmentService.reducerPath]: departmentService.reducer,
+
+    [enumService.reducerPath]: enumService.reducer,
 
   },
   // @ts-ignore
@@ -116,7 +116,7 @@ export const store = configureStore({
     getDefaultMiddleware().concat([
       uiService.middleware,
       authService.middleware,
-      authServiceApi.middleware, 
+      authServiceApi.middleware,
       accountApi.middleware,
       patientService.middleware,
       inventoryService.middleware,
@@ -140,6 +140,7 @@ export const store = configureStore({
       roleService.middleware,
       userRoleService.middleware,
       enumService.middleware,
+      facilityService.middleware,
     ])
 });
 
