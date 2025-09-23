@@ -559,16 +559,22 @@ const ERList = () => {
   };
   const tablebuttons = (
     <div className="er-list-table-buttons-position-handle">
-      <MyButton onClick={() => setOpenRefillModal(true)}>
-        <FontAwesomeIcon icon={faBoxOpen} />
+      <MyButton
+        onClick={() => setOpenRefillModal(true)}
+        prefixIcon={() => <FontAwesomeIcon icon={faBoxOpen} />}
+      >
         Refill Stock
       </MyButton>
-      <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
-        <FontAwesomeIcon icon={faListCheck} />
+      <MyButton
+        onClick={() => setOpenPhysicianOrderSummaryModal(true)}
+        prefixIcon={() => <FontAwesomeIcon icon={faListCheck} />}
+      >
         Task Management
       </MyButton>
-      <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
-        <FontAwesomeIcon icon={faFile} />
+      <MyButton
+        onClick={() => setOpenEncounterLogsModal(true)}
+        prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
+      >
         Encounter Logs
       </MyButton>
     </div>
