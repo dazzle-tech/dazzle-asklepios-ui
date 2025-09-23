@@ -15,7 +15,7 @@ export interface ApUser {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   phoneNumber?: string | null;
-  birthDate?: Date | null; 
+  birthDate?: Date | null;
   gender?: string | null;
 
   jobDescription?: string | null;
@@ -33,10 +33,26 @@ export interface Candidate {
   gender?: boolean;
 
   createdBy?: string;
-  createdDate?: string; 
+  createdDate?: string;
   lastModifiedBy?: string;
   lastModifiedDate?: string;
   isActive?: boolean;
+}
+export interface Department {
+  id: number;
+  facilityId: string;
+  name: string;
+  createdBy: string;
+  createdDate: number;
+  lastModifiedBy: string;
+  lastModifiedDate: number;
+  departmentType: string;
+  appointable: boolean;
+  departmentCode: string;
+  phoneNumber: string;
+  email: string;
+  encountertype: string;
+  isActive: boolean;
 }
 
 
