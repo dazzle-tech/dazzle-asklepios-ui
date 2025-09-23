@@ -33,11 +33,7 @@ import { FaBuilding } from 'react-icons/fa';
 import { CreateFacility, Facility } from '@/types/model-types-new';
 import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
 import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQuery, useUpdateFacilityMutation } from '@/services/security/facilityService';
-
-
-import { FaKey } from 'react-icons/fa6';
-
-import RoleManegment from '../role-managemen';
+import { set } from 'lodash';
 const Facilities = () => {
 
   const dispatch = useAppDispatch();
@@ -46,7 +42,6 @@ const Facilities = () => {
   const [address, setAddress] = useState<ApAddresses>({ ...newApAddresses });
   const [departments, setDepartments] = useState<ApDepartment>({ ...newApDepartment });
   const [popupOpen, setPopupOpen] = useState(false);
-  const [popupOpenRole, setPopupOpenRole] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [facilityDepartmentPopupOpen, setFacilityDepartmentPopupOpen] = useState<boolean>(false);
   const [openConfirmDeleteModel, setOpenConfirmDeleteModel] = useState<boolean>(false);
@@ -121,13 +116,12 @@ const Facilities = () => {
         }}
         className='icons-style'
       />
-      <FaKey
-        title="Facility Roles"
+      <RiInformationFill
+        title="Add Details"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
           setFacility(rowData);
-          setPopupOpenRole(true);
         }}
         className='icons-style'
       />
@@ -325,12 +319,6 @@ const Facilities = () => {
               setAddress={setAddress}
               handleSave = {handleSave}
               width={width}
-            />
-            <RoleManegment
-              open={popupOpenRole}
-              setOpen={setPopupOpenRole}
-              facility={facility}
-              setFacility={setFacility}
             />
             <FacilityDepartment
              open={facilityDepartmentPopupOpen}
