@@ -1,0 +1,111 @@
+.role-management {
+  height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.role-row {
+  height: 100%;
+}
+
+.left-col {
+  padding-right: 12px;
+  margin-bottom: 12px;
+}
+
+.right-col {
+  padding-left: 12px;
+}
+
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.list-wrapper {
+  flex: 1;
+  overflow: auto;
+}
+
+.list-item {
+  cursor: pointer;
+  padding: 10px 12px;
+}
+
+.list-item.selected {
+  background: #eef6ff;
+}
+
+.item-name {
+  font-weight: 600;
+}
+
+.item-desc {
+  font-size: 12px;
+  color: #666;
+}
+
+.add-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+/* allow inputs to shrink on small screens */
+.input-name {
+  flex: 1;
+  min-width: 120px;
+}
+
+.input-desc {
+  flex: 1;
+  min-width: 120px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label {
+  font-size: 12px;
+  color: #888;
+}
+
+.value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.actions {
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.empty {
+  color: #666;
+}
+
+/* responsive tweaks */
+@media (max-width: 768px) {
+  .add-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

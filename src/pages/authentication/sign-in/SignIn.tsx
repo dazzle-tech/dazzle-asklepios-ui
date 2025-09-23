@@ -1,5 +1,5 @@
 import MyInput from '@/components/MyInput';
-import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
+import {  useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
 import { initialListRequest } from '@/types/types';
@@ -20,6 +20,7 @@ import { useLoginMutation } from '@/services/authServiceApi';
 import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
 import { setToken, setUser } from '@/reducers/authSlice';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 const SignIn = () => {
   const [otpView, setOtpView] = useState(false);
@@ -44,7 +45,8 @@ const SignIn = () => {
 
   const {
     data: facilityListResponse,
-  } = useGetFacilitiesQuery({ ...initialListRequest });
+  } = useGetAllFacilitiesQuery({});
+  console.log( facilityListResponse);
 
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
   const [saveUser] = useSaveUserMutation();
@@ -127,9 +129,9 @@ const SignIn = () => {
                   width="100%"
                   fieldType='select'
                   fieldLabel="Facility"
-                  selectData={facilityListResponse?.object ?? []}
-                  selectDataLabel="facilityName"
-                  selectDataValue="key"
+                  selectData={facilityListResponse ?? []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
                   fieldName="orgKey"
                   record={credentials}
                   setRecord={setCredentials}
