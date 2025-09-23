@@ -28,8 +28,7 @@ import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
 import callReducer from './store/callSlice';
 import { enumsApi } from '@/services/enumsApi';
-
-
+import { facilityService } from './services/security/facilityService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -99,6 +98,8 @@ export const store = configureStore({
     [userService.reducerPath]: userService.reducer,
     call: callReducer,
 
+    [facilityService.reducerPath]: facilityService.reducer ,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -123,7 +124,8 @@ export const store = configureStore({
       operationService.middleware,
       recoveryService.middleware,
       userService.middleware,
-      enumsApi.middleware
+      enumsApi.middleware,
+      facilityService.middleware,
 
     ])
 });
