@@ -64,7 +64,6 @@ console.log("Facility in RoleManagement:", facility);
       </Row>
     </Grid>
   );
-
   return (
     <MyModal
       open={open}
