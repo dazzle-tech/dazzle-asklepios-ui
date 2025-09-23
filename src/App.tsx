@@ -174,6 +174,7 @@ import { setScreenKey } from './utils/uiReducerActions';
 import CallOverlay from './components/Overlay/CallOverlay';
 import IncidentPortal from './pages/Incident/IncidentPortal';
 import LanguagesSetup from './pages/setup/language-setup/Language';
+import NewDepartments from './pages/setup/departments-setup/Departments-new';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -437,7 +438,7 @@ const App = () => {
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
-              <Route path="departments" element={<Departments />} />
+              <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
