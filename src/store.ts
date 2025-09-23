@@ -26,6 +26,7 @@ import { recoveryService } from './services/RecoveryService';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
+import { facilityService } from './services/security/facilityService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -92,6 +93,8 @@ export const store = configureStore({
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
 
+    [facilityService.reducerPath]: facilityService.reducer ,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -115,7 +118,8 @@ export const store = configureStore({
       procedureService.middleware,
       operationService.middleware,
       recoveryService.middleware,
-      userService.middleware
+      userService.middleware,
+      facilityService.middleware,
 
     ])
 });
