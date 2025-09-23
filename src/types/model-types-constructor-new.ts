@@ -32,22 +32,7 @@ export const newCandidate: modelTypes.Candidate = {
   isActive: true,
 
 };
-export const newDepartment:modelTypes.Department = { 
-  id:undefined,
-  facilityId:undefined,
-  name:'',
-  createdBy:'',
-  createdDate:undefined,
-  lastModifiedBy:'',
-  lastModifiedDate:undefined,
-  departmentType:undefined,
-  appointable:undefined,
-  departmentCode:'',
-  phoneNumber:'',
-  email:'',
-  encountertype:undefined,
-  isActive:true
-}
+
 
 export const newDepartment:modelTypes.Department = { 
   id:undefined,
@@ -68,6 +53,7 @@ export const newDepartment:modelTypes.Department = {
 
 
 
+
 export const newFacility:modelTypes.Facility = { 
   id:undefined,
   name:'',
@@ -78,6 +64,7 @@ export const newFacility:modelTypes.Facility = {
 	addressId:'',
 	type:'',
 	defaultCurrency:null,
+
   isActive: true,
 } 
 
@@ -100,10 +87,12 @@ export const newRole:modelTypes.Role = {
 	facilityId: null,
 } 
 
+
 export const newUserRole:modelTypes.UserRole = { 
   roleId:undefined,
   userId:undefined,
 }
+
 
 
 
