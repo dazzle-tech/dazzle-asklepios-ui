@@ -38,7 +38,7 @@ export const newDepartment:modelTypes.Department = {
   name:'',
   createdBy:'',
   createdDate:undefined,
-  lastModifiedBy:undefined,
+  lastModifiedBy:'',
   lastModifiedDate:undefined,
   departmentType:undefined,
   appointable:undefined,
@@ -85,6 +85,7 @@ export const newUserRole:modelTypes.UserRole = {
   roleId:undefined,
   userId:undefined,
 }
+
 
 
 
