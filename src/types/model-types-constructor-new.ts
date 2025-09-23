@@ -18,7 +18,6 @@ export const newApUser: modelTypes.ApUser = {
   phoneNumber: null,
   birthDate: null,
   gender: null,
-
   jobDescription: null,
 };
 
@@ -34,8 +33,37 @@ export const newCandidate: modelTypes.Candidate = {
 
 };
 
+export const newFacility:modelTypes.Facility = { 
+  id:undefined,
+  name:'',
+	emailAddress:'',
+	phone1:'',
+	phone2:'',
+	fax:'',
+	addressId:'',
+	type:'',
+	defaultCurrency:'',
+  isActive: true,
+} 
 
+export const newCreateFacility:modelTypes.CreateFacility = { 
+  name:'',
+	emailAddress:'',
+	phone1:'',
+	phone2:'',
+	fax:'',
+	addressId:'',
+	type:'',
+	defaultCurrency:'',
+  isActive: true,
+} 
 
+export const newRole:modelTypes.Role = { 
+	id:undefined,
+	name:'',
+	type:'',
+	facilityId: null,
+} 
 
 
 

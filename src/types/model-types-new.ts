@@ -16,22 +16,19 @@ export interface ApUser {
   lastModifiedDate?: Date | null;
   phoneNumber?: string | null;
   birthDate?: Date | null; 
-  gender?: string | null;
-
+  gender?: number | null;
   jobDescription?: string | null;
 }
 
 
 export interface Candidate {
   id?: number;
-
   role?: string;
   dob?: boolean;
   lastName?: boolean;
   documentNo?: boolean;
   mobileNumber?: boolean;
   gender?: boolean;
-
   createdBy?: string;
   createdDate?: string; 
   lastModifiedBy?: string;
@@ -39,5 +36,36 @@ export interface Candidate {
   isActive?: boolean;
 }
 
+export interface Facility { 
+	id?:string;
+	name?:string;
+	emailAddress?:string;
+	phone1?:string;
+	phone2?:string;
+	fax?:string;
+	addressId?:string;
+	type:string;
+	defaultCurrency:string;
+  isActive?: boolean;
+} 
+
+export interface CreateFacility { 
+	name?:string;
+	emailAddress?:string;
+	phone1?:string;
+	phone2?:string;
+	fax?:string;
+	addressId?:string;
+	type:string;
+	defaultCurrency:string;
+  isActive?: boolean;
+} 
 
 
+
+export interface Role { 
+	id?:string;
+	name?:string;
+	type?:string;
+	facilityId?:string;
+} 
