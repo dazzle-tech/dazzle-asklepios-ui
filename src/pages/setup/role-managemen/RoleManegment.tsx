@@ -33,7 +33,6 @@ console.log("Facility in RoleManagement:", facility);
     // close after save (optional)
     setOpen(false);
   };
-
   const content = (
     <Grid fluid className="role-management">
       <Row className="role-row">
