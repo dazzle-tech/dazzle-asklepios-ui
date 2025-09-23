@@ -78,6 +78,7 @@ export interface CreateFacility {
 } 
 
 
+
 export interface Facility { 
 	id?:string;
 	name?:string;
@@ -102,6 +103,7 @@ export interface CreateFacility {
 	defaultCurrency:string;
   isActive?: boolean;
 } 
+
 
 
 
