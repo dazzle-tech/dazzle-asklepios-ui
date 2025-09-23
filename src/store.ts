@@ -138,7 +138,7 @@ export const store = configureStore({
       facilityService.middleware,
       departmentService.middleware,
       roleService.middleware,
-      userRoleService.middleware,
+      userRoleService.middleware
     ])
 });
 
