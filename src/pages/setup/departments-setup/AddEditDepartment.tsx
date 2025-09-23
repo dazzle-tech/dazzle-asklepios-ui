@@ -1,8 +1,7 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
+import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
@@ -10,9 +9,6 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import './styles.less';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
-
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -21,21 +17,18 @@ const AddEditDepartment = ({
   setDepartment,
   recordOfDepartmentCode,
   setRecordOfDepartmentCode,
-  handleAddNew,
-  handleUpdate
+  handleSave
 }) => {
   const [facilityListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
   // Fetch  facility list response
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
-  // Fetch  encTypesEnum list response
+  const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
+  // Fetch  encTypesLov list response
+  const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+  // Fetch  depTTypesLov list response
+  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
 
-  const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
-
-
-  // Fetch  depTTypesEnum list response
-  const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -45,26 +38,25 @@ const AddEditDepartment = ({
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
-                fieldLabel="Facility"
                 fieldName="facilityId"
                 required
                 fieldType="select"
-                selectData={facilityListResponse ?? []}
-                selectDataLabel="name"
-                selectDataValue="id"
+                selectData={facilityListResponse?.object ?? []}
+                selectDataLabel="facilityName"
+                selectDataValue="Id"
                 record={department}
                 setRecord={setDepartment}
               />
-
               <MyInput
                 width={250}
                 fieldName="departmentType"
                 fieldLabel="Department Type"
                 fieldType="select"
-                selectData={depTTypesEnum ?? []}
+                selectData={depTTypesLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="Id"
                 record={department}
                 setRecord={setDepartment}
-                required
               />
             </div>
             <MyInput
@@ -72,7 +64,6 @@ const AddEditDepartment = ({
               fieldName="name"
               record={department}
               setRecord={setDepartment}
-              required
             />
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
@@ -108,10 +99,12 @@ const AddEditDepartment = ({
               {department?.appointable ? (
                 <MyInput
                   width={250}
-                  fieldName="encounterType"
+                  fieldName="encountertypelkey"
                   fieldType="select"
                   fieldLabel="Encounter Type"
-                  selectData={encTypesEnum?? []}
+                  selectData={encTypesLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
                   record={department}
                   setRecord={setDepartment}
                 />
@@ -129,8 +122,8 @@ const AddEditDepartment = ({
       position="right"
       content={conjureFormContent}
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
-      actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
-      steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
+      actionButtonFunction={handleSave}
+      steps={[{ title: 'Department Info', icon:<FontAwesomeIcon icon={ faLaptop }/>}]}
       size={width > 600 ? '36vw' : '25vw'}
     />
   );
