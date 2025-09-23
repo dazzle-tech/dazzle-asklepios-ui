@@ -33,6 +33,22 @@ export const newCandidate: modelTypes.Candidate = {
   isActive: true,
 
 };
+export const newDepartment:modelTypes.Department = { 
+  id:undefined,
+  facilityId:undefined,
+  name:'',
+  createdBy:'',
+  createdDate:undefined,
+  lastModifiedBy:'',
+  lastModifiedDate:undefined,
+  departmentType:undefined,
+  appointable:undefined,
+  departmentCode:'',
+  phoneNumber:'',
+  email:'',
+  encountertype:undefined,
+  isActive:true
+}
 
 
 
