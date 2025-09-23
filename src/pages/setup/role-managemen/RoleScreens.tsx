@@ -23,6 +23,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
   const [updatePermissions] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
+
   console.log("Selected",selected)
 
   // sync from backend
@@ -68,7 +69,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     });
   };
 
-  
   const columns = [
     {
       key: "module",
@@ -106,7 +106,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     },
   ];
 
-  
   const screenColumns = (moduleRow: any) => [
     {
       key: "screen",
@@ -160,8 +159,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
         data={MODULES}
         columns={columns}
         getNestedTable={getNestedTable}
-       
-
       />
       <br />
       <MyButton appearance="primary" onClick={handleSave}>

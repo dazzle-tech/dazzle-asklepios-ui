@@ -182,7 +182,6 @@ import { useGetMenuQuery } from './services/security/UserRoleService';
 
 
 
-
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   console.log("User Screens from APP", authSlice.user)
@@ -612,7 +611,7 @@ const loadNavs = () => {
               <Route path="icd10-setup" element={<ICD10Setup />} />
               <Route path="cpt-setup" element={<CPTSetup />} />
               <Route path="loinc-setup" element={<LOINCSetup />} />
-              <Route path="services-setup" element={<ServiceSetup />} />
+              <Route path="services-setup" element={<RoleManegment />} />
               <Route path="surgical-kits-setup" element={<SurgicalKitsSetup />} />
               <Route path="error-404" element={<Error404Page />} />
               <Route path="error-403" element={<Error403Page />} />
