@@ -1,5 +1,4 @@
 import MyInput from '@/components/MyInput';
-
 import {  useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
@@ -43,12 +42,12 @@ const SignIn = () => {
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
-
-
   const {
     data: facilityListResponse,
   } = useGetAllFacilitiesQuery({});
   console.log( facilityListResponse);
+
+
 
 
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
