@@ -45,14 +45,16 @@ const AddEditFacility = ({
         return (
           <Form fluid layout="inline">
             <div className={clsx('', { 'container-of-two-fields-facility': width > 600 })}>
-              <MyInput
+              {/* <MyInput
                 fieldLabel="Facility ID"
-                fieldName="code"
+
+                fieldName="id"
+>
                 required
                 record={facility}
                 setRecord={setFacility}
                 width={250}
-              />
+              /> */}
               <MyInput
                 column
                 required

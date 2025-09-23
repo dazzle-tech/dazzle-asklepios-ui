@@ -1,10 +1,9 @@
 import MyInput from '@/components/MyInput';
-import {
-  useGetFacilitiesQuery
-} from '@/services/setupService';
+
 import {  useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
+
 import { initialListRequest } from '@/types/types';
 import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, { useEffect, useState } from 'react';
@@ -17,16 +16,15 @@ import './styles.less';
 import { useLoginMutation } from '@/services/authServiceApi';
 import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
-import { setTenant, setToken, setUser } from '@/reducers/authSlice';
+import { setToken, setUser } from '@/reducers/authSlice';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
-import { useAppSelector } from '@/hooks';
-import { setLang } from '@/reducers/uiSlice';
 
 
 const SignIn = () => {
+  const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
   const [newPassword, setNewPassword] = useState<string | undefined>();
   const [newPasswordConfirm, setNewPasswordConfirm] = useState<string | undefined>();
@@ -42,15 +40,16 @@ const SignIn = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-   const uiSlice = useAppSelector(state => state.ui);
-  const [langRecord, setLangRecord] = useState({lang: uiSlice.lang});
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
+
+
   const {
     data: facilityListResponse,
   } = useGetAllFacilitiesQuery({});
   console.log( facilityListResponse);
+
 
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
   const [saveUser] = useSaveUserMutation();
@@ -76,17 +75,6 @@ const SignIn = () => {
       const userResp = await getAccount().unwrap();
       dispatch(setUser(userResp));
 
-    // NEW ⬇︎ merge the selected facility into tenant as `selectedFacility`
-      const selectedFacility =
-        (facilityListResponse ?? []).find((f: any) => f.id === Number(credentials.orgKey)) || null;
-     const existingTenant = JSON.parse(localStorage.getItem('tenant') || 'null') || {};
-     dispatch(setTenant({ ...existingTenant, selectedFacility }));
-
-     // (Optional cleanup) If you previously stored standalone 'facility' in localStorage, remove it:
-     // localStorage.removeItem('facility');
-     // and stop dispatching any setFacility action you might have had.
-
-      console.log('User Info:', userResp);
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
 
@@ -96,6 +84,7 @@ const SignIn = () => {
       setErrText(' ');
       navigate('/');
     } catch (err: any) {
+      console.error(err);
       setErrText('Login failed. Please check your credentials.');
     }
   };
@@ -129,10 +118,6 @@ const SignIn = () => {
   useEffect(() => {
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
-
-  useEffect(() => {
-    dispatch(setLang(langRecord['lang']));
-  },[langRecord]);
 
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
@@ -168,10 +153,10 @@ const SignIn = () => {
                   fieldType="select"
                   selectData={langLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
-                  selectDataValue="valueCode"
+                  selectDataValue="key"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
-                  record={langRecord}
-                  setRecord={setLangRecord}
+                  record={{}}
+                  setRecord={() => { }}
                   placeholder="Select Language"
                   showLabel={false}
                 />

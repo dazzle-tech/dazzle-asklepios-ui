@@ -17,6 +17,7 @@ export interface ApUser {
   phoneNumber?: string | null;
   birthDate?: Date | null;
   gender?: string | null;
+
   jobDescription?: string | null;
 }
 
@@ -81,7 +82,6 @@ export interface CreateFacility {
 export interface Facility { 
 	id?:string;
 	name?:string;
-  code?:string;
 	emailAddress?:string;
 	phone1?:string;
 	phone2?:string;
@@ -106,15 +106,10 @@ export interface CreateFacility {
 
 
 
-
 export interface Role { 
 	id?:string;
 	name?:string;
 	type?:string;
 	facilityId?:string;
 } 
-export interface UserRole { 
-	roleId?:string;
-  userId?:string;
 
-} 
