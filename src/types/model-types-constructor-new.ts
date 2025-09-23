@@ -54,7 +54,6 @@ export const newDepartment:modelTypes.Department = {
 
 
 
-
 export const newFacility:modelTypes.Facility = { 
   id:undefined,
   name:'',
@@ -87,16 +86,13 @@ export const newRole:modelTypes.Role = {
 	type:'',
 	facilityId: null,
 } 
-
 export const newUserRole:modelTypes.UserRole = { 
   roleId:undefined,
   userId:undefined,
 }
 
-export const newUserRole:modelTypes.UserRole = { 
-  roleId:undefined,
-  userId:undefined,
-}
+
+
 
 
 
