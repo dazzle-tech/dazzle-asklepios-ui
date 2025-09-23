@@ -31,4 +31,6 @@ const SectionContainer: React.FC<SectionContainerProps> = ({ title, content, but
   );
 };
 
+
 export default SectionContainer;
+
