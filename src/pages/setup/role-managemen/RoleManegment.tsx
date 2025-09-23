@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Grid, Row, Col } from "rsuite";
 import "./styles.less";
-import Roles from "./Roles";
+import Roles from "./Role";
 import RoleScreens from "./RoleScreens";
 import SectionContainer from "@/components/SectionsoContainer";
 import MyModal from "@/components/MyModal/MyModal";
@@ -33,6 +33,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
     // close after save (optional)
     setOpen(false);
   };
+
   const content = (
     <Grid fluid className="role-management">
       <Row className="role-row">
@@ -40,7 +41,6 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
           <Roles
             selected={selected}
             setSelected={setSelected}
-            facilityId={facility.id}
           />
         </Col>
 
@@ -67,11 +67,11 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
       open={open}
       setOpen={setOpen}
       title="Role Management"
-      size="full"
-     
+      size="70%"
+      bodyheight="70vh"
       content={content}
       hideBack={true}
-     
+      steps={[{ title: "Roles", icon: <FontAwesomeIcon icon={faUserShield} /> }]}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       isDisabledActionBtn={!selected} // disable until a role is selected
