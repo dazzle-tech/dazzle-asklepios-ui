@@ -1,8 +1,15 @@
 import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
-import { Form, Panel, Text } from 'rsuite';
+import { Form, Panel, Text, Col, Row } from 'rsuite';
 import MyTable from '@/components/MyTable';
-import { faTrash, faCircleInfo, faPen, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import {
+  faTrash,
+  faCircleInfo,
+  faPen,
+  faCheckDouble,
+  faCheck,
+  faDroplet
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyButton from '@/components/MyButton/MyButton';
 import PlusIcon from '@rsuite/icons/Plus';
@@ -11,6 +18,10 @@ import './styles.less';
 import MyInput from '@/components/MyInput';
 import AddEditBloodOrder from './AddEditBloodOrder';
 import SectionContainer from '@/components/SectionsoContainer';
+import BloodCardQuestions from './BloodCardQuestions';
+import OrderDetails from './OrderDetails';
+import PatientInformation from './PatientInformation';
+import NotesAndHistory from './NotesAndHistory';
 
 const BloodOrder = () => {
   const [popupOpen, setPopupOpen] = useState(false);
@@ -87,15 +98,6 @@ const BloodOrder = () => {
         onClick={() => {
           setBloodOrder(rowData);
           setOpenCancellationReasonModel(true);
-        }}
-      />
-      <FontAwesomeIcon
-        title="Submit"
-        icon={faCheckDouble}
-        color="var(--primary-gray)"
-        className="icons-style"
-        onClick={() => {
-          console.log('Submit clicked', rowData);
         }}
       />
     </div>
@@ -177,6 +179,50 @@ const BloodOrder = () => {
     setOpenCancellationReasonModel(false);
   };
 
+  // Modal content from AddEditBloodOrder
+  const renderOrderDetailsContent = () => {
+    return (
+      <Row gutter={15} className="d container-of-blood-card-questions">
+        <Form>
+          <Col md={12}>
+            <Row>
+              <SectionContainer
+                title={<Text>Patient Information</Text>}
+                content={
+                  <PatientInformation bloodorder={bloodOrder} setBloodOrder={setBloodOrder} />
+                }
+              />
+            </Row>
+            <Row>
+              <SectionContainer
+                title={<Text>Notes & History</Text>}
+                content={
+                  <NotesAndHistory bloodorder={bloodOrder} setBloodOrder={setBloodOrder} />
+                }
+              />
+            </Row>
+          </Col>
+          <Col md={12}>
+            <Row>
+              <SectionContainer
+                title={<Text>Order Details</Text>}
+                content={<OrderDetails bloodorder={bloodOrder} setBloodOrder={setBloodOrder} />}
+              />
+            </Row>
+            <Row>
+              <SectionContainer
+                title={<Text>Blood Card Questions</Text>}
+                content={
+                  <BloodCardQuestions bloodorder={bloodOrder} setBloodOrder={setBloodOrder} />
+                }
+              />
+            </Row>
+          </Col>
+        </Form>
+      </Row>
+    );
+  };
+
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -199,7 +245,7 @@ const BloodOrder = () => {
             width={200}
           />
           <div className="container-of-buttons-blood">
-            <MyButton>Submit</MyButton>
+            <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}>Submit</MyButton>
             <MyButton prefixIcon={() => <PlusIcon />} onClick={handleNew}>
               Add
             </MyButton>
@@ -229,27 +275,17 @@ const BloodOrder = () => {
         }}
       />
 
-      {/* Order Details Section */}
+      {/* Order Details Section - Now showing modal content instead of simple inputs */}
       {bloodOrder?.key && (
         <div className="my-order-details-margin">
           <SectionContainer
-            title={<Text>Order Details</Text>}
-            content={
-              <Form className="order-details-row">
-                <MyInput fieldName="productType" record={record} setRecord={setRecord} disabled />
-                <MyInput fieldName="amount" record={record} setRecord={setRecord} disabled />
-                <MyInput fieldName="reason" record={record} setRecord={setRecord} disabled />
-                <MyInput fieldName="status" record={record} setRecord={setRecord} disabled />
-                <MyInput fieldName="submittedByAt" record={record} setRecord={setRecord} disabled />
-                <MyInput fieldName="cancelledByAt" record={record} setRecord={setRecord} disabled />
-                <MyInput
-                  fieldName="cancellationReason"
-                  record={record}
-                  setRecord={setRecord}
-                  disabled
-                />
-              </Form>
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FontAwesomeIcon icon={faDroplet} />
+                <Text>Blood Order Information</Text>
+              </div>
             }
+            content={renderOrderDetailsContent()}
           />
         </div>
       )}
