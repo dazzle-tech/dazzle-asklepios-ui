@@ -20,8 +20,11 @@ import { Form, Tooltip, Whisper } from 'rsuite';
 import BedCards from './BedCards';
 import './BedManagmentFirstTab.less';
 import DetailsCard from '@/components/DetailsCard';
+import { useSelector } from 'react-redux';
 
 const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
+  const mode = useSelector((state: any) => state.ui.mode);
+  //
   const dispatch = useAppDispatch();
   const [saveBed] = useSaveBedMutation();
   const [viewMode, setViewMode] = useState('table'); // view mode state
@@ -153,7 +156,7 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   // Calculate statistics (use latest fetched data)
   const bedsData = fetchBedsRelatedToDepartmentResponse ?? [];
 
-   console.log("bedsData==>",bedsData);
+  console.log('bedsData==>', bedsData);
   const totalBeds = bedsData.length;
   const occupiedBeds = bedsData.filter(item => {
     const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
@@ -193,8 +196,8 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
           title="Total Beds"
           number={totalBeds}
           icon={faBed}
-          color="black"
-          backgroundClassName="total"
+          color={mode === 'light' ? 'black' : 'white'}
+          // backgroundClassName="total"
           position="left"
           width={250}
         />
