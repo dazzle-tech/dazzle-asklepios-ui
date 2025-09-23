@@ -3,7 +3,10 @@ import SectionContainer from "@/components/SectionsoContainer";
 import React,{useEffect,useState} from "react";
 import { Divider, Input, List, Panel } from "rsuite";
 type Role = { id: number; name: string; description: string };
-const Role=({selected, setSelected})=>{
+const Role=({
+  selected,
+  setSelected
+})=>{
 
   const [roles, setRoles] = useState<Role[]>([
     { id: 1, name: "Admin", description: "Full permissions" },
