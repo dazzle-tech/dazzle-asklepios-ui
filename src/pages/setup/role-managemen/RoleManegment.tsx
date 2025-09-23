@@ -26,12 +26,20 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
   onSave,
 }) => {
   const [selected, setSelected] = useState<Role | null>(null);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1d2704e2 (Link between facility and role manegment)
   const handleSave = () => {
     // hook for your save logic (permissions, screens, etc.)
     onSave?.(selected);
     // close after save (optional)
     setOpen(false);
   };
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1d2704e2 (Link between facility and role manegment)
   const content = (
     <Grid fluid className="role-management">
       <Row className="role-row">
@@ -39,7 +47,10 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
           <Roles
             selected={selected}
             setSelected={setSelected}
+<<<<<<< HEAD
             facilityId={facility.id}
+=======
+>>>>>>> 1d2704e2 (Link between facility and role manegment)
           />
         </Col>
 
@@ -60,6 +71,10 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
       </Row>
     </Grid>
   );
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1d2704e2 (Link between facility and role manegment)
   return (
     <MyModal
       open={open}

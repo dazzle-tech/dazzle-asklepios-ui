@@ -36,7 +36,11 @@ import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQ
 import { set } from 'lodash';
 import { Key, KeyOff, KeySharp } from '@mui/icons-material';
 import { FaKey } from 'react-icons/fa6';
+<<<<<<< HEAD
 import Role from '../role-managemen/Roles';
+=======
+import Role from '../role-managemen/Role';
+>>>>>>> 1d2704e2 (Link between facility and role manegment)
 import RoleScreens from '../role-managemen/RoleScreens';
 import RoleManegment from '../role-managemen';
 const Facilities = () => {
@@ -348,8 +352,13 @@ const Facilities = () => {
             <RoleManegment
               open={popupOpenRole}
               setOpen={setPopupOpenRole}
+<<<<<<< HEAD
               facility={facility}
               setFacility={setFacility}
+=======
+              facility={createFacility}
+              setFacility={setCreateFacility}
+>>>>>>> 1d2704e2 (Link between facility and role manegment)
             />
             <FacilityDepartment
              open={facilityDepartmentPopupOpen}
