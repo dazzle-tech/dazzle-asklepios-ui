@@ -171,6 +171,7 @@ import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
+import NewDepartments from './pages/setup/departments-setup/Departments-new';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -433,7 +434,7 @@ const App = () => {
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
-              <Route path="departments" element={<Departments />} />
+              <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
