@@ -35,7 +35,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BarChartHorizontalIcon from '@rsuite/icons/BarChartHorizontal';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
@@ -62,16 +62,16 @@ import { notify } from '@/utils/uiReducerActions';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 import MyInput from '@/components/MyInput';
-import { set } from 'lodash';
 import { FaSearch } from 'react-icons/fa';
 import { faCapsules } from '@fortawesome/free-solid-svg-icons';
 import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 import SideSummaryScreen from './SideSummaryScreen';
-import MedicalTimeline from './MedicalTimeLine';
 import { useSelector } from 'react-redux';
+import ConsultationPopup from '../encounter-component/patient-summary/ConsultationPopup';
+import { faDesktop } from '@fortawesome/free-solid-svg-icons';
 
 const Encounter = () => {
-    const mode = useSelector((state: any) => state.ui.mode);
+  const mode = useSelector((state: any) => state.ui.mode);
   // create the action for the Customize Dashboard that we defined it in Patient summary page
   const [action, setAction] = useState(() => () => {});
 
@@ -95,6 +95,78 @@ const Encounter = () => {
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [edit, setEdit] = useState(false);
   const [fromPage, setFromPage] = useState(savedState);
+
+  // States for floating consultation button
+  const [openConsultationPopup, setOpenConsultationPopup] = useState<boolean>(false);
+  const [buttonPosition, setButtonPosition] = useState({
+    x: typeof window !== 'undefined' ? window.innerWidth - 100 : 100,
+    y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
+  const buttonRef = useRef<HTMLDivElement>(null);
+
+  // Handle mouse down on the floating button
+  const handleMouseDown = e => {
+    setIsDragging(true);
+    setHasMoved(false);
+    setDragOffset({
+      x: e.clientX - buttonPosition.x,
+      y: e.clientY - buttonPosition.y
+    });
+    e.preventDefault();
+  };
+
+  // Handle mouse move to drag the button
+  const handleMouseMove = e => {
+    if (!isDragging) return;
+
+    if (!hasMoved) {
+      const movedDistance = Math.sqrt(
+        Math.pow(e.clientX - (buttonPosition.x + dragOffset.x), 2) +
+          Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
+      );
+
+      if (movedDistance > 5) {
+        setHasMoved(true);
+      }
+    }
+
+    setButtonPosition({
+      x: e.clientX - dragOffset.x,
+      y: e.clientY - dragOffset.y
+    });
+  };
+
+  // Handle mouse up to stop dragging
+  const handleMouseUp = () => {
+    if (!hasMoved && !isDragging) {
+      setOpenConsultationPopup(true);
+    }
+
+    setIsDragging(false);
+  };
+
+  // Handle click (for click only without drag)
+  const handleClick = () => {
+    if (!hasMoved && !isDragging) {
+      setOpenConsultationPopup(true);
+    }
+  };
+
+  // Add event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragOffset, hasMoved]);
 
   const {
     data: appointments,
@@ -127,6 +199,7 @@ const Encounter = () => {
       setFromPage(location.state.fromPage);
     }
   }, [location.state]);
+
   // get Midical Sheets Data Steps
   useEffect(() => {
     if (!propsData?.encounter) {
@@ -138,14 +211,14 @@ const Encounter = () => {
       //TODO convert key to code
       if (
         propsData?.encounter?.resourceTypeLkey === '2039516279378421' ||
-        '4217389643435490' ||
-        '6743167799449277'
+        propsData?.encounter?.resourceTypeLkey === '4217389643435490' ||
+        propsData?.encounter?.resourceTypeLkey === '6743167799449277'
       ) {
-        // Clinic, then we need to get its resource details
+        // Clinic logic
         setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
         setMedicalSheetSourceKey(undefined);
       } else {
-        // Not Clinic, use department directly
+        // Not Clinic
         setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
         setMedicalSheetRowSourceKey(undefined);
       }
@@ -259,11 +332,11 @@ const Encounter = () => {
     '/encounter/continuous-observation': 'Continuous Observation',
     '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment',
     '/encounter/sliding-scale ': 'Sliding Scale',
-    '/encounter/icu': 'ICU',
+    '/encounter/icu': 'ICU'
   };
 
   const menuItems = [
-        {
+    {
       key: 'icu',
       label: 'ICU',
       icon: <FontAwesomeIcon icon={faBed} className="icon" />,
@@ -389,7 +462,6 @@ const Encounter = () => {
       icon: <FontAwesomeIcon icon={faComment} className="icon" />,
       path: 'multidisciplinary-team-notes'
     },
-
     {
       key: 'dischargePlanning',
       label: 'Discharge Planning',
@@ -414,21 +486,18 @@ const Encounter = () => {
       icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />,
       path: 'intake-output-balance'
     },
-
     {
       key: 'carePlanAndGoals',
       label: 'Care Plan & Goals',
       icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
       path: 'care-plan-and-goals'
     },
-
     {
       key: 'johnsHopkinsFallRiskAssessmentTool',
       label: 'Johns Hopkins Tool',
       icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
       path: 'johns-hopkins-tool'
     },
-
     {
       key: 'medicationsRecord',
       label: 'Medications Record',
@@ -441,7 +510,6 @@ const Encounter = () => {
       icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
       path: 'vaccine-record'
     },
-
     {
       key: 'cardiology',
       label: 'Cardiology',
@@ -514,7 +582,6 @@ const Encounter = () => {
       icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
       path: 'doctor-round'
     },
-
     {
       key: 'nutritionStateAssessment',
       label: 'Nutrition State',
@@ -576,6 +643,7 @@ const Encounter = () => {
       path: 'sliding-scale'
     }
   ];
+
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (
     <div style={{ display: 'flex' }}>
@@ -592,7 +660,6 @@ const Encounter = () => {
   }, [location.pathname, dispatch]);
 
   const [expand, setExpand] = useState(false);
-
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
 
   useEffect(() => {
@@ -607,10 +674,28 @@ const Encounter = () => {
   return (
     <ActionContext.Provider value={{ action, setAction }}>
       <div className="container">
+        {/* Floating Consultation Button */}
+        <div
+          ref={buttonRef}
+          className={`draggable-container ${isDragging ? 'grabbing' : 'grab'}`}
+          style={{ left: `${buttonPosition.x}px`, top: `${buttonPosition.y}px` }}
+          onMouseDown={handleMouseDown}
+          onClick={handleClick}
+        >
+          <button
+            className={`my-button draggable-button ${isDragging ? 'dragging' : ''}`}
+            title="Drag to move or click to open consultation"
+          >
+            <FontAwesomeIcon icon={faDesktop} />
+          </button>
+
+          {!isDragging && <div className="draggable-pulse" />}
+        </div>
+
         <div className="left-box">
           <Panel>
             <div className="container-bt">
-              <div className='left'>
+              <div className="left">
                 <BackButton onClick={handleGoBack} />
                 <Form fluid>
                   <MyInput
@@ -633,15 +718,6 @@ const Encounter = () => {
                 </Form>
               </div>
               <div className="right">
-                {/* <MyButton
-                  prefixIcon={() => <BarChartHorizontalIcon />}
-                  backgroundColor={'var(--deep-blue)'}
-                  onClick={() => {
-                    setIsDrawerOpen(true);
-                  }}
-                >
-                  Medical Sheets
-                </MyButton> */}
                 <MyButton
                   disabled={edit}
                   prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
@@ -738,7 +814,7 @@ const Encounter = () => {
               </div>
             </div>
             <Divider />
-            
+
             <Drawer
               open={isDrawerOpen}
               onClose={() => setIsDrawerOpen(false)}
@@ -748,7 +824,7 @@ const Encounter = () => {
               <Drawer.Header className="header-drawer">
                 <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
               </Drawer.Header>
-              <Drawer.Body className='drawer-body'>
+              <Drawer.Body className="drawer-body">
                 <Form fluid>
                   <Row>
                     <Col md={24}>
@@ -805,10 +881,12 @@ const Encounter = () => {
                               encounter: propsData.encounter,
                               edit
                             }}
-                            style={{ color: 'inherit', textDecoration: 'none' }}
+                            className="inherit-link"
                           >
                             {icon}
-                            <Translate> {label} </Translate>
+                            <span className="margin-left-10">
+                              <Translate>{label}</Translate>
+                            </span>
                           </Link>
                         </List.Item>
                       ) : null
@@ -819,62 +897,81 @@ const Encounter = () => {
 
             <div className="content-with-sticky">
               <div className="main-content-area">
-                <Outlet />
+                <Outlet
+                  context={{
+                    patient: propsData?.patient,
+                    encounter: propsData?.encounter,
+                    edit,
+                    setLocalEncounter
+                  }}
+                />
               </div>
 
               {expand && (
                 <div className="sticky-sidebar-area">
                   <SideSummaryScreen
-                    expand={expand}
-                    setExpand={setExpand}
-                    windowHeight={windowHeight}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
+                    patient={propsData?.patient}
+                    encounter={propsData?.encounter}
                   />
                 </div>
               )}
             </div>
-
-            {/* {activeContent} Render the selected content */}
           </Panel>
-          <AdmitToInpatientModal
-            open={openAdmitModal}
-            setOpen={setOpenAdmitModal}
-            encounter={propsData?.encounter}
-          />
-          <AppointmentModal
-            from={'Encounter'}
-            isOpen={modalOpen}
-            onClose={() => {
-              setModalOpen(false), setShowAppointmentOnly(false);
-            }}
-            appointmentData={selectedEvent?.appointmentData}
-            resourceType={selectedResourceType}
-            facility={selectedFacility}
-            onSave={refitchAppointments}
-            showOnly={showAppointmentOnly}
-          />
         </div>
 
+        {/* Right box with PatientSide and Medical Timeline */}
         <div className="right-box">
-          <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
+          <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
         </div>
-        <WarningiesModal
-          open={openWarningModal}
-          setOpen={setOpenWarningModal}
-          patient={propsData.patient}
-        />
-        <AllergiesModal
-          open={openAllargyModal}
-          setOpen={setOpenAllargyModal}
-          patient={propsData.patient}
-        />
-        <EncounterDischarge
-          open={openDischargeModal}
-          setOpen={setOpenDischargeModal}
-          encounter={propsData.encounter}
-        />
       </div>
+
+      {/* Modals */}
+      <AllergiesModal
+        open={openAllargyModal}
+        setOpen={setOpenAllargyModal}
+        patientKey={propsData?.patient?.patientKey}
+      />
+
+      <WarningiesModal
+        open={openWarningModal}
+        setOpen={setOpenWarningModal}
+        patientKey={propsData?.patient?.patientKey}
+      />
+
+      <AdmitToInpatientModal
+        open={openAdmitModal}
+        setOpen={setOpenAdmitModal}
+        patient={propsData?.patient}
+        encounter={propsData?.encounter}
+      />
+
+      <AppointmentModal
+        open={modalOpen}
+        setOpen={setModalOpen}
+        patient={propsData?.patient}
+        encounter={propsData?.encounter}
+        showAppointmentOnly={showAppointmentOnly}
+        setSelectedEvent={setSelectedEvent}
+        setSelectedFacility={setSelectedFacility}
+        setSelectedResourceType={setSelectedResourceType}
+        setSelectedResources={setSelectedResources}
+        refitchAppointments={refitchAppointments}
+      />
+
+      <EncounterDischarge
+        open={openDischargeModal}
+        setOpen={setOpenDischargeModal}
+        patient={propsData?.patient}
+        encounter={propsData?.encounter}
+      />
+
+      {/* Consultation Popup */}
+      <ConsultationPopup
+        open={openConsultationPopup}
+        setOpen={() => setOpenConsultationPopup(false)}
+        patient={propsData?.patient}
+        encounter={propsData?.encounter}
+      />
     </ActionContext.Provider>
   );
 };
