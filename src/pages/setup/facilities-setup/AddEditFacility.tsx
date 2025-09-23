@@ -49,7 +49,6 @@ const AddEditFacility = ({
                 fieldLabel="Facility ID"
 
                 fieldName="id"
->
                 required
                 record={facility}
                 setRecord={setFacility}

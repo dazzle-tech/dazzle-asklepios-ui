@@ -35,7 +35,6 @@ import { newCreateFacility, newFacility } from '@/types/model-types-constructor-
 import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQuery, useUpdateFacilityMutation } from '@/services/security/facilityService';
 import { FaKey } from 'react-icons/fa6';
 import RoleManegment from '../role-managemen';
-
 const Facilities = () => {
 
   const dispatch = useAppDispatch();
