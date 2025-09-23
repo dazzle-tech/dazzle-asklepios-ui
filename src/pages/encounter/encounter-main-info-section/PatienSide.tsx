@@ -31,7 +31,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const dispatch = useDispatch();
-  console.log("encountr==>",encounter)
+  console.log('encountr==>', encounter);
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
@@ -422,13 +422,13 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
             <span className="patient-section-title">Diagnosis</span>
           </Text>
 
-          <div style={{ marginTop: 8 }}>
+          <div className="margin-top-8">
             <Text>{encounter?.diagnosis}</Text>
           </div>
         </>
       )}
       {/* ==== Allergy & Warning Banners moved to the bottom ==== */}
-      <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="my-container">
         {/* Allergies Banner */}
         {activeAllergies.length > 0 && (
           <MyBadgeStatus
@@ -436,10 +436,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
             color={getHighestSeverityColors().text}
             contant={
               <>
-                <FontAwesomeIcon
-                  icon={faExclamationTriangle}
-                  style={{ marginRight: '8px', fontSize: '16px' }}
-                />
+                <FontAwesomeIcon icon={faExclamationTriangle} className="margin-right-size" />
                 ALLERGIES:{' '}
                 {activeAllergies.map(allergy => getAllergenName(allergy.allergenKey)).join(', ')}
               </>
@@ -454,10 +451,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
             color={getWarningSeverityColors().text}
             contant={
               <>
-                <FontAwesomeIcon
-                  icon={faExclamationTriangle}
-                  style={{ marginRight: '8px', fontSize: '16px' }}
-                />
+                <FontAwesomeIcon icon={faExclamationTriangle} className="margin-right-size" />
                 WARNINGS:{' '}
                 {activeWarnings
                   .map(warning => warning.warning)
