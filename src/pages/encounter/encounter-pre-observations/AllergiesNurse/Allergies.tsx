@@ -384,7 +384,9 @@ const Allergies = (props: AllergiesProps) => {
                 Cancel
               </MyButton>
               <MyButton
-                disabled={!edit ? (allerges?.statusLkey != '9766169155908512' ? true : false) : true}
+                disabled={
+                  !edit ? (allerges?.statusLkey != '9766169155908512' ? true : false) : true
+                }
                 prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
                 onClick={() => setOpenConfirmResolvedModel(true)}
               >
@@ -392,7 +394,9 @@ const Allergies = (props: AllergiesProps) => {
               </MyButton>
               <MyButton
                 prefixIcon={() => <ReloadIcon />}
-                disabled={!edit ? (allerges?.statusLkey != '9766179572884232' ? true : false) : true}
+                disabled={
+                  !edit ? (allerges?.statusLkey != '9766179572884232' ? true : false) : true
+                }
                 onClick={() => setOpenConfirmUndoResolvedModel(true)}
               >
                 Undo Resolved
@@ -420,7 +424,7 @@ const Allergies = (props: AllergiesProps) => {
                 setOpenToAdd(true);
               }}
             >
-              Add Warning
+              Add Allergy
             </MyButton>
           </div>
         )}
