@@ -36,7 +36,6 @@ const Departments = () => {
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
-
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -286,6 +285,7 @@ const Departments = () => {
         icon={faSheetPlastic}
         title="Medical Sheets"
         size="lg"
+
         style={{
           cursor: [
             '5673990729647001',
@@ -306,6 +306,7 @@ const Departments = () => {
             setDepartment(rowData);
             setOpenScreensPopup(true);
           }
+
         }}
       />
     </div>
@@ -327,7 +328,6 @@ const Departments = () => {
         </span>
       )
     },
-
     {
       key: 'name',
       title: <Translate>Department Name</Translate>,
@@ -372,7 +372,6 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
   const getFilterWidth = (filter: string): string => {
     switch (filter) {
       case 'facilityName':
@@ -471,7 +470,6 @@ const Departments = () => {
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
-
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setListRequest({
       ...listRequest,
