@@ -42,14 +42,14 @@ const AddEditFacility = ({
         return (
           <Form fluid layout="inline">
             <div className={clsx('', { 'container-of-two-fields-facility': width > 600 })}>
-              <MyInput
+              {/* <MyInput
                 fieldLabel="Facility ID"
-                fieldName="facilityId"
+                fieldName="id"
                 required
                 record={facility}
                 setRecord={setFacility}
                 width={250}
-              />
+              /> */}
               <MyInput
                 column
                 required
@@ -66,7 +66,7 @@ const AddEditFacility = ({
               />
             </div>
             <MyInput
-              fieldName="facilityName"
+              fieldName="name"
               record={facility}
               setRecord={setFacility}
               width={width > 600 ? 520 : 250}
@@ -78,7 +78,7 @@ const AddEditFacility = ({
             >
               <MyInput
                 column
-                fieldName="facilityRegistrationDate"
+                fieldName="registrationDate"
                 fieldType="date"
                 record={facility}
                 setRecord={setFacility}
@@ -91,7 +91,7 @@ const AddEditFacility = ({
                 column
                 fieldLabel="Default Currency"
                 fieldType="select"
-                fieldName="defaultCurrencyLkey"
+                fieldName="defaultCurrency"
                 selectData={currencyLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
@@ -194,7 +194,7 @@ const AddEditFacility = ({
             >
               <MyInput
                 column
-                fieldName="facilityPhone1"
+                fieldName="phone1"
                 fieldLabel="Primary Phone Number"
                 required
                 record={facility}
@@ -203,9 +203,8 @@ const AddEditFacility = ({
               />
               <MyInput
                 column
-                fieldName="facilityPhone2"
+                fieldName="phone2"
                 fieldLabel="Secondary Phone Number"
-                required
                 record={facility}
                 setRecord={setFacility}
                 width={250}
@@ -213,14 +212,14 @@ const AddEditFacility = ({
             </div>
             <MyInput
               column
-              fieldName="facilityEmailAddress"
+              fieldName="emailAddress"
               record={facility}
               setRecord={setFacility}
               width={width > 600 ? 520 : 250}
             />
             <MyInput
               column
-              fieldName="facilityFax"
+              fieldName="fax"
               required
               record={facility}
               setRecord={setFacility}
