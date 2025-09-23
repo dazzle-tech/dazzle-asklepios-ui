@@ -33,6 +33,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
     // close after save (optional)
     setOpen(false);
   };
+
   const content = (
     <Grid fluid className="role-management">
       <Row className="role-row">
@@ -41,6 +42,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
             selected={selected}
             setSelected={setSelected}
             facilityId={facility.id}
+
           />
         </Col>
 
@@ -63,7 +65,6 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
     </Grid>
   );
 
-
   return (
     <MyModal
       open={open}
@@ -73,7 +74,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
      
       content={content}
       hideBack={true}
-     
+
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       isDisabledActionBtn={!selected} // disable until a role is selected
@@ -82,4 +83,5 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
 };
 
 export default RoleManegment;
+
 
