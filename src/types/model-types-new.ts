@@ -64,7 +64,6 @@ export interface Facility {
 	defaultCurrency:string;
   isActive?: boolean;
 } 
-
 export interface CreateFacility { 
 	name?:string;
 	emailAddress?:string;
@@ -117,5 +116,5 @@ export interface Role {
 export interface UserRole { 
 	roleId?:string;
   userId?:string;
-
 } 
+
