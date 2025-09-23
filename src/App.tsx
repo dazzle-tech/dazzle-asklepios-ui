@@ -94,7 +94,6 @@ import ERTabsDepartmentAndWaitingList from './pages/encounter/ER-triage/ERTabsDe
 import ERTriage from './pages/encounter/ER-triage/ERTriage';
 import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
 import ViewTriage from './pages/encounter/ER-triage/ViewTriage';
-import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
 import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
@@ -171,15 +170,24 @@ import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
+import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
+import { useGetScreensQuery } from './services/userService';
+import { MODULES } from "@/config/modules-config";
+import RoleManegment from './pages/setup/role-managemen';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
+  console.log("User Screens from APP",authSlice.user)
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
   const [navigationMap, setNavigationMap] = useState([]);
   const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+
+const { data: screens, isLoading, error } = useGetScreensQuery(null);
+
 
   const {
     data: navigationMapRawData,
@@ -456,7 +464,7 @@ const App = () => {
               <Route path="icd10-setup" element={<ICD10Setup />} />
               <Route path="cpt-setup" element={<CPTSetup />} />
               <Route path="loinc-setup" element={<LOINCSetup />} />
-              <Route path="services-setup" element={<ServiceSetup />} />
+              <Route path="services-setup" element={<RoleManegment />} />
               <Route path="surgical-kits-setup" element={<SurgicalKitsSetup />} />
               <Route path="error-404" element={<Error404Page />} />
               <Route path="error-403" element={<Error403Page />} />
