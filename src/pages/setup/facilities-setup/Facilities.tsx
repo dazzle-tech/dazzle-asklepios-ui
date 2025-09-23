@@ -33,12 +33,9 @@ import { FaBuilding } from 'react-icons/fa';
 import { CreateFacility, Facility } from '@/types/model-types-new';
 import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
 import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQuery, useUpdateFacilityMutation } from '@/services/security/facilityService';
-import { set } from 'lodash';
-import { Key, KeyOff, KeySharp } from '@mui/icons-material';
 import { FaKey } from 'react-icons/fa6';
-import Role from '../role-managemen/Roles';
-import RoleScreens from '../role-managemen/RoleScreens';
 import RoleManegment from '../role-managemen';
+
 const Facilities = () => {
 
   const dispatch = useAppDispatch();
