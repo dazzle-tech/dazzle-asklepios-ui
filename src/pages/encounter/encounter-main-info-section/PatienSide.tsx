@@ -1,12 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
-import { faIdCard, faUser, faFileWaveform } from '@fortawesome/free-solid-svg-icons';
+import {
+  faIdCard,
+  faUser,
+  faFileWaveform,
+  faExclamationTriangle,
+  faHandDots
+} from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
-import { Panel, Avatar, Text, Divider } from 'rsuite';
+import { Panel, Avatar, Text, Divider, Badge, Loader } from 'rsuite';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FaWeight } from 'react-icons/fa';
 import { calculateAgeFormat } from '@/utils';
-import { useGetObservationSummariesQuery } from '@/services/observationService';
+import {
+  useGetObservationSummariesQuery,
+  useGetAllergiesQuery,
+  useGetWarningsQuery
+} from '@/services/observationService';
+import { useGetAllergensQuery } from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import { ApAttachment } from '@/types/model-types';
 import './styles.less';
@@ -14,15 +25,18 @@ import { GiMedicalThermometer } from 'react-icons/gi';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetRefetchPatientSide } from '@/reducers/refetchPatientSide';
 import { RootState } from '@/store';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 const PatientSide = ({ patient, encounter, refetchList = null }) => {
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const dispatch = useDispatch();
-
+  console.log("encountr==>",encounter)
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
+
+  // Existing queries
   const { data: patirntObservationlist, refetch } = useGetObservationSummariesQuery({
     ...initialListRequest,
     sortBy: 'createdAt',
@@ -35,11 +49,44 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
       }
     ]
   });
+
+  // New queries for allergies and warnings
+  const { data: allergiesResponse, isLoading: allergiesLoading } = useGetAllergiesQuery(
+    {
+      ...initialListRequest,
+      pageSize: 5, // Limit to show only recent ones
+      sortBy: 'createdAt',
+      sortType: 'desc',
+      filters: [
+        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+        { fieldName: 'status_lkey', operator: 'notMatch', value: '3196709905099521' } // Exclude cancelled
+      ]
+    },
+    { skip: !patient?.key }
+  );
+
+  const { data: warningsResponse, isLoading: warningsLoading } = useGetWarningsQuery(
+    {
+      ...initialListRequest,
+      pageSize: 5, // Limit to show only recent ones
+      sortBy: 'createdAt',
+      sortType: 'desc',
+      filters: [
+        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+        { fieldName: 'status_lkey', operator: 'notMatch', value: '3196709905099521' } // Exclude cancelled
+      ]
+    },
+    { skip: !patient?.key }
+  );
+
+  const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
+
   const [bodyMeasurements, setBodyMeasurements] = useState({
     height: null,
     weight: null,
     headcircumference: null
   });
+
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
@@ -73,13 +120,14 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
       setPatientImage(undefined);
     }
   }, [fetchPatientImageResponse]);
+
   useEffect(() => {
     if (refetchList) {
       refetch();
     }
   }, [refetchList]);
+
   const handleImageClick = type => {
-    // setNewAttachmentType(type); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE
     if (patient.key) profileImageFileInputRef.current.click();
   };
 
@@ -90,6 +138,95 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
       dispatch(resetRefetchPatientSide());
     }
   }, [refetchPatientSide]);
+
+  // Helper function to get allergen name
+  const getAllergenName = (allergenKey: string) => {
+    if (!allergensListToGetName?.object) return 'Loading...';
+    const found = allergensListToGetName.object.find(item => item.key === allergenKey);
+    return found?.allergenName || 'Unknown';
+  };
+
+  // Helper function to get status badge color
+  const getStatusBadgeColor = (statusLkey: string) => {
+    switch (statusLkey) {
+      case '9766169155908512': // Active
+        return 'red';
+      case '9766179572884232': // Resolved
+        return 'green';
+      default:
+        return 'blue';
+    }
+  };
+
+  // Helper function to get allergy severity color
+  const getAllergySeverityColor = (severity: string) => {
+    const lowerSeverity = severity?.toLowerCase();
+    if (lowerSeverity === 'mild' || lowerSeverity === 'minor' || lowerSeverity === 'milk') {
+      return '#28a745'; // Green
+    } else if (lowerSeverity === 'moderate') {
+      return '#fd7e14'; // Orange
+    } else {
+      return '#dc3545'; // Red (for severe/high/critical)
+    }
+  };
+
+  // Get active allergies for the alert banner
+  const activeAllergies =
+    allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
+
+  // Get active warnings for the alert banner
+  const activeWarnings =
+    warningsResponse?.object?.filter(warning => warning.statusLkey === '9766169155908512') || [];
+
+  // Helper function to get allergy severity background + text color
+  const getAllergySeverityColors = (severity: string) => {
+    const lowerSeverity = severity?.toLowerCase();
+
+    if (lowerSeverity === 'mild' || lowerSeverity === 'minor' || lowerSeverity === 'milk') {
+      return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
+    } else if (lowerSeverity === 'moderate') {
+      return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
+    } else {
+      return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
+    }
+  };
+
+  // Get highest severity (for allergies banner)
+  const getHighestSeverityColors = () => {
+    if (!activeAllergies.length) return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
+
+    const severities = activeAllergies.map(a =>
+      (a.severityLvalue?.lovDisplayVale || '').toLowerCase().trim()
+    );
+
+    if (
+      severities.some(s => s.includes('severe') || s.includes('high') || s.includes('critical'))
+    ) {
+      return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
+    } else if (severities.some(s => s.includes('moderate'))) {
+      return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
+    } else {
+      return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
+    }
+  };
+
+  // Get warning severity colors
+  const getWarningSeverityColors = () => {
+    if (!activeWarnings.length) return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
+
+    const severities = activeWarnings.map(
+      w => w.severityLvalue?.lovDisplayVale?.toLowerCase() || ''
+    );
+
+    if (severities.some(s => s === 'severe' || s === 'high' || s === 'critical')) {
+      return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
+    } else if (severities.some(s => s === 'moderate')) {
+      return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
+    } else {
+      return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
+    }
+  };
+
   return (
     <Panel className="patient-panel">
       <div className="div-avatar">
@@ -149,6 +286,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
         </div>
       </div>
       <Divider className="divider-style" />
+
       <Text className="main-info-patient-side">
         <FaWeight className="icon-color" />{' '}
         <span className="section-title-patient-side">Physical Measurements</span>
@@ -289,7 +427,49 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
           </div>
         </>
       )}
+      {/* ==== Allergy & Warning Banners moved to the bottom ==== */}
+      <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Allergies Banner */}
+        {activeAllergies.length > 0 && (
+          <MyBadgeStatus
+            backgroundColor={getHighestSeverityColors().bg}
+            color={getHighestSeverityColors().text}
+            contant={
+              <>
+                <FontAwesomeIcon
+                  icon={faExclamationTriangle}
+                  style={{ marginRight: '8px', fontSize: '16px' }}
+                />
+                ALLERGIES:{' '}
+                {activeAllergies.map(allergy => getAllergenName(allergy.allergenKey)).join(', ')}
+              </>
+            }
+          />
+        )}
+
+        {/* Warnings Banner */}
+        {activeWarnings.length > 0 && (
+          <MyBadgeStatus
+            backgroundColor={getWarningSeverityColors().bg}
+            color={getWarningSeverityColors().text}
+            contant={
+              <>
+                <FontAwesomeIcon
+                  icon={faExclamationTriangle}
+                  style={{ marginRight: '8px', fontSize: '16px' }}
+                />
+                WARNINGS:{' '}
+                {activeWarnings
+                  .map(warning => warning.warning)
+                  .filter(w => w)
+                  .join(', ')}
+              </>
+            }
+          />
+        )}
+      </div>
     </Panel>
   );
 };
+
 export default PatientSide;

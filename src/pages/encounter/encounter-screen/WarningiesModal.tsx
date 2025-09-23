@@ -1,251 +1,254 @@
-import React, { useEffect, useState } from 'react';
-import './styles.less';
-import Translate from '@/components/Translate';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
-import { initialListRequest, ListRequest } from '@/types/types';
-import {
-    useGetWarningsQuery
-} from '@/services/observationService';
-import {
-    IconButton,
-    Table,
-    Checkbox,
-} from 'rsuite';
-import { faWarning } from '@fortawesome/free-solid-svg-icons';
 import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { useGetWarningsQuery } from '@/services/observationService';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { faWarning } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState } from 'react';
+import { Checkbox, Table } from 'rsuite';
+import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
 
 const WarningiesModal = ({ open, setOpen, patient }) => {
-    const [showCanceled, setShowCanceled] = useState(true);
+  const [showCanceled, setShowCanceled] = useState(true);
 
-    const [listRequest, setListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patient?.key
-            },
-            {
-                fieldName: 'status_lkey',
-                operator: showCanceled ? 'notMatch' : 'match',
-                value: '3196709905099521'
-            }
-        ]
-    });
-    const { data: warningsListResponse, refetch: fetchwarning ,isLoading} = useGetWarningsQuery(listRequest);
-
-    const tableColumns = [
-        {
-            key: "warningTypeLkey",
-            dataKey: "warningTypeLkey",
-            title: <Translate>Warning Type</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.warningTypeLvalue?.lovDisplayVale;
-            }
-        },
-        {
-            key: "severityLkey",
-            dataKey: "severityLkey",
-            title: <Translate>Severity</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.severityLvalue?.lovDisplayVale;
-            }
-        },
-        {
-            key: "firstTimeRecorded",
-            dataKey: "firstTimeRecorded",
-            title: <Translate>First Time Recorded</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.firstTimeRecorded
-                    ? new Date(rowData.firstTimeRecorded).toLocaleString()
-                    : 'Undefind'
-                    ;
-            }
-        },
-        {
-            key: "sourceOfInformationLkey",
-            dataKey: "sourceOfInformationLkey",
-            title: <Translate>Source of information</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient';
-            }
-        },
-        {
-            key: "warning",
-            dataKey: "warning",
-            title: <Translate>Warning</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.warning;
-            }
-        },
-        {
-            key: "actionTake",
-            dataKey: "actionTake",
-            title: <Translate>Action Taken</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.actionTake;
-            }
-        },
-        {
-            key: "notes",
-            dataKey: "notes",
-            title: <Translate>Notes</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.notes;
-            }
-        },
-        {
-            key: "statusLkey",
-            dataKey: "statusLkey",
-            title: <Translate>Status</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.statusLvalue?.lovDisplayVale;
-            }
-        },
-         {
-           key: "",
-           title: <Translate>Created At/By</Translate>,
-           expandable: true,
-           render: (rowData: any) => {
-             return (<>
-               <span>{rowData.createdBy}</span>
-               <br />
-               <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
-             </>)
-           }
-     
-         },
-         {
-           key: "",
-           title: <Translate>Updated At/By</Translate>,
-           expandable: true,
-           render: (rowData: any) => {
-             return (<>
-               <span>{rowData.updatedBy}</span>
-               <br />
-               <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
-             </>)
-           }
-     
-         },
-     
-         {
-           key: "",
-           title: <Translate>Cancelled At/By</Translate>,
-           expandable: true,
-           render: (rowData: any) => {
-             return (<>
-               <span>{rowData.deletedBy}</span>
-               <br />
-               <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
-             </>)
-           }
-     
-         },
-         {
-           key: "",
-           title: <Translate>Resolved At/By</Translate>,
-           expandable: true,
-           render: (rowData: any) => {
-             if (rowData.statusLkey != '9766169155908512') {
-               return (<>
-     
-                 <span>{rowData.resolvedBy}</span>
-                 <br />
-                 <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
-               </>)
-             }
-             else {
-               return null;
-             }
-           }
-     
-         },
-        {
-            key: "cancellationReason",
-            dataKey: "cancellationReason",
-            title: <Translate>Cancelliton Reason</Translate>,
-            flexGrow: 1,
-            expandable: true
-
-        }
-
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'patient_key',
+        operator: 'match',
+        value: patient?.key
+      },
+      {
+        fieldName: 'status_lkey',
+        operator: showCanceled ? 'notMatch' : 'match',
+        value: '3196709905099521'
+      }
     ]
-    const pageIndex = listRequest.pageNumber - 1;
+  });
+  const {
+    data: warningsListResponse,
+    refetch: fetchwarning,
+    isLoading
+  } = useGetWarningsQuery(listRequest);
 
-    // how many rows per page:
-    const rowsPerPage = listRequest.pageSize;
+  const tableColumns = [
+    {
+      key: 'warningTypeLkey',
+      dataKey: 'warningTypeLkey',
+      title: <Translate>Warning Type</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.warningTypeLvalue?.lovDisplayVale;
+      }
+    },
+    {
+      key: 'severityLkey',
+      dataKey: 'severityLkey',
+      title: <Translate>Severity</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.severityLvalue?.lovDisplayVale;
+      }
+    },
+    {
+      key: 'firstTimeRecorded',
+      dataKey: 'firstTimeRecorded',
+      title: <Translate>First Time Recorded</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.firstTimeRecorded
+          ? new Date(rowData.firstTimeRecorded).toLocaleString()
+          : 'Undefind';
+      }
+    },
+    {
+      key: 'sourceOfInformationLkey',
+      dataKey: 'sourceOfInformationLkey',
+      title: <Translate>Source of information</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient';
+      }
+    },
+    {
+      key: 'warning',
+      dataKey: 'warning',
+      title: <Translate>Warning</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.warning;
+      }
+    },
+    {
+      key: 'actionTake',
+      dataKey: 'actionTake',
+      title: <Translate>Action Taken</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.actionTake;
+      }
+    },
+    {
+      key: 'notes',
+      dataKey: 'notes',
+      title: <Translate>Notes</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.notes;
+      }
+    },
+    {
+      key: 'statusLkey',
+      dataKey: 'statusLkey',
+      title: <Translate>Status</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.statusLvalue?.lovDisplayVale;
+      }
+    },
+    {
+      key: '',
+      title: <Translate>Created At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (
+          <>
+            <span>{rowData.createdBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}
+            </span>
+          </>
+        );
+      }
+    },
+    {
+      key: '',
+      title: <Translate>Updated At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (
+          <>
+            <span>{rowData.updatedBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}
+            </span>
+          </>
+        );
+      }
+    },
 
-    // total number of items in the backend:
-    const totalCount = warningsListResponse?.extraNumeric ?? 0;
+    {
+      key: '',
+      title: <Translate>Cancelled At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (
+          <>
+            <span>{rowData.deletedBy}</span>
+            <br />
+            <span className="date-table-style">
+              {rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}
+            </span>
+          </>
+        );
+      }
+    },
+    {
+      key: '',
+      title: <Translate>Resolved At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        if (rowData.statusLkey != '9766169155908512') {
+          return (
+            <>
+              <span>{rowData.resolvedBy}</span>
+              <br />
+              <span className="date-table-style">
+                {rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}
+              </span>
+            </>
+          );
+        } else {
+          return null;
+        }
+      }
+    },
+    {
+      key: 'cancellationReason',
+      dataKey: 'cancellationReason',
+      title: <Translate>Cancelliton Reason</Translate>,
+      flexGrow: 1,
+      expandable: true
+    }
+  ];
+  const pageIndex = listRequest.pageNumber - 1;
 
-    // handler when the user clicks a new page number:
-    const handlePageChange = (_: unknown, newPage: number) => {
-        // MUI gives you a zero-based page, so add 1 for your API
+  // how many rows per page:
+  const rowsPerPage = listRequest.pageSize;
 
-        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-    };
+  // total number of items in the backend:
+  const totalCount = warningsListResponse?.extraNumeric ?? 0;
 
-    // handler when the user chooses a different rows-per-page:
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // handler when the user clicks a new page number:
+  const handlePageChange = (_: unknown, newPage: number) => {
+    // MUI gives you a zero-based page, so add 1 for your API
 
-        setListRequest({
-            ...listRequest,
-            pageSize: parseInt(event.target.value, 10),
-            pageNumber: 1 // reset to first page
-        });
-    };
-    return (<>
-        <MyModal
-            position='right'
-            size='50vw'
-            title="Warning"
-            open={open}
-            setOpen={setOpen}
-            steps={[{ title: "Warning", icon: <FontAwesomeIcon icon={faWarning} /> }]}
-            content={<>
-                <div>
-                    <Checkbox
-                        checked={!showCanceled}
-                        onChange={() => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
 
-
-                            setShowCanceled(!showCanceled);
-                        }}
-                    >
-                        Show Cancelled
-                    </Checkbox>
-
-
-                </div>
-                <MyTable
-                    columns={tableColumns}
-                    data={warningsListResponse?.object || []}
-                   
-                    sortColumn={listRequest.sortBy}
-                    sortType={listRequest.sortType}
-                    onSortChange={(sortBy, sortType) => {
-                        setListRequest({ ...listRequest, sortBy, sortType });
-                    }}
-                    page={pageIndex}
-                    rowsPerPage={rowsPerPage}
-                    totalCount={totalCount}
-                    onPageChange={handlePageChange}
-                    onRowsPerPageChange={handleRowsPerPageChange}
-                    loading={isLoading}
-                />
-            </>}
-        ></MyModal>
-    </>);
-}
-export default WarningiesModal
+  // handler when the user chooses a different rows-per-page:
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1 // reset to first page
+    });
+  };
+  return (
+    <>
+      <MyModal
+        position="right"
+        size="50vw"
+        title="Warning"
+        open={open}
+        setOpen={setOpen}
+        steps={[{ title: 'Warning', icon: <FontAwesomeIcon icon={faWarning} /> }]}
+        content={
+          <>
+            <div>
+              <Checkbox
+                checked={!showCanceled}
+                onChange={() => {
+                  setShowCanceled(!showCanceled);
+                }}
+              >
+                Show Cancelled
+              </Checkbox>
+            </div>
+            <MyTable
+              columns={tableColumns}
+              data={warningsListResponse?.object || []}
+              sortColumn={listRequest.sortBy}
+              sortType={listRequest.sortType}
+              onSortChange={(sortBy, sortType) => {
+                setListRequest({ ...listRequest, sortBy, sortType });
+              }}
+              page={pageIndex}
+              rowsPerPage={rowsPerPage}
+              totalCount={totalCount}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              loading={isLoading}
+            />
+          </>
+        }
+      ></MyModal>
+    </>
+  );
+};
+export default WarningiesModal;
