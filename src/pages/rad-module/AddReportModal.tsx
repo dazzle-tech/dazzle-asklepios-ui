@@ -149,11 +149,11 @@ const AddReportModal = ({
                     previewImage: true
                   }
                 }}
-                editorStyle={{ height: '60vh', width: '100%', border: '1px solid #ccc', padding: '8px' }}
+                editorStyle={{ height: '60vh', width: '100%', border: '1px solid var(--rs-border-primary)', padding: '8px'}}
                 editorState={editorState}
                 onEditorStateChange={setEditorState}
                 placeholder="Write your report here..."
-                readOnly={isDisabled}
+                readOnly={isDisabled} 
               />
 
             </Col>

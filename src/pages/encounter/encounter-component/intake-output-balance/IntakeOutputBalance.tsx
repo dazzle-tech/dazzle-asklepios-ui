@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
-import { Col, Divider, FlexboxGrid, Form, Panel, Row, Text } from 'rsuite';
+import { Col, Form, Panel, Row } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,6 +11,7 @@ import './styles.less';
 import AddEditIntake from './AddEditIntake';
 import AddEditOutput from './AddEditOutput';
 import DynamicLineChart from '@/components/Charts/DynamicLineChart/DynamicLineChart';
+import SectionContainer from '@/components/SectionsoContainer';
 const IntakeOutputBalance = () => {
   const [popupAddIntakeOpen, setPopupAddIntakeOpen] = useState<boolean>(false);
   const [popupAddOutputOpen, setPopupAddOutputOpen] = useState<boolean>(false);
@@ -260,51 +261,50 @@ const IntakeOutputBalance = () => {
     <Row gutter={15} className="d">
       <Col md={12}>
         <Row>
-          <div className="container-form">
-            <div className="title-div">
-              <Text>Fluid Balance</Text>
-            </div>
-            <Divider />
-            <MyTable
-              data={data}
-              columns={tableFluidBalanceColumns}
-              rowClassName={isSelected}
-              filters={filters()}
-              onRowClick={rowData => {
-                setBalance(rowData);
-              }}
-            />
-            <br />
-            <FlexboxGrid>
-              <FlexboxGrid.Item className="chart" as={Col} colspan={24} lg={8} md={12} sm={24}>
-                <div className="title-div">
-              <Text>Total Balance Change per Date</Text>
-            </div>
-                <Panel>
-                  <DynamicLineChart
-                    maxValue={7000}
-                    title="Balance Change"
-                    chartData={[
-                      { x: '2025-09-19', y: 1450 },
-                      { x: '2025-09-20', y: -300 },
-                      { x: '2025-09-21', y: 1200 },
-                      { x: '2025-09-22', y: -500 },
-                      { x: '2025-09-23', y: 750 }
-                    ]}
-                  />
-                </Panel>
-              </FlexboxGrid.Item>
-            </FlexboxGrid>
-          </div>
+          <SectionContainer
+            title="Fluid Balance"
+            content={
+              <>
+                <MyTable
+                  data={data}
+                  columns={tableFluidBalanceColumns}
+                  rowClassName={isSelected}
+                  filters={filters()}
+                  onRowClick={rowData => {
+                    setBalance(rowData);
+                  }}
+                />
+              </>
+            }
+          />
+        </Row>
+        <Row>
+          <SectionContainer
+            title="Total Balance Change per Date"
+            content={
+              <Panel>
+                <DynamicLineChart
+                  maxValue={7000}
+                  title="Balance Change"
+                  chartData={[
+                    { x: '2025-09-19', y: 1450 },
+                    { x: '2025-09-20', y: -300 },
+                    { x: '2025-09-21', y: 1200 },
+                    { x: '2025-09-22', y: -500 },
+                    { x: '2025-09-23', y: 750 }
+                  ]}
+                />
+              </Panel>
+            }
+          />
         </Row>
       </Col>
       <Col md={12}>
         <Row>
-          <div className="container-form">
-            <div className="title-div">
-              <Text>Intakes</Text>
-            </div>
-            <Divider />
+          <SectionContainer 
+           title="Intakes"
+           content={
+            <>
             <div className="container-of-add-new-button"></div>
             <Form fluid layout="inline" className="container-of-header-intake">
               <MyInput
@@ -339,14 +339,15 @@ const IntakeOutputBalance = () => {
               setOpen={setPopupAddIntakeOpen}
               width={width}
             />
-          </div>
+            </>
+           }
+          />
         </Row>
         <Row>
-          <div className="container-form">
-            <div className="title-div">
-              <Text>Outputs</Text>
-            </div>
-            <Divider />
+          <SectionContainer 
+           title="Outputs"
+           content={
+            <>
             <div className="container-of-add-new-button"></div>
             <Form fluid layout="inline" className="container-of-header-intake">
               <MyInput
@@ -381,7 +382,9 @@ const IntakeOutputBalance = () => {
               setOpen={setPopupAddOutputOpen}
               width={width}
             />
-          </div>
+            </>
+           }
+          />
         </Row>
       </Col>
     </Row>

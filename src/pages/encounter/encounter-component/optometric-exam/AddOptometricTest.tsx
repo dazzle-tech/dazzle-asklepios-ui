@@ -14,6 +14,7 @@ import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal';
 import clsx from 'clsx';
 const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject, refetch, secondSelectedicd10, setSecondSelectedicd10, selectedicd10, setSelectedIcd10, timeM,edit }) => {
+    const mode = useAppSelector((state: any) => state.ui.mode);
     const authSlice = useAppSelector(state => state.auth);
     const [optometricExam, setOptometricExam] = useState<any>(optometricObject);
     const [openTest, setOpenTest] = useState("Visual Acuity Test");
@@ -195,19 +196,19 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
     // lift Content Modal
     const liftContent = (
         <div className="test-list-btn">
-            <MyButton appearance="subtle" color="#1C2836" className="test-btn" radius="10px" onClick={() => setOpenTest("Visual Acuity Test")}>
+            <MyButton appearance="subtle" color= {mode === 'light' ? "#1C2836" : 'var(--white)'} className="test-btn" radius="10px" onClick={() => setOpenTest("Visual Acuity Test")}>
                 Visual Acuity
             </MyButton>
-            <MyButton appearance="subtle" color="#1C2836" className="test-btn" radius="10px" onClick={() => setOpenTest("Ishihara Color Blindness Test")}>
+            <MyButton appearance="subtle" color= {mode === 'light' ? "#1C2836" : 'var(--white)'} className="test-btn" radius="10px" onClick={() => setOpenTest("Ishihara Color Blindness Test")}>
                 Ishihara Color Blindness
             </MyButton>
-            <MyButton appearance="subtle" color="#1C2836" className="test-btn" radius="10px" onClick={() => setOpenTest("Refraction Test Results")}>
+            <MyButton appearance="subtle" color= {mode === 'light' ? "#1C2836" : 'var(--white)'} className="test-btn" radius="10px" onClick={() => setOpenTest("Refraction Test Results")}>
                 Refraction Results
             </MyButton>
-            <MyButton appearance="subtle" color="#1C2836" className="test-btn" radius="10px" onClick={() => setOpenTest("Intraocular Pressure (IOP)")}>
+            <MyButton appearance="subtle" color= {mode === 'light' ? "#1C2836" : 'var(--white)'} className="test-btn" radius="10px" onClick={() => setOpenTest("Intraocular Pressure (IOP)")}>
                 Intraocular Pressure (IOP)
             </MyButton>
-            <MyButton appearance="subtle" color="#1C2836" className="test-btn" radius="10px" onClick={() => setOpenTest("Interpretation & Diagnosis")}>
+            <MyButton appearance="subtle" color= {mode === 'light' ? "#1C2836" : 'var(--white)'} className="test-btn" radius="10px" onClick={() => setOpenTest("Interpretation & Diagnosis")}>
                 Interpretation & Diagnosis
             </MyButton>
         </div>
@@ -692,7 +693,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
             actionButtonFunction={handleSave}
             footerButtons={<>
                 <MyButton appearance='ghost' onClick={handleClearField}>Clear</MyButton>
-                <MyButton   disabled={isDisabledField} onClick={() => { handleSave(); setOpen(false); }}>Save & Close</MyButton>
+                <MyButton disabled={isDisabledField} onClick={() => { handleSave(); setOpen(false); }}>Save & Close</MyButton>
             </>
             }
             rightContent={rightContent}

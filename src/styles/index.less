@@ -344,7 +344,9 @@ aside {
   --text-weight-bold: 500;
   --text-weight-extra-bold: 600;
 
-  --dark-mode-box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+  // --dark-mode-box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+  --dark-mode-box-shadow:  0 2px 6px rgba(0, 0, 0, 0.6),   
+    0 0 6px rgba(255, 255, 255, 0.05);
 
 
 
@@ -499,9 +501,11 @@ input[disabled] {
   .react-tabs__tab{
     background-color: var(--black) !important;
   }
+  
 }
 // To style the Search Input inside the SelectPicker dropdown to match dark mode
 .rs-theme-dark{
+  scrollbar-color: #606060 transparent !important; // for scroll backgroun on dark mode
   .rs-input-group.rs-input-group-inside .rs-input {
     background-color: var(--dark-black) !important;
   }
@@ -509,5 +513,7 @@ input[disabled] {
   .rs-input-group .rs-form-control-wrapper ~ .rs-input-group-addon {
     background-color: var(--gray-dark) !important;
   }
+  .rs-nav-horizontal{
+    background-color: var(--dark-black) !important;
+  }
 }
-

@@ -76,7 +76,8 @@
     //   width: calc(100% - 35% - 16px);
     // }
 
-    .active-plan, .draft-plan {
+    .active-plan,
+    .draft-plan {
       width: 100%;
       padding: 0 8px 16px;
       border-radius: 8px;
@@ -85,7 +86,6 @@
         font-weight: 600;
         font-size: 15px;
       }
-      
     }
     .rs-tabs {
       .rs-nav {
@@ -100,7 +100,7 @@
 
           .number-label {
             background-color: var(--background-light);
-            border:1px solid var(--background-gray);
+            border: 1px solid var(--background-gray);
             padding: 2px 6px;
             border-radius: 4px;
             font-weight: 600;
@@ -109,5 +109,18 @@
         }
       }
     }
+  }
+}
+
+.dark {
+  .dental-actions-table {
+    background-color: var(--extra-dark-black) !important;
+  }
+  .treatment-plan-tab .tab-content .rs-tabs .rs-nav {
+    background-color: var(--dark-black) !important;
+  }
+  .number-label {
+    background-color: rgb(48, 47, 47) !important;
+    border: var(--rs-border-primary) 1px solid !important;
   }
 }
