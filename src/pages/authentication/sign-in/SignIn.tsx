@@ -1,7 +1,5 @@
 import MyInput from '@/components/MyInput';
 
-
-
 import {  useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
@@ -21,9 +19,9 @@ import { useLazyGetAccountQuery } from '@/services/accountService';
 import { setToken, setUser } from '@/reducers/authSlice';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
-// import store + enumsApi to prefetch after auth
 import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
+
 
 const SignIn = () => {
   const [otpView, setOtpView] = useState(false);
