@@ -39,9 +39,7 @@ const Users = () => {
   const [user, setUser] = useState<ApUser>({
     ...newApUser
     // isValid: true
-  });
- 
- 
+  }); 
   const [record, setRecord] = useState({ filter: '', value: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -224,7 +222,6 @@ const handleSave = async () => {
         onClick={() => {
           setPopupOpen(true);
           setUser(rowData);
-          setReadyUser(rowData);
         }}
       />
       <FaMedal

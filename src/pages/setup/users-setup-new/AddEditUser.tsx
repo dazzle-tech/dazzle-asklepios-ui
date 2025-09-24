@@ -156,6 +156,7 @@ const AddEditUser = ({
       actionButtonFunction={handleSave}
       size={width > 600 ? '38vw' : '25vw'}
       steps={[{ title: 'User Info', icon: <FontAwesomeIcon icon={faUser} /> ,disabledNext:!user.id, footer: <>
+
                     <MyButton
                         disabled={false}
                         onClick={handleSave}
