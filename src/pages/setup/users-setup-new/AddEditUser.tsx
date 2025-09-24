@@ -12,6 +12,7 @@ import { useGetAllRolesQuery, useGetRolesByFacilityQuery } from '@/services/secu
 import MyButton from '@/components/MyButton/MyButton';
 import AccessRole from './AccessRole';
 import { useGetGenderQuery } from '@/services/enumService';
+
 const AddEditUser = ({
   open,
   setOpen,
@@ -156,6 +157,7 @@ const AddEditUser = ({
       actionButtonFunction={handleSave}
       size={width > 600 ? '38vw' : '25vw'}
       steps={[{ title: 'User Info', icon: <FontAwesomeIcon icon={faUser} /> ,disabledNext:!user.id, footer: <>
+
 
                     <MyButton
                         disabled={false}

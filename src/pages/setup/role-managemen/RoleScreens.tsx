@@ -14,27 +14,25 @@ import { notify } from "@/utils/uiReducerActions";
 
 interface Permission {
 
+
   screen: string;
+
 
   permission: "VIEW" | "EDIT";
 }
 
 const RoleScreens = ({ roleId }: { roleId: number }) => {
-  console.log("RoleScreens for roleId:", roleId);
   const dispatch = useAppDispatch();
+
 
 
   const { data: initialPermissions = [], isLoading, refetch } =
 
+
     useGetRolePermissionsQuery(roleId);
-    console.log("screens:", initialPermissions);
   const [updatePermissions] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
-
-  console.log("Selected",selected)
-
-  // sync from backend
 
   useEffect(() => {
     setSelected(initialPermissions);
@@ -44,7 +42,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     refetch();
   }, [roleId]);
 
- 
   const permissionOptions = [
     { label: "No Access", value: null },
     { label: "View", value: "VIEW" },
@@ -75,11 +72,11 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
         screen: scr.name,
         permission: value,
 
+
       }));
       return [...filtered, ...additions];
     });
   };
-
 
   const columns = [
     {
@@ -93,6 +90,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
       title: <Translate>Permission</Translate>,
       render: (rowData: any) => {
        
+
         const screens = rowData.screens || [];
         let current: "VIEW" | "EDIT" | null = null;
 
@@ -103,6 +101,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
           );
           const unique = [...new Set(perms)];
           current = unique.length === 1 ? unique[0] : null;
+
         }
 
         return (
@@ -113,7 +112,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
             value={current}
             onChange={(value) => setModulePermissions(screens, value)}
             style={{ width: 150 }}
-
           />
         );
       },
@@ -145,7 +143,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
           />
         );
       },
-
     },
   ];
 
@@ -164,7 +161,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
       dispatch(
         notify({ sev: "error", msg: "Failed to update permissions" })
       );
-
     }
   };
 

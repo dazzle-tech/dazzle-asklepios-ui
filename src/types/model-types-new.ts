@@ -112,3 +112,8 @@ export interface Role {
 	type?:string;
 	facilityId?:string;
 } 
+export interface UserRole { 
+	roleId?:string;
+  userId?:string;
+
+} 
