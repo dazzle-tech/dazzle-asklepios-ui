@@ -36,6 +36,7 @@ const Departments = () => {
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
+
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -172,11 +173,11 @@ const Departments = () => {
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
-
   // add department
   const handleAdd = () => {
     setPopupOpen(false);
     setLoad(true);
+
     addDepartment(department)
       .unwrap()
       .then(() => {
@@ -191,7 +192,6 @@ const Departments = () => {
   const handleUpdate = () => {
     setPopupOpen(false);
     setLoad(true);
-
     updateDepartment(department)
       .unwrap()
       .then(() => {
@@ -251,7 +251,6 @@ const Departments = () => {
         );
       });
   };
-
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -260,6 +259,8 @@ const Departments = () => {
         fill="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
+          setDepartment(rowData);
+          console.log('Row Data ---> ', rowData)
           setDepartment(rowData);
           setPopupOpen(true);
         }}
@@ -285,7 +286,6 @@ const Departments = () => {
         icon={faSheetPlastic}
         title="Medical Sheets"
         size="lg"
-
         style={{
           cursor: [
             '5673990729647001',
@@ -306,7 +306,6 @@ const Departments = () => {
             setDepartment(rowData);
             setOpenScreensPopup(true);
           }
-
         }}
       />
     </div>
@@ -384,7 +383,6 @@ const Departments = () => {
         return '150px';
     }
   };
-
 
   const filters = () => {
     const selectedFilter = record.filter;
@@ -470,6 +468,7 @@ const Departments = () => {
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setListRequest({
       ...listRequest,
