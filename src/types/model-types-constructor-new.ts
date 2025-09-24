@@ -81,6 +81,10 @@ export const newRole:modelTypes.Role = {
 	facilityId: null,
 } 
 
+export const newUserRole:modelTypes.UserRole = { 
+  roleId:undefined,
+  userId:undefined,
+}
 
 
 

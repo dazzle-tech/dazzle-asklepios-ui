@@ -1,47 +1,56 @@
 import Translate from '@/components/Translate';
-import {
-  useDeactivateUserMutation,
-  useGetFacilitiesQuery
-} from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import React, { useEffect, useState } from 'react';
-import { FaAddressCard, FaBuilding, FaMedal } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Panel, Whisper, Tooltip } from 'rsuite';
 import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import { FaMedal } from 'react-icons/fa';
+import { FaAddressCard } from 'react-icons/fa';
+import { FaUndo } from 'react-icons/fa';
 import { RiLockPasswordFill } from 'react-icons/ri';
-import { Panel, Tooltip, Whisper } from 'rsuite';
 import ViewDepartments from './ViewDepartments';
 import ViewLicenses from './ViewLicenses';
+import { FaBuilding } from 'react-icons/fa';
+import {
+  useGetAccessRolesQuery,
+  useGetFacilitiesQuery,
+  useGetUsersQuery,
+  useSaveUserMutation,
+  useDeactivateUserMutation
+} from '@/services/setupService';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
 
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
-import MyTable from '@/components/MyTable';
-import { useAppDispatch } from '@/hooks';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAddUserMutation, useGetUserQuery, useUpdateUserMutation } from '@/services/userService';
 import { newApFacility } from '@/types/model-types-constructor';
-import { newApUser } from '@/types/model-types-constructor-new';
-import { ApUser } from '@/types/model-types-new';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
 import {
   addFilterToListRequest,
+  conjureValueBasedOnKeyFromList,
   fromCamelCaseToDBName
 } from '@/utils';
-import { notify } from '@/utils/uiReducerActions';
 import ReactDOMServer from 'react-dom/server';
-import { Form } from 'rsuite';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
+import MyTable from '@/components/MyTable';
 import AddEditUser from './AddEditUser';
+import { notify } from '@/utils/uiReducerActions';
+import MyButton from '@/components/MyButton/MyButton';
 import ResetPassword from './ResetPassword';
-
 import './styles.less';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { ApUser } from '@/types/model-types-new';
+import { newApUser } from '@/types/model-types-constructor-new';
+import { useAddUserMutation, useGetUserQuery, useUpdateUserMutation } from '@/services/userService';
 const Users = () => {
   const dispatch = useAppDispatch();
   const [user, setUser] = useState<ApUser>({
     ...newApUser
     // isValid: true
   });
-
-
+  console.log("USER",user)
+  const [readyUser, setReadyUser] = useState(user);
+  const [selectedFacility] = useState(newApFacility);
+ 
   const [record, setRecord] = useState({ filter: '', value: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -224,6 +233,7 @@ const handleSave = async () => {
         onClick={() => {
           setPopupOpen(true);
           setUser(rowData);
+          setReadyUser(rowData);
         }}
       />
       <FaMedal
