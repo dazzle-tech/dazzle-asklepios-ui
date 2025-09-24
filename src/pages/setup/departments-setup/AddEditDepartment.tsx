@@ -2,6 +2,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
@@ -11,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
+
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -31,6 +33,7 @@ const AddEditDepartment = ({
   const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -108,6 +111,7 @@ const AddEditDepartment = ({
                   fieldType="select"
                   fieldLabel="Encounter Type"
                   selectData={encTypesEnum?? []}
+
                   record={department}
                   setRecord={setDepartment}
                 />
@@ -127,6 +131,7 @@ const AddEditDepartment = ({
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
       actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
       steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
+
 
       size={width > 600 ? '36vw' : '25vw'}
     />

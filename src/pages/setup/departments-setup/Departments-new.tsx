@@ -9,7 +9,9 @@ import { useGetLovValuesByCodeQuery, useGetMedicalSheetsByDepartmentIdQuery } fr
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
+
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, conjureValueBasedOnIDFromList, fromCamelCaseToDBName } from '@/utils';
+
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -22,6 +24,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
 import { useAddDepartmentMutation, useGetDepartmentByFacilityQuery, useGetDepartmentByNameQuery, useGetDepartmentByTypeQuery, useGetDepartmentQuery, useGetDepartmentTypesQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
+
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 
@@ -38,12 +41,14 @@ const Departments = () => {
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
 
+
   const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
   const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
 
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
+
 
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
@@ -68,6 +73,7 @@ const Departments = () => {
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequestId,
+
     pageSize: 15
   });
 
@@ -166,6 +172,7 @@ const Departments = () => {
   }, [medicalSheet, department.id, department.facilityId]);
   //handle get facility and department type data for search
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+
   const [facilitiesList, setFacilitiesList] = useState<{ label: string; value: string }[]>([]);
   useEffect(() => {
     if (facilityListResponse?.length) {
@@ -176,23 +183,34 @@ const Departments = () => {
       setFacilitiesList(facilityOptions);
     }
   }, [facilityListResponse]);
+
   
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+
   // Handle new department creation
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);
+
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
-  };
+ 
 
-  // add department
-  const handleAdd = () => {
+    setDepartment({ ...newDepartment, departmentCode: code });
+    setPopupOpen(true);
 
+  const cleanDepartmentForAPI = (dept: Department) => ({
+    ...dept,
+    facilityId: dept?.facility?.id ?? dept.facilityId,
+    facility: undefined
+  });
+ 
     setPopupOpen(false);
     setLoad(true);
-    addDepartment(department)
+    console.log("Adding department with payload:", cleanDepartmentForAPI(department));
+
+    addDepartment(cleanDepartmentForAPI(department))
       .unwrap()
       .then(() => {
 
@@ -203,11 +221,13 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
+
   // update department
   const handleUpdate = () => {
     setPopupOpen(false);
     setLoad(true);
     updateDepartment(department)
+
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
@@ -217,6 +237,7 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
+
 
   const handleFilterChange = async (fieldName, value) => {
     if (!value) {
@@ -242,6 +263,7 @@ const Departments = () => {
       setIsFiltered(false);
     }
   };
+
   const generateFiveDigitCode = (): string => {
     return String(Math.floor(10000 + Math.random() * 90000));
   };
@@ -279,6 +301,7 @@ const Departments = () => {
         className="icons-style"
         onClick={() => {
           setDepartment(rowData);
+
           setPopupOpen(true);
         }}
       />
@@ -303,6 +326,8 @@ const Departments = () => {
         icon={faSheetPlastic}
         title="Medical Sheets"
         size="lg"
+
+
 
         style={{
           cursor: [
@@ -347,6 +372,7 @@ const Departments = () => {
           )}
         </span>
       )
+
     },
 
 
@@ -397,6 +423,7 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
+
 
 
   const getFilterWidth = (filter: string): string => {
@@ -496,6 +523,7 @@ const Departments = () => {
 
 
 
+
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
@@ -531,6 +559,7 @@ const Departments = () => {
             ? departmentList.length
             : departmentListResponse?.length ?? 0
         }
+
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => setDepartment(rowData)}
@@ -552,7 +581,7 @@ const Departments = () => {
         setRecordOfDepartmentCode={setRecordOfDepartmentCode}
         width={width}
 
-        handleAddNew={handleAdd}
+        handleAddNew={handleNew}
         handleUpdate={handleUpdate}
 
       />

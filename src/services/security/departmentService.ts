@@ -67,6 +67,7 @@ export const departmentService = createApi({
       query: (id) => `/api/setup/department/encounter-type`,
     }),
 
+
   }),
 
 
