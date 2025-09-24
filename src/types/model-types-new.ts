@@ -15,8 +15,8 @@ export interface ApUser {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   phoneNumber?: string | null;
-  birthDate?: Date | null;
-  gender?: string | null;
+  birthDate?: Date | null; 
+  gender?: number | null;
   jobDescription?: string | null;
 }
 
@@ -55,33 +55,6 @@ export interface Department {
 export interface Facility { 
 	id?:string;
 	name?:string;
-  code?:string;
-	emailAddress?:string;
-	phone1?:string;
-	phone2?:string;
-	fax?:string;
-	addressId?:string;
-	type:string;
-	defaultCurrency:string;
-  isActive?: boolean;
-} 
-
-export interface CreateFacility { 
-	name?:string;
-  code?:string;
-	emailAddress?:string;
-	phone1?:string;
-	phone2?:string;
-	fax?:string;
-	addressId?:string;
-	type:string;
-	defaultCurrency:string;
-  isActive?: boolean;
-} 
-
-export interface Facility { 
-	id?:string;
-	name?:string;
 	emailAddress?:string;
 	phone1?:string;
 	phone2?:string;
@@ -103,6 +76,8 @@ export interface CreateFacility {
 	defaultCurrency:string;
   isActive?: boolean;
 } 
+
+
 
 export interface Role { 
 	id?:string;
@@ -113,4 +88,5 @@ export interface Role {
 export interface UserRole { 
 	roleId?:string;
   userId?:string;
+
 } 

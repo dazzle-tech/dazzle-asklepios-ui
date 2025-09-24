@@ -58,7 +58,7 @@ export const newFacility:modelTypes.Facility = {
 	fax:'',
 	addressId:'',
 	type:'',
-	defaultCurrency:null,
+	defaultCurrency:'',
   isActive: true,
 } 
 
@@ -85,4 +85,15 @@ export const newUserRole:modelTypes.UserRole = {
   roleId:undefined,
   userId:undefined,
 }
+
+
+
+
+
+
+
+
+
+
+
 
