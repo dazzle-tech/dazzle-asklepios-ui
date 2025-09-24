@@ -30,6 +30,7 @@ import callReducer from './store/callSlice';
 import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
+import { roleService } from './services/security/roleService';
 
 export const store = configureStore({
   reducer: {
@@ -83,6 +84,8 @@ export const store = configureStore({
     [radService.reducerPath]: radService.reducer,
     // div slice 
     [divSlice.name]: divSlice.reducer,
+    //role
+    [roleService.reducerPath]: roleService.reducer,
 
     [enumsApi.reducerPath]: enumsApi.reducer,
  
@@ -130,6 +133,7 @@ export const store = configureStore({
       enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
+      roleService.middleware
 
 
     ])
