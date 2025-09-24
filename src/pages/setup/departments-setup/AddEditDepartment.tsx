@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
+
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -41,7 +42,6 @@ const AddEditDepartment = ({
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
-
                 fieldLabel="Facility"
                 fieldName="facilityId"
                 required
@@ -49,7 +49,6 @@ const AddEditDepartment = ({
                 selectData={facilityListResponse ?? []}
                 selectDataLabel="name"
                 selectDataValue="id"
-
                 record={department}
                 setRecord={setDepartment}
               />
@@ -129,7 +128,6 @@ const AddEditDepartment = ({
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
       actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
       steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
-
       size={width > 600 ? '36vw' : '25vw'}
     />
   );

@@ -49,7 +49,6 @@ export interface Department {
   departmentCode: string;
   phoneNumber: string;
   email: string;
-
   encounterType: string;
   isActive: boolean;
 }
