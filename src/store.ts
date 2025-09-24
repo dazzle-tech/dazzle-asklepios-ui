@@ -31,6 +31,7 @@ import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
 import { roleService } from './services/security/roleService';
+import { userRoleService } from './services/security/UserRoleService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -85,6 +86,7 @@ export const store = configureStore({
     [divSlice.name]: divSlice.reducer,
     //role
     [roleService.reducerPath]: roleService.reducer,
+    [userRoleService.reducerPath]: userRoleService.reducer,
 
     [enumsApi.reducerPath]: enumsApi.reducer,
  
@@ -132,7 +134,8 @@ export const store = configureStore({
       enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
-      roleService.middleware
+      roleService.middleware,
+      userRoleService.middleware
 
     ])
 });
