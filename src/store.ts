@@ -107,7 +107,6 @@ export const store = configureStore({
 
     [facilityService.reducerPath]: facilityService.reducer ,
      [departmentService.reducerPath]: departmentService.reducer ,
-     
       [enumService.reducerPath]: enumService.reducer 
 
   },

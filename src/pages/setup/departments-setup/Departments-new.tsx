@@ -181,11 +181,11 @@ const Departments = () => {
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
-
   // add department
   const handleAdd = () => {
     setPopupOpen(false);
     setLoad(true);
+
     addDepartment(department)
       .unwrap()
       .then(() => {
@@ -414,7 +414,6 @@ const Departments = () => {
           record={record}
           setRecord={setRecord}
         />
-
       );
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (
@@ -481,6 +480,7 @@ const Departments = () => {
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setListRequest({
       ...listRequest,
@@ -502,16 +502,20 @@ const Departments = () => {
         </MyButton>
       </div>
       <MyTable
-        data={departmentListResponse?.object ?? []}
+        data={
+          departmentListResponse?.slice(
+            pageIndex * rowsPerPage,
+            pageIndex * rowsPerPage + rowsPerPage
+          ) ?? []
+        }
+        totalCount={departmentListResponse?.length ?? 0}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={rowData => {
-          setDepartment(rowData);
-        }}
+        onRowClick={rowData => setDepartment(rowData)}
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
+
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
