@@ -186,7 +186,6 @@ const Departments = () => {
   
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
-
   // Handle new department creation
   const handleNew = () => {
     const code = generateFiveDigitCode();
@@ -200,7 +199,6 @@ const Departments = () => {
     facilityId: dept?.facility?.id ?? dept.facilityId,
     facility: undefined
   });
- 
 
     setPopupOpen(false);
     setLoad(true);
@@ -232,7 +230,6 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
-
 
   const handleFilterChange = async (fieldName, value) => {
     if (!value) {
@@ -286,7 +283,6 @@ const Departments = () => {
         );
       });
   };
-
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -452,7 +448,6 @@ const Departments = () => {
           record={record}
           setRecord={setRecord}
         />
-
       );
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (

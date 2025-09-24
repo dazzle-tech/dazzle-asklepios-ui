@@ -52,7 +52,6 @@ const AddEditDepartment = ({
                 selectData={facilityListResponse ?? []}
                 selectDataLabel="name"
                 selectDataValue="id"
-
                 record={department}
                 setRecord={setDepartment}
               />
