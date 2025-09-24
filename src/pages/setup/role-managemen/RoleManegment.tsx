@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Grid, Row, Col } from "rsuite";
 import "./styles.less";
-import Roles from "./Role";
+import Roles from "./Roles";
 import RoleScreens from "./RoleScreens";
 import SectionContainer from "@/components/SectionsoContainer";
 import MyModal from "@/components/MyModal/MyModal";
@@ -26,7 +26,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
   onSave,
 }) => {
   const [selected, setSelected] = useState<Role | null>(null);
-
+console.log("Facility in RoleManagement:", facility);
   const handleSave = () => {
     // hook for your save logic (permissions, screens, etc.)
     onSave?.(selected);
@@ -41,6 +41,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
           <Roles
             selected={selected}
             setSelected={setSelected}
+            facilityId={facility.id}
           />
         </Col>
 

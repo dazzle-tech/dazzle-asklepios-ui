@@ -17,20 +17,24 @@ interface Permission {
 }
 
 const RoleScreens = ({ roleId }: { roleId: number }) => {
+  console.log("RoleScreens for roleId:", roleId);
   const dispatch = useAppDispatch();
-  const { data: initialPermissions = [], isLoading } =
+  const { data: initialPermissions = [], isLoading ,refetch } =
     useGetRolePermissionsQuery(roleId);
+    console.log("screens:", initialPermissions);
   const [updatePermissions] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
 
   // sync from backend
-  useEffect(() => {
-    if (initialPermissions.length) {
-      setSelected(initialPermissions);
-    }
-  }, [initialPermissions]);
+useEffect(() => {
+  setSelected(initialPermissions);
+}, [initialPermissions]);
 
+
+  useEffect(() => {
+    refetch();
+  }, [roleId]);
   // toggle permission لشاشة واحدة
   const togglePermission = (screen: string, permission: "VIEW" | "EDIT") => {
     setSelected((prev) => {
