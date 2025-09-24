@@ -28,6 +28,7 @@ import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
 import { facilityService } from './services/security/facilityService';
 import { roleService } from './services/security/roleService';
+import { userRoleService } from './services/security/UserRoleService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -82,6 +83,7 @@ export const store = configureStore({
     [divSlice.name]: divSlice.reducer,
     //role
     [roleService.reducerPath]: roleService.reducer,
+    [userRoleService.reducerPath]: userRoleService.reducer,
 
     //refetch Encounters
     refetch: refetchReducer,
@@ -123,7 +125,8 @@ export const store = configureStore({
       recoveryService.middleware,
       userService.middleware,
       facilityService.middleware,
-      roleService.middleware
+      roleService.middleware,
+      userRoleService.middleware,
 
     ])
 });

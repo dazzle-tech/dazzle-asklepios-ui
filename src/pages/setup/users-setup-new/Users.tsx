@@ -47,7 +47,7 @@ const Users = () => {
     ...newApUser
     // isValid: true
   });
-  console.log(newApUser)
+  console.log("USER",user)
   const [readyUser, setReadyUser] = useState(user);
   const [selectedFacility] = useState(newApFacility);
  
@@ -68,11 +68,8 @@ const Users = () => {
 
    const { data: users, isLoading  ,refetch} = useGetUserQuery();
    const [updateUser] = useUpdateUserMutation();
-  // Fetch accessRoles list response
-  const { data: accessRoleListResponse } = useGetAccessRolesQuery({
-    ...initialListRequest,
-    pageSize: 1000
-  });
+  
+ 
   // Fetch Facilities list response
   const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
     ...initialListRequest,
@@ -167,17 +164,19 @@ const handleSave = async () => {
   try {
     if (user.id !== undefined) {
     
-      await updateUser({ ...user } ).unwrap();
+      const saveduser=await updateUser({ ...user } ).unwrap();
       dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
+      setUser({...saveduser})
       refetch();
     } else {
    
-      await saveUser({ ...user}).unwrap();
+     const saveduser= await saveUser({ ...user}).unwrap();
       dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
+      setUser({...saveduser})
       refetch();
     }
-    refetchFacility();
-    setPopupOpen(false);
+   
+    
 
   } catch (error) {
     dispatch(notify({ msg: 'Failed to save this User', sev: 'error' }));
@@ -216,7 +215,7 @@ const handleSave = async () => {
         .then(() => {
           setOpenConfirmDeleteUserModal(false);
           dispatch(notify({ msg: 'The User was successfully ' + process, sev: 'success' }));
-          refetchUsers();
+          refetch();
         });
     } catch (error) {
       dispatch(notify({ msg: 'Failed to ' + process + ' this User', sev: 'error' }));
@@ -449,10 +448,8 @@ const handleSave = async () => {
             setOpen={setPopupOpen}
             user={user}
             setUser={setUser}
-            readyUser={readyUser}
-            setReadyUser={setReadyUser}
             handleSave={handleSave}
-            facilityListResponse={facilityListResponse}
+           
             width={width}
           />
         </Panel>
