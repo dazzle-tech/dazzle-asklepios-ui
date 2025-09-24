@@ -27,6 +27,7 @@ import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
 import { facilityService } from './services/security/facilityService';
+import { departmentService } from './services/security/departmentService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 export const store = configureStore({
@@ -99,6 +100,7 @@ export const store = configureStore({
     [userService.reducerPath]: userService.reducer,
 
     [facilityService.reducerPath]: facilityService.reducer ,
+     [departmentService.reducerPath]: departmentService.reducer ,
 
   },
   // @ts-ignore
@@ -127,7 +129,8 @@ export const store = configureStore({
       facilityService.middleware,
       roleService.middleware,
       userRoleService.middleware,
-
+      departmentService.middleware,
+      roleService.middleware
     ])
 });
 
