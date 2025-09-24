@@ -111,5 +111,4 @@ export interface Role {
 export interface UserRole { 
 	roleId?:string;
   userId?:string;
-
 } 

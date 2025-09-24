@@ -18,13 +18,10 @@ interface Permission {
 }
 
 const RoleScreens = ({ roleId }: { roleId: number }) => {
-  console.log("RoleScreens for roleId:", roleId);
   const dispatch = useAppDispatch();
   const Operations: string[] = useEnumByName("Operation") || [];
-
   const { data: initialPermissions = [], isLoading, refetch } =
     useGetRolePermissionsQuery(roleId);
-    console.log("screens:", initialPermissions);
   const [updatePermissions] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
