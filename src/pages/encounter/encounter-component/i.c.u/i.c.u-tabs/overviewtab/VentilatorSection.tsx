@@ -198,7 +198,7 @@ const [tableData, setTableData] = useState<any[]>(initialTableData);
           <MyModal
             open={openVentilator}
             setOpen={setOpenVentilator}
-            title="New/Edit Ventilator"
+            title="Add Ventilator"
             size="55vw"
             bodyheight="80vh"
             position="center"

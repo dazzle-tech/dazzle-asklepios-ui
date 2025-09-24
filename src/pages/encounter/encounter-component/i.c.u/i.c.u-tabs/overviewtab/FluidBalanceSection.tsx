@@ -82,7 +82,7 @@ const mode = useSelector((state: any) => state.ui.mode);
         <MyModal
       open={openFluidBalance}
       setOpen={setOpenFluidBalance}
-      title="New/Edit Patient Attachments"
+      title="Add Fluid Balance"
       size="80vw"
       bodyheight="80vh"
       position="center"

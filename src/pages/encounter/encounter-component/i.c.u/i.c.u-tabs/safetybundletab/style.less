@@ -1,0 +1,157 @@
+
+.safety-bundle-icu-section {
+  padding: 15px;
+  border-radius: 8px;
+
+  &.light {
+    background-color: #f9f9f9;
+  }
+
+  &.dark {
+    background-color: #1e1e1e;
+    color: #fff;
+  }
+}
+
+.safety-bundle-icu-title {
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.safety-bundle-icu-title-icon {
+  margin-right: 2px;
+  font-size: 1rem;
+}
+
+.safety-bundle-icu-add-btn-wrapper {
+  margin-left: auto;
+  display: inline-block;
+
+  button {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+}
+
+.safety-bundle-icu-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.safety-bundle-icu-card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* Light Mode */
+.safety-bundle-icu-section.light {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.safety-bundle-icu-section.light .safety-bundle-icu-card-title {
+  color: #1a1a1a;
+}
+
+/* Dark Mode */
+.safety-bundle-icu-section.dark {
+  background-color: #1f1f1f;
+  color: #f0f0f0;
+}
+
+.safety-bundle-icu-section.dark .safety-bundle-icu-card-title {
+  color: #f0f0f0;
+}
+
+
+.safety-bundle-icu-card-subtext {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 2px;
+}
+
+
+.count-div-on-top-of-page-safety-bundle{display: flex;
+flex-direction: row;
+gap: 0.5vw;}
+
+
+
+
+
+
+///
+.safety-overview-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Light Theme */
+.safety-overview-wrapper.light .bundle-item {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+/* Dark Theme */
+.safety-overview-wrapper.dark .bundle-item {
+  color: #f0f0f0;
+}
+
+.bundle-item {
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Segoe UI', sans-serif;
+  min-height: 90px;
+  text-align: center;
+}
+
+.bundle-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  height: 35px;
+  text-align: center;
+  line-height: 1.2;
+
+  .bundle-icon {
+    margin-right: 5px;
+    font-size: 16px;
+  }
+}
+
+.bundle-percent {
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 8px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.3s ease-in-out;
+}
