@@ -1,39 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faHeartbeat,
-  faVial,
-  faSyringe,
-  faDroplet,
-  faUserMd,
-  faProcedures,
-  faXRay,
-  faPills,
-  faChevronLeft,
-  faChevronRight,
-  faPlay,
-  faPause,
-  faStop,
-  faFastForward,
-  faBackward,
   faCalendarCheck,
-  faNotesMedical
+  faHeartbeat,
+  faPause,
+  faPills,
+  faPlay,
+  faProcedures,
+  faStop,
+  faVial
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useRef, useState } from 'react';
+import './MedicalTimeline.less';
 
 const MedicalTimeline = ({ patient, encounter }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentPlayTime, setCurrentPlayTime] = useState(null);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [timeRange, setTimeRange] = useState({ start: null, end: null });
-  const [viewMode, setViewMode] = useState('all'); 
+  const [viewMode, setViewMode] = useState('all');
   const intervalRef = useRef(null);
 
   const firstVisitDate = patient?.firstVisitDate
     ? new Date(patient.firstVisitDate)
-    : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000); 
+    : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
   const currentTime = new Date();
   const totalDuration = currentTime.getTime() - firstVisitDate.getTime();
-
+  
   // Initialize time range
   useEffect(() => {
     setTimeRange({
@@ -83,9 +75,9 @@ const MedicalTimeline = ({ patient, encounter }) => {
     {
       id: 2,
       type: 'vitals',
-      title: 'Vital Signs Trends',
+      title: 'Vitals',
       icon: faHeartbeat,
-      color: '#e74c3c',
+      color: '#2980b9',
       items: [
         {
           name: 'BP: 160/95',
@@ -128,12 +120,12 @@ const MedicalTimeline = ({ patient, encounter }) => {
     {
       id: 3,
       type: 'lab',
-      title: 'Laboratory Results',
+      title: 'Labs',
       icon: faVial,
-      color: '#3498db',
+      color: '#8e44ad',
       items: [
         {
-          name: 'Initial Labs',
+          name: 'Complete Panel',
           time: new Date(firstVisitDate.getTime() + 7 * 24 * 60 * 60 * 1000),
           value: 'Complete Panel'
         },
@@ -171,9 +163,9 @@ const MedicalTimeline = ({ patient, encounter }) => {
     {
       id: 4,
       type: 'medications',
-      title: 'Medication History',
+      title: 'Meds',
       icon: faPills,
-      color: '#27ae60',
+      color: '#16a085',
       items: [
         {
           name: 'Metformin 500mg',
@@ -210,9 +202,9 @@ const MedicalTimeline = ({ patient, encounter }) => {
     {
       id: 5,
       type: 'procedures',
-      title: 'Procedures & Tests',
+      title: 'Tests',
       icon: faProcedures,
-      color: '#f39c12',
+      color: '#d35400',
       items: [
         {
           name: 'ECG',
@@ -255,19 +247,13 @@ const MedicalTimeline = ({ patient, encounter }) => {
     return Math.max(0, Math.min(100, (itemOffset / totalRange) * 100));
   };
 
-  const formatTime = time => {
-    return time.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  const formatTime = time =>
+    time.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
   const formatDuration = ms => {
     const days = Math.floor(ms / (1000 * 60 * 60 * 24));
     const months = Math.floor(days / 30);
     const years = Math.floor(days / 365);
-
     if (years > 0) {
       const remainingMonths = Math.floor((days % 365) / 30);
       return `${years}y ${remainingMonths}m`;
@@ -277,6 +263,17 @@ const MedicalTimeline = ({ patient, encounter }) => {
     } else {
       return `${days} days`;
     }
+  };
+
+  const getItemColor = (item, category) => {
+    if (item.urgent) return '#8e44ad';
+    if (item.type === 'current') return '#2980b9';
+    if (item.type === 'first-visit') return '#6f42c1';
+    if (item.status === 'high') return '#9b59b6';
+    if (item.status === 'borderline') return '#f39c12';
+    if (item.action === 'started') return '#16a085';
+    if (item.action === 'increased') return '#3498db';
+    return category.color || '#2980b9';
   };
 
   const handlePlay = () => {
@@ -296,493 +293,168 @@ const MedicalTimeline = ({ patient, encounter }) => {
       }, 100);
     } else {
       setIsPlaying(false);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
   };
 
   const handleStop = () => {
     setIsPlaying(false);
     setCurrentPlayTime(timeRange.start);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
+    if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
-  const handleSpeedChange = speed => {
-    setPlaybackSpeed(speed);
-  };
-
-  const changeViewMode = mode => {
-    setViewMode(mode);
-    const now = new Date();
-    let newStart;
-
-    switch (mode) {
-      case 'year':
-        newStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-        break;
-      case 'month':
-        newStart = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
-        break;
-      default:
-        newStart = firstVisitDate;
-    }
-
-    setTimeRange({ start: newStart, end: now });
-    setCurrentPlayTime(newStart);
-  };
+  const handleSpeedChange = speed => setPlaybackSpeed(speed);
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
   if (!timeRange.start) return null;
 
   return (
-    <div style={{ position: 'relative', overflowX: 'auto', whiteSpace: 'nowrap' }}>
-      <div
-        style={{
-          padding: '65px',
-          paddingTop: '10px',
-          paddingRight: '45px',
-          paddingBottom: '10px',
-          backgroundColor: '#ffffffff',
-          borderRadius: '8px',
-          margin: '16px 0',
-          border: '1px solid #e9ecef'
-        }}
-      >
-        {/* Timeline Header */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: '16px',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}
-        >
+    <div className="timeline-container">
+      <div className="timeline-card">
+        {/* Header */}
+        <div className="timeline-header">
           <div>
-            <h4 style={{ margin: 0, color: '#2c3e50', fontSize: '16px', fontWeight: '600' }}>
-              Patient Medical History Timeline - {patient?.name || 'Patient'} (
-              {formatDuration(currentTime.getTime() - firstVisitDate.getTime())})
-            </h4>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6c757d' }}>
-              Complete medical history from {formatTime(firstVisitDate)} to{' '}
-              {formatTime(currentTime)}
+            <h3 className="timeline-title">
+              Patient ({formatDuration(currentTime.getTime() - firstVisitDate.getTime())})
+            </h3>
+            <p className="timeline-subtitle">
+              {formatTime(firstVisitDate)} - {formatTime(currentTime)}
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            {/* View Mode Selector */}
-            <div
-              style={{
-                display: 'flex',
-                backgroundColor: 'white',
-                borderRadius: '6px',
-                border: '1px solid #dee2e6',
-                overflow: 'hidden'
-              }}
-            >
-              {[
-                { key: 'all', label: 'All Time' }
-                // { key: 'year', label: 'Last Year' },
-                // { key: 'month', label: '6 Months' }
-              ].map(mode => (
-                <button
-                  key={mode.key}
-                  onClick={() => changeViewMode(mode.key)}
-                  style={{
-                    background: viewMode === mode.key ? '#007bff' : 'white',
-                    color: viewMode === mode.key ? 'white' : '#007bff',
-                    border: 'none',
-                    padding: '6px 12px',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {mode.label}
-                </button>
-              ))}
-            </div>
+          {/* Controls */}
+          <div className="timeline-controls">
+            <button onClick={handlePlay} className={`btn-play ${isPlaying ? 'pause' : ''}`}>
+              <FontAwesomeIcon icon={isPlaying ? faPause : faPlay} />
+              <span className="btn-text">{isPlaying ? 'Pause' : 'Play'}</span>
+            </button>
 
-            {/* Playback Controls */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: 'white',
-                padding: '8px',
-                borderRadius: '6px',
-                border: '1px solid #dee2e6'
-              }}
-            >
+            <button onClick={handleStop} className="btn-reset">
+              <FontAwesomeIcon icon={faStop} />
+              <span className="btn-text">Reset</span>
+            </button>
+
+            <div className="divider" />
+
+            {[0.5, 1, 2, 5].map(speed => (
               <button
-                onClick={handlePlay}
-                style={{
-                  background: isPlaying ? '#dc3545' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '6px 10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '12px'
-                }}
+                key={speed}
+                onClick={() => handleSpeedChange(speed)}
+                className={`btn-speed ${playbackSpeed === speed ? 'active' : ''}`}
               >
-                <FontAwesomeIcon icon={isPlaying ? faPause : faPlay} />
-                {isPlaying ? 'Pause' : 'Play'}
+                {speed}x
               </button>
-
-              <button
-                onClick={handleStop}
-                style={{
-                  background: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '6px 10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '12px'
-                }}
-              >
-                <FontAwesomeIcon icon={faStop} />
-                Reset
-              </button>
-
-              {/* Speed Controls */}
-              <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
-                {[0.5, 1, 2, 5].map(speed => (
-                  <button
-                    key={speed}
-                    onClick={() => handleSpeedChange(speed)}
-                    style={{
-                      background: playbackSpeed === speed ? '#007bff' : 'white',
-                      color: playbackSpeed === speed ? 'white' : '#007bff',
-                      border: '1px solid #007bff',
-                      borderRadius: '3px',
-                      padding: '4px 6px',
-                      cursor: 'pointer',
-                      fontSize: '10px'
-                    }}
-                  >
-                    {speed}x
-                  </button>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Timeline Container */}
-        <div style={{ position: 'relative', minHeight: '350px' }}>
-          {' '}
-          {/*  */}
-          {/* Time axis */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '330px',
-              left: '0',
-              right: '0',
-              height: '2px',
-              backgroundColor: '#34495e',
-              borderRadius: '1px'
-            }}
-          >
-            {/* Time & date markers */}
-            {Array.from({ length: 6 }, (_, i) => {
-              const totalRange = timeRange.end.getTime() - timeRange.start.getTime();
-              const markerTime = new Date(timeRange.start.getTime() + (i * totalRange) / 5);
-              const position = (i / 5) * 100;
-
-              return (
-                <div
-                  key={i}
-                  style={{
-                    position: 'absolute',
-                    left: `${position}%`,
-                    top: '-6px',
-                    width: '2px',
-                    height: '14px',
-                    backgroundColor: '#34495e'
-                  }}
-                >
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: '16px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      fontSize: '10px',
-                      color: '#6c757d',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {formatTime(markerTime)}
-                  </span>
+        {/* Timeline */}
+        <div className="timeline-body">
+          <div className="timeline-categories">
+            {patientHistoricalData.map((category, cIndex) => (
+              <div key={category.id} className="timeline-row">
+                <div className="category-label" style={{ ['--cat-color']: category.color }}>
+                  <FontAwesomeIcon icon={category.icon} className="category-icon" />
+                  <span className="category-title">{category.title}</span>
                 </div>
-              );
-            })}
 
-            {/* Current playback time indicator */}
-            {currentPlayTime && (
-              <div
-                style={{
-                  position: 'absolute',
-                  left: `${getTimePosition(currentPlayTime)}%`,
-                  top: '-12px',
-                  width: '3px',
-                  height: '26px',
-                  backgroundColor: '#e74c3c',
-                  borderRadius: '1.5px',
-                  zIndex: 10
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '-30px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: '10px',
-                    color: '#e74c3c',
-                    fontWeight: 'bold',
-                    whiteSpace: 'nowrap',
-                    backgroundColor: 'white',
-                    padding: '2px 4px',
-                    borderRadius: '2px',
-                    border: '1px solid #e74c3c'
-                  }}
-                >
-                  {formatTime(currentPlayTime)}
+                <div className="timeline-track">
+                  <div className="timeline-track-line" />
+
+                  {category.items.map((item, itemIndex) => {
+                    const position = getTimePosition(item.time);
+                    const isVisible = currentPlayTime && item.time <= currentPlayTime;
+                    if (position < 0 || position > 100 || !isVisible) return null;
+                    const dotColor = getItemColor(item, category);
+
+                    return (
+                      <div
+                        key={itemIndex}
+                        className="timeline-item"
+                        style={{
+                          ['--pos']: `${position}%`,
+                          ['--dot-color']: dotColor
+                        }}
+                      >
+                        <div className="timeline-dot" />
+                        <div className="timeline-infobox">
+                          <div className="infobox-title">{item.name}</div>
+                          {item.value && <div className="infobox-line">{item.value}</div>}
+                          {item.result && <div className="infobox-line">Result: {item.result}</div>}
+                          {item.action && (
+                            <div className="infobox-line capetalize">{item.action}</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            )}
-          </div>
-          {/* Timeline categories */}
-          {patientHistoricalData.map((category, categoryIndex) => (
-            <div
-              key={category.id}
-              style={{
-                position: 'relative',
-                marginBottom: '16px',
-
-                minHeight: `${Math.max(65, category.items.length * 30)}px`
-              }}
-            >
-              {/* Category label */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '0',
-                  top: '0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  minWidth: '180px',
-                  padding: '8px 12px',
-                  backgroundColor: 'white',
-                  border: `2px solid ${category.color}`,
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: category.color,
-                  zIndex: 5,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
-              >
-                <FontAwesomeIcon icon={category.icon} />
-                {category.title}
-              </div>
-
-              {/* Category items */}
-              {category.items.map((item, itemIndex) => {
-                const position = getTimePosition(item.time);
-                const isVisible = !currentPlayTime || item.time <= currentPlayTime;
-
-                if (position < 0 || position > 100) return null;
-
-                return (
-                  <div
-                    key={itemIndex}
-                    style={{
-                      position: 'absolute',
-                      left: `${position}%`,
-                      top: `${40 + itemIndex * 22}px`,
-                      transform: 'translateX(-50%)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                    //   paddingLeft: '120px',
-                      alignItems: 'center',
-                      zIndex: 3,
-                      opacity: isVisible ? 1 : 0.3,
-                      transition: 'opacity 0.3s ease'
-                    }}
-                  >
-                    {/* Item icon/dot */}
-                    <div
-                      style={{
-                        width: item.type === 'current' ? '20px' : '16px',
-                        height: item.type === 'current' ? '20px' : '16px',
-                        borderRadius: '50%',
-                        backgroundColor: item.urgent
-                          ? '#dc3545'
-                          : item.type === 'current'
-                          ? '#28a745'
-                          : item.type === 'first-visit'
-                          ? '#6f42c1'
-                          : item.status === 'high'
-                          ? '#e74c3c'
-                          : item.status === 'borderline'
-                          ? '#f39c12'
-                          : item.action === 'started'
-                          ? '#28a745'
-                          : item.action === 'increased'
-                          ? '#17a2b8'
-                          : category.color,
-                        border: `3px solid white`,
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      {item.type === 'current' && (
-                        <FontAwesomeIcon
-                          icon={faCalendarCheck}
-                          style={{ fontSize: '10px', color: 'white' }}
-                        />
-                      )}
-                    </div>
-
-                    {/* Item label */}
-                    <div
-                      style={{
-                        marginTop: '6px',
-                        padding: '4px 8px',
-                        backgroundColor: 'rgba(255,255,255,0.95)',
-                        border: `1px solid ${category.color}`,
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        color: category.color,
-                        fontWeight: '500',
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                        maxWidth: '140px',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <div>{item.name}</div>
-                      {item.value && (
-                        <div
-                          style={{
-                            fontWeight: '600',
-                            color:
-                              item.status === 'high'
-                                ? '#e74c3c'
-                                : item.status === 'borderline'
-                                ? '#f39c12'
-                                : category.color,
-                            marginTop: '2px'
-                          }}
-                        >
-                          {item.value}
-                        </div>
-                      )}
-                      {item.result && (
-                        <div
-                          style={{
-                            fontSize: '9px',
-                            color: '#6c757d',
-                            marginTop: '1px'
-                          }}
-                        >
-                          {item.result}
-                        </div>
-                      )}
-                      {item.action && (
-                        <div
-                          style={{
-                            fontSize: '8px',
-                            color: item.action === 'started' ? '#28a745' : '#17a2b8',
-                            marginTop: '1px',
-                            textTransform: 'uppercase'
-                          }}
-                        >
-                          {item.action}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-
-        {/* Legend & Statistics */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '16px',
-            paddingTop: '12px',
-            borderTop: '1px solid #e9ecef',
-            fontSize: '11px',
-            flexWrap: 'wrap',
-            gap: '16px'
-          }}
-        >
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-            {patientHistoricalData.map(category => (
-              <div
-                key={category.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  color: category.color,
-                  fontWeight: '500'
-                }}
-              >
-                <FontAwesomeIcon icon={category.icon} />
-                <span>{category.title}</span>
-                <span style={{ color: '#6c757d' }}>({category.items.length})</span>
               </div>
             ))}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: '12px',
-              alignItems: 'center',
-              fontSize: '10px',
-              color: '#6c757d'
-            }}
-          >
-            <span>● Current Visit</span>
-            <span>● Emergency</span>
-            <span>● High Risk</span>
-            <span>● Normal</span>
+          {/* Time axis */}
+          <div className="time-axis-wrapper">
+            <div className="time-axis">
+              <div className="axis-line">
+                {Array.from({ length: 6 }, (_, i) => {
+                  const totalRange = timeRange.end.getTime() - timeRange.start.getTime();
+                  const markerTime = new Date(timeRange.start.getTime() + (i * totalRange) / 5);
+                  const position = (i / 5) * 100;
+                  return (
+                    <div key={i} className="time-marker" style={{ left: `${position}%` }}>
+                      <span className="time-marker-label">{formatTime(markerTime)}</span>
+                    </div>
+                  );
+                })}
+
+                {currentPlayTime && (
+                  <div
+                    className="playhead"
+                    style={{ left: `${getTimePosition(currentPlayTime)}%` }}
+                  >
+                    <div className="playhead-label">{formatTime(currentPlayTime)}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="timeline-legend">
+            <div className="legend-left">
+              {patientHistoricalData.map(cat => (
+                <div className="legend-item" key={cat.id} style={{ ['--cat-color']: cat.color }}>
+                  <FontAwesomeIcon icon={cat.icon} className="legend-icon" />
+                  <span>{cat.title}</span>
+                  <span className="legend-count">{cat.items.length}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="legend-right">
+              <div className="legend-small">
+                <div className="legend-dot current" />
+                <span>Current</span>
+              </div>
+              <div className="legend-small">
+                <div className="legend-dot emergency" />
+                <span>Emergency</span>
+              </div>
+              <div className="legend-small">
+                <div className="legend-dot highrisk" />
+                <span>High Risk</span>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Animations (kept in CSS file) */}
       </div>
     </div>
   );
