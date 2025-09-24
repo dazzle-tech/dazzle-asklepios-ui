@@ -174,13 +174,9 @@ import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/N
 import { useGetScreensQuery } from './services/userService';
 import { MODULES } from "@/config/modules-config";
 import RoleManegment from './pages/setup/role-managemen';
-
 import CallOverlay from './components/Overlay/CallOverlay';
 import NewDepartments from './pages/setup/departments-setup/Departments-new';
-import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
-import { useGetScreensQuery } from './services/userService';
-import { MODULES } from "@/config/modules-config";
-import RoleManegment from './pages/setup/role-managemen';
+
 
 
 

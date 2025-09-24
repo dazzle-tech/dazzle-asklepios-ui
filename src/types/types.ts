@@ -29,6 +29,16 @@ export const initialListRequest: ListRequest = {
   filters: [],
   pageNumber: 1,
   pageSize: 15,
+  sortBy: 'key',
+  sortType: 'asc',
+  timestamp: 0,
+  ignore: false,
+  filterLogic: 'and'
+};
+export const initialListRequestNew: ListRequest = {
+  filters: [],
+  pageNumber: 1,
+  pageSize: 15,
   sortBy: 'id',
   sortType: 'asc',
   timestamp: 0,
