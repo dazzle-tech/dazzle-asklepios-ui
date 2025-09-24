@@ -427,40 +427,41 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
           </div>
         </>
       )}
-      {/* ==== Allergy & Warning Banners moved to the bottom ==== */}
+      {/* ==== Allergy & Warning Banners ==== */}
       <div className="my-container">
-        {/* Allergies Banner */}
-        {activeAllergies.length > 0 && (
+        {/* Individual Allergies Badges */}
+        {activeAllergies.map((allergy, index) => (
           <MyBadgeStatus
-            backgroundColor={getHighestSeverityColors().bg}
-            color={getHighestSeverityColors().text}
+            key={`allergy-${allergy.key || index}`}
+            backgroundColor={
+              getAllergySeverityColors(allergy.severityLvalue?.lovDisplayVale || '').bg
+            }
+            color={getAllergySeverityColors(allergy.severityLvalue?.lovDisplayVale || '').text}
             contant={
               <>
-                <FontAwesomeIcon icon={faExclamationTriangle} className="margin-right-size" />
-                ALLERGIES:{' '}
-                {activeAllergies.map(allergy => getAllergenName(allergy.allergenKey)).join(', ')}
+                <FontAwesomeIcon icon={faHandDots} className="margin-right-size" />
+                {getAllergenName(allergy.allergenKey)}
               </>
             }
           />
-        )}
+        ))}
 
-        {/* Warnings Banner */}
-        {activeWarnings.length > 0 && (
+        {/* Individual Warnings Badges */}
+        {activeWarnings.map((warning, index) => (
           <MyBadgeStatus
-            backgroundColor={getWarningSeverityColors().bg}
-            color={getWarningSeverityColors().text}
+            key={`warning-${warning.key || index}`}
+            backgroundColor={
+              getAllergySeverityColors(warning.severityLvalue?.lovDisplayVale || '').bg
+            }
+            color={getAllergySeverityColors(warning.severityLvalue?.lovDisplayVale || '').text}
             contant={
               <>
                 <FontAwesomeIcon icon={faExclamationTriangle} className="margin-right-size" />
-                WARNINGS:{' '}
-                {activeWarnings
-                  .map(warning => warning.warning)
-                  .filter(w => w)
-                  .join(', ')}
+                {warning.warning}
               </>
             }
           />
-        )}
+        ))}
       </div>
     </Panel>
   );
