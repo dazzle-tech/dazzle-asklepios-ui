@@ -87,8 +87,8 @@ export const store = configureStore({
     [divSlice.name]: divSlice.reducer,
     //role
     [roleService.reducerPath]: roleService.reducer,
-
     [userRoleService.reducerPath]: userRoleService.reducer,
+
 
     [enumsApi.reducerPath]: enumsApi.reducer,
  
@@ -143,7 +143,6 @@ export const store = configureStore({
       roleService.middleware,
       userRoleService.middleware,
       enumService.middleware,
-
 
     ])
 });
