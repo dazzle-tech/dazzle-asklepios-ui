@@ -28,6 +28,7 @@ import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
+import { roleService } from './services/security/roleService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -80,6 +81,8 @@ export const store = configureStore({
     [radService.reducerPath]: radService.reducer,
     // div slice 
     [divSlice.name]: divSlice.reducer,
+    //role
+    [roleService.reducerPath]: roleService.reducer,
 
     //refetch Encounters
     refetch: refetchReducer,
@@ -123,7 +126,7 @@ export const store = configureStore({
       userService.middleware,
       facilityService.middleware,
       departmentService.middleware,
-
+      roleService.middleware
     ])
 });
 
