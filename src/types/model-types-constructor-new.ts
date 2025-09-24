@@ -49,6 +49,7 @@ export const newDepartment:modelTypes.Department = {
   email:'',
   encounterType:undefined,
   isActive:true,
+
 }
 
 
