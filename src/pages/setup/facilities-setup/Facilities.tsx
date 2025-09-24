@@ -331,7 +331,6 @@ const Facilities = () => {
               setOpen={setPopupOpenRole}
               facility={facility}
               setFacility={setFacility}
-
             />
             <FacilityDepartment
              open={facilityDepartmentPopupOpen}

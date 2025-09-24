@@ -41,7 +41,6 @@ console.log("Facility in RoleManagement:", facility);
             selected={selected}
             setSelected={setSelected}
             facilityId={facility.id}
-
           />
         </Col>
 
