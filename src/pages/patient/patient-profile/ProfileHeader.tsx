@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useAppSelector } from '@/hooks';
 import type { ApAttachment, ApPatient } from '@/types/model-types';
 import { faBroom, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
@@ -194,6 +194,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const handleNewVisit = () => {
     setQuickAppointmentModel(true);
   };
+  //
+  const closeMenus = useCallback(() => {
+    setOpenMoreMenu(false);
+    setOpenPrintMenu(false);
+  }, []);
   // Effects for patient image
   React.useEffect(() => {
     if (
@@ -293,62 +298,69 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
           </AvatarGroup>
 
-<div className="button-group-left-align">
-  <Form fluid layout="inline" className='registration-header-buttons-section'>
-    <MyButton>Scan Document</MyButton>
-    <MyButton
-      prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-      onClick={handleSave}
-    >
-      Save
-    </MyButton>
-    <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
-      Clear
-    </MyButton>
-    <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
-      Quick Appointment
-    </MyButton>
+          <div className="button-group-left-align">
+            <Form fluid layout="inline" className="registration-header-buttons-section">
+              <MyButton>Scan Document</MyButton>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                onClick={handleSave}
+              >
+                Save
+              </MyButton>
+              <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
+                Clear
+              </MyButton>
+              <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
+                Quick Appointment
+              </MyButton>
 
-    <AdministrativeWarningsModal
-      localPatient={localPatient}
-      validationResult={validationResult}
-    />
+              <AdministrativeWarningsModal
+                localPatient={localPatient}
+                validationResult={validationResult}
+              />
 
-    <Whisper
-      open={openMoreMenu}
-      onOpen={() => setOpenMoreMenu(true)}
-      onClose={() => setOpenMoreMenu(false)}
-      placement="bottom"
-      trigger="click"
-      speaker={contentOfMoreIconMenu}
-    >
-      <span>
-        <MyButton size="small" onClick={() => setOpenMoreMenu(!openMoreMenu)}>
-          <FontAwesomeIcon icon={faEllipsisVertical} className="icons-style" />
-        </MyButton>
-      </span>
-    </Whisper>
+              <Whisper
+                open={openMoreMenu}
+                onClose={() => setOpenMoreMenu(false)}
+                placement="bottom"
+                speaker={contentOfMoreIconMenu}
+              >
+                <span>
+                  <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
+                    <FontAwesomeIcon icon={faEllipsisVertical} />
+                  </MyButton>
+                </span>
+              </Whisper>
 
-    <Whisper
-      open={openPrintMenu}
-      onOpen={() => setOpenPrintMenu(true)}
-      onClose={() => setOpenPrintMenu(false)}
-      placement="bottom"
-      trigger="click"
-      speaker={contentOfPrintIconMenu}
-    >
-      <span>
-        <MyButton size="small" onClick={() => setOpenPrintMenu(!openPrintMenu)}>
-          <FontAwesomeIcon icon={faPrint} className="icons-style" />
-        </MyButton>
-      </span>
-    </Whisper>
-  </Form>
-</div>
+              <Whisper
+                open={openPrintMenu}
+                onClose={() => setOpenPrintMenu(false)}
+                placement="bottom"
+                speaker={contentOfPrintIconMenu}
+              >
+                <span>
+                  <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
+                    <FontAwesomeIcon icon={faPrint} />
+                  </MyButton>
+                </span>
+              </Whisper>
 
-          
+              {(openMoreMenu || openPrintMenu) && (
+                <div
+                  onClick={closeMenus}
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    zIndex: 1
+                  }}
+                />
+              )}
+            </Form>
+          </div>
         </Form>
-
       </Stack.Item>
     </Stack>
   );

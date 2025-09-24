@@ -26,7 +26,7 @@ const BulkRegistration = ({ open, setOpen }) => {
               </div>
               <ol>
                 <li>Download the Excel template</li>
-                <li>Fill in customer data according to the template format</li>
+                <li>Fill in patient data according to the template format</li>
                 <li>Upload the completed Excel file</li>
               </ol>
             </div>
