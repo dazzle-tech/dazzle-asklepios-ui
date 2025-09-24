@@ -36,11 +36,7 @@ import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQ
 import { set } from 'lodash';
 import { Key, KeyOff, KeySharp } from '@mui/icons-material';
 import { FaKey } from 'react-icons/fa6';
-<<<<<<< HEAD
 import Role from '../role-managemen/Roles';
-=======
-import Role from '../role-managemen/Role';
->>>>>>> 1d2704e2 (Link between facility and role manegment)
 import RoleScreens from '../role-managemen/RoleScreens';
 import RoleManegment from '../role-managemen';
 const Facilities = () => {
@@ -67,8 +63,6 @@ const Facilities = () => {
   const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
   // Remove Facility
   const [removeFacility] = useDeleteFacilityMutation(); 
-  // To check if we are in edit mode
-  const [isEditing, setIsEditing] = useState<boolean>(false);
    // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -111,9 +105,8 @@ const Facilities = () => {
   // Handle click on Add New Button
   const handleNew = () => {
     setAddress(newApAddresses);
-    setCreateFacility(newCreateFacility);
+    setFacility(newFacility);
     setDepartments(newApDepartment);
-    setIsEditing(false);
     setPopupOpen(true);
   };
   //icons column (View Departments, Add Details, Edite, Active/Deactivate)
@@ -145,7 +138,6 @@ const Facilities = () => {
         fill="var(--primary-gray)"
         onClick={() => {
           setFacility(facility);
-          setIsEditing(true);
           setPopupOpen(true);
         }}
         className='icons-style'
@@ -184,20 +176,6 @@ const Facilities = () => {
    });
    setLoad(false);
   };
-
-    // Handle click on Update Facility button
-  const handleUpdate = async () => {
-    setPopupOpen(false);
-    setLoad(true);
-    console.log(facility);
-   await updateFacility({ ...facility }).unwrap().then(() => {
-    dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
-   }).catch(() => {
-    dispatch(notify({ msg: 'Failed to update this Facility', sev: 'error' }));
-   });
-   setLoad(false);
-  };
-
   // Handle remove Facility
   const handleRemove = async () => {
     setPopupOpen(false);
@@ -281,13 +259,13 @@ const Facilities = () => {
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
-      render: (rowData) => {return(<p>{rowData?.isActive ? "Active" : "Inactive"}</p>);} 
+      render: (rowData: Facility) => {return(<p>{rowData?.isActive ? "Active" : "Inactive"}</p>);} 
     },
     {
       key: 'actions',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: (rowData) => iconsForActions(rowData)
+      render: (rowData: Facility) => iconsForActions(rowData)
     }
   ];
 
@@ -342,23 +320,18 @@ const Facilities = () => {
             <AddEditFacility 
               open={popupOpen}
               setOpen={setPopupOpen}
-              facility={isEditing ? facility : createFacility}
-              setFacility={isEditing ? setFacility : setCreateFacility}
+              facility={createFacility}
+              setFacility={setCreateFacility}
               address={address}
               setAddress={setAddress}
-              handleSave={isEditing ? handleUpdate : handleSave}
+              handleSave = {handleSave}
               width={width}
             />
             <RoleManegment
               open={popupOpenRole}
               setOpen={setPopupOpenRole}
-<<<<<<< HEAD
               facility={facility}
               setFacility={setFacility}
-=======
-              facility={createFacility}
-              setFacility={setCreateFacility}
->>>>>>> 1d2704e2 (Link between facility and role manegment)
             />
             <FacilityDepartment
              open={facilityDepartmentPopupOpen}
