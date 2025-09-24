@@ -28,8 +28,8 @@ import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
 import callReducer from './store/callSlice';
 import { enumsApi } from '@/services/enumsApi';
-
 import { facilityService } from './services/security/facilityService';
+import { departmentService } from './services/security/departmentService';
 
 export const store = configureStore({
   reducer: {
@@ -101,6 +101,7 @@ export const store = configureStore({
     call: callReducer,
 
     [facilityService.reducerPath]: facilityService.reducer ,
+     [departmentService.reducerPath]: departmentService.reducer ,
 
   },
   // @ts-ignore
@@ -128,6 +129,7 @@ export const store = configureStore({
       userService.middleware,
       enumsApi.middleware,
       facilityService.middleware,
+      departmentService.middleware,
 
 
     ])
