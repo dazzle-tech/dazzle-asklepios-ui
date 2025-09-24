@@ -10,6 +10,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, conjureValueBasedOnIDFromList, fromCamelCaseToDBName } from '@/utils';
+
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -42,6 +43,7 @@ const Departments = () => {
 
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
+
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -158,6 +160,7 @@ const Departments = () => {
   }, [medicalSheet, department.id, department.facilityId]);
   //handle get facility and department type data for search
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+
   const [facilitiesList, setFacilitiesList] = useState<{ label: string; value: string }[]>([]);
   useEffect(() => {
     if (facilityListResponse?.length) {
@@ -170,7 +173,6 @@ const Departments = () => {
   }, [facilityListResponse]);
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
-
   // Handle new department creation
   const handleNew = () => {
     const code = generateFiveDigitCode();
@@ -178,7 +180,6 @@ const Departments = () => {
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
-
   // add department
   const handleAdd = () => {
     setPopupOpen(false);
@@ -197,7 +198,6 @@ const Departments = () => {
   const handleUpdate = () => {
     setPopupOpen(false);
     setLoad(true);
-
     updateDepartment(department)
       .unwrap()
       .then(() => {
@@ -208,7 +208,6 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
-
   const handleFilterChange = async (fieldName, value) => {
     if (!value) {
       setDepartmentList(departmentListResponse);
@@ -260,7 +259,6 @@ const Departments = () => {
         );
       });
   };
-
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -270,6 +268,7 @@ const Departments = () => {
         className="icons-style"
         onClick={() => {
           setDepartment(rowData);
+
           setPopupOpen(true);
         }}
       />
@@ -334,6 +333,7 @@ const Departments = () => {
           )}
         </span>
       )
+
     },
 
     {
@@ -413,7 +413,6 @@ const Departments = () => {
           record={record}
           setRecord={setRecord}
         />
-
       );
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (

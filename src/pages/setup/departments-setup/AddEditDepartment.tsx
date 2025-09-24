@@ -32,6 +32,7 @@ const AddEditDepartment = ({
   
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -48,7 +49,6 @@ const AddEditDepartment = ({
                 selectData={facilityListResponse ?? []}
                 selectDataLabel="name"
                 selectDataValue="id"
-
                 record={department}
                 setRecord={setDepartment}
               />
