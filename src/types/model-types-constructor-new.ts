@@ -92,6 +92,10 @@ export const newUserRole:modelTypes.UserRole = {
 }
 
 
+export const newUserRole:modelTypes.UserRole = { 
+  roleId:undefined,
+  userId:undefined,
+}
 
 
 
