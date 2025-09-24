@@ -26,7 +26,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
   onSave,
 }) => {
   const [selected, setSelected] = useState<Role | null>(null);
-
+console.log("Facility in RoleManagement:", facility);
   const handleSave = () => {
     // hook for your save logic (permissions, screens, etc.)
     onSave?.(selected);
