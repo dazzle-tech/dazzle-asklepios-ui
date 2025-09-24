@@ -168,6 +168,7 @@ const Departments = () => {
       setFacilitiesList(facilityOptions);
     }
   }, [facilityListResponse]);
+  
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
 
@@ -197,7 +198,6 @@ const Departments = () => {
   const handleUpdate = () => {
     setPopupOpen(false);
     setLoad(true);
-
     updateDepartment(department)
       .unwrap()
       .then(() => {
@@ -260,7 +260,6 @@ const Departments = () => {
         );
       });
   };
-
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
