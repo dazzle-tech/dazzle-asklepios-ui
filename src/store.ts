@@ -137,6 +137,7 @@ export const store = configureStore({
       enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
+      roleService.middleware
     ])
 });
 
