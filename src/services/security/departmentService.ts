@@ -23,7 +23,7 @@ export const departmentService = createApi({
         url: '/api/setup/department/department-list-by-type',
         method: 'GET',
         headers: {
-          'type': type, 
+          'type': type,
         },
       }),
     }),
@@ -52,10 +52,18 @@ export const departmentService = createApi({
         method: 'PUT',
         body: department,
       }),
-     
+
+    }),
+    toggleDepartmentIsActive: builder.mutation({
+      query: (id: number) => ({
+        url: `/api/setup/department/${id}/toggle-active`,
+        method: 'PATCH',
+      }),
     }),
 
   }),
+
+
 });
 
 export const {
@@ -66,4 +74,5 @@ export const {
   useGetDepartmentByNameQuery,
   useAddDepartmentMutation,
   useUpdateDepartmentMutation,
+  useToggleDepartmentIsActiveMutation
 } = departmentService;
