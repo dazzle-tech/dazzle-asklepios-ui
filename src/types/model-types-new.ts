@@ -111,4 +111,3 @@ export interface Role {
 	type?:string;
 	facilityId?:string;
 } 
-

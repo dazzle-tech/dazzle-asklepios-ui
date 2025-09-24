@@ -17,11 +17,9 @@ interface Permission {
 }
 
 const RoleScreens = ({ roleId }: { roleId: number }) => {
-  console.log("RoleScreens for roleId:", roleId);
   const dispatch = useAppDispatch();
   const { data: initialPermissions = [], isLoading, refetch } =
     useGetRolePermissionsQuery(roleId);
-    console.log("screens:", initialPermissions);
   const [updatePermissions] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
@@ -44,7 +42,6 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
 
   // helper لتغيير صلاحية شاشة معينة
   const setScreenPermission = (screenName: string, value: "VIEW" | "EDIT" | null) => {
-
     setSelected((prev) => {
       const filtered = prev.filter((s) => s.screen !== screenName);
       if (!value) return filtered; // No Access

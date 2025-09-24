@@ -43,6 +43,7 @@ export const roleService = createApi({
                 method: 'GET',
             }),
         }),
+
     }),
 });
 export const {
