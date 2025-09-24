@@ -72,3 +72,4 @@ const Roles = ({ selected, setSelected, facilityId }) => {
 };
 
 export default Roles;
+
