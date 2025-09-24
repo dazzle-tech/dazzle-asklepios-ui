@@ -39,7 +39,7 @@ export const newDepartment:modelTypes.Department = {
   name:'',
   createdBy:'',
   createdDate:undefined,
-  lastModifiedBy:'',
+  lastModifiedBy:undefined,
   lastModifiedDate:undefined,
   departmentType:undefined,
   appointable:undefined,
