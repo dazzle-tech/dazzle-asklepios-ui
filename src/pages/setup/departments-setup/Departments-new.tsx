@@ -1,19 +1,16 @@
 import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { initialListRequestNew, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Panel } from 'rsuite';
-import { MdModeEdit } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
-import { faSheetPlastic } from '@fortawesome/free-solid-svg-icons';
+import { Panel, Form } from 'rsuite';
+import { MdModeEdit, MdDelete } from 'react-icons/md';
+import { faSheetPlastic, faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useGetLovValuesByCodeQuery, useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
-import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useDispatch } from 'react-redux';
-import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
@@ -22,21 +19,24 @@ import MyButton from '@/components/MyButton/MyButton';
 import AddEditDepartment from './AddEditDepartment';
 import ChooseDepartment from './ChooseScreen';
 import { notify } from '@/utils/uiReducerActions';
-import { useGetDepartmentQuery, useAddDepartmentMutation, useUpdateDepartmentMutation } from '@/services/setup/departmentService'
-import { newDepartment } from '@/types/model-types-constructor-new';
 import { Department } from '@/types/model-types-new';
+import { newDepartment } from '@/types/model-types-constructor-new';
+import { useAddDepartmentMutation, useGetDepartmentQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
-const NewDepartments = () => {
+
+const Departments = () => {
   const dispatch = useDispatch();
 
   const [department, setDepartment] = useState<Department>({ ...newDepartment });
-  const [load, setLoad] = useState<boolean>(false);
+  const [load, setLoad] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
+
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -56,65 +56,79 @@ const NewDepartments = () => {
     diagnosticsResult: true,
     observation: true
   });
+
   const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
+    ...initialListRequestNew,
     pageSize: 15
   });
-  // Fetch  medicalSheets list response
+
+  // Data fetching
+  const { data: departmentListResponse, isFetching } = useGetDepartmentQuery(listRequest);
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.id, {
     skip: !department.id
   });
-  // Fetch Department list response
-  const { data: departmentListResponse, isFetching } = useGetDepartmentQuery(listRequest);
-  // add Department
+  // Add New Department
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
-  // 
+  // Update Department 
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
 
-  // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
-  const totalCount = departmentListResponse?.extraNumeric ?? 0;
-  // Available fields for filtering
+
   const filterFields = [
-    { label: 'Facility Name', value: 'facilityName' },
+    { label: 'Facility', value: 'facilityName' },
     { label: 'Department Name', value: 'name' },
     { label: 'Department Type', value: 'departmentType' }
   ];
-  // Header page setUp
-  const divContent = (
-    <div className="page-title">
-      <h5>Departments</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Departments'));
-  dispatch(setDivContent(divContentHTML));
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && department && rowData.key === department.id) {
-      return 'selected-row';
-    } else return '';
-  };
-  // Effects
+
+  // Header setup
+  useEffect(() => {
+    const divContent = (
+      <div className="page-title">
+        <h5>Departments</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Departments'));
+    dispatch(setDivContent(divContentHTML));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
+  // Handle window resize
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  useEffect(() => {
-    setRecordOfDepartmentCode({ departmentCode: department?.departmentCode ?? generateCode });
-  }, [recordOfDepartmentCode]);
 
+  // Update department code field when department or code changes
+  useEffect(() => {
+    setRecordOfDepartmentCode({
+      departmentCode: department?.departmentCode ?? generateCode
+    });
+  }, [department?.departmentCode, generateCode]);
+
+  // Refresh table on successful add/update 
   useEffect(() => {
     if (addDepartmentMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+      setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
     }
   }, [addDepartmentMutation.data]);
 
   useEffect(() => {
-    if (medicalSheet?.object?.key !== null) {
-      setShowScreen({ ...medicalSheet?.object });
+    if (updateDepartmentMutation.data) {
+      setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
+    }
+  }, [updateDepartmentMutation.data]);
+
+  // Update screen state on medicalSheet fetch
+  useEffect(() => {
+    if (medicalSheet?.object?.key) {
+      setShowScreen({ ...medicalSheet.object });
     } else {
       setShowScreen({
         ...newApMedicalSheets,
@@ -136,57 +150,69 @@ const NewDepartments = () => {
         observation: true
       });
     }
-  }, [medicalSheet]);
-
+  }, [medicalSheet, department.id, department.facilityId]);
+  //handle get facility and department type data for search
+  const [facilityListRequest] = useState<ListRequest>({
+    ...initialListRequestNew
+  });
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+  const [facilitiesList, setFacilitiesList] = useState<{ label: string; value: string }[]>([]);
   useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
-  useEffect(() => {
-    if (record['filter']) {
-      handleFilterChange(record['filter'], record['value']);
-    } else {
-      setListRequest({
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          }
-        ],
-        pageSize: listRequest.pageSize,
-        pageNumber: 1
-      });
+    if (facilityListResponse?.length) {
+      const facilityOptions = facilityListResponse.map(facility => ({
+        label: facility.name,
+        value: facility.id
+      }));
+      setFacilitiesList(facilityOptions);
     }
-  }, [record]);
-
-  // Handle click on Add New Button
+  }, [facilityListResponse]);
+  // Fetch  depTTypesLov list response
+  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
+  // Handle new department creation
   const handleNew = () => {
-    const newCode = generateFiveDigitCode();
-    setGenerateCode(newCode);
-    setDepartment({ ...newDepartment, departmentCode: newCode });
+    const code = generateFiveDigitCode();
+    setGenerateCode(code);
+
+    setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
-  // Handle Save Department
-  const handleSave = () => {
+  const cleanDepartmentForAPI = (dept: Department) => ({
+    ...dept,
+    facilityId: dept?.facility?.id ?? dept.facilityId,
+    facility: undefined
+  });
+  // add department
+  const handleAdd = () => {
     setPopupOpen(false);
     setLoad(true);
-    addDepartment(department)
+    console.log("Adding department with payload:", cleanDepartmentForAPI(department));
+
+    addDepartment(cleanDepartmentForAPI(department))
       .unwrap()
       .then(() => {
-        dispatch(notify({ msg: 'Departments Saved successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
       })
       .catch(() => {
-        dispatch(notify({ msg: 'Failed to save this Departments', sev: 'error' }));
-      });
-    setLoad(false);
+        dispatch(notify({ msg: 'Failed to add department', sev: 'error' }));
+      })
+      .finally(() => setLoad(false));
+  };
+  // add department
+  const handleUpdate = () => {
+    setPopupOpen(false);
+    setLoad(true);
+
+    updateDepartment(cleanDepartmentForAPI(department))
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
+      })
+      .catch(() => {
+        dispatch(notify({ msg: 'Failed to update department', sev: 'error' }));
+      })
+      .finally(() => setLoad(false));
   };
 
-  // Filter table
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -199,22 +225,47 @@ const NewDepartments = () => {
       );
     } else {
       setListRequest({
-        ...listRequest,
-        filters: [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          }
-        ]
+        ...initialListRequestNew,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1,
+        filters: []
       });
     }
   };
-  // Generate code for department
+
+
   const generateFiveDigitCode = (): string => {
     return String(Math.floor(10000 + Math.random() * 90000));
   };
-  //icons column (Medical sheets, Edite, Active/Deactivate)
+
+  const isSelected = rowData => (rowData?.id === department?.id ? 'selected-row' : '');
+  const [toggleDepartmentIsActive] = useToggleDepartmentIsActiveMutation();
+  const handleToggleActive = (id: number) => {
+    toggleDepartmentIsActive(id)
+      .unwrap()
+      .then(() => {
+        dispatch(
+          notify({
+            msg: 'Department status updated successfully',
+            sev: 'success'
+          })
+        );
+        setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Failed to update department status',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  const prepareDepartmentForEdit = (rowData: Department): Department => ({
+    ...rowData,
+    facilityId: rowData.facility?.id ?? rowData.facilityId ?? '',
+    departmentType: rowData.departmentType ?? ''
+  });
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -223,21 +274,32 @@ const NewDepartments = () => {
         fill="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
+          console.log('Row Data ---> ', rowData)
+          setDepartment(prepareDepartmentForEdit(rowData));
           setPopupOpen(true);
         }}
       />
-      {rowData?.isActive ? (
+      {!rowData?.isActive ? (
         <FontAwesomeIcon
-          title="Active"
+          title="Activate"
           icon={faRotateRight}
-          fill="var(--primary-gray)"
           className="icons-style"
+          color="var(--primary-gray)"
+          onClick={() => handleToggleActive(rowData.id)}
         />
       ) : (
-        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" className="icons-style" />
+        <MdDelete
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          className="icons-style"
+          onClick={() => handleToggleActive(rowData.id)}
+        />
       )}
       <FontAwesomeIcon
         icon={faSheetPlastic}
+        title="Medical Sheets"
+        size="lg"
         style={{
           cursor: [
             '5673990729647001',
@@ -249,29 +311,27 @@ const NewDepartments = () => {
             : 'not-allowed',
           color: 'var(--primary-gray)'
         }}
-        title="Medical Sheets"
-        size={'lg'}
         onClick={() => {
           if (
-            [
-              '5673990729647001',
-              '5673990729647002',
-              '5673990729647005',
-              '5673990729647004'
-            ].includes(rowData?.departmentType)
-          )
+            ['5673990729647001', '5673990729647002', '5673990729647005', '5673990729647004'].includes(
+              rowData?.departmentType
+            )
+          ) {
+            setDepartment(rowData);
             setOpenScreensPopup(true);
+          }
         }}
       />
     </div>
   );
-  //table columns
+
+
   const tableColumns = [
     {
       key: 'facilityName',
       title: <Translate>Facility Name</Translate>,
       flexGrow: 4,
-      render: rowData => (rowData?.facility?.facilityName ? rowData?.facility?.facilityName : ' ')
+      render: rowData => rowData?.facility?.name ?? ''
     },
     {
       key: 'name',
@@ -282,7 +342,7 @@ const NewDepartments = () => {
       key: 'departmentType',
       title: <Translate>Department Type</Translate>,
       flexGrow: 4,
-      render: rowData => <p>{rowData?.departmentTypeLvalue.lovDisplayVale}</p>
+      render: rowData => <p>{rowData?.departmentType}</p>
     },
     {
       key: 'phoneNumber',
@@ -302,9 +362,13 @@ const NewDepartments = () => {
     {
       key: 'appointable',
       title: <Translate>Appointable</Translate>,
-      render: (rowData: Department) => {
-        return <p>{rowData?.appointable ? 'Yes' : 'No'}</p>;
-      }
+      render: rowData => <p>{rowData?.appointable ? 'Yes' : 'No'}</p>
+    },
+    {
+      key: 'isActive',
+      title: <Translate>Status</Translate>,
+      flexGrow: 4,
+      render: rowData => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
     },
     {
       key: 'icons',
@@ -314,42 +378,107 @@ const NewDepartments = () => {
     }
   ];
 
-  // Filter form rendered above the table
-  const filters = () => (
-    <Form layout="inline" fluid>
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={record}
-        setRecord={updatedRecord => {
-          setRecord({
-            ...record,
-            filter: updatedRecord.filter,
-            value: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
+  const getFilterWidth = (filter: string): string => {
+    switch (filter) {
+      case 'facilityName':
+        return '100px';
+      case 'departmentType':
+        return '200px';
+      case 'name':
+        return '170px';
+      default:
+        return '150px';
+    }
+  };
 
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={record}
-        setRecord={setRecord}
-        showLabel={false}
-        placeholder="Search"
-      />
-    </Form>
-  );
+
+  const filters = () => {
+    const selectedFilter = record.filter;
+
+    let dynamicInput;
+
+    if (selectedFilter === 'facilityName') {
+      dynamicInput = (
+        <MyInput
+          width={250}
+          fieldLabel=""
+          fieldName="facilityId"
+          fieldType="select"
+          selectData={facilityListResponse ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={department}
+          setRecord={setDepartment}
+        />
+      );
+    } else if (selectedFilter === 'departmentType') {
+      dynamicInput = (
+        <MyInput
+          width={250}
+          fieldName="departmentType"
+          fieldLabel=""
+          fieldType="select"
+          selectData={depTTypesLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="valueCode"
+          record={department}
+          setRecord={setDepartment}
+        />
+      );
+    } else {
+      dynamicInput = (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={record}
+          setRecord={setRecord}
+          showLabel={false}
+          placeholder="Enter Value"
+        />
+      );
+    }
+
+    return (
+      <Form layout="inline" fluid style={{ display: 'flex', gap: '10px' }}>
+        <MyInput
+          selectDataValue="value"
+          selectDataLabel="label"
+          selectData={filterFields}
+          fieldName="filter"
+          fieldType="select"
+          record={record}
+          setRecord={updatedRecord => {
+            setRecord({
+              filter: updatedRecord.filter,
+              value: ''
+            });
+          }}
+          showLabel={false}
+          placeholder="Select Filter"
+          searchable={false}
+          width={getFilterWidth(record.filter)}
+        />
+
+        {dynamicInput}
+
+        <MyButton
+          color="var(--deep-blue)"
+          onClick={() => {
+            handleFilterChange(record.filter, record.value);
+          }}
+          width="80px"
+        >
+          Search
+        </MyButton>
+      </Form>
+    );
+  };
+
 
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setListRequest({
       ...listRequest,
@@ -371,16 +500,20 @@ const NewDepartments = () => {
         </MyButton>
       </div>
       <MyTable
-        data={departmentListResponse?.object ?? []}
+        data={
+          departmentListResponse?.slice(
+            pageIndex * rowsPerPage,
+            pageIndex * rowsPerPage + rowsPerPage
+          ) ?? []
+        }
+        totalCount={departmentListResponse?.length ?? 0}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={rowData => {
-          setDepartment(rowData);
-        }}
+        onRowClick={rowData => setDepartment(rowData)}
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
+
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
@@ -393,7 +526,8 @@ const NewDepartments = () => {
         recordOfDepartmentCode={recordOfDepartmentCode}
         setRecordOfDepartmentCode={setRecordOfDepartmentCode}
         width={width}
-        handleSave={handleSave}
+        handleAddNew={handleAdd}
+        handleUpdate={handleUpdate}
       />
       <ChooseDepartment
         open={openScreensPopup}
@@ -407,4 +541,4 @@ const NewDepartments = () => {
   );
 };
 
-export default NewDepartments;
+export default Departments;
