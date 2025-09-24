@@ -16,6 +16,7 @@ import ModalContent from './ModalContent';
 import { Tabs } from 'rsuite';
 import AbgICU from "./AbgICU";
 import './style.less';
+import ICUTabs from "./i.c.u-tabs/overviewtab/ICUTabs";
 const ICU: React.FC = () => {
   const [record, setRecord] = useState<any>({});
   const [openVitalModal, setOpenVitalModal] = useState(false);
@@ -175,27 +176,7 @@ title={
       />
     </div>
 
-              <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
-
-                <Tabs.Tab eventKey="1" title="Overview">
-<><h1>test1</h1></>
-                </Tabs.Tab>
-
-                <Tabs.Tab eventKey="2" title="Flow Sheet">
-<><h1>test2</h1></>
-
-                </Tabs.Tab>
-
-                <Tabs.Tab eventKey="3" title="Neurological">
-<><h1>test3</h1></>
-</Tabs.Tab>
-                <Tabs.Tab eventKey="4" title="Invasive Devices">
-<><h1>test4</h1></>
-</Tabs.Tab>
-                <Tabs.Tab eventKey="5" title="Safety Bundle">
-<><h1>test5</h1></>
-</Tabs.Tab>
-              </Tabs>
+<ICUTabs/>
 
  <MyModal
         open={openVitalModal}
