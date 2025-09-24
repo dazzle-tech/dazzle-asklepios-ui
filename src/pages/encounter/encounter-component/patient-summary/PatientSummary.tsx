@@ -25,10 +25,9 @@ const PatientSummary = () => {
   const location = useLocation();
   const { patient, encounter } = location.state || {};
 
-  // store the action in the context because the button exist in the encounter page
   const { setAction } = useContext(ActionContext);
   const [openChooseScreen, setOpenChooseScreen] = useState<boolean>(false);
-  // object of visibility states of items for the customised dashboard popup
+
   const [displays, setDisplays] = useState({
     c1: true,
     c2: false,
@@ -47,7 +46,6 @@ const PatientSummary = () => {
     c15: false
   });
 
-  // items inside the columns(that can drags between columns)
   const [columns, setColumns] = useState({
     col1: [
       { id: 'c1', content: <BodyDiagram patient={patient} />, display: true },
@@ -92,40 +90,59 @@ const PatientSummary = () => {
     ]
   });
 
-  // define the action for open cusomised dashboard popup
   useEffect(() => {
-    setAction(() => () => {
-      setOpenChooseScreen(true);
-    });
-
+    setAction(() => () => setOpenChooseScreen(true));
     return () => setAction(() => () => {});
   }, [setAction]);
 
-  // handle move (drag) item
-  const handleDragEnd = result => {
+  // Function triggered after drag ends
+  const handleDragEnd = (result: any) => {
     const { source, destination } = result;
+
+    // If no destination → do nothing
     if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index)
-      return;
 
-    const sourceCol = Array.from(columns[source.droppableId]);
-    const [movedItem] = sourceCol.splice(source.index, 1);
+    // Case 1: same column → reorder
+    if (source.droppableId === destination.droppableId) {
+      // copy the column items
+      const colItems = Array.from(columns[source.droppableId]);
 
-    const destCol = Array.from(columns[destination.droppableId]);
-    destCol.splice(destination.index, 0, movedItem);
+      // remove dragged item
+      const [movedItem] = colItems.splice(source.index, 1);
 
-    setColumns({
-      ...columns,
-      [source.droppableId]: sourceCol,
-      [destination.droppableId]: destCol
-    });
+      // insert at new position
+      colItems.splice(destination.index, 0, movedItem);
+
+      // update state
+      setColumns({
+        ...columns,
+        [source.droppableId]: colItems
+      });
+    } else {
+      // Case 2: different column → move
+
+      // copy source and destination
+      const sourceItems = Array.from(columns[source.droppableId]);
+      const destItems = Array.from(columns[destination.droppableId]);
+
+      // remove dragged item from source
+      const [movedItem] = sourceItems.splice(source.index, 1);
+
+      // insert into destination
+      destItems.splice(destination.index, 0, movedItem);
+
+      // update both columns in state
+      setColumns({
+        ...columns,
+        [source.droppableId]: sourceItems,
+        [destination.droppableId]: destItems
+      });
+    }
   };
 
   return (
     <>
-      {/*  */}
       <MedicalTimeline />
-      {/*  */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="patient-summary-container">
           {Object.entries(columns).map(([colId, items]) => (
