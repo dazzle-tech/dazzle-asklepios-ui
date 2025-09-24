@@ -1,7 +1,7 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import {  useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
@@ -10,7 +10,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -26,11 +25,12 @@ const AddEditDepartment = ({
     ...initialListRequest
   });
   // Fetch  facility list response
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
-  // Fetch  encTypesEnum list response
-  const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
-  // Fetch  depTTypesEnum list response
-  const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+  const { data: facilityListResponse } =  useGetAllFacilitiesQuery(facilityListRequest);
+  // Fetch  encTypesLov list response
+  const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+  // Fetch  depTTypesLov list response
+  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
+
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -50,13 +50,14 @@ const AddEditDepartment = ({
                 record={department}
                 setRecord={setDepartment}
               />
-
               <MyInput
                 width={250}
                 fieldName="departmentType"
                 fieldLabel="Department Type"
                 fieldType="select"
-                selectData={depTTypesEnum ?? []}
+                selectData={depTTypesLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="valueCode"
                 record={department}
                 setRecord={setDepartment}
                 required
@@ -103,10 +104,12 @@ const AddEditDepartment = ({
               {department?.appointable ? (
                 <MyInput
                   width={250}
-                  fieldName="encounterType"
+                  fieldName="encountertype"
                   fieldType="select"
                   fieldLabel="Encounter Type"
-                  selectData={encTypesEnum?? []}
+                  selectData={encTypesLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="valueCode"
                   record={department}
                   setRecord={setDepartment}
                 />
@@ -124,8 +127,8 @@ const AddEditDepartment = ({
       position="right"
       content={conjureFormContent}
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
-      actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
-      steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
+      actionButtonFunction={department?.id?handleUpdate:handleAddNew}
+      steps={[{ title: 'Department Info', icon:<FontAwesomeIcon icon={ faLaptop }/>}]}
       size={width > 600 ? '36vw' : '25vw'}
     />
   );

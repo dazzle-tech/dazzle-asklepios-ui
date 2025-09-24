@@ -1,14 +1,15 @@
 import Translate from '@/components/Translate';
+import { initialListRequestNew, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { faSheetPlastic, faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery, useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
-import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
+import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -20,16 +21,13 @@ import ChooseDepartment from './ChooseScreen';
 import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
-import { useAddDepartmentMutation, useGetDepartmentsQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
+import { useAddDepartmentMutation, useGetDepartmentQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useEnumOptions } from '@/services/enumsApi';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 
 const Departments = () => {
   const dispatch = useDispatch();
-  const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] = useState(false);
-  const [stateOfDeleteDepartmentModal, setStateOfDeleteDepartmentModal] = useState('delete');
+
   const [department, setDepartment] = useState<Department>({ ...newDepartment });
   const [load, setLoad] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -38,12 +36,7 @@ const Departments = () => {
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
-  const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
-  const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
-  const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
-  const [departmentList, setDepartmentList] = useState<Department[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [isFiltered, setIsFiltered] = useState(false);
+
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -59,31 +52,28 @@ const Departments = () => {
     allergies: true,
     medicalWarnings: true,
     medicationsRecord: true,
-    departmentRecord: true,
+    vaccineReccord: true,
     diagnosticsResult: true,
     observation: true
   });
 
-  const [paginationParams, setPaginationParams] = useState({
-    page: 0,
-    size: 15,
-    sort: 'id,asc',
-    timestamp: Date.now()
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequestNew,
+    pageSize: 15
   });
 
   // Data fetching
-  const { data: departmentListResponse, isFetching } = useGetDepartmentsQuery(paginationParams);
+  const { data: departmentListResponse, isFetching } = useGetDepartmentQuery(listRequest);
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.id, {
     skip: !department.id
   });
-  const totaldepartmentListResponseCount = departmentListResponse?.totalCount ?? 0;
   // Add New Department
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
   // Update Department 
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
 
-  const pageIndex = paginationParams.page;
-  const rowsPerPage = paginationParams.size;
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
 
   const filterFields = [
     { label: 'Facility', value: 'facilityName' },
@@ -125,13 +115,13 @@ const Departments = () => {
   // Refresh table on successful add/update 
   useEffect(() => {
     if (addDepartmentMutation.data) {
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
+      setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
     }
   }, [addDepartmentMutation.data]);
 
   useEffect(() => {
     if (updateDepartmentMutation.data) {
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
+      setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
     }
   }, [updateDepartmentMutation.data]);
 
@@ -155,14 +145,17 @@ const Departments = () => {
         allergies: true,
         medicalWarnings: true,
         medicationsRecord: true,
-        departmentRecord: true,
+        vaccineReccord: true,
         diagnosticsResult: true,
         observation: true
       });
     }
   }, [medicalSheet, department.id, department.facilityId]);
   //handle get facility and department type data for search
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+  const [facilityListRequest] = useState<ListRequest>({
+    ...initialListRequestNew
+  });
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
   const [facilitiesList, setFacilitiesList] = useState<{ label: string; value: string }[]>([]);
   useEffect(() => {
     if (facilityListResponse?.length) {
@@ -173,20 +166,28 @@ const Departments = () => {
       setFacilitiesList(facilityOptions);
     }
   }, [facilityListResponse]);
-  // Fetch DepartmentType enum from the new enum API
-  const depTypeOptions = useEnumOptions("DepartmentType");
+  // Fetch  depTTypesLov list response
+  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
   // Handle new department creation
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);
+
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
+  const cleanDepartmentForAPI = (dept: Department) => ({
+    ...dept,
+    facilityId: dept?.facility?.id ?? dept.facilityId,
+    facility: undefined
+  });
   // add department
   const handleAdd = () => {
     setPopupOpen(false);
     setLoad(true);
-    addDepartment(department)
+    console.log("Adding department with payload:", cleanDepartmentForAPI(department));
+
+    addDepartment(cleanDepartmentForAPI(department))
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
@@ -196,11 +197,12 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
-  // update department
+  // add department
   const handleUpdate = () => {
     setPopupOpen(false);
     setLoad(true);
-    updateDepartment(department)
+
+    updateDepartment(cleanDepartmentForAPI(department))
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
@@ -211,45 +213,27 @@ const Departments = () => {
       .finally(() => setLoad(false));
   };
 
-  const handleFilterChange = async (fieldName, value) => {
-    if (!value) {
-      setDepartmentList(departmentListResponse?.data ?? []);
-      return;
-    }
-    try {
-      let response;
-      if (fieldName === "facilityName") {
-        response = await getDepartmentsByFacility({ 
-          facilityId: value, 
-          page: 0, 
-          size: paginationParams.size, 
-          sort: paginationParams.sort 
-        }).unwrap();
-      } else if (fieldName === "departmentType") {
-        response = await getDepartmentsByType({ 
-          type: value?.toUpperCase().replace(/\s+/g, '_'), 
-          page: 0, 
-          size: paginationParams.size, 
-          sort: paginationParams.sort 
-        }).unwrap();
-      } else if (fieldName === "name") {
-        response = await getDepartmentsByName({ 
-          name: value, 
-          page: 0, 
-          size: paginationParams.size, 
-          sort: paginationParams.sort 
-        }).unwrap();
-      }
-      setDepartmentList(response?.data ?? []);
-      setIsFiltered(true);
-      setFilteredTotal(response?.totalCount ?? 0);
-
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-      setDepartmentList([]);
-      setIsFiltered(false);
+  const handleFilterChange = (fieldName, value) => {
+    if (value) {
+      setListRequest(
+        addFilterToListRequest(
+          fromCamelCaseToDBName(fieldName),
+          'startsWithIgnoreCase',
+          value,
+          listRequest
+        )
+      );
+    } else {
+      setListRequest({
+        ...initialListRequestNew,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1,
+        filters: []
+      });
     }
   };
+
+
   const generateFiveDigitCode = (): string => {
     return String(Math.floor(10000 + Math.random() * 90000));
   };
@@ -266,7 +250,7 @@ const Departments = () => {
             sev: 'success'
           })
         );
-        setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
+        setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
       })
       .catch(() => {
         dispatch(
@@ -277,6 +261,11 @@ const Departments = () => {
         );
       });
   };
+  const prepareDepartmentForEdit = (rowData: Department): Department => ({
+    ...rowData,
+    facilityId: rowData.facility?.id ?? rowData.facilityId ?? '',
+    departmentType: rowData.departmentType ?? ''
+  });
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -285,7 +274,8 @@ const Departments = () => {
         fill="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
-          setDepartment(rowData);
+          console.log('Row Data ---> ', rowData)
+          setDepartment(prepareDepartmentForEdit(rowData));
           setPopupOpen(true);
         }}
       />
@@ -295,10 +285,7 @@ const Departments = () => {
           icon={faRotateRight}
           className="icons-style"
           color="var(--primary-gray)"
-          onClick={() => { 
-            setDepartment(rowData);
-            setStateOfDeleteDepartmentModal('reactivate');
-            setOpenConfirmDeleteDepartmentModal(true);}}
+          onClick={() => handleToggleActive(rowData.id)}
         />
       ) : (
         <MdDelete
@@ -306,11 +293,7 @@ const Departments = () => {
           size={24}
           fill="var(--primary-pink)"
           className="icons-style"
-          onClick={() => {
-            setDepartment(rowData);
-            setStateOfDeleteDepartmentModal('deactivate');
-            setOpenConfirmDeleteDepartmentModal(true);
-          }}
+          onClick={() => handleToggleActive(rowData.id)}
         />
       )}
       <FontAwesomeIcon
@@ -341,31 +324,25 @@ const Departments = () => {
       />
     </div>
   );
+
+
   const tableColumns = [
     {
-      key: 'facilityId',
+      key: 'facilityName',
       title: <Translate>Facility Name</Translate>,
       flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnIDFromList(
-            facilityListResponse ?? [],
-            rowData.facilityId,
-            'name'
-          )}
-        </span>
-      )
-    },
-    {
-      key: 'departmentType',
-      title: <Translate>Department Type</Translate>,
-      flexGrow: 4,
-      render: rowData => <p>{formatEnumString(rowData?.departmentType)}</p>
+      render: rowData => rowData?.facility?.name ?? ''
     },
     {
       key: 'name',
       title: <Translate>Department Name</Translate>,
       flexGrow: 4
+    },
+    {
+      key: 'departmentType',
+      title: <Translate>Department Type</Translate>,
+      flexGrow: 4,
+      render: rowData => <p>{rowData?.departmentType}</p>
     },
     {
       key: 'phoneNumber',
@@ -386,12 +363,6 @@ const Departments = () => {
       key: 'appointable',
       title: <Translate>Appointable</Translate>,
       render: rowData => <p>{rowData?.appointable ? 'Yes' : 'No'}</p>
-    },
-    {
-      key: 'encounterType',
-      title: <Translate>Encounter Type</Translate>,
-      flexGrow: 4,
-      render: rowData => <p>{formatEnumString(rowData?.encounterType)}</p>
     },
     {
       key: 'isActive',
@@ -420,6 +391,7 @@ const Departments = () => {
     }
   };
 
+
   const filters = () => {
     const selectedFilter = record.filter;
 
@@ -430,28 +402,27 @@ const Departments = () => {
         <MyInput
           width={250}
           fieldLabel=""
-          fieldName="value"
+          fieldName="facilityId"
           fieldType="select"
           selectData={facilityListResponse ?? []}
           selectDataLabel="name"
           selectDataValue="id"
-          record={record}
-          setRecord={setRecord}
+          record={department}
+          setRecord={setDepartment}
         />
-
       );
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (
         <MyInput
           width={250}
-          fieldName="value"
+          fieldName="departmentType"
           fieldLabel=""
           fieldType="select"
-          selectData={depTypeOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={record}
-          setRecord={setRecord}
+          selectData={depTTypesLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="valueCode"
+          record={department}
+          setRecord={setDepartment}
         />
       );
     } else {
@@ -502,22 +473,20 @@ const Departments = () => {
       </Form>
     );
   };
+
+
   const handlePageChange = (_: unknown, newPage: number) => {
-    setPaginationParams({ ...paginationParams, page: newPage, timestamp: Date.now() });
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPaginationParams({
-      ...paginationParams,
-      size: parseInt(event.target.value, 10),
-      page: 0,
-      timestamp: Date.now()
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
     });
   };
-  const handleDeactiveReactivateDepartment = () => {
-    handleToggleActive(department.id);
-    setOpenConfirmDeleteDepartmentModal(false);
-  };
+
   return (
     <Panel>
       <div className="container-of-add-new-button">
@@ -532,22 +501,23 @@ const Departments = () => {
       </div>
       <MyTable
         data={
-          isFiltered
-            ? departmentList ??[]
-            : departmentListResponse?.data ?? []
+          departmentListResponse?.slice(
+            pageIndex * rowsPerPage,
+            pageIndex * rowsPerPage + rowsPerPage
+          ) ?? []
         }
-        totalCount={isFiltered ? filteredTotal : totaldepartmentListResponseCount}
+        totalCount={departmentListResponse?.length ?? 0}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => setDepartment(rowData)}
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
+
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
       />
-
       <AddEditDepartment
         open={popupOpen}
         setOpen={setPopupOpen}
@@ -567,14 +537,8 @@ const Departments = () => {
         department={department}
         width={width}
       />
-         <DeletionConfirmationModal
-        open={openConfirmDeleteDepartmentModal}
-        setOpen={setOpenConfirmDeleteDepartmentModal}
-        itemToDelete="Department"
-        actionButtonFunction={handleDeactiveReactivateDepartment}
-        actionType={stateOfDeleteDepartmentModal}
-      />
     </Panel>
   );
 };
+
 export default Departments;
