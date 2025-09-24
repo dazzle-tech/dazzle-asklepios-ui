@@ -92,6 +92,7 @@ export const store = configureStore({
 
     [enumsApi.reducerPath]: enumsApi.reducer,
 
+
     //refetch Encounters
     refetch: refetchReducer,
     //refetch Patient Side Information
@@ -143,6 +144,7 @@ export const store = configureStore({
       userRoleService.middleware,
       enumService.middleware,
       facilityService.middleware,
+      roleService.middleware
     ])
 });
 
