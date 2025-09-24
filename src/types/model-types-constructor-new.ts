@@ -49,25 +49,6 @@ export const newDepartment:modelTypes.Department = {
   isActive:true,
 }
 
-export const newDepartment:modelTypes.Department = { 
-  id:undefined,
-  facilityId:undefined,
-  name:'',
-  createdBy:'',
-  createdDate:undefined,
-  lastModifiedBy:undefined,
-  lastModifiedDate:undefined,
-  departmentType:undefined,
-  appointable:undefined,
-  departmentCode:'',
-  phoneNumber:'',
-  email:'',
-  encounterType:undefined,
-  isActive:true,
-}
-
-
-
 export const newFacility:modelTypes.Facility = { 
   id:undefined,
   name:'',
@@ -77,7 +58,7 @@ export const newFacility:modelTypes.Facility = {
 	fax:'',
 	addressId:'',
 	type:'',
-	defaultCurrency:null,
+	defaultCurrency:'',
   isActive: true,
 } 
 
@@ -104,7 +85,6 @@ export const newUserRole:modelTypes.UserRole = {
   roleId:undefined,
   userId:undefined,
 }
-
 
 
 

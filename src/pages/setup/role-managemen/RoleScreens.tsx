@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { MODULES } from "@/config/modules-config";
 import Translate from "@/components/Translate";
 import MyNestedTable from "@/components/MyNestedTable";
-import { Checkbox } from "rsuite";
+import { SelectPicker } from "rsuite";
 import {
   useGetRolePermissionsQuery,
   useUpdateRolePermissionsMutation,
@@ -12,70 +12,59 @@ import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 
 interface Permission {
-  screen: string; // Friendly Name, ex: "Patient Registration"
+  screen: string;
   permission: "VIEW" | "EDIT";
 }
 
 const RoleScreens = ({ roleId }: { roleId: number }) => {
-  console.log("RoleScreens for roleId:", roleId);
   const dispatch = useAppDispatch();
-  const { data: initialPermissions = [], isLoading ,refetch } =
+  const { data: initialPermissions = [], isLoading, refetch } =
     useGetRolePermissionsQuery(roleId);
-    console.log("screens:", initialPermissions);
   const [updatePermissions] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
 
   // sync from backend
-useEffect(() => {
-  setSelected(initialPermissions);
-}, [initialPermissions]);
-
+  useEffect(() => {
+    setSelected(initialPermissions);
+  }, [initialPermissions]);
 
   useEffect(() => {
     refetch();
   }, [roleId]);
-  // toggle permission لشاشة واحدة
-  const togglePermission = (screen: string, permission: "VIEW" | "EDIT") => {
+
+  // options
+  const permissionOptions = [
+    { label: "No Access", value: null },
+    { label: "View", value: "VIEW" },
+    { label: "Edit", value: "EDIT" },
+  ];
+
+  // helper لتغيير صلاحية شاشة معينة
+  const setScreenPermission = (screenName: string, value: "VIEW" | "EDIT" | null) => {
     setSelected((prev) => {
-      const exists = prev.find(
-        (item) => item.screen === screen && item.permission === permission
-      );
-      return exists
-        ? prev.filter(
-            (item) => !(item.screen === screen && item.permission === permission)
-          )
-        : [...prev, { screen, permission }];
+      const filtered = prev.filter((s) => s.screen !== screenName);
+      if (!value) return filtered; // No Access
+      return [...filtered, { screen: screenName, permission: value }];
     });
   };
 
-  // select all لشاشات الموديول
-  const selectAll = (screens: any[], permission: "VIEW" | "EDIT") => {
+  // helper لتغيير صلاحيات كل الشاشات في module
+  const setModulePermissions = (screens: any[], value: "VIEW" | "EDIT" | null) => {
     setSelected((prev) => {
+      // امسح صلاحيات الشاشات تبع هذا الموديول
       const filtered = prev.filter(
-        (item) =>
-          !screens.some(
-            (scr) => scr.name === item.screen && item.permission === permission
-          )
+        (s) => !screens.some((scr) => scr.name === s.screen)
       );
+
+      if (!value) return filtered; // No Access
+      // ضيف نفس الصلاحية لكل الشاشات
       const additions = screens.map((scr) => ({
         screen: scr.name,
-        permission,
+        permission: value,
       }));
       return [...filtered, ...additions];
     });
-  };
-
-  // deselect all لشاشات الموديول
-  const deselectAll = (screens: any[], permission: "VIEW" | "EDIT") => {
-    setSelected((prev) =>
-      prev.filter(
-        (item) =>
-          !screens.some(
-            (scr) => scr.name === item.screen && item.permission === permission
-          )
-      )
-    );
   };
 
   // الجدول الرئيسي للموديولات
@@ -86,43 +75,30 @@ useEffect(() => {
       render: (rowData: any) => <div>{rowData.name}</div>,
     },
     {
-      key: "view",
-      title: <Translate>View</Translate>,
+      key: "permission",
+      title: <Translate>Permission</Translate>,
       render: (rowData: any) => {
-        const allChecked = rowData.screens?.every((scr: any) =>
-          selected.some(
-            (s) => s.screen === scr.name && s.permission === "VIEW"
-          )
-        );
+        // هل كل الشاشات في هذا الموديول نفس القيمة؟
+        const screens = rowData.screens || [];
+        let current: "VIEW" | "EDIT" | null = null;
+
+        if (screens.length > 0) {
+          const perms = screens.map(
+            (scr: any) =>
+              selected.find((s) => s.screen === scr.name)?.permission ?? null
+          );
+          const unique = [...new Set(perms)];
+          current = unique.length === 1 ? unique[0] : null; // لو كلهم نفس القيمة بنعرضها، غير هيك No Access
+        }
+
         return (
-          <Checkbox
-            checked={allChecked}
-            onChange={(checked) =>
-              checked
-                ? selectAll(rowData.screens, "VIEW")
-                : deselectAll(rowData.screens, "VIEW")
-            }
-          />
-        );
-      },
-    },
-    {
-      key: "edit",
-      title: <Translate>Edit</Translate>,
-      render: (rowData: any) => {
-        const allChecked = rowData.screens?.every((scr: any) =>
-          selected.some(
-            (s) => s.screen === scr.name && s.permission === "EDIT"
-          )
-        );
-        return (
-          <Checkbox
-            checked={allChecked}
-            onChange={(checked) =>
-              checked
-                ? selectAll(rowData.screens, "EDIT")
-                : deselectAll(rowData.screens, "EDIT")
-            }
+          <SelectPicker
+            cleanable={false}
+            searchable={false}
+            data={permissionOptions}
+            value={current}
+            onChange={(value) => setModulePermissions(screens, value)}
+            style={{ width: 150 }}
           />
         );
       },
@@ -137,28 +113,23 @@ useEffect(() => {
       render: (rowData: any) => <div>{rowData.name}</div>,
     },
     {
-      key: "view",
-      title: <Translate>View</Translate>,
-      render: (rowData: any) => (
-        <Checkbox
-          checked={selected.some(
-            (s) => s.screen === rowData.name && s.permission === "VIEW"
-          )}
-          onChange={() => togglePermission(rowData.name, "VIEW")}
-        />
-      ),
-    },
-    {
-      key: "edit",
-      title: <Translate>Edit</Translate>,
-      render: (rowData: any) => (
-        <Checkbox
-          checked={selected.some(
-            (s) => s.screen === rowData.name && s.permission === "EDIT"
-          )}
-          onChange={() => togglePermission(rowData.name, "EDIT")}
-        />
-      ),
+      key: "permission",
+      title: <Translate>Permission</Translate>,
+      render: (rowData: any) => {
+        const current =
+          selected.find((s) => s.screen === rowData.name)?.permission ?? null;
+
+        return (
+          <SelectPicker
+            cleanable={false}
+            searchable={false}
+            data={permissionOptions}
+            value={current}
+            onChange={(value) => setScreenPermission(rowData.name, value)}
+            style={{ width: 150 }}
+          />
+        );
+      },
     },
   ];
 
@@ -174,7 +145,9 @@ useEffect(() => {
         notify({ sev: "success", msg: "Permissions updated successfully" })
       );
     } catch (err) {
-      dispatch(notify({ sev: "error", msg: "Failed to update permissions" }));
+      dispatch(
+        notify({ sev: "error", msg: "Failed to update permissions" })
+      );
     }
   };
 
