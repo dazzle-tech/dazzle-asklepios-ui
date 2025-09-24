@@ -171,7 +171,7 @@ const AccessRole = ({ user }) => {
 
       <MyTable data={userRoles} columns={columns} />
     </>
-  );
+  )
 };
 
 export default AccessRole;
