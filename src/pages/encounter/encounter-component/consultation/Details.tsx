@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Diagnosis from '../procedure/Diagnosis';
+import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import MyInput from '@/components/MyInput';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';

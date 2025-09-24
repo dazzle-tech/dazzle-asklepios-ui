@@ -23,7 +23,8 @@ import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { Dropdown, Form } from 'rsuite';
 import PatientOrder from '../diagnostics-order';
-import Diagnosis from './Diagnosis';
+import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
+
 import './styles.less';
 
 const Details = ({
