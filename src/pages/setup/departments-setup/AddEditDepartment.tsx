@@ -1,7 +1,7 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import {  useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -25,11 +26,20 @@ const AddEditDepartment = ({
     ...initialListRequest
   });
   // Fetch  facility list response
-  const { data: facilityListResponse } =  useGetAllFacilitiesQuery(facilityListRequest);
-  // Fetch  encTypesLov list response
-  const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
-  // Fetch  depTTypesLov list response
-  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+  // Fetch  encTypesEnum list response
+  const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
+  const encounterTypes = (encTypesEnum ?? []).map((type) => ({
+    enumCode: type,
+    enumDisplayValue: type.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+  }));
+  // Fetch  depTTypesEnum list response
+  const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+  const departmentsType = (depTTypesEnum ?? []).map((type) => ({
+    enumCode: type,
+    enumDisplayValue: type.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+  }));
+
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -50,14 +60,15 @@ const AddEditDepartment = ({
                 record={department}
                 setRecord={setDepartment}
               />
+
               <MyInput
                 width={250}
                 fieldName="departmentType"
                 fieldLabel="Department Type"
                 fieldType="select"
-                selectData={depTTypesLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="valueCode"
+                selectData={departmentsType ?? []}
+                selectDataLabel="enumDisplayValue"
+                selectDataValue="enumCode"
                 record={department}
                 setRecord={setDepartment}
                 required
@@ -104,12 +115,12 @@ const AddEditDepartment = ({
               {department?.appointable ? (
                 <MyInput
                   width={250}
-                  fieldName="encountertype"
+                  fieldName="encounterType"
                   fieldType="select"
                   fieldLabel="Encounter Type"
-                  selectData={encTypesLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="valueCode"
+                  selectData={encounterTypes?? []}
+                  selectDataLabel="enumDisplayValue"
+                  selectDataValue="enumCode"
                   record={department}
                   setRecord={setDepartment}
                 />
@@ -127,8 +138,8 @@ const AddEditDepartment = ({
       position="right"
       content={conjureFormContent}
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
-      actionButtonFunction={department?.id?handleUpdate:handleAddNew}
-      steps={[{ title: 'Department Info', icon:<FontAwesomeIcon icon={ faLaptop }/>}]}
+      actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
+      steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
       size={width > 600 ? '36vw' : '25vw'}
     />
   );
