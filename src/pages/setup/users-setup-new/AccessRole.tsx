@@ -8,6 +8,7 @@ import {
   useGetUserRolesByUserIdQuery
 } from "@/services/security/UserRoleService";
 import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
+
 import { useGetAllRolesQuery, useGetRolesByFacilityQuery } from "@/services/security/roleService";
 import MyInput from "@/components/MyInput";
 import MyButton from "@/components/MyButton/MyButton";
@@ -15,6 +16,7 @@ import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { conjureValueBasedOnIDFromList } from "@/utils";
 import TrashIcon from "@rsuite/icons/Trash";
+
 
 const AccessRole = ({ user }) => {
   const dispatch = useAppDispatch();
@@ -85,6 +87,7 @@ const AccessRole = ({ user }) => {
       refetchUserRoles();
     } catch (err) {
       dispatch(notify({ msg: "Failed to remove role", sev: "error" }));
+
     }
   };
 
