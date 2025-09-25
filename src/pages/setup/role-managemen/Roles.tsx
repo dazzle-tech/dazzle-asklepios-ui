@@ -9,13 +9,7 @@ import { newRole } from "@/types/model-types-constructor-new";
 import { useAppDispatch } from "@/hooks";
 import MyInput from "@/components/MyInput";
 
-type Props = {
-  selected: Role | null;
-  setSelected: (r: Role | null) => void;
-  facilityId?: string | number;
-};
-
-const Roles: React.FC<Props> = ({ selected, setSelected, facilityId }) => {
+const Roles = ({ selected, setSelected, facilityId }) => {
   const dispatch = useAppDispatch();
   const { data: rolesData, isLoading: rolesLoading, refetch: refetchRoles } =
     useGetRolesByFacilityQuery(facilityId!, { skip: !facilityId });
