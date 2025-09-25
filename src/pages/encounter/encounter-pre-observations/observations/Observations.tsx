@@ -1,31 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { Col, Divider, Row } from 'rsuite';
-import { useAppDispatch } from '@/hooks';
+import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import { forwardRef, useImperativeHandle } from 'react';
-import './styles.less';
-import { Text, Form } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
-import { notify } from '@/utils/uiReducerActions';
+import MyLabel from '@/components/MyLabel';
+import SectionContainer from '@/components/SectionsoContainer';
+import { useAppDispatch } from '@/hooks';
+import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
+import { setRefetchPatientSide } from '@/reducers/refetchPatientSide';
+import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import {
   useGetObservationSummariesQuery,
   useSaveObservationSummaryMutation
 } from '@/services/observationService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { ApPatientObservationSummary } from '@/types/model-types';
-import { newApPatientObservationSummary } from '@/types/model-types-constructor';
-import { ApPatient } from '@/types/model-types';
-import { initialListRequest, ListRequest } from '@/types/types';
-import MyLabel from '@/components/MyLabel';
-import { useLocation } from 'react-router-dom';
-import MyButton from '@/components/MyButton/MyButton';
-import clsx from 'clsx';
-import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import { useGetAgeGroupValueQuery } from '@/services/patientService';
-import { useSaveEncounterChangesMutation } from '@/services/encounterService';
-import { setRefetchPatientSide } from '@/reducers/refetchPatientSide';
-import SectionContainer from '@/components/SectionsoContainer';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { ApPatient, ApPatientObservationSummary } from '@/types/model-types';
+import { newApPatientObservationSummary } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
+import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import clsx from 'clsx';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Col, Form, Row } from 'rsuite';
+import './styles.less';
 export type ObservationsRef = {
   handleSave: () => void;
 };
@@ -327,10 +324,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   title="Vital Signs"
                   content={
                     <VitalSigns
+                      width="28vw"
                       object={vital}
                       setObject={setVital}
-                      disabled={true}
-                      width="28vw"
+                      disabled={false}
                       showNoteField={true}
                     />
                   }
