@@ -62,8 +62,6 @@ const AddEditDepartment = ({
                 fieldLabel="Department Type"
                 fieldType="select"
                 selectData={depTTypesEnum ?? []}
-
-
                 record={department}
                 setRecord={setDepartment}
                 required
