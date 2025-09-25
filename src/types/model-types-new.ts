@@ -48,9 +48,8 @@ export interface Department {
   departmentCode: string;
   phoneNumber: string;
   email: string;
-  encountertype: string;
+  encounterType: string;
   isActive: boolean;
-  facility:Facility;
 }
 
 export interface Facility { 

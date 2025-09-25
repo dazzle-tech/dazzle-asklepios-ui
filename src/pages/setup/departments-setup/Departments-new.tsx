@@ -9,7 +9,7 @@ import { useGetLovValuesByCodeQuery, useGetMedicalSheetsByDepartmentIdQuery } fr
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import { addFilterToListRequest, conjureValueBasedOnKeyFromList, conjureValueBasedOnIDFromList, fromCamelCaseToDBName } from '@/utils';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -21,7 +21,7 @@ import ChooseDepartment from './ChooseScreen';
 import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
-import { useAddDepartmentMutation, useGetDepartmentQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
+import { useAddDepartmentMutation, useGetDepartmentQuery, useGetDepartmentTypesQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 
@@ -152,10 +152,7 @@ const Departments = () => {
     }
   }, [medicalSheet, department.id, department.facilityId]);
   //handle get facility and department type data for search
-  const [facilityListRequest] = useState<ListRequest>({
-    ...initialListRequestNew
-  });
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const [facilitiesList, setFacilitiesList] = useState<{ label: string; value: string }[]>([]);
   useEffect(() => {
     if (facilityListResponse?.length) {
@@ -166,9 +163,12 @@ const Departments = () => {
       setFacilitiesList(facilityOptions);
     }
   }, [facilityListResponse]);
-  // Fetch  depTTypesLov list response
-  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
-  // Handle new department creation
+  // Fetch  depTTypesEnum list response
+  const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+  const departmentsType = (depTTypesEnum ?? []).map((type) => ({
+    enumCode: type,
+    enumDisplayValue: type.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+  }));  // Handle new department creation
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);
@@ -176,18 +176,12 @@ const Departments = () => {
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
-  const cleanDepartmentForAPI = (dept: Department) => ({
-    ...dept,
-    facilityId: dept?.facility?.id ?? dept.facilityId,
-    facility: undefined
-  });
+
   // add department
   const handleAdd = () => {
     setPopupOpen(false);
     setLoad(true);
-    console.log("Adding department with payload:", cleanDepartmentForAPI(department));
-
-    addDepartment(cleanDepartmentForAPI(department))
+    addDepartment(department)
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
@@ -202,7 +196,7 @@ const Departments = () => {
     setPopupOpen(false);
     setLoad(true);
 
-    updateDepartment(cleanDepartmentForAPI(department))
+    updateDepartment(department)
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
@@ -261,11 +255,7 @@ const Departments = () => {
         );
       });
   };
-  const prepareDepartmentForEdit = (rowData: Department): Department => ({
-    ...rowData,
-    facilityId: rowData.facility?.id ?? rowData.facilityId ?? '',
-    departmentType: rowData.departmentType ?? ''
-  });
+
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -275,7 +265,7 @@ const Departments = () => {
         className="icons-style"
         onClick={() => {
           console.log('Row Data ---> ', rowData)
-          setDepartment(prepareDepartmentForEdit(rowData));
+          setDepartment(rowData);
           setPopupOpen(true);
         }}
       />
@@ -328,11 +318,20 @@ const Departments = () => {
 
   const tableColumns = [
     {
-      key: 'facilityName',
+      key: 'facilityId',
       title: <Translate>Facility Name</Translate>,
       flexGrow: 4,
-      render: rowData => rowData?.facility?.name ?? ''
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnIDFromList(
+            facilityListResponse ?? [],
+            rowData.facilityId,
+            'name'
+          )}
+        </span>
+      )
     },
+
     {
       key: 'name',
       title: <Translate>Department Name</Translate>,
@@ -418,9 +417,9 @@ const Departments = () => {
           fieldName="departmentType"
           fieldLabel=""
           fieldType="select"
-          selectData={depTTypesLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="valueCode"
+          selectData={departmentsType ?? []}
+          selectDataLabel="enumDisplayValue"
+          selectDataValue="enumCode"
           record={department}
           setRecord={setDepartment}
         />
