@@ -77,7 +77,6 @@ const Departments = () => {
 
   // Data fetching
   const { data: departmentListResponse, isFetching } = useGetDepartmentQuery(listRequest);
-  console.log("departmentListResponse", departmentListResponse);
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.id, {
     skip: !department.id
   });
@@ -186,7 +185,6 @@ const Departments = () => {
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
   // Handle new department creation
-
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);

@@ -36,8 +36,6 @@ const AddEditDepartment = ({
 
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
-
-
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
