@@ -10,7 +10,6 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, conjureValueBasedOnIDFromList, fromCamelCaseToDBName } from '@/utils';
-
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -160,7 +159,6 @@ const Departments = () => {
   }, [medicalSheet, department.id, department.facilityId]);
   //handle get facility and department type data for search
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
-
   const [facilitiesList, setFacilitiesList] = useState<{ label: string; value: string }[]>([]);
   useEffect(() => {
     if (facilityListResponse?.length) {
@@ -174,6 +172,7 @@ const Departments = () => {
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
   // Handle new department creation
+
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);
@@ -268,7 +267,6 @@ const Departments = () => {
         className="icons-style"
         onClick={() => {
           setDepartment(rowData);
-
           setPopupOpen(true);
         }}
       />
@@ -333,7 +331,6 @@ const Departments = () => {
           )}
         </span>
       )
-
     },
 
     {
