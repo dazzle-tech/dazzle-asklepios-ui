@@ -110,7 +110,6 @@ export const store = configureStore({
 
     [enumService.reducerPath]: enumService.reducer,
 
-
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -143,7 +142,6 @@ export const store = configureStore({
       enumService.middleware,
       facilityService.middleware,
       roleService.middleware
-
     ])
 });
 
