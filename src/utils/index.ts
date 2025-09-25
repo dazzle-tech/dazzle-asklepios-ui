@@ -117,6 +117,21 @@ export const conjureValueBasedOnKeyFromList = (
   });
   return displayValue;
 };
+// new backend
+export const conjureValueBasedOnIDFromList = (
+  list: [],
+  currentKey: string,
+  preferredField: any
+) => {
+  let displayValue = currentKey;
+  list.map(record => {
+
+    if (record['id'] === currentKey) {
+      displayValue = record[preferredField];
+    }
+  });
+  return displayValue;
+};
 
 export const calculateAge = birthdate => {
   const birthDate = new Date(birthdate);
