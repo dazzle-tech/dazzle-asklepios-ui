@@ -185,7 +185,6 @@ const Departments = () => {
   const handleAdd = () => {
     setPopupOpen(false);
     setLoad(true);
-
     addDepartment(department)
       .unwrap()
       .then(() => {
