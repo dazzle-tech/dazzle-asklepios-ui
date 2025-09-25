@@ -6,15 +6,19 @@ import { Panel } from 'rsuite';
 
 import './styles.less';
 import { useSelector } from 'react-redux';
+import MyBadgeStatus from '../MyBadgeStatus/MyBadgeStatus';
+
 //props
 interface DetailsCardProps {
   title: string;
   number: number | string;
   icon?: IconDefinition;
   color: string;
+  badgeColor?: string; 
   backgroundClassName?: string;
   position?: 'left' | 'center' | 'right';
   width?: string | number;
+  badgeText?: string;
 }
 
 const DetailsCard: React.FC<DetailsCardProps> = ({
@@ -22,9 +26,11 @@ const DetailsCard: React.FC<DetailsCardProps> = ({
   number,
   icon,
   color,
+  badgeColor = color,
   backgroundClassName = '',
   position = 'left',
   width = 240,
+  badgeText,
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
   return (
@@ -44,8 +50,13 @@ const DetailsCard: React.FC<DetailsCardProps> = ({
           />
         )}
         <div className="details-card-text">
-          <h4 style={{ color: `var(${color})` }}>{number}</h4>
+          <h4 style={{ marginBottom: 6 }}>{number}</h4>
           <p>{title}</p>
+          {badgeText && (
+            <div className="details-card-badge-wrapper">
+              <MyBadgeStatus contant={badgeText} color={badgeColor} />
+            </div>
+          )}
         </div>
       </div>
     </Panel>

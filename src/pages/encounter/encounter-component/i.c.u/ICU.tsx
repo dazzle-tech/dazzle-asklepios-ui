@@ -16,7 +16,7 @@ import ModalContent from './ModalContent';
 import { Tabs } from 'rsuite';
 import AbgICU from "./AbgICU";
 import './style.less';
-import ICUTabs from "./i.c.u-tabs/overviewtab/ICUTabs";
+import ICUTabs from "./ICUTabs";
 const ICU: React.FC = () => {
   const [record, setRecord] = useState<any>({});
   const [openVitalModal, setOpenVitalModal] = useState(false);

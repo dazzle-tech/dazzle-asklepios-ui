@@ -24,7 +24,7 @@ const OverviewICU: React.FC = () => {
 
 
     return (<>
-        <div className="dynamic-cards-over-view-grid">
+<div className="dynamic-cards-over-view-grid">
 <TodayGoalsSection />
 <ActiveProblemsSection/>
 <ActiveDripsSection/>

@@ -11,8 +11,11 @@ import MyButton from "@/components/MyButton/MyButton";
 import MyModal from "@/components/MyModal/MyModal";
 import PlusIcon from '@rsuite/icons/Plus';
 import { Tabs } from 'rsuite';
-import OverviewICU from "./OverviewICU";
-
+import OverviewICU from "./i.c.u-tabs/overviewtab/OverviewICU";
+import FlowSheetICU from "./i.c.u-tabs/FlowSheetTab/FlowSheetICU";
+import Neurological from './i.c.u-tabs/NeurologicalTab/NeurologicalICU'
+import InvasiveDeviceICU from "./i.c.u-tabs/invasivedevice/InvasiveDeviceICU";
+import SafetyBundleICU from "./i.c.u-tabs/safetybundletab/SafetyBundleICU";
 const ICUTabs: React.FC = () => {
   const [activeKey, setActiveKey] = useState<string | number>('1');
 
@@ -25,18 +28,18 @@ const ICUTabs: React.FC = () => {
                 </Tabs.Tab>
 
                 <Tabs.Tab eventKey="2" title="Flow Sheet">
-<><h1>test2</h1></>
+<><FlowSheetICU></FlowSheetICU></>
 
                 </Tabs.Tab>
 
                 <Tabs.Tab eventKey="3" title="Neurological">
-<><h1>test3</h1></>
+<><Neurological></Neurological></>
 </Tabs.Tab>
                 <Tabs.Tab eventKey="4" title="Invasive Devices">
-<><h1>test4</h1></>
+<><InvasiveDeviceICU></InvasiveDeviceICU></>
 </Tabs.Tab>
                 <Tabs.Tab eventKey="5" title="Safety Bundle">
-<><h1>test53</h1></>
+<><SafetyBundleICU></SafetyBundleICU></>
 </Tabs.Tab>
               </Tabs>
 

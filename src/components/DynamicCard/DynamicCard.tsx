@@ -8,15 +8,22 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './styles.less';
 
 interface CardItem {
-  label?: string;
+  label?: string | React.ReactNode;
   value?: string | React.ReactNode;
-  type?: 'text' | 'badge' | 'strong';
+  type?: 'text' | 'badge' | 'strong' | 'week';
   color?: string;
+  valueColor?: string;
   position?: 'left' | 'center' | 'right';
   vertical?: 'top' | 'center' | 'bottom';
   showLabel?: boolean;
   section?: 'left' | 'center' | 'right';
-  labelGap?: string | number;
+  labelDirection?: 'row' | 'column';
+  labelIcon?: React.ReactNode;
+  columnGap?: number;
+  verticalGap?: number;
+  labelGap?: number;
+  showColon?: boolean;
+  sectionDirection?: 'row' | 'column';
 }
 
 interface MyCardProps {
@@ -58,68 +65,64 @@ const DynamicCard: React.FC<MyCardProps> = ({
   const rightItems = data.filter(item => item.section === 'right');
 
   const renderItem = (item: CardItem, index: number) => {
+    const isColumn = item.labelDirection === 'column';
+    const showColon = item.showColon !== false;
+
+    const valueMarginBottom = item.columnGap ?? 0;
+    const verticalMarginBottom = item.verticalGap ?? 0;
+    const labelGap = item.labelGap ?? 4;
+
     return (
       <div
         key={index}
         style={{
           display: 'flex',
-          justifyContent:
-            item.position === 'center'
-              ? 'center'
-              : item.position === 'right'
-              ? 'flex-end'
-              : 'flex-start',
-          alignSelf:
-            item.vertical === 'center'
-              ? 'center'
-              : item.vertical === 'bottom'
-              ? 'flex-end'
-              : 'flex-start',
-          margin: '0',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          maxWidth: '100%'
+          flexDirection: isColumn ? 'column' : 'row',
+          gap: isColumn ? 0 : labelGap,
+          width: 'auto',
+          marginBottom: verticalMarginBottom,
         }}
       >
-        {item.type === 'badge' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: item.labelGap || 4 }}>
-            {item.showLabel !== false && item.label && (
-  <>
-    {typeof item.label === 'string' ? (
-      <span style={{ color: item.color}}>{item.label}:</span>
-    ) : (
-      React.cloneElement(item.label as React.ReactElement, {}, `${(item.label as React.ReactElement).props.children}:`)
-    )}
-  </>
-)}
-
-            <MyBadgeStatus contant={item.value} color={item.color || '#555'} />
+        {item.showLabel !== false && item.label && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {item.labelIcon && <span>{item.labelIcon}</span>}
+            <span style={{ color: item.color }}>
+              {item.label}{showColon ? ':' : ''}
+            </span>
           </div>
-        ) : item.type === 'strong' ? (
-          <strong className="title-style-dynamic-card">{item.value}</strong>
-        ) : item.labelGap === 'auto' ? (
-          <>
-            {item.showLabel !== false && item.label && (
-              <div style={{ flex: 1, minWidth: 0 }}>{item.label}:</div>
-            )}
-            <div style={{ flexShrink: 0 }}>{item.value}</div>
-          </>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: item.labelGap || 4 }}>
-            {item.showLabel !== false && item.label && (
-  <>
-    {typeof item.label === 'string' ? (
-      <span style={{ color: item.color}}>{item.label}:</span>
-    ) : (
-      React.cloneElement(item.label as React.ReactElement, {}, `${(item.label as React.ReactElement).props.children}:`)
-    )}
-  </>
-)}
+        )}
 
+        {item.type === 'badge' ? (
+          <div style={{ marginBottom: valueMarginBottom }}>
+            <MyBadgeStatus contant={item.value} color={item.valueColor || item.color || '#555'} />
+          </div>
+        ) : (
+          <div
+            style={{
+              fontSize: item.type === 'week' ? 12 : undefined,
+              fontWeight: item.type === 'strong' ? '700' : undefined,
+              fontFamily: item.type === 'week' ? 'Inter Regular' : undefined,
+              color: item.valueColor || (item.type === 'week' ? 'var(--primary-gray)' : undefined),
+              marginBottom: valueMarginBottom,
+            }}
+          >
             {item.value}
           </div>
         )}
+      </div>
+    );
+  };
+
+  const renderSection = (items: CardItem[], direction?: 'row' | 'column') => {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: direction ?? 'column',
+          width: 'auto',
+        }}
+      >
+        {items.map(renderItem)}
       </div>
     );
   };
@@ -132,7 +135,6 @@ const DynamicCard: React.FC<MyCardProps> = ({
       className={`dynamic-card ${mode === 'light' ? 'light' : 'dark'}`}
       {...props}
     >
-      {/* Header */}
       {(avatar || showMore) && (
         <Card.Header className="card-header">
           {avatar && <Avatar circle src={avatar} className="avatar" />}
@@ -151,14 +153,12 @@ const DynamicCard: React.FC<MyCardProps> = ({
         </Card.Header>
       )}
 
-      {/* Body */}
       <Card.Body className="card-body">
-        <div className="card-body-left">{leftItems.map(renderItem)}</div>
-        <div className="card-body-center">{centerItems.map(renderItem)}</div>
-        <div className="card-body-right">{rightItems.map(renderItem)}</div>
+        {leftItems.length > 0 && renderSection(leftItems, leftItems[0].sectionDirection)}
+        {centerItems.length > 0 && renderSection(centerItems, centerItems[0].sectionDirection)}
+        {rightItems.length > 0 && renderSection(rightItems, rightItems[0].sectionDirection)}
       </Card.Body>
 
-      {/* Footer */}
       <Card.Footer className="card-footer">
         {showArrow && (
           <MyButton

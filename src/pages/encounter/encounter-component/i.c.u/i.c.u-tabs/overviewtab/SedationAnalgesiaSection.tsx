@@ -203,7 +203,7 @@ const SedationAnalgesiaSection: React.FC = () => {
       <MyModal
         open={openModal}
         setOpen={setOpenModal}
-        title="Sedation & Analgesia"
+        title="Add Sedation & Analgesia"
         size="50vw"
         bodyheight="70vh"
         position="center"
