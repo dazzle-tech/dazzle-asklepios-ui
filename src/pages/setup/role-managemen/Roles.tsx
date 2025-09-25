@@ -10,6 +10,7 @@ import { newRole } from "@/types/model-types-constructor-new";
 import { useAppDispatch } from "@/hooks";
 import MyInput from "@/components/MyInput";
 
+
 const Roles = ({ selected, setSelected, facilityId }) => {
   const dispatch = useAppDispatch();
   const { data: rolesData, isLoading: rolesLoading, refetch: refetchRoles } =
@@ -21,6 +22,7 @@ const Roles = ({ selected, setSelected, facilityId }) => {
   const addRole = async () => {
     try {
       const created = await saveRole({ ...role, facilityId }).unwrap();
+
 
       dispatch(notify({ msg: 'The Role has been saved successfully', sev: 'success' }));
 
