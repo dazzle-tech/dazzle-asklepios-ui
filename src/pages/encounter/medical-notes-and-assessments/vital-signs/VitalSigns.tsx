@@ -1,34 +1,27 @@
-import MyInput from '@/components/MyInput';
-import Translate from '@/components/Translate';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import React, { useEffect, useState } from 'react';
-import {
-  FlexboxGrid,
-  IconButton,
-  Input,
-  Panel,
-  Table,
-  Grid,
-  Row,
-  Col,
-  ButtonToolbar,
-  Text,
-  InputGroup,
-  SelectPicker
-} from 'rsuite';
-import 'react-tabs/style/react-tabs.css';
-import * as icons from '@rsuite/icons';
-import { useNavigate } from 'react-router-dom';
-import { initialListRequest } from '@/types/types';
+import { useAppSelector } from '@/hooks';
 import {
   useGetObservationSummariesQuery,
   useRemoveObservationSummaryMutation,
   useSaveObservationSummaryMutation
 } from '@/services/observationService';
 import { newApPatientObservationSummary } from '@/types/model-types-constructor';
+import { initialListRequest } from '@/types/types';
 import { Plus, Trash } from '@rsuite/icons';
+import React, { useEffect, useState } from 'react';
 import { MdSave } from 'react-icons/md';
+import 'react-tabs/style/react-tabs.css';
+import {
+  ButtonToolbar,
+  Col,
+  Grid,
+  IconButton,
+  Input,
+  InputGroup,
+  Panel,
+  Row,
+  Table,
+  Text
+} from 'rsuite';
 const VitalSigns = () => {
   const patientSlice = useAppSelector(state => state.patient);
 
