@@ -271,33 +271,36 @@ const MyInput = ({
             onClose={() => setIsTimeOpen(false)}
           />
         );
-      case 'select':
-        return (
-          <Form.Control
-            style={{ width: styleWidth, height: props?.height ?? 30 }}
-            className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
-            block
-            disabled={props.disabled}
-            accepter={SelectPicker}
-            renderMenuItem={props.renderMenuItem}
-            searchBy={props.searchBy}
-            name={fieldName}
-            data={props?.selectData ?? []}
-            labelKey={props?.selectDataLabel ?? ''}
-            valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : ''}
-            onChange={handleValueChange}
-            defaultValue={props.defaultSelectValue}
-            placeholder={props.placeholder}
-            searchable={props.searchable}
-            menuMaxHeight={props?.menuMaxHeight ?? ''}
-            onKeyDown={focusNextField}
-            loading={props?.loading ?? false}
-            open={isSelectOpen}
-            onOpen={() => setIsSelectOpen(true)}
-            onClose={() => setIsSelectOpen(false)}
-          />
-        );
+     case 'select':
+  // Normalize selectData if it's an array of strings
+  const selectData = Array.isArray(props?.selectData) && 
+    typeof props?.selectData[0] === 'string'
+    ? props.selectData.map(item => ({ label: item, value: item }))
+    : props?.selectData ?? [];
+
+  return (
+    <Form.Control
+      style={{ width: styleWidth, height: props?.height ?? 30 }}
+      className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
+      block
+      disabled={props.disabled}
+      accepter={SelectPicker}
+      renderMenuItem={props.renderMenuItem}
+      searchBy={props.searchBy}
+      name={fieldName}
+      data={selectData}
+      labelKey={props?.selectDataLabel || 'label'}
+      valueKey={props?.selectDataValue || 'value'}
+      value={record ? record[fieldName] : ''}
+      onChange={handleValueChange}
+      defaultValue={props.defaultSelectValue}
+      placeholder={props.placeholder}
+      searchable={props.searchable}
+      menuMaxHeight={props?.menuMaxHeight ?? ''}
+      onKeyDown={focusNextField}
+      loading={props?.loading ?? false}
+    />
+  );
       //<TagPicker data={data} style={{ width: 300 }} />
       case 'multyPicker':
         return (
