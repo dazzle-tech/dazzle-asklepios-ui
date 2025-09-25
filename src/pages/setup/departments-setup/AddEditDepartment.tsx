@@ -11,7 +11,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
-
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -30,9 +29,9 @@ const AddEditDepartment = ({
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
   // Fetch  encTypesEnum list response
   const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
-  
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
