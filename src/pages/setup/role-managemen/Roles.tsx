@@ -1,76 +1,81 @@
+import React, { useEffect, useState } from "react";
 import MyButton from "@/components/MyButton/MyButton";
 import SectionContainer from "@/components/SectionsoContainer";
-import React,{useEffect,useState} from "react";
-import { Divider, Input, List, Panel } from "rsuite";
-import {Role} from '@/types/model-types-new';
+import { Form, List } from "rsuite";
+import { Role } from '@/types/model-types-new';
+import { notify } from '@/utils/uiReducerActions';
+import { useAddRoleMutation, useGetRolesByFacilityQuery } from "@/services/security/roleService";
+import { newRole } from "@/types/model-types-constructor-new";
+import { useAppDispatch } from "@/hooks";
+import MyInput from "@/components/MyInput";
 
-import { useGetRolesByFacilityQuery} from "@/services/security/roleService";
+type Props = {
+  selected: Role | null;
+  setSelected: (r: Role | null) => void;
+  facilityId?: string | number;
+};
 
-const Roles=({
-  selected,
-  setSelected,
-  facilityId
-})=>{
+const Roles: React.FC<Props> = ({ selected, setSelected, facilityId }) => {
+  const dispatch = useAppDispatch();
+  const { data: rolesData, isLoading: rolesLoading, refetch: refetchRoles } =
+    useGetRolesByFacilityQuery(facilityId!, { skip: !facilityId });
 
+  const [saveRole, saveRoleMutation] = useAddRoleMutation();
+  const [role, setRole] = useState<Role>({ ...newRole });
 
- const [newRoleName, setNewRoleName] = useState("");
-  const [newRoleDesc, setNewRoleDesc] = useState("");
- const {  data: rolesData, isLoading: rolesLoading, refetch: refetchRoles } = useGetRolesByFacilityQuery(facilityId);
- 
- const [roles, setRoles] = useState<Role[]>([]);
-  const addRole = () => {
-    // if (!newRoleName.trim()) return;
-    // const id = Date.now();
-    // const r: Role = { id, name: newRoleName.trim(), description: newRoleDesc.trim() };
-    // setRoles((prev) => {
-    //   const next = [...prev, r];
-    //   return next;
-    // });
-    // setNewRoleName("");
-    // setNewRoleDesc("");
-    // setSelected(r);
+  const addRole = async () => {
+    try {
+      // include facilityId if your backend requires it
+      const created = await saveRole({ ...role, facilityId }).unwrap();
+
+      dispatch(notify({ msg: 'The Role has been saved successfully', sev: 'success' }));
+
+      setRole({ ...newRole });
+      setSelected(created);
+
+      // Refresh the list
+      refetchRoles();
+    } catch (e) {
+      dispatch(notify({ msg: 'Failed to save this Role', sev: 'error' }));
+    }
   };
 
 
-    return  <SectionContainer 
-        
-        content={ 
-            <div className="list-wrapper">
-              <List bordered hover>
-                {rolesData?.map((r) => (
-                  <List.Item
-                    key={r.id}
-                    className={`list-item ${selected?.id === r.id ? "selected" : ""}`}
-                    onClick={() => setSelected(r)}
-                  >
-                    <div className="item-name">{r.name}</div>
-                   
-                  </List.Item>
-                ))}
-              </List>
-            </div>}
-            title={"Roles"}
-            button={   <div className="add-form">
-              <Input
-                placeholder="Role name"
-                value={newRoleName}
-                onChange={(v: any) => setNewRoleName(v)}
-                className="input-name"
-              />
-              <Input
-                placeholder="Description"
-                value={newRoleDesc}
-                onChange={(v: any) => setNewRoleDesc(v)}
-                className="input-desc"
-              />
-              <MyButton  onClick={addRole}>
-                Add
-              </MyButton>
-            </div>}
-            
+  return (
+    <SectionContainer
+      title="Roles"
+      content={
+        <div className="list-wrapper">
+          <List bordered hover>
+            {rolesData?.map((r) => (
+              <List.Item
+                key={r.id}
+                className={`list-item ${selected?.id === r.id ? "selected" : ""}`}
+                onClick={() => setSelected(r)}
+              >
+                <div className="item-name">{r.name}</div>
+              </List.Item>
+            ))}
+          </List>
+        </div>
+      }
+      button={
+        <div className="add-form">
+          <Form layout="inline" onSubmit={addRole}>
+            <MyInput
+              fieldLabel="Name"
+              width={200}
+              required
+              fieldName="name"
+              record={role}
+              setRecord={setRole}
             />
-          
+            <MyButton type="submit">Add</MyButton>
+          </Form>
+        </div>
+      }
+    />
+  );
+};
 
-         
-}
 export default Roles;
