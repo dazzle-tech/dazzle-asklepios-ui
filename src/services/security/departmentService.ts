@@ -66,8 +66,6 @@ export const departmentService = createApi({
     getEnconuterTypes: builder.query({
       query: (id) => `/api/setup/department/encounter-type`,
     }),
-
-
   }),
 
 
