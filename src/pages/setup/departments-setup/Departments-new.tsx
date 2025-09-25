@@ -64,7 +64,6 @@ const Departments = () => {
 
   // Data fetching
   const { data: departmentListResponse, isFetching } = useGetDepartmentQuery(listRequest);
-  console.log("departmentListResponse", departmentListResponse);
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.id, {
     skip: !department.id
   });
@@ -166,14 +165,11 @@ const Departments = () => {
   }, [facilityListResponse]);
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
-  const departmentsType = (depTTypesEnum ?? []).map((type) => ({
-    enumCode: type,
-    enumDisplayValue: type.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-  }));  // Handle new department creation
+ 
+  // Handle new department creation
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);
-
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
@@ -265,7 +261,6 @@ const Departments = () => {
         fill="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
-          console.log('Row Data ---> ', rowData)
           setDepartment(rowData);
           setPopupOpen(true);
         }}
@@ -418,9 +413,7 @@ const Departments = () => {
           fieldName="departmentType"
           fieldLabel=""
           fieldType="select"
-          selectData={departmentsType ?? []}
-          selectDataLabel="enumDisplayValue"
-          selectDataValue="enumCode"
+          selectData={depTTypesEnum ?? []}
           record={department}
           setRecord={setDepartment}
         />
