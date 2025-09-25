@@ -45,9 +45,8 @@ export const newDepartment:modelTypes.Department = {
   departmentCode:'',
   phoneNumber:'',
   email:'',
-  encountertype:undefined,
+  encounterType:undefined,
   isActive:true,
-  facility:undefined
 }
 
 export const newDepartment:modelTypes.Department = { 

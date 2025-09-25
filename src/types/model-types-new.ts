@@ -50,7 +50,6 @@ export interface Department {
   email: string;
   encounterType: string;
   isActive: boolean;
-  facility:Facility;
 }
 
 export interface Facility { 
