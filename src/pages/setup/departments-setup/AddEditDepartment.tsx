@@ -31,8 +31,10 @@ const AddEditDepartment = ({
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
   // Fetch  encTypesEnum list response
   const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
+
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -60,6 +62,7 @@ const AddEditDepartment = ({
                 fieldLabel="Department Type"
                 fieldType="select"
                 selectData={depTTypesEnum ?? []}
+
 
                 record={department}
                 setRecord={setDepartment}
@@ -111,7 +114,6 @@ const AddEditDepartment = ({
                   fieldType="select"
                   fieldLabel="Encounter Type"
                   selectData={encTypesEnum?? []}
-
                   record={department}
                   setRecord={setDepartment}
                 />
@@ -131,8 +133,6 @@ const AddEditDepartment = ({
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
       actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
       steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
-
-
       size={width > 600 ? '36vw' : '25vw'}
     />
   );

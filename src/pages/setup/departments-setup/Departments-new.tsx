@@ -12,6 +12,7 @@ import MyInput from '@/components/MyInput';
 
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, conjureValueBasedOnIDFromList, fromCamelCaseToDBName } from '@/utils';
 
+
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -189,6 +190,7 @@ const Departments = () => {
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
 
   // Handle new department creation
+
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);
@@ -197,20 +199,16 @@ const Departments = () => {
     setPopupOpen(true);
  
 
-    setDepartment({ ...newDepartment, departmentCode: code });
-    setPopupOpen(true);
-
   const cleanDepartmentForAPI = (dept: Department) => ({
     ...dept,
     facilityId: dept?.facility?.id ?? dept.facilityId,
     facility: undefined
   });
  
+
     setPopupOpen(false);
     setLoad(true);
-    console.log("Adding department with payload:", cleanDepartmentForAPI(department));
-
-    addDepartment(cleanDepartmentForAPI(department))
+    addDepartment(department)
       .unwrap()
       .then(() => {
 
@@ -227,6 +225,7 @@ const Departments = () => {
     setPopupOpen(false);
     setLoad(true);
     updateDepartment(department)
+
 
       .unwrap()
       .then(() => {
@@ -375,7 +374,6 @@ const Departments = () => {
 
     },
 
-
     {
       key: 'name',
       title: <Translate>Department Name</Translate>,
@@ -470,6 +468,7 @@ const Departments = () => {
           selectData={depTTypesEnum ?? []}
           record={record}
           setRecord={setRecord}
+
         />
       );
     } else {
