@@ -10,6 +10,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
+import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
 
 interface ConsultationPopupProps {
   open: boolean;
@@ -135,10 +136,11 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
 
   const content = () => (
     <Form className="form-container-column">
+      <PatientHistorySummary title={'Patient Summary'} />
       <Form className="form-container-row">
         {/* Reason */}
         <SectionContainer
-          title="Reason for Consultation"
+          title="Question to Consultant"
           content={
             <MyInput
               fieldName="reasonForConsultation"
