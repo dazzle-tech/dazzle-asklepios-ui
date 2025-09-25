@@ -6,7 +6,7 @@ import { faShield, faUser } from '@fortawesome/free-solid-svg-icons';
 import VAP from "./VAP";
 import DVT from "./DVT";
 import CAUTI from "./CAUTI";
-import CLABSI from "./Clabsi";
+import CLABSI from "./CLABSI";
 import EarlyMobility from "./EarlyMobility";
 import DeliriumPrevention from "./DeliriumPrevention";
 import StressUlcerProphylaxis from "./StressUlcerProphylaxis";
