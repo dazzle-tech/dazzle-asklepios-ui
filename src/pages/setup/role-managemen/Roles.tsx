@@ -25,7 +25,6 @@ const Roles: React.FC<Props> = ({ selected, setSelected, facilityId }) => {
 
   const addRole = async () => {
     try {
-      // include facilityId if your backend requires it
       const created = await saveRole({ ...role, facilityId }).unwrap();
 
       dispatch(notify({ msg: 'The Role has been saved successfully', sev: 'success' }));
