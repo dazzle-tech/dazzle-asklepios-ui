@@ -29,6 +29,7 @@ const AddEditDepartment = ({
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
   // Fetch  encTypesEnum list response
   const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
+  
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
   // Modal content

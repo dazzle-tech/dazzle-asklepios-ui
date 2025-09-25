@@ -21,7 +21,7 @@ import ChooseDepartment from './ChooseScreen';
 import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
-import { useAddDepartmentMutation, useGetDepartmentByFacilityQuery, useGetDepartmentByNameQuery, useGetDepartmentByTypeQuery, useGetDepartmentQuery, useGetDepartmentTypesQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
+import { useAddDepartmentMutation, useGetDepartmentQuery, useGetDepartmentTypesQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 
@@ -36,12 +36,7 @@ const Departments = () => {
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
-  const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
-  const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
-  const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
 
-  const [departmentList, setDepartmentList] = useState<Department[]>([]);
-  const [isFiltered, setIsFiltered] = useState(false);
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -69,7 +64,6 @@ const Departments = () => {
 
   // Data fetching
   const { data: departmentListResponse, isFetching } = useGetDepartmentQuery(listRequest);
-  console.log("departmentListResponse", departmentListResponse);
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.id, {
     skip: !department.id
   });
@@ -171,17 +165,15 @@ const Departments = () => {
   }, [facilityListResponse]);
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
-
-  const departmentsType = (depTTypesEnum ?? []).map((type) => ({
-    enumCode: type,
-    enumDisplayValue: type.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-  }));  // Handle new department creation)
+ 
+  // Handle new department creation
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
+
   // add department
   const handleAdd = () => {
     setPopupOpen(false);
@@ -196,10 +188,11 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
-  // update department
+  // add department
   const handleUpdate = () => {
     setPopupOpen(false);
     setLoad(true);
+
     updateDepartment(department)
       .unwrap()
       .then(() => {
@@ -211,30 +204,27 @@ const Departments = () => {
       .finally(() => setLoad(false));
   };
 
-  const handleFilterChange = async (fieldName, value) => {
-    if (!value) {
-      setDepartmentList(departmentListResponse);
-      return;
-    }
-
-    try {
-      let response;
-      if (fieldName === "facilityName") {
-        response = await getDepartmentsByFacility(value).unwrap();
-      } else if (fieldName === "departmentType") {
-        response = await getDepartmentsByType(value?.toUpperCase().replace(/\s+/g, '_')).unwrap();
-
-      } else if (fieldName === "name") {
-        response = await getDepartmentsByName(value).unwrap();
-      }
-      setDepartmentList(response ?? []);
-      setIsFiltered(true);
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-      setDepartmentList([]);
-      setIsFiltered(false);
+  const handleFilterChange = (fieldName, value) => {
+    if (value) {
+      setListRequest(
+        addFilterToListRequest(
+          fromCamelCaseToDBName(fieldName),
+          'startsWithIgnoreCase',
+          value,
+          listRequest
+        )
+      );
+    } else {
+      setListRequest({
+        ...initialListRequestNew,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1,
+        filters: []
+      });
     }
   };
+
+
   const generateFiveDigitCode = (): string => {
     return String(Math.floor(10000 + Math.random() * 90000));
   };
@@ -262,6 +252,7 @@ const Departments = () => {
         );
       });
   };
+
   const iconsForActions = (rowData: Department) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -270,8 +261,6 @@ const Departments = () => {
         fill="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
-          setDepartment(rowData);
-          console.log('Row Data ---> ', rowData)
           setDepartment(rowData);
           setPopupOpen(true);
         }}
@@ -383,6 +372,7 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
+
   const getFilterWidth = (filter: string): string => {
     switch (filter) {
       case 'facilityName':
@@ -396,6 +386,7 @@ const Departments = () => {
     }
   };
 
+
   const filters = () => {
     const selectedFilter = record.filter;
 
@@ -406,25 +397,25 @@ const Departments = () => {
         <MyInput
           width={250}
           fieldLabel=""
-          fieldName="value"
+          fieldName="facilityId"
           fieldType="select"
           selectData={facilityListResponse ?? []}
           selectDataLabel="name"
           selectDataValue="id"
-          record={record}
-          setRecord={setRecord}
+          record={department}
+          setRecord={setDepartment}
         />
       );
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (
         <MyInput
           width={250}
-          fieldName="value"
+          fieldName="departmentType"
           fieldLabel=""
           fieldType="select"
           selectData={depTTypesEnum ?? []}
-          record={record}
-          setRecord={setRecord}
+          record={department}
+          setRecord={setDepartment}
         />
       );
     } else {
