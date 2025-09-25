@@ -9,13 +9,10 @@ import {
 } from "@/services/security/UserRoleService";
 import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
 import { useGetRolesByFacilityQuery } from "@/services/security/roleService";
-import MyIconInput from "@/components/MyInput/MyIconInput";
 import MyInput from "@/components/MyInput";
 import MyButton from "@/components/MyButton/MyButton";
-import { Translate } from "@mui/icons-material";
-import { render } from "react-dom";
 import MyTable from "@/components/MyTable";
-
+import Translate from '@/components/Translate';
 
 const { Column, HeaderCell, Cell } = Table;
 
@@ -76,7 +73,7 @@ console.log("userRoles",userRoles);
 const columns=[
     {key:'roleName',
     title:<Translate>Role Name</Translate>,
-    renderer:(rowData)=><span>{rowData.roleName}</span>
+    render:(rowData)=><span>{rowData.roleName}</span>
     }
 ]
     return (
