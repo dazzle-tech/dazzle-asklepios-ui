@@ -8,7 +8,6 @@ import {
   useGetUserRolesByUserIdQuery
 } from "@/services/security/UserRoleService";
 import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
-
 import { useGetAllRolesQuery, useGetRolesByFacilityQuery } from "@/services/security/roleService";
 import MyInput from "@/components/MyInput";
 import MyButton from "@/components/MyButton/MyButton";
@@ -175,6 +174,7 @@ const AccessRole = ({ user }) => {
       <MyTable data={userRoles} columns={columns} />
     </>
   )
+
 
 };
 
