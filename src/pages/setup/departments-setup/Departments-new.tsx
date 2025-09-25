@@ -165,19 +165,22 @@ const Departments = () => {
   }, [facilityListResponse]);
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
- 
-  // Handle new department creation
+
+  const departmentsType = (depTTypesEnum ?? []).map((type) => ({
+    enumCode: type,
+    enumDisplayValue: type.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+  }));  // Handle new department creation)
   const handleNew = () => {
     const code = generateFiveDigitCode();
     setGenerateCode(code);
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
   };
+
   // add department
   const handleAdd = () => {
     setPopupOpen(false);
     setLoad(true);
-
     addDepartment(department)
       .unwrap()
       .then(() => {
@@ -327,6 +330,7 @@ const Departments = () => {
         </span>
       )
     },
+
     {
       key: 'name',
       title: <Translate>Department Name</Translate>,
