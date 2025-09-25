@@ -11,6 +11,7 @@ import './styles.less';
 import { useGetAllRolesQuery, useGetRolesByFacilityQuery } from '@/services/security/roleService';
 import MyButton from '@/components/MyButton/MyButton';
 import AccessRole from './AccessRole';
+import { useGetGenderQuery } from '@/services/enumService';
 const AddEditUser = ({
   open,
   setOpen,
@@ -20,15 +21,19 @@ const AddEditUser = ({
   handleSave,
  
 }) => {
-  console.log("USERE",user)
   // Fetch accessRoles list response
  const {data:accessRoles}=useGetAllRolesQuery(null);
- console.log("accessRoles",accessRoles);
   // Fetch gender lov list response
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   // Fetch jobRole lov list response
   const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
-
+   const {data:genderList}=useGetGenderQuery(null);
+     const genders = (genderList ?? []).map((type) => ({
+    id: type,
+    displayValue: type,
+  }));
+   console.log("genderList",genderList); 
+   console.log("user",user);
   // Modal content
   const conjureFormContent = stepNumber => {
     switch (stepNumber) {
@@ -70,10 +75,10 @@ const AddEditUser = ({
                 column
                 fieldLabel="sex at birth"
                 fieldType="select"
-                fieldName="genderLkey"
-                selectData={gndrLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                fieldName="gender"
+                selectData={genders?? []}
+                selectDataLabel="displayValue"
+                selectDataValue="id"
                 record={user}
                 setRecord={setUser}
                 width={250}
@@ -150,7 +155,7 @@ const AddEditUser = ({
       actionButtonLabel={user?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size={width > 600 ? '38vw' : '25vw'}
-      steps={[{ title: 'User Info', icon: <FontAwesomeIcon icon={faUser} /> , footer: <>
+      steps={[{ title: 'User Info', icon: <FontAwesomeIcon icon={faUser} /> ,disabledNext:!user.id, footer: <>
                     <MyButton
                         disabled={false}
                         onClick={handleSave}

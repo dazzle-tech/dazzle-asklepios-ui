@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import {BaseQuery } from '../../newApi'; 
+import { BaseQuery } from '../../newApi';
 export const userRoleService = createApi({
     reducerPath: 'userRoleApi',
     baseQuery: BaseQuery,
@@ -12,23 +12,25 @@ export const userRoleService = createApi({
             }),
         }),
         deleteUserRole: builder.mutation({
-            query: (roleId) => ({
-                url: `/api/setup/user-role/${roleId}`,
+            query: ({ userId, roleId }) => ({
+                url: `/api/setup/user-role`,
                 method: 'DELETE',
+                body: { userId, roleId },
             }),
         }),
-     
+
+
 
         getUserRolesByUserId: builder.query({
-      query: (userId) => ({
-        url: `/api/setup/user-role/by-user/${userId}`,
-        method: "GET",
-      }),
-    }),
+            query: (userId) => ({
+                url: `/api/setup/user-role/by-user/${userId}`,
+                method: "GET",
+            }),
+        }),
     }),
 });
 export const {
-    useAddUserRoleMutation, 
+    useAddUserRoleMutation,
     useDeleteUserRoleMutation,
     useGetUserRolesByUserIdQuery
 } = userRoleService;
