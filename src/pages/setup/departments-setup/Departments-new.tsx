@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import { initialListRequestNew, ListRequest } from '@/types/types';
+import { initialListRequestId, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
@@ -63,7 +63,7 @@ const Departments = () => {
   });
 
   const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequestNew,
+    ...initialListRequestId,
     pageSize: 15
   });
 
