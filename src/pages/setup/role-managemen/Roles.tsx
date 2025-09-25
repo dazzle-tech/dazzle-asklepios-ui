@@ -10,7 +10,6 @@ import { newRole } from "@/types/model-types-constructor-new";
 import { useAppDispatch } from "@/hooks";
 import MyInput from "@/components/MyInput";
 
-
 const Roles = ({ selected, setSelected, facilityId }) => {
   const dispatch = useAppDispatch();
   const { data: rolesData, isLoading: rolesLoading, refetch: refetchRoles } =
