@@ -29,18 +29,9 @@ const AddEditDepartment = ({
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
   // Fetch  encTypesEnum list response
   const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
-  const encounterTypes = (encTypesEnum ?? []).map((type) => ({
-    enumCode: type,
-    enumDisplayValue: type.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-  }));
+  
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
-  const departmentsType = (depTTypesEnum ?? []).map((type) => ({
-    enumCode: type,
-    enumDisplayValue: type.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-  }));
-
-
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -66,9 +57,7 @@ const AddEditDepartment = ({
                 fieldName="departmentType"
                 fieldLabel="Department Type"
                 fieldType="select"
-                selectData={departmentsType ?? []}
-                selectDataLabel="enumDisplayValue"
-                selectDataValue="enumCode"
+                selectData={depTTypesEnum ?? []}
                 record={department}
                 setRecord={setDepartment}
                 required
@@ -118,9 +107,7 @@ const AddEditDepartment = ({
                   fieldName="encounterType"
                   fieldType="select"
                   fieldLabel="Encounter Type"
-                  selectData={encounterTypes?? []}
-                  selectDataLabel="enumDisplayValue"
-                  selectDataValue="enumCode"
+                  selectData={encTypesEnum?? []}
                   record={department}
                   setRecord={setDepartment}
                 />
