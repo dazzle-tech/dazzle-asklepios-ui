@@ -32,6 +32,7 @@ import ReactDOMServer from 'react-dom/server';
 import { Form } from 'rsuite';
 import AddEditUser from './AddEditUser';
 import ResetPassword from './ResetPassword';
+
 import './styles.less';
 const Users = () => {
   const dispatch = useAppDispatch();
@@ -39,9 +40,7 @@ const Users = () => {
     ...newApUser
     // isValid: true
   });
-  console.log("USER",user)
-  const [readyUser, setReadyUser] = useState(user);
-  const [selectedFacility] = useState(newApFacility);
+ 
  
   const [record, setRecord] = useState({ filter: '', value: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
