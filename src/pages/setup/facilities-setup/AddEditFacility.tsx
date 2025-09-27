@@ -8,6 +8,7 @@ import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import { faUser, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useGetFacilityTypesQuery } from '@/services/security/facilityService';
 
 const AddEditFacility = ({
   open,
@@ -20,9 +21,11 @@ const AddEditFacility = ({
   handleSave
 }) => {
   const [validationResult] = useState({});
+  
 
   // Fetch facility type Lov list response
-  const { data: fsltyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('FSLTY_TYP');
+  const { data: facilityTypevQueryResponse } = useGetFacilityTypesQuery({});
+
   // Fetch country Lov list response
   const { data: contryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   // Fetch state Lov list response
@@ -42,14 +45,14 @@ const AddEditFacility = ({
         return (
           <Form fluid layout="inline">
             <div className={clsx('', { 'container-of-two-fields-facility': width > 600 })}>
-              {/* <MyInput
+              <MyInput
                 fieldLabel="Facility ID"
-                fieldName="id"
+                fieldName="code"
                 required
                 record={facility}
                 setRecord={setFacility}
                 width={250}
-              /> */}
+              />
               <MyInput
                 column
                 required
@@ -57,10 +60,8 @@ const AddEditFacility = ({
                 vr={validationResult}
                 fieldLabel="Facility Type"
                 fieldType="select"
-                fieldName="facilityTypeLkey"
-                selectData={fsltyTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                fieldName="type"
+                selectData={facilityTypevQueryResponse ?? []}
                 record={facility}
                 setRecord={setFacility}
               />
