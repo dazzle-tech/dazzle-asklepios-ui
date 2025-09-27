@@ -45,6 +45,7 @@ export const facilityService = createApi({
         method: 'GET',
       }),
     }),
+
   }),
 
 
@@ -56,6 +57,4 @@ export const {
     useGetAllFacilitiesQuery,
     useGetFacilityMutation,
     useGetFacilityTypesQuery
-
-
 } = facilityService;
