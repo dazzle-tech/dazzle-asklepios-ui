@@ -15,8 +15,8 @@ export interface ApUser {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   phoneNumber?: string | null;
-  birthDate?: Date | null; 
-  gender?: number | null;
+  birthDate?: Date | null;
+  gender?: string | null;
   jobDescription?: string | null;
 }
 
