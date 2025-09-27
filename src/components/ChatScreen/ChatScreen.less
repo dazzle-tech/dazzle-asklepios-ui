@@ -35,7 +35,7 @@
 
 .main-screen-bar-buttons-main-container {
   .rs-toggle-presentation {
-    border: solid 1px var(--white) !important;
+    border: solid 1px var(--rs-border-primary) !important;
   }
   .rs-toggle .rs-toggle-presentation::after {
     width: 18px;
@@ -88,7 +88,7 @@
   justify-content: space-between;
   padding: 10px;
   font-weight: bold;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--rs-border-primary);
 }
 
 .chat-list-item {
@@ -114,7 +114,7 @@
   justify-content: space-between;
   padding: 10px;
   font-weight: bold;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--rs-border-primary);
 }
 
 .chat-messages {
@@ -140,12 +140,12 @@
 .chat-message.received {
   align-self: flex-start;
   background-color: #fff;
-  border: 1px solid #eee;
+  border: 1px solid var(--rs-border-primary);
 }
 
 .chat-input-area {
   padding: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--rs-border-primary);
 }
 .big-button {
   font-size: 16px !important;
@@ -170,7 +170,7 @@
 /* Sidebar Header */
 .sidebarHeader {
   padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--rs-border-primary);
   background-color: #f8f9fa;
 }
 
@@ -262,7 +262,7 @@
 /* Chat Header */
 .chatHeader {
   padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--rs-border-primary);
 }
 
 .chatHeaderRow {
@@ -385,7 +385,7 @@
 /* Message Input */
 .messageInput {
   padding: 16px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--rs-border-primary);
 }
 
 .inputRow {
@@ -476,7 +476,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--rs-border-primary);
   cursor: pointer;
 
   &:hover {
@@ -553,4 +553,29 @@
   max-height: 90vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.rs-theme-dark {
+  .chatScreen {
+  background-color: var(--black) !important;
+}
+  .sidebarHeader {
+    background-color: var(--black) !important;
+  }
+  .emptyState {
+    background-color: var(--dark-black) !important;
+  }
+  .messagesArea {
+  background-color: var(--dark-black) !important;
+}
+.messageBubble {
+ 
+  &.me {
+    background-color: #578cb2;
+  }
+}
+.chat-modal-title {
+   border-bottom: 1px solid var(--rs-border-primary) !important;
+   background-color: var(--dark-black) !important;
+}
 }
