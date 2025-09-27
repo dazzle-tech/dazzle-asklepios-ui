@@ -38,8 +38,10 @@ import './ChatScreen.less';
 import MyButton from '../MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { useSelector } from 'react-redux';
 
 const ChatScreen = () => {
+  const mode = useSelector((state: any) => state.ui.mode);
   // States
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [message, setMessage] = useState('');
@@ -455,7 +457,7 @@ const ChatScreen = () => {
                             <div className="doubleCheck">
                               <FontAwesomeIcon
                                 icon={faCheck}
-                                color={msg.status === 'read' ? 'blue' : 'gray'}
+                                color={msg.status === 'read' ? 'blue' : (mode === 'light' ? 'gray' : '#B3AFAF')}
                                 className="checkIcon first"
                               />
                               <FontAwesomeIcon
