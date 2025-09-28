@@ -18,6 +18,8 @@ import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import AddElectrocardiogram from './AddElectrocardiogram';
 import { formatDateWithoutSeconds } from '@/utils';
+import epg from '@/images/epg.png';
+
 const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
   const authSlice = useAppSelector(state => state.auth);
   const [open, setOpen] = useState(false);
@@ -36,43 +38,32 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
   const [allData, setAllData] = useState(false);
   const dispatch = useAppDispatch();
 
-  // Initialize list request with default filters
+  const [selectedImages, setSelectedImages] = useState<
+    { imageUrl: string; createdAt: string; createdBy: string }[]
+  >([]);
+
   const [electrocardiogramEcgListRequest, setElectrocardiogramEcgListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
       filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key
-        },
-        {
-          fieldName: 'encounter_key',
-          operator: 'match',
-          value: encounter?.key
-        }
+        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+        { fieldName: 'encounter_key', operator: 'match', value: encounter?.key }
       ]
     });
 
-  // Fetch the list of Electrocardiogram ECG based on the provided request, and provide a refetch function
   const {
     data: electrocardiogramEcgResponse,
     refetch: refetchelectrocardiogramEcg,
     isLoading
   } = useGetElectrocardiogramECGsQuery(electrocardiogramEcgListRequest);
 
-  // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
   const isSelected = rowData => {
     if (rowData && electrocardiogramEcg && electrocardiogramEcg.key === rowData.key) {
       return 'selected-row';
     } else return '';
   };
-  // Handle Clear Fields Function
+
   const handleClearField = () => {
     setElectrocardiogramEcg({
       ...newApElectrocardiogramEcg,
@@ -81,30 +72,27 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
     });
   };
 
-  // Handle Add New Electrocardiogram ECG Record
   const handleAddNewElectrocardiogram = () => {
     handleClearField();
     setOpen(true);
   };
-  // Change page event handler
+
   const handlePageChange = (_: unknown, newPage: number) => {
     setElectrocardiogramEcgListRequest({
       ...electrocardiogramEcgListRequest,
       pageNumber: newPage + 1
     });
   };
-  // Change number of rows per page
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setElectrocardiogramEcgListRequest({
       ...electrocardiogramEcgListRequest,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // Reset to first page
+      pageNumber: 1
     });
   };
 
-  // Handle Cancel ElectrocardiogramECG Record Function
   const handleCancle = () => {
-    //TODO convert key to code
     saveElectrocardiogramECG({
       ...electrocardiogramEcg,
       statusLkey: '3196709905099521',
@@ -119,127 +107,120 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
     setPopupCancelOpen(false);
   };
 
-  // Effects
   useEffect(() => {
     setElectrocardiogramEcgListRequest(prev => ({
       ...prev,
       filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
+        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
         ...(patient?.key && encounter?.key
           ? [
-              {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patient?.key
-              },
-              {
-                fieldName: 'encounter_key',
-                operator: 'match',
-                value: encounter?.key
-              }
+              { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+              { fieldName: 'encounter_key', operator: 'match', value: encounter?.key }
             ]
           : [])
       ]
     }));
   }, [patient?.key, encounter?.key]);
+
   useEffect(() => {
     setElectrocardiogramEcgListRequest(prev => ({
       ...prev,
       filters: [
         ...(electrocardiogramEcgStatus !== ''
           ? [
-              {
-                fieldName: 'status_lkey',
-                operator: 'match',
-                value: electrocardiogramEcgStatus
-              },
-              {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patient?.key
-              },
+              { fieldName: 'status_lkey', operator: 'match', value: electrocardiogramEcgStatus },
+              { fieldName: 'patient_key', operator: 'match', value: patient?.key },
               ...(allData === false
-                ? [
-                    {
-                      fieldName: 'encounter_key',
-                      operator: 'match',
-                      value: encounter?.key
-                    }
-                  ]
+                ? [{ fieldName: 'encounter_key', operator: 'match', value: encounter?.key }]
                 : [])
             ]
           : [
-              {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-              },
-              {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patient?.key
-              },
+              { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+              { fieldName: 'patient_key', operator: 'match', value: patient?.key },
               ...(allData === false
-                ? [
-                    {
-                      fieldName: 'encounter_key',
-                      operator: 'match',
-                      value: encounter?.key
-                    }
-                  ]
+                ? [{ fieldName: 'encounter_key', operator: 'match', value: encounter?.key }]
                 : [])
             ])
       ]
     }));
   }, [electrocardiogramEcgStatus, allData]);
+
   useEffect(() => {
     setElectrocardiogramEcgListRequest(prev => {
       const filters =
-        electrocardiogramEcgStatus != '' && allData
-          ? [
-              {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patient?.key
-              }
-            ]
+        electrocardiogramEcgStatus !== '' && allData
+          ? [{ fieldName: 'patient_key', operator: 'match', value: patient?.key }]
           : electrocardiogramEcgStatus === '' && allData
           ? [
-              {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-              },
-              {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patient?.key
-              }
+              { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+              { fieldName: 'patient_key', operator: 'match', value: patient?.key }
             ]
           : prev.filters;
-
-      return {
-        ...initialListRequest,
-        filters
-      };
+      return { ...initialListRequest, filters };
     });
   }, [allData, electrocardiogramEcgStatus]);
-  // Pagination values
+
   const pageIndex = electrocardiogramEcgListRequest.pageNumber - 1;
   const rowsPerPage = electrocardiogramEcgListRequest.pageSize;
   const totalCount = electrocardiogramEcgResponse?.extraNumeric ?? 0;
 
-  // Table Column
   const columns = [
+    {
+      key: 'imageSelect',
+      title: '',
+      render: rowData => {
+        const isChecked = selectedImages.some(img => img.key === rowData.key);
+        return (
+          <Checkbox
+            checked={isChecked}
+            onChange={(value, checked) => {
+              setSelectedImages(prev => {
+                if (checked) {
+                  return [
+                    ...prev.filter(img => img.key !== rowData.key),
+                    {
+                      key: rowData.key,
+                      imageUrl: rowData.imageUrl,
+                      createdAt: rowData.createdAt,
+                      createdBy: rowData.createByUser?.fullName || ''
+                    }
+                  ];
+                } else {
+                  return prev.filter(img => img.key !== rowData.key);
+                }
+              });
+            }}
+          />
+        );
+      }
+    },
+    {
+      key: 'image',
+      title: 'IMAGE',
+      render: rowData =>
+        rowData?.imageUrl ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img
+              src={rowData.imageUrl}
+              alt="ECG"
+              style={{ width: '60px', height: '60px', objectFit: 'cover', marginBottom: '4px' }}
+            />
+            <span style={{ fontSize: '10px', textAlign: 'center' }}>
+              {rowData.createByUser?.fullName}
+              <br />
+              {formatDateWithoutSeconds(rowData.createdAt)}
+            </span>
+          </div>
+        ) : (
+          ' '
+        )
+    },
     {
       key: 'indication',
       title: <Translate>INDICATION</Translate>,
       render: rowData => rowData?.indication
     },
+    ,
     {
       key: 'ecgLeadType',
       title: <Translate>ECG LEAD TYPE</Translate>,
@@ -282,30 +263,28 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
       title: <Translate>EDIT</Translate>,
       flexGrow: 2,
       fullText: true,
-      render: rowData => {
-        return (
-          <MdModeEdit
-            title="Edit"
-            size={24}
-            fill="var(--primary-gray)"
-            onClick={() => {
-              setElectrocardiogramEcg(rowData);
-              setOpen(true);
-            }}
-          />
-        );
-      }
+      render: rowData => (
+        <MdModeEdit
+          title="Edit"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setElectrocardiogramEcg(rowData);
+            setOpen(true);
+          }}
+        />
+      )
     },
     {
       key: 'createdAt',
       title: 'CREATED AT/BY',
       expandable: true,
-      render: (row: any) =>
+      render: row =>
         row?.createdAt ? (
           <>
             {row?.createByUser?.fullName}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>{' '}
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
           </>
         ) : (
           ' '
@@ -315,12 +294,12 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
       key: 'updatedAt',
       title: 'UPDATED AT/BY',
       expandable: true,
-      render: (row: any) =>
+      render: row =>
         row?.updatedAt ? (
           <>
             {row?.updateByUser?.fullName}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.updatedAt)}</span>{' '}
+            <span className="date-table-style">{formatDateWithoutSeconds(row.updatedAt)}</span>
           </>
         ) : (
           ' '
@@ -330,10 +309,11 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
       key: 'deletedAt',
       title: 'CANCELLED AT/BY',
       expandable: true,
-      render: (row: any) =>
+      render: row =>
         row?.deletedAt ? (
           <>
-            {row?.deleteByUser?.fullName} <br />
+            {row?.deleteByUser?.fullName}
+            <br />
             <span className="date-table-style">{formatDateWithoutSeconds(row.deletedAt)}</span>
           </>
         ) : (
@@ -356,7 +336,35 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
         onRowClick={rowData => setElectrocardiogramEcg({ ...rowData })}
         rowClassName={isSelected}
         page={pageIndex}
-        columns={columns}
+        columns={[
+          ...columns,
+          {
+            key: 'imageSelect',
+            title: '',
+            render: rowData => (
+              <Checkbox
+                checked={selectedImages.some(img => img.key === rowData.key)}
+                onChange={(value, checked) => {
+                  setSelectedImages(prev => {
+                    if (checked) {
+                      return [
+                        ...prev.filter(img => img.key !== rowData.key),
+                        {
+                          key: rowData.key,
+                          imageUrl: rowData.imageUrl,
+                          createdAt: rowData.createdAt,
+                          createdBy: rowData.createByUser?.fullName || ''
+                        }
+                      ];
+                    } else {
+                      return prev.filter(img => img.key !== rowData.key);
+                    }
+                  });
+                }}
+              />
+            )
+          }
+        ]}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
         onPageChange={handlePageChange}
@@ -365,51 +373,60 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
           <div className="bt-div-2">
             <div className="bt-left-2">
               <MyButton
-                onClick={() => {
-                  setPopupCancelOpen(true);
-                }}
+                onClick={() => setPopupCancelOpen(true)}
                 prefixIcon={() => <CloseOutlineIcon />}
                 disabled={!edit ? !electrocardiogramEcg?.key : true}
               >
                 <Translate>Cancel</Translate>
               </MyButton>
               <Checkbox
-                onChange={(value, checked) => {
-                  if (checked) {
-                    //TODO convert key to code
-                    setElectrocardiogramEcgStatus('3196709905099521');
-                  } else {
-                    setElectrocardiogramEcgStatus('');
-                  }
-                }}
+                onChange={(value, checked) =>
+                  setElectrocardiogramEcgStatus(checked ? '3196709905099521' : '')
+                }
               >
                 Show Cancelled
               </Checkbox>
-              <Checkbox
-                onChange={(value, checked) => {
-                  if (checked) {
-                    setAllData(true);
-                  } else {
-                    setAllData(false);
-                  }
-                }}
-              >
-                Show All
-              </Checkbox>
+              <Checkbox onChange={(value, checked) => setAllData(checked)}>Show All</Checkbox>
             </div>
-
             <div className="bt-right-2">
               <MyButton
                 disabled={edit}
                 prefixIcon={() => <PlusIcon />}
                 onClick={handleAddNewElectrocardiogram}
               >
-                Add{' '}
+                Add
               </MyButton>
             </div>
           </div>
         }
       />
+
+      {selectedImages.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+          {selectedImages.map((img, index) => (
+            <div
+              key={index}
+              style={{
+                width: 'calc(33.33% - 8px)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                marginBottom: '8px'
+              }}
+            >
+              <img
+                src={img.imageUrl || epg}
+                alt="ECG"
+                style={{ width: '100%', height: '120px', objectFit: 'cover' }}
+              />
+              <span style={{ fontSize: '12px', textAlign: 'center', marginTop: '4px' }}>
+                {formatDateWithoutSeconds(img.createdAt)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <AddElectrocardiogram
         open={open}
         setOpen={setOpen}
@@ -432,4 +449,5 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
     </div>
   );
 };
+
 export default ElectrocardiogramECG;
