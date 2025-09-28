@@ -929,39 +929,38 @@ const Encounter = () => {
       <AllergiesModal
         open={openAllargyModal}
         setOpen={setOpenAllargyModal}
-        patientKey={propsData?.patient?.patientKey}
+        patient={propsData?.patien}
       />
 
       <WarningiesModal
         open={openWarningModal}
         setOpen={setOpenWarningModal}
-        patientKey={propsData?.patient?.patientKey}
+        patient={propsData?.patient}
       />
 
       <AdmitToInpatientModal
         open={openAdmitModal}
         setOpen={setOpenAdmitModal}
-        patient={propsData?.patient}
         encounter={propsData?.encounter}
       />
 
       <AppointmentModal
-        open={modalOpen}
-        setOpen={setModalOpen}
-        patient={propsData?.patient}
-        encounter={propsData?.encounter}
-        showAppointmentOnly={showAppointmentOnly}
-        setSelectedEvent={setSelectedEvent}
-        setSelectedFacility={setSelectedFacility}
-        setSelectedResourceType={setSelectedResourceType}
-        setSelectedResources={setSelectedResources}
-        refitchAppointments={refitchAppointments}
+        from={'Encounter'}
+        isOpen={modalOpen}
+        onClose={() => {
+          setModalOpen(false), setShowAppointmentOnly(false);
+        }}
+        appointmentData={selectedEvent?.appointmentData}
+        resourceType={selectedResourceType}
+        facility={selectedFacility}
+        onSave={refitchAppointments}
+        showOnly={showAppointmentOnly}
+        selectedSlot={undefined}
       />
 
       <EncounterDischarge
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
-        patient={propsData?.patient}
         encounter={propsData?.encounter}
       />
 
@@ -970,7 +969,6 @@ const Encounter = () => {
         open={openConsultationPopup}
         setOpen={() => setOpenConsultationPopup(false)}
         patient={propsData?.patient}
-        encounter={propsData?.encounter}
       />
     </ActionContext.Provider>
   );
