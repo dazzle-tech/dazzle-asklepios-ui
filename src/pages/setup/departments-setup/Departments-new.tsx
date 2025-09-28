@@ -21,7 +21,7 @@ import ChooseDepartment from './ChooseScreen';
 import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
-import { useAddDepartmentMutation, useGetDepartmentQuery, useGetDepartmentTypesQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
+import { useAddDepartmentMutation, useGetDepartmentByFacilityQuery, useGetDepartmentByNameQuery, useGetDepartmentByTypeQuery, useGetDepartmentQuery, useGetDepartmentTypesQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 
@@ -36,7 +36,12 @@ const Departments = () => {
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
   const [record, setRecord] = useState({ filter: '', value: '' });
+  const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
+  const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
+  const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
 
+  const [departmentList, setDepartmentList] = useState<Department[]>([]);
+  const [isFiltered, setIsFiltered] = useState(false);
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -191,7 +196,7 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
-  // add department
+  // update department
   const handleUpdate = () => {
     setPopupOpen(false);
     setLoad(true);
@@ -206,27 +211,30 @@ const Departments = () => {
       .finally(() => setLoad(false));
   };
 
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listRequest
-        )
-      );
-    } else {
-      setListRequest({
-        ...initialListRequestNew,
-        pageSize: listRequest.pageSize,
-        pageNumber: 1,
-        filters: []
-      });
+  const handleFilterChange = async (fieldName, value) => {
+    if (!value) {
+      setDepartmentList(departmentListResponse);
+      return;
+    }
+
+    try {
+      let response;
+      if (fieldName === "facilityName") {
+        response = await getDepartmentsByFacility(value).unwrap();
+      } else if (fieldName === "departmentType") {
+        response = await getDepartmentsByType(value?.toUpperCase().replace(/\s+/g, '_')).unwrap();
+
+      } else if (fieldName === "name") {
+        response = await getDepartmentsByName(value).unwrap();
+      }
+      setDepartmentList(response ?? []);
+      setIsFiltered(true);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      setDepartmentList([]);
+      setIsFiltered(false);
     }
   };
-
-
   const generateFiveDigitCode = (): string => {
     return String(Math.floor(10000 + Math.random() * 90000));
   };
@@ -398,25 +406,26 @@ const Departments = () => {
         <MyInput
           width={250}
           fieldLabel=""
-          fieldName="facilityId"
+          fieldName="value"
           fieldType="select"
           selectData={facilityListResponse ?? []}
           selectDataLabel="name"
           selectDataValue="id"
-          record={department}
-          setRecord={setDepartment}
+          record={record}
+          setRecord={setRecord}
         />
+
       );
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (
         <MyInput
           width={250}
-          fieldName="departmentType"
+          fieldName="value"
           fieldLabel=""
           fieldType="select"
           selectData={depTTypesEnum ?? []}
-          record={department}
-          setRecord={setDepartment}
+          record={record}
+          setRecord={setRecord}
         />
       );
     } else {
@@ -495,23 +504,26 @@ const Departments = () => {
       </div>
       <MyTable
         data={
-          departmentListResponse?.slice(
-            pageIndex * rowsPerPage,
-            pageIndex * rowsPerPage + rowsPerPage
-          ) ?? []
+          isFiltered
+            ? departmentList.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage)
+            : departmentListResponse?.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage) ?? []
         }
-        totalCount={departmentListResponse?.length ?? 0}
+        totalCount={
+          isFiltered
+            ? departmentList.length
+            : departmentListResponse?.length ?? 0
+        }
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => setDepartment(rowData)}
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
-
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
       />
+
       <AddEditDepartment
         open={popupOpen}
         setOpen={setPopupOpen}
