@@ -113,6 +113,29 @@ const AppointmentModal = ({
   }, [appointmentData]);
 
   useEffect(() => {
+    if (selectedSlot?.resourceId) {
+      // Find the resource from the resources list
+      const resource = resourcesListResponse?.object?.find(r => r.key === selectedSlot.resourceId);
+      if (resource) {
+        setAppoitment(prev => ({
+          ...prev,
+          resourceKey: resource.key,
+          resourceTypeLkey: resource.resourceTypeLkey,
+          facilityKey: selectedSlot.resourceId ? facility?.facilityKey : null
+        }));
+      }
+    } else {
+      // Clear resource info when no selectedSlot (opened from Add Appointment button)
+      setAppoitment(prev => ({
+        ...prev,
+        resourceKey: null,
+        resourceTypeLkey: null,
+        facilityKey: null
+      }));
+    }
+  }, [selectedSlot, resourcesListResponse, facility]);
+
+  useEffect(() => {
     if (selectedSlot?.start) {
       const slotDate = new Date(selectedSlot.start);
       setSelectedDate(slotDate);
@@ -142,37 +165,21 @@ const AppointmentModal = ({
   const [dailySlices, setDailySlices] = useState({});
 
   useEffect(() => {
-    console.log(
-      'useEffect triggered for resourceAvailabilityDetails:',
-      resourceAvailabilityDetails
-    );
-    console.log(
-      resourceAvailabilityDetails?.object[0]?.availabilitySlices?.length > 0
-        ? 'Data found'
-        : 'No data found'
-    );
     if (resourceAvailabilityDetails?.object[0]?.availabilitySlices?.length > 0) {
-      console.log(
-        'Availability slices data found:',
-        resourceAvailabilityDetails.object[0].availabilitySlices
-      );
       const loadedSlices = {};
+      
       resourceAvailabilityDetails.object[0].availabilitySlices.forEach(slice => {
-        const day = slice.dayOfWeek;
+        const day = String(slice.dayOfWeek);
+        
+        if (!['0', '1', '2', '3', '4', '5', '6'].includes(day)) {
+          return;
+        }
+        
         if (!loadedSlices[day]) {
           loadedSlices[day] = [];
         }
         const fromDate = minutesToDisplayDate(slice.startHour);
         const toDate = minutesToDisplayDate(slice.endHour);
-
-        // Log the conversion results
-        console.log(
-          `Processing slice for day ${day}: startHour=${
-            slice.startHour
-          } -> fromDate=${fromDate?.toLocaleTimeString()}; endHour=${
-            slice.endHour
-          } -> toDate=${toDate?.toLocaleTimeString()}`
-        );
 
         loadedSlices[day].push({
           from: fromDate,
@@ -192,11 +199,9 @@ const AppointmentModal = ({
         });
       });
 
-      console.log('Processed dailySlices:', loadedSlices);
       setDailySlices(loadedSlices);
     } else {
-      console.log('No availability slices data found or array is empty.');
-      setDailySlices({}); // Clear slices if no data
+      setDailySlices({});
     }
   }, [resourceAvailabilityDetails]);
 
@@ -633,9 +638,9 @@ const AppointmentModal = ({
     })
       .unwrap()
       .then(() => {
-        // closeModal();
-        // handleClear();
-        // onSave();
+        closeModal();
+        handleClear();
+        onSave();
       })
       .catch(e => {
         if (e.status === 422) {
@@ -1155,16 +1160,20 @@ const AppointmentModal = ({
                               onChange={date => {
                                 setSelectedDate(date);
                                 if (date) {
-                                  const dayOfWeek = mapJsDayToCustom(date.getDay());
-                                  setOpenDay(dayOfWeek);
+                              // Convert JavaScript day to API day format (same as NewAvailabilityTimeModal)
+                              const jsDay = date.getDay(); // 0=Sunday, 6=Saturday
+                              const apiDay = String((jsDay + 1) % 7); // Convert to 0=Saturday, 1=Sunday, etc.
+                              setOpenDay(apiDay as DayValue);
                                 } else {
                                   setOpenDay(null);
                                 }
                               }}
                               shouldDisableDate={date => {
                                 if (openDay !== null) {
-                                  const dayOfWeek = mapJsDayToCustom(date.getDay());
-                                  return dayOfWeek !== openDay;
+                                  // Convert JavaScript day to API day format (same as NewAvailabilityTimeModal)
+                                  const jsDay = date.getDay(); // 0=Sunday, 6=Saturday
+                                  const apiDay = String((jsDay + 1) % 7); // Convert to 0=Saturday, 1=Sunday, etc.
+                                  return apiDay !== openDay;
                                 }
                                 return false;
                               }}
@@ -1180,7 +1189,16 @@ const AppointmentModal = ({
 
                 <div style={{ width: '100%' }}>
                   <div
-                    style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}
+                    style={{ 
+                      display: 'flex', 
+                      gap: '10px', 
+                      marginBottom: '16px', 
+                      flexWrap: 'wrap',
+                      padding: '8px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '12px',
+                      border: '1px solid #e9ecef'
+                    }}
                   >
                     {sortedDaysWithSlices.map(day => {
                       const dayLabel = DAYS.find(d => d.value === day)?.label;
@@ -1190,14 +1208,35 @@ const AppointmentModal = ({
                           key={day}
                           onClick={() => handleDayClick(day)}
                           style={{
-                            padding: '8px 12px',
-                            borderRadius: '8px',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
                             cursor: 'pointer',
-                            backgroundColor: openDay === day ? '#4caf50' : '#f0f0f0',
-                            color: openDay === day ? 'white' : 'black',
-                            fontWeight: 'bold',
+                            background: openDay === day 
+                              ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)' 
+                              : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                            color: openDay === day ? 'white' : '#495057',
+                            fontWeight: '600',
                             userSelect: 'none',
-                            transition: 'background-color 0.3s'
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            border: openDay === day 
+                              ? '2px solid #4caf50' 
+                              : '1px solid #dee2e6',
+                            boxShadow: openDay === day 
+                              ? '0 4px 12px rgba(76, 175, 80, 0.25), 0 2px 4px rgba(0,0,0,0.1)'
+                              : '0 2px 4px rgba(0,0,0,0.05)',
+                            transform: openDay === day ? 'translateY(-1px)' : 'translateY(0)',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (openDay !== day) {
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (openDay !== day) {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                            }
                           }}
                         >
                           {dayLabel}
