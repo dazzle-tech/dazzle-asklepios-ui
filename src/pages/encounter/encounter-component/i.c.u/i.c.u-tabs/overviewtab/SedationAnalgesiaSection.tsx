@@ -198,6 +198,7 @@ const SedationAnalgesiaSection: React.FC = () => {
             />
           </>
         }
+        minHeight={"auto"}
       />
 
       <MyModal

@@ -8,26 +8,32 @@
   display: flex;
   gap: 5px;
 }
+
 .bt-div-2 {
   display: flex;
   gap: 5px;
   justify-content: space-between;
   align-items: space-between;
 }
+
 .bt-right {
   margin-left: auto;
 }
+
 .div-parent {
   display: flex !important;
   gap: 17px !important;
 }
+
 .basuc-div {
   display: flex;
   flex-direction: column;
 }
+
 .fil-width {
   width: 100%;
 }
+
 .disabled-panel {
   pointer-events: none;
   opacity: 0.6;
@@ -111,4 +117,35 @@
   display: flex;
   flex-direction: row;
   gap: 0.8vw;
+}
+
+
+///
+
+
+
+.preview-consultation {
+  margin: 10px 0;
+  border-radius: 12px;
+
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+
+    .close-btn {
+      cursor: pointer;
+      color: #888;
+
+      &:hover {
+        color: #000;
+      }
+    }
+  }
+
+  .preview-body {
+    line-height: 1.6;
+    font-size: 14px;
+  }
 }

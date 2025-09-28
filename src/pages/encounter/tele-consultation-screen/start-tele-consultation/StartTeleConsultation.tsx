@@ -184,16 +184,14 @@ const StartTeleConsultation = () => {
 
             {/* Placeholder for camera section */}
             <div className="camera-tele-consultaition">
-              <SectionContainer
-                title={<div className="patient-history-title">
-                  <FontAwesomeIcon icon={faUser} className="patient-history-icon" />
-                  <span>Patient Details</span></div>}
-                content={<AddProgressNotes
+              <div className='progress-notes-section-handle'>
+                <AddProgressNotes
                   progressNotes={progressNotes}
                   setProgressNotes={setProgressNotes}
                   currentChart={{ key: 'dummy-chart-key' }}
                   dispatch={(action) => console.log(action)}
-                />} />
+                />
+              </div>
               <div>
                 <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} /></div>
             </div>

@@ -11,6 +11,8 @@ import {
 } from 'chart.js';
 import MyTable from '@/components/MyTable';
 import './style.less';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
@@ -34,13 +36,18 @@ const metricMap = {
 interface VitalsignGraphsProps {
   tableView?: boolean;
   selectedMetric?: string | null;
+  filterView?: boolean;
 }
+
 
 const VitalsignGraphs: React.FC<VitalsignGraphsProps> = ({
   tableView = true,
   selectedMetric: selectedMetricProp = null,
+  filterView = true,
 }) => {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(selectedMetricProp);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   React.useEffect(() => {
     setSelectedMetric(selectedMetricProp);
@@ -93,15 +100,60 @@ const VitalsignGraphs: React.FC<VitalsignGraphsProps> = ({
     },
   };
 
+  const filteredData = useMemo(() => {
+    if (!fromDate && !toDate) return sampleData;
+
+    return sampleData.filter(row => {
+      const rowDate = new Date(row.date);
+      const from = fromDate ? new Date(fromDate) : null;
+      const to = toDate ? new Date(toDate) : null;
+
+      if (from && rowDate < from) return false;
+      if (to && rowDate > to) return false;
+      return true;
+    });
+  }, [fromDate, toDate]);
+
+
+
+  const filters = () => (
+    <Form layout="inline" fluid>
+      <MyInput
+        column
+        width={180}
+        fieldType="date"
+        fieldLabel="From"
+        fieldName="fromDate"
+        record={fromDate}
+        setRecord={setFromDate}
+      />
+      <MyInput
+        column
+        width={180}
+        fieldType="date"
+        fieldLabel="To"
+        fieldName="toDate"
+        record={toDate}
+        setRecord={setToDate}
+      />
+    </Form>
+  );
+
   return (
     <div className="vitalsign-graph-page">
+      {filterView && (
+        <div style={{ marginBottom: 20 }}>
+          {filters()}
+        </div>
+      )}
+
       {tableView && (
         <MyTable
-          data={sampleData}
+          data={filteredData}
           columns={columns}
           rowsPerPage={5}
           page={0}
-          totalCount={sampleData.length}
+          totalCount={filteredData.length}
           height={500}
           filters={null}
           onPageChange={() => { }}
@@ -113,7 +165,19 @@ const VitalsignGraphs: React.FC<VitalsignGraphsProps> = ({
         <div className="graph-container" style={{ marginTop: 40 }}>
           <h4>{metricMap[selectedMetric]} Trend</h4>
           <Line
-            data={chartData!}
+            data={{
+              labels: filteredData.map((row) => row.date),
+              datasets: [
+                {
+                  label: metricMap[selectedMetric],
+                  data: filteredData.map((row) => row[selectedMetric]),
+                  borderColor: '#36a2eb',
+                  backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                  fill: true,
+                  tension: 0.4,
+                },
+              ],
+            }}
             options={{
               ...chartOptions,
               maintainAspectRatio: false,
@@ -124,6 +188,7 @@ const VitalsignGraphs: React.FC<VitalsignGraphsProps> = ({
       )}
     </div>
   );
+
 };
 
 export default VitalsignGraphs;

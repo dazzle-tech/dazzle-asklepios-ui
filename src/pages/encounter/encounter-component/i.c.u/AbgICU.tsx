@@ -90,7 +90,7 @@ const AbgICU: React.FC<AbgICUProps> = () => {
         size="50vw"
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenGraphModal(false)}
-        content={<ABGGraphs selectedMetric={selectedMetric} tableView={false} />}
+        content={<ABGGraphs selectedMetric={selectedMetric} tableView={false} filterView={true} />}
       />
     </div>
   );

@@ -9,7 +9,7 @@ import {
   faVial,
   faPlus
 } from '@fortawesome/free-solid-svg-icons';
-
+import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
@@ -208,7 +208,7 @@ const DiagnosticsOrder = props => {
   const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
   const [selectedGeneric, setSelectedGeneric] = useState(null);
   const [isdraft, setIsDraft] = useState(false);
-
+  const [previewDiagnosticsOrder, setPreviewDiagnosticsOrder] = useState<any | null>(null);
   // LOV queries for new fields
   const { data: diagTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
   const { data: labCategoriesLovResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
@@ -989,8 +989,8 @@ const DiagnosticsOrder = props => {
                   orders.type === 'Laboratory'
                     ? labCategoriesLovResponse?.object ?? []
                     : orders.type === 'Radiology'
-                    ? radCategoriesLovResponse?.object ?? []
-                    : []
+                      ? radCategoriesLovResponse?.object ?? []
+                      : []
                 }
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
@@ -1103,6 +1103,7 @@ const DiagnosticsOrder = props => {
           onRowClick={rowData => {
             setOrderTest(rowData);
             setTest(rowData.test);
+            setPreviewDiagnosticsOrder(rowData);
           }}
           rowClassName={isSelected}
           page={pageIndex}
@@ -1111,6 +1112,14 @@ const DiagnosticsOrder = props => {
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
         />
+
+        <PreviewDiagnosticsOrder
+          open={!!previewDiagnosticsOrder}
+          setOpen={() => setPreviewDiagnosticsOrder(null)}
+          orderTest={previewDiagnosticsOrder}
+        />
+
+
         <Panel header="Patient Orders Test" collapsible expanded={true} className="panel-style">
           <PatientPrevTests patient={patient} />
         </Panel>
