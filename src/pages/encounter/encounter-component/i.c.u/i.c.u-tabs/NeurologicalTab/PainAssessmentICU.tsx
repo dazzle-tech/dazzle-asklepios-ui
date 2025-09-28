@@ -125,6 +125,7 @@ const PainAssessmentICU: React.FC = () => {
           </div>
         </>
       }
+      minHeight={"auto"}
     />
   );
 };

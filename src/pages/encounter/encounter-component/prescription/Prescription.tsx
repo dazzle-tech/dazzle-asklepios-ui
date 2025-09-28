@@ -80,7 +80,7 @@ const Prescription = props => {
   const filteredPrescriptions =
     prescriptions?.object?.filter(item => item.statusLkey === '1804482322306061') ?? [];
 
-  const [preKeyRecord, setPreKeyRecord] = useState({preKey : null});
+  const [preKeyRecord, setPreKeyRecord] = useState({ preKey: null });
   const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>({
     ...newApPrescriptionMedications,
     prescriptionKey: preKeyRecord['preKey'],
@@ -89,7 +89,7 @@ const Prescription = props => {
   });
 
 
-const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null);
+  const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null);
   const [favoriteMedications, setFavoriteMedications] = useState([]);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
 
@@ -221,7 +221,7 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
       );
 
       if (foundPrescription?.key != null) {
-        setPreKeyRecord({preKey: foundPrescription?.key});
+        setPreKeyRecord({ preKey: foundPrescription?.key });
       }
     }
   }, [prescriptions]);
@@ -255,19 +255,18 @@ const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null)
   }, [showCanceled]);
 
   // Functions
-const handleCheckboxChange = (rowData: any) => {
-  setSelectedRows(prev => {
-    let updatedRows;
-    if (prev.includes(rowData)) {
-      updatedRows = prev.filter(item => item !== rowData);
-      setSelectedPreviewMedication(null);
-    } else {
-      updatedRows = [...prev, rowData];
-      setSelectedPreviewMedication(rowData);
-    }
-    return updatedRows;
-  });
-};
+  const handleCheckboxChange = (rowData: any) => {
+    setSelectedRows(prev => {
+      let updatedRows;
+      if (prev.includes(rowData)) {
+        updatedRows = prev.filter(item => item !== rowData);
+        setSelectedPreviewMedication(null);
+      } else {
+        updatedRows = [...prev, rowData];
+      }
+      return updatedRows;
+    });
+  };
 
 
   const handleCancle = async () => {
@@ -286,12 +285,12 @@ const handleCheckboxChange = (rowData: any) => {
       dispatch(notify({ msg: 'All Medication Deleted Successfully', sev: 'success' }));
       setOpenCancellation(false);
       medicRefetch()
-        .then(() => {})
-        .catch(error => {});
+        .then(() => { })
+        .catch(error => { });
 
       medicRefetch()
-        .then(() => {})
-        .catch(error => {});
+        .then(() => { })
+        .catch(error => { });
 
       setSelectedRows([]);
     } catch (error) {
@@ -310,7 +309,7 @@ const handleCheckboxChange = (rowData: any) => {
       }).unwrap();
       dispatch(notify('submetid  Successfully'));
       await handleCleare();
-      setPreKeyRecord({preKey: null});
+      setPreKeyRecord({ preKey: null });
       preRefetch().then(() => '');
       medicRefetch().then(() => '');
     } catch (error) {
@@ -347,7 +346,7 @@ const handleCheckboxChange = (rowData: any) => {
         dispatch(notify({ msg: 'Saved Draft successfully', sev: 'success' }));
         setIsDraft(true);
       });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const cancleDraft = async () => {
@@ -359,12 +358,12 @@ const handleCheckboxChange = (rowData: any) => {
         dispatch(notify({ msg: 'Draft Cancelled', sev: 'success' }));
         setIsDraft(false);
       });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const handleSavePrescription = async () => {
     await handleCleare();
-    setPreKeyRecord({preKey: null});
+    setPreKeyRecord({ preKey: null });
 
     if (patient && encounter) {
       try {
@@ -377,7 +376,7 @@ const handleCheckboxChange = (rowData: any) => {
 
         dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
 
-        setPreKeyRecord({preKey: response?.data?.key});
+        setPreKeyRecord({ preKey: response?.data?.key });
 
         preRefetch().then(() => '');
       } catch (error) {
@@ -625,17 +624,17 @@ const handleCheckboxChange = (rowData: any) => {
       <div className="bt-div">
         <div style={{ width: '500px' }}>
           <Form fluid>
-          <MyInput
-          placeholder="Prescription"
-          fieldName="preKey"
-          fieldType='select'
-          record={preKeyRecord}
-          setRecord={setPreKeyRecord}
-          selectData={filteredPrescriptions ?? []}
-          selectDataLabel="prescriptionId"
-          selectDataValue="key"
-          showLabel={false}
-          />
+            <MyInput
+              placeholder="Prescription"
+              fieldName="preKey"
+              fieldType='select'
+              record={preKeyRecord}
+              setRecord={setPreKeyRecord}
+              selectData={filteredPrescriptions ?? []}
+              selectDataLabel="prescriptionId"
+              selectDataValue="key"
+              showLabel={false}
+            />
           </Form>
         </div>
         <div className="icon-style">
@@ -684,7 +683,7 @@ const handleCheckboxChange = (rowData: any) => {
             disabled={
               preKeyRecord['preKey']
                 ? prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
-                    ?.statusLkey === '1804482322306061'
+                  ?.statusLkey === '1804482322306061'
                 : true
             }
             prefixIcon={() => <CheckIcon />}
@@ -699,7 +698,7 @@ const handleCheckboxChange = (rowData: any) => {
               disabled={
                 preKeyRecord['preKey']
                   ? prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
-                      ?.statusLkey === '1804482322306061'
+                    ?.statusLkey === '1804482322306061'
                   : true
               }
             >
@@ -727,6 +726,7 @@ const handleCheckboxChange = (rowData: any) => {
         columns={tableColumns}
         data={prescriptionMedications?.object ?? []}
         onRowClick={rowData => {
+          setSelectedPreviewMedication(rowData)
           setPrescriptionMedications(rowData);
           setOpenToAdd(false);
           if (rowData.instructionsTypeLkey == '3010606785535008') {
@@ -742,25 +742,25 @@ const handleCheckboxChange = (rowData: any) => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
-{selectedPreviewMedication && (
-  <div className="mt-4">
-    <PrescriptionPreview
-      orderMedication={selectedPreviewMedication}
-      fluidOrder={selectedPreviewMedication?.fluidOrder ?? {}}
-      genericMedicationListResponse={genericMedicationListResponse}
-      orderTypeLovQueryResponse={{ object: [] }}
-      unitLovQueryResponse={{ object: [] }}
-      unitsLovQueryResponse={{ object: [] }}
-      DurationTypeLovQueryResponse={{ object: [] }}
-      filteredList={[]}
-      indicationLovQueryResponse={{ object: [] }}
-      administrationInstructionsLovQueryResponse={{ object: [] }}
-      routeLovQueryResponse={{ object: [] }}
-      frequencyLovQueryResponse={{ object: [] }}
-      infusionDeviceLovQueryResponse={{ object: [] }}
-    />
-  </div>
-)}
+      {selectedPreviewMedication && (
+        <div className="mt-4">
+          <PrescriptionPreview
+            orderMedication={selectedPreviewMedication}
+            fluidOrder={selectedPreviewMedication?.fluidOrder ?? {}}
+            genericMedicationListResponse={genericMedicationListResponse}
+            orderTypeLovQueryResponse={{ object: [] }}
+            unitLovQueryResponse={{ object: [] }}
+            unitsLovQueryResponse={{ object: [] }}
+            DurationTypeLovQueryResponse={{ object: [] }}
+            filteredList={[]}
+            indicationLovQueryResponse={{ object: [] }}
+            administrationInstructionsLovQueryResponse={{ object: [] }}
+            routeLovQueryResponse={{ object: [] }}
+            frequencyLovQueryResponse={{ object: [] }}
+            infusionDeviceLovQueryResponse={{ object: [] }}
+          />
+        </div>
+      )}
 
 
 

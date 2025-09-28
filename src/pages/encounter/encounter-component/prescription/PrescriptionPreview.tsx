@@ -2,16 +2,17 @@ import React from 'react';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
 import { Form } from 'rsuite';
-import {  useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const PrescriptionPreview = ({
   orderMedication,
+  prescriptionMedication,
   indicationLovQueryResponse = { object: [] },
   refillunitQueryResponse = { object: [] },
 
 }) => {
-  const noop = () => {};
-  const record = orderMedication || {};
+  const noop = () => { };
+  const record = orderMedication || prescriptionMedication || {};
 
   const getSelectText = (selectData = [], key) => {
     const item = selectData.find(obj => obj.key === key);
@@ -24,8 +25,8 @@ const PrescriptionPreview = ({
     const item = indicationLovQueryResponse.object.find(obj => obj.key === key);
     return item ? item.lovDisplayVale : '';
   };
-    const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
- console.log("orderMedication===>",orderMedication);
+  const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
+  console.log("orderMedication===>", orderMedication);
   return (
     <div>
       {/* Prescription Details */}
@@ -43,18 +44,18 @@ const PrescriptionPreview = ({
                 record={record}
                 setRecord={noop}
               />
- <MyInput
-                            disabled
-                            width={142}
-                            fieldType="select"
-                            fieldLabel="Duration Type"
-                            selectData={DurationTypeLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            fieldName={'durationTypeLkey'}
-                            record={orderMedication}
-                            searchable={false}
-                          />
+              <MyInput
+                disabled
+                width={142}
+                fieldType="select"
+                fieldLabel="Duration Type"
+                selectData={DurationTypeLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName={'durationTypeLkey'}
+                record={orderMedication}
+                searchable={false}
+              />
               <MyInput
                 disabled
                 width={120}
@@ -178,15 +179,15 @@ const PrescriptionPreview = ({
                 setRecord={noop}
                 height={60}
               />
-<MyInput
-  disabled
-  width="100%"
-  fieldType="text"
-  fieldLabel="Indication Use"
-  fieldName="indicationUseLkey"
-  record={{ indicationUseLkey: getIndicationUseText(record.indicationUseLkey) }}
-  setRecord={noop}
-/>
+              <MyInput
+                disabled
+                width="100%"
+                fieldType="text"
+                fieldLabel="Indication Use"
+                fieldName="indicationUseLkey"
+                record={{ indicationUseLkey: getIndicationUseText(record.indicationUseLkey) }}
+                setRecord={noop}
+              />
 
               <MyInput
                 disabled
@@ -228,27 +229,30 @@ const PrescriptionPreview = ({
                 record={record}
                 setRecord={noop}
               />
-<MyInput
-  disabled
-  width="100%"
-  fieldType="text"
-  fieldLabel="Refill Interval Unit"
-  fieldName="refillIntervalUnitLkey"
-  record={{ refillIntervalUnitLkey: getSelectText(refillunitQueryResponse.object, record.refillIntervalUnitLkey) }}
-  setRecord={noop}
-/>
-                        <MyInput
-                          disabled
-                          width={180}
-                          fieldType="select"
-                          fieldLabel="Refill Interval Value"
-                          selectData={refillunitQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="refillIntervalLkey"
-                          record={{ refillIntervalUnitLkey: getSelectText(refillunitQueryResponse.object, record.refillIntervalUnitLkey) }}
-                          setRecord={noop}
-                        />
+              <MyInput
+                disabled
+                width="100%"
+                fieldType="select"
+                fieldLabel="Refill Interval Unit"
+                selectData={refillunitQueryResponse?.object ?? []}
+                selectDataValue="key"
+                selectDataLabel="lovDisplayVale"
+                fieldName="refillIntervalUnitLkey"
+                record={prescriptionMedication}
+              />
+
+
+              <MyInput
+                disabled
+                width={180}
+                fieldType="select"
+                fieldLabel="Refill Interval Value"
+                selectData={refillunitQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName="refillIntervalLkey"
+                record={record}
+              />
             </div>
           </Form>
         }

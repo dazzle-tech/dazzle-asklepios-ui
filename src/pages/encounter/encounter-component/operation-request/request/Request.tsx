@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { faPlus, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import BlockIcon from '@rsuite/icons/Block';
+import PreviewRequest from './PreviewRequest';
 
 const Request = ({ patient, encounter, user, refetchrequest }) => {
   const dispatch = useAppDispatch();
@@ -27,6 +28,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
   const [open, setOpen] = useState(false);
   const [openView, setOpenView] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [previewRequest, setPreviewRequest] = useState<any | null>(null);
   const [request, setRequest] = useState<any>({
     ...newApOperationRequests,
     encounterKey: encounter?.key,
@@ -316,6 +318,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
           loading={isLoading}
           onRowClick={rowData => {
             setRequest(rowData);
+            setPreviewRequest(rowData);
           }}
           tableButtons={
             <div className="bt-div-2">
@@ -354,6 +357,16 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
           }
         />
       </Row>
+      {previewRequest && (
+        <PreviewRequest
+          open={true}
+          setOpen={(val) => { }}
+          request={previewRequest}
+          patient={patient}
+          encounter={encounter}
+        />
+      )}
+
       <Details
         open={open}
         setOpen={setOpen}

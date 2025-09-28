@@ -125,7 +125,7 @@ const VitalSignICU: React.FC = () => {
         size="50vw"
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenGraphModal(false)}
-        content={<VitalsignGraphs selectedMetric={selectedMetric} tableView={false} />}
+        content={<VitalsignGraphs selectedMetric={selectedMetric} tableView={false} filterView={true} />}
       />
     </div>
   );

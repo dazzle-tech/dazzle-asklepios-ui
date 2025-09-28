@@ -117,14 +117,15 @@ const DetailsModal = ({
       ...(checked
         ? {}
         : {
-            repeatEveryNumber: null,
-            repeatEveryUnit: null,
-            periodNumber: null,
-            periodUnit: null,
-            firstOccurrenceDateTime: null
-          })
+          repeatEveryNumber: null,
+          repeatEveryUnit: null,
+          periodNumber: null,
+          periodUnit: null,
+          firstOccurrenceDateTime: null
+        })
     }));
   };
+
 
   return (
     <>
@@ -174,7 +175,9 @@ const DetailsModal = ({
                     fieldName={'reasonLkey'}
                     record={orderTest}
                     setRecord={setOrderTest}
+                    value={orderTest?.reasonLkey}
                   />
+
                 </Col>
                 <Col md={8}>
                   <MyInput

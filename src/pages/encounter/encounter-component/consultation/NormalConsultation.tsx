@@ -4,8 +4,6 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
-  useFetchAttachmentByKeyQuery,
-  useFetchAttachmentQuery,
   useGetPatientAttachmentsListQuery
 } from '@/services/attachmentService';
 import {
@@ -34,6 +32,10 @@ import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
 import { at } from 'lodash';
 import clsx from 'clsx';
+
+// ✅ import preview
+import PreviewConsultation from './PreviewConsultation';
+
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -42,8 +44,6 @@ const handleDownload = attachment => {
   }
   const byteArray = new Uint8Array(byteNumbers);
   const blob = new Blob([byteArray], { type: attachment.contentType });
-
-  // Create a temporary  element and trigger the download
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.style.display = 'none';
@@ -53,6 +53,7 @@ const handleDownload = attachment => {
   a.click();
   window.URL.revokeObjectURL(url);
 };
+
 const NormalConsultation = props => {
   const location = useLocation();
 
@@ -60,7 +61,7 @@ const NormalConsultation = props => {
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
   const dispatch = useAppDispatch();
-  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [showCanceled, setShowCanceled] = useState(true);
   const [showPrev, setShowPrev] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -68,6 +69,8 @@ const NormalConsultation = props => {
   const [openDetailsMdal, setOpenDetailsModal] = useState(false);
   const [openConfirmCancelModel, setOpenConfirmCancelModel] = useState(false);
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const [previewConsultation, setPreviewConsultation] = useState<ApConsultationOrder | null>(null);
+
   const filters = [
     {
       fieldName: 'patient_key',
@@ -88,21 +91,24 @@ const NormalConsultation = props => {
       value: encounter.key
     });
   }
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters
   });
+
   const {
     data: consultationOrderListResponse,
     refetch: refetchCon,
     isLoading: consaultLoading
   } = useGetConsultationOrdersQuery(listRequest);
 
-  const [saveconsultationOrders, saveConsultationOrdersMutation] =
-    useSaveConsultationOrdersMutation();
+  const [saveconsultationOrders] = useSaveConsultationOrdersMutation();
+
   const [consultationOrders, setConsultationOrder] = useState<ApConsultationOrder>({
     ...newApConsultationOrder
   });
+
   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -111,7 +117,6 @@ const NormalConsultation = props => {
         operator: 'isNull',
         value: undefined
       },
-
       {
         fieldName: 'attachment_type',
         operator: 'match',
@@ -123,7 +128,6 @@ const NormalConsultation = props => {
   const {
     data: fetchPatintAttachmentsResponce,
     refetch: attachmentRefetch,
-    isLoading: loadAttachment
   } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
 
   const isSelected = rowData => {
@@ -135,60 +139,43 @@ const NormalConsultation = props => {
   useEffect(() => {
     if (!attachmentsModalOpen) {
       setConsultationOrder({ ...newApConsultationOrder });
-      const updatedFilters = [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-
-        {
-          fieldName: 'attachment_type',
-          operator: 'match',
-          value: 'CONSULTATION_ORDER'
-        }
-      ];
       setAttachmentsListRequest(prevRequest => ({
         ...prevRequest,
-        filters: updatedFilters
+        filters: [
+          { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+          { fieldName: 'attachment_type', operator: 'match', value: 'CONSULTATION_ORDER' }
+        ]
       }));
     }
     attachmentRefetch();
   }, [attachmentsModalOpen]);
+
   useEffect(() => {
-    const upateFilter = [
-      {
-        fieldName: 'visit_key',
-        operator: 'match',
-        value: encounter.key
-      },
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '1804447528780744'
-      }
-    ];
     setListRequest(prevRequest => ({
       ...prevRequest,
-      filters: upateFilter
+      filters: [
+        { fieldName: 'visit_key', operator: 'match', value: encounter.key },
+        {
+          fieldName: 'status_lkey',
+          operator: showCanceled ? 'notMatch' : 'match',
+          value: '1804447528780744'
+        }
+      ]
     }));
   }, [showCanceled]);
 
-  const handleCheckboxChange = key => {
+  const handleCheckboxChange = rowData => {
     setSelectedRows(prev => {
-      if (prev.includes(key)) {
-        return prev.filter(item => item !== key);
+      if (prev.includes(rowData)) {
+        return prev.filter(item => item !== rowData);
       } else {
-        return [...prev, key];
+        return [...prev, rowData];
       }
     });
   };
-  const OpenConfirmDeleteModel = () => {
-    setOpenConfirmCancelModel(true);
-  };
-  const CloseConfirmDeleteModel = () => {
-    setOpenConfirmCancelModel(false);
-  };
+
+  const OpenConfirmDeleteModel = () => setOpenConfirmCancelModel(true);
+  const CloseConfirmDeleteModel = () => setOpenConfirmCancelModel(false);
 
   const handleClear = async () => {
     setConsultationOrder({
@@ -200,6 +187,7 @@ const NormalConsultation = props => {
       preferredConsultantKey: null
     });
   };
+
   const handleCancle = async () => {
     try {
       await Promise.all(
@@ -213,24 +201,16 @@ const NormalConsultation = props => {
           }).unwrap()
         )
       );
-
       dispatch(notify('All orders deleted successfully'));
-
-      refetchCon()
-        .then(() => {
-          console.log('Refetch complete');
-        })
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
+      refetchCon();
       setSelectedRows([]);
       CloseConfirmDeleteModel();
-    } catch (error) {
-      console.error('Encounter save failed:', error);
+    } catch {
       dispatch(notify('One or more deleted failed'));
       CloseConfirmDeleteModel();
     }
   };
+
   const handleSubmit = async () => {
     try {
       await Promise.all(
@@ -242,22 +222,14 @@ const NormalConsultation = props => {
           }).unwrap()
         )
       );
-
-      dispatch(notify('All  Submitted successfully'));
-
-      refetchCon()
-        .then(() => {
-          console.log('Refetch complete');
-        })
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
+      dispatch(notify('All Submitted successfully'));
+      refetchCon();
       setSelectedRows([]);
-    } catch (error) {
-      console.error('Encounter save failed:', error);
+    } catch {
       dispatch(notify('One or more saves failed'));
     }
   };
+
   const handelAddNew = () => {
     handleClear();
     setOpenDetailsModal(true);
@@ -266,69 +238,52 @@ const NormalConsultation = props => {
 
   const tableColumns = [
     {
-      key: '',
-      dataKey: '',
-      title: <Translate>#</Translate>,
+      key: 'select',
+      title: '#',
       flexGrow: 1,
-      render: (rowData: any) => {
-        return (
-          <Checkbox
-            key={rowData.id}
-            checked={selectedRows.includes(rowData)}
-            onChange={() => handleCheckboxChange(rowData)}
-            disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
-          />
-        );
-      }
+      render: (rowData: any) => (
+        <Checkbox
+          key={rowData.id}
+          checked={selectedRows.includes(rowData)}
+          onChange={() => handleCheckboxChange(rowData)}
+          disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
+        />
+      )
     },
     {
       key: 'createdAt ',
       dataKey: 'createdAt ',
       title: <Translate>CONSULTATION DATE</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : '';
-      }
+      render: (rowData: any) =>
+        rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''
     },
     {
       key: 'consultantSpecialtyLkey',
-      dataKey: 'consultantSpecialtyLkey',
       title: <Translate>CONSULTANT SPECIALTY</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.consultantSpecialtyLvalue?.lovDisplayVale;
-      }
+      render: (rowData: any) => rowData.consultantSpecialtyLvalue?.lovDisplayVale
     },
     {
       key: 'statusLkey',
-      dataKey: 'statusLkey',
       title: <Translate>STATUS</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.statusLvalue.lovDisplayVale ?? null;
-      }
+      render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale ?? null
     },
     {
       key: 'resposeStatusLkey',
-      dataKey: 'resposeStatusLkey',
       title: <Translate>RESPOSE STATUS</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.resposeStatusLvalue?.lovDisplayVale;
-      }
+      render: (rowData: any) => rowData.resposeStatusLvalue?.lovDisplayVale
     },
     {
-      key: '',
-      dataKey: '',
+      key: 'viewResponse',
       title: <Translate>VIEW RESPONSE</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return <IoIosMore size={22} fill="var(--primary-gray)" />;
-      }
+      render: () => <IoIosMore size={22} fill="var(--primary-gray)" />
     },
     {
-      key: '',
-      dataKey: '',
+      key: 'attachedFile',
       title: <Translate>ATTACHED FILE</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -347,7 +302,6 @@ const NormalConsultation = props => {
                 style={{ cursor: 'pointer' }}
               />
             )}
-
             <MdAttachFile
               size={20}
               fill="var(--primary-gray)"
@@ -359,176 +313,124 @@ const NormalConsultation = props => {
       }
     },
     {
-      key: '',
-      dataKey: '',
+      key: 'action',
       title: <Translate>Action</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return (
-          <>
-            <div className="icons-consultation-main-container">
-              <MdModeEdit
-                title="Edit"
-                size={24}
-                fill="var(--primary-gray)"
-                onClick={() => setOpenDetailsModal(true)}
-                className="icon-button"
-              />
-              <FontAwesomeIcon
-                icon={faClone}
-                title="Clone"
-                className="icon-button clone-icon-main-style"
-                // onClick={() => handleClone(rowData)}
-              />
-            </div>
-          </>
-        );
-      }
-    },
-    {
-      key: 'created',
-      title: 'SUBMISSION AT/BY',
-      expandable: true
-    },
-    {
-      key: '',
-      title: 'UPDATED AT/BY',
-      render: (row: any) =>
-        row?.updatedAt ? (
-          <>
-            {'keyForCurrentUser'} <br />
-            <span className="date-table-style">
-              {row.updatedAt ? formatDateWithoutSeconds(row.updatedAt) : ' '}
-            </span>
-          </>
-        ) : (
-          ' '
-        ),
-      expandable: true
-    },
-    {
-      key: 'deletedAt',
-      title: 'CANCELLED AT/BY',
-      render: (row: any) =>
-        row?.deletedAt ? (
-          <>
-            {'keyForCurrentUser'} <br />
-            <span className="date-table-style">
-              {row.deletedAt ? formatDateWithoutSeconds(row.deletedAt) : ' '}
-            </span>
-          </>
-        ) : (
-          ' '
-        ),
-      expandable: true
-    },
-    {
-      key: 'cancellationReason',
-      title: 'CANCELLATION REASON',
-      dataKey: 'cancellationReason',
-      expandable: true
+      render: () => (
+        <div className="icons-consultation-main-container">
+          <MdModeEdit
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => setOpenDetailsModal(true)}
+            className="icon-button"
+          />
+          <FontAwesomeIcon
+            icon={faClone}
+            title="Clone"
+            className="icon-button clone-icon-main-style"
+          />
+        </div>
+      )
     }
   ];
+
   const pageIndex = listRequest.pageNumber - 1;
-
-  // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
   const totalCount = consultationOrderListResponse?.extraNumeric ?? 0;
 
-  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
     setManualSearchTriggered(true);
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualSearchTriggered(true);
     setListRequest({
       ...listRequest,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
+      pageNumber: 1
     });
   };
 
   return (
     <div>
-      <div>
-        <MyTable
-          columns={tableColumns}
-          data={consultationOrderListResponse?.object ?? []}
-          onRowClick={rowData => {
-            setConsultationOrder(rowData);
-            setEditing(rowData.statusLkey == '164797574082125' ? false : true);
-          }}
-          rowClassName={isSelected}
-          loading={consaultLoading || (manualSearchTriggered && consaultLoading)}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortChange={(sortBy, sortType) => {
-            setListRequest({ ...listRequest, sortBy, sortType });
-          }}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          tableButtons={
-            <div className="bt-div-2">
-              <div className="bt-left-2">
-                <MyButton
-                  onClick={handleSubmit}
-                  disabled={selectedRows.length === 0 || edit}
-                  prefixIcon={() => <CheckIcon />}
-                >
-                  Submit
-                </MyButton>
-                <MyButton
-                  prefixIcon={() => <BlockIcon />}
-                  onClick={OpenConfirmDeleteModel}
-                  disabled={selectedRows.length === 0}
-                >
-                  Cancle
-                </MyButton>
-                <MyButton
-                  appearance="ghost"
-                  disabled={selectedRows.length === 0}
-                  prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
-                >
-                  Print
-                </MyButton>
-                <Checkbox
-                  checked={!showCanceled}
-                  onChange={() => {
-                    setShowCanceled(!showCanceled);
-                  }}
-                >
-                  Show Cancelled
-                </Checkbox>
-                <Checkbox
-                  checked={!showPrev}
-                  onChange={() => {
-                    setShowPrev(!showPrev);
-                  }}
-                >
-                  Show Previous Consultations
-                </Checkbox>
-              </div>
-
-              <div
-                className={clsx('bt-right-2', {
-                  'disabled-panel': edit
-                })}
+      <MyTable
+        columns={tableColumns}
+        data={consultationOrderListResponse?.object ?? []}
+        onRowClick={rowData => {
+          setConsultationOrder(rowData);
+          setEditing(rowData.statusLkey === '164797574082125' ? false : true);
+          setPreviewConsultation(rowData);
+        }}
+        rowClassName={isSelected}
+        loading={consaultLoading || (manualSearchTriggered && consaultLoading)}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        tableButtons={
+          <div className="bt-div-2">
+            <div className="bt-left-2">
+              <MyButton
+                onClick={handleSubmit}
+                disabled={selectedRows.length === 0 || edit}
+                prefixIcon={() => <CheckIcon />}
               >
-                <MyButton onClick={handelAddNew}>Add Consultation</MyButton>
-              </div>
+                Submit
+              </MyButton>
+              <MyButton
+                prefixIcon={() => <BlockIcon />}
+                onClick={OpenConfirmDeleteModel}
+                disabled={selectedRows.length === 0}
+              >
+                Cancle
+              </MyButton>
+              <MyButton
+                appearance="ghost"
+                disabled={selectedRows.length === 0}
+                prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+              >
+                Print
+              </MyButton>
+              <Checkbox
+                checked={!showCanceled}
+                onChange={() => setShowCanceled(!showCanceled)}
+              >
+                Show Cancelled
+              </Checkbox>
+              <Checkbox
+                checked={!showPrev}
+                onChange={() => setShowPrev(!showPrev)}
+              >
+                Show Previous Consultations
+              </Checkbox>
             </div>
-          }
+
+            <div
+              className={clsx('bt-right-2', {
+                'disabled-panel': edit
+              })}
+            >
+              <MyButton onClick={handelAddNew}>Add Consultation</MyButton>
+            </div>
+          </div>
+        }
+      />
+
+      {previewConsultation && (
+        <PreviewConsultation
+          consultation={previewConsultation}
+          onClose={() => setPreviewConsultation(null)}
         />
-      </div>
+      )}
+
       <CancellationModal
         title="Cancel Consultation "
         fieldLabel="Cancellation Reason"
@@ -539,6 +441,7 @@ const NormalConsultation = props => {
         handleCancle={handleCancle}
         fieldName="cancellationReason"
       />
+
       <Details
         patient={patient}
         encounter={encounter}
@@ -550,10 +453,11 @@ const NormalConsultation = props => {
         refetchCon={refetchCon}
         edit={edit}
       />
+
       <AttachmentUploadModal
         isOpen={attachmentsModalOpen}
         setIsOpen={setAttachmentsModalOpen}
-        actionType={'add'}
+        actionType="add"
         refecthData={attachmentRefetch}
         attachmentSource={consultationOrders}
         attatchmentType="CONSULTATION_ORDER"
@@ -562,4 +466,5 @@ const NormalConsultation = props => {
     </div>
   );
 };
+
 export default NormalConsultation;
