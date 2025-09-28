@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import { initialListRequestNew, ListRequest } from '@/types/types';
+import { initialListRequestId, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
@@ -39,10 +39,8 @@ const Departments = () => {
   const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
   const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
-
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
-
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -64,7 +62,7 @@ const Departments = () => {
   });
 
   const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequestNew,
+    ...initialListRequestId,
     pageSize: 15
   });
 
@@ -211,7 +209,6 @@ const Departments = () => {
       setDepartmentList(departmentListResponse);
       return;
     }
-
     try {
       let response;
       if (fieldName === "facilityName") {
@@ -409,6 +406,7 @@ const Departments = () => {
           record={record}
           setRecord={setRecord}
         />
+
       );
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (
@@ -420,7 +418,6 @@ const Departments = () => {
           selectData={depTTypesEnum ?? []}
           record={record}
           setRecord={setRecord}
-
         />
       );
     } else {
