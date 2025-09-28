@@ -582,15 +582,6 @@ const ScheduleScreen = () => {
   };
 
   const MyEvent = ({ event }) => {
-    const normalize = str => str?.toLowerCase().replace(/[-_]/g, ' ').trim();
-
-    const getBackgroundColor = status => {
-      const item = legendItems.find(i => normalize(i.label) === normalize(status));
-      return item ? hexToRgba(item.color, 0.1) : '#ffffff';
-    };
-
-    const status = event?.appointmentData?.appointmentStatus;
-    const backgroundColor = getBackgroundColor(status);
     const image = event?.appointmentData?.profilePicture;
     const content_type = event?.appointmentData?.profilePicture;
 
@@ -599,9 +590,7 @@ const ScheduleScreen = () => {
         style={{
           padding: '7px',
           display: 'flex',
-          gap: '9px',
-          backgroundColor,
-          borderRadius: '8px'
+          gap: '9px'
         }}
       >
         <div style={{ marginRight: '5px' }}>
@@ -633,14 +622,37 @@ const ScheduleScreen = () => {
     );
   };
 
-  const eventPropGetter = () => ({
-    style: {
-      backgroundColor: '#ffffff',
-      borderRadius: '8px',
-      padding: '5px',
-      color: 'black'
-    }
-  });
+  const eventPropGetter = (event) => {
+    const normalize = str => str?.toLowerCase().replace(/[-_]/g, ' ').trim();
+    
+    const getBackgroundColor = status => {
+      const item = legendItems.find(i => normalize(i.label) === normalize(status));
+      return item ? hexToRgba(item.color, 0.15) : '#ffffff';
+    };
+    
+    const getBorderColor = status => {
+      const item = legendItems.find(i => normalize(i.label) === normalize(status));
+      return item ? item.color : '#007bff';
+    };
+    
+    const status = event?.appointmentData?.appointmentStatus;
+    const backgroundColor = getBackgroundColor(status);
+    const borderColor = getBorderColor(status);
+    
+    return {
+      style: {
+        backgroundColor,
+        borderColor,
+        borderWidth: '3px',
+        borderStyle: 'solid',
+        borderRadius: '10px',
+        padding: '8px',
+        color: 'black',
+        boxShadow: `0 2px 8px ${hexToRgba(borderColor, 0.3)}`,
+        transition: 'all 0.2s ease'
+      }
+    };
+  };
 
   const slotPropGetter = (date, resourceId) => {
     const defaultShadedStyle = {
@@ -654,7 +666,8 @@ const ScheduleScreen = () => {
     );
 
     if (currentResource && currentResource.availability) {
-      const currentDay = date.getDay();
+      const jsDay = date.getDay(); // JavaScript day: 0=Sunday, 6=Saturday
+      const apiDay = (jsDay + 1) % 7; // Convert to API day: 0=Saturday, 1=Sunday, etc.
       const currentMinutes = date.getHours() * 60 + date.getMinutes();
       const isAvailable =
         currentResource?.availability?.some(period => {
@@ -662,7 +675,7 @@ const ScheduleScreen = () => {
           const endMinutes = period.endHour * 60 + (period.endMinute || 0);
 
           const match =
-            period.dayOfWeek === currentDay &&
+            period.dayOfWeek === apiDay &&
             currentMinutes >= startMinutes &&
             currentMinutes < endMinutes;
           return match;
@@ -903,6 +916,33 @@ const ScheduleScreen = () => {
             timeslots={1}
             onSelectSlot={slotInfo => {
               console.log('Selected slot:', slotInfo);
+              
+              // Check if the slot is available before opening modal
+              if (slotInfo.resourceId) {
+                const currentResource = resourcesWithAvailabilityResponse?.object.find(
+                  r => r.key === slotInfo.resourceId
+                );
+                
+                if (currentResource && currentResource.availability) {
+                  const jsDay = slotInfo.start.getDay();
+                  const apiDay = (jsDay + 1) % 7;
+                  const currentMinutes = slotInfo.start.getHours() * 60 + slotInfo.start.getMinutes();
+                  
+                  const isAvailable = currentResource?.availability?.some(period => {
+                    const startMinutes = period.startHour * 60 + (period.startMinute || 0);
+                    const endMinutes = period.endHour * 60 + (period.endMinute || 0);
+                    
+                    return period.dayOfWeek === apiDay &&
+                           currentMinutes >= startMinutes &&
+                           currentMinutes < endMinutes;
+                  }) || false;
+                  
+                  if (!isAvailable) {
+                    return; // Don't open modal for unavailable slots
+                  }
+                }
+              }
+              
               setSelectedSlot(slotInfo);
               setModalOpen(true);
             }}
