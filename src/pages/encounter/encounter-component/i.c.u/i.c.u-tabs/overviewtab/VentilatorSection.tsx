@@ -4,7 +4,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import DynamicCard from '@/components/DynamicCard';
 import PlusIcon from '@rsuite/icons/Plus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMaskFace  } from '@fortawesome/free-solid-svg-icons';
+import { faMaskFace } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
@@ -25,18 +25,18 @@ const columns: ColumnConfig[] = [
   { key: 'ps', title: 'PS', dataKey: 'ps', width: 70 },
   { key: 'ratePatient', title: 'Rate: Patient', dataKey: 'ratePatient', width: 70 },
   { key: 'setRate', title: 'Set Rate', dataKey: 'setRate', width: 70 },
-  { key: 'pc', title: 'PC', dataKey: 'pc', width: 80, expandable:true },
-  { key: 'etco2', title: 'ETCO2', dataKey: 'etco2', width: 80, expandable:true },
-  { key: 'cuff', title: 'Cuff', dataKey: 'cuff', width: 80, expandable:true },
-  { key: 'pap', title: 'PAP', dataKey: 'pap', width: 80, expandable:true },
-  { key: 'rateVentilator', title: 'Rate: Ventilator', dataKey: 'rateVentilator', width: 100, expandable:true },
-  { key: 'ettPositionCm', title: 'ETT Position (cm)', dataKey: 'ettPositionCm', width: 120, expandable:true },
-  { key: 'suction', title: 'Suction', dataKey: 'suction', width: 100, expandable:true },
-   {
+  { key: 'pc', title: 'PC', dataKey: 'pc', width: 80, expandable: true },
+  { key: 'etco2', title: 'ETCO2', dataKey: 'etco2', width: 80, expandable: true },
+  { key: 'cuff', title: 'Cuff', dataKey: 'cuff', width: 80, expandable: true },
+  { key: 'pap', title: 'PAP', dataKey: 'pap', width: 80, expandable: true },
+  { key: 'rateVentilator', title: 'Rate: Ventilator', dataKey: 'rateVentilator', width: 100, expandable: true },
+  { key: 'ettPositionCm', title: 'ETT Position (cm)', dataKey: 'ettPositionCm', width: 120, expandable: true },
+  { key: 'suction', title: 'Suction', dataKey: 'suction', width: 100, expandable: true },
+  {
     key: 'createdByAt',
     title: 'Created By\\At',
     dataKey: 'createdByAt',
-   expandable:true,
+    expandable: true,
     width: 200,
     render: row => (
       <>
@@ -94,7 +94,7 @@ const initialTableData = [
 const VentilatorSection = () => {
   const [openVentilator, setOpenVentilator] = useState(false);
   const [record, setRecord] = useState<any>({});
-const [tableData, setTableData] = useState<any[]>(initialTableData);
+  const [tableData, setTableData] = useState<any[]>(initialTableData);
 
   const VentilatorForm = (<>
     <Form fluid>
@@ -118,21 +118,21 @@ const [tableData, setTableData] = useState<any[]>(initialTableData);
         />
       </div>
 
-    <div className="ventilator-grid">
-      <MyInput width="15vw" fieldLabel="FIO2" fieldName="fio2" fieldType="number" record={record} setRecord={setRecord} rightAddon="%" rightAddonwidth="auto" />
-      <MyInput width="12vw" fieldLabel="PEEP" fieldName="peep" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto"/>
-      <MyInput width="14vw" fieldLabel="Tidal Volume" fieldName="tidalVolume" fieldType="number" record={record} setRecord={setRecord} rightAddon="mL" rightAddonwidth="auto"/>
-      <MyInput width="14vw" fieldLabel="Minute Volume" fieldName="minuteVolume" fieldType="number" record={record} setRecord={setRecord} rightAddon="L/min" rightAddonwidth="auto"/>
-      <MyInput width="12vw" fieldLabel="PS" fieldName="ps" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto"/>
-      <MyInput width="13vw" fieldLabel="Rate: Patient" fieldName="ratePatient" fieldType="number" record={record} setRecord={setRecord} rightAddon="bpm" rightAddonwidth="auto"/>
-      <MyInput width="11vw" fieldLabel="Set Rate" fieldName="setRate" fieldType="number" record={record} setRecord={setRecord} rightAddon="breaths/min" rightAddonwidth="auto"/>
-      <MyInput width="12vw" fieldLabel="PC" fieldName="pc" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto"/>
-      <MyInput width="12vw" fieldLabel="ETCO2" fieldName="etco2" fieldType="number" record={record} setRecord={setRecord} rightAddon="mmHg" rightAddonwidth="auto"/>
-      <MyInput width="13vw" fieldLabel="Cuff" fieldName="cuff" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto"/>
-      <MyInput width="12vw" fieldLabel="PAP" fieldName="pap" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto"/>
-      <MyInput width="10vw" fieldLabel="Rate: Ventilator" fieldName="rateVentilator" fieldType="number" record={record} setRecord={setRecord} rightAddon="breaths/min" rightAddonwidth="auto"/>
-      <MyInput width="15vw" fieldLabel="ETT Position (cm)" fieldName="ettPositionCm" fieldType="number" record={record} setRecord={setRecord} rightAddon="cm" rightAddonwidth="auto"/>
-    </div>
+      <div className="ventilator-grid">
+        <MyInput width="15vw" fieldLabel="FIO2" fieldName="fio2" fieldType="number" record={record} setRecord={setRecord} rightAddon="%" rightAddonwidth="auto" />
+        <MyInput width="12vw" fieldLabel="PEEP" fieldName="peep" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto" />
+        <MyInput width="14vw" fieldLabel="Tidal Volume" fieldName="tidalVolume" fieldType="number" record={record} setRecord={setRecord} rightAddon="mL" rightAddonwidth="auto" />
+        <MyInput width="14vw" fieldLabel="Minute Volume" fieldName="minuteVolume" fieldType="number" record={record} setRecord={setRecord} rightAddon="L/min" rightAddonwidth="auto" />
+        <MyInput width="12vw" fieldLabel="PS" fieldName="ps" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto" />
+        <MyInput width="13vw" fieldLabel="Rate: Patient" fieldName="ratePatient" fieldType="number" record={record} setRecord={setRecord} rightAddon="bpm" rightAddonwidth="auto" />
+        <MyInput width="11vw" fieldLabel="Set Rate" fieldName="setRate" fieldType="number" record={record} setRecord={setRecord} rightAddon="breaths/min" rightAddonwidth="auto" />
+        <MyInput width="12vw" fieldLabel="PC" fieldName="pc" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto" />
+        <MyInput width="12vw" fieldLabel="ETCO2" fieldName="etco2" fieldType="number" record={record} setRecord={setRecord} rightAddon="mmHg" rightAddonwidth="auto" />
+        <MyInput width="13vw" fieldLabel="Cuff" fieldName="cuff" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto" />
+        <MyInput width="12vw" fieldLabel="PAP" fieldName="pap" fieldType="number" record={record} setRecord={setRecord} rightAddon="cmH₂O" rightAddonwidth="auto" />
+        <MyInput width="10vw" fieldLabel="Rate: Ventilator" fieldName="rateVentilator" fieldType="number" record={record} setRecord={setRecord} rightAddon="breaths/min" rightAddonwidth="auto" />
+        <MyInput width="15vw" fieldLabel="ETT Position (cm)" fieldName="ettPositionCm" fieldType="number" record={record} setRecord={setRecord} rightAddon="cm" rightAddonwidth="auto" />
+      </div>
 
 
       <div className='radio-buttons-overview-cards'>
@@ -148,20 +148,20 @@ const [tableData, setTableData] = useState<any[]>(initialTableData);
         </RadioGroup>
       </div>
     </Form>
-          <div style={{ marginTop: 20 }}>
-            <MyTable
-              data={tableData}
-              columns={columns}
-              loading={false}
-              sortColumn="mode"
-              sortType="asc"
-              page={0}
-              rowsPerPage={5}
-              totalCount={tableData.length}
-              onPageChange={() => {}}
-              onRowsPerPageChange={() => {}}
-            />
-          </div>
+    <div style={{ marginTop: 20 }}>
+      <MyTable
+        data={tableData}
+        columns={columns}
+        loading={false}
+        sortColumn="mode"
+        sortType="asc"
+        page={0}
+        rowsPerPage={5}
+        totalCount={tableData.length}
+        onPageChange={() => { }}
+        onRowsPerPageChange={() => { }}
+      />
+    </div>
   </>);
 
   return (
@@ -169,23 +169,23 @@ const [tableData, setTableData] = useState<any[]>(initialTableData);
       title={<>
 
         <span className="today-goals-section-title">
-                  <FontAwesomeIcon
-                      color="#b4b4b4ff"
-                      icon={faMaskFace }
-                      className="title-icon-main-title"
-                    />
+          <FontAwesomeIcon
+            color="#b4b4b4ff"
+            icon={faMaskFace}
+            className="title-icon-main-title"
+          />
           Ventilator
         </span>
 
 
-          <div className="add-button-for-cards-over-view">
-            <MyButton
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => setOpenVentilator(true)}
-            >
-              Add
-            </MyButton>
-          </div>
+        <div className="add-button-for-cards-over-view">
+          <MyButton
+            prefixIcon={() => <PlusIcon />}
+            onClick={() => setOpenVentilator(true)}
+          >
+            Add
+          </MyButton>
+        </div>
       </>}
       content={
         <>

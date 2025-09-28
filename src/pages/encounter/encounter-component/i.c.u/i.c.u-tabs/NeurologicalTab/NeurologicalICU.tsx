@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import SectionContainer from "@/components/SectionsoContainer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTruckMedical,faEye,faBrain,faBandage,faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faTruckMedical, faEye, faBrain, faBandage, faCheck } from "@fortawesome/free-solid-svg-icons";
 import GlasgowComaScale from "../../../glasgow-coma-scale";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { Form } from "rsuite";
@@ -11,6 +11,10 @@ import { Slider } from "rsuite";
 import MyTable, { ColumnConfig } from "@/components/MyTable/MyTable";
 import MyButton from "@/components/MyButton/MyButton";
 import "./style.less";
+import GlasgowComaScaleICU from "./GlasgowComaScaleICU";
+import PupilSizeReactivityICU from "./PupilSizeReactivityICU";
+import IntracranialDynamicsICU from "./IntracranialDynamicsICU";
+import PainAssessmentICU from "./PainAssessmentICU";
 
 // sample table data
 const initialPupilRecords = [
@@ -210,289 +214,14 @@ const NeurologicalICU: React.FC = () => {
       className={`flow-sheet-icu ${mode === "dark" ? "dark" : "light"}`}
       style={{ margin: "0.5vw" }}
     >
-      
-      <SectionContainer
-        title={<>
-          <span className="icu-title-flow-sheet">
-            <FontAwesomeIcon
-              icon={faTruckMedical}
-              className="title-icon-main-title"
-              color={mode === "dark" ? "#dfdfdfff" : "#7d7d7dff"}
-            />
-            Glasgow coma scale
-          </span>
-                    <div className="add-button-for-neurological-view">
-                      <MyButton
-                        prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}                      >
-                        Save
-                      </MyButton>
-                    </div>
-        </>}
-        content={<GlasgowComaScale />}
-      />
 
-        <SectionContainer
-          title={<><span className="icu-title-flow-sheet">
-            <FontAwesomeIcon
-              icon={faEye}
-              className="title-icon-main-title"
-              color={mode === "dark" ? "#dfdfdfff" : "#7d7d7dff"}
-            />
-            Pupil size and Reactivity
-          </span>
-                              <div className="add-button-for-neurological-view">
-                      <MyButton
-                        prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
-                      >
-                        Save
-                      </MyButton>
-                    </div>
-        </>}
-          
-          content={
-            <>
-              <div className="eye-direction-handle-neurological-main-container">
-                <SectionContainer
-                  title="Right Eye"
-                  content={
-                    <Form fluid>
-                      <div className="eye-direction-handle-neurological">
-                        <MyInput
-                          width={200}
-                          fieldLabel="Reacting to light"
-                          fieldType="checkbox"
-                          fieldName="rightEyeLightResponse"
-                          record={record}
-                          setRecord={setRecord}
-                        />
-                        <MyInput
-                          width={200}
-                          fieldLabel="Pupil Size"
-                          fieldType="select"
-                          fieldName="rightEyePupilSizeLkey"
-                          selectData={sizeLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={record}
-                          setRecord={setRecord}
-                          searchable={false}
-                        />
-                      </div>
-                    </Form>
-                  }
-                />
+      <GlasgowComaScaleICU></GlasgowComaScaleICU>
 
-                <SectionContainer
-                  title="Left Eye"
-                  content={
-                    <Form fluid>
-                      <div className="eye-direction-handle-neurological">
-                        <MyInput
-                          width={200}
-                          fieldLabel="Reacting to light"
-                          fieldType="checkbox"
-                          fieldName="leftEyeLightResponse"
-                          record={record}
-                          setRecord={setRecord}
-                        />
-                        <MyInput
-                          width={200}
-                          fieldLabel="Pupil Size"
-                          fieldType="select"
-                          fieldName="leftEyePupilSizeLkey"
-                          selectData={sizeLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={record}
-                          setRecord={setRecord}
-                          searchable={false}
-                        />
-                      </div>
-                    </Form>
-                  }
-                />
-              </div>
+      <PupilSizeReactivityICU></PupilSizeReactivityICU>
 
-              {/* table under eye inputs */}
-              <div style={{ marginTop: "1vw" }}>
-                <MyTable
-                  data={pupilRecords}
-                  columns={pupilTableColumns}
-                  loading={false}
-                  sortColumn={null}
-                  sortType={null}
-                  page={0}
-                  rowsPerPage={10}
-                  totalCount={pupilRecords.length}
-                  onPageChange={() => { }}
-                  onRowsPerPageChange={() => { }}
-                />
-              </div>
-            </>
-          }
-        />
+      <PainAssessmentICU></PainAssessmentICU>
 
-      <SectionContainer
-        title={<>
-          <span className="icu-title-flow-sheet">
-            <FontAwesomeIcon
-              icon={faBandage}
-              className="title-icon-main-title"
-              color={mode === "dark" ? "#dfdfdfff" : "#7d7d7dff"}
-            />
-            Pain Assessment
-          </span>
-                              <div className="add-button-for-neurological-view">
-                      <MyButton
-                        prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}                      >
-                        Save
-                      </MyButton>
-                    </div>
-        </>}
-
-        content={<><Form fluid>
-          <div className="pain-assessment-inputs-container-handle">
-            <div className="pain-assessment-container">
-
-              <label>Pain Level ({painLevel}-10)</label>
-              <div className="slider-class" style={{ position: "relative", width: "300px" }}>
-                <Slider
-                  value={painLevel}
-                  onChange={(value) => setPainLevel(value)}
-                  min={0}
-                  max={10}
-                  step={1}
-                  progress
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "52%",
-                    left: 0,
-                    height: "7px",
-                    width: `${(painLevel / 10) * 100}%`,
-                    backgroundColor: getTrackColor(painLevel),
-                    transform: "translateY(-50%)",
-                    zIndex: 1,
-                    transition: "background-color 0.2s ease",
-                    borderRadius: "4px",
-                  }}
-                />
-              </div>
-            </div>
-            <MyInput
-              width={200}
-              fieldLabel="Pain Description"
-              fieldType="textarea"
-              fieldName="paindescription"
-              record={record}
-              setRecord={setRecord}
-            />
-          </div>
-        </Form>
-
-
-          <div style={{ marginTop: "1vw" }}>
-            <MyTable
-              data={painRecords}
-              columns={painAssessmentColumns}
-              loading={false}
-              sortColumn={null}
-              sortType={null}
-              page={0}
-              rowsPerPage={10}
-              totalCount={painRecords.length}
-              onPageChange={() => { }}
-              onRowsPerPageChange={() => { }}
-            />
-          </div></>}
-      />
-
-      <SectionContainer
-        title={<>
-          <span className="icu-title-flow-sheet">
-            <FontAwesomeIcon
-              icon={faBrain}
-              className="title-icon-main-title"
-              color={mode === "dark" ? "#dfdfdfff" : "#7d7d7dff"}
-            />
-            Intracranial Dynamics
-          </span>
-                            <div className="add-button-for-neurological-view">
-                      <MyButton
-                        prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}                      >
-                        Save
-                      </MyButton>
-                    </div>
-        </>}
-        content={
-          <>
-            <Form fluid style={{ display: "flex", gap: "1vw", marginBottom: "1vw" }}>
-              <MyInput
-                fieldName="icp"
-                fieldLabel="ICP"
-                fieldType="number"
-                record={intracranialRecord}
-                setRecord={setIntracranialRecord}
-                rightAddon={"mmHg"}
-                rightAddonwidth={"auto"}
-                inputColor={
-                  intracranialRecord.icp > 25
-                    ? "red"
-                    : "black"
-                }
-              />
-
-              {/* CPP */}
-              <MyInput
-                fieldName="cpp"
-                fieldLabel="CPP"
-                fieldType="number"
-                record={intracranialRecord}
-                setRecord={setIntracranialRecord}
-                rightAddon={"mmHg"}
-                rightAddonwidth={"auto"}
-                inputColor={
-                  intracranialRecord.cpp >= 60 && intracranialRecord.cpp <= 70
-                    ? "green"
-                    : "black"
-                }
-              />
-
-              {/* EVD Level */}
-              <MyInput
-                fieldName="evdLevel"
-                fieldLabel="END LEVEL"
-                fieldType="number"
-                record={intracranialRecord}
-                setRecord={setIntracranialRecord}
-                rightAddon={"cmH₂O"}
-                rightAddonwidth={"auto"}
-                inputColor={
-                  intracranialRecord.evdLevel < 0 || intracranialRecord.evdLevel > 30
-                    ? "red"
-                    : "black"
-                }
-              />
-            </Form>
-
-            <div style={{ marginTop: "1vw" }}>
-              <MyTable
-                data={intracranialRecords}
-                columns={intracranialColumns}
-                loading={false}
-                sortColumn={null}
-                sortType={null}
-                page={0}
-                rowsPerPage={10}
-                totalCount={intracranialRecords.length}
-                onPageChange={() => { }}
-                onRowsPerPageChange={() => { }}
-              />
-            </div>
-          </>
-        }
-      />
+      <IntracranialDynamicsICU></IntracranialDynamicsICU>
 
     </div>
   );

@@ -1,27 +1,25 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faHeart,
-  faTemperatureHalf,
-  faHeartPulse,
-  faGaugeSimpleHigh,
-  faTint,
-  faBolt
+import { 
+  faHeart, 
+  faTemperatureHalf, 
+  faHeartPulse , 
+  faGaugeSimpleHigh , 
+  faTint, 
+  faBolt  
 } from '@fortawesome/free-solid-svg-icons';
 import DynamicCard from "@/components/DynamicCard";
-import MyModal from "@/components/MyModal/MyModal";
-import VitalsignGraphs from "./VitalsignGraphs";
-import './style.less';
+import './styles.less';
 
-const VitalSignICU: React.FC = () => {
-  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
-  const [openGraphModal, setOpenGraphModal] = useState(false);
+const VitalSignsTeleConsultion: React.FC = () => {
+  const [record, setRecord] = useState<any>({});
+
+
 
   const vitals = [
     {
       id: 1,
       label: "Heart Rate",
-      key: "heartRate",
       value: "92",
       unit: "bpm",
       icon: faHeart,
@@ -29,23 +27,20 @@ const VitalSignICU: React.FC = () => {
     {
       id: 2,
       label: "Blood Pressure",
-      key: "bloodPressure",
       value: "118/65",
       unit: "MAP: 83",
-      icon: faGaugeSimpleHigh,
+      icon: faGaugeSimpleHigh ,
     },
     {
       id: 3,
       label: "Resp Rate",
-      key: "respRate",
       value: "18",
       unit: "breaths/min",
-      icon: faHeartPulse,
+      icon: faHeartPulse ,
     },
     {
       id: 4,
       label: "Temperature",
-      key: "temperature",
       value: "37.2°C",
       unit: null,
       icon: faTemperatureHalf,
@@ -53,7 +48,6 @@ const VitalSignICU: React.FC = () => {
     {
       id: 5,
       label: "SpO₂",
-      key: "spO2",
       value: "96%",
       unit: null,
       icon: faTint,
@@ -61,29 +55,23 @@ const VitalSignICU: React.FC = () => {
     {
       id: 6,
       label: "Pain",
-      key: "pain",
       value: "3/10",
       unit: null,
-      icon: faBolt,
+      icon: faBolt ,
     },
   ];
-
-  const handleShowGraph = (metricKey: string) => {
-    setSelectedMetric(metricKey);
-    setOpenGraphModal(true);
-  };
 
   return (
     <div className="vital-container">
       {vitals.map((item) => (
         <DynamicCard
           key={item.id}
-          width="300px"
-          height="100px"
+          width="270px"
+          height="120px"
           avatar={null}
           backgroundColor="#3bb13f15"
           showMore
-          moreClick={() => handleShowGraph(item.key)}
+          moreClick={() => alert(`Details for ${item.label}`)}
           data={[
             {
               label: item.label,
@@ -106,29 +94,18 @@ const VitalSignICU: React.FC = () => {
             },
             item.unit
               ? {
-                label: `${item.label} unit`,
-                type: "strong",
-                section: "left",
-                value: <span className="vital-unit">{item.unit}</span>,
-                showLabel: false,
-              }
+                  label: `${item.label} unit`,
+                  type: "strong",
+                  section: "left",
+                  value: <span className="vital-unit">{item.unit}</span>,
+                  showLabel: false,
+                }
               : null,
           ].filter(Boolean)}
         />
       ))}
-
-      <MyModal
-        open={openGraphModal}
-        setOpen={setOpenGraphModal}
-        title={selectedMetric ? `Graph for ${selectedMetric}` : "Graph"}
-        position="right"
-        size="50vw"
-        actionButtonLabel="Close"
-        actionButtonFunction={() => setOpenGraphModal(false)}
-        content={<VitalsignGraphs selectedMetric={selectedMetric} tableView={false} />}
-      />
     </div>
   );
 };
 
-export default VitalSignICU;
+export default VitalSignsTeleConsultion;

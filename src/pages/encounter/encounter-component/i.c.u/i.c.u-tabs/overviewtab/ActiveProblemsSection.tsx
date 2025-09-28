@@ -157,8 +157,8 @@ const ActiveProblemsSection = () => {
           page={0}
           rowsPerPage={5}
           totalCount={problemsData.length}
-          onPageChange={() => {}}
-          onRowsPerPageChange={() => {}}
+          onPageChange={() => { }}
+          onRowsPerPageChange={() => { }}
         />
       </div>
     </>

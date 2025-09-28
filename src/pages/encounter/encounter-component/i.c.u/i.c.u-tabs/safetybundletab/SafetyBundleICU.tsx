@@ -1,4 +1,3 @@
-// SafetyBundleICU.tsx
 import React, { useState } from "react";
 import './style.less';
 import { faShield, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -16,7 +15,6 @@ import SafetyBundleOverview from "./SafetyBundleOverview";
 const SafetyBundleICU: React.FC = () => {
   const [activeKey, setActiveKey] = useState<string | number>('1');
 
-  // ----- بيانات كل قسم -----
   const vapPreventionData = [
     { id: 2, status: "Complete" },
     { id: 3, status: "Complete" },
