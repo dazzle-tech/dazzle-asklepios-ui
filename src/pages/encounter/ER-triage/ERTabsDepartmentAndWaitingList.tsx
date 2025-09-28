@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import ReactDOMServer from 'react-dom/server';
-import ERWaitingList from './ERWaitingList'; 
+import ERWaitingList from './ERWaitingList';
 import ERList from './ERList';
 import './styles.less';
 
@@ -33,11 +33,11 @@ const ERTabsDepartmentAndWaitingList = () => {
   return (
     <Panel>
       <Tabs defaultActiveKey="1" appearance="subtle">
-        <Tabs.Tab eventKey="1" title="ER Waiting List">
-          <ERWaitingList />
-        </Tabs.Tab>
-        <Tabs.Tab eventKey="2" title="ER Department">
+        <Tabs.Tab eventKey="1" title="ER Department">
           <ERList />
+        </Tabs.Tab>
+        <Tabs.Tab eventKey="2" title="ER Waiting List">
+          <ERWaitingList />
         </Tabs.Tab>
       </Tabs>
     </Panel>
