@@ -43,10 +43,8 @@ const Departments = () => {
   const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
   const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
-
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
-
 
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
@@ -234,7 +232,6 @@ const Departments = () => {
       setDepartmentList(departmentListResponse);
       return;
     }
-
     try {
       let response;
       if (fieldName === "facilityName") {
@@ -444,6 +441,7 @@ const Departments = () => {
           record={record}
           setRecord={setRecord}
         />
+
       );
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (
@@ -455,7 +453,6 @@ const Departments = () => {
           selectData={depTTypesEnum ?? []}
           record={record}
           setRecord={setRecord}
-
         />
       );
     } else {
