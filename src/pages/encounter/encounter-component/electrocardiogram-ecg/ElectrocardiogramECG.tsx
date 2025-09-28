@@ -18,7 +18,7 @@ import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import AddElectrocardiogram from './AddElectrocardiogram';
 import { formatDateWithoutSeconds } from '@/utils';
-import epg from '@/images/epg.png'; // استيراد الصورة
+import epg from '@/images/epg.png';
 
 const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
   const authSlice = useAppSelector(state => state.auth);
@@ -38,7 +38,6 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
   const [allData, setAllData] = useState(false);
   const dispatch = useAppDispatch();
 
-  // State جديد لتخزين الصور المختارة
   const [selectedImages, setSelectedImages] = useState<
     { imageUrl: string; createdAt: string; createdBy: string }[]
   >([]);
@@ -170,16 +169,15 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
       key: 'imageSelect',
       title: '',
       render: rowData => {
-        const isChecked = selectedImages.some(img => img.key === rowData.key); // تحقق لكل صف
+        const isChecked = selectedImages.some(img => img.key === rowData.key);
         return (
           <Checkbox
             checked={isChecked}
             onChange={(value, checked) => {
               setSelectedImages(prev => {
                 if (checked) {
-                  // إضافة فقط هذه الصورة
                   return [
-                    ...prev.filter(img => img.key !== rowData.key), // إزالة أي نسخة موجودة مسبقًا لنفس الصف
+                    ...prev.filter(img => img.key !== rowData.key),
                     {
                       key: rowData.key,
                       imageUrl: rowData.imageUrl,
@@ -188,7 +186,6 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
                     }
                   ];
                 } else {
-                  // إزالة الصورة إذا تم إلغاء الاختيار
                   return prev.filter(img => img.key !== rowData.key);
                 }
               });
@@ -331,7 +328,6 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
     }
   ];
   return (
-    // الجزء الخاص بعرض الصور أسفل الجدول وكل Checkbox مستقل
     <div>
       <MyTable
         data={electrocardiogramEcgResponse?.object ?? []}
@@ -351,7 +347,6 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
                 onChange={(value, checked) => {
                   setSelectedImages(prev => {
                     if (checked) {
-                      // إضافة صورة واحدة للـ row الحالي
                       return [
                         ...prev.filter(img => img.key !== rowData.key),
                         {
@@ -362,7 +357,6 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
                         }
                       ];
                     } else {
-                      // إزالة الصورة إذا تم إلغاء الاختيار
                       return prev.filter(img => img.key !== rowData.key);
                     }
                   });
@@ -407,34 +401,31 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
         }
       />
 
-      {/* عرض الصور أسفل الجدول */}
-      
-{/* عرض الصور أسفل الجدول */}
-{selectedImages.length > 0 && (
-  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
-    {selectedImages.map((img, index) => (
-      <div
-        key={index}
-        style={{
-          width: 'calc(33.33% - 8px)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          marginBottom: '8px'
-        }}
-      >
-        <img
-          src={img.imageUrl || epg} // استخدم الصورة الافتراضية إذا لم توجد صورة
-          alt="ECG"
-          style={{ width: '100%', height: '120px', objectFit: 'cover' }}
-        />
-        <span style={{ fontSize: '12px', textAlign: 'center', marginTop: '4px' }}>
-          {formatDateWithoutSeconds(img.createdAt)}
-        </span>
-      </div>
-    ))}
-  </div>
-)}
+      {selectedImages.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+          {selectedImages.map((img, index) => (
+            <div
+              key={index}
+              style={{
+                width: 'calc(33.33% - 8px)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                marginBottom: '8px'
+              }}
+            >
+              <img
+                src={img.imageUrl || epg}
+                alt="ECG"
+                style={{ width: '100%', height: '120px', objectFit: 'cover' }}
+              />
+              <span style={{ fontSize: '12px', textAlign: 'center', marginTop: '4px' }}>
+                {formatDateWithoutSeconds(img.createdAt)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <AddElectrocardiogram
         open={open}
