@@ -43,7 +43,6 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
     setOpenModal(true);
   };
 
-  // بيانات وهمية للـ sections عند الضغط على صف معين
   const getSampleDataForRow = rowKey => {
     const sampleData = {
       1: {
@@ -99,11 +98,10 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
             regurgitation: 'Trivial'
           },
 
-          // Other Findings - تأكد من أن جميع القيم arrays
           pericardium: 'Normal',
-          rwma: [], // تغيير إلى array
+          rwma: [],
           wallMotionAbnormalities: [],
-          selectedRwmaOptions: [], // إضافة هذا الحقل
+          selectedRwmaOptions: [],
 
           // Conclusion
           finalImpression:
@@ -165,11 +163,10 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
             regurgitation: 'Trivial'
           },
 
-          // Other Findings - تأكد من أن جميع القيم arrays
           pericardium: 'Normal',
-          rwma: ['Hypokinesia'], // تغيير إلى array
+          rwma: ['Hypokinesia'],
           wallMotionAbnormalities: ['Inferior wall hypokinesia'],
-          selectedRwmaOptions: ['Hypokinesia'], // إضافة هذا الحقل
+          selectedRwmaOptions: ['Hypokinesia'],
 
           // Conclusion
           finalImpression:
@@ -193,11 +190,9 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
     );
   };
 
-  // التعامل مع الضغط على صف من الجدول
   const handleRowClick = row => {
     setSelectedRow(row);
 
-    // جلب البيانات المناسبة للصف المحدد
     const rowData = getSampleDataForRow(row.key);
     setEchoTest(rowData.echoTest);
     setRecord(rowData.record);
@@ -369,28 +364,9 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
-      {/* إظهار الـ sections فقط عند تحديد صف من الجدول */}
       {selectedRow && (
         <div style={{ margin: '10px' }}>
-          {/* <div
-            style={{
-              padding: '15px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '5px',
-              marginBottom: '10px'
-            }}
-          >
-            <h4 style={{ color: '#495057', marginBottom: '10px' }}>
-              Echo Test Details - {selectedRow.testIndication}
-            </h4>
-            <p style={{ color: '#6c757d', margin: 0, fontSize: '14px' }}>
-              Selected Test: {selectedRow.echotype} | Cardiologist: {selectedRow.cardiologist}
-            </p>
-          </div> */}
-
           <Form fluid disabled={true}>
-            {/* دائماً readonly */}
             <div className="sections-handle-position">
               <TestInformation
                 echoTest={echoTest}
