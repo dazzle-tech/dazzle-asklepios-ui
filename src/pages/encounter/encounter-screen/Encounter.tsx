@@ -530,7 +530,7 @@ const Encounter = () => {
     },
     {
       key: 'audiometryPuretone',
-      label: 'ENT',
+      label: 'Audiometry Puretone',
       icon: <FontAwesomeIcon icon={faEarListen} className="icon" />,
       path: 'audiometry'
     },
@@ -929,9 +929,7 @@ const Encounter = () => {
       <AllergiesModal
         open={openAllargyModal}
         setOpen={setOpenAllargyModal}
-
         patient={propsData?.patien}
-
       />
 
       <WarningiesModal
@@ -947,7 +945,7 @@ const Encounter = () => {
       />
 
       <AppointmentModal
-       from={'Encounter'}
+        from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false);
@@ -958,7 +956,7 @@ const Encounter = () => {
         onSave={refitchAppointments}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
-
+        
       />
 
       <EncounterDischarge
