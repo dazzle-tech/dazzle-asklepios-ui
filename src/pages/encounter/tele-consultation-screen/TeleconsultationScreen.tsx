@@ -1,5 +1,5 @@
 // Import required modules
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Panel } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import DragDropTable from './DragDropTable';
@@ -22,139 +22,147 @@ import ReactDOMServer from 'react-dom/server';
 import { useDispatch } from 'react-redux';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import './start-tele-consultation/styles.less';
-// Define request type
-type TeleconsultationRequest = {
-  id: number;
-  patientName: string;
-  mrn: string;
-  gender: 'Male' | 'Female' | 'Other';
-  age: number;
-  reason: string;
-  requestedBy: string;
-  requestedAt: string;
-  priority: 'Low' | 'Medium' | 'Urgent';
-  status: 'Pending' | 'Confirmed' | 'Rejected';
-};
+import { useGetEncounterByIdQuery, useGetTeleConsultationListQuery, useGetTeleConsultationProgressNotesListQuery, useSaveTeleConsultationMutation } from '@/services/encounterService';
+import { initialListRequestId } from '@/types/types';
+import { ApTeleConsultation } from '@/types/model-types';
+import { formatDateWithoutSeconds } from '@/utils';
+import { render } from 'react-dom';
+import { newApEncounter, newApPatient, newApTeleConsultation } from '@/types/model-types-constructor';
+import { notify } from '@/utils/uiReducerActions';
+import MyModal from '@/components/MyModal/MyModal';
+import StartTeleConsultation from './start-tele-consultation';
 
-// Sample data
-const sampleRequests: TeleconsultationRequest[] = [
-  {
-    id: 1,
-    patientName: 'John Doe',
-    mrn: 'MRN001',
-    gender: 'Male',
-    age: 35,
-    reason: 'Chest pain',
-    requestedBy: 'Dr. Smith',
-    requestedAt: '2025-08-11 10:30',
-    priority: 'Urgent',
-    status: 'Pending'
-  },
-  {
-    id: 2,
-    patientName: 'Ahmad Naser',
-    mrn: 'MRN003',
-    gender: 'Male',
-    age: 42,
-    reason: 'Severe abdominal pain',
-    requestedBy: 'Dr. Rami Khalil',
-    requestedAt: '2025-08-12 08:45',
-    priority: 'Urgent',
-    status: 'Pending'
-  },
-  {
-    id: 3,
-    patientName: 'Jane Smith',
-    mrn: 'MRN002',
-    gender: 'Female',
-    age: 29,
-    reason: 'Headache',
-    requestedBy: 'Dr. Johnson',
-    requestedAt: '2025-08-11 09:15',
-    priority: 'Medium',
-    status: 'Pending'
-  },
-  {
-    id: 4,
-    patientName: 'Lina Youssef',
-    mrn: 'MRN004',
-    gender: 'Female',
-    age: 37,
-    reason: 'Blurred vision and dizziness',
-    requestedBy: 'Dr. Sara Mansour',
-    requestedAt: '2025-08-12 10:20',
-    priority: 'Low',
-    status: 'Pending'
-  }
-];
+// Define request type
+
+
+
 // State variables
 const TeleconsultationRequests = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [requests, setRequests] = useState<TeleconsultationRequest[]>(sampleRequests);
+  const [patient , setPatient] = useState<any>({...newApPatient});
+  const [encounter , setEncounter] = useState<any>({...newApEncounter});
+
+  const [actionType, setActionType] = useState<'confirm' | 'reject' | null>(null);
+  const [requests, setRequests] = useState<ApTeleConsultation>({...newApTeleConsultation});
+  const {data:encounterData}=useGetEncounterByIdQuery(requests?.encounterId??'',{skip:!requests?.encounterId});
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [cancelObject, setCancelObject] = useState<any>({});
   const [record, setRecord] = useState({});
-  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
-  const [pendingAction, setPendingAction] = useState<'confirm' | 'reject' | null>(null);
+ const [openStartModal, setOpenStartModal] = useState(false);
+ const {
+   data: fetchedProgressNotes,
+   isLoading,
+   isFetching,
+   error,
+  
+ } = useGetTeleConsultationProgressNotesListQuery(
+   {
+     ...initialListRequestId
+     ,
+     filters: [
+      {
+        fieldName: "tele_consultation_id",
+        operator: "match",
+        value: requests?.id,
+      },
+    ],
+
+    },{
+      skip: !requests?.id
+    });
+
+  // const [pendingAction, setPendingAction] = useState<'confirm' | 'reject' | null>(null);
   const [customConfirmMessage, setCustomConfirmMessage] = useState('');
   const [sortColumn, setSortColumn] = useState('patientName');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const handleConfirmAction = () => {
-    if (selectedRequestId !== null && pendingAction) {
-      setRequests(prev =>
-        prev.map(req =>
-          req.id === selectedRequestId
-            ? { ...req, status: pendingAction === 'confirm' ? 'Confirmed' : 'Rejected' }
-            : req
-        )
-      );
-      // Navigate to the consultation screen if confirmed
-      if (pendingAction === 'confirm') {
-        const confirmedRequest = requests.find(req => req.id === selectedRequestId);
-        if (confirmedRequest) {
+
+
+
+ const {data:orders,refetch}=useGetTeleConsultationListQuery({...initialListRequestId,})
+console.log(orders);
+ const [save,saveMutation]=useSaveTeleConsultationMutation();
+
+
+
+useEffect(()=>{
+  if(encounterData){
+    setEncounter(encounterData);
+   
+  }
+},[encounterData]);
+useEffect(()=>{
+  setPatient(requests?.patient??{});
+},[requests]);
+
+ const handleConfirmAction = () => {
+  if (requests !== null) {
+    try {
+      save({ ...requests, statusLkey:'32972397807900'}) 
+        .unwrap()
+        .then((res) => {
+          dispatch(
+            notify({
+              sev: 'success',
+              msg: 'Teleconsultation started successfully',
+            })
+          );
+          refetch();
+          // setOpenStartModal(true);
           navigate('/start-tele-consultation', {
             state: {
-              patient: confirmedRequest.patientName,
-              encounter: confirmedRequest,
-              fromPage: 'teleconsultation-requests'
-            }
+              patient: patient,
+              encounter: encounter,
+              fromPage: 'teleconsultation-requests',
+             
+           
+            },
           });
-        }
-      }
+        })
+        .catch((err) => {
+          console.error('Save failed:', err);
+          dispatch(
+            notify({
+              sev: 'error',
+              msg: 'Failed to start teleconsultation',
+            })
+          );
+        });
+    } catch (e) {
+      console.error('Unexpected error:', e);
     }
+  }
 
-    // Reset modal state
-    setOpenConfirmModal(false);
-    setSelectedRequestId(null);
-    setPendingAction(null);
-  };
+  // Reset modal state
+  setOpenConfirmModal(false);
+};
+
   // Handle cancellation (rejection) with reason
   const handleCancleReject = () => {
-    if (selectedRequestId !== null) {
-      setRequests(prev =>
-        prev.map(req =>
-          req.id === selectedRequestId
-            ? { ...req, status: 'Rejected', reason: cancelObject?.reason || '' }
-            : req
-        )
+    // ORD_STAT_REJCONS
+  save({ ...requests, statusLkey: '32943037809141' })
+    .unwrap()
+    .then((res) => {
+      dispatch(
+        notify({ sev: 'success', msg: 'Request rejected successfully' })
       );
-    }
-
-    // Close modal and reset
-    setOpenCancelModal(false);
-    setSelectedRequestId(null);
-    setCancelObject({});
-  };
-  const physicianList = [
-    { label: 'Dr. Ahmed Ali', value: '1' },
-    { label: 'Dr. Sara Youssef', value: '2' },
-    { label: 'Dr. Khalid Mansour', value: '3' }
-  ];
-
+      refetch();
+    })
+    .catch((err) => {
+      console.error('Save failed:', err);
+      dispatch(notify({ sev: 'error', msg: 'Failed to reject request' }));
+    })
+    .finally(() => {
+      // Close modal and reset
+      setOpenCancelModal(false);
+      setSelectedRequestId(null);
+      setCancelObject({});
+    });
+};
+ 
 const contents = (
   <div className="advanced-filters">
     <Form fluid className="dissss">
@@ -186,17 +194,7 @@ const contents = (
         setRecord={setRecord}
       />
 
-<MyInput
-  width="100%"
-  fieldLabel="Physician"
-  fieldType="select"
-  fieldName="physicianId"
-  record={record}
-  setRecord={setRecord}
-  selectData={physicianList}
-  selectDataLabel="label"
-  selectDataValue="value"
-/>
+
 
 
       <MyInput
@@ -266,9 +264,9 @@ const contents = (
       key: 'priorityIcon',
       title: '',
       width: 50,
-      align: 'center',
-      render: (row: TeleconsultationRequest) =>
-        row.priority.toLowerCase() === 'urgent' ? (
+      
+      render: (row: ApTeleConsultation) =>
+        row.expectedResponse ==="immediate" ? (
           <FontAwesomeIcon
             icon={faLandMineOn}
             style={{ color: 'red', fontSize: '18px' }}
@@ -280,65 +278,73 @@ const contents = (
       key: 'patient',
       title: 'Patient Name',
       dataKey: 'patientName',
-      width: 200
+      width: 200,
+      render: (row: any) => (
+        <div>{row.patient?.fullName}</div>
+      )
     },
     { key: 'gender', title: 'Gender', dataKey: 'gender', width: 80 },
     { key: 'age', title: 'Age', dataKey: 'age', width: 60 },
-    { key: 'reason', title: 'Reason', dataKey: 'reason', width: 180 },
+    { key: 'questionToConsultant', title: 'Question To Consultant', width: 180
+
+     },
     {
       key: 'requestedBy',
       title: 'Requested By / At',
       width: 160,
-      render: (row: TeleconsultationRequest) => (
+      render: (row: ApTeleConsultation) => (
         <>
           <div>{row.requestedBy}</div>
-          <div style={{ fontSize: '12px', color: '#888' }}>{row.requestedAt}</div>
+          <div style={{ fontSize: '12px', color: '#888' }}>{formatDateWithoutSeconds(row.requestedAt)}</div>
         </>
       )
     },
-    { key: 'priority', title: 'Priority', dataKey: 'priority', width: 100 },
-    {
-      key: 'status',
+  { key: 'urgencyLkey', title: 'Urgency', width: 80 ,
+        render: row => {
+          return row.urgencyLvalue?.lovDisplayVale;
+        }
+      },
+      {
+      key: 'statusLkey',
       title: 'Status',
-      dataKey: 'status',
       width: 100,
-      render: (row: TeleconsultationRequest) => (
-        <MyBadgeStatus
-          backgroundColor={
-            row.status === 'Pending'
-              ? 'var(--light-gray)'
-              : row.status === 'Confirmed'
-              ? 'var(--light-green)'
-              : 'var(--light-pink)'
-          }
-          color={
-            row.status === 'Pending'
-              ? 'var(--primary-gray)'
-              : row.status === 'Confirmed'
-              ? 'var(--primary-green)'
-              : 'var(--primary-pink)'
-          }
-          contant={row.status}
-        />
-      )
+
+      render: row => {
+      
+        return <MyBadgeStatus  color={row.statusLvalue?.valueColor} contant={row.statusLvalue?.lovDisplayVale} />;
+      }
     },
 {
   key: 'actions',
   title: 'Actions',
   width: 120,
-  align: 'center',
-  render: (rowData: TeleconsultationRequest) => (
+ 
+  render: (rowData: ApTeleConsultation) => (
     <div className="actions-icons-tele-consultation-screen">
       {/* Start Teleconsultation */}
       <Whisper trigger="hover" placement="top" speaker={<Tooltip>Start Teleconsultation</Tooltip>}>
         <div>
           <MyButton
             size="small"
+             disabled={rowData.statusLkey === '32943037809141'}
             onClick={() => {
-              setSelectedRequestId(rowData.id);
-              setPendingAction('confirm');
-              setCustomConfirmMessage(`Start The Call With ${rowData.patientName}?`);
-              setOpenConfirmModal(true);
+              if(rowData.statusLkey === '32972397807900'){
+                navigate('/start-tele-consultation', {
+            state: {
+              patient: patient,
+              encounter: encounter,
+              fromPage: 'teleconsultation-requests',
+             
+           
+            },
+          });
+              }
+              
+              // setPendingAction('confirm');
+              else{
+              setCustomConfirmMessage(`Start The Call With ${rowData.patient?.fullName}?`);
+              setActionType('confirm');
+              setOpenConfirmModal(true);}
             }}
           >
             <FontAwesomeIcon icon={faCirclePlay} />
@@ -352,14 +358,11 @@ const contents = (
           <MyButton
             size="small"
             onClick={() => {
-              setSelectedRequestId(rowData.id);
-              setCancelObject({
-                ...rowData,
-                statusLkey: '',
-                reason: ''
-              });
+           
+             setActionType('reject');
               setOpenCancelModal(true);
             }}
+             disabled={rowData.statusLkey !== '5959341154465084'}
           >
             <FontAwesomeIcon icon={faCircleXmark} />
           </MyButton>
@@ -381,16 +384,16 @@ const contents = (
 
   ];
 
-  const sortedData = [...requests].sort((a, b) => {
-    const aValue = a[sortColumn as keyof TeleconsultationRequest];
-    const bValue = b[sortColumn as keyof TeleconsultationRequest];
+  const sortedData =[...orders].sort((a, b) => {
+    const aValue = a[sortColumn as keyof ApTeleConsultation];
+    const bValue = b[sortColumn as keyof ApTeleConsultation];
 
     if (aValue === bValue) return 0;
     return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
   });
 
-  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-
+  const paginatedData = sortedData?.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+   console.log(paginatedData);
   const divContent = (
     <div className="page-title">
       <h5>Tele Consultation Screen</h5>
@@ -402,16 +405,21 @@ const contents = (
 
   return (
     <Panel>
+    
       <DragDropTable
-        data={paginatedData}
+        data={orders?.object??[]}
         columns={columns}
         loading={false}
         filters={filterstable}
         page={page}
         rowsPerPage={rowsPerPage}
-        totalCount={requests.length}
+        totalCount={orders?.object?.length}
         sortColumn={sortColumn}
         sortType={sortType}
+         rowClassName={row => (row?.id === requests?.id ? 'selected-row' : '')}
+        onRowClick={data => {
+          setRequests(data);
+        }}
         onSortChange={(col, type) => {
           setSortColumn(col);
           setSortType(type);
@@ -437,10 +445,22 @@ const contents = (
       <DeletionConfirmationModal
         open={openConfirmModal}
         setOpen={setOpenConfirmModal}
-        itemToDelete={pendingAction === 'confirm' ? 'Confirm' : 'Reject'}
-        actionType={pendingAction === 'confirm' ? 'confirm' : 'reject'}
+        itemToDelete={actionType==='confirm'?"Confirm":"Reject"}
+        actionType={actionType}
         actionButtonFunction={handleConfirmAction}
         confirmationQuestion={customConfirmMessage}
+      />
+      <MyModal
+        open={openStartModal}
+        setOpen={setOpenStartModal}
+        title="Start Teleconsultation"
+        size="fill"
+       content={<StartTeleConsultation consultaition={requests} 
+        patient={patient}
+        encounter={encounter}
+        notelist={fetchedProgressNotes??[]}
+       />}
+      
       />
     </Panel>
   );

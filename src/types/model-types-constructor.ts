@@ -2032,7 +2032,7 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	sofa:undefined,
 	medicalCalculators:undefined,
 	cpoeResultsManager:undefined,
-	orderDetails:undefined,
+	icu:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
@@ -4045,6 +4045,36 @@ export const newApSnomedCode:modelTypes.ApSnomedCode = {
 	isValid:undefined,
 } 
 
+export const newApTeleConsultation:modelTypes.ApTeleConsultation = { 
+	id:'',
+	questionToConsultant:'',
+	consultantFacilityId:'',
+	consultantDepartmentId:'',
+	specialtyLkey:undefined,
+	urgencyLkey:undefined,
+	expectedResponse:'',
+	notes:'',
+	expectedResponseTime:0,
+	startedAt:0,
+	rejectedAt:0,
+	statusLkey:undefined,
+	rejectedReason:'',
+	patientId:'',
+	encounterId:'',
+	rejectedBy:'',
+	startedBy:'',
+	requestedAt:0,
+	requestedBy:'',
+} 
+
+export const newApTeleConsultationProgressNote:modelTypes.ApTeleConsultationProgressNote = { 
+	id:'',
+	note:'',
+	createdBy:'',
+	createdDate:0,
+	teleConsultationId:'',
+} 
+
 export const newApTenant:modelTypes.ApTenant = { 
 	key:undefined,
 	tenantId:'',
@@ -4542,3 +4572,25 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	deletedAt:undefined,
 	isvalid:undefined,
 } 
+
+export const newAppUser:modelTypes.AppUser = { 
+	id:undefined,
+	login:'',
+	passwordHash:'',
+	firstName:'',
+	lastName:'',
+	email:'',
+	imageUrl:'',
+	activated:undefined,
+	langKey:undefined,
+	resetKey:undefined,
+	createdBy:'',
+	createdDate:undefined,
+	resetDate:undefined,
+	lastModifiedBy:'',
+	lastModifiedDate:undefined,
+	phoneNumber:'',
+	birthDate:null,
+	gender:'',
+} 
+

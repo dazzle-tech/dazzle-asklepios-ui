@@ -2031,7 +2031,7 @@ export interface ApMedicalSheets {
 	sofa:boolean;
 	medicalCalculators:boolean;
 	cpoeResultsManager:boolean;
-	orderDetails:boolean;
+	icu:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -4044,6 +4044,36 @@ export interface ApSnomedCode {
 	isValid:boolean;
 } 
 
+export interface ApTeleConsultation { 
+	id:string;
+	questionToConsultant:string;
+	consultantFacilityId:string;
+	consultantDepartmentId:string;
+	specialtyLkey:string;
+	urgencyLkey:string;
+	expectedResponse:string;
+	notes:string;
+	expectedResponseTime:number;
+	startedAt:number;
+	rejectedAt:number;
+	statusLkey:string;
+	rejectedReason:string;
+	patientId:string;
+	encounterId:string;
+	rejectedBy:string;
+	startedBy:string;
+	requestedAt:number;
+	requestedBy:string;
+} 
+
+export interface ApTeleConsultationProgressNote { 
+	id:string;
+	note:string;
+	createdBy:string;
+	createdDate:number;
+	teleConsultationId:string;
+} 
+
 export interface ApTenant { 
 	key:string;
 	tenantId:string;
@@ -4541,3 +4571,25 @@ export interface ApWarehouseUser {
 	deletedAt:number;
 	isvalid:boolean;
 } 
+
+export interface AppUser { 
+	id:;
+	login:string;
+	passwordHash:string;
+	firstName:string;
+	lastName:string;
+	email:string;
+	imageUrl:string;
+	activated:boolean;
+	langKey:string;
+	resetKey:string;
+	createdBy:string;
+	createdDate:;
+	resetDate:;
+	lastModifiedBy:string;
+	lastModifiedDate:;
+	phoneNumber:string;
+	birthDate:Date;
+	gender:string;
+} 
+

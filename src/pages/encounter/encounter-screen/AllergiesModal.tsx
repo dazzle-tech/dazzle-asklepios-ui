@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState } from 'react';
 import { Checkbox, Table } from 'rsuite';
 import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
+
 const AllergiesModal = ({ open, setOpen, patient }) => {
   const [showCanceled, setShowCanceled] = useState(true);
 
