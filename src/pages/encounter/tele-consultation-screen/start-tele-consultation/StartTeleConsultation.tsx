@@ -49,6 +49,11 @@ const StartTeleConsultation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   const { state } = useLocation();
   const { patient, encounter, fromPage, consultaition, notelist } = state || {};
+  console.log('patient', patient);
+  console.log('encounter', encounter);
+  console.log('fromPage', fromPage);
+  console.log('consultaition', consultaition);
+  console.log('notelist', notelist);
   const [showProcedureDetails, setShowProcedureDetails] = useState(false);
   const [showOperationRequest, setShowOperationRequest] = useState(false);
   const [showConsultationModal, setShowConsultationModal] = useState(false);
@@ -159,12 +164,7 @@ const StartTeleConsultation = () => {
                   title={<div className="patient-history-title">
                     <FontAwesomeIcon icon={faUser} className="patient-history-icon" />
                     <span>Patient Details</span></div>}
-                  content={<AddProgressNotes
-                    progressNotes={progressNotes}
-                    setProgressNotes={setProgressNotes}
-                    currentChart={{ key: 'dummy-chart-key' }}
-                    dispatch={(action) => console.log(action)}
-                  />} />
+                  content={<ProgressNote consultaition={consultaition} list={notelist}/>} />
                 <div>
                   <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} />
                 </div>

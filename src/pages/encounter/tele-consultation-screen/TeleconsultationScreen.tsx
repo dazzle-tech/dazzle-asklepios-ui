@@ -117,6 +117,8 @@ useEffect(()=>{
               patient: patient,
               encounter: encounter,
               fromPage: 'teleconsultation-requests',
+              consultaition: requests,
+              notelist: fetchedProgressNotes??[]
              
            
             },
@@ -334,6 +336,9 @@ const contents = (
               patient: patient,
               encounter: encounter,
               fromPage: 'teleconsultation-requests',
+              consultaition: requests,
+              notelist: fetchedProgressNotes??[]
+
              
            
             },
@@ -450,18 +455,7 @@ const contents = (
         actionButtonFunction={handleConfirmAction}
         confirmationQuestion={customConfirmMessage}
       />
-      <MyModal
-        open={openStartModal}
-        setOpen={setOpenStartModal}
-        title="Start Teleconsultation"
-        size="fill"
-       content={<StartTeleConsultation consultaition={requests} 
-        patient={patient}
-        encounter={encounter}
-        notelist={fetchedProgressNotes??[]}
-       />}
-      
-      />
+     
     </Panel>
   );
 };
