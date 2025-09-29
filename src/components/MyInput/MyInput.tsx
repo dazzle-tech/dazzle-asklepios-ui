@@ -250,15 +250,42 @@ const MyInput = ({
       case 'number': {
         const inputWidth = props?.width ?? 145;
         const addonWidth = 40;
-        const totalWidth =
-          inputWidth +
-          (leftAddon ? leftAddonwidth ?? addonWidth : 0) +
-          (rightAddon ? rightAddonwidth ?? addonWidth : 0);
+
+        const calculateTextWidth = text => {
+          if (!text) return addonWidth;
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          context.font =
+            '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial';
+          const metrics = context.measureText(text.toString());
+          return Math.ceil(metrics.width) + 18;
+        };
+
+        const leftWidth = leftAddon
+          ? leftAddonwidth === 'auto'
+            ? calculateTextWidth(leftAddon)
+            : leftAddonwidth ?? addonWidth
+          : 0;
+
+        const rightWidth = rightAddon
+          ? rightAddonwidth === 'auto'
+            ? calculateTextWidth(rightAddon)
+            : rightAddonwidth ?? addonWidth
+          : 0;
+
+        const totalWidth = inputWidth + rightWidth + (rightAddon ? 2 : 0);
 
         const inputControl = (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
-            style={{ width: inputWidth, height: props?.height ?? 30 }}
+            style={{
+              width: inputWidth,
+              height: props?.height ?? 30,
+              minWidth: inputWidth,
+              maxWidth: inputWidth,
+              flexShrink: 0,
+              paddingRight: rightAddon ? '2px' : undefined
+            }}
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
@@ -276,13 +303,16 @@ const MyInput = ({
             <InputGroup style={{ width: totalWidth }}>
               {leftAddon && (
                 <InputGroup.Addon
+                  className="my-input-addon"
                   style={{
-                    width: leftAddonwidth ?? addonWidth,
-                    textAlign: 'center',
-                    color: '#A1A9B8',
-                    backgroundColor: '#e0e0e0',
-                    pointerEvents: 'none',
-                    opacity: 1
+                    width:
+                      leftAddonwidth === 'auto'
+                        ? calculateTextWidth(leftAddon)
+                        : leftAddonwidth ?? addonWidth,
+                    minWidth:
+                      leftAddonwidth === 'auto'
+                        ? calculateTextWidth(leftAddon)
+                        : leftAddonwidth ?? addonWidth
                   }}
                 >
                   {leftAddon}
@@ -291,13 +321,16 @@ const MyInput = ({
               {inputControl}
               {rightAddon && (
                 <InputGroup.Addon
+                  className="my-input-addon"
                   style={{
-                    width: rightAddonwidth ?? addonWidth,
-                    textAlign: 'center',
-                    color: '#A1A9B8',
-                    backgroundColor: '#e0e0e0',
-                    pointerEvents: 'none',
-                    opacity: 1
+                    width:
+                      rightAddonwidth === 'auto'
+                        ? calculateTextWidth(rightAddon)
+                        : rightAddonwidth ?? addonWidth,
+                    minWidth:
+                      rightAddonwidth === 'auto'
+                        ? calculateTextWidth(rightAddon)
+                        : rightAddonwidth ?? addonWidth
                   }}
                 >
                   {rightAddon}
@@ -332,7 +365,7 @@ const MyInput = ({
         const inputControl = (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}
-            style={{ width: inputWidth, height: props?.height ?? 30}}
+            style={{ width: inputWidth, height: props?.height ?? 30 }}
             disabled={props.disabled}
             name={fieldName}
             type={fieldType}
@@ -387,8 +420,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                  ? 'orange'
-                  : 'grey'
+                ? 'orange'
+                : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
@@ -400,9 +433,17 @@ const MyInput = ({
   };
 
   return (
-    <Form.Group className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}>
+    <Form.Group
+      className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
+    >
       <Form.ControlLabel>
-        {showLabel && <MyLabel label={fieldLabel} error={validationResult} color={mode === "light" ? 'var(--black)' : "var(--white)"} />}
+        {showLabel && (
+          <MyLabel
+            label={fieldLabel}
+            error={validationResult}
+            color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
+          />
+        )}
         {props.required && <span className="required-field ">*</span>}
       </Form.ControlLabel>
       {props.column && <br />}
