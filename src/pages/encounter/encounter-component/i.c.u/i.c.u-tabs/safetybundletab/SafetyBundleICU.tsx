@@ -116,6 +116,7 @@ const SafetyBundleICU: React.FC = () => {
       <SectionContainer
         title={"Safety Bundle Overview"}
         content={<SafetyBundleOverview bundles={bundles} />}
+        minHeight={"auto"}
       />
 
       <div className="dynamic-cards-over-view-grid">

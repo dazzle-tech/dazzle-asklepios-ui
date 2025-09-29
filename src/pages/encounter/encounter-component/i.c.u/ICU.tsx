@@ -136,6 +136,7 @@ const ICU: React.FC = () => {
                 setRecord={setRecord}
               /></div>
           </Form>}
+        minHeight={"auto"}
       />
     </div>
 
@@ -180,7 +181,8 @@ const ICU: React.FC = () => {
                 </MyButton>
               </div>
 
-                <AbgICU /></>} />
+                <AbgICU /></>}
+              minHeight={"auto"} />
           </div>
         </>} />
     </div>
@@ -198,6 +200,7 @@ const ICU: React.FC = () => {
           patient={patient}
           encounter={encounter}
         />}
+        minHeight={"auto"}
       />
     </div>
 

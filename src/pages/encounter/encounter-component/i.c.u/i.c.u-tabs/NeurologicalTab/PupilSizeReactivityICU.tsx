@@ -90,6 +90,7 @@ const PupilSizeReactivityICU: React.FC = () => {
                   </div>
                 </Form>
               }
+              minHeight={"auto"}
             />
 
             <SectionContainer
@@ -119,6 +120,7 @@ const PupilSizeReactivityICU: React.FC = () => {
                   </div>
                 </Form>
               }
+              minHeight={"auto"}
             />
           </div>
 

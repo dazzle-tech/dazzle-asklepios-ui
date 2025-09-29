@@ -42,6 +42,7 @@ const FlowSheetICU: React.FC = () => {
             editable={dummyEncounter.editable}
           />
         }
+        minHeight={"auto"}
       />
     </div>
   );

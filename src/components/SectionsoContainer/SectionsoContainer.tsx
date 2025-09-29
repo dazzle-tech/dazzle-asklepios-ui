@@ -3,11 +3,21 @@ import './styles.less';
 import { Divider } from 'rsuite';
 import { useSelector } from 'react-redux';
 
-const SectionContainer = ({ title, content, button = null }) => {
+interface SectionContainerProps {
+  title: React.ReactNode;
+  content: React.ReactNode;
+  button?: React.ReactNode;
+  minHeight?: string | number;
+}
+
+const SectionContainer: React.FC<SectionContainerProps> = ({ title, content, button = null, minHeight }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
   return (
-    <div className={`container-form-section ${mode === 'dark' ? 'dark' : 'light'}`}>
+    <div
+      className={`container-form-section ${mode === 'dark' ? 'dark' : 'light'}`}
+      style={{ minHeight: minHeight ?? 'auto' }}
+    >
       <div className={`title-div ${mode === 'dark' ? 'dark' : 'light'}`}>{title}</div>
       <Divider />
       {content}

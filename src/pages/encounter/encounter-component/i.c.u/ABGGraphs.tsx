@@ -26,12 +26,16 @@ const sampleData = [
 interface ABGGraphsProps {
   selectedMetric?: string | null;
   tableView?: boolean;
+  filterView?: boolean;
 }
+
 
 const ABGGraphs: React.FC<ABGGraphsProps> = ({
   selectedMetric: selectedMetricProp = null,
   tableView = true,
+  filterView = true,
 }) => {
+
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [selectedMetric, setSelectedMetric] = useState<string | null>(selectedMetricProp);
@@ -126,19 +130,26 @@ const ABGGraphs: React.FC<ABGGraphsProps> = ({
 
   return (
     <div>
+      {filterView && (
+        <div style={{ marginBottom: 20 }}>
+          {filters()}
+        </div>
+      )}
+
       {tableView && (
         <MyTable
           height={500}
-          filters={filters()}
           data={filteredData}
           columns={columns}
           page={0}
           rowsPerPage={10}
           totalCount={filteredData.length}
-          onPageChange={() => {}}
-          onRowsPerPageChange={() => {}}
+          onPageChange={() => { }}
+          onRowsPerPageChange={() => { }}
         />
       )}
+
+
 
       {selectedMetric && (
         <div style={{ marginTop: 40 }}>

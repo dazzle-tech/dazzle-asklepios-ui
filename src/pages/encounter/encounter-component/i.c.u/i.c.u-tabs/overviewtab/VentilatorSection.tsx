@@ -208,6 +208,7 @@ const VentilatorSection = () => {
           />
         </>
       }
+      minHeight={"auto"}
     />
   );
 };

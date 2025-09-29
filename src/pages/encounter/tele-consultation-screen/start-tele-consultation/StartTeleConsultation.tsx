@@ -122,31 +122,20 @@ const StartTeleConsultation = () => {
               <BackButton onClick={() => navigate(-1)} />
             </div>
 
-            <div className="container-btns-start-tele">
-              <MyButton disabled={edit} prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}>
-                Create Follow-up
-              </MyButton>
-              <MyButton
-                disabled={!dummyPatient.hasAllergy}
-                backgroundColor={dummyPatient.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'}
-                prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
-              >
-                Allergy
-              </MyButton>
-              <MyButton
-                disabled={!dummyPatient.hasWarning}
-                backgroundColor={dummyPatient.hasWarning ? 'var(--primary-orange)' : 'var(--deep-blue)'}
-                prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
-              >
-                Warning
-              </MyButton>
-              <MyButton
-                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                appearance="ghost"
-                onClick={() => alert('Complete Visit')}
-              >
-                Complete Visit
-              </MyButton>
+
+
+            {/* Placeholder for camera section */}
+            <div className="camera-tele-consultaition">
+              <div className='progress-notes-section-handle'>
+                <AddProgressNotes
+                  progressNotes={progressNotes}
+                  setProgressNotes={setProgressNotes}
+                  currentChart={{ key: 'dummy-chart-key' }}
+                  dispatch={(action) => console.log(action)}
+                />
+              </div>
+              <div>
+                <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} /></div>
             </div>
 
             <Divider />
