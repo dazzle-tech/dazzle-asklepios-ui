@@ -929,7 +929,9 @@ const Encounter = () => {
       <AllergiesModal
         open={openAllargyModal}
         setOpen={setOpenAllargyModal}
+
         patient={propsData?.patien}
+
       />
 
       <WarningiesModal
@@ -945,7 +947,7 @@ const Encounter = () => {
       />
 
       <AppointmentModal
-        from={'Encounter'}
+       from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false);
@@ -956,11 +958,13 @@ const Encounter = () => {
         onSave={refitchAppointments}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
+
       />
 
       <EncounterDischarge
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
+
         encounter={propsData?.encounter}
       />
 
@@ -969,6 +973,7 @@ const Encounter = () => {
         open={openConsultationPopup}
         setOpen={() => setOpenConsultationPopup(false)}
         patient={propsData?.patient}
+        encounter={propsData?.encounter}
       />
     </ActionContext.Provider>
   );

@@ -35,6 +35,16 @@ export const initialListRequest: ListRequest = {
   ignore: false,
   filterLogic: 'and'
 };
+export const initialListRequestId: ListRequest = {
+  filters: [],
+  pageNumber: 1,
+  pageSize: 15,
+  sortBy: 'id',
+  sortType: 'asc',
+  timestamp: 0,
+  ignore: false,
+  filterLogic: 'and'
+};
 export const initialListRequestAllValues : ListRequestAllValues  = {
   filters: [],
   sortBy: 'key',

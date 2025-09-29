@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes, ApPatient } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes, ApPatient, ApTeleConsultationProgressNote } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -953,6 +953,49 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
+    saveTeleConsultation: builder.mutation({
+      query: (progressNotes: ApProgressNotes) => ({
+        url: `/encounter/save-tele-consultation`,
+        method: 'POST',
+        body: progressNotes
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getTeleConsultationList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/tele-consultation-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveTeleConsultationProgressNotes: builder.mutation({
+      query: (progressNotes: ApProgressNotes) => ({
+        url: `/encounter/save-tele-consultation-progress-notes`,
+        method: 'POST',
+        body: progressNotes
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+  getTeleConsultationProgressNotesList: builder.query<ApTeleConsultationProgressNote[], ListRequest>({
+  query: (listRequest) => ({
+    url: `/encounter/tele-consultation-progress-notes-list?${fromListRequestToQueryParams(listRequest)}`
+  }),
+  transformResponse: (response: any) => {
+    console.log("RAW progress notes API response", response);
+    return response?.object ?? [];   // ✅ رجّع array حتى لو فاضي
+  },
+  keepUnusedDataFor: 5,
+}),
+
+
+
   }),
 });
 
@@ -1055,5 +1098,10 @@ export const {
   useCancelEncounterMutation,
   usePatientTemporaryDischargeMutation,
   useReturnTemporaryDischargeMutation,
-  useGetDayCaseEncountersQuery
+  useGetDayCaseEncountersQuery,
+  useSaveTeleConsultationMutation,
+  useGetTeleConsultationListQuery,
+  useSaveTeleConsultationProgressNotesMutation,
+  useGetTeleConsultationProgressNotesListQuery
+
 } = encounterService;
