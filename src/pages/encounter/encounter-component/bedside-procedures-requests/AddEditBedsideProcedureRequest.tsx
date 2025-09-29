@@ -36,6 +36,7 @@ const AddEditBedsideProcedureRequest = ({
             <MyInput
               fieldName="cptCode"
               fieldType="select"
+              label="CPT Code"
               selectData={cptListResponseLoading?.object ?? []}
               selectDataLabel="description"
               selectDataValue="cptCode"
