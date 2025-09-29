@@ -135,28 +135,21 @@ const AddChiefComplaintSymptoms = ({
   const content = (
     <div className={clsx('', { 'disabled-panel': edit })}>
       <Form fluid layout="vertical" disabled={edit}>
-        {/* Chief Complaint */}
+        {/* Chief Complaint & Symptoms */}
         <div className="margin-bottom-8">
           <SectionContainer
             title="Chief Complaint"
             content={
-              <MyInput
-                fieldLabel="Chief Complaint"
-                fieldType="textarea"
-                fieldName="chiefComplaint"
-                record={complaintSymptoms}
-                setRecord={setComplaintSymptoms}
-                disabled={isDisabledField}
-              />
-            }
-          />
-        </div>
-        {/* Chief Complaint & Symptoms */}
-        <div className="margin-bottom-8">
-          <SectionContainer
-            title="Chief Complaint & Symptoms"
-            content={
               <Form className="flex-row-3">
+                <MyInput
+                  fieldLabel="Chief Complaint"
+                  fieldType="textarea"
+                  fieldName="chiefComplaint"
+                  record={complaintSymptoms}
+                  setRecord={setComplaintSymptoms}
+                  disabled={isDisabledField}
+                  width={410}
+                />
                 <MyInput
                   width={200}
                   fieldType="date"
@@ -232,7 +225,7 @@ const AddChiefComplaintSymptoms = ({
         </div>
         {/* Aggravating/Relieving Factors & Associated Symptoms */}
         <SectionContainer
-          title="Aggravating/Relieving Factors & Associated Symptoms"
+          title="Aggravating, Relieving & Associated Symptoms"
           content={
             <Form className="flex-row-3">
               <MyInput
@@ -286,7 +279,7 @@ const AddChiefComplaintSymptoms = ({
       setOpen={setOpen}
       title="Add/Edit Chief Complaint Symptoms"
       actionButtonFunction={handleSave}
-      position="right"
+      position="center"
       isDisabledActionBtn={!edit ? isDisabledField : true}
       size="34vw"
       steps={[
