@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Form } from 'rsuite';
 import {
   useSaveComplaintSymptomsMutation,
   useGetComplaintSymptomsQuery
 } from '@/services/encounterService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
@@ -17,6 +18,8 @@ import CancellationModal from '@/components/CancellationModal';
 import AddChiefComplaintSymptoms from './AddChiefComplaintSymptoms';
 import { MdModeEdit } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
+import MyInput from '@/components/MyInput';
+import SectionContainer from '@/components/SectionsoContainer';
 import { formatDateWithoutSeconds } from '@/utils';
 
 const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
@@ -25,6 +28,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
     ...newApComplaintSymptoms,
     duration: null
   });
+  const [selectedRowData, setSelectedRowData] = useState<ApComplaintSymptoms | null>(null);
   const [open, setOpen] = useState(false);
   const [saveComplaintSymptoms] = useSaveComplaintSymptomsMutation();
   const [popupCancelOpen, setPopupCancelOpen] = useState(false);
@@ -32,6 +36,10 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
   const [allData, setAllData] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const dispatch = useAppDispatch();
+
+  // Fetch LOV data for display purposes
+  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
+  const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
 
   const handleSelectRow = (rowKey: string, checked: boolean) => {
     if (checked) {
@@ -74,7 +82,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
 
   // Check if the current row is selected visually
   const isSelected = rowData => {
-    if (rowData && complaintSymptoms && complaintSymptoms.key === rowData.key) {
+    if (rowData && selectedRowData && selectedRowData.key === rowData.key) {
       return 'selected-row';
     } else return '';
   };
@@ -86,6 +94,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       unitLkey: null,
       painLocationLkey: null
     });
+    setSelectedRowData(null);
   };
 
   // Handle Add New
@@ -243,34 +252,8 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
   // Columns
   const columns = [
     {
-      key: 'select',
-      title: (
-        <Checkbox
-          checked={
-            complaintSymptomsResponse?.object?.length > 0 &&
-            selectedRows.length === complaintSymptomsResponse?.object?.length
-          }
-          indeterminate={
-            selectedRows.length > 0 &&
-            selectedRows.length < (complaintSymptomsResponse?.object?.length ?? 0)
-          }
-          onChange={(_, checked) => {
-            if (checked) {
-              setSelectedRows(complaintSymptomsResponse?.object?.map(item => item.key) ?? []);
-            } else {
-              setSelectedRows([]);
-            }
-          }}
-        />
-      ),
-      width: 50,
-      align: 'center',
-      render: (rowData: any) => (
-        <Checkbox
-          checked={isRowSelected(rowData.key)}
-          onChange={(_, checked) => handleSelectRow(rowData.key, checked)}
-        />
-      )
+      key: 'chiefComplaint',
+      title: 'CHIEF COMPLAINT'
     },
     {
       key: 'onsetDate',
@@ -312,6 +295,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       key: 'relievingFactors',
       title: 'RELIEVING FACTORS'
     },
+
     {
       key: 'details',
       title: <Translate>EDIT</Translate>,
@@ -398,10 +382,11 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       <MyTable
         data={complaintSymptomsResponse?.object ?? []}
         columns={columns}
-        height={600}
+        height={400}
         loading={isLoading}
         onRowClick={rowData => {
           setComplaintSymptoms({ ...rowData });
+          setSelectedRowData({ ...rowData });
         }}
         rowClassName={isSelected}
         page={pageIndex}
@@ -456,6 +441,114 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
           </div>
         }
       />
+
+      {/* Details Form Section */}
+      {selectedRowData && (
+        <div className="margin-ver-10">
+          <Form fluid layout="vertical" disabled={true}>
+            {/* Chief Complaint */}
+            <SectionContainer
+              title="Chief Complaint"
+              content={
+                <Form className="flex-row-3">
+                  <MyInput
+                    fieldLabel="Chief Complaint"
+                    fieldType="textarea"
+                    fieldName="chiefComplaint"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldType="date"
+                    fieldLabel="Onset Date"
+                    fieldName="onsetDate"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Pain Characteristics"
+                    fieldName="painCharacteristics"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldType="number"
+                    fieldLabel="Duration"
+                    fieldName="duration"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Unit"
+                    fieldType="select"
+                    fieldName="unitLkey"
+                    selectData={unitLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                    searchable={false}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Pain Location"
+                    fieldType="select"
+                    fieldName="painLocationLkey"
+                    selectData={bodyPartsLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Radiation"
+                    fieldName="radiation"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Aggravating Factors"
+                    fieldName="aggravatingFactors"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Relieving Factors"
+                    fieldName="relievingFactors"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    fieldLabel="Associated Symptoms"
+                    fieldType="textarea"
+                    fieldName="associatedSymptoms"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                </Form>
+              }
+            />
+          </Form>
+        </div>
+      )}
+
       <CancellationModal
         title="Cancel Chief Complaint"
         fieldLabel="Cancellation Reason"

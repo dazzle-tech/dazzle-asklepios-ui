@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Form } from 'rsuite';
 import {
   useSaveTreadmillStresseMutation,
   useGetTreadmillStressesQuery
 } from '@/services/encounterService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import Translate from '@/components/Translate';
 import MyButton from '@/components/MyButton/MyButton';
 import { newApTreadmillStress } from '@/types/model-types-constructor';
@@ -15,9 +16,13 @@ import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
+import MyInput from '@/components/MyInput';
+import SectionContainer from '@/components/SectionsoContainer';
 import AddTreadmillStress from './AddTreadmillStress';
 import { MdModeEdit } from 'react-icons/md';
 import { formatDateWithoutSeconds } from '@/utils';
+import { tr } from 'date-fns/locale';
+
 const TreadmillStress = ({ patient, encounter, edit }) => {
   const authSlice = useAppSelector(state => state.auth);
   const [open, setOpen] = useState(false);
@@ -32,13 +37,22 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
     postTestDiastolicBp: null,
     recoveryTime: null
   });
+  const [selectedRowData, setSelectedRowData] = useState<ApTreadmillStress | null>(null);
   const [saveTreadmillStress] = useSaveTreadmillStresseMutation();
   const [popupCancelOpen, setPopupCancelOpen] = useState(false);
   const [treadmillStressStatus, setTreadmillStressStatus] = useState('');
   const [allData, setAllData] = useState(false);
   const dispatch = useAppDispatch();
 
-  // Initialize list request with default filters
+  // Fetch LOV data for display purposes
+  const { data: baselineEcgLovQueryResponse } = useGetLovValuesByCodeQuery('BASELINE_ECG_FINDINGS');
+  const { data: bruceProtocolLovQueryResponse } =
+    useGetLovValuesByCodeQuery('BRUCE_PROTOCOL_STAGES');
+  const { data: segmentChangeLovQueryResponse } = useGetLovValuesByCodeQuery('SEGMENT_CHANGES');
+  const { data: typeLovQueryResponse } = useGetLovValuesByCodeQuery('TREADMILL_TYPES');
+  const { data: testOutcomeLovQueryResponse } = useGetLovValuesByCodeQuery('TEST_OUTCOMES');
+
+  // Initialize list request with default filters
   const [treadmillStressListRequest, setTreadmillStressListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -69,10 +83,11 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
 
   // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
   const isSelected = rowData => {
-    if (rowData && treadmillStress && treadmillStress.key === rowData.key) {
+    if (rowData && selectedRowData && selectedRowData.key === rowData.key) {
       return 'selected-row';
     } else return '';
   };
+
   // Handle Clear Fields Function
   const handleClearField = () => {
     setTreadmillStress({
@@ -85,16 +100,20 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
       testOutcomeLkey: null,
       arrhythmiaNoted: false
     });
+    setSelectedRowData(null);
   };
+
   // Handle Add New Treadmill Stress Record
   const handleAddNewTreadmillStress = () => {
     handleClearField();
     setOpen(true);
   };
+
   // Change page event handler
   const handlePageChange = (_: unknown, newPage: number) => {
     setTreadmillStressListRequest({ ...treadmillStressListRequest, pageNumber: newPage + 1 });
   };
+
   // Change number of rows per page
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTreadmillStressListRequest({
@@ -103,6 +122,7 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
       pageNumber: 1 // Reset to first page
     });
   };
+
   // Handle Cancle Function
   const handleCancle = () => {
     //TODO convert key to code
@@ -147,6 +167,7 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
       ]
     }));
   }, [patient?.key, encounter?.key]);
+
   useEffect(() => {
     setTreadmillStressListRequest(prev => ({
       ...prev,
@@ -197,6 +218,7 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
       ]
     }));
   }, [treadmillStressStatus, allData]);
+
   useEffect(() => {
     setTreadmillStressListRequest(prev => {
       const filters =
@@ -262,42 +284,6 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
       key: 'exerciseDuration',
       title: 'EXERCISE DURATION',
       render: (row: any) => (row?.exerciseDuration ? `${row?.exerciseDuration ?? ''} Minutes` : ' ')
-    },
-    {
-      key: 'maximumHeartRateAchieved',
-      title: 'MAXIMUM HEART RATE ACHIEVED',
-      render: (row: any) =>
-        row?.maximumHeartRateAchieved ? `${row?.maximumHeartRateAchieved ?? ''} BPM` : ' '
-    },
-    {
-      key: 'recoveryTime',
-      title: 'RECOVERY TIME',
-      render: (row: any) => (row?.recoveryTime ? `${row?.recoveryTime ?? ''} Minutes` : ' '),
-      expandable: true
-    },
-    {
-      key: 'preTestBp',
-      title: 'PRE-TEST BP',
-      expandable: true,
-      render: (row: any) =>
-        row?.preTestDiastolicBp != null &&
-        row?.preTestDiastolicBp != 0 &&
-        row?.preTestSystolicBp != null &&
-        row?.preTestSystolicBp != 0
-          ? `${row?.preTestDiastolicBp} / ${row?.preTestSystolicBp}`
-          : ' '
-    },
-    {
-      key: 'postTestBp',
-      title: 'POST-TEST BP',
-      expandable: true,
-      render: (row: any) =>
-        row?.postTestDiastolicBp != null &&
-        row?.postTestDiastolicBp != 0 &&
-        row?.postTestSystolicBp != null &&
-        row?.postTestSystolicBp != 0
-          ? `${row?.postTestDiastolicBp} / ${row?.postTestSystolicBp}`
-          : ' '
     },
     {
       key: 'details',
@@ -376,8 +362,11 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
         data={treadmillStressResponse?.object ?? []}
         columns={columns}
         loading={isLoading}
-        height={600}
-        onRowClick={row => setTreadmillStress({ ...row })}
+        height={400}
+        onRowClick={row => {
+          setTreadmillStress({ ...row });
+          setSelectedRowData({ ...row });
+        }}
         rowClassName={isSelected}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
@@ -432,6 +421,210 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
           </div>
         }
       />
+
+      {/* Details Form Section */}
+      {selectedRowData && (
+        <div className="margin-det-10">
+          <div className="margin-buttom-8">
+            <SectionContainer
+              title="Test Information"
+              content={
+                <Form className="flex-row-3" disabled={true}>
+                  <MyInput
+                    fieldLabel="Test Indication"
+                    fieldName="indication"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Baseline ECG Findings"
+                    fieldType="select"
+                    fieldName="baselineEcgFindingsLkey"
+                    selectData={baselineEcgLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <div className="bp-input-group-2">
+                    <div>
+                      <MyInput
+                        width={200}
+                        fieldLabel="Pre-Test Blood Pressure"
+                        fieldName="preTestSystolicBp"
+                        fieldType="number"
+                        record={treadmillStress}
+                        setRecord={setTreadmillStress}
+                        disabled={true}
+                      />
+                    </div>
+                    <div className="slash">/</div>
+                    <div>
+                      <MyInput
+                        width={200}
+                        fieldName="preTestDiastolicBp"
+                        fieldType="number"
+                        record={treadmillStress}
+                        setRecord={setTreadmillStress}
+                        showLabel={false}
+                        disabled={true}
+                      />
+                    </div>
+                  </div>
+                </Form>
+              }
+            />
+          </div>
+          <div className="margin-buttom-8">
+            <SectionContainer
+              title="Exercise Parameters"
+              content={
+                <Form className="flex-row-3" disabled={true}>
+                  <MyInput
+                    width={200}
+                    fieldLabel="Bruce Protocol Stage"
+                    fieldType="select"
+                    fieldName="bruceProtocolStageLkey"
+                    selectData={bruceProtocolLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="ST Segment Change"
+                    fieldType="select"
+                    fieldName="segmentChangeLkey"
+                    selectData={segmentChangeLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Arrhythmia Noted"
+                    fieldType="checkbox"
+                    fieldName="arrhythmiaNoted"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Type"
+                    fieldType="select"
+                    fieldName="typeLkey"
+                    selectData={typeLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Test Outcome"
+                    fieldType="select"
+                    fieldName="testOutcomeLkey"
+                    selectData={testOutcomeLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldType="number"
+                    fieldLabel="Exercise Duration (Minutes)"
+                    fieldName="exerciseDuration"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldType="number"
+                    fieldLabel="Maximum Heart Rate Achieved (BPM)"
+                    fieldName="maximumHeartRateAchieved"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldType="number"
+                    fieldLabel="Target Heart Rate (BPM)"
+                    fieldName="targetHeartRate"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                </Form>
+              }
+            />
+          </div>
+          <div className="margin-buttom-8">
+            <SectionContainer
+              title="Out Comes "
+              content={
+                <Form className="flex-row-3" disabled={true}>
+                  <div className="bp-input-group-2">
+                    <div>
+                      <MyInput
+                        width={200}
+                        fieldLabel="Post-Test BP"
+                        fieldName="postTestSystolicBp"
+                        fieldType="number"
+                        record={treadmillStress}
+                        setRecord={setTreadmillStress}
+                        disabled={true}
+                      />
+                    </div>
+                    <div className="slash">/</div>
+                    <div>
+                      <MyInput
+                        width={200}
+                        fieldName="postTestDiastolicBp"
+                        fieldType="number"
+                        record={treadmillStress}
+                        setRecord={setTreadmillStress}
+                        showLabel={false}
+                        disabled={true}
+                      />
+                    </div>
+                  </div>
+                  <MyInput
+                    width={200}
+                    fieldType="number"
+                    fieldLabel="Recovery Time (Minutes)"
+                    fieldName="recoveryTime"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    fieldLabel="Cardiologist Notes"
+                    fieldType="textarea"
+                    fieldName="cardiologistNotes"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                </Form>
+              }
+            />
+          </div>
+        </div>
+      )}
+
       <AddTreadmillStress
         open={open}
         setOpen={setOpen}
