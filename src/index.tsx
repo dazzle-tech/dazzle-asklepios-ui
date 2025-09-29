@@ -10,9 +10,12 @@ import CssBaseline from '@mui/material/CssBaseline';
 import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
+import { enumsApi } from '@/services/enumsApi';
+
 const RootWrapper = () => {
   const mode = useSelector((state: any) => state.ui.mode);
-
+  store.dispatch(enumsApi.util.prefetch('getEnums', undefined, { force: true }));
+ 
   // MUI theme
   const muiTheme = createTheme({
     palette: {
