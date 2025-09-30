@@ -145,11 +145,14 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
   };
 
   const handleSave = () => {
+    console.log("EX",consultationData.expectedResponseTime)
     try{
       const response=save({...consultationData,patientId:patient.key,encounterId:encounter.key,
         // ToDo status key for ORD_STAT_REQST
         statusLkey:'5959341154465084',
-        expectedResponseTime: consultationData.expectedResponseTime?null:new Date(consultationData.expectedResponseTime).getTime()
+expectedResponseTime: consultationData.expectedResponseTime
+  ? new Date(consultationData.expectedResponseTime).getTime()
+  : null
        ,
        requestedAt: new Date().getTime()
       }).unwrap();
