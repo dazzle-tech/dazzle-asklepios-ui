@@ -72,8 +72,8 @@ const SignIn = () => {
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
 
-      // 🔵 Fetch enums ONCE right after successful auth
-      store.dispatch(enumsApi.util.prefetch('getEnums', undefined, { force: true }));
+            store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
+
 
       setErrText(' ');
       navigate('/');
