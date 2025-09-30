@@ -72,8 +72,8 @@ const SignIn = () => {
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
 
-            store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
+      store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
       setErrText(' ');
       navigate('/');
@@ -150,7 +150,7 @@ const SignIn = () => {
                   selectDataValue="key"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
                   record={{}}
-                  setRecord={() => {}}
+                  setRecord={() => { }}
                   placeholder="Select Language"
                   showLabel={false}
                 />
