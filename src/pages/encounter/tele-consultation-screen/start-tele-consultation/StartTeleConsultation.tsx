@@ -16,7 +16,8 @@ import {
   faNotesMedical,
   faProcedures,
   faUser,
-  faHourglassStart
+  faHourglassStart,
+  faVideo
 } from '@fortawesome/free-solid-svg-icons';
 import { Divider, Panel } from 'rsuite';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -130,7 +131,7 @@ const sliceauth = useSelector((state: any) => state.auth);
                  
                 }}
                
-                prefixIcon={() => <FontAwesomeIcon icon={faHourglassStart} />}
+                prefixIcon={() => <FontAwesomeIcon icon={faVideo} />}
                
                 loading={false
                 }
@@ -190,14 +191,15 @@ const sliceauth = useSelector((state: any) => state.auth);
               </div>
 
               <div className="camera-tele-consultaition">
+                   <div>
+                  <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} />
+                </div>
                 <SectionContainer
                   title={<div className="patient-history-title">
                     <FontAwesomeIcon icon={faUser} className="patient-history-icon" />
                     <span>Patient Details</span></div>}
                   content={<ProgressNote consultaition={consultaition} list={notelist}/>} />
-                <div>
-                  <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} />
-                </div>
+             
               </div>
 
               <div className="sheets-open-popup">
