@@ -10,7 +10,6 @@ import { TitleWithIcon } from '@/components/Charts/DynamicTableChart/TitleWithIc
 import DynamicMainTableChart from '@/components/Charts/DynamicTableChart/DynamicMainTableChart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icons';
-import { getEnumByName, getEnumOptions } from '@/utils/enumsHelpers';
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
@@ -19,8 +18,6 @@ const Dashboard = () => {
       <h5>Dashboard</h5>
     </div>
   );
-  const currencies = getEnumOptions('Screen'); // readonly string[]
-   console.log("currencies===>",currencies);
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Dashboard'));
   dispatch(setDivContent(divContentHTML));
