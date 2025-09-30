@@ -6,7 +6,7 @@ import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { Checkbox, HStack, Table } from 'rsuite';
 import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
-
+import PreviewProcedure from './PreviewProcedure';
 import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
@@ -47,7 +47,7 @@ const handleDownload = attachment => {
 };
 const Referrals = props => {
   const location = useLocation();
-
+  const [showPreview, setShowPreview] = useState(false);
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
@@ -383,65 +383,6 @@ const Referrals = props => {
         );
       }
     },
-    {
-      key: 'facilityKey',
-      dataKey: 'facilityKey',
-      title: <Translate>FACILITY</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.facilityKey ? rowData.facility?.facilityName : '';
-      }
-    },
-    {
-      key: 'departmentTypeLkey',
-      dataKey: 'departmentTypeLkey',
-      title: <Translate>DEPARTMENT</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.departmentKey
-          ? rowData.department?.departmentTypeLvalue?.lovDisplayVale
-          : '';
-      }
-    },
-    {
-      key: 'currentDepartment',
-      dataKey: 'currentDepartment',
-      title: <Translate>CURRENT DEPARTMENT</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.currentDepartment ? 'Yes' : '';
-      }
-    },
-    {
-      key: 'bodyPartLkey',
-      dataKey: 'bodyPartLkey',
-      title: <Translate>BODY PART</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.bodyPartLkey ? rowData.bodyPartLvalue.lovDisplayVale : rowData.bodyPartLkey;
-      }
-    },
-    {
-      key: 'sideLkey',
-      dataKey: 'sideLkey',
-      title: <Translate>SIDE</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.sideLkey ? rowData.sideLvalue.lovDisplayVale : rowData.sideLkey;
-      }
-    },
-    {
-      key: 'notes',
-      dataKey: 'notes',
-      title: <Translate>NOTE</Translate>,
-      flexGrow: 1,
-      expandable: true
-    },
     ,
     {
       key: '',
@@ -531,6 +472,7 @@ const Referrals = props => {
         onRowClick={rowData => {
           setProcedure(rowData);
           setEditing(rowData.statusLkey == '3621690096636149' ? true : false);
+          setShowPreview(true);
         }}
         loading={procedureLoding}
         rowClassName={isSelected}
@@ -581,6 +523,16 @@ const Referrals = props => {
           </div>
         }
       />
+
+      {showPreview && (
+        <div className="preview-section">
+          <PreviewProcedure
+            procedure={procedure}
+            encounter={encounter}
+            patient={patient}
+          />
+        </div>
+      )}
 
       <MyModal
         open={openPerformModal}

@@ -14,6 +14,7 @@ import {
   faCalendarDays
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PreviewPhysiotherapyPlans from './PreviewPhysiotherapyPlans';
 import MyButton from '@/components/MyButton/MyButton';
 import PlusIcon from '@rsuite/icons/Plus';
 import MyInput from '@/components/MyInput';
@@ -38,7 +39,7 @@ const Physiotherapy = () => {
   const [width, setWidth] = useState(window.innerWidth); // window width
   const [initiatePlanModalOpen, setInitiatePlanModalOpen] = useState(false); // modal open/close
   const [attachmentModalOpen, setAttachmentModalOpen] = useState(false); // attachment modal state
-  const [selectedPlan, setSelectedPlan] = useState({}); // selected physiotherapy plan
+const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   const [showCanceled, setShowCanceled] = useState(true); // toggle canceled plans
   const [progressNotes, setProgressNotes] = useState([]);
   // Physiotherapy plan form data
@@ -714,13 +715,30 @@ const Physiotherapy = () => {
             </MyButton>
           </div>
         </div>
-
+<div className='nested-table-preview-handle-positions'>
         <MyNestedTable
           data={plansData}
           columns={planColumns}
           getNestedTable={getNestedTable}
           onRowClick={rowData => setSelectedPlan(rowData)}
         />
+
+        {selectedPlan && (
+  <div className="preview-wrapper">
+<PreviewPhysiotherapyPlans
+  planData={selectedPlan}
+  progressNotes={progressNotes}
+  propsData={propsData}
+  refetchAttachmentList={refetchAttachmentList}
+  setRefetchAttachmentList={setRefetchAttachmentList}
+  therapyTypeLovQueryResponse={therapyTypeLovQueryResponse}
+  frequencyLovQueryResponse={frequencyLovQueryResponse}
+  statusTableLovQueryResponse={statusTableLovQueryResponse}
+  mobilityImprovementLovQueryResponse={mobilityImprovementLovQueryResponse}
+/>
+  </div>
+)}
+</div>
       </Panel>
 
       {/* Modal for initiating plan */}
