@@ -17,7 +17,7 @@ import { useGetTeleConsultationListQuery, useSaveTeleConsultationMutation } from
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
-import { request } from 'http';
+
 
 interface ConsultationPopupProps {
   open: boolean;
@@ -47,7 +47,18 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
  const [save,saveMutation]=useSaveTeleConsultationMutation();
  //facility & Department - Mock data
   const {data:facilities}=useGetFacilitiesQuery({...initialListRequest});
- const {data:departments}=useGetDepartmentsQuery({...initialListRequest});
+ const {data:departments}=useGetDepartmentsQuery({...initialListRequest
+  , filters: [
+    {
+        fieldName: 'facility_key',
+        operator: 'match',
+        value: consultationData.consultantFacilityId??''
+    }
+  ]
+
+ },{
+    skip:!consultationData.consultantFacilityId
+ });
 
 
   // Fetch Sub Specialty Lov list response
@@ -137,7 +148,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
     try{
       const response=save({...consultationData,patientId:patient.key,encounterId:encounter.key,
         // ToDo status key for ORD_STAT_REQST
-        statusLkey:5959341154465084,
+        statusLkey:'5959341154465084',
         expectedResponseTime: consultationData.expectedResponseTime?null:new Date(consultationData.expectedResponseTime).getTime()
        ,
        requestedAt: new Date().getTime()
@@ -205,6 +216,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
                   selectDataValue="key"
                   width={150}
                   fieldLabel="Consultant Department"
+                  menuMaxHeight={'15vh'}
                 />
               </div>
               <div className="flex-20">
@@ -300,11 +312,11 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
         />
       </Form>
       <div className="flex-end-5">
-        <MyButton  prefixIcon={() => <FontAwesomeIcon icon={faSave} 
+        <MyButton 
+        prefixIcon={() => <FontAwesomeIcon icon={faSave}/> }
         onClick={handleSave}
-        />}>
-          Save & Submit
-        </MyButton>
+        >Save&Submit</MyButton>
+
       </div>
       {/* Orders */}
       <SectionContainer
@@ -326,7 +338,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
       size="lg"
       bodyheight="75vh"
       content={content()}
-    actionButtonFunction={handleSave}
+      hideActionBtn={true}
       handleCancelFunction={handleCancel}
     />
   );
