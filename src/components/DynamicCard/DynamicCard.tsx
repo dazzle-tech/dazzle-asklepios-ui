@@ -55,7 +55,7 @@ const DynamicCard: React.FC<MyCardProps> = ({
   margin = '0px',
   data = [],
   variant = 'basic',
-  backgroundColor, // 👈 ييجي من props
+  backgroundColor, 
   ...props
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
