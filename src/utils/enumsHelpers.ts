@@ -8,7 +8,7 @@ export function getEnumByName(name: string): readonly string[] {
   return sel?.data?.[name] ?? [];
 }
 
-/** Convert "VERY_HIGH_RISK" -> "Very High Risk". */
+
 export function formatEnumLabel(value: string): string {
   return value
     .toLowerCase()
