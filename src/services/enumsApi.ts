@@ -9,11 +9,13 @@ export const enumsApi = createApi({
   endpoints: (builder) => ({
     getEnums: builder.query<EnumMap, void>({
       query: () => '/api/setup/enums',
-      async onQueryStarted(arg, api) { await onQueryStarted(arg, api); },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
       transformResponse: (data: EnumMap) => {
         // optional: sort values for stable UI
         const out: EnumMap = {};
-        Object.keys(data).forEach(k => out[k] = [...(data[k] ?? [])].sort());
+        Object.keys(data).forEach((k) => (out[k] = [...(data[k] ?? [])].sort()));
         return out;
       },
     }),

@@ -1,14 +1,8 @@
-import { store } from '@/store';
+import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { enumsApi } from '@/services/enumsApi';
 
-/** Get the enum list by name from RTK Query cache (empty array if not loaded/missing). */
-export function getEnumByName(name: string): readonly string[] {
-  const state = store.getState();
-  const sel = enumsApi.endpoints.getEnums.select()(state);
-  return sel?.data?.[name] ?? [];
-}
-
-
+/** Title-case helper for labels */
 export function formatEnumLabel(value: string): string {
   return value
     .toLowerCase()
@@ -18,11 +12,26 @@ export function formatEnumLabel(value: string): string {
     .join(' ');
 }
 
-/** Return [{value, label}, ...] for use in selects, radios, etc. */
-export function getEnumOptions(name: string): { value: string; label: string }[] {
-  const values = getEnumByName(name);
-  return values.map(v => ({
-    value: v,
-    label: formatEnumLabel(v),
-  }));
+/**
+ * Subscribes to enums and returns the array for a given key.
+ * This both TRIGGERS the fetch (if not in cache) and SUBSCRIBES to updates.
+ */
+export function useEnumByName(name: string): readonly string[] {
+  // Ensure there is an active subscription (and trigger fetch if needed)
+  enumsApi.useGetEnumsQuery(undefined, { refetchOnMountOrArgChange: false });
+
+  // Subscribe to RTK Query cache for getEnums
+  const selectEnums = useMemo(() => enumsApi.endpoints.getEnums.select(), []);
+  const { data } = useSelector(selectEnums);
+
+  return data?.[name] ?? [];
+}
+
+/** Returns [{ value, label }] for selects, radios, etc., while subscribed. */
+export function useEnumOptions(name: string): { value: string; label: string }[] {
+  const values = useEnumByName(name);
+  return useMemo(
+    () => values.map(v => ({ value: v, label: formatEnumLabel(v) })),
+    [values]
+  );
 }
