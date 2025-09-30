@@ -15,7 +15,9 @@ import {
   faStethoscope,
   faNotesMedical,
   faProcedures,
-  faUser
+  faUser,
+  faHourglassStart,
+  faVideo
 } from '@fortawesome/free-solid-svg-icons';
 import { Divider, Panel } from 'rsuite';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -41,6 +43,7 @@ import './styles.less';
 import { useSelector } from 'react-redux';
 import ICU from '../../encounter-component/i.c.u';
 import ProgressNote from './ProgressNotes';
+import { useSaveTeleConsultationMutation } from '@/services/encounterService';
 
 
 
@@ -49,11 +52,7 @@ const StartTeleConsultation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   const { state } = useLocation();
   const { patient, encounter, fromPage, consultaition, notelist } = state || {};
-  console.log('patient', patient);
-  console.log('encounter', encounter);
-  console.log('fromPage', fromPage);
-  console.log('consultaition', consultaition);
-  console.log('notelist', notelist);
+const sliceauth = useSelector((state: any) => state.auth);
   const [showProcedureDetails, setShowProcedureDetails] = useState(false);
   const [showOperationRequest, setShowOperationRequest] = useState(false);
   const [showConsultationModal, setShowConsultationModal] = useState(false);
@@ -61,7 +60,7 @@ const StartTeleConsultation = () => {
   const [showMedicationOrderModal, setShowMedicationOrderModal] = useState(false);
   const [openVitalModal, setOpenVitalModal] = useState(false);
 
-  const [progressNotes, setProgressNotes] = useState<any[]>([]);
+   const [save, saveMutation] = useSaveTeleConsultationMutation();
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
 
   const noop = () => { };
@@ -120,22 +119,65 @@ const StartTeleConsultation = () => {
           <Panel>
             <div className="container-bt-start-tele">
               <BackButton onClick={() => navigate(-1)} />
+                <MyButton
+                onClick={async () => {
+                  const payload = {
+                    ...consultaition,
+                    statusLkey: '13828778108999715',// ORD_ON_CALL
+                    callStartedAt: Date.now(),
+                    callStartedBy: sliceauth.user?.login ,
+                  };
+                  await save(payload).unwrap();
+                 
+                }}
+               
+                prefixIcon={() => <FontAwesomeIcon icon={faVideo} />}
+               
+                loading={false
+                }
+                
+                >
+                  Start Call
+                </MyButton>
             </div>
 
 
+            <div className="container-btns-start-tele">
+              <MyButton disabled={edit} prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}>
+                Create Follow-up
+              </MyButton>
+              <MyButton
+                disabled={!encounter.hasAllergy}
+                backgroundColor={encounter.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'}
+                prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
+              >
+                Allergy
+              </MyButton>
+              <MyButton
+                disabled={!patient.hasWarning}
+                backgroundColor={patient.hasWarning ? 'var(--primary-orange)' : 'var(--deep-blue)'}
+                prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
+              >
+                Warning
+              </MyButton>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                appearance="ghost"
+                onClick={async () => {
+                  const payload = {
+                    ...consultaition,
+                    statusLkey: '13828896473769449',// ORD_CALL_CLOSED
+                    callClosedAt: Date.now(),
+                    callClosedBy: sliceauth.user?.login ,
+                  };
+                  await save(payload).unwrap();
+                 
+                }}
+               
+              >
+                Close Call
+              </MyButton>
 
-            {/* Placeholder for camera section */}
-            <div className="camera-tele-consultaition">
-              <div className='progress-notes-section-handle'>
-                <AddProgressNotes
-                  progressNotes={progressNotes}
-                  setProgressNotes={setProgressNotes}
-                  currentChart={{ key: 'dummy-chart-key' }}
-                  dispatch={(action) => console.log(action)}
-                />
-              </div>
-              <div>
-                <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} /></div>
             </div>
 
             <Divider />
@@ -149,14 +191,15 @@ const StartTeleConsultation = () => {
               </div>
 
               <div className="camera-tele-consultaition">
+                   <div>
+                  <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} />
+                </div>
                 <SectionContainer
                   title={<div className="patient-history-title">
                     <FontAwesomeIcon icon={faUser} className="patient-history-icon" />
                     <span>Patient Details</span></div>}
                   content={<ProgressNote consultaition={consultaition} list={notelist}/>} />
-                <div>
-                  <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} />
-                </div>
+             
               </div>
 
               <div className="sheets-open-popup">

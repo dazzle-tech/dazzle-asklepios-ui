@@ -2751,7 +2751,6 @@ export interface ApPatient {
 	noDocument:boolean;
 	specialCourtesyLkey:string;
 	unknown:string;
-	genderLkey:string;
 	phoneNumber:string;
 	mobileNumber:string;
 	email:string;
@@ -2817,6 +2816,7 @@ export interface ApPatient {
 	districtLkey:string;
 	countryId:string;
 	bloodGroupLkey:string;
+	genderLkey:string;
 } 
 
 export interface ApPatientAddresses { 
@@ -4064,6 +4064,17 @@ export interface ApTeleConsultation {
 	startedBy:string;
 	requestedAt:number;
 	requestedBy:string;
+	callStartedAt:number;
+	callStartedBy:string;
+	callColsedAt:number;
+	callColsedBy:string;
+} 
+
+export interface ApTeleConsultationCallLog { 
+	id:string;
+	startedBy:string;
+	startedDate:number;
+	teleConsultationId:string;
 } 
 
 export interface ApTeleConsultationProgressNote { 

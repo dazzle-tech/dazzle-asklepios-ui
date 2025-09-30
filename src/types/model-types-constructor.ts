@@ -2752,7 +2752,6 @@ export const newApPatient:modelTypes.ApPatient = {
 	noDocument:undefined,
 	specialCourtesyLkey:undefined,
 	unknown:'',
-	genderLkey:undefined,
 	phoneNumber:'',
 	mobileNumber:'',
 	email:'',
@@ -2818,6 +2817,7 @@ export const newApPatient:modelTypes.ApPatient = {
 	districtLkey:undefined,
 	countryId:'',
 	bloodGroupLkey:undefined,
+	genderLkey:undefined,
 } 
 
 export const newApPatientAddresses:modelTypes.ApPatientAddresses = { 
@@ -4065,6 +4065,17 @@ export const newApTeleConsultation:modelTypes.ApTeleConsultation = {
 	startedBy:'',
 	requestedAt:0,
 	requestedBy:'',
+	callStartedAt:0,
+	callStartedBy:'',
+	callColsedAt:0,
+	callColsedBy:'',
+} 
+
+export const newApTeleConsultationCallLog:modelTypes.ApTeleConsultationCallLog = { 
+	id:'',
+	startedBy:'',
+	startedDate:0,
+	teleConsultationId:'',
 } 
 
 export const newApTeleConsultationProgressNote:modelTypes.ApTeleConsultationProgressNote = { 

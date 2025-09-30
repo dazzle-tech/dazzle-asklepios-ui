@@ -20,8 +20,7 @@ import { useSelector } from "react-redux";
 import { formatDateWithoutSeconds } from "@/utils";
 const ProgressNote = ({ consultaition ,list}) => {
     const sliceauth = useSelector((state: any) => state.auth);
-    console.log("user", sliceauth.user);
-    console.log("consultaition", consultaition);
+    
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
  
   const [saveProgressNotes, saveProgressNotesMutation] = useSaveTeleConsultationProgressNotesMutation();
