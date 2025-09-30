@@ -38,7 +38,7 @@ const ModalContent: React.FC = () => {
       content={<><VitalSigns
         object={vital}
         setObject={setVital}
-        disabled={true}
+        disabled={false}
         width="40vw"
         showNoteField={false}
       />

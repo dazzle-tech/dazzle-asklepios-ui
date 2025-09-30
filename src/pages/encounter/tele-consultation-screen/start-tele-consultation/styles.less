@@ -19,8 +19,6 @@
   flex-direction: row;
   justify-content: start;
   position: relative;
-  top: 2vw;
-  gap: 0.3vw;
 }
 
 .camera-tele-consultaition {
@@ -68,7 +66,7 @@
   background-color: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 10px;
-  transition: all 0.2s ease-in-out;
+  // transition: all 0.2s ease-in-out;
   cursor: pointer;
   text-align: left;
 
@@ -135,8 +133,18 @@
 
 .progress-notes-section-handle {
   flex: 1;
-  background-color: #ffffff;
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 0 6px rgba(24, 23, 23, 0.25);
+  height: auto;
+  
+  &.light {
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  &.dark {
+    background-color: var(--dark-black) !important;
+    color: var(--white) !important;
+  }
 }

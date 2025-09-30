@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { Dropdown, Form, Input, InputGroup, Radio, RadioGroup, Text } from 'rsuite';
 import ActiveIngrediantList from './ActiveIngredient';
 import MyButton from '@/components/MyButton/MyButton';
+import PlusIcon from '@rsuite/icons/Plus';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
@@ -18,7 +19,7 @@ import {
   useSavePrescriptionMedicationMutation
 } from '@/services/encounterService';
 import { newApPrescriptionMedications } from '@/types/model-types-constructor';
-import { faRightLeft,faPills } from '@fortawesome/free-solid-svg-icons';
+import { faRightLeft, faPills } from '@fortawesome/free-solid-svg-icons';
 import Instructions from './Instructions';
 import Substitues from '../drug-order/Substitutes';
 import clsx from 'clsx';
@@ -357,7 +358,11 @@ const DetailsModal = ({
         open={open}
         setOpen={setOpen}
         actionButtonFunction={handleSaveMedication}
-        actionButtonLabel="Save"
+        actionButtonLabel={
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <CheckIcon /> Save & Close
+          </span>
+        }
         size="98vw"
         leftTitle={selectedGeneric ? selectedGeneric.genericName : 'Select Generic'}
         rightTitle="Medication Order Details"
@@ -377,6 +382,11 @@ const DetailsModal = ({
             >
               Order Related Tests
             </MyButton>
+            <MyButton
+              prefixIcon={() => <PlusIcon />}
+            >
+              Add Medication
+            </MyButton>
           </div>
         }
         rightContent={
@@ -390,27 +400,27 @@ const DetailsModal = ({
                       <div className="prescription-full-block">
                         {/* Medication Search */}
                         <div className="prescription-search-wrapper">
-                    <div className='prescription-search-button-position-handle'>
-                          <InputGroup inside className="input-search-p select-issue">
-                            <Input
-                              placeholder={'Medication Name'}
-                              value={searchKeyword}
-                              onChange={handleSearch}
-                            />
-                            <InputGroup.Button>
-                              <SearchIcon />
-                            </InputGroup.Button>
-                          </InputGroup>
+                          <div className='prescription-search-button-position-handle'>
+                            <InputGroup inside className="input-search-p select-issue">
+                              <Input
+                                placeholder={'Medication Name'}
+                                value={searchKeyword}
+                                onChange={handleSearch}
+                              />
+                              <InputGroup.Button>
+                                <SearchIcon />
+                              </InputGroup.Button>
+                            </InputGroup>
 
-                        <div className="prescription-button-wrapper">
-                          <MyButton
-                            radius={'25px'}
-                            appearance="ghost"
-                            color="#808099"
-                            onClick={() => setOpenSubstitutesModel(true)}
-                            prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
-                          />
-                        </div>
+                            <div className="prescription-button-wrapper">
+                              <MyButton
+                                radius={'25px'}
+                                appearance="ghost"
+                                color="#808099"
+                                onClick={() => setOpenSubstitutesModel(true)}
+                                prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
+                              />
+                            </div>
                           </div>
                           {searchKeyword && (
                             <Dropdown.Menu className="prescription-dropdown-menuresult">
@@ -559,225 +569,225 @@ const DetailsModal = ({
 
 
 
-<SectionContainer
-  title={<Text className="font-style">Pharmacy Use Only</Text>}
-  content={
-    <Form>
-      <div className="prescription-pharmacy-blocks">
-        <MyInput
-          fieldType="datetime"
-          fieldName="startDateTime"
-          fieldLabel="Start Time"
-          record={''}
-          setRecord={setOrderMedication}
-          width="100%"
-        />
-        <MyInput
-          fieldType="datetime"
-          fieldName="endDateTime"
-          fieldLabel="End Time"
-          record={''}
-          setRecord={setOrderMedication}
-          width="100%"
-        />
-        <MyInput
-          width="100%"
-          fieldLabel="Therapy Type"
-          fieldType="select"
-          fieldName="therapyType"
-          record={''}
-          setRecord={setOrderMedication}
-        />
-        <MyInput
-          width="100%"
-          fieldLabel="Reason for Prescription"
-          fieldType="note"
-          fieldName="reasonForPrescription"
-          record={''}
-          setRecord={setOrderMedication}
-        />
-        <MyInput
-          width="100%"
-          fieldLabel="Approval Number"
-          fieldType="Text"
-          fieldName="approvalNumber"
-          record={''}
-          setRecord={setOrderMedication}
-        />
-      </div>
-    </Form>
-  }
-/>
+              <SectionContainer
+                title={<Text className="font-style">Pharmacy Use Only</Text>}
+                content={
+                  <Form>
+                    <div className="prescription-pharmacy-blocks">
+                      <MyInput
+                        fieldType="datetime"
+                        fieldName="startDateTime"
+                        fieldLabel="Start Time"
+                        record={''}
+                        setRecord={setOrderMedication}
+                        width="100%"
+                      />
+                      <MyInput
+                        fieldType="datetime"
+                        fieldName="endDateTime"
+                        fieldLabel="End Time"
+                        record={''}
+                        setRecord={setOrderMedication}
+                        width="100%"
+                      />
+                      <MyInput
+                        width="100%"
+                        fieldLabel="Therapy Type"
+                        fieldType="select"
+                        fieldName="therapyType"
+                        record={''}
+                        setRecord={setOrderMedication}
+                      />
+                      <MyInput
+                        width="100%"
+                        fieldLabel="Reason for Prescription"
+                        fieldType="note"
+                        fieldName="reasonForPrescription"
+                        record={''}
+                        setRecord={setOrderMedication}
+                      />
+                      <MyInput
+                        width="100%"
+                        fieldLabel="Approval Number"
+                        fieldType="Text"
+                        fieldName="approvalNumber"
+                        record={''}
+                        setRecord={setOrderMedication}
+                      />
+                    </div>
+                  </Form>
+                }
+              />
 
 
             </div>
 
-<div className='prescription-mid-row-indication-details'>
-<SectionContainer
-  title={<Text className="font-style">Indication Details</Text>}
-  content={
-    <Form>
-      <div className="prescription-indication-blocks">
+            <div className='prescription-mid-row-indication-details'>
+              <SectionContainer
+                title={<Text className="font-style">Indication Details</Text>}
+                content={
+                  <Form>
+                    <div className="prescription-indication-blocks">
 
-        <div className="indication-row">
+                      <div className="indication-row">
 
-          {/* ICD-10 */}
-          <div className="indication-field">
-            <InputGroup inside className="indication-input">
-              <Input
-                disabled={preKey != null ? false : true}
-                placeholder="Search ICD-10"
-                value={searchKeywordicd}
-                onChange={handleSearchIcd}
+                        {/* ICD-10 */}
+                        <div className="indication-field">
+                          <InputGroup inside className="indication-input">
+                            <Input
+                              disabled={preKey != null ? false : true}
+                              placeholder="Search ICD-10"
+                              value={searchKeywordicd}
+                              onChange={handleSearchIcd}
+                            />
+                            <InputGroup.Button>
+                              <SearchIcon />
+                            </InputGroup.Button>
+                          </InputGroup>
+
+                          {searchKeywordicd && (
+                            <Dropdown.Menu className="prescription-dropdown-menuresult">
+                              {modifiedData?.map(mod => (
+                                <Dropdown.Item
+                                  key={mod.key}
+                                  eventKey={mod.key}
+                                  onClick={() => {
+                                    setIndicationsIcd({ ...indicationsIcd, indicationIcd: mod.key });
+                                    setSearchKeywordicd('');
+                                  }}
+                                >
+                                  {mod.icdCode} - {mod.description}
+                                </Dropdown.Item>
+                              ))}
+                            </Dropdown.Menu>
+                          )}
+
+                          <Input
+                            as="textarea"
+                            disabled
+                            value={indicationsDescription || prescriptionMedication.indicationIcd}
+                            rows={3}
+                            className="indication-textarea"
+                          />
+                        </div>
+
+                        {/* SNOMED */}
+                        <div className="indication-field">
+                          <InputGroup inside className="indication-input">
+                            <Input
+                              disabled={preKey != null ? false : true}
+                              placeholder="Search SNOMED-CT"
+                            />
+                            <InputGroup.Button>
+                              <SearchIcon />
+                            </InputGroup.Button>
+                          </InputGroup>
+
+                          <Input
+                            as="textarea"
+                            disabled
+                            rows={3}
+                            className="indication-textarea"
+                          />
+                        </div>
+
+                        {/* Indication Use */}
+                        <div className="indication-field">
+                          <MyInput
+                            width="17vw"
+                            fieldType="select"
+                            showLabel={false}
+                            placeholder="Indication Use"
+                            fieldLabel="Indication Use"
+                            selectData={indicationLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            fieldName={'indicationUseLkey'}
+                            record={prescriptionMedication}
+                            setRecord={setPrescriptionMedications}
+                          />
+                          <Input as="textarea" rows={3} className="indication-textarea-indication-use" />
+                        </div>
+
+                        {/* Manual Indication */}
+                        <div className='indication-field-notes-manual-handle'>
+                          <div>
+                          </div>
+
+
+                        </div>
+                        <div className='adminstration-instructions-position'>
+                          <MultiSelectAppender
+                            label="Administration Instructions"
+                            options={administrationInstructionsLovQueryResponse?.object ?? []}
+                            optionLabel="lovDisplayVale"
+                            optionValue="key"
+                            setObject={setInstruc}
+                            object={instr}
+                          /></div>
+                      </div>
+
+                    </div>
+                  </Form>
+                }
               />
-              <InputGroup.Button>
-                <SearchIcon />
-              </InputGroup.Button>
-            </InputGroup>
-
-            {searchKeywordicd && (
-              <Dropdown.Menu className="prescription-dropdown-menuresult">
-                {modifiedData?.map(mod => (
-                  <Dropdown.Item
-                    key={mod.key}
-                    eventKey={mod.key}
-                    onClick={() => {
-                      setIndicationsIcd({ ...indicationsIcd, indicationIcd: mod.key });
-                      setSearchKeywordicd('');
-                    }}
-                  >
-                    {mod.icdCode} - {mod.description}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            )}
-
-            <Input
-              as="textarea"
-              disabled
-              value={indicationsDescription || prescriptionMedication.indicationIcd}
-              rows={3}
-              className="indication-textarea"
-            />
-          </div>
-
-          {/* SNOMED */}
-          <div className="indication-field">
-            <InputGroup inside className="indication-input">
-              <Input
-                disabled={preKey != null ? false : true}
-                placeholder="Search SNOMED-CT"
-              />
-              <InputGroup.Button>
-                <SearchIcon />
-              </InputGroup.Button>
-            </InputGroup>
-
-            <Input
-              as="textarea"
-              disabled
-              rows={3}
-              className="indication-textarea"
-            />
-          </div>
-
-          {/* Indication Use */}
-          <div className="indication-field">
-            <MyInput
-              width="17vw"
-              fieldType="select"
-              showLabel={false}
-              placeholder="Indication Use"
-              fieldLabel="Indication Use"
-              selectData={indicationLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'indicationUseLkey'}
-              record={prescriptionMedication}
-              setRecord={setPrescriptionMedications}
-            />
-            <Input as="textarea" rows={3} className="indication-textarea-indication-use"/>
-          </div>
-
-          {/* Manual Indication */}
-          <div className='indication-field-notes-manual-handle'>
-          <div>
-          </div>
-
-
-        </div>
-<div className='adminstration-instructions-position'>
-          <MultiSelectAppender
-            label="Administration Instructions"
-            options={administrationInstructionsLovQueryResponse?.object ?? []}
-            optionLabel="lovDisplayVale"
-            optionValue="key"
-            setObject={setInstruc}
-            object={instr}
-          /></div>
-          </div>
-
-      </div>
-    </Form>
-  }
-/>
-</div>
+            </div>
 
 
 
 
             <div className="prescription-mid-row">
-                              <SectionContainer
-                  title={<Text className="font-style">Refills and Parameters to monitor</Text>}
-                  content={
-                    <Form>
-                      <MyLabel label="Parameters to monitor" />
-                        <MyTagInput tags={tags} setTags={setTags} />
+              <SectionContainer
+                title={<Text className="font-style">Refills and Parameters to monitor</Text>}
+                content={
+                  <Form>
+                    <MyLabel label="Parameters to monitor" />
+                    <MyTagInput tags={tags} setTags={setTags} />
 
-                      <div className="prescription-refills-blocks">
-                        <MyInput
-                          disabled={preKey != null ? false : true}
-                          width={140}
-                          fieldType="number"
-                          fieldLabel="Number of Refills"
-                          fieldName="numberOfRefills"
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                        />
+                    <div className="prescription-refills-blocks">
+                      <MyInput
+                        disabled={preKey != null ? false : true}
+                        width={140}
+                        fieldType="number"
+                        fieldLabel="Number of Refills"
+                        fieldName="numberOfRefills"
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                      />
 
-                        <MyInput
-                          disabled={preKey != null ? false : true}
-                          width={180}
-                          fieldType="select"
-                          fieldLabel="Refill Interval Value"
-                          selectData={refillunitQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="refillIntervalLkey"
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                        />
+                      <MyInput
+                        disabled={preKey != null ? false : true}
+                        width={180}
+                        fieldType="select"
+                        fieldLabel="Refill Interval Value"
+                        selectData={refillunitQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName="refillIntervalLkey"
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                      />
 
-                        <MyInput
-                          disabled={preKey != null ? false : true}
-                          width={180}
-                          fieldType="select"
-                          fieldLabel="Refill Interval Unit"
-                          selectData={refillunitQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="refillIntervalUnitLkey"
-                          record={prescriptionMedication}
-                          setRecord={setPrescriptionMedications}
-                        />
-                      </div>
-                    </Form>
-                  }
-                />
+                      <MyInput
+                        disabled={preKey != null ? false : true}
+                        width={180}
+                        fieldType="select"
+                        fieldLabel="Refill Interval Unit"
+                        selectData={refillunitQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName="refillIntervalUnitLkey"
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                      />
+                    </div>
+                  </Form>
+                }
+              />
 
-              
-            <SectionContainer
-              title={<Text className="font-style">Notes</Text>}
+
+              <SectionContainer
+                title={<Text className="font-style">Notes</Text>}
                 content={
                   <Form>
                     <MyInput
@@ -807,7 +817,7 @@ const DetailsModal = ({
                       <MyButton prefixIcon={() => <FaDownload />}>Download</MyButton>
                     </div>
                   </Form>
-            }/>
+                } />
 
               <div className="prescription-row">
 
@@ -820,8 +830,8 @@ const DetailsModal = ({
 
             </div>
             <div className='prescription-mid-row-indication-details'>
-            <SectionContainer
-              title={<Text className="font-style">Recall From Favorite</Text>}
+              <SectionContainer
+                title={<Text className="font-style">Recall From Favorite</Text>}
                 content={
                   <Form>
                     <div className="prescription-recall-blocks">
@@ -929,9 +939,9 @@ const DetailsModal = ({
                       />
                     </div>
                   </Form>
-              }
+                }
               />
-              </div>
+            </div>
           </div>
         }
       />
