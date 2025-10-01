@@ -44,6 +44,7 @@ import { useSelector } from 'react-redux';
 import ICU from '../../encounter-component/i.c.u';
 import ProgressNote from './ProgressNotes';
 import { useSaveTeleConsultationMutation } from '@/services/encounterService';
+import Translate from '@/components/Translate';
 
 
 
@@ -52,6 +53,7 @@ const StartTeleConsultation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   const { state } = useLocation();
   const { patient, encounter, fromPage, consultaition, notelist } = state || {};
+  console.log("cons",consultaition)
 const sliceauth = useSelector((state: any) => state.auth);
   const [showProcedureDetails, setShowProcedureDetails] = useState(false);
   const [showOperationRequest, setShowOperationRequest] = useState(false);
@@ -127,6 +129,7 @@ const sliceauth = useSelector((state: any) => state.auth);
                     callStartedAt: Date.now(),
                     callStartedBy: sliceauth.user?.login ,
                   };
+                  console.log("paylod",payload)
                   await save(payload).unwrap();
                  
                 }}
@@ -141,9 +144,50 @@ const sliceauth = useSelector((state: any) => state.auth);
                 </MyButton>
             </div>
 
+
+            <div className="container-btns-start-tele">
+              <MyButton disabled={edit} prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}>
+                Create Follow-up
+              </MyButton>
+              <MyButton
+                disabled={!encounter.hasAllergy}
+                backgroundColor={encounter.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'}
+                prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
+              >
+                Allergy
+              </MyButton>
+              <MyButton
+                disabled={!patient.hasWarning}
+                backgroundColor={patient.hasWarning ? 'var(--primary-orange)' : 'var(--deep-blue)'}
+                prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
+              >
+                Warning
+              </MyButton>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                appearance="ghost"
+                onClick={async () => {
+                  const payload = {
+                    ...consultaition,
+                    statusLkey: '13828896473769449',// ORD_CALL_CLOSED
+                    callClosedAt: Date.now(),
+                    callClosedBy: sliceauth.user?.login ,
+                  };
+                  console.log("close",payload)
+                  await save(payload).unwrap();
+                 
+                }}
+               
+              >
+                Close Call
+              </MyButton>
+
+            </div>
+
             <Divider />
 
             <div className={`page-content-main-container ${mode === 'light' ? 'light' : 'dark'}`}>
+           
               <div className="patient-summary-section">
                 <PatientMajorProblem patient={dummyPatient} />
                 <PatientChronicMedication patient={dummyPatient} />
@@ -151,18 +195,22 @@ const sliceauth = useSelector((state: any) => state.auth);
                 <Procedures patient={dummyPatient} />
               </div>
 
- <div className="camera-tele-consultaition">
-              <div className={`progress-notes-section-handle ${mode === 'light' ? 'light' : 'dark'}`}>
-                <AddProgressNotes
-                  progressNotes={progressNotes}
-                  setProgressNotes={setProgressNotes}
-                  currentChart={{ key: 'dummy-chart-key' }}
-                  dispatch={(action) => console.log(action)}
-                />
+              <div className="camera-tele-consultaition">
+                   <div>
+                  <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} />
+                </div>
+              
+               <div> 
+                <SectionContainer
+                title={<Translate>Progress Note</Translate>}
+
+                
+                content={ <ProgressNote consultaition={consultaition} list={notelist}/>}/>
+                
+               </div>
+               
+             
               </div>
-              <div>
-                <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} /></div>
-            </div>
 
               <div className="sheets-open-popup">
                 {sheetButtons.map(({ label, icon }) => (
