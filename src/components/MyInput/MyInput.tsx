@@ -67,9 +67,26 @@ const MyInput = ({
   ...props
 }) => {
   // <<< Added this line here to fix the error
+
   const inputColor = props.inputColor || record?.inputColor || '';
   const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult, setValidationResult] = useState(undefined);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isSelectOpen || fieldType !== 'select') return;
+
+    const handleScroll = () => {
+      setIsSelectOpen(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [isSelectOpen, fieldType]);
+
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
     if (vr && vr.details && vr.details[fieldDbName]) {
@@ -184,6 +201,9 @@ const MyInput = ({
             menuMaxHeight={props?.menuMaxHeight ?? ''}
             onKeyDown={focusNextField}
             loading={props?.loading ?? false}
+            open={isSelectOpen}
+            onOpen={() => setIsSelectOpen(true)}
+            onClose={() => setIsSelectOpen(false)}
           />
         );
       //<TagPicker data={data} style={{ width: 300 }} />
