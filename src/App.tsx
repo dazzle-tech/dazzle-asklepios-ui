@@ -178,7 +178,7 @@ import RoleManegment from './pages/setup/role-managemen';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
-  console.log("User Screens from APP",authSlice.user)
+  console.log("User Screens from APP",authSlice)
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
