@@ -23,6 +23,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
   const [updatePermissions] = useUpdateRolePermissionsMutation();
 
   const [selected, setSelected] = useState<Permission[]>([]);
+  console.log("Selected",selected)
 
   // sync from backend
   useEffect(() => {
@@ -33,14 +34,14 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     refetch();
   }, [roleId]);
 
-  // options
+ 
   const permissionOptions = [
     { label: "No Access", value: null },
     { label: "View", value: "VIEW" },
     { label: "Edit", value: "EDIT" },
   ];
 
-  // helper لتغيير صلاحية شاشة معينة
+  
   const setScreenPermission = (screenName: string, value: "VIEW" | "EDIT" | null) => {
     setSelected((prev) => {
       const filtered = prev.filter((s) => s.screen !== screenName);
@@ -49,16 +50,16 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     });
   };
 
-  // helper لتغيير صلاحيات كل الشاشات في module
+  
   const setModulePermissions = (screens: any[], value: "VIEW" | "EDIT" | null) => {
     setSelected((prev) => {
-      // امسح صلاحيات الشاشات تبع هذا الموديول
+      
       const filtered = prev.filter(
         (s) => !screens.some((scr) => scr.name === s.screen)
       );
 
       if (!value) return filtered; // No Access
-      // ضيف نفس الصلاحية لكل الشاشات
+     
       const additions = screens.map((scr) => ({
         screen: scr.name,
         permission: value,
@@ -67,7 +68,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     });
   };
 
-  // الجدول الرئيسي للموديولات
+  
   const columns = [
     {
       key: "module",
@@ -78,7 +79,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
       key: "permission",
       title: <Translate>Permission</Translate>,
       render: (rowData: any) => {
-        // هل كل الشاشات في هذا الموديول نفس القيمة؟
+       
         const screens = rowData.screens || [];
         let current: "VIEW" | "EDIT" | null = null;
 
@@ -88,7 +89,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
               selected.find((s) => s.screen === scr.name)?.permission ?? null
           );
           const unique = [...new Set(perms)];
-          current = unique.length === 1 ? unique[0] : null; // لو كلهم نفس القيمة بنعرضها، غير هيك No Access
+          current = unique.length === 1 ? unique[0] : null;
         }
 
         return (
@@ -105,7 +106,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     },
   ];
 
-  // الجدول الفرعي لكل موديول
+  
   const screenColumns = (moduleRow: any) => [
     {
       key: "screen",
@@ -159,7 +160,8 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
         data={MODULES}
         columns={columns}
         getNestedTable={getNestedTable}
-        height={500}
+       
+
       />
       <br />
       <MyButton appearance="primary" onClick={handleSave}>
