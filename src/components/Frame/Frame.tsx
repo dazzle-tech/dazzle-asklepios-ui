@@ -70,6 +70,7 @@ const Frame = (props: FrameProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // menu anchor element
   const [activeMenu, setActiveMenu] = useState<string | null>(null); // active menu for popover
   const [expandAllSubmenus, setExpandAllSubmenus] = useState(false);
+
   const authSlice = useAppSelector(state => state.auth);
   const patientSlice = useAppSelector(state => state.patient);
   const [expandNotes, setExpandNotes] = useState(false); // sticky notes panel

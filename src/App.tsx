@@ -178,98 +178,238 @@ import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/N
 import { useGetScreensQuery } from './services/userService';
 import { MODULES } from "@/config/modules-config";
 import RoleManegment from './pages/setup/role-managemen';
+import { useGetMenuQuery } from './services/security/UserRoleService';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
-  console.log("User Screens from APP",authSlice.user)
+  console.log("User Screens from APP", authSlice.user)
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
   const [navigationMap, setNavigationMap] = useState([]);
   const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+  const selectedFacility = tenant?.selectedFacility || null;
+  console.log('Tenant in APP:', tenant);
+
+  // ⬇️ Call your RTK Query endpoint:
+  const { data: menu , isFetching: isMenuLoading } = useGetMenuQuery(
+    user?.id && selectedFacility?.id
+      ? { userId: user.id, facilityId: selectedFacility.id }
+      : ({} as any),
+    { skip: !(user?.id && selectedFacility?.id) }
+  );
+
+  // const { data: screens, isLoading, error } = useGetScreensQuery(null);
+
+  // const [navs, setNavs] = useState([]);
+  // // useEffect(() => {
+  // //   loadNavs();
+  // //   console.log('Screens from APP', screens);
+  // // }, [screens]);
+
+  // useEffect(() => {
+  //   loadNavs();
+  //    console.log('menu from APP', menu);
+  // }, [menu]);
 
 
-const { data: screens, isLoading, error } = useGetScreensQuery(null);
+
+  // const loadNavs = async () => {
+  //   const navsTemp: any[] = [];
+
+  //   // Dashboard ثابت
+  //   navsTemp.push({
+  //     eventKey: "dashboard",
+  //     icon: <Icon as={MdDashboard} />,
+  //     title: "Dashboard",
+  //     to: "/",
+  //   });
+  //   const toTitleCase = (str: string) =>
+  //     str
+  //       .toLowerCase()
+  //       .split(" ")
+  //       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+  //       .join(" ");
 
 
-  const {
-    data: navigationMapRawData,
-    isLoading: isLoadingNavigationMap,
-    isFetching: isFetchingNavigationMap
-  } = useLoadNavigationMapQuery(String(user?.id || ''), {
-    // Using user ID here because in the old backend, the key matches the value of the new user ID.
-    // This ensures proper mapping and allows the UI team to work smoothly.
-    skip: !user?.id
+  //     // Build a fast lookup of allowed screens from backend
+  // const norm = (s?: string) => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+  // const allowed = new Set<string>(
+  // (menu ?? []).flatMap(m => [
+  //     norm(m.label),                               // "Icd 10"
+  //     norm((m.screen || '').replace(/_/g, ' '))    // "ICD_10" → "icd 10"
+  //   ])
+  // );
+
+  //   MODULES.forEach((module) => {
+  //     if (module.screens && module.screens.length > 0) {
+  //       const childrenNavs: any[] = [];
+
+  //       module.screens.forEach((screen) => {
+  //         // 👇 حول اسم الشاشة ل Title Case
+  //         const normalizedName = toTitleCase(screen.name);
+
+  //         // 👇 قارن مع اللي جاي من الباك
+  //         if (menu?.includes(normalizedName)) {
+  //           childrenNavs.push({
+  //             icon: <Icon as={icons[screen?.icon ?? "FaCircle"]} />,
+  //             title: normalizedName, // استخدم الاسم اللي مطابق الباك
+  //             to: "/".concat(screen.navPath),
+  //           });
+  //         }
+  //       });
+
+  //       if (childrenNavs.length > 0) {
+  //         navsTemp.push({
+  //           icon: <Icon as={icons[module?.icon ?? "FaBox"]} />,
+  //           title: module.name,
+  //           children: childrenNavs,
+  //         });
+  //       }
+  //     }
+  //   });
+
+  //   setNavs(navsTemp);
+  // };
+
+  // Types for safety (optional)
+type BackendMenuItem = {
+  module?: string | null; // backend module name (if provided)
+  label?: string | null;  // human title, e.g. "ICD-10"
+  screen?: string | null; // code-ish name, e.g. "ICD_10"
+};
+
+// ────────────────────────────────────────────────────────────────────────────────
+// Helpers
+const norm = (s?: string | null) =>
+  (s ?? '')
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const toTitleCase = (str: string) =>
+  str
+    .toLowerCase()
+    .split(' ')
+    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ');
+
+// Build fast lookups from backend menu
+const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
+  // Global allow-list: screens allowed regardless of module (label or screen code)
+  const globalAllowed = new Set<string>();
+
+  // Per-module allow-list: screens allowed within a module name
+  const moduleAllowed = new Map<string, Set<string>>();
+
+  for (const m of menuItems ?? []) {
+    const nLabel = norm(m.label);
+    const nScreen = norm((m.screen ?? '').replace(/[_]/g, ' ')); // "ICD_10" → "icd 10"
+    const nModule = norm(m.module);
+
+    // Add to global
+    if (nLabel) globalAllowed.add(nLabel);
+    if (nScreen) globalAllowed.add(nScreen);
+
+    // Add to module-specific
+    if (nModule) {
+      if (!moduleAllowed.has(nModule)) moduleAllowed.set(nModule, new Set());
+      if (nLabel) moduleAllowed.get(nModule)!.add(nLabel);
+      if (nScreen) moduleAllowed.get(nModule)!.add(nScreen);
+    }
+  }
+
+  return { globalAllowed, moduleAllowed };
+};
+
+// Robust screen-name matcher against backend entries
+const isScreenAllowed = (
+  screen: { name: string; navPath: string },
+  moduleName: string,
+  lookups: { globalAllowed: Set<string>; moduleAllowed: Map<string, Set<string>> }
+) => {
+  const { globalAllowed, moduleAllowed } = lookups;
+
+  const nScreenName = norm(screen.name);               // e.g. "icd 10"
+  const nScreenCode = norm(screen.name.replace(/-/g, ' ')); // loose match variant
+  const nNavPath = norm(screen.navPath);               // e.g. "icd10-setup" → "icd10 setup"
+  const nModule = norm(moduleName);
+
+  // 1) Check module-specific allow-list first (most precise)
+  const modSet = moduleAllowed.get(nModule);
+  if (modSet && (modSet.has(nScreenName) || modSet.has(nScreenCode) || modSet.has(nNavPath))) {
+    return true;
+  }
+
+  // 2) Fallback: global allow-list
+  if (globalAllowed.has(nScreenName) || globalAllowed.has(nScreenCode) || globalAllowed.has(nNavPath)) {
+    return true;
+  }
+
+  return false;
+};
+// ────────────────────────────────────────────────────────────────────────────────
+
+useEffect(() => {
+  if (!menu || isMenuLoading) return;
+  loadNavs();
+  // console.log('menu from APP', menu);
+}, [menu, isMenuLoading]);
+
+const loadNavs = () => {
+  const navsTemp: any[] = [];
+
+  // Always-on Dashboard
+  navsTemp.push({
+    eventKey: 'dashboard',
+    icon: <Icon as={MdDashboard} />,
+    title: 'Dashboard',
+    to: '/',
   });
 
-  const [screenKeys, setScreenKeys] = useState({});
-  const location = useLocation();
+  // Build lookups from backend menu
+  const lookups = buildPermissionLookup(menu as BackendMenuItem[]);
 
-  useEffect(() => {
-    if (navigationMapRawData && !isLoadingNavigationMap && !isFetchingNavigationMap) {
-      // build navigation map
-      loadNavs();
-    }
-  }, [navigationMapRawData]);
+  // Walk your static MODULES and keep only allowed screens
+  MODULES.forEach((module) => {
+    if (!module.screens || module.screens.length === 0) return;
 
-  useEffect(() => {
-    if (screenKeys && location) {
-      if (screenKeys[location.pathname]) {
-        dispatch(setScreenKey(screenKeys[location.pathname]));
-      }
-    }
-  }, [screenKeys]);
+    const childrenNavs: any[] = [];
 
-  const loadNavs = async () => {
-    const navs = [];
-    navs.push({
-      eventKey: 'dashboard',
-      icon: <Icon as={MdDashboard} />,
-      title: 'Dashboard',
-      to: '/'
-    });
+    // Sort screens by viewOrder if you want consistent ordering
+    const sortedScreens = [...module.screens].sort((a, b) => (a.viewOrder ?? 0) - (b.viewOrder ?? 0));
 
-    // fill screens without a module (direct links)
-    navigationMapRawData.screens.map(screenWithoutModule => {
-      navs.push({
-        eventKey: screenWithoutModule.key,
-        icon: <Icon as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
-        title: screenWithoutModule.name,
-        to: '/'.concat(screenWithoutModule.navPath)
-      });
-    });
+    sortedScreens.forEach((screen) => {
+      if (isScreenAllowed(screen, module.name, lookups)) {
+        const safeIconKey = (screen?.icon as keyof typeof icons) ?? 'FaCircle';
+        const IconComp = icons[safeIconKey] ?? icons['FaCircle'];
 
-    const _screenKeys = {};
-
-    // fill screens without a module (direct links)
-    navigationMapRawData.modules.map(module => {
-      const childrenScreens = module.screens;
-      const chidlrenNavs = [];
-
-      childrenScreens.map(screen => {
-        chidlrenNavs.push({
-          eventKey: screen.key,
-          icon: <Icon as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
-          title: screen.name,
-          to: '/'.concat(screen.navPath)
+        childrenNavs.push({
+          icon: <Icon as={IconComp} />,
+          title: toTitleCase(screen.name), // keep a nice title
+          to: `/${screen.navPath}`,
         });
-
-        _screenKeys['/'.concat(screen.navPath)] = screen.key;
-      });
-
-      navs.push({
-        eventKey: module.key,
-        icon: <Icon as={icons[module?.iconImagePath ?? 'FaBox']} />,
-        title: module.name,
-        children: chidlrenNavs
-      });
+      }
     });
 
-    setScreenKeys(_screenKeys);
+    if (childrenNavs.length > 0) {
+      const safeModuleIconKey = (module?.icon as keyof typeof icons) ?? 'FaBox';
+      const ModuleIconComp = icons[safeModuleIconKey] ?? icons['FaBox'];
 
-    setNavigationMap(navs);
-  };
+      navsTemp.push({
+        icon: <Icon as={ModuleIconComp} />,
+        title: module.name,
+        children: childrenNavs,
+      });
+    }
+  });
+
+  setNavigationMap(navsTemp);
+};
+
 
   return (
     <IntlProvider locale="en" messages={locales.en}>

@@ -55,6 +55,7 @@ export interface Department {
 export interface Facility { 
 	id?:string;
 	name?:string;
+  code?:string;
 	emailAddress?:string;
 	phone1?:string;
 	phone2?:string;
@@ -67,6 +68,7 @@ export interface Facility {
 
 export interface CreateFacility { 
 	name?:string;
+  code?:string;
 	emailAddress?:string;
 	phone1?:string;
 	phone2?:string;
