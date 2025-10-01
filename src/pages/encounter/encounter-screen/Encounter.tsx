@@ -828,6 +828,7 @@ const Encounter = () => {
               open={isDrawerOpen}
               onClose={() => setIsDrawerOpen(false)}
               placement="left"
+              style={{zIndex:999999999999}}
               className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
             >
               <Drawer.Header className="header-drawer">
