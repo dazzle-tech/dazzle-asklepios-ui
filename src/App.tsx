@@ -171,6 +171,7 @@ import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
+import CallOverlay from './components/Overlay/CallOverlay';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -489,6 +490,7 @@ const App = () => {
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
+        <CallOverlay />
       </CustomProvider>
     </IntlProvider>
   );

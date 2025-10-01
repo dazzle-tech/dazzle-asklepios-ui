@@ -26,6 +26,8 @@ import { recoveryService } from './services/RecoveryService';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
+import callReducer from './store/callSlice';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -91,6 +93,7 @@ export const store = configureStore({
 
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
+    call: callReducer,
 
   },
   // @ts-ignore

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider, useSelector } from 'react-redux';
@@ -16,8 +15,8 @@ const RootWrapper = () => {
   // MUI theme
   const muiTheme = createTheme({
     palette: {
-      mode: mode === 'dark' ? 'dark' : 'light',
-    },
+      mode: mode === 'dark' ? 'dark' : 'light'
+    }
   });
 
   // Styled Components theme
@@ -25,21 +24,23 @@ const RootWrapper = () => {
     mode,
     colors: {
       background: mode === 'dark' ? '#121212' : '#fff',
-      text: mode === 'dark' ? '#fff' : '#000',
-    },
+      text: mode === 'dark' ? '#fff' : '#000'
+    }
   };
 
   return (
     <MUIThemeProvider theme={muiTheme}>
       <CssBaseline />
       <RSuiteProvider theme={mode === 'dark' ? 'dark' : 'light'}>
-          <StyledThemeProvider theme={styledTheme}>
-            <div className={`${mode === 'light' ? 'light' : 'dark'}`}>
-            <App />
-            </div>
-          </StyledThemeProvider>
-       </RSuiteProvider>
-     </MUIThemeProvider>
+        <StyledThemeProvider theme={styledTheme}>
+          <div className={`${mode === 'light' ? 'light' : 'dark'}`}>
+            <Provider store={store}>
+              <App />
+            </Provider>
+          </div>
+        </StyledThemeProvider>
+      </RSuiteProvider>
+    </MUIThemeProvider>
   );
 };
 
@@ -51,6 +52,3 @@ root.render(
     </HashRouter>
   </Provider>
 );
-
-
-

@@ -1,5 +1,5 @@
 // Import required dependencies and components
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PlusIcon from '@rsuite/icons/Plus';
 import ModalContent from './ModalContent';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -44,15 +44,18 @@ import { useSelector } from 'react-redux';
 import ICU from '../../encounter-component/i.c.u';
 import ProgressNote from './ProgressNotes';
 import { useSaveTeleConsultationMutation } from '@/services/encounterService';
-
-
+import { JitsiMeeting } from '@jitsi/react-sdk';
+import FloatingPiPJitsi from './JitsiPip';
+import { slice } from 'lodash';
+import { startCall } from '@/store/callSlice';
+import { useDispatch } from 'react-redux';
 
 const StartTeleConsultation = () => {
   const navigate = useNavigate();
   const mode = useSelector((state: any) => state.ui.mode);
   const { state } = useLocation();
   const { patient, encounter, fromPage, consultaition, notelist } = state || {};
-const sliceauth = useSelector((state: any) => state.auth);
+  const sliceauth = useSelector((state: any) => state.auth);
   const [showProcedureDetails, setShowProcedureDetails] = useState(false);
   const [showOperationRequest, setShowOperationRequest] = useState(false);
   const [showConsultationModal, setShowConsultationModal] = useState(false);
@@ -60,15 +63,19 @@ const sliceauth = useSelector((state: any) => state.auth);
   const [showMedicationOrderModal, setShowMedicationOrderModal] = useState(false);
   const [openVitalModal, setOpenVitalModal] = useState(false);
 
-   const [save, saveMutation] = useSaveTeleConsultationMutation();
+  const [save, saveMutation] = useSaveTeleConsultationMutation();
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
 
-  const noop = () => { };
+  const noop = () => {};
 
   const [edit] = useState(false);
 
   const [selectedModalContent, setSelectedModalContent] = useState<React.ReactNode | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [usePip, setUsePip] = useState(true);
+  const [inCall, setInCall] = useState(false);
+  const [callOpen, setCallOpen] = useState(false);
 
   const dummyPatient = { name: 'John Doe', hasAllergy: true, hasWarning: true };
   const dummyEncounter = { editable: true };
@@ -112,35 +119,52 @@ const sliceauth = useSelector((state: any) => state.auth);
     setIsModalOpen(true);
   };
 
+  const roomName = useMemo(() => `asklepios tele-consultation`, []);
+  // const meetingUrl = `https://meet.jit.si/${roomName}`;
+
+  const dispatch = useDispatch();
+  const displayName = sliceauth?.user?.login.name;
+  const email = sliceauth?.user?.login.email;
+
   return (
-    <div className='main-start-tele-consultation-container-handle'>
+    <div className="main-start-tele-consultation-container-handle">
       <div className="container">
         <div className="left-box">
           <Panel>
             <div className="container-bt-start-tele">
               <BackButton onClick={() => navigate(-1)} />
-                <MyButton
+              <MyButton
                 onClick={async () => {
                   const payload = {
                     ...consultaition,
-                    statusLkey: '13828778108999715',// ORD_ON_CALL
+                    statusLkey: '13828778108999715', // ORD_ON_CALL
                     callStartedAt: Date.now(),
-                    callStartedBy: sliceauth.user?.login ,
+                    callStartedBy: sliceauth.user?.login
                   };
-                  await save(payload).unwrap();
-                 
+                  // await save({ consultaition, roomName, payload }).unwrap();
+                  // if (usePip) setInCall(true);
+                  // else setCallOpen(true);
+                  await save({ payload }).unwrap();
+                  dispatch(startCall({ roomName, displayName, email }));
+
+                  console.log('[StartCall] dispatched', { roomName });
+                  console.log('[CallOverlay] render', { inCall, roomName });
                 }}
-               
                 prefixIcon={() => <FontAwesomeIcon icon={faVideo} />}
-               
-                loading={false
-                }
-                
-                >
-                  Start Call
-                </MyButton>
+                loading={false}
+              >
+                Start Call
+              </MyButton>
             </div>
 
+            {/* {inCall && (
+              <FloatingPiPJitsi
+                roomName={roomName}
+                displayName={sliceauth.user?.login.name}
+                email={sliceauth.user?.login.email}
+                onClose={() => setInCall(false)}
+              />
+            )} */}
 
             <div className="container-btns-start-tele">
               <MyButton disabled={edit} prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}>
@@ -148,7 +172,9 @@ const sliceauth = useSelector((state: any) => state.auth);
               </MyButton>
               <MyButton
                 disabled={!encounter.hasAllergy}
-                backgroundColor={encounter.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'}
+                backgroundColor={
+                  encounter.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'
+                }
                 prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
               >
                 Allergy
@@ -166,18 +192,15 @@ const sliceauth = useSelector((state: any) => state.auth);
                 onClick={async () => {
                   const payload = {
                     ...consultaition,
-                    statusLkey: '13828896473769449',// ORD_CALL_CLOSED
+                    statusLkey: '13828896473769449', // ORD_CALL_CLOSED
                     callClosedAt: Date.now(),
-                    callClosedBy: sliceauth.user?.login ,
+                    callClosedBy: sliceauth.user?.login
                   };
                   await save(payload).unwrap();
-                 
                 }}
-               
               >
                 Close Call
               </MyButton>
-
             </div>
 
             <Divider />
@@ -191,20 +214,31 @@ const sliceauth = useSelector((state: any) => state.auth);
               </div>
 
               <div className="camera-tele-consultaition">
-                   <div>
-                  <PatientHistorySummary patient={dummyPatient} encounter={dummyEncounter} edit={edit} />
+                <div>
+                  <PatientHistorySummary
+                    patient={dummyPatient}
+                    encounter={dummyEncounter}
+                    edit={edit}
+                  />
                 </div>
                 <SectionContainer
-                  title={<div className="patient-history-title">
-                    <FontAwesomeIcon icon={faUser} className="patient-history-icon" />
-                    <span>Patient Details</span></div>}
-                  content={<ProgressNote consultaition={consultaition} list={notelist}/>} />
-             
+                  title={
+                    <div className="patient-history-title">
+                      <FontAwesomeIcon icon={faUser} className="patient-history-icon" />
+                      <span>Patient Details</span>
+                    </div>
+                  }
+                  content={<ProgressNote consultaition={consultaition} list={notelist} />}
+                />
               </div>
 
               <div className="sheets-open-popup">
                 {sheetButtons.map(({ label, icon }) => (
-                  <button key={label} onClick={() => handleOpenModal(label)} className="sheet-button">
+                  <button
+                    key={label}
+                    onClick={() => handleOpenModal(label)}
+                    className="sheet-button"
+                  >
                     <FontAwesomeIcon icon={icon} className="icon-left" />
                     {label}
                   </button>
@@ -237,7 +271,7 @@ const sliceauth = useSelector((state: any) => state.auth);
             prescriptionMedication={{
               medicationItems: [],
               instructions: '',
-              dosage: '',
+              dosage: ''
             }}
             setPrescriptionMedications={noop}
             preKey={null}
@@ -252,7 +286,10 @@ const sliceauth = useSelector((state: any) => state.auth);
         )}
 
         {showProcedureDetails && (
-          <TeleScreenProcedures open={showProcedureDetails} onClose={() => setShowProcedureDetails(false)} />
+          <TeleScreenProcedures
+            open={showProcedureDetails}
+            onClose={() => setShowProcedureDetails(false)}
+          />
         )}
         {showOperationRequest && (
           <TeleScreenOperationRequests
@@ -260,7 +297,7 @@ const sliceauth = useSelector((state: any) => state.auth);
             onClose={() => setShowOperationRequest(false)}
             patient={dummyPatient}
             encounter={dummyEncounter}
-            refetch={() => { }}
+            refetch={() => {}}
           />
         )}
         {showConsultationModal && (
@@ -269,11 +306,14 @@ const sliceauth = useSelector((state: any) => state.auth);
             onClose={() => setShowConsultationModal(false)}
             patient={dummyPatient}
             encounter={dummyEncounter}
-            refetch={() => { }}
+            refetch={() => {}}
           />
         )}
         {showSelectTestsModal && (
-          <TeleScreenSelectTests open={showSelectTestsModal} onClose={() => setShowSelectTestsModal(false)} />
+          <TeleScreenSelectTests
+            open={showSelectTestsModal}
+            onClose={() => setShowSelectTestsModal(false)}
+          />
         )}
         {showMedicationOrderModal && (
           <TeleScreenMedicationOrder
@@ -281,17 +321,15 @@ const sliceauth = useSelector((state: any) => state.auth);
             onClose={() => setShowMedicationOrderModal(false)}
             patient={dummyPatient}
             encounter={dummyEncounter}
-            medicRefetch={() => { }}
+            medicRefetch={() => {}}
           />
         )}
       </div>
-
       {/* Extra Sections */}
-      <div className='coulmns-part-tele-consultation-screen'>
-        <div><ICU /></div>
-
-       
-       
+      <div className="coulmns-part-tele-consultation-screen">
+        <div>
+          <ICU />
+        </div>
       </div>
 
       <MyModal
@@ -301,7 +339,7 @@ const sliceauth = useSelector((state: any) => state.auth);
         position="right"
         content={<ModalContent />}
         actionButtonLabel="Save"
-        actionButtonFunction={() => alert("Saved vitals")}
+        actionButtonFunction={() => alert('Saved vitals')}
         size="50vw"
       />
     </div>
