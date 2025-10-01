@@ -28,7 +28,8 @@ import {
   Divider as MuiDivider,
   Box,
   Menu,
-  MenuItem
+  MenuItem,
+  Tooltip
 } from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
@@ -266,26 +267,33 @@ const Frame = (props: FrameProps) => {
                           }
                         }}
                       >
-                        <ListItemIcon
-                          sx={{
-                            minWidth: 0,
-                            mr: expand ? 3 : 'auto',
-                            justifyContent: 'center',
-                            '& svg': { fontSize: '20px' }
-                          }}
+                        <Tooltip
+                          title={item.title}
+                          placement="right"
+                          arrow
+                          disableHoverListener={expand}
                         >
-                          {item.icon ? (
-                            React.isValidElement(item.icon) ? (
-                              item.icon
-                            ) : typeof item.icon === 'function' ? (
-                              React.createElement(item.icon)
+                          <ListItemIcon
+                            sx={{
+                              minWidth: 0,
+                              mr: expand ? 3 : 'auto',
+                              justifyContent: 'center',
+                              '& svg': { fontSize: '20px' }
+                            }}
+                          >
+                            {item.icon ? (
+                              React.isValidElement(item.icon) ? (
+                                item.icon
+                              ) : typeof item.icon === 'function' ? (
+                                React.createElement(item.icon)
+                              ) : (
+                                <FontAwesomeIcon icon={faHospital} />
+                              )
                             ) : (
                               <FontAwesomeIcon icon={faHospital} />
-                            )
-                          ) : (
-                            <FontAwesomeIcon icon={faHospital} />
-                          )}
-                        </ListItemIcon>
+                            )}
+                          </ListItemIcon>
+                        </Tooltip>
                         {expand && <ListItemText primary={item.title} />}
                         {expand &&
                           item.children &&
