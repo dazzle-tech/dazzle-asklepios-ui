@@ -61,7 +61,7 @@ export const newFacility:modelTypes.Facility = {
 	fax:'',
 	addressId:'',
 	type:'',
-	defaultCurrency:'',
+	defaultCurrency:null,
   isActive: true,
 } 
 
