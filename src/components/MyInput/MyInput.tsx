@@ -182,17 +182,17 @@ const MyInput = ({
       case 'textarea':
         return (
           <InputGroup>
-          <Form.Control
-            style={{ width: props?.width ?? 200, height: props?.height ?? 70 }}
-            disabled={props.disabled}
-            name={fieldName}
-            placeholder={props.placeholder}
-            value={record[fieldName] ? record[fieldName] : ''}
-            accepter={Textarea}
-            onChange={handleValueChange}
-            onKeyDown={focusNextField}
-          />
-           <div
+            <Form.Control
+              style={{ width: props?.width ?? 200, height: props?.height ?? 70 }}
+              disabled={props.disabled}
+              name={fieldName}
+              placeholder={props.placeholder}
+              value={record[fieldName] ? record[fieldName] : ''}
+              accepter={Textarea}
+              onChange={handleValueChange}
+              onKeyDown={focusNextField}
+            />
+            <div
               className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
               onClick={changeRecordingState}
               style={{ position: 'relative' }}
@@ -201,9 +201,9 @@ const MyInput = ({
                 icon={faMicrophone}
                 className={props.disabled ? 'disabled-icon' : 'active-icon'}
               />
-               {recording && <span className="pulse-ring"></span>}
+              {recording && <span className="pulse-ring"></span>}
             </div>
-            </InputGroup>
+          </InputGroup>
         );
       case 'checkbox':
         return (
@@ -482,10 +482,46 @@ const MyInput = ({
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const inputControl = (
-           <InputGroup style={{ width: totalWidth + 20 }}>
+          //  <InputGroup style={{ width: totalWidth + 20 }}>
+          //   <Form.Control
+          //     labelKey={props?.selectDataLabel ?? ''}
+          //     style={{ width: inputWidth, height: props?.height ?? 30 }}
+          //     disabled={props.disabled}
+          //     name={fieldName}
+          //     type={fieldType}
+          //     value={record ? record[fieldName] : ''}
+          //     onChange={handleValueChange}
+          //     placeholder={props.placeholder}
+          //     onKeyDown={async e => {
+          //       if (e.key === 'Enter') {
+          //         e.preventDefault();
+          //         const result = await props.enterClick?.();
+          //         if (result !== false) {
+          //           handleEnterFocusNext(e);
+          //         }
+          //       }
+          //     }}
+          //   />
+          //     <div
+          //     className={`container-of-search-icon ${recording ? 'recording' : ''}`}
+          //     onClick={changeRecordingState}
+          //     style={{ position: 'relative' }}
+          //   >
+          //     <FontAwesomeIcon
+          //       icon={faMicrophone}
+          //       className={props.disabled ? 'disabled-icon' : 'active-icon'}
+          //     />
+          //      {recording && <span className="pulse-ring"></span>}
+          //   </div>
+          //   </InputGroup>
+          <div style={{ position: 'relative', display: 'inline-block', width: inputWidth }}>
             <Form.Control
               labelKey={props?.selectDataLabel ?? ''}
-              style={{ width: inputWidth, height: props?.height ?? 30 }}
+              style={{
+                width: '100%',
+                height: props?.height ?? 30,
+                paddingRight: '35px'
+              }}
               disabled={props.disabled}
               name={fieldName}
               type={fieldType}
@@ -502,18 +538,18 @@ const MyInput = ({
                 }
               }}
             />
-              <div
+
+            <div
               className={`container-of-search-icon ${recording ? 'recording' : ''}`}
               onClick={changeRecordingState}
-              style={{ position: 'relative' }}
             >
               <FontAwesomeIcon
                 icon={faMicrophone}
                 className={props.disabled ? 'disabled-icon' : 'active-icon'}
               />
-               {recording && <span className="pulse-ring"></span>}
-            </div>  
-            </InputGroup>
+              {recording && <span className="pulse-ring"></span>}
+            </div>
+          </div>
         );
 
         if (leftAddon || rightAddon) {
