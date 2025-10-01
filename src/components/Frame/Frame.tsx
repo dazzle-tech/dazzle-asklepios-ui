@@ -31,6 +31,7 @@ export interface FrameProps {
 }
 const Frame = (props: FrameProps) => {
   const { navs } = props;
+  console.log('Navs in Frame:', navs);
   const { mode } = props;
   const NavItem = props => {
     const { title, eventKey, ...rest } = props;

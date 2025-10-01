@@ -27,12 +27,20 @@ export const userRoleService = createApi({
                 method: "GET",
             }),
         }),
+
+      getMenu: builder.query({
+      query: ({ userId, facilityId }) => ({
+        url: `/api/setup/menu?userId=${userId}&facilityId=${facilityId}`,
+        method: 'GET',
+      }),
+    }),
     }),
 });
 export const {
     useAddUserRoleMutation,
     useDeleteUserRoleMutation,
-    useGetUserRolesByUserIdQuery
+    useGetUserRolesByUserIdQuery,
+    useGetMenuQuery
 } = userRoleService;
 
 

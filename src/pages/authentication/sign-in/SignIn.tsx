@@ -19,7 +19,7 @@ import './styles.less';
 import { useLoginMutation } from '@/services/authServiceApi';
 import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
-import { setToken, setUser } from '@/reducers/authSlice';
+import { setTenant, setToken, setUser } from '@/reducers/authSlice';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 const SignIn = () => {
@@ -70,6 +70,16 @@ const SignIn = () => {
       dispatch(setToken(resp.id_token));
       const userResp = await getAccount().unwrap();
       dispatch(setUser(userResp));
+
+    // NEW ⬇︎ merge the selected facility into tenant as `selectedFacility`
+      const selectedFacility =
+        (facilityListResponse ?? []).find((f: any) => f.id === Number(credentials.orgKey)) || null;
+     const existingTenant = JSON.parse(localStorage.getItem('tenant') || 'null') || {};
+     dispatch(setTenant({ ...existingTenant, selectedFacility }));
+
+     // (Optional cleanup) If you previously stored standalone 'facility' in localStorage, remove it:
+     // localStorage.removeItem('facility');
+     // and stop dispatching any setFacility action you might have had.
 
       console.log('User Info:', userResp);
 
