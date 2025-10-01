@@ -26,7 +26,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
   onSave,
 }) => {
   const [selected, setSelected] = useState<Role | null>(null);
-console.log("Facility in RoleManagement:", facility);
+
   const handleSave = () => {
     // hook for your save logic (permissions, screens, etc.)
     onSave?.(selected);
@@ -67,11 +67,11 @@ console.log("Facility in RoleManagement:", facility);
       open={open}
       setOpen={setOpen}
       title="Role Management"
-      size="70%"
-      bodyheight="70vh"
+      size="full"
+     
       content={content}
       hideBack={true}
-      steps={[{ title: "Roles", icon: <FontAwesomeIcon icon={faUserShield} /> }]}
+     
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       isDisabledActionBtn={!selected} // disable until a role is selected
