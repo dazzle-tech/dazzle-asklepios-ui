@@ -229,6 +229,7 @@ const StartTeleConsultation = () => {
                   <SectionContainer
                     title={<Translate>Progress Note</Translate>}
                     content={<ProgressNote consultaition={consultaition} list={notelist} />}
+                    minHeight={"17vw"}
                   />
                 </div>
               </div>
