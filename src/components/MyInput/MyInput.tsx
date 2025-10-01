@@ -16,6 +16,7 @@ import MyLabel from '../MyLabel';
 import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
+
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -23,6 +24,7 @@ const Textarea = React.forwardRef((props, ref: any) => (
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
   <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
 ));
+
 const CustomDateTimePicker = React.forwardRef((props: any, ref: ForwardedRef<HTMLDivElement>) => (
   <DatePicker {...props} oneTap format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
 ));
@@ -71,13 +73,32 @@ const MyInput = ({
   const inputColor = props.inputColor || record?.inputColor || '';
   const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult, setValidationResult] = useState(undefined);
+
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [isDateOpen, setIsDateOpen] = useState(false);
+  const [isDateTimeOpen, setIsDateTimeOpen] = useState(false);
+  const [isTimeOpen, setIsTimeOpen] = useState(false);
+  const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
+  const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
   useEffect(() => {
-    if (!isSelectOpen || fieldType !== 'select') return;
+    const isAnyOpen =
+      isSelectOpen ||
+      isDateOpen ||
+      isDateTimeOpen ||
+      isTimeOpen ||
+      isMultyPickerOpen ||
+      isCheckPickerOpen;
+
+    if (!isAnyOpen) return;
 
     const handleScroll = () => {
       setIsSelectOpen(false);
+      setIsDateOpen(false);
+      setIsDateTimeOpen(false);
+      setIsTimeOpen(false);
+      setIsMultyPickerOpen(false);
+      setIsCheckPickerOpen(false);
     };
 
     window.addEventListener('scroll', handleScroll, true);
@@ -85,7 +106,7 @@ const MyInput = ({
     return () => {
       window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [isSelectOpen, fieldType]);
+  }, [isSelectOpen, isDateOpen, isDateTimeOpen, isTimeOpen, isMultyPickerOpen, isCheckPickerOpen]);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -151,6 +172,9 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
+            open={isDateTimeOpen}
+            onOpen={() => setIsDateTimeOpen(true)}
+            onClose={() => setIsDateTimeOpen(false)}
           />
         );
       case 'time':
@@ -177,6 +201,9 @@ const MyInput = ({
             format="HH:mm"
             cleanable
             onKeyDown={focusNextField}
+            open={isTimeOpen}
+            onOpen={() => setIsTimeOpen(true)}
+            onClose={() => setIsTimeOpen(false)}
           />
         );
       case 'select':
@@ -226,6 +253,9 @@ const MyInput = ({
             searchBy={props.searchBy} // Optional: Search function for TagPicker
             menuMaxHeight={props?.menuMaxHeight ?? ''}
             onKeyDown={focusNextField}
+            open={isMultyPickerOpen}
+            onOpen={() => setIsMultyPickerOpen(true)}
+            onClose={() => setIsMultyPickerOpen(false)}
           />
         );
       case 'checkPicker':
@@ -246,6 +276,9 @@ const MyInput = ({
             searchBy={props.searchBy} // Optional: Search function for checkPicker
             menuMaxHeight={props?.menuMaxHeight ?? ''}
             onKeyDown={focusNextField}
+            open={isCheckPickerOpen}
+            onOpen={() => setIsCheckPickerOpen(true)}
+            onClose={() => setIsCheckPickerOpen(false)}
           />
         );
       case 'date':
@@ -265,6 +298,9 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
+            open={isDateOpen}
+            onOpen={() => setIsDateOpen(true)}
+            onClose={() => setIsDateOpen(false)}
           />
         );
       case 'number': {
