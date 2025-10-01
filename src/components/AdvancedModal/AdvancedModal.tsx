@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode } from 'react';
 import { Modal } from 'rsuite';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,7 +6,29 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '../MyButton/MyButton';
 import { useSelector } from 'react-redux';
 
-const AdvancedModal = ({
+interface AdvancedModalProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  leftTitle?: string;
+  rightTitle?: string;
+  subRightTitle?: string;
+  leftContent?: ReactNode;
+  rightContent?: ReactNode;
+  footerButtons?: ReactNode;
+  hideCancel?: boolean;
+  position?: 'left' | 'right' | 'center';
+  actionButtonLabel?: string | ReactNode;
+  actionButtonFunction?: (() => void) | null;
+  height?: string;
+  size?: string;
+  leftWidth?: string;
+  rightWidth?: string;
+  isDisabledActionBtn?: boolean;
+  defaultClose?: boolean;
+  isLeftClosed?: boolean;
+}
+
+const AdvancedModal: React.FC<AdvancedModalProps> = ({
   open,
   setOpen,
   leftTitle = '',
@@ -29,6 +51,7 @@ const AdvancedModal = ({
 }) => {
   const modalClass = position === 'left' ? 'left-modal' : position === 'right' ? 'rigth-modal' : '';
   const mode = useSelector((state: any) => state.ui.mode);
+
   return (
     <Modal
       open={open}
@@ -66,9 +89,9 @@ const AdvancedModal = ({
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <MyButton
-                appearance={mode === 'light' ? "subtle" : 'primary'}
+                appearance={mode === 'light' ? 'subtle' : 'primary'}
                 color="#5B5B5B"
-                backgroundColor='var(--dark-black)'
+                backgroundColor="var(--dark-black)"
                 width="20px"
                 height="20px"
                 onClick={() => setOpen(false)}

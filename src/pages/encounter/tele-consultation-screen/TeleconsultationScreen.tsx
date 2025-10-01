@@ -89,7 +89,7 @@ const TeleconsultationRequests = () => {
 
 
 
-  const { data: orders, refetch } = useGetTeleConsultationListQuery({ ...initialListRequestId, })
+  const { data: orders, refetch  ,isLoading:ordersLod} = useGetTeleConsultationListQuery({ ...initialListRequestId, })
   const { data: callLogs } = useGetTeleConsultationCallLogListQuery(
     {
       ...initialListRequestId,
@@ -479,7 +479,7 @@ const TeleconsultationRequests = () => {
       <DragDropTable
         data={orders?.object ?? []}
         columns={columns}
-        loading={false}
+        loading={ordersLod}
         filters={filterstable}
         page={page}
         rowsPerPage={rowsPerPage}

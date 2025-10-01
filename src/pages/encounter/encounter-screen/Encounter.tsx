@@ -13,6 +13,7 @@ import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { GiKidneys } from 'react-icons/gi';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faLeaf } from '@fortawesome/free-solid-svg-icons';
+import { FaArrowLeft } from 'react-icons/fa6';
 import {
   faBedPulse,
   faCheckDouble,
@@ -697,6 +698,14 @@ const Encounter = () => {
             <div className="container-bt">
               <div className="left">
                 <BackButton onClick={handleGoBack} />
+
+                <MyButton
+                              backgroundColor={'var(--primary-gray)'}
+                              onClick={handleGoBack}
+                              prefixIcon={() => <FaArrowLeft />}
+                            >
+                </MyButton>
+
                 <Form fluid>
                   <MyInput
                     width="100%"
@@ -819,6 +828,7 @@ const Encounter = () => {
               open={isDrawerOpen}
               onClose={() => setIsDrawerOpen(false)}
               placement="left"
+              style={{zIndex:999999999999}}
               className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
             >
               <Drawer.Header className="header-drawer">

@@ -135,7 +135,7 @@ const SOAP = props => {
   return (
     <div className="patient-summary-container">
       <Tabs defaultActiveKey="1" appearance="subtle">
-        <Tabs.Tab eventKey="1" title="Chief Complain">
+        <Tabs.Tab eventKey="1" title="Visit Details">
           <div className={clsx('column-container', { 'disabled-panel': edit })}>
             <div className="top-section">
               <SectionContainer

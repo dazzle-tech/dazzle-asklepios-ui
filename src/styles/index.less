@@ -56,6 +56,7 @@ body {
   font-family: 'Inter', sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow:  auto !important;
 }
 
 * {
@@ -311,7 +312,7 @@ aside {
   --icon-gray: #8f98ab;
   --gray-dark: #666;
   // --black: #000000;
-   --black: #121212;
+  --black: #121212;
   --dark-black: #242424;
   --extra-dark-black: #1a1a1a;
   --light-gray: #f9fafc;
@@ -345,25 +346,18 @@ aside {
   --text-weight-extra-bold: 600;
 
   // --dark-mode-box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
-  --dark-mode-box-shadow:  0 2px 6px rgba(0, 0, 0, 0.6),   
-    0 0 6px rgba(255, 255, 255, 0.05);
-
-
-
+  --dark-mode-box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 6px rgba(255, 255, 255, 0.05);
 
   --card-purple: #ba68c8a6;
   --card-pink: #ff6b6b80;
   --card-dark-pink: #ad2626;
   --card-dark-blue: #344780;
-  --card-blue: #4D79FF;
-  --card-light-blue: #4DD0E1;
+  --card-blue: #4d79ff;
+  --card-light-blue: #4dd0e1;
   --card-green: #489e20;
   --card-dark-green: rgb(0, 92, 0);
-  --card-yellow: #FFC300;
+  --card-yellow: #ffc300;
   --card-gray: #adadad;
-
-
-
 }
 
 .rs-form-inline .rs-form-control-label {
@@ -474,8 +468,6 @@ input[disabled] {
   opacity: 1;
 }
 
-
-
 .dark .rs-nav-horizontal {
   background-color: var(--black) !important;
 }
@@ -491,29 +483,36 @@ input[disabled] {
 // .dark svg:not(:root) {
 //   color: var(--white) !important;
 // }
-.dark{
+.dark {
   textarea.rs-input {
     background-color: var(--dark-black) !important;
   }
-  .rs-picker-toggle-wrapper{
+  .rs-picker-toggle-wrapper {
     background-color: var(--dark-black) !important;
   }
-  .react-tabs__tab{
+  .react-tabs__tab {
     background-color: var(--black) !important;
   }
-  
 }
 // To style the Search Input inside the SelectPicker dropdown to match dark mode
-.rs-theme-dark{
+.rs-theme-dark {
   scrollbar-color: #606060 transparent !important; // for scroll backgroun on dark mode
   .rs-input-group.rs-input-group-inside .rs-input {
     background-color: var(--dark-black) !important;
   }
- .rs-input-group input.rs-input ~ .rs-input-group-addon,
+  .rs-input-group input.rs-input ~ .rs-input-group-addon,
   .rs-input-group .rs-form-control-wrapper ~ .rs-input-group-addon {
     background-color: var(--gray-dark) !important;
   }
-  .rs-nav-horizontal{
+  .rs-nav-horizontal {
     background-color: var(--dark-black) !important;
   }
+}
+
+.page-container.container-full.rs-container {
+  padding-left: 0 !important;
+}
+
+.page-container.rs-container {
+  padding-left: 0 !important;
 }

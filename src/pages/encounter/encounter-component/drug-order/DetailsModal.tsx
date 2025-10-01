@@ -28,6 +28,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import DiagnosticsOrder from '../diagnostics-order';
 import ActiveIngrediantList from './ActiveIngredient';
 import Substitues from './Substitutes';
+import PlusIcon from '@rsuite/icons/Plus';
 import './styles.less';
 
 const DetailsModal = ({
@@ -267,14 +268,13 @@ const DetailsModal = ({
     if (orderMedication.administrationInstructions != null) {
       setAdminInstructions(prevadminInstructions =>
         prevadminInstructions
-          ? `${prevadminInstructions}, ${
-              administrationInstructionsLovQueryResponse?.object?.find(
-                item => item.key === orderMedication.administrationInstructions
-              )?.lovDisplayVale
-            }`
+          ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
+            item => item.key === orderMedication.administrationInstructions
+          )?.lovDisplayVale
+          }`
           : administrationInstructionsLovQueryResponse?.object?.find(
-              item => item.key === orderMedication.administrationInstructions
-            )?.lovDisplayVale
+            item => item.key === orderMedication.administrationInstructions
+          )?.lovDisplayVale
       );
     }
 
@@ -436,21 +436,24 @@ const DetailsModal = ({
         open={open}
         setOpen={setOpen}
         actionButtonFunction={handleSaveMedication}
-        actionButtonLabel="Save"
-        size="100vw"
+        actionButtonLabel={
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <CheckIcon /> Save & Close
+          </span>
+        } size="100vw"
         isDisabledActionBtn={
           edit
             ? true
             : orderMedication.key
-            ? orderMedication?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'
-            : false
+              ? orderMedication?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'
+              : false
         }
         leftTitle={
           isUnregistered
             ? 'Unregistered Medication'
             : selectedGeneric
-            ? selectedGeneric.genericName
-            : 'Select Generic'
+              ? selectedGeneric.genericName
+              : 'Select Generic'
         }
         rightTitle="Medication Order Details"
         leftContent={
@@ -473,6 +476,10 @@ const DetailsModal = ({
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
+            </MyButton>
+            <MyButton
+              prefixIcon={() => <PlusIcon />}>
+              Add Medication
             </MyButton>
           </div>
         }

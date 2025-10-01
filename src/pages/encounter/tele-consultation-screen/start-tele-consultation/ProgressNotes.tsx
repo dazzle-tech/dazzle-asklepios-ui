@@ -26,7 +26,6 @@ const ProgressNote = ({ consultaition ,list}) => {
   const [saveProgressNotes, saveProgressNotesMutation] = useSaveTeleConsultationProgressNotesMutation();
 
 
-    console.log("fetchedProgressNotes", list);
    
   const [notesList, setNotesList] = useState<ApTeleConsultationProgressNote[]>(
   list ?? []
@@ -118,8 +117,8 @@ const ProgressNote = ({ consultaition ,list}) => {
   return (
     <Panel
       header={
-        <Box display={"flex"} justifyContent={"space-between"} gap={2} my={1}>
-          <Translate>Progress Notes</Translate>
+       
+       
           <Box display="flex" gap={2} justifyContent={"flex-end"}>
             <MyButton onClick={handleAddNew}>
               <AddIcon /> Add New
@@ -131,7 +130,7 @@ const ProgressNote = ({ consultaition ,list}) => {
               <FaCheck /> Save Notes
             </MyButton>
           </Box>
-        </Box>
+     
       }
     >
       <MyTable

@@ -302,7 +302,19 @@ const IntakeOutputBalance = () => {
       <Col md={12}>
         <Row>
           <SectionContainer 
-           title="Intakes"
+           title={<>Intakes
+           
+                           <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={() => {
+                  setPopupAddIntakeOpen(true);
+                }}
+                width="90px"
+              >
+                Add
+              </MyButton>
+              </>}
            content={
             <>
             <div className="container-of-add-new-button"></div>
@@ -314,16 +326,6 @@ const IntakeOutputBalance = () => {
                 setRecord={setRecordFilterIntake}
                 showLabel={false}
               />
-              <MyButton
-                prefixIcon={() => <AddOutlineIcon />}
-                color="var(--deep-blue)"
-                onClick={() => {
-                  setPopupAddIntakeOpen(true);
-                }}
-                width="90px"
-              >
-                Add
-              </MyButton>
             </Form>
             <MyTable
               data={intakeData}
@@ -345,7 +347,18 @@ const IntakeOutputBalance = () => {
         </Row>
         <Row>
           <SectionContainer 
-           title="Outputs"
+           title={<>Outputs
+                <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={() => {
+                  setPopupAddOutputOpen(true);
+                }}
+                width="90px"
+              >
+                Add
+              </MyButton>
+              </>}
            content={
             <>
             <div className="container-of-add-new-button"></div>
@@ -357,16 +370,7 @@ const IntakeOutputBalance = () => {
                 setRecord={setRecordFilterOutput}
                 showLabel={false}
               />
-              <MyButton
-                prefixIcon={() => <AddOutlineIcon />}
-                color="var(--deep-blue)"
-                onClick={() => {
-                  setPopupAddOutputOpen(true);
-                }}
-                width="90px"
-              >
-                Add
-              </MyButton>
+
             </Form>
             <MyTable
               data={outputData}

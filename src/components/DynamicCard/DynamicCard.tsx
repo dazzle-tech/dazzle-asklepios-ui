@@ -55,7 +55,7 @@ const DynamicCard: React.FC<MyCardProps> = ({
   margin = '0px',
   data = [],
   variant = 'basic',
-  backgroundColor,
+  backgroundColor, 
   ...props
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -131,7 +131,10 @@ const DynamicCard: React.FC<MyCardProps> = ({
     <Card
       width={width || 280}
       height={height}
-      style={{ backgroundColor: backgroundColor || 'inherit' }}
+      style={{ 
+        backgroundColor: backgroundColor || 'inherit',
+        margin: margin || 0
+      }}
       className={`dynamic-card ${mode === 'light' ? 'light' : 'dark'}`}
       {...props}
     >

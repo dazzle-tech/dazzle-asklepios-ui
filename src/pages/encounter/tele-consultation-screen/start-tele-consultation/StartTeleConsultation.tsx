@@ -44,18 +44,23 @@ import { useSelector } from 'react-redux';
 import ICU from '../../encounter-component/i.c.u';
 import ProgressNote from './ProgressNotes';
 import { useSaveTeleConsultationMutation } from '@/services/encounterService';
+
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import FloatingPiPJitsi from './JitsiPip';
 import { slice } from 'lodash';
 import { startCall } from '@/store/callSlice';
 import { useDispatch } from 'react-redux';
 
+import Translate from '@/components/Translate';
+
 const StartTeleConsultation = () => {
   const navigate = useNavigate();
   const mode = useSelector((state: any) => state.ui.mode);
   const { state } = useLocation();
   const { patient, encounter, fromPage, consultaition, notelist } = state || {};
+
   const sliceauth = useSelector((state: any) => state.auth);
+
   const [showProcedureDetails, setShowProcedureDetails] = useState(false);
   const [showOperationRequest, setShowOperationRequest] = useState(false);
   const [showConsultationModal, setShowConsultationModal] = useState(false);
@@ -146,9 +151,6 @@ const StartTeleConsultation = () => {
                   // else setCallOpen(true);
                   await save({ payload }).unwrap();
                   dispatch(startCall({ roomName, displayName, email }));
-
-                  console.log('[StartCall] dispatched', { roomName });
-                  console.log('[CallOverlay] render', { inCall, roomName });
                 }}
                 prefixIcon={() => <FontAwesomeIcon icon={faVideo} />}
                 loading={false}
@@ -196,6 +198,7 @@ const StartTeleConsultation = () => {
                     callClosedAt: Date.now(),
                     callClosedBy: sliceauth.user?.login
                   };
+                  console.log('close', payload);
                   await save(payload).unwrap();
                 }}
               >
@@ -221,15 +224,13 @@ const StartTeleConsultation = () => {
                     edit={edit}
                   />
                 </div>
-                <SectionContainer
-                  title={
-                    <div className="patient-history-title">
-                      <FontAwesomeIcon icon={faUser} className="patient-history-icon" />
-                      <span>Patient Details</span>
-                    </div>
-                  }
-                  content={<ProgressNote consultaition={consultaition} list={notelist} />}
-                />
+
+                <div>
+                  <SectionContainer
+                    title={<Translate>Progress Note</Translate>}
+                    content={<ProgressNote consultaition={consultaition} list={notelist} />}
+                  />
+                </div>
               </div>
 
               <div className="sheets-open-popup">

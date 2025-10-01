@@ -1,17 +1,15 @@
 import MyInput from '@/components/MyInput';
-import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
-import { ApUser } from '@/types/model-types';
-import { newApUser } from '@/types/model-types-constructor';
+import {
+  useGetFacilitiesQuery,
+  useGetLovValuesByCodeQuery,
+  useSaveUserMutation,
+  useGetLovDefultByCodeQuery,
+} from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Button,
-  Form,
-  Modal,
-  Panel
-} from 'rsuite';
+import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.svg';
 import './styles.less';
@@ -21,11 +19,15 @@ import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
 import { setToken, setUser } from '@/reducers/authSlice';
 
+// import store + enumsApi to prefetch after auth
+import { store } from '@/store';
+import { enumsApi } from '@/services/enumsApi';
+
 const SignIn = () => {
   const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
-  const [newPassword, setNewPassword] = useState();
-  const [newPasswordConfirm, setNewPasswordConfirm] = useState();
+  const [newPassword, setNewPassword] = useState<string | undefined>();
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState<string | undefined>();
   const [errText, setErrText] = useState(' ');
   const [resetPasswordView, setResetPasswordView] = useState(false);
   const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
@@ -33,7 +35,7 @@ const SignIn = () => {
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
-    orgKey: ''
+    orgKey: '',
   });
 
   const navigate = useNavigate();
@@ -42,10 +44,7 @@ const SignIn = () => {
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
 
-  const {
-    data: facilityListResponse,
-  } = useGetFacilitiesQuery({ ...initialListRequest });
-
+  const { data: facilityListResponse } = useGetFacilitiesQuery({ ...initialListRequest });
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
   const [saveUser] = useSaveUserMutation();
 
@@ -61,18 +60,20 @@ const SignIn = () => {
         username: credentials.username,
         password: credentials.password,
         facilityId: Number(credentials.orgKey),
-        rememberMe: true
+        rememberMe: true,
       }).unwrap();
 
-      console.log('Login Response:', resp);
+      // Save token first so prepareHeaders can pick it up
       dispatch(setToken(resp.id_token));
+
       const userResp = await getAccount().unwrap();
       dispatch(setUser(userResp));
 
-      console.log('User Info:', userResp);
-
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
+
+
+      store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
       setErrText(' ');
       navigate('/');
@@ -81,6 +82,7 @@ const SignIn = () => {
       setErrText('Login failed. Please check your credentials.');
     }
   };
+
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
@@ -113,7 +115,10 @@ const SignIn = () => {
 
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
-      <Panel bordered style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '10px' }}>
+      <Panel
+        bordered
+        style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '10px' }}
+      >
         <div className="bodySignInDiv">
           <Panel className="logo-panel">
             <img src={Logo} alt="Tenant Logo" />
@@ -125,7 +130,7 @@ const SignIn = () => {
                 <MyInput
                   placeholder="Select Facility"
                   width="100%"
-                  fieldType='select'
+                  fieldType="select"
                   fieldLabel="Facility"
                   selectData={facilityListResponse?.object ?? []}
                   selectDataLabel="facilityName"
@@ -143,7 +148,7 @@ const SignIn = () => {
                   selectData={langLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
-                  defaultSelectValue={langdefult?.object?.key.toString() ?? ''}
+                  defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
                   record={{}}
                   setRecord={() => { }}
                   placeholder="Select Language"
@@ -162,11 +167,11 @@ const SignIn = () => {
 
                 <Form.Group>
                   <Form.Control
-                    placeholder='Enter Password'
+                    placeholder="Enter Password"
                     name="password"
                     type="password"
                     value={credentials.password}
-                    onChange={e => setCredentials({ ...credentials, password: e })}
+                    onChange={(e) => setCredentials({ ...credentials, password: e })}
                   />
                 </Form.Group>
 
@@ -198,18 +203,14 @@ const SignIn = () => {
             <Form fluid>
               <Form.Group>
                 <Form.ControlLabel>New Password</Form.ControlLabel>
-                <Form.Control
-                  name="New Password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e)}
-                />
+                <Form.Control name="New Password" value={newPassword} onChange={(e) => setNewPassword(e)} />
               </Form.Group>
               <Form.Group>
                 <Form.ControlLabel>Password Confirm</Form.ControlLabel>
                 <Form.Control
                   name="Password Confirm"
                   value={newPasswordConfirm}
-                  onChange={e => setNewPasswordConfirm(e)}
+                  onChange={(e) => setNewPasswordConfirm(e)}
                 />
               </Form.Group>
             </Form>

@@ -27,6 +27,8 @@ import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
 import callReducer from './store/callSlice';
+import { enumsApi } from '@/services/enumsApi';
+
 
 export const store = configureStore({
   reducer: {
@@ -81,6 +83,8 @@ export const store = configureStore({
     // div slice 
     [divSlice.name]: divSlice.reducer,
 
+    [enumsApi.reducerPath]: enumsApi.reducer,
+ 
     //refetch Encounters
     refetch: refetchReducer,
     //refetch Patient Side Information
@@ -118,7 +122,8 @@ export const store = configureStore({
       procedureService.middleware,
       operationService.middleware,
       recoveryService.middleware,
-      userService.middleware
+      userService.middleware,
+      enumsApi.middleware
 
     ])
 });
