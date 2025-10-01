@@ -271,7 +271,7 @@ const Frame = (props: FrameProps) => {
                             minWidth: 0,
                             mr: expand ? 3 : 'auto',
                             justifyContent: 'center',
-                            '& svg': { fontSize: '22px' }
+                            '& svg': { fontSize: '20px' }
                           }}
                         >
                           {item.icon ? (
@@ -319,7 +319,7 @@ const Frame = (props: FrameProps) => {
                                   '& svg': {
                                     fontSize: '16px',
                                     marginRight: '6px',
-                                    color: '#6b7280'
+                                    color: mode === 'dark' ? '#ffffff' : '#6b7280'
                                   }
                                 }}
                                 onClick={() => {
@@ -367,9 +367,9 @@ const Frame = (props: FrameProps) => {
                               display: 'flex',
                               alignItems: 'center',
                               gap: 1,
-                              color: '#6b7280',
+                              color: mode === 'dark' ? '#ffffff' : '#6b7280',
                               '& svg': {
-                                color: '#6b7280'
+                                color: mode === 'dark' ? '#ffffff' : '#6b7280'
                               },
                               '&:hover': {
                                 backgroundColor: '#f3f4f6',
