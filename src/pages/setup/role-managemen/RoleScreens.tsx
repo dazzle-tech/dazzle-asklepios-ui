@@ -20,6 +20,7 @@ interface Permission {
 const RoleScreens = ({ roleId }: { roleId: number }) => {
   const dispatch = useAppDispatch();
   const Operations: string[] = useEnumByName("Operation") || [];
+
   const { data: initialPermissions = [], isLoading, refetch } =
     useGetRolePermissionsQuery(roleId);
   const [updatePermissions] = useUpdateRolePermissionsMutation();
