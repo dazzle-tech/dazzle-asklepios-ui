@@ -78,10 +78,6 @@ const StartTeleConsultation = () => {
   const [selectedModalContent, setSelectedModalContent] = useState<React.ReactNode | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [usePip, setUsePip] = useState(true);
-  const [inCall, setInCall] = useState(false);
-  const [callOpen, setCallOpen] = useState(false);
-
   const dummyPatient = { name: 'John Doe', hasAllergy: true, hasWarning: true };
   const dummyEncounter = { editable: true };
 
@@ -128,8 +124,8 @@ const StartTeleConsultation = () => {
   // const meetingUrl = `https://meet.jit.si/${roomName}`;
 
   const dispatch = useDispatch();
-  const displayName = sliceauth?.user?.login.name;
-  const email = sliceauth?.user?.login.email;
+  const displayName = sliceauth?.user?.firstName + ' ' + sliceauth?.user?.lastName;
+  const email = sliceauth?.user?.email;
 
   return (
     <div className="main-start-tele-consultation-container-handle">
@@ -146,9 +142,7 @@ const StartTeleConsultation = () => {
                     callStartedAt: Date.now(),
                     callStartedBy: sliceauth.user?.login
                   };
-                  // await save({ consultaition, roomName, payload }).unwrap();
-                  // if (usePip) setInCall(true);
-                  // else setCallOpen(true);
+
                   await save({ payload }).unwrap();
                   dispatch(startCall({ roomName, displayName, email }));
                 }}
@@ -158,15 +152,6 @@ const StartTeleConsultation = () => {
                 Start Call
               </MyButton>
             </div>
-
-            {/* {inCall && (
-              <FloatingPiPJitsi
-                roomName={roomName}
-                displayName={sliceauth.user?.login.name}
-                email={sliceauth.user?.login.email}
-                onClose={() => setInCall(false)}
-              />
-            )} */}
 
             <div className="container-btns-start-tele">
               <MyButton disabled={edit} prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}>
@@ -229,7 +214,7 @@ const StartTeleConsultation = () => {
                   <SectionContainer
                     title={<Translate>Progress Note</Translate>}
                     content={<ProgressNote consultaition={consultaition} list={notelist} />}
-                    minHeight={"17vw"}
+                    minHeight={'17vw'}
                   />
                 </div>
               </div>
