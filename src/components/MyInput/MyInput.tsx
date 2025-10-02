@@ -1,5 +1,5 @@
 import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
-import React, { useEffect, useState, ForwardedRef } from 'react';
+import React, { useEffect, useState, ForwardedRef, useRef } from 'react';
 import { CheckPicker, TimePicker } from 'rsuite';
 import {
   Checkbox,
@@ -16,6 +16,10 @@ import MyLabel from '../MyLabel';
 import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -23,6 +27,7 @@ const Textarea = React.forwardRef((props, ref: any) => (
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
   <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
 ));
+
 const CustomDateTimePicker = React.forwardRef((props: any, ref: ForwardedRef<HTMLDivElement>) => (
   <DatePicker {...props} oneTap format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
 ));
@@ -66,10 +71,50 @@ const MyInput = ({
   className = '',
   ...props
 }) => {
+  const dispatch = useAppDispatch();
+  const uiSlice = useAppSelector(state => state.ui);
+  const recognitionRef = useRef(null);
+  const [recording, setRecording] = useState(false);
   // <<< Added this line here to fix the error
+
   const inputColor = props.inputColor || record?.inputColor || '';
   const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult, setValidationResult] = useState(undefined);
+
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [isDateOpen, setIsDateOpen] = useState(false);
+  const [isDateTimeOpen, setIsDateTimeOpen] = useState(false);
+  const [isTimeOpen, setIsTimeOpen] = useState(false);
+  const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
+  const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
+
+  useEffect(() => {
+    const isAnyOpen =
+      isSelectOpen ||
+      isDateOpen ||
+      isDateTimeOpen ||
+      isTimeOpen ||
+      isMultyPickerOpen ||
+      isCheckPickerOpen;
+
+    if (!isAnyOpen) return;
+
+    const handleScroll = () => {
+      setIsSelectOpen(false);
+      setIsDateOpen(false);
+      setIsDateTimeOpen(false);
+      setIsTimeOpen(false);
+      setIsMultyPickerOpen(false);
+      setIsCheckPickerOpen(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [isSelectOpen, isDateOpen, isDateTimeOpen, isTimeOpen, isMultyPickerOpen, isCheckPickerOpen]);
+
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
     if (vr && vr.details && vr.details[fieldDbName]) {
@@ -89,20 +134,76 @@ const MyInput = ({
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
+  // start speech recognition
+  const startListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      dispatch(notify({ msg: 'Your browser does not support Speech Recognition', sev: 'error' }));
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = uiSlice.lang === 'en' ? 'en-US' : 'ar-SA';
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onresult = event => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setRecord({ ...record, [fieldName]: transcript });
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  };
+  // stop speech recognition
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+  };
+
+  // change recording state
+  const changeRecordingState = () => {
+    if (!props.disabled) {
+      if (recording) {
+        stopListening();
+      } else {
+        startListening();
+      }
+      setRecording(!recording);
+    }
+  };
+
   const conjureFormControl = () => {
     switch (fieldType) {
       case 'textarea':
         return (
-          <Form.Control
-            style={{ width: props?.width ?? 200, height: props?.height ?? 70 }}
-            disabled={props.disabled}
-            name={fieldName}
-            placeholder={props.placeholder}
-            value={record[fieldName] ? record[fieldName] : ''}
-            accepter={Textarea}
-            onChange={handleValueChange}
-            onKeyDown={focusNextField}
-          />
+          <InputGroup>
+            <Form.Control
+              style={{ width: props?.width ?? 200, height: props?.height ?? 70 }}
+              disabled={props.disabled}
+              name={fieldName}
+              placeholder={props.placeholder}
+              value={record[fieldName] ? record[fieldName] : ''}
+              accepter={Textarea}
+              onChange={handleValueChange}
+              onKeyDown={focusNextField}
+            />
+            <div
+              className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
+              onClick={changeRecordingState}
+              style={{ position: 'relative' }}
+            >
+              <FontAwesomeIcon
+                icon={faMicrophone}
+                className={props.disabled ? 'disabled-icon' : 'active-icon'}
+              />
+              {recording && <span className="pulse-ring"></span>}
+            </div>
+          </InputGroup>
         );
       case 'checkbox':
         return (
@@ -134,6 +235,9 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
+            open={isDateTimeOpen}
+            onOpen={() => setIsDateTimeOpen(true)}
+            onClose={() => setIsDateTimeOpen(false)}
           />
         );
       case 'time':
@@ -160,38 +264,39 @@ const MyInput = ({
             format="HH:mm"
             cleanable
             onKeyDown={focusNextField}
+            open={isTimeOpen}
+            onOpen={() => setIsTimeOpen(true)}
+            onClose={() => setIsTimeOpen(false)}
           />
         );
-     case 'select':
-  // Normalize selectData if it's an array of strings
-  const selectData = Array.isArray(props?.selectData) && 
-    typeof props?.selectData[0] === 'string'
-    ? props.selectData.map(item => ({ label: item, value: item }))
-    : props?.selectData ?? [];
+      case 'select':
+        return (
+          <Form.Control
+            style={{ width: styleWidth, height: props?.height ?? 30 }}
+            className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
+            block
+            disabled={props.disabled}
+            accepter={SelectPicker}
+            renderMenuItem={props.renderMenuItem}
+            searchBy={props.searchBy}
+            name={fieldName}
+            data={props?.selectData ?? []}
+            labelKey={props?.selectDataLabel ?? ''}
+            valueKey={props?.selectDataValue ?? ''}
+            value={record ? record[fieldName] : ''}
+            onChange={handleValueChange}
+            defaultValue={props.defaultSelectValue}
+            placeholder={props.placeholder}
+            searchable={props.searchable}
+            menuMaxHeight={props?.menuMaxHeight ?? ''}
+            onKeyDown={focusNextField}
+            loading={props?.loading ?? false}
+            open={isSelectOpen}
+            onOpen={() => setIsSelectOpen(true)}
+            onClose={() => setIsSelectOpen(false)}
+          />
+        );
 
-  return (
-    <Form.Control
-      style={{ width: styleWidth, height: props?.height ?? 30 }}
-      className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
-      block
-      disabled={props.disabled}
-      accepter={SelectPicker}
-      renderMenuItem={props.renderMenuItem}
-      searchBy={props.searchBy}
-      name={fieldName}
-      data={selectData}
-      labelKey={props?.selectDataLabel || 'label'}
-      valueKey={props?.selectDataValue || 'value'}
-      value={record ? record[fieldName] : ''}
-      onChange={handleValueChange}
-      defaultValue={props.defaultSelectValue}
-      placeholder={props.placeholder}
-      searchable={props.searchable}
-      menuMaxHeight={props?.menuMaxHeight ?? ''}
-      onKeyDown={focusNextField}
-      loading={props?.loading ?? false}
-    />
-  );
       //<TagPicker data={data} style={{ width: 300 }} />
       case 'multyPicker':
         return (
@@ -212,6 +317,9 @@ const MyInput = ({
             searchBy={props.searchBy} // Optional: Search function for TagPicker
             menuMaxHeight={props?.menuMaxHeight ?? ''}
             onKeyDown={focusNextField}
+            open={isMultyPickerOpen}
+            onOpen={() => setIsMultyPickerOpen(true)}
+            onClose={() => setIsMultyPickerOpen(false)}
           />
         );
       case 'checkPicker':
@@ -232,6 +340,9 @@ const MyInput = ({
             searchBy={props.searchBy} // Optional: Search function for checkPicker
             menuMaxHeight={props?.menuMaxHeight ?? ''}
             onKeyDown={focusNextField}
+            open={isCheckPickerOpen}
+            onOpen={() => setIsCheckPickerOpen(true)}
+            onClose={() => setIsCheckPickerOpen(false)}
           />
         );
       case 'date':
@@ -251,20 +362,50 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
+            open={isDateOpen}
+            onOpen={() => setIsDateOpen(true)}
+            onClose={() => setIsDateOpen(false)}
           />
         );
       case 'number': {
         const inputWidth = props?.width ?? 145;
         const addonWidth = 40;
-        const totalWidth =
-          inputWidth +
-          (leftAddon ? leftAddonwidth ?? addonWidth : 0) +
-          (rightAddon ? rightAddonwidth ?? addonWidth : 0);
+
+        const calculateTextWidth = text => {
+          if (!text) return addonWidth;
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          context.font =
+            '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial';
+          const metrics = context.measureText(text.toString());
+          return Math.ceil(metrics.width) + 18;
+        };
+
+        const leftWidth = leftAddon
+          ? leftAddonwidth === 'auto'
+            ? calculateTextWidth(leftAddon)
+            : leftAddonwidth ?? addonWidth
+          : 0;
+
+        const rightWidth = rightAddon
+          ? rightAddonwidth === 'auto'
+            ? calculateTextWidth(rightAddon)
+            : rightAddonwidth ?? addonWidth
+          : 0;
+
+        const totalWidth = inputWidth + rightWidth + (rightAddon ? 2 : 0);
 
         const inputControl = (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
-            style={{ width: inputWidth, height: props?.height ?? 30 }}
+            style={{
+              width: inputWidth,
+              height: props?.height ?? 30,
+              minWidth: inputWidth,
+              maxWidth: inputWidth,
+              flexShrink: 0,
+              paddingRight: rightAddon ? '2px' : undefined
+            }}
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
@@ -282,13 +423,16 @@ const MyInput = ({
             <InputGroup style={{ width: totalWidth }}>
               {leftAddon && (
                 <InputGroup.Addon
+                  className="my-input-addon"
                   style={{
-                    width: leftAddonwidth ?? addonWidth,
-                    textAlign: 'center',
-                    color: '#A1A9B8',
-                    backgroundColor: '#e0e0e0',
-                    pointerEvents: 'none',
-                    opacity: 1
+                    width:
+                      leftAddonwidth === 'auto'
+                        ? calculateTextWidth(leftAddon)
+                        : leftAddonwidth ?? addonWidth,
+                    minWidth:
+                      leftAddonwidth === 'auto'
+                        ? calculateTextWidth(leftAddon)
+                        : leftAddonwidth ?? addonWidth
                   }}
                 >
                   {leftAddon}
@@ -297,13 +441,16 @@ const MyInput = ({
               {inputControl}
               {rightAddon && (
                 <InputGroup.Addon
+                  className="my-input-addon"
                   style={{
-                    width: rightAddonwidth ?? addonWidth,
-                    textAlign: 'center',
-                    color: '#A1A9B8',
-                    backgroundColor: '#e0e0e0',
-                    pointerEvents: 'none',
-                    opacity: 1
+                    width:
+                      rightAddonwidth === 'auto'
+                        ? calculateTextWidth(rightAddon)
+                        : rightAddonwidth ?? addonWidth,
+                    minWidth:
+                      rightAddonwidth === 'auto'
+                        ? calculateTextWidth(rightAddon)
+                        : rightAddonwidth ?? addonWidth
                   }}
                 >
                   {rightAddon}
@@ -336,26 +483,74 @@ const MyInput = ({
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const inputControl = (
-          <Form.Control
-            labelKey={props?.selectDataLabel ?? ''}
-            style={{ width: inputWidth, height: props?.height ?? 30}}
-            disabled={props.disabled}
-            name={fieldName}
-            type={fieldType}
-            value={record ? record[fieldName] : ''}
-            onChange={handleValueChange}
-            placeholder={props.placeholder}
-            onKeyDown={async e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-
-                const result = await props.enterClick?.();
-                if (result !== false) {
-                  handleEnterFocusNext(e);
+          //  <InputGroup style={{ width: totalWidth + 20 }}>
+          //   <Form.Control
+          //     labelKey={props?.selectDataLabel ?? ''}
+          //     style={{ width: inputWidth, height: props?.height ?? 30 }}
+          //     disabled={props.disabled}
+          //     name={fieldName}
+          //     type={fieldType}
+          //     value={record ? record[fieldName] : ''}
+          //     onChange={handleValueChange}
+          //     placeholder={props.placeholder}
+          //     onKeyDown={async e => {
+          //       if (e.key === 'Enter') {
+          //         e.preventDefault();
+          //         const result = await props.enterClick?.();
+          //         if (result !== false) {
+          //           handleEnterFocusNext(e);
+          //         }
+          //       }
+          //     }}
+          //   />
+          //     <div
+          //     className={`container-of-search-icon ${recording ? 'recording' : ''}`}
+          //     onClick={changeRecordingState}
+          //     style={{ position: 'relative' }}
+          //   >
+          //     <FontAwesomeIcon
+          //       icon={faMicrophone}
+          //       className={props.disabled ? 'disabled-icon' : 'active-icon'}
+          //     />
+          //      {recording && <span className="pulse-ring"></span>}
+          //   </div>
+          //   </InputGroup>
+          <div style={{ position: 'relative', display: 'inline-block', width: inputWidth }}>
+            <Form.Control
+              labelKey={props?.selectDataLabel ?? ''}
+              style={{
+                width: '100%',
+                height: props?.height ?? 30,
+                paddingRight: '35px'
+              }}
+              disabled={props.disabled}
+              name={fieldName}
+              type={fieldType}
+              value={record ? record[fieldName] : ''}
+              onChange={handleValueChange}
+              placeholder={props.placeholder}
+              onKeyDown={async e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const result = await props.enterClick?.();
+                  if (result !== false) {
+                    handleEnterFocusNext(e);
+                  }
                 }
-              }
-            }}
-          />
+              }}
+            />
+
+            <div
+              className={`container-of-search-icon ${recording ? 'recording' : ''}`}
+              onClick={changeRecordingState}
+            >
+              <FontAwesomeIcon
+                icon={faMicrophone}
+                className={props.disabled ? 'disabled-icon' : 'active-icon'}
+              />
+              {recording && <span className="pulse-ring"></span>}
+            </div>
+          </div>
         );
 
         if (leftAddon || rightAddon) {
@@ -393,8 +588,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                  ? 'orange'
-                  : 'grey'
+                ? 'orange'
+                : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
@@ -406,9 +601,17 @@ const MyInput = ({
   };
 
   return (
-    <Form.Group className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}>
+    <Form.Group
+      className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
+    >
       <Form.ControlLabel>
-        {showLabel && <MyLabel label={fieldLabel} error={validationResult} color={mode === "light" ? 'var(--black)' : "var(--white)"} />}
+        {showLabel && (
+          <MyLabel
+            label={fieldLabel}
+            error={validationResult}
+            color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
+          />
+        )}
         {props.required && <span className="required-field ">*</span>}
       </Form.ControlLabel>
       {props.column && <br />}

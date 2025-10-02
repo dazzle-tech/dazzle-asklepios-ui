@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes, ApPatient } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes, ApPatient, ApTeleConsultationProgressNote, ApTeleConsultationCallLog } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -376,7 +376,7 @@ export const encounterService = createApi({
     getOrderTestNotesByTestId: builder.query({
       query: (testid: string) => ({
         headers: {
-         'test-id': testid
+          'test-id': testid
         },
         url: `/encounter/diagnostic-order-test-notes-list`
       }),
@@ -398,7 +398,7 @@ export const encounterService = createApi({
     getOrderTestSamplesByTestId: builder.query({
       query: (testid: string) => ({
         headers: {
-         'test-id': testid
+          'test-id': testid
         },
         url: `/encounter/diagnostic-order-test-samples-list`
       }),
@@ -943,7 +943,7 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-     getDayCaseEncounters: builder.query({
+    getDayCaseEncounters: builder.query({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/day-case-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
@@ -953,6 +953,71 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
+    saveTeleConsultation: builder.mutation({
+      query: (progressNotes: ApProgressNotes) => ({
+        url: `/encounter/save-tele-consultation`,
+        method: 'POST',
+        body: progressNotes
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getTeleConsultationList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/tele-consultation-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveTeleConsultationProgressNotes: builder.mutation({
+      query: (progressNotes: ApTeleConsultationProgressNote) => ({
+        url: `/encounter/save-tele-consultation-progress-notes`,
+        method: 'POST',
+        body: progressNotes
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getTeleConsultationProgressNotesList: builder.query<ApTeleConsultationProgressNote[], ListRequest>({
+      query: (listRequest) => ({
+        url: `/encounter/tele-consultation-progress-notes-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      transformResponse: (response: any) => {
+        console.log("RAW progress notes API response", response);
+        return response?.object ?? [];
+      },
+      keepUnusedDataFor: 5,
+    }),
+
+      saveTeleConsultationCallLog: builder.mutation({
+      query: (log: ApTeleConsultationCallLog) => ({
+        url: `/encounter/save-tele-consultation-call-log`,
+        method: 'POST',
+        body: log
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getTeleConsultationCallLogList: builder.query<ApTeleConsultationProgressNote[], ListRequest>({
+      query: (listRequest) => ({
+        url: `/encounter/tele-consultation-call-log-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      transformResponse: (response: any) => {
+    
+        return response?.object ?? [];
+      },
+      keepUnusedDataFor: 5,
+    }),
+
+
+
   }),
 });
 
@@ -1055,5 +1120,12 @@ export const {
   useCancelEncounterMutation,
   usePatientTemporaryDischargeMutation,
   useReturnTemporaryDischargeMutation,
-  useGetDayCaseEncountersQuery
+  useGetDayCaseEncountersQuery,
+  useSaveTeleConsultationMutation,
+  useGetTeleConsultationListQuery,
+  useSaveTeleConsultationProgressNotesMutation,
+  useGetTeleConsultationProgressNotesListQuery,
+  useSaveTeleConsultationCallLogMutation,
+  useGetTeleConsultationCallLogListQuery,
+
 } = encounterService;

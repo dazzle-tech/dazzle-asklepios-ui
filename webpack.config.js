@@ -12,14 +12,19 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js', '.json']
   },
   devServer: {
+    host: '0.0.0.0',
+    port: 3100,
     hot: true,
     liveReload: false,
-    disableHostCheck: true,
-    historyApiFallback: {
-      disableDotRule: true
+    allowedHosts: 'all',
+    historyApiFallback: { disableDotRule: true },
+    static: {
+      directory: path.resolve(__dirname, 'public'),
+      publicPath: '/',
     },
-    contentBase: path.resolve(__dirname, ''),
-    publicPath: '/'
+    devMiddleware: {
+      publicPath: '/',
+    },
   },
   output: {
     path: path.resolve(__dirname, 'assets'),

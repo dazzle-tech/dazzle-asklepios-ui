@@ -1,15 +1,14 @@
 // Imports
-import React, { useState } from 'react';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { Whisper, Tooltip } from 'rsuite';
-import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
+import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState } from 'react';
+import { Form, Tooltip, Whisper } from 'rsuite';
 import './style.less';
 // Dummy data
 const sampleData = [
@@ -231,8 +230,8 @@ const columns: ColumnConfig[] = [
     align: 'center',
     render: () => (
       <FontAwesomeIcon
-        icon={faEye}
-        style={{ cursor: 'pointer', fontSize: '16px',}}
+        icon={faUserDoctor}
+        style={{ cursor: 'pointer', fontSize: '16px' }}
         title="View Details"
       />
     )
@@ -260,120 +259,122 @@ const ERDashboardTable = () => {
 
   const isSelectedRow = (row: any) => (row.id === selectedRowId ? 'selected-row' : '');
 
-  const tableFilters = (<>
-    <Form fluid>
-      <div className="filters-container">
-        <MyInput
-          fieldLabel="Encounter Date From"
-          fieldName="encounterDateFrom"
-          fieldType="date"
-          width="10vw"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          fieldLabel="To"
-          fieldName="encounterDateTo"
-          fieldType="date"
-          width="10vw"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          fieldLabel="Emergency Level"
-          fieldName="emergencyLevel"
-          fieldType="select"
-          width="10vw"
-          record={record}
-          setRecord={setRecord}
-          selectData={emergencyLevelLov}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-        />
-        <MyInput
-          fieldLabel="Physician"
-          fieldName="physician"
-          fieldType="select"
-          lovCode="PRACTITIONERS"
-          width="10vw"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          width="10vw"
-          fieldLabel="Triage Nurse"
-          fieldName="triageNurse"
-          fieldType="select"
-          lovCode="USERS"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          fieldLabel="Chief Complaint"
-          fieldName="chiefComplaint"
-          fieldType="text"
-          width="10vw"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          width="10vw"
-          fieldLabel="Status"
-          fieldName="status"
-          fieldType="select"
-          selectData={[
-            { key: 'Waiting Triage', value: 'Waiting Triage' },
-            { key: 'Triage Started', value: 'Triage Started' },
-            { key: 'Sent to ER', value: 'Sent to ER' },
-            { key: 'Ongoing', value: 'Ongoing' },
-            { key: 'Completed', value: 'Completed' },
-            { key: 'Discharged', value: 'Discharged' }
-          ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
+  const tableFilters = (
+    <>
+      <Form fluid>
+        <div className="filters-container">
+          <MyInput
+            fieldLabel="Encounter Date From"
+            fieldName="encounterDateFrom"
+            fieldType="date"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            fieldLabel="To"
+            fieldName="encounterDateTo"
+            fieldType="date"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            fieldLabel="Emergency Level"
+            fieldName="emergencyLevel"
+            fieldType="select"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+            selectData={emergencyLevelLov}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+          />
+          <MyInput
+            fieldLabel="Physician"
+            fieldName="physician"
+            fieldType="select"
+            lovCode="PRACTITIONERS"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            width="10vw"
+            fieldLabel="Triage Nurse"
+            fieldName="triageNurse"
+            fieldType="select"
+            lovCode="USERS"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            fieldLabel="Chief Complaint"
+            fieldName="chiefComplaint"
+            fieldType="text"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            width="10vw"
+            fieldLabel="Status"
+            fieldName="status"
+            fieldType="select"
+            selectData={[
+              { key: 'Waiting Triage', value: 'Waiting Triage' },
+              { key: 'Triage Started', value: 'Triage Started' },
+              { key: 'Sent to ER', value: 'Sent to ER' },
+              { key: 'Ongoing', value: 'Ongoing' },
+              { key: 'Completed', value: 'Completed' },
+              { key: 'Discharged', value: 'Discharged' }
+            ]}
+            selectDataLabel="value"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
 
-           <MyInput
-          width="10vw"
-          fieldLabel="Select Filter"
-          fieldName="selectfilter"
-          fieldType="select"
-          selectData={[
-            { key: 'MRN', value: 'MRN' },
-            { key: 'Document Number', value: 'Document Number' },
-            { key: 'Full Name', value: 'Full Name' },
-            { key: 'Archiving Number', value: 'Archiving Number' },
-            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-            { key: 'Date of Birth', value: 'Date of Birth'}
-        ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          fieldLabel='Search by'
-          fieldName="searchCriteria"
-          fieldType="text"
-          placeholder="Search"
-          width="15vw"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          fieldLabel="Auto Refresh (10s)"
-          fieldName="autoRefresh"
-          fieldType="checkbox"
-          width="10vw"
-          record={record}
-          setRecord={setRecord}
-        />
-      </div>
-    </Form>
-    <AdvancedSearchFilters searchFilter={true}/>
-  </>);
+          <MyInput
+            width="10vw"
+            fieldLabel="Select Filter"
+            fieldName="selectfilter"
+            fieldType="select"
+            selectData={[
+              { key: 'MRN', value: 'MRN' },
+              { key: 'Document Number', value: 'Document Number' },
+              { key: 'Full Name', value: 'Full Name' },
+              { key: 'Archiving Number', value: 'Archiving Number' },
+              { key: 'Primary Phone Number', value: 'Primary Phone Number' },
+              { key: 'Date of Birth', value: 'Date of Birth' }
+            ]}
+            selectDataLabel="value"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            fieldLabel="Search by"
+            fieldName="searchCriteria"
+            fieldType="text"
+            placeholder="Search"
+            width="15vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            fieldLabel="Auto Refresh (10s)"
+            fieldName="autoRefresh"
+            fieldType="checkbox"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+          />
+        </div>
+      </Form>
+      <AdvancedSearchFilters searchFilter={true} />
+    </>
+  );
 
   return (
     <div className="first-middle-table-er-dashboard">

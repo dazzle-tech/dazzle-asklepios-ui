@@ -61,6 +61,7 @@ const EncounterList = () => {
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
+  const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
   const [encounterStatus, setEncounterStatus] = useState({ key: '' });
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
@@ -368,6 +369,22 @@ const EncounterList = () => {
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
+
+            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="black"
+                  onClick={() => {
+                    const patientData = rowData.patientObject;
+                    setLocalEncounter(rowData);
+                      setOpenNurseAssessment(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faUserNurse} />
+                </MyButton>
+              </div>
+            </Whisper>
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
               <div>
                 <MyButton
@@ -379,21 +396,6 @@ const EncounterList = () => {
                   }}
                 >
                   <FontAwesomeIcon icon={faUserDoctor} />
-                </MyButton>
-              </div>
-            </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="black"
-                  onClick={() => {
-                    const patientData = rowData.patientObject;
-                    setLocalEncounter(rowData);
-                    handleGoToPreVisitObservations(rowData, patientData);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserNurse} />
                 </MyButton>
               </div>
             </Whisper>
@@ -710,6 +712,22 @@ const EncounterList = () => {
           actionButtonLabel="Cancel"
           cancelButtonLabel="Close"
         />
+
+<DeletionConfirmationModal
+  open={openNurseAssessment}
+  setOpen={setOpenNurseAssessment}
+  actionButtonFunction={() => {
+    if (encounter && encounter.patientObject) {
+      const patientData = encounter.patientObject;
+      handleGoToPreVisitObservations(encounter, patientData);
+    }
+  }}
+  actionType="confirm"
+  confirmationQuestion="Do you want to start Nurse Assessment?"
+  actionButtonLabel="Start"
+  cancelButtonLabel="Close"
+/>
+
 
         <MyModal
           open={openPhysicianOrderSummaryModal}

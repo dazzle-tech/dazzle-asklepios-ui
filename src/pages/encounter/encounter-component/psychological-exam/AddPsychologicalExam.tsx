@@ -1,167 +1,210 @@
-import React, { useEffect, useState } from 'react';
-import MyInput from '@/components/MyInput';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useAppSelector, useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
-import './styles.less';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBrain } from "@fortawesome/free-solid-svg-icons";
-import { newApPsychologicalExam } from '@/types/model-types-constructor';
-import { ApPsychologicalExam } from '@/types/model-types';
+import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { Form } from 'rsuite';
-import { useSavePsychologicalExamsMutation, useGetPsychologicalExamsQuery } from '@/services/encounterService';
+import SectionContainer from '@/components/SectionsoContainer';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useSavePsychologicalExamsMutation } from '@/services/encounterService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { ApPsychologicalExam } from '@/types/model-types';
+import { newApPsychologicalExam } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
+import { faBrain } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
+import './styles.less';
+
 const AddPsychologicalExam = ({
-    open,
-    setOpen,
-    patient,
-    encounter,
-    encounterPsychologicalExam,
-    refetchPsychologicalExam,
-    edit
+  open,
+  setOpen,
+  patient,
+  encounter,
+  encounterPsychologicalExam,
+  refetchPsychologicalExam,
+  edit
 }) => {
-    const authSlice = useAppSelector(state => state.auth);
-    const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({ ...encounterPsychologicalExam });
-    const [savePsychologicalExam] = useSavePsychologicalExamsMutation();
-    const [popupCancelOpen, setPopupCancelOpen] = useState(false);
-    const [isEncounterPsychologicalExamStatusClose, setIsEncounterPsychologicalExamStatusClose] = useState(false);
-    const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
-    const [isDisabledField, setIsDisabledField] = useState(false);
-    const dispatch = useAppDispatch()
-    // Fetch LOV data for various fields
-    const { data: testTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PSYCH_TEST_TYPES');
-    const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-    const { data: scoreLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
-    const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-    // Initialize List Request Filters
-    const [psychologicalExamListRequest, setPsychologicalExamListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-            , {
+  const authSlice = useAppSelector(state => state.auth);
+  const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({
+    ...encounterPsychologicalExam
+  });
+  const [savePsychologicalExam] = useSavePsychologicalExamsMutation();
+  const [popupCancelOpen, setPopupCancelOpen] = useState(false);
+  const [isEncounterPsychologicalExamStatusClose, setIsEncounterPsychologicalExamStatusClose] =
+    useState(false);
+  const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
+  const [isDisabledField, setIsDisabledField] = useState(false);
+  const dispatch = useAppDispatch();
+
+  // Fetch LOV data for various fields
+  const { data: testTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PSYCH_TEST_TYPES');
+  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
+  const { data: scoreLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
+  const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
+
+  // Initialize List Request Filters
+  const [psychologicalExamListRequest, setPsychologicalExamListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      },
+      {
+        fieldName: 'patient_key',
+        operator: 'match',
+        value: patient?.key
+      },
+      {
+        fieldName: 'encounter_key',
+        operator: 'match',
+        value: encounter?.key
+      }
+    ]
+  });
+
+  //handle Clear Fields
+  const handleClearField = () => {
+    setPopupCancelOpen(false);
+    setPsychologicalExam({
+      ...newApPsychologicalExam,
+      testTypeLkey: null,
+      unitLkey: null,
+      scoreLkey: null,
+      resultInterpretationLkey: null,
+      statusLkey: null,
+      requireFollowUp: false
+    });
+  };
+
+  //handle Save Psychological Exam
+  const handleSave = async () => {
+    //TODO convert key to code
+    try {
+      if (psychologicalExam.key === undefined) {
+        await savePsychologicalExam({
+          ...psychologicalExam,
+          patientKey: patient.key,
+          encounterKey: encounter.key,
+          followUpDate: psychologicalExam?.followUpDate
+            ? new Date(psychologicalExam.followUpDate).getTime()
+            : 0,
+          statusLkey: '9766169155908512',
+          createdBy: authSlice.user.key
+        }).unwrap();
+        dispatch(notify({ msg: 'Patient Psychological Exam Added Successfully', sev: 'success' }));
+        setPsychologicalExam({ ...newApPsychologicalExam, statusLkey: '9766169155908512' });
+        setOpen(false);
+      } else {
+        await savePsychologicalExam({
+          ...psychologicalExam,
+          patientKey: patient.key,
+          encounterKey: encounter.key,
+          followUpDate: psychologicalExam?.followUpDate
+            ? new Date(psychologicalExam.followUpDate).getTime()
+            : 0,
+          updatedBy: authSlice.user.key
+        }).unwrap();
+        dispatch(
+          notify({ msg: 'Patient Psychological Exam Updated Successfully', sev: 'success' })
+        );
+        setOpen(false);
+      }
+      await refetchPsychologicalExam();
+      handleClearField();
+    } catch (error) {
+      console.error('Error saving Psychological Exam:', error);
+      dispatch(notify({ msg: 'Failed to save Psychological Exam', sev: 'error' }));
+    }
+  };
+
+  // Effects
+  useEffect(() => {
+    setPsychologicalExamListRequest(prev => ({
+      ...prev,
+      filters: [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        },
+        ...(patient?.key && encounter?.key
+          ? [
+              {
                 fieldName: 'patient_key',
                 operator: 'match',
                 value: patient?.key
-            },
-            {
+              },
+              {
                 fieldName: 'encounter_key',
                 operator: 'match',
                 value: encounter?.key
-            }
-        ],
-    });
+              }
+            ]
+          : [])
+      ]
+    }));
+  }, [patient?.key, encounter?.key]);
 
-    //handle Clear Fields
-    const handleClearField = () => {
-        setPopupCancelOpen(false);
-        setPsychologicalExam({
-            ...newApPsychologicalExam,
-            testTypeLkey: null,
-            unitLkey: null,
-            scoreLkey: null,
-            resultInterpretationLkey: null,
-            statusLkey: null,
-            requireFollowUp: false
-        });
-    };
-    //handle Save Psychological Exam
-    const handleSave = async () => {
-        //TODO convert key to code
-        try {
-            if (psychologicalExam.key === undefined) {
-                await savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
-                dispatch(notify({msg:'Patient Psychological Exam Added Successfully',sev:'success'}));
-                setPsychologicalExam({ ...newApPsychologicalExam, statusLkey: "9766169155908512" });
-                setOpen(false);
-            } else {
-                await savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, updatedBy: authSlice.user.key }).unwrap();
-                dispatch(notify({msg:'Patient Psychological Exam Updated Successfully',sev:'success'}));
-                setOpen(false);
-            }
-            await refetchPsychologicalExam();
-            handleClearField();
-        } catch (error) {
-            console.error("Error saving Psychological Exam:", error);
-            dispatch(notify({msg:'Failed to save Psychological Exam',sev:'error'}));
-        }
-    };
+  useEffect(() => {
+    setPsychologicalExam({ ...encounterPsychologicalExam });
+  }, [encounterPsychologicalExam]);
 
-    // Effects
-    useEffect(() => {
-        setPsychologicalExamListRequest((prev) => ({
-            ...prev,
-            filters: [
-                {
-                    fieldName: 'deleted_at',
-                    operator: 'isNull',
-                    value: undefined,
-                },
-                ...(patient?.key && encounter?.key
-                    ? [
-                        {
-                            fieldName: 'patient_key',
-                            operator: 'match',
-                            value: patient?.key
-                        },
-                        {
-                            fieldName: 'encounter_key',
-                            operator: 'match',
-                            value: encounter?.key
-                        },
-                    ]
-                    : []),
-            ],
-        }));
-    }, [patient?.key, encounter?.key]);
-    useEffect(() => {
-        setPsychologicalExam({ ...encounterPsychologicalExam });
-    }, [encounterPsychologicalExam]);
-    useEffect(() => {
-        // TODO update status to be a LOV value
-        if (psychologicalExam?.statusLkey === '3196709905099521') {
-            setIsEncounterPsychologicalExamStatusClose(true);
-        } else {
-            setIsEncounterPsychologicalExamStatusClose(false);
+  useEffect(() => {
+    // TODO update status to be a LOV value
+    if (psychologicalExam?.statusLkey === '3196709905099521') {
+      setIsEncounterPsychologicalExamStatusClose(true);
+    } else {
+      setIsEncounterPsychologicalExamStatusClose(false);
+    }
+  }, [psychologicalExam?.statusLkey]);
+
+  useEffect(() => {
+    // TODO update status to be a LOV value
+    if (encounter?.encounterStatusLkey === '91109811181900') {
+      setIsEncounterStatusClosed(true);
+    }
+  }, [encounter?.encounterStatusLkey]);
+
+  useEffect(() => {
+    if (isEncounterStatusClosed || isEncounterPsychologicalExamStatusClose) {
+      setIsDisabledField(true);
+    } else {
+      setIsDisabledField(false);
+    }
+  }, [isEncounterStatusClosed, isEncounterPsychologicalExamStatusClose]);
+
+  return (
+    <MyModal
+      open={open}
+      setOpen={setOpen}
+      title="Add/Edit Psychology Exam"
+      actionButtonFunction={handleSave}
+      position="right"
+      isDisabledActionBtn={!edit ? isDisabledField : true}
+      size="33vw"
+      steps={[
+        {
+          title: 'Psychology Exam',
+          icon: <FontAwesomeIcon icon={faBrain} />,
+          footer: (
+            <MyButton appearance="ghost" onClick={handleClearField}>
+              Clear
+            </MyButton>
+          )
         }
-    }, [psychologicalExam?.statusLkey]);
-    useEffect(() => {
-        // TODO update status to be a LOV value
-        if (encounter?.encounterStatusLkey === '91109811181900') {
-            setIsEncounterStatusClosed(true);
-        }
-    }, [encounter?.encounterStatusLkey]);
-    useEffect(() => {
-        if (isEncounterStatusClosed || isEncounterPsychologicalExamStatusClose) {
-            setIsDisabledField(true);
-        } else {
-            setIsDisabledField(false);
-        }
-    }, [isEncounterStatusClosed, isEncounterPsychologicalExamStatusClose]);
-    return (
-        <MyModal
-            open={open}
-            setOpen={setOpen}
-            title="Add/Edit Psychology Exam"
-            actionButtonFunction={handleSave}
-            position='right'
-            isDisabledActionBtn={!edit?isDisabledField:true}
-            size='33vw'
-            steps={[{
-                title: "Psychology Exam",
-                icon:<FontAwesomeIcon icon={ faBrain}/>,
-                footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
-            },]}
-            content={
-           <div  className={clsx('', {'disabled-panel': edit})}>
-            <Form fluid layout='inline'>
-                <MyInput
+      ]}
+      content={
+        <div className={clsx('', { 'disabled-panel': edit })}>
+          <Form fluid layout="inline">
+            {/* Section 1: Test Information & Results */}
+            <SectionContainer
+              title="Test Information & Results"
+              content={
+                <div className="section-container-gap">
+                  <MyInput
                     width={200}
                     column
                     fieldLabel="Test Type"
@@ -173,8 +216,8 @@ const AddPsychologicalExam = ({
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
-                />
-                <MyInput
+                  />
+                  <MyInput
                     column
                     width={200}
                     fieldLabel="Reason"
@@ -182,8 +225,8 @@ const AddPsychologicalExam = ({
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
-                />
-                <MyInput
+                  />
+                  <MyInput
                     fieldType="number"
                     fieldLabel="Test Duration"
                     column
@@ -192,8 +235,8 @@ const AddPsychologicalExam = ({
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
-                />
-                <MyInput
+                  />
+                  <MyInput
                     column
                     width={200}
                     fieldLabel="Unit"
@@ -206,28 +249,8 @@ const AddPsychologicalExam = ({
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
                     searchable={false}
-                />
-                <MyInput
-                    column
-                    width={200}
-                    fieldLabel="Require Follow-up"
-                    fieldType="checkbox"
-                    fieldName="requireFollowUp"
-                    record={psychologicalExam}
-                    setRecord={setPsychologicalExam}
-                    disabled={isDisabledField}
-                />
-                <MyInput
-                    column
-                    width={200}
-                    fieldType="date"
-                    fieldLabel="Require Follow-up"
-                    fieldName="followUpDate"
-                    record={psychologicalExam}
-                    setRecord={setPsychologicalExam}
-                    disabled={isDisabledField || !psychologicalExam?.requireFollowUp}
-                />
-                <MyInput
+                  />
+                  <MyInput
                     column
                     width={200}
                     fieldLabel="Score"
@@ -240,8 +263,8 @@ const AddPsychologicalExam = ({
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
                     searchable={false}
-                />
-                <MyInput
+                  />
+                  <MyInput
                     column
                     width={200}
                     fieldLabel="Result Interpretation"
@@ -254,8 +277,17 @@ const AddPsychologicalExam = ({
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
                     searchable={false}
-                />
-                <MyInput
+                  />
+                </div>
+              }
+            />
+
+            {/* Section 2: Clinical Details */}
+            <SectionContainer
+              title="Clinical Details"
+              content={
+                <div className="section-container-gap">
+                  <MyInput
                     column
                     width={200}
                     fieldType="textarea"
@@ -265,8 +297,8 @@ const AddPsychologicalExam = ({
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
                     rows={4}
-                />
-                <MyInput
+                  />
+                  <MyInput
                     column
                     width={200}
                     fieldType="textarea"
@@ -276,8 +308,8 @@ const AddPsychologicalExam = ({
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
                     rows={4}
-                />
-                <MyInput
+                  />
+                  <MyInput
                     column
                     width={200}
                     fieldType="textarea"
@@ -287,9 +319,44 @@ const AddPsychologicalExam = ({
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
                     rows={4}
-                />
-            </Form></div>}
-        ></MyModal>
-    );
+                  />
+                </div>
+              }
+            />
+
+            {/* Section 3: Follow-up */}
+            <SectionContainer
+              title="Follow-up"
+              content={
+                <div className="section-container-gap">
+                  <MyInput
+                    column
+                    width={200}
+                    fieldLabel="Require Follow-up"
+                    fieldType="checkbox"
+                    fieldName="requireFollowUp"
+                    record={psychologicalExam}
+                    setRecord={setPsychologicalExam}
+                    disabled={isDisabledField}
+                  />
+                  <MyInput
+                    column
+                    width={200}
+                    fieldType="date"
+                    fieldLabel="Follow-up Date"
+                    fieldName="followUpDate"
+                    record={psychologicalExam}
+                    setRecord={setPsychologicalExam}
+                    disabled={isDisabledField || !psychologicalExam?.requireFollowUp}
+                  />
+                </div>
+              }
+            />
+          </Form>
+        </div>
+      }
+    ></MyModal>
+  );
 };
+
 export default AddPsychologicalExam;

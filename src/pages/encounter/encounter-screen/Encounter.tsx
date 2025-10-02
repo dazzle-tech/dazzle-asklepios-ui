@@ -13,6 +13,7 @@ import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { GiKidneys } from 'react-icons/gi';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faLeaf } from '@fortawesome/free-solid-svg-icons';
+import { FaArrowLeft } from 'react-icons/fa6';
 import {
   faBedPulse,
   faCheckDouble,
@@ -530,7 +531,7 @@ const Encounter = () => {
     },
     {
       key: 'audiometryPuretone',
-      label: 'ENT',
+      label: 'Audiometry Puretone',
       icon: <FontAwesomeIcon icon={faEarListen} className="icon" />,
       path: 'audiometry'
     },
@@ -697,6 +698,14 @@ const Encounter = () => {
             <div className="container-bt">
               <div className="left">
                 <BackButton onClick={handleGoBack} />
+
+                <MyButton
+                              backgroundColor={'var(--primary-gray)'}
+                              onClick={handleGoBack}
+                              prefixIcon={() => <FaArrowLeft />}
+                            >
+                </MyButton>
+
                 <Form fluid>
                   <MyInput
                     width="100%"
@@ -819,6 +828,7 @@ const Encounter = () => {
               open={isDrawerOpen}
               onClose={() => setIsDrawerOpen(false)}
               placement="left"
+              style={{zIndex:999999999999}}
               className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
             >
               <Drawer.Header className="header-drawer">
@@ -929,39 +939,40 @@ const Encounter = () => {
       <AllergiesModal
         open={openAllargyModal}
         setOpen={setOpenAllargyModal}
-        patientKey={propsData?.patient?.patientKey}
+        patient={propsData?.patien}
       />
 
       <WarningiesModal
         open={openWarningModal}
         setOpen={setOpenWarningModal}
-        patientKey={propsData?.patient?.patientKey}
+        patient={propsData?.patient}
       />
 
       <AdmitToInpatientModal
         open={openAdmitModal}
         setOpen={setOpenAdmitModal}
-        patient={propsData?.patient}
         encounter={propsData?.encounter}
       />
 
       <AppointmentModal
-        open={modalOpen}
-        setOpen={setModalOpen}
-        patient={propsData?.patient}
-        encounter={propsData?.encounter}
-        showAppointmentOnly={showAppointmentOnly}
-        setSelectedEvent={setSelectedEvent}
-        setSelectedFacility={setSelectedFacility}
-        setSelectedResourceType={setSelectedResourceType}
-        setSelectedResources={setSelectedResources}
-        refitchAppointments={refitchAppointments}
+        from={'Encounter'}
+        isOpen={modalOpen}
+        onClose={() => {
+          setModalOpen(false), setShowAppointmentOnly(false);
+        }}
+        appointmentData={selectedEvent?.appointmentData}
+        resourceType={selectedResourceType}
+        facility={selectedFacility}
+        onSave={refitchAppointments}
+        showOnly={showAppointmentOnly}
+        selectedSlot={undefined}
+        
       />
 
       <EncounterDischarge
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
-        patient={propsData?.patient}
+
         encounter={propsData?.encounter}
       />
 

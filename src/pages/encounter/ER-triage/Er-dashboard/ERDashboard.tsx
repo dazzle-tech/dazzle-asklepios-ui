@@ -1,7 +1,7 @@
-import React from "react";
-import ERDashboardTable from "./ERDashboardTable";
-import ERDashboardTableTwo from "./ERDashboardTableTwo";
-import ERDashboardNotificationCard from "./ERDashboardNotificationCard";
+import React from 'react';
+import ERDashboardTable from './ERDashboardTable';
+import ERDashboardTableTwo from './ERDashboardTableTwo';
+import ERDashboardNotificationCard from './ERDashboardNotificationCard';
 import { formatDateWithoutSeconds } from '@/utils';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
@@ -20,16 +20,20 @@ const ERDashboards = () => {
   dispatch(setPageCode('ER-Dashboard'));
   dispatch(setDivContent(divContentHTML));
 
-    return (<>
-<div className="main-tables-container-er-dashboard">
-  <ERDashboardTable />
+  return (
+    <>
+      <div className="main-tables-container-er-dashboard">
+        <ERDashboardTable />
 
-  <div className="table-two-container-er-dashboard"><ERDashboardTableTwo /><div className="er-dashboard-notification-container"><ERDashboardNotificationCard /></div></div>
-
-</div>
-
+        <div className="table-two-container-er-dashboard">
+          <ERDashboardTableTwo />
+          <div className="er-dashboard-notification-container">
+            <ERDashboardNotificationCard />
+          </div>
+        </div>
+      </div>
     </>
-    );
+  );
 };
 
 export default ERDashboards;

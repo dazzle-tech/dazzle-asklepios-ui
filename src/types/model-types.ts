@@ -2031,7 +2031,7 @@ export interface ApMedicalSheets {
 	sofa:boolean;
 	medicalCalculators:boolean;
 	cpoeResultsManager:boolean;
-	orderDetails:boolean;
+	icu:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -2751,7 +2751,6 @@ export interface ApPatient {
 	noDocument:boolean;
 	specialCourtesyLkey:string;
 	unknown:string;
-	genderLkey:string;
 	phoneNumber:string;
 	mobileNumber:string;
 	email:string;
@@ -2817,6 +2816,7 @@ export interface ApPatient {
 	districtLkey:string;
 	countryId:string;
 	bloodGroupLkey:string;
+	genderLkey:string;
 } 
 
 export interface ApPatientAddresses { 
@@ -4044,6 +4044,47 @@ export interface ApSnomedCode {
 	isValid:boolean;
 } 
 
+export interface ApTeleConsultation { 
+	id:string;
+	questionToConsultant:string;
+	consultantFacilityId:string;
+	consultantDepartmentId:string;
+	specialtyLkey:string;
+	urgencyLkey:string;
+	expectedResponse:string;
+	notes:string;
+	expectedResponseTime:number;
+	startedAt:number;
+	rejectedAt:number;
+	statusLkey:string;
+	rejectedReason:string;
+	patientId:string;
+	encounterId:string;
+	rejectedBy:string;
+	startedBy:string;
+	requestedAt:number;
+	requestedBy:string;
+	callStartedAt:number;
+	callStartedBy:string;
+	callColsedAt:number;
+	callColsedBy:string;
+} 
+
+export interface ApTeleConsultationCallLog { 
+	id:string;
+	startedBy:string;
+	startedDate:number;
+	teleConsultationId:string;
+} 
+
+export interface ApTeleConsultationProgressNote { 
+	id:string;
+	note:string;
+	createdBy:string;
+	createdDate:number;
+	teleConsultationId:string;
+} 
+
 export interface ApTenant { 
 	key:string;
 	tenantId:string;
@@ -4541,3 +4582,25 @@ export interface ApWarehouseUser {
 	deletedAt:number;
 	isvalid:boolean;
 } 
+
+export interface AppUser { 
+	id:;
+	login:string;
+	passwordHash:string;
+	firstName:string;
+	lastName:string;
+	email:string;
+	imageUrl:string;
+	activated:boolean;
+	langKey:string;
+	resetKey:string;
+	createdBy:string;
+	createdDate:;
+	resetDate:;
+	lastModifiedBy:string;
+	lastModifiedDate:;
+	phoneNumber:string;
+	birthDate:Date;
+	gender:string;
+} 
+

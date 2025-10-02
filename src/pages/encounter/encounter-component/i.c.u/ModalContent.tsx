@@ -5,7 +5,7 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { Form } from 'rsuite';
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {faCircleInfo, faHeart} from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faHeart } from '@fortawesome/free-solid-svg-icons';
 import DynamicCard from "@/components/DynamicCard";
 import MyButton from "@/components/MyButton/MyButton";
 import VitalSignABG from "./VitalSignICU";
@@ -27,67 +27,67 @@ const ModalContent: React.FC = () => {
     respiratoryRate: 0
   });
 
-  return (<> 
-      <SectionContainer
-title={
-            <h5 className="h3-icu-screen-handle">
-              <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
-              ICU Vitals
-            </h5>
-          }
-        content={<><VitalSigns
-                      object={vital}
-                      setObject={setVital}
-                      disabled={true}
-                      width="40vw"
-                      showNoteField={false}
-                    />
-<div className="vital-sign-icu-card">
-<Form>
-    <div className="icu-first-section-content-container"> 
-            <MyInput
-              width={"14vw"}
-              fieldType="number"
-              fieldLabel="pH"
-              fieldName="ph"
-              record={record}
-              setRecord={setRecord}
-            />
-            <MyInput
-              width={"14vw"}
-              fieldType="number"
-              fieldLabel="PaCO₂"
-              fieldName="paco₂"
-              rightAddon={'mmHg'}
-              rightAddonwidth={'auto'}
-              record={record}
-              setRecord={setRecord}
-            />
+  return (<>
+    <SectionContainer
+      title={
+        <h5 className="h3-tele-consultation-screen-handle">
+          <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
+          ICU Vitals
+        </h5>
+      }
+      content={<><VitalSigns
+        object={vital}
+        setObject={setVital}
+        disabled={false}
+        width="40vw"
+        showNoteField={false}
+      />
+        <div className="vital-sign-icu-card">
+          <Form>
+            <div className="icu-first-section-content-container">
+              <MyInput
+                width={"14vw"}
+                fieldType="number"
+                fieldLabel="pH"
+                fieldName="ph"
+                record={record}
+                setRecord={setRecord}
+              />
+              <MyInput
+                width={"14vw"}
+                fieldType="number"
+                fieldLabel="PaCO₂"
+                fieldName="paco₂"
+                rightAddon={'mmHg'}
+                rightAddonwidth={'auto'}
+                record={record}
+                setRecord={setRecord}
+              />
 
-            <MyInput
-              width={"14vw"}
-              fieldType="number"
-              fieldLabel="P/F Ratio"
-              fieldName="pfratio"
-              record={record}
-              setRecord={setRecord}
-            />
+              <MyInput
+                width={"14vw"}
+                fieldType="number"
+                fieldLabel="P/F Ratio"
+                fieldName="pfratio"
+                record={record}
+                setRecord={setRecord}
+              />
 
-            <MyInput
-              width={"14vw"}
-              fieldType="number"
-              fieldLabel="PaO₂"
-              fieldName="pao₂"
-              rightAddon={'mmHg'}
-              rightAddonwidth={'auto'}
-              record={record}
-              setRecord={setRecord}
-            />
+              <MyInput
+                width={"14vw"}
+                fieldType="number"
+                fieldLabel="PaO₂"
+                fieldName="pao₂"
+                rightAddon={'mmHg'}
+                rightAddonwidth={'auto'}
+                record={record}
+                setRecord={setRecord}
+              />
             </div>
-</Form> 
-</div>
+          </Form>
+        </div>
 
-</>}/></>)
+      </>} /></>)
 
 };
 

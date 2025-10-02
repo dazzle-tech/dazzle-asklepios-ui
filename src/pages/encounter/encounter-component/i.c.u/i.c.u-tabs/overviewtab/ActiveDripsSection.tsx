@@ -26,7 +26,7 @@ const ActiveDripsSection = () => {
   const [editing, setEditing] = useState(false);
   const [patient, setPatient] = useState<any>({});
   const [encounter, setEncounter] = useState<any>({});
-  const medicRefetch = () => {};
+  const medicRefetch = () => { };
   const [openToAdd, setOpenToAdd] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 

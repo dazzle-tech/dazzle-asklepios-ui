@@ -33,7 +33,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
     // close after save (optional)
     setOpen(false);
   };
-
+  
   const content = (
     <Grid fluid className="role-management">
       <Row className="role-row">

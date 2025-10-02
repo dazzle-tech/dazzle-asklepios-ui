@@ -14,6 +14,7 @@ import { ApPatient } from '@/types/model-types';
 import { newApPatient } from '@/types/model-types-constructor';
 import './style.less';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const initialForm = {
   dietOrderType: '',
@@ -154,7 +155,10 @@ const DietaryRequests = () => {
   // forms
   const renderBasicFields = () => (
     <>
-      <MyInput
+    <div className='dietary-request-modal-handle'>
+
+<SectionContainer title="Dietary Request Details"
+  content={<><MyInput
         fieldLabel="Diet Order Type"
         fieldName="dietOrderType"
         fieldType="select"
@@ -179,9 +183,12 @@ const DietaryRequests = () => {
         disabled={modalMode === 'view'}
         searchable={false}
       />
+{renderConditionalFields()}
+      </>}
+      minHeight={300}/>
 
-      {/* Start Date */}
-      <MyInput
+<SectionContainer title="Schedule"
+content={<><MyInput
         fieldLabel="Start Date & Time"
         fieldName="startDateTime"
         fieldType="datetime"
@@ -257,7 +264,10 @@ const DietaryRequests = () => {
           searchable={false}
         />
       </div>
+</>}/>
 
+<SectionContainer title="Food Preferences"
+content={<>
       <MyInput
         fieldLabel="Food Preferences"
         fieldName="foodPreferences"
@@ -276,19 +286,10 @@ const DietaryRequests = () => {
         setRecord={setForm}
         width={250}
         disabled={modalMode === 'view'}
-      />
+      /></>}/>
 
-      <MyInput
-        fieldLabel="Allergy Avoidances"
-        fieldName="allergyAvoidances"
-        fieldType="textarea"
-        record={form}
-        setRecord={setForm}
-        width={250}
-        disabled={modalMode === 'view'}
-      />
-
-      {/* Extra Documentation */}
+<SectionContainer title="Additional Notes"
+content={<>{/* Extra Documentation */}
       <MyInput
         fieldLabel="Extra Documentation"
         fieldName="extraDocumentation"
@@ -310,282 +311,11 @@ const DietaryRequests = () => {
         width={250}
         disabled={modalMode === 'view'}
         rows={3}
-      />
+      /></>}/>
+
+</div>
     </>
   );
-
-  const renderConditionalField = () => {
-    const isDisabled = modalMode === 'view';
-
-    switch (form.dietOrderType) {
-      case 'regular':
-        return (
-          <>
-            <MyInput
-              fieldLabel="Meal Type"
-              fieldName="mealType"
-              fieldType="select"
-              selectData={mealTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={form}
-              setRecord={setForm}
-              required
-              width={250}
-              disabled={isDisabled}
-              searchable={false}
-            />
-            <MyInput
-              fieldLabel="Portion Size"
-              fieldName="portionSize"
-              fieldType="select"
-              selectData={portionSizeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={form}
-              setRecord={setForm}
-              required
-              width={250}
-              disabled={isDisabled}
-              searchable={false}
-            />
-          </>
-        );
-      case 'therapeutic':
-        return (
-          <>
-            <MyInput
-              fieldLabel="Diet Category"
-              fieldName="dietCategory"
-              fieldType="select"
-              selectData={dietCategoryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={form}
-              setRecord={setForm}
-              required
-              width={250}
-              disabled={isDisabled}
-              searchable={false}
-            />
-            <MyInput
-              fieldLabel="Calorie Target"
-              fieldName="calorieTarget"
-              fieldType="number"
-              record={form}
-              setRecord={setForm}
-              required
-              width={120}
-              rightAddon="kcal"
-              rightAddonwidth={50}
-              disabled={isDisabled}
-            />
-            <MyInput
-              fieldLabel="Protein Target"
-              fieldName="proteinTarget"
-              fieldType="number"
-              record={form}
-              setRecord={setForm}
-              required
-              width={120}
-              rightAddon="g"
-              disabled={isDisabled}
-            />
-          </>
-        );
-      case 'texture':
-        return (
-          <div>
-            <Text>Texture Level</Text>
-            <RadioGroup
-              inline
-              value={form.textureLevel}
-              onChange={value => setForm(prev => ({ ...prev, textureLevel: value }))}
-              disabled={isDisabled}
-            >
-              <Radio value="Pureed">Pureed</Radio>
-              <Radio value="Minced">Minced</Radio>
-              <Radio value="Soft">Soft</Radio>
-              <Radio value="Liquidized">Liquidized</Radio>
-            </RadioGroup>
-
-            <div className="margin-top">
-              <Text>Fluid Consistency</Text>
-              <RadioGroup
-                inline
-                value={form.fluidConsistency}
-                onChange={value => setForm(prev => ({ ...prev, fluidConsistency: value }))}
-                disabled={isDisabled}
-              >
-                <Radio value="Thin">Thin</Radio>
-                <Radio value="Nectar-Thick">Nectar-Thick</Radio>
-                <Radio value="Honey-Thick">Honey-Thick</Radio>
-              </RadioGroup>
-            </div>
-          </div>
-        );
-      case 'npo':
-        return (
-          <MyInput
-            fieldLabel="Reason"
-            fieldName="reason"
-            fieldType="text"
-            record={form}
-            setRecord={setForm}
-            required
-            width={250}
-            disabled={isDisabled}
-          />
-        );
-      case 'fluid':
-        return (
-          <MyInput
-            fieldLabel="Daily Volume Limit"
-            fieldName="dailyVolumeLimit"
-            fieldType="number"
-            record={form}
-            setRecord={setForm}
-            required
-            width={120}
-            rightAddon="ml"
-            disabled={isDisabled}
-          />
-        );
-      case 'enteral':
-        return (
-          <>
-            <MyInput
-              fieldLabel="Formula Name"
-              fieldName="formulaName"
-              fieldType="select"
-              selectData={[
-                { key: 'formula1', lovDisplayVale: 'Formula 1' },
-                { key: 'formula2', lovDisplayVale: 'Formula 2' }
-              ]}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={form}
-              setRecord={setForm}
-              required
-              width={250}
-              disabled={isDisabled}
-            />
-            <MyInput
-              fieldLabel="Delivery Method"
-              fieldName="deliveryMethod"
-              fieldType="select"
-              selectData={deliveryMethodLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={form}
-              setRecord={setForm}
-              required
-              width={250}
-              disabled={isDisabled}
-              searchable={false}
-            />
-            <MyInput
-              fieldLabel="Rate"
-              fieldName="rate"
-              fieldType="number"
-              record={form}
-              setRecord={setForm}
-              required
-              width={120}
-              rightAddon="ml/hr"
-              rightAddonwidth={60}
-              disabled={isDisabled}
-            />
-            <MyInput
-              fieldLabel="Volume per feed"
-              fieldName="volumePerFeed"
-              fieldType="number"
-              record={form}
-              setRecord={setForm}
-              required
-              width={120}
-              rightAddon="ml"
-              disabled={isDisabled}
-            />
-            <MyInput
-              fieldLabel="Number of feeds/day"
-              fieldName="feedsPerDay"
-              fieldType="number"
-              record={form}
-              setRecord={setForm}
-              required
-              width={120}
-              disabled={isDisabled}
-            />
-            <MyInput
-              fieldLabel="Additional Instructions"
-              fieldName="additionalInstructions"
-              fieldType="textarea"
-              record={form}
-              setRecord={setForm}
-              width={250}
-              disabled={isDisabled}
-            />
-          </>
-        );
-      case 'parenteral':
-        return (
-          <>
-            <MyInput
-              fieldLabel="Formula Composition"
-              fieldName="formulaComposition"
-              fieldType="text"
-              record={form}
-              setRecord={setForm}
-              required
-              width={250}
-              placeholder="Enter tags separated by comma"
-              disabled={isDisabled}
-            />
-            <MyInput
-              fieldLabel="Infusion Rate"
-              fieldName="infusionRate"
-              fieldType="number"
-              record={form}
-              setRecord={setForm}
-              required
-              width={120}
-              rightAddon="ml/hr"
-              rightAddonwidth={60}
-              disabled={isDisabled}
-            />
-            <MyInput
-              fieldLabel="Infusion Duration"
-              fieldName="infusionDuration"
-              fieldType="number"
-              record={form}
-              setRecord={setForm}
-              required
-              width={120}
-              rightAddon="hours"
-              rightAddonwidth={60}
-              disabled={isDisabled}
-            />
-            <MyInput
-              fieldLabel="Line Type"
-              fieldName="lineType"
-              fieldType="select"
-              selectData={lineTypeMethodLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={form}
-              setRecord={setForm}
-              required
-              width={250}
-              disabled={isDisabled}
-              searchable={false}
-            />
-          </>
-        );
-      default:
-        return null;
-    }
-  };
 
   const renderConditionalFields = () => {
     const isDisabled = modalMode === 'view';
@@ -1017,8 +747,6 @@ expandable: true},
         content={
           <Form fluid className="fields-containers">
             {renderBasicFields()}
-            {renderConditionalFields()}
-            {renderConditionalField()}
           </Form>
         }
         footerButtons={renderModalFooter}

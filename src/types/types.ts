@@ -35,7 +35,7 @@ export const initialListRequest: ListRequest = {
   ignore: false,
   filterLogic: 'and'
 };
-export const initialListRequestNew: ListRequest = {
+export const initialListRequestId: ListRequest = {
   filters: [],
   pageNumber: 1,
   pageSize: 15,

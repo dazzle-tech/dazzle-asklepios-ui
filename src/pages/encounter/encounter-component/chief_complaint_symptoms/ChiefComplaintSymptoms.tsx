@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Form } from 'rsuite';
 import {
   useSaveComplaintSymptomsMutation,
   useGetComplaintSymptomsQuery
 } from '@/services/encounterService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
@@ -17,21 +18,40 @@ import CancellationModal from '@/components/CancellationModal';
 import AddChiefComplaintSymptoms from './AddChiefComplaintSymptoms';
 import { MdModeEdit } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
+import MyInput from '@/components/MyInput';
+import SectionContainer from '@/components/SectionsoContainer';
 import { formatDateWithoutSeconds } from '@/utils';
+
 const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
   const authSlice = useAppSelector(state => state.auth);
   const [complaintSymptoms, setComplaintSymptoms] = useState<ApComplaintSymptoms>({
     ...newApComplaintSymptoms,
     duration: null
   });
+  const [selectedRowData, setSelectedRowData] = useState<ApComplaintSymptoms | null>(null);
   const [open, setOpen] = useState(false);
   const [saveComplaintSymptoms] = useSaveComplaintSymptomsMutation();
   const [popupCancelOpen, setPopupCancelOpen] = useState(false);
   const [complaintSymptomsStatus, setComplaintSymptomsStatus] = useState('');
   const [allData, setAllData] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const dispatch = useAppDispatch();
 
-  // Initialize list request with default filters
+  // Fetch LOV data for display purposes
+  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
+  const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
+
+  const handleSelectRow = (rowKey: string, checked: boolean) => {
+    if (checked) {
+      setSelectedRows(prev => [...prev, rowKey]);
+    } else {
+      setSelectedRows(prev => prev.filter(key => key !== rowKey));
+    }
+  };
+
+  const isRowSelected = (rowKey: string) => selectedRows.includes(rowKey);
+
+  // Initialize list request with default filters
   const [complaintSymptomsListRequest, setComplaintSymptomsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -53,19 +73,20 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
     ]
   });
 
-  // Fetch the list of Complaint Symptoms based on the provided request, and provide a refetch function
+  // Fetch the list
   const {
     data: complaintSymptomsResponse,
     refetch: refetchComplaintSymptoms,
     isLoading
   } = useGetComplaintSymptomsQuery(complaintSymptomsListRequest);
 
-  // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
+  // Check if the current row is selected visually
   const isSelected = rowData => {
-    if (rowData && complaintSymptoms && complaintSymptoms.key === rowData.key) {
+    if (rowData && selectedRowData && selectedRowData.key === rowData.key) {
       return 'selected-row';
     } else return '';
   };
+
   // Handle Clear Fields
   const handleClearField = () => {
     setComplaintSymptoms({
@@ -73,27 +94,30 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       unitLkey: null,
       painLocationLkey: null
     });
+    setSelectedRowData(null);
   };
-  // Handle Add New Complaint Symptoms Puretone Record
+
+  // Handle Add New
   const handleAddNewComplaintSymptoms = () => {
     handleClearField();
     setOpen(true);
   };
-  // Change page event handler
+
+  // Pagination handlers
   const handlePageChange = (_: unknown, newPage: number) => {
     setComplaintSymptomsListRequest({ ...complaintSymptomsListRequest, pageNumber: newPage + 1 });
   };
-  // Change number of rows per page
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setComplaintSymptomsListRequest({
       ...complaintSymptomsListRequest,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // Reset to first page
+      pageNumber: 1
     });
   };
-  // Handle Cancel Complaint Symptoms Record
+
+  // Handle Cancel
   const handleCancle = () => {
-    //TODO convert key to code
     saveComplaintSymptoms({
       ...complaintSymptoms,
       statusLkey: '3196709905099521',
@@ -135,6 +159,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       ]
     }));
   }, [patient?.key, encounter?.key]);
+
   useEffect(() => {
     setComplaintSymptomsListRequest(prev => ({
       ...prev,
@@ -185,6 +210,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       ]
     }));
   }, [complaintSymptomsStatus, allData]);
+
   useEffect(() => {
     setComplaintSymptomsListRequest(prev => {
       const filters =
@@ -218,13 +244,17 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
     });
   }, [allData, complaintSymptomsStatus]);
 
-  // Pagination values
+  // Pagination
   const pageIndex = complaintSymptomsListRequest.pageNumber - 1;
   const rowsPerPage = complaintSymptomsListRequest.pageSize;
   const totalCount = complaintSymptomsResponse?.extraNumeric ?? 0;
 
-  // Table Column
+  // Columns
   const columns = [
+    {
+      key: 'chiefComplaint',
+      title: 'CHIEF COMPLAINT'
+    },
     {
       key: 'onsetDate',
       title: 'ONSET DATE',
@@ -265,6 +295,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       key: 'relievingFactors',
       title: 'RELIEVING FACTORS'
     },
+
     {
       key: 'details',
       title: <Translate>EDIT</Translate>,
@@ -293,7 +324,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
           <>
             {row?.createByUser?.fullName}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>{' '}
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
           </>
         ) : (
           ' '
@@ -308,7 +339,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
           <>
             {row?.updateByUser?.fullName}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.updatedAt)}</span>{' '}
+            <span className="date-table-style">{formatDateWithoutSeconds(row.updatedAt)}</span>
           </>
         ) : (
           ' '
@@ -321,7 +352,8 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       render: (row: any) =>
         row?.deletedAt ? (
           <>
-            {row?.deleteByUser?.fullName} <br />
+            {row?.deleteByUser?.fullName}
+            <br />
             <span className="date-table-style">{formatDateWithoutSeconds(row.deletedAt)}</span>
           </>
         ) : (
@@ -350,10 +382,11 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
       <MyTable
         data={complaintSymptomsResponse?.object ?? []}
         columns={columns}
-        height={600}
+        height={400}
         loading={isLoading}
         onRowClick={rowData => {
           setComplaintSymptoms({ ...rowData });
+          setSelectedRowData({ ...rowData });
         }}
         rowClassName={isSelected}
         page={pageIndex}
@@ -376,7 +409,6 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
               <Checkbox
                 onChange={(value, checked) => {
                   if (checked) {
-                    //TODO convert key to code
                     setComplaintSymptomsStatus('3196709905099521');
                   } else {
                     setComplaintSymptomsStatus('');
@@ -409,6 +441,114 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
           </div>
         }
       />
+
+      {/* Details Form Section */}
+      {selectedRowData && (
+        <div className="margin-ver-10">
+          <Form fluid layout="vertical" disabled={true}>
+            {/* Chief Complaint */}
+            <SectionContainer
+              title="Chief Complaint"
+              content={
+                <Form className="flex-row-3">
+                  <MyInput
+                    fieldLabel="Chief Complaint"
+                    fieldType="textarea"
+                    fieldName="chiefComplaint"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldType="date"
+                    fieldLabel="Onset Date"
+                    fieldName="onsetDate"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Pain Characteristics"
+                    fieldName="painCharacteristics"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldType="number"
+                    fieldLabel="Duration"
+                    fieldName="duration"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Unit"
+                    fieldType="select"
+                    fieldName="unitLkey"
+                    selectData={unitLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                    searchable={false}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Pain Location"
+                    fieldType="select"
+                    fieldName="painLocationLkey"
+                    selectData={bodyPartsLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Radiation"
+                    fieldName="radiation"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Aggravating Factors"
+                    fieldName="aggravatingFactors"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    width={200}
+                    fieldLabel="Relieving Factors"
+                    fieldName="relievingFactors"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                  <MyInput
+                    fieldLabel="Associated Symptoms"
+                    fieldType="textarea"
+                    fieldName="associatedSymptoms"
+                    record={selectedRowData}
+                    setRecord={setSelectedRowData}
+                    disabled={true}
+                  />
+                </Form>
+              }
+            />
+          </Form>
+        </div>
+      )}
+
       <CancellationModal
         title="Cancel Chief Complaint"
         fieldLabel="Cancellation Reason"
@@ -422,4 +562,5 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
     </div>
   );
 };
+
 export default ChiefComplaintSymptoms;

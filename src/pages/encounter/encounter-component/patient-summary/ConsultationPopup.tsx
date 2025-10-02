@@ -6,117 +6,135 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import { Form } from 'rsuite';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetDepartmentsQuery, useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
+import { initialListRequest, initialListRequestId } from '@/types/types';
+import { newApTeleConsultation } from '@/types/model-types-constructor';
+import { useGetTeleConsultationListQuery, useSaveTeleConsultationMutation } from '@/services/encounterService';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+
 
 interface ConsultationPopupProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   patient: any;
+  encounter: any;
 }
 
-const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, patient }) => {
-  const [consultationData, setConsultationData] = useState({
-    reasonForConsultation: '',
-    consultantFacility: '',
-    consultantDepartment: '',
-    specialty: '',
-    consultationUrgency: '',
-    expectedResponseType: 'immediate',
-    expectedResponseTime: null,
-    notes: ''
-  });
-
-  const [orders, setOrders] = useState<any[]>([
+const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, patient ,encounter}) => {
+  const dispatch = useAppDispatch();
+  const [consultationData, setConsultationData] = useState({...newApTeleConsultation});
+  const {data:orders,refetch}=useGetTeleConsultationListQuery({...initialListRequestId,
+     filters: [
+            {
+                fieldName: 'patient_id',
+                operator: 'match',
+                value: patient?.key
+            },
+            {
+                fieldName: 'encounter_id',
+                operator: 'match',
+                value: encounter?.key
+            }
+          ],
+  })
+ 
+ const [save,saveMutation]=useSaveTeleConsultationMutation();
+ //facility & Department - Mock data
+  const {data:facilities}=useGetFacilitiesQuery({...initialListRequest});
+ const {data:departments}=useGetDepartmentsQuery({...initialListRequest
+  , filters: [
     {
-      facility: 'Rafidia Hospital',
-      department: 'Cardiology',
-      specialty: 'Pediatrics',
-      urgency: 'High',
-      expectedResponse: 'Immediate',
-      status: 'Pending',
-      createdBy: 'Dr. Ahmad',
-      createdAt: '2025-09-23 14:30'
-    },
-    {
-      facility: 'Makassed Hospital',
-      department: 'Neurology',
-      specialty: 'Neuro Surgery',
-      urgency: 'Medium',
-      expectedResponse: 'Scheduled',
-      status: 'Closed',
-      createdBy: 'Dr. Sara',
-      createdAt: '2025-09-20 11:00'
-    },
-    {
-      facility: 'Augusta Victoria Hospital',
-      department: 'Cardiology',
-      specialty: 'Cardio Surgery',
-      urgency: 'Low',
-      expectedResponse: 'Scheduled',
-      status: 'Rejected',
-      createdBy: 'Dr. Omar',
-      createdAt: '2025-09-19 09:15'
+        fieldName: 'facility_key',
+        operator: 'match',
+        value: consultationData.consultantFacilityId??''
     }
-  ]);
+  ]
 
-  // Mock data - replace with actual API calls
-  const facilities = [
-    { label: 'Rafidia Hospital', value: 'Rafidia Hospital' },
-    { label: 'Makassed Hospital', value: 'Makassed Hospital' }
-  ];
+ },{
+    skip:!consultationData.consultantFacilityId
+ });
 
-  const departments = [
-    { label: 'Cardiology', value: 'cardiology' },
-    { label: 'Neurology', value: 'neurology' }
-  ];
 
   // Fetch Sub Specialty Lov list response
   const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
   const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
 
   const tableColumns = [
-    { key: 'facility', title: 'Facility', width: 100 },
-    { key: 'department', title: 'Department', width: 100 },
-    { key: 'specialty', title: 'Specialty', width: 100 },
-    { key: 'urgency', title: 'Urgency', width: 80 },
+    { key: 'consultantFacilityId',
+     title: 'Facility',
+     width: 100,
+      render: row => {
+        return <span>
+                  {conjureValueBasedOnKeyFromList(
+                    facilities?.object ?? [],
+                    row.consultantFacilityId,
+                    'facilityName'
+                  )}
+                </span>
+      }
+     },
+    { key: 'consultantDepartmentId', title: 'Department', width: 100
+    , render: row => {
+      return <span>
+                {conjureValueBasedOnKeyFromList(
+                  departments?.object ?? [],
+                  row.consultantDepartmentId,
+                  'name'
+                )}
+              </span>
+    }
+
+     },
+    { key: 'specialtyLkey', title: 'Specialty', width: 100
+      ,
+      render: row => {
+        return <span>
+                  {conjureValueBasedOnKeyFromList(
+                    subSpecialityLovQueryResponse?.object ?? [],
+                    row.specialtyLkey,
+                    'lovDisplayVale'
+                  )}
+                </span>
+      }
+     },
+    { key: 'urgencyLkey', title: 'Urgency', width: 80 ,
+      render: row => {
+        return <span>
+                  {conjureValueBasedOnKeyFromList(
+                    priorityLevelLovQueryResponse?.object ?? [],
+                    row.urgencyLkey,
+                    'lovDisplayVale'
+                  )}
+                </span>
+      }
+    },
     { key: 'expectedResponse', title: 'Expected Response', width: 120 },
     {
-      key: 'status',
+      key: 'statusLkey',
       title: 'Status',
-      dataKey: 'status',
-
-      width: 100,
+      
 
       render: row => {
-        let bgColor = 'var(--light-gray)';
-        let color = 'var(--primary-gray)';
-        if (row.status === 'Pending') {
-          bgColor = 'var(--light-orange)';
-          color = 'var(--primary-orange)';
-        } else if (row.status === 'Closed') {
-          bgColor = 'var(--light-yellow)';
-          color = 'var(--primary-yellow)';
-        } else if (row.status === 'Rejected') {
-          bgColor = 'var(--light-red)';
-          color = 'var(--primary-red)';
-        }
-        return <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.status} />;
+      
+        return <MyBadgeStatus  color={row.statusLvalue?.valueColor} contant={row.statusLvalue?.lovDisplayVale} />;
       }
     },
     {
       key: 'createdByAt',
-      title: 'Created By\\At',
+      title: 'Created By\At',
       width: 100,
       expandable: true,
       render: row => (
         <>
           {row.createdBy}
           <br />
-          <span className="date-table-style">{row.createdAt}</span>
+          <span className="date-table-style">{row.createdDate}</span>
         </>
       )
     }
@@ -126,11 +144,31 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
     setOpen(false);
   };
 
+  const handleSave = () => {
+    console.log("EX",consultationData.expectedResponseTime)
+    try{
+      const response=save({...consultationData,patientId:patient.key,encounterId:encounter.key,
+        // ToDo status key for ORD_STAT_REQST
+        statusLkey:'5959341154465084',
+expectedResponseTime: consultationData.expectedResponseTime
+  ? new Date(consultationData.expectedResponseTime).getTime()
+  : null
+       ,
+       requestedAt: new Date().getTime()
+      }).unwrap();
+      response.then((res)=>{
+        dispatch(notify({ sev: 'success', msg: 'Consultation saved successfully' }));
+        refetch();
+      })
+    }catch(err){
+      dispatch(notify({ sev: 'error', msg: 'Error saving consultation' }));
+
+    }}
   const handleExpectedResponseChange = (type: string) => {
     setConsultationData(prev => ({
       ...prev,
-      expectedResponseType: type,
-      expectedResponseTime: type === 'immediate' ? null : prev.expectedResponseTime
+      expectedResponse: type,
+      expectedResponseTime: type === 'immediate' ? null : new Date(prev.expectedResponseTime).getTime()
     }));
   };
 
@@ -143,7 +181,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
           title="Question to Consultant"
           content={
             <MyInput
-              fieldName="reasonForConsultation"
+              fieldName="questionToConsultant"
               fieldType="textarea"
               record={consultationData}
               setRecord={setConsultationData}
@@ -161,31 +199,32 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
             <>
               <div className="flex-20">
                 <MyInput
-                  fieldName="consultantFacility"
+                  fieldName="consultantFacilityId"
                   fieldType="select"
                   record={consultationData}
                   setRecord={setConsultationData}
-                  selectData={facilities}
-                  selectDataLabel="label"
-                  selectDataValue="value"
+                  selectData={facilities?.object ?? []}
+                  selectDataLabel="facilityName"
+                  selectDataValue="key"
                   width={150}
                   fieldLabel="Consultant Facility"
                 />
                 <MyInput
-                  fieldName="consultantDepartment"
+                  fieldName="consultantDepartmentId"
                   fieldType="select"
                   record={consultationData}
                   setRecord={setConsultationData}
-                  selectData={departments}
-                  selectDataLabel="label"
-                  selectDataValue="value"
+                  selectData={departments?.object ?? []}
+                  selectDataLabel="name"
+                  selectDataValue="key"
                   width={150}
                   fieldLabel="Consultant Department"
+                  menuMaxHeight={'15vh'}
                 />
               </div>
               <div className="flex-20">
                 <MyInput
-                  fieldName="specialty"
+                  fieldName="specialtyLkey"
                   fieldType="select"
                   record={consultationData}
                   setRecord={setConsultationData}
@@ -197,7 +236,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
                   searchable={false}
                 />
                 <MyInput
-                  fieldName="consultationUrgency"
+                  fieldName="urgencyLkey"
                   fieldType="select"
                   record={consultationData}
                   setRecord={setConsultationData}
@@ -225,7 +264,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
                     type="radio"
                     name="expectedResponse"
                     value="immediate"
-                    checked={consultationData.expectedResponseType === 'immediate'}
+                    checked={consultationData.expectedResponse === 'immediate'}
                     onChange={e => handleExpectedResponseChange(e.target.value)}
                   />
                   Immediate
@@ -236,14 +275,14 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
                     type="radio"
                     name="expectedResponse"
                     value="scheduled"
-                    checked={consultationData.expectedResponseType === 'scheduled'}
+                    checked={consultationData.expectedResponse === 'scheduled'}
                     onChange={e => handleExpectedResponseChange(e.target.value)}
                   />
                   Scheduled Time
                 </label>
               </div>
 
-              {consultationData.expectedResponseType === 'scheduled' && (
+              {consultationData.expectedResponse === 'scheduled' && (
                 <div className="margin-div">
                   <MyInput
                     fieldName="expectedResponseTime"
@@ -276,16 +315,18 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
         />
       </Form>
       <div className="flex-end-5">
-        <MyButton appearance="primary" prefixIcon={() => <FontAwesomeIcon icon={faSave} />}>
-          Save & Submit
-        </MyButton>
+        <MyButton 
+        prefixIcon={() => <FontAwesomeIcon icon={faSave}/> }
+        onClick={handleSave}
+        >Save&Submit</MyButton>
+
       </div>
       {/* Orders */}
       <SectionContainer
         title="Orders List"
         content={
           <div>
-            <MyTable data={orders} columns={tableColumns} height={200} loading={false} />
+            <MyTable data={orders?.object??[]} columns={tableColumns} height={200} loading={false} />
           </div>
         }
       />

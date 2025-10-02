@@ -79,6 +79,32 @@ export interface CreateFacility {
   isActive?: boolean;
 } 
 
+export interface Facility { 
+	id?:string;
+	name?:string;
+	emailAddress?:string;
+	phone1?:string;
+	phone2?:string;
+	fax?:string;
+	addressId?:string;
+	type:string;
+	defaultCurrency:string;
+  isActive?: boolean;
+} 
+
+export interface CreateFacility { 
+	name?:string;
+  code?:string;
+	emailAddress?:string;
+	phone1?:string;
+	phone2?:string;
+	fax?:string;
+	addressId?:string;
+	type:string;
+	defaultCurrency:string;
+  isActive?: boolean;
+} 
+
 
 
 export interface Role { 

@@ -89,6 +89,26 @@
   font-size: 13px;
 }
 
+.container-of-search-icon {
+  display: flex;
+  align-items: center;
+  padding-right: 7px;
+  color: var(--gray-dark);
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.container-of-search-icon-textarea {
+  padding-right: 7px;
+  padding-top: 3px;
+  color: var(--gray-dark);
+}
+.recording {
+  color: #e74c3c !important;
+}
+
 .rs-form-group.dark .rs-input {
   background-color: var(--dark-black) !important;
 }
@@ -123,8 +143,8 @@
   .rs-picker-tag-md .rs-picker-tag-list .rs-tag-md {
     background-color: #444444 !important;
   }
-   .rs-input-group-addon{
-     background-color: var(--gray-dark) !important;
+  .rs-input-group-addon {
+    background-color: var(--gray-dark) !important;
   }
 }
 
@@ -132,12 +152,38 @@
   color: var(--white) !important;
 }
 
-.my-icon-input.dark{
-   .rs-picker-toggle-wrapper {
+.my-icon-input.dark {
+  .rs-picker-toggle-wrapper {
     background: var(--dark-black) !important;
   }
-  .rs-picker-toggle-wrapper .rs-picker-toggle.rs-btn{
-  background: var(--dark-black) !important;
+  .rs-picker-toggle-wrapper .rs-picker-toggle.rs-btn {
+    background: var(--dark-black) !important;
+  }
+}
+.my-input-addon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a1a9b8;
+  background-color: #e0e0e0;
+  pointer-events: none;
+  opacity: 1;
+  flex-shrink: 0;
 }
 
+.dark {
+  .container-of-search-icon,
+  .container-of-search-icon-textarea {
+    background-color: var(--dark-black) !important;
+  }
+  .recording.container-of-search-icon {
+    svg:not(:root) {
+      color: #e74c3c !important;
+    }
+  }
+  .recording.container-of-search-icon-textarea {
+    svg:not(:root) {
+      color: #e74c3c !important;
+    }
+  }
 }

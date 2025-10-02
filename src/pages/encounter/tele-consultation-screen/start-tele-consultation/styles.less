@@ -1,35 +1,45 @@
 .patient-summary-section {
   width: 23vw;
-  max-height: 60vh;
+  max-height: 62vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.container-btns-start-tele{
+.container-btns-start-tele {
   display: flex;
   flex-direction: row;
   justify-content: end;
   gap: 0.3vw;
 }
 
-.container-bt-start-tele{
+.container-bt-start-tele {
   display: flex;
   flex-direction: row;
   justify-content: start;
   position: relative;
-  top: 2vw;
+  gap:1vh;
 }
 
-.camera-tele-consultaition{width: 40vw;
-  max-height: 60vh;
-border: solid rgba(201, 201, 201, 0.76) 1px;
-border-radius: 9px;}
+.camera-tele-consultaition {
+  width: 40vw;
+  max-height: 65vh;
+  margin-left: 1vw;
+  margin-right: 1vw;
+  display: flex;
+  gap: 1vw;
+  flex-direction: column;
+  border-radius: 9px;
+  overflow:auto;
+}
 
-.page-content-main-container{display: flex;
-flex-direction: row;
-justify-content: space-between;}
+.page-content-main-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+ 
+}
 
 //
 .sheets-open-popup {
@@ -41,10 +51,8 @@ justify-content: space-between;}
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 60vh;
+  max-height: 63vh;
   height: 60vh;
-  position: relative;
-  bottom: 3vh;
   overflow-y: auto;
 }
 
@@ -59,7 +67,7 @@ justify-content: space-between;}
   background-color: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 10px;
-  transition: all 0.2s ease-in-out;
+  // transition: all 0.2s ease-in-out;
   cursor: pointer;
   text-align: left;
 
@@ -75,29 +83,69 @@ justify-content: space-between;}
   gap: 0.5vw;
 }
 
-.actions-icons-tele-consultation-screen{display: flex;
-flex-direction: row;
-gap: 0.3vw;}
+.actions-icons-tele-consultation-screen {
+  display: flex;
+  flex-direction: row;
+  gap: 0.3vw;
+}
 
-.vital-sign-progress-notes-handle-position{display: flex;
-flex-direction: row;
-gap: 1vw;
-margin-top: 1vw;
-margin-left: 0.1vw;
-margin-right: 0.1vw;}
+.vital-sign-progress-notes-handle-position {
+  display: flex;
+  flex-direction: row;
+  gap: 1vw;
+  margin-top: 1vw;
+  margin-left: 0.1vw;
+  margin-right: 0.1vw;
+}
 
-.vital-sign-section-size-tele-consultation{width: 38%;}
+.vital-sign-section-size-tele-consultation {
+  width: 58%;
+}
 
-.coulmns-part-tele-consultation-screen{display: flex;
-flex-direction: column;
-gap: 1vw;}
+.coulmns-part-tele-consultation-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+}
 
-.page-content-main-container.dark{
-  .sheets-open-popup{
+.page-content-main-container.dark {
+  .sheets-open-popup {
     background-color: var(--dark-black) !important;
   }
-  .sheet-button{
+
+  .sheet-button {
     background-color: var(--extra-dark-black) !important;
+    color: var(--white) !important;
+  }
+}
+
+.h3-tele-consultation-screen-handle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-start-tele-consultation-container-handle {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+}
+
+
+.progress-notes-section-handle {
+  flex: 1;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 0 6px rgba(24, 23, 23, 0.25);
+  height: auto;
+  
+  &.light {
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  &.dark {
+    background-color: var(--dark-black) !important;
     color: var(--white) !important;
   }
 }

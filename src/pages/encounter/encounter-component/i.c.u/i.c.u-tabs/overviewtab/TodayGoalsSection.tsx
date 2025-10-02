@@ -125,8 +125,8 @@ const TodayGoalsSection: React.FC = () => {
           page={0}
           rowsPerPage={5}
           totalCount={goalsData.length}
-          onPageChange={() => {}}
-          onRowsPerPageChange={() => {}}
+          onPageChange={() => { }}
+          onRowsPerPageChange={() => { }}
         />
       </div>
     </>
@@ -141,13 +141,13 @@ const TodayGoalsSection: React.FC = () => {
             Today's Goal
           </span>
 
-            <div className="add-button-for-cards-over-view">
-              <MyButton
-                prefixIcon={() => <PlusIcon />}
-                onClick={() => setOpenTodayGoal(true)}
-              >
-                Add
-              </MyButton></div>
+          <div className="add-button-for-cards-over-view">
+            <MyButton
+              prefixIcon={() => <PlusIcon />}
+              onClick={() => setOpenTodayGoal(true)}
+            >
+              Add
+            </MyButton></div>
         </>}
         content={
           <div className="goals-card-list">

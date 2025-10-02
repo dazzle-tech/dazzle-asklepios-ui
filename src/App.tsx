@@ -176,6 +176,7 @@ import { useGetScreensQuery } from './services/userService';
 import { MODULES } from "@/config/modules-config";
 import RoleManegment from './pages/setup/role-managemen';
 import { useGetMenuQuery } from './services/security/UserRoleService';
+import CallOverlay from './components/Overlay/CallOverlay';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -198,80 +199,7 @@ const App = () => {
     { skip: !(user?.id && selectedFacility?.id) }
   );
 
-  // const { data: screens, isLoading, error } = useGetScreensQuery(null);
-
-  // const [navs, setNavs] = useState([]);
-  // // useEffect(() => {
-  // //   loadNavs();
-  // //   console.log('Screens from APP', screens);
-  // // }, [screens]);
-
-  // useEffect(() => {
-  //   loadNavs();
-  //    console.log('menu from APP', menu);
-  // }, [menu]);
-
-
-
-  // const loadNavs = async () => {
-  //   const navsTemp: any[] = [];
-
-  //   // Dashboard ثابت
-  //   navsTemp.push({
-  //     eventKey: "dashboard",
-  //     icon: <Icon as={MdDashboard} />,
-  //     title: "Dashboard",
-  //     to: "/",
-  //   });
-  //   const toTitleCase = (str: string) =>
-  //     str
-  //       .toLowerCase()
-  //       .split(" ")
-  //       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-  //       .join(" ");
-
-
-  //     // Build a fast lookup of allowed screens from backend
-  // const norm = (s?: string) => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
-  // const allowed = new Set<string>(
-  // (menu ?? []).flatMap(m => [
-  //     norm(m.label),                               // "Icd 10"
-  //     norm((m.screen || '').replace(/_/g, ' '))    // "ICD_10" → "icd 10"
-  //   ])
-  // );
-
-  //   MODULES.forEach((module) => {
-  //     if (module.screens && module.screens.length > 0) {
-  //       const childrenNavs: any[] = [];
-
-  //       module.screens.forEach((screen) => {
-  //         // 👇 حول اسم الشاشة ل Title Case
-  //         const normalizedName = toTitleCase(screen.name);
-
-  //         // 👇 قارن مع اللي جاي من الباك
-  //         if (menu?.includes(normalizedName)) {
-  //           childrenNavs.push({
-  //             icon: <Icon as={icons[screen?.icon ?? "FaCircle"]} />,
-  //             title: normalizedName, // استخدم الاسم اللي مطابق الباك
-  //             to: "/".concat(screen.navPath),
-  //           });
-  //         }
-  //       });
-
-  //       if (childrenNavs.length > 0) {
-  //         navsTemp.push({
-  //           icon: <Icon as={icons[module?.icon ?? "FaBox"]} />,
-  //           title: module.name,
-  //           children: childrenNavs,
-  //         });
-  //       }
-  //     }
-  //   });
-
-  //   setNavs(navsTemp);
-  // };
-
-  // Types for safety (optional)
+   // Types for safety (optional)
 type BackendMenuItem = {
   module?: string | null; // backend module name (if provided)
   label?: string | null;  // human title, e.g. "ICD-10"
@@ -638,6 +566,7 @@ const loadNavs = () => {
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
+        <CallOverlay />
       </CustomProvider>
     </IntlProvider>
   );

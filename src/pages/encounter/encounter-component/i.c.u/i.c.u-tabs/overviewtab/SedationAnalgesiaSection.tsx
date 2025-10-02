@@ -52,7 +52,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const initialTableData = [
-  { id: 1, sedationLevel: 'Alert and calm', targetNumber: '0', lastTime: '08:00', createdBy: "Nurse Layla",createdAt: "2025-09-21 11:15 AM", },
+  { id: 1, sedationLevel: 'Alert and calm', targetNumber: '0', lastTime: '08:00', createdBy: "Nurse Layla", createdAt: "2025-09-21 11:15 AM", },
   { id: 2, sedationLevel: 'Light sedation', targetNumber: '-1', lastTime: '12:00', createdBy: "Dr. Ahmad", createdAt: "2025-09-21 09:30 AM", },
   { id: 3, sedationLevel: 'Moderate sedation', targetNumber: '-2', lastTime: '16:00', createdBy: "Dr. Ali", createdAt: "2025-09-23 12:30 PM", },
 ];
@@ -152,8 +152,8 @@ const SedationAnalgesiaSection: React.FC = () => {
           page={0}
           rowsPerPage={5}
           totalCount={tableData.length}
-          onPageChange={() => {}}
-          onRowsPerPageChange={() => {}}
+          onPageChange={() => { }}
+          onRowsPerPageChange={() => { }}
         />
       </div>
     </>
@@ -164,23 +164,23 @@ const SedationAnalgesiaSection: React.FC = () => {
       <SectionContainer
         title={<>
           <span className="today-goals-section-title">
-                        <FontAwesomeIcon
-                          color="#b4b4b4ff"
-                          icon={faBed}
-                          className="title-icon-main-title"
-                        />
+            <FontAwesomeIcon
+              color="#b4b4b4ff"
+              icon={faBed}
+              className="title-icon-main-title"
+            />
             Sedation & Analgesia
           </span>
 
 
-                                        <div className="add-button-for-cards-over-view">
-                                <MyButton
-                                  prefixIcon={() => <PlusIcon />}
-                                  onClick={() => setOpenModal(true)}
-                                >
-                                  Add
-                                </MyButton></div>
-                          </>
+          <div className="add-button-for-cards-over-view">
+            <MyButton
+              prefixIcon={() => <PlusIcon />}
+              onClick={() => setOpenModal(true)}
+            >
+              Add
+            </MyButton></div>
+        </>
         }
         content={
           <>
@@ -198,6 +198,7 @@ const SedationAnalgesiaSection: React.FC = () => {
             />
           </>
         }
+        minHeight={"auto"}
       />
 
       <MyModal

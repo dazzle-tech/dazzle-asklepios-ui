@@ -5,28 +5,31 @@ import CheckIcon from '@rsuite/icons/Check';
 import { useAppDispatch } from '@/hooks';
 import { useSaveDrugOrderMedicationMutation } from '@/services/encounterService';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
-import { useGetDepartmentsQuery, useGetIcdListQuery } from '@/services/setupService';
+import {
+  useGetDepartmentsQuery,
+  useGetIcdListQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
 import { newApDrugOrderMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faRightLeft } from '@fortawesome/free-solid-svg-icons';
+import { faRightLeft, faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
-import React, { useEffect, useState } from 'react';
-import { Col, Dropdown, Form, Input, InputGroup, Row, Text } from 'rsuite';
-import ActiveIngrediantList from './ActiveIngredient';
-import './styles.less';
-import Substitues from './Substitutes';
-import clsx from 'clsx';
-import DiagnosticsOrder from '../diagnostics-order';
-import MyModal from '@/components/MyModal/MyModal';
 import { PlusRound } from '@rsuite/icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import MyTable from '@/components/MyTable';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
+import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
 import { FaDownload } from 'react-icons/fa';
+import { Col, Dropdown, Form, Input, InputGroup, Row, Text } from 'rsuite';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import Section from '@/components/Section';
 import SectionContainer from '@/components/SectionsoContainer';
+import DiagnosticsOrder from '../diagnostics-order';
+import ActiveIngrediantList from './ActiveIngredient';
+import Substitues from './Substitutes';
+import PlusIcon from '@rsuite/icons/Plus';
+import './styles.less';
 
 const DetailsModal = ({
   edit,
@@ -61,6 +64,9 @@ const DetailsModal = ({
   const [adminDescription, setAdminDescription] = useState<string>('');
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [favoriteMedications, setFavoriteMedications] = useState([]);
+  const [isUnregistered, setIsUnregistered] = useState(false);
+  const [unregisteredMedicationName, setUnregisteredMedicationName] = useState('');
+
   const MedicalTestsTable = () => {
     return (
       <div className="medical-tests-container">
@@ -262,14 +268,13 @@ const DetailsModal = ({
     if (orderMedication.administrationInstructions != null) {
       setAdminInstructions(prevadminInstructions =>
         prevadminInstructions
-          ? `${prevadminInstructions}, ${
-              administrationInstructionsLovQueryResponse?.object?.find(
-                item => item.key === orderMedication.administrationInstructions
-              )?.lovDisplayVale
-            }`
+          ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
+            item => item.key === orderMedication.administrationInstructions
+          )?.lovDisplayVale
+          }`
           : administrationInstructionsLovQueryResponse?.object?.find(
-              item => item.key === orderMedication.administrationInstructions
-            )?.lovDisplayVale
+            item => item.key === orderMedication.administrationInstructions
+          )?.lovDisplayVale
       );
     }
 
@@ -305,16 +310,19 @@ const DetailsModal = ({
     setindicationsDescription('');
     setSearchKeyword('');
     setTags([]);
+    setIsUnregistered(false);
+    setUnregisteredMedicationName('');
   };
   const handleSaveMedication = () => {
     try {
       const tagcompine = joinValuesFromArray(tags);
-      saveDrugorderMedication({
+      const medicationData = {
         ...orderMedication,
         patientKey: patient.key,
         visitKey: encounter.key,
         drugOrderKey: drugKey,
-        genericMedicationsKey: selectedGeneric.key,
+        genericMedicationsKey: isUnregistered ? null : selectedGeneric?.key,
+        unregisteredMedicationName: isUnregistered ? unregisteredMedicationName : null,
         parametersToMonitor: tagcompine,
         statusLkey: '164797574082125',
         startDateTime: orderMedication.startDateTime
@@ -322,16 +330,18 @@ const DetailsModal = ({
           : null,
         indicationIcd: indicationsDescription,
         administrationInstructions: instr
-      })
+      };
+
+      saveDrugorderMedication(medicationData)
         .unwrap()
         .then(() => {
-          dispatch(notify({ msg: 'Added sucssesfily', sev: 'success' }));
+          dispatch(notify({ msg: 'Added successfully', sev: 'success' }));
           setOpen(false);
           handleCleare();
           medicRefetch();
         });
     } catch (error) {
-      dispatch(notify({ msg: 'Added feild', sev: 'error' }));
+      dispatch(notify({ msg: 'Failed to add', sev: 'error' }));
       console.log(error);
     }
   };
@@ -426,22 +436,31 @@ const DetailsModal = ({
         open={open}
         setOpen={setOpen}
         actionButtonFunction={handleSaveMedication}
-        actionButtonLabel="Save"
-        size="100vw"
+        actionButtonLabel={
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <CheckIcon /> Save & Close
+          </span>
+        } size="100vw"
         isDisabledActionBtn={
           edit
             ? true
             : orderMedication.key
-            ? orderMedication?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'
-            : false
+              ? orderMedication?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'
+              : false
         }
-        leftTitle={selectedGeneric ? selectedGeneric.genericName : 'Select Generic'}
+        leftTitle={
+          isUnregistered
+            ? 'Unregistered Medication'
+            : selectedGeneric
+              ? selectedGeneric.genericName
+              : 'Select Generic'
+        }
         rightTitle="Medication Order Details"
         leftContent={
           <>
             <div className="left-content-wrapper">
-              <div className='left-content-active-ingrediant-list'>
-              <ActiveIngrediantList selectedGeneric={selectedGeneric} />
+              <div className="left-content-active-ingrediant-list">
+                <ActiveIngrediantList selectedGeneric={selectedGeneric} />
               </div>
               <MedicalTestsTable />
             </div>
@@ -457,6 +476,10 @@ const DetailsModal = ({
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
+            </MyButton>
+            <MyButton
+              prefixIcon={() => <PlusIcon />}>
+              Add Medication
             </MyButton>
           </div>
         }
@@ -476,7 +499,14 @@ const DetailsModal = ({
                 <Row className="" style={{ display: 'flex' }}>
                   <Col className="padding-16 flex2-radius ">
                     <SectionContainer
-                      title={<></>}
+                      title={
+                        <div className="header-Container">
+                          <Text>Medication Details</Text>
+                          <div className="center-button">
+                            <MyButton>Titration Plan</MyButton>
+                          </div>
+                        </div>
+                      }
                       content={
                         <div className="medication-form-row" style={{ minHeight: '288px' }}>
                           <div className="full-block">
@@ -487,15 +517,16 @@ const DetailsModal = ({
                                 className="input-search-p"
                               >
                                 <Input
-                                  placeholder="Medic Name"
+                                  placeholder="Medication Name"
                                   value={searchKeyword}
                                   onChange={handleSearch}
+                                  disabled={isUnregistered}
                                 />
                                 <InputGroup.Button>
                                   <SearchIcon />
                                 </InputGroup.Button>
                               </InputGroup>
-                              {searchKeyword && (
+                              {searchKeyword && !isUnregistered && (
                                 <Dropdown.Menu className="dropdown-menuresult">
                                   {genericMedicationListResponse?.object?.map(Generic => (
                                     <Dropdown.Item
@@ -534,6 +565,36 @@ const DetailsModal = ({
                               />
                             </div>
 
+                            <MyInput
+                              fieldLabel="Unregistered"
+                              fieldType="checkbox"
+                              fieldName="unregistered"
+                              record={{ unregistered: isUnregistered }}
+                              setRecord={rec => {
+                                setIsUnregistered(rec.unregistered);
+                                if (rec.unregistered) {
+                                  setSelectedGeneric(null);
+                                  setSearchKeyword('');
+                                } else {
+                                  setUnregisteredMedicationName('');
+                                }
+                              }}
+                            />
+
+                            {isUnregistered && (
+                              <MyInput
+                                fieldName={'unregisteredMedicationName'}
+                                fieldType="text"
+                                fieldLabel="Unregistered Medication"
+                                placeholder=""
+                                value={unregisteredMedicationName}
+                                onChange={setUnregisteredMedicationName}
+                                record={orderMedication}
+                                setRecord={setOrderMedication}
+                                width={350}
+                              />
+                            )}
+
                             {/* Order Type */}
                             <MyInput
                               fieldType="select"
@@ -545,7 +606,7 @@ const DetailsModal = ({
                               record={orderMedication}
                               setRecord={setOrderMedication}
                               searchable={false}
-                              width={100}
+                              width={150}
                             />
 
                             <MyInput
@@ -605,13 +666,8 @@ const DetailsModal = ({
                               setRecord={setOrderMedication}
                             />
                             <div className="button-wrapper-p">
-                            {/* Titration Button */}
                               <MyButton>Generate Instructions</MyButton>
                             </div>
-                            <div className="button-wrapper">
-                              <MyButton>Titration Plan</MyButton>
-                            </div>
-
                           </div>
                           <Col>
                             <Col style={{ marginRight: '12px' }}>
@@ -678,7 +734,7 @@ const DetailsModal = ({
                     }}
                   >
                     <SectionContainer
-                      title={<></>}
+                      title={<Text>Dose Time</Text>}
                       content={
                         <>
                           <div className="medication-form-flex">
@@ -730,7 +786,7 @@ const DetailsModal = ({
 
                 <Row className="padding-16">
                   <SectionContainer
-                    title={<Text className="font-style">Indication</Text>}
+                    title={<Text>Indication</Text>}
                     content={
                       <>
                         <Row>
@@ -859,7 +915,7 @@ const DetailsModal = ({
                     }}
                   >
                     <SectionContainer
-                      title={<Text className="font-style">Notes</Text>}
+                      title={<Text>Notes</Text>}
                       content={
                         <>
                           <MyInput
@@ -903,7 +959,7 @@ const DetailsModal = ({
                   {/* Right Half - Diluent + Fluid Order */}
                   <Col className="padding-16 flex1-radius">
                     <SectionContainer
-                      title={<Text className="font-style">Diluent</Text>}
+                      title={<Text>Diluent</Text>}
                       content={
                         <div style={{ minHeight: '253px' }}>
                           <Row className="align-center mb-2">
@@ -1059,7 +1115,7 @@ const DetailsModal = ({
                 <Row className="padding-20">
                   <Row>
                     <SectionContainer
-                      title={<Text className="font-style">Recall From Favorite</Text>}
+                      title={<Text>Recall From Favorite</Text>}
                       content={
                         <div>
                           <MyTable

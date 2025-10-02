@@ -66,11 +66,15 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
             selectedResource.object.forEach(objItem => {
                 if (objItem.availabilitySlices?.length > 0) {
                     objItem.availabilitySlices.forEach(slice => {
-                        const day = slice.dayOfWeek;
+                        const day = String(slice.dayOfWeek);
+                        
+                        if (!['0', '1', '2', '3', '4', '5', '6'].includes(day)) {
+                            return;
+                        }
 
                         if (!loadedSlices[day]) {
                             loadedSlices[day] = [];
-                            loadedDays.push(day);
+                            loadedDays.push(day as DayValue);
                         }
 
                         const fromDate = minutesToDisplayDate(slice.startHour);
@@ -162,7 +166,7 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
     };
 
     const generateMinutesFromMidnight = (dateObject) => {
-    if (!dateObject instanceof Date || isNaN(dateObject.getTime())) return null;
+    if (!(dateObject instanceof Date) || isNaN(dateObject.getTime())) return null;
     return dateObject.getHours() * 60 + dateObject.getMinutes();
     };
     const minutesToDisplayDate = (minutes) => {
@@ -177,15 +181,16 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
 
     const handleSave = () => {
 
-        const finalData = selectedDays.map(day => ({
-            day: day,
-            slices: timeSlices[day].map(slice => ({
-                startTimeMinutes: generateMinutesFromMidnight(slice.from),
-                endTimeMinutes: generateMinutesFromMidnight(slice.to),
-                isBreak: slice.isBreak || false
-            }))
-        }));
-
+        const finalData = selectedDays.map(day => {
+            return {
+                day: day,
+                slices: timeSlices[day].map(slice => ({
+                    startTimeMinutes: generateMinutesFromMidnight(slice.from),
+                    endTimeMinutes: generateMinutesFromMidnight(slice.to),
+                    isBreak: slice.isBreak || false
+                }))
+            };
+        });
 
         try {
             saveResourcesAvailabilitySlices({
@@ -193,13 +198,13 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
                 resource: selectedResource?.object[0].key,
                 availability: finalData
             }).unwrap();
-            console.log({
+            console.log('✅ SAVE SUCCESS:', {
                 facility,
                 resource: selectedResource?.object[0].key,
                 availability: finalData
             });
         } catch (err) {
-            console.error('Adding Error', err);
+            console.error('❌ SAVE ERROR:', err);
         }
         setOpen(false);
     };
@@ -420,7 +425,7 @@ const handleAddSliceRight = (day) => {
 
                     <Form.Group>
                         <Form.ControlLabel>Select Days</Form.ControlLabel>
-                        <CheckboxGroup value={selectedDays} onChange={setSelectedDays}>
+                        <CheckboxGroup value={selectedDays} onChange={(value) => setSelectedDays(value as DayValue[])}>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                 {DAYS.map(day => (
                                     <Checkbox key={day.value} value={day.value}>
@@ -432,7 +437,7 @@ const handleAddSliceRight = (day) => {
                     </Form.Group>
 
                     <Button appearance="ghost" onClick={handleGenerate} style={{ marginTop: '10px' }}>
-                        {Object.values(timeSlices).some(daySlices => daySlices?.length > 0)
+                        {Object.values(timeSlices).some(daySlices => Array.isArray(daySlices) && daySlices.length > 0)
                             ? "Regenerate slices"
                             : "Generate slices"}
                     </Button>
@@ -468,11 +473,11 @@ const handleAddSliceRight = (day) => {
                                         const displayFrom = slice.from;
                                         const displayTo = slice.to;
 
-                                        const fromStr = displayFrom instanceof Date && !isNaN(displayFrom)
+                                        const fromStr = displayFrom instanceof Date && !isNaN(displayFrom.getTime())
                                             ? displayFrom.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                                             : 'Invalid Date';
 
-                                        const toStr = displayTo instanceof Date && !isNaN(displayTo)
+                                        const toStr = displayTo instanceof Date && !isNaN(displayTo.getTime())
                                             ? displayTo.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                                             : 'Invalid Date';
 

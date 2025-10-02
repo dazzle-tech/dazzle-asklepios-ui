@@ -26,6 +26,8 @@ import { recoveryService } from './services/RecoveryService';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import { accountApi } from './services/accountService';
 import authReducer from './reducers/authSlice';
+import callReducer from './store/callSlice';
+import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
 import { roleService } from './services/security/roleService';
@@ -87,6 +89,9 @@ export const store = configureStore({
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
 
+
+    [enumsApi.reducerPath]: enumsApi.reducer,
+ 
     //refetch Encounters
     refetch: refetchReducer,
     //refetch Patient Side Information
@@ -99,11 +104,13 @@ export const store = configureStore({
 
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
+    call: callReducer,
 
     [facilityService.reducerPath]: facilityService.reducer ,
      [departmentService.reducerPath]: departmentService.reducer ,
      
       [enumService.reducerPath]: enumService.reducer ,
+
 
   },
   // @ts-ignore
@@ -129,6 +136,7 @@ export const store = configureStore({
       operationService.middleware,
       recoveryService.middleware,
       userService.middleware,
+      enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
       roleService.middleware,
