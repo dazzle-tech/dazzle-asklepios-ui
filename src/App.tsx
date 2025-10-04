@@ -177,12 +177,9 @@ import RoleManegment from './pages/setup/role-managemen';
 import CallOverlay from './components/Overlay/CallOverlay';
 import NewDepartments from './pages/setup/departments-setup/Departments-new';
 
-
-
-
-
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
+  console.log("User Screens from APP",authSlice)
 
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);

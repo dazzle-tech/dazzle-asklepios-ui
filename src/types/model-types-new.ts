@@ -51,7 +51,6 @@ export interface Department {
   encounterType: string;
   isActive: boolean;
 }
-
 export interface Facility { 
 	id?:string;
 	name?:string;
@@ -75,8 +74,16 @@ export interface CreateFacility {
 	defaultCurrency:string;
   isActive?: boolean;
 } 
-
-
+export interface Role { 
+	id?:string;
+	name?:string;
+	type?:string;
+	facilityId?:string;
+} 
+export interface UserRole { 
+	roleId?:string;
+  userId?:string;
+} 
 
 export interface Facility { 
 	id?:string;

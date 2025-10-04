@@ -15,8 +15,6 @@ import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { conjureValueBasedOnIDFromList } from "@/utils";
 import TrashIcon from "@rsuite/icons/Trash";
-
-
 const AccessRole = ({ user }) => {
   const dispatch = useAppDispatch();
 
@@ -86,7 +84,6 @@ const AccessRole = ({ user }) => {
       refetchUserRoles();
     } catch (err) {
       dispatch(notify({ msg: "Failed to remove role", sev: "error" }));
-
     }
   };
 
@@ -173,9 +170,7 @@ const AccessRole = ({ user }) => {
 
       <MyTable data={userRoles} columns={columns} />
     </>
-  )
-
-
+  );
 };
 
 export default AccessRole;

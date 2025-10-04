@@ -57,7 +57,6 @@ console.log("Facility in RoleManagement:", facility);
               )
             }
           />
-
         </Col>
       </Row>
     </Grid>
@@ -67,11 +66,11 @@ console.log("Facility in RoleManagement:", facility);
       open={open}
       setOpen={setOpen}
       title="Role Management"
-      size="full"
-     
+      size="70%"
+      bodyheight="70vh"
       content={content}
       hideBack={true}
-
+      steps={[{ title: "Roles", icon: <FontAwesomeIcon icon={faUserShield} /> }]}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       isDisabledActionBtn={!selected} // disable until a role is selected
@@ -80,4 +79,3 @@ console.log("Facility in RoleManagement:", facility);
 };
 
 export default RoleManegment;
-

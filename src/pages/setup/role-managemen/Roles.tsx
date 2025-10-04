@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import MyButton from "@/components/MyButton/MyButton";
 import SectionContainer from "@/components/SectionsoContainer";
@@ -21,8 +20,6 @@ const Roles = ({ selected, setSelected, facilityId }) => {
   const addRole = async () => {
     try {
       const created = await saveRole({ ...role, facilityId }).unwrap();
-
-
       dispatch(notify({ msg: 'The Role has been saved successfully', sev: 'success' }));
 
       setRole({ ...newRole });

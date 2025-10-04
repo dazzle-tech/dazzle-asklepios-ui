@@ -2,7 +2,6 @@ import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
@@ -12,7 +11,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
-
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -30,10 +28,7 @@ const AddEditDepartment = ({
   // Fetch  facility list response
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
   // Fetch  encTypesEnum list response
-
-  const { data: encTypesEnum } = useGetEnconuterTypesQuery({});
-
-
+  const { data: encTypesEnum } = useGetEnconuterTypesQuery({});  
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
   // Modal content

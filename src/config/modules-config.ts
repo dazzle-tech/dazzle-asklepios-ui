@@ -62,6 +62,7 @@ export const MODULES: Module[] =
       { name: "User New", code: "USER_NEW", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
       { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
       { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-product-setup" },
+
     ],
   },
   {name: "Coding Module",
@@ -74,6 +75,7 @@ export const MODULES: Module[] =
       { name: "Loinc", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
       { name: "Cdt Codes", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
       { name: "Snomed Ct", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "" },
+
 
     ],
   },

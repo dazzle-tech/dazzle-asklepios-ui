@@ -47,8 +47,7 @@ const AddEditFacility = ({
             <div className={clsx('', { 'container-of-two-fields-facility': width > 600 })}>
               {/* <MyInput
                 fieldLabel="Facility ID"
-                fieldName="id"
-
+                fieldName="code"
                 required
                 record={facility}
                 setRecord={setFacility}

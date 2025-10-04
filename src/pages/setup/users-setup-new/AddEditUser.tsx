@@ -12,7 +12,6 @@ import { useGetAllRolesQuery, useGetRolesByFacilityQuery } from '@/services/secu
 import MyButton from '@/components/MyButton/MyButton';
 import AccessRole from './AccessRole';
 import { useGetGenderQuery } from '@/services/enumService';
-
 const AddEditUser = ({
   open,
   setOpen,

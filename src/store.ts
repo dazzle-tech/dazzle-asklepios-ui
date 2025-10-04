@@ -30,8 +30,6 @@ import callReducer from './store/callSlice';
 import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
-
-
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -141,7 +139,9 @@ export const store = configureStore({
       departmentService.middleware,
       roleService.middleware,
       userRoleService.middleware,
-      enumService.middleware
+      enumService.middleware,
+      facilityService.middleware,
+      roleService.middleware
 
     ])
 });

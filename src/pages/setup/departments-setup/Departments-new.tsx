@@ -9,7 +9,6 @@ import { useGetLovValuesByCodeQuery, useGetMedicalSheetsByDepartmentIdQuery } fr
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
-
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, conjureValueBasedOnIDFromList, fromCamelCaseToDBName } from '@/utils';
 
 import { useDispatch } from 'react-redux';
@@ -24,7 +23,6 @@ import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
 import { useAddDepartmentMutation, useGetDepartmentByFacilityQuery, useGetDepartmentByNameQuery, useGetDepartmentByTypeQuery, useGetDepartmentQuery, useGetDepartmentTypesQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
-
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 
@@ -33,7 +31,6 @@ const Departments = () => {
 
   const [department, setDepartment] = useState<Department>({ ...newDepartment });
   const [load, setLoad] = useState(false);
-
   const [popupOpen, setPopupOpen] = useState(false);
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
@@ -45,7 +42,6 @@ const Departments = () => {
   const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
-
   const [showScreen, setShowScreen] = useState({
     ...newApMedicalSheets,
     departmentId: department.id,
@@ -66,10 +62,8 @@ const Departments = () => {
     observation: true
   });
 
-
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequestId,
-
     pageSize: 15
   });
 
@@ -110,7 +104,6 @@ const Departments = () => {
   }, [dispatch]);
 
   // Handle window resize
-
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
@@ -128,7 +121,6 @@ const Departments = () => {
   useEffect(() => {
     if (addDepartmentMutation.data) {
       setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
-
     }
   }, [addDepartmentMutation.data]);
 
@@ -142,7 +134,6 @@ const Departments = () => {
   useEffect(() => {
     if (medicalSheet?.object?.key) {
       setShowScreen({ ...medicalSheet.object });
-
     } else {
       setShowScreen({
         ...newApMedicalSheets,
@@ -164,7 +155,6 @@ const Departments = () => {
         observation: true
       });
     }
-
   }, [medicalSheet, department.id, department.facilityId]);
   //handle get facility and department type data for search
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
@@ -178,8 +168,6 @@ const Departments = () => {
       setFacilitiesList(facilityOptions);
     }
   }, [facilityListResponse]);
-
-  
   // Fetch  depTTypesEnum list response
   const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
   // Handle new department creation
@@ -188,20 +176,14 @@ const Departments = () => {
     setGenerateCode(code);
     setDepartment({ ...newDepartment, departmentCode: code });
     setPopupOpen(true);
- 
-
-  const cleanDepartmentForAPI = (dept: Department) => ({
-    ...dept,
-    facilityId: dept?.facility?.id ?? dept.facilityId,
-    facility: undefined
-  });
-
+  };
+  // add department
+  const handleAdd = () => {
     setPopupOpen(false);
     setLoad(true);
     addDepartment(department)
       .unwrap()
       .then(() => {
-
         dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
       })
       .catch(() => {
@@ -209,14 +191,11 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
-
   // update department
   const handleUpdate = () => {
     setPopupOpen(false);
     setLoad(true);
     updateDepartment(department)
-
-
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));
@@ -226,7 +205,6 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
-
   const handleFilterChange = async (fieldName, value) => {
     if (!value) {
       setDepartmentList(departmentListResponse);
@@ -250,7 +228,6 @@ const Departments = () => {
       setIsFiltered(false);
     }
   };
-
   const generateFiveDigitCode = (): string => {
     return String(Math.floor(10000 + Math.random() * 90000));
   };
@@ -311,9 +288,6 @@ const Departments = () => {
         icon={faSheetPlastic}
         title="Medical Sheets"
         size="lg"
-
-
-
         style={{
           cursor: [
             '5673990729647001',
@@ -325,7 +299,6 @@ const Departments = () => {
             : 'not-allowed',
           color: 'var(--primary-gray)'
         }}
-
         onClick={() => {
           if (
             ['5673990729647001', '5673990729647002', '5673990729647005', '5673990729647004'].includes(
@@ -335,14 +308,10 @@ const Departments = () => {
             setDepartment(rowData);
             setOpenScreensPopup(true);
           }
-
         }}
       />
     </div>
   );
-
-
-
   const tableColumns = [
     {
       key: 'facilityId',
@@ -369,7 +338,6 @@ const Departments = () => {
       title: <Translate>Department Type</Translate>,
       flexGrow: 4,
       render: rowData => <p>{rowData?.departmentType}</p>
-
     },
     {
       key: 'phoneNumber',
@@ -389,7 +357,6 @@ const Departments = () => {
     {
       key: 'appointable',
       title: <Translate>Appointable</Translate>,
-
       render: rowData => <p>{rowData?.appointable ? 'Yes' : 'No'}</p>
     },
     {
@@ -397,7 +364,6 @@ const Departments = () => {
       title: <Translate>Status</Translate>,
       flexGrow: 4,
       render: rowData => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
-
     },
     {
       key: 'icons',
@@ -406,9 +372,6 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
-
-
   const getFilterWidth = (filter: string): string => {
     switch (filter) {
       case 'facilityName':
@@ -503,10 +466,6 @@ const Departments = () => {
       </Form>
     );
   };
-
-
-
-
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
@@ -536,15 +495,12 @@ const Departments = () => {
           isFiltered
             ? departmentList.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage)
             : departmentListResponse?.slice(pageIndex * rowsPerPage, pageIndex * rowsPerPage + rowsPerPage) ?? []
-
         }
         totalCount={
           isFiltered
             ? departmentList.length
             : departmentListResponse?.length ?? 0
         }
-
-
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => setDepartment(rowData)}
@@ -564,10 +520,8 @@ const Departments = () => {
         recordOfDepartmentCode={recordOfDepartmentCode}
         setRecordOfDepartmentCode={setRecordOfDepartmentCode}
         width={width}
-
-        handleAddNew={handleNew}
+        handleAddNew={handleAdd}
         handleUpdate={handleUpdate}
-
       />
       <ChooseDepartment
         open={openScreensPopup}
@@ -580,7 +534,4 @@ const Departments = () => {
     </Panel>
   );
 };
-
-
 export default Departments;
-

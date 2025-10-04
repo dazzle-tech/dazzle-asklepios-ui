@@ -1,6 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
-
 export const userRoleService = createApi({
     reducerPath: 'userRoleApi',
     baseQuery: BaseQuery,

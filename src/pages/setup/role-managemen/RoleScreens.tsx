@@ -5,6 +5,7 @@ import MyNestedTable from "@/components/MyNestedTable";
 import MyButton from "@/components/MyButton/MyButton";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
+
 import {
   useGetRolePermissionsQuery,
   useUpdateRolePermissionsMutation,
@@ -15,11 +16,14 @@ import { Toggle } from "rsuite";
 interface Permission {
   screen: string;
   permission: string;
+
 }
 
 const RoleScreens = ({ roleId }: { roleId: number }) => {
   const dispatch = useAppDispatch();
+
   const Operations: string[] = useEnumByName("Operation") || [];
+
 
   const { data: initialPermissions = [], isLoading, refetch } =
     useGetRolePermissionsQuery(roleId);
@@ -27,6 +31,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
 
   const [selected, setSelected] = useState<Permission[]>([]);
 
+  // sync from backend
   useEffect(() => {
     if (initialPermissions?.length) {
       setSelected(initialPermissions);
@@ -36,6 +41,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
   useEffect(() => {
     refetch();
   }, [roleId]);
+
 
   /** ✅ تفعيل / إلغاء عملية واحدة */
   const togglePermission = (screenCode: string, operation: string) => {
@@ -169,6 +175,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
   };
 
   /** 🧱 أعمدة الموديول */
+
   const columns = [
     {
       key: "module",
@@ -206,6 +213,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
       title: op,
       align: "center" as const,
       render: (rowData: any) => {
+
         const screens = rowData.screens || [];
         const allActive =
           screens.length > 0 &&
@@ -214,6 +222,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
               (p) => p.screen === scr.code && p.permission === op
             )
           );
+
 
         return (
           <Toggle
@@ -253,7 +262,9 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     },
   ];
 
+
   /** 🧱 أعمدة الشاشات */
+
   const screenColumns = (moduleRow: any) => [
     {
       key: "screen",
@@ -327,6 +338,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
         data={MODULES}
         columns={columns}
         getNestedTable={getNestedTable}
+
       />
       <br />
       <MyButton appearance="primary" onClick={handleSave}>

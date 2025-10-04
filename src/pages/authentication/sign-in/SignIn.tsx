@@ -2,7 +2,6 @@ import MyInput from '@/components/MyInput';
 import {  useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
-
 import { initialListRequest } from '@/types/types';
 import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, { useEffect, useState } from 'react';
@@ -17,7 +16,7 @@ import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
 import { setToken, setUser } from '@/reducers/authSlice';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-
+// import store + enumsApi to prefetch after auth
 import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
 
@@ -46,10 +45,6 @@ const SignIn = () => {
     data: facilityListResponse,
   } = useGetAllFacilitiesQuery({});
   console.log( facilityListResponse);
-
-
-
-
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
   const [saveUser] = useSaveUserMutation();
 
