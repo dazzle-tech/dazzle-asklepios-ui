@@ -78,7 +78,8 @@ module.exports = {
       template: './src/index.html',
       inject: true,
       hash: true,
-      path: './'
+      path: './',
+      favicon: '../../AskLepois/dazzle-asklepios-ui/tab-logo.png' 
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
