@@ -455,7 +455,7 @@ const Frame = (props: FrameProps) => {
             ></Stack>
 
             <div className="content-with-sticky">
-              <div className="main-content-area">
+              <div className="main-content-area" >
                 <Outlet />
               </div>
 
