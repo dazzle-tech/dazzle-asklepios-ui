@@ -269,6 +269,7 @@ const MyInput = ({
             onClose={() => setIsTimeOpen(false)}
           />
         );
+
       case 'select':
         return (
           <Form.Control
@@ -296,6 +297,7 @@ const MyInput = ({
             onClose={() => setIsSelectOpen(false)}
           />
         );
+
       //<TagPicker data={data} style={{ width: 300 }} />
       case 'multyPicker':
         return (

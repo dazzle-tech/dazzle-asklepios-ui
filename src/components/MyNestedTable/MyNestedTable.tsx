@@ -43,7 +43,8 @@ export interface NestedTableConfig {
 interface MyNestedTableProps {
   data: any[];
   columns: ColumnConfig[];
-  height?: number;
+  height?: number | string;      
+  nestedHeight?: number | string;
   loading?: boolean;
   onRowClick?: (rowData: any) => void;
   rowClassName?: (rowData: any) => string;
@@ -63,7 +64,8 @@ interface MyNestedTableProps {
 const MyNestedTable: React.FC<MyNestedTableProps> = ({
   data,
   columns,
-  height = 450,
+  height = '50vh',
+  nestedHeight = '22vh',
   loading,
   onRowClick,
   rowClassName,
@@ -81,6 +83,7 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const mode = useSelector((state: any) => state.ui.mode);
+
   const handleExpandClick = (index: number) => {
     setExpandedRow(prev => (prev === index ? null : index));
   };
@@ -98,9 +101,10 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
   return (
     <Box className={`my-table-wrapper ${mode === 'light' ? 'light' : 'dark'}`}>
       {filters && <Box className="my-table-filters">{filters}</Box>}
-
       {tableButtons && <Box className="my-table-buttons-wrapper">{tableButtons}</Box>}
+
       <Box className="my-table-content-wrapper">
+        {/* Main table */}
         <TableContainer
           component={Paper}
           sx={{ maxHeight: height, overflowY: 'auto' }}
@@ -174,6 +178,7 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
 
                   return (
                     <React.Fragment key={index}>
+                      {/* Main row */}
                       <TableRow
                         onClick={() => onRowClick?.(row)}
                         className={clsx('main-row', rowClassName?.(row), { 'even-row': isEvenRow })}
@@ -214,61 +219,65 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
                           </TableCell>
                         ))}
                       </TableRow>
+
+                      {/* Expanded nested table */}
                       {expandedRow === index && nestedTable && (
                         <TableRow className="expanded-row">
                           <TableCell colSpan={columns.length + 1}>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  {nestedTable.columns.map(nCol => (
-                                    <TableCell
-                                      key={nCol.key}
-                                      align={nCol.align || 'left'}
-                                      sx={{
-                                        width: nCol.width,
-                                        maxWidth: nCol.width,
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis'
-                                      }}
-                                    >
-                                      {nCol.title}
-                                    </TableCell>
-                                  ))}
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {nestedTable.data.length === 0 ? (
+                            <TableContainer sx={{ maxHeight: nestedHeight, overflowY: 'auto' }}>
+                              <Table size="small" stickyHeader>
+                                <TableHead>
                                   <TableRow>
-                                    <TableCell colSpan={nestedTable.columns.length} align="center">
-                                      No nested data
-                                    </TableCell>
+                                    {nestedTable.columns.map(nCol => (
+                                      <TableCell
+                                        key={nCol.key}
+                                        align={nCol.align || 'left'}
+                                        sx={{
+                                          width: nCol.width,
+                                          maxWidth: nCol.width,
+                                          whiteSpace: 'nowrap',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis'
+                                        }}
+                                      >
+                                        {nCol.title}
+                                      </TableCell>
+                                    ))}
                                   </TableRow>
-                                ) : (
-                                  nestedTable.data.map((nRow, nIndex) => (
-                                    <TableRow key={nIndex}>
-                                      {nestedTable.columns.map(nCol => (
-                                        <TableCell
-                                          key={nCol.key}
-                                          align={nCol.align || 'left'}
-                                          sx={{
-                                            width: nCol.width,
-                                            maxWidth: nCol.width,
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
-                                          }}
-                                        >
-                                          {nCol.render
-                                            ? nCol.render(nRow, nIndex)
-                                            : nRow[nCol.dataKey || nCol.key]}
-                                        </TableCell>
-                                      ))}
+                                </TableHead>
+                                <TableBody>
+                                  {nestedTable.data.length === 0 ? (
+                                    <TableRow>
+                                      <TableCell colSpan={nestedTable.columns.length} align="center">
+                                        No nested data
+                                      </TableCell>
                                     </TableRow>
-                                  ))
-                                )}
-                              </TableBody>
-                            </Table>
+                                  ) : (
+                                    nestedTable.data.map((nRow, nIndex) => (
+                                      <TableRow key={nIndex}>
+                                        {nestedTable.columns.map(nCol => (
+                                          <TableCell
+                                            key={nCol.key}
+                                            align={nCol.align || 'left'}
+                                            sx={{
+                                              width: nCol.width,
+                                              maxWidth: nCol.width,
+                                              whiteSpace: 'nowrap',
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis'
+                                            }}
+                                          >
+                                            {nCol.render
+                                              ? nCol.render(nRow, nIndex)
+                                              : nRow[nCol.dataKey || nCol.key]}
+                                          </TableCell>
+                                        ))}
+                                      </TableRow>
+                                    ))
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
 
                             {nestedTable.page !== undefined &&
                               nestedTable.rowsPerPage !== undefined &&
@@ -294,6 +303,7 @@ const MyNestedTable: React.FC<MyNestedTableProps> = ({
           </Table>
         </TableContainer>
 
+        {/* Main pagination */}
         {page !== undefined && rowsPerPage !== undefined && totalCount !== undefined && (
           <TablePagination
             component="div"

@@ -18,7 +18,6 @@ module.exports = {
     liveReload: false,
     allowedHosts: 'all',
     historyApiFallback: { disableDotRule: true },
-    server:'https',
     static: {
       directory: path.resolve(__dirname, 'public'),
       publicPath: '/',

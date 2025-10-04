@@ -20,6 +20,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
 
+
 const SignIn = () => {
   const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
@@ -44,7 +45,6 @@ const SignIn = () => {
     data: facilityListResponse,
   } = useGetAllFacilitiesQuery({});
   console.log( facilityListResponse);
-
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
   const [saveUser] = useSaveUserMutation();
 

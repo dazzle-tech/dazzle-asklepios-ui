@@ -10,6 +10,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, conjureValueBasedOnIDFromList, fromCamelCaseToDBName } from '@/utils';
+
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -311,8 +312,6 @@ const Departments = () => {
       />
     </div>
   );
-
-
   const tableColumns = [
     {
       key: 'facilityId',
@@ -373,7 +372,6 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
   const getFilterWidth = (filter: string): string => {
     switch (filter) {
       case 'facilityName':
@@ -468,8 +466,6 @@ const Departments = () => {
       </Form>
     );
   };
-
-
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
@@ -538,5 +534,4 @@ const Departments = () => {
     </Panel>
   );
 };
-
 export default Departments;

@@ -48,7 +48,6 @@ const AddEditFacility = ({
               {/* <MyInput
                 fieldLabel="Facility ID"
                 fieldName="code"
-
                 required
                 record={facility}
                 setRecord={setFacility}

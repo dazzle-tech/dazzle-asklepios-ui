@@ -15,7 +15,6 @@ import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { conjureValueBasedOnIDFromList } from "@/utils";
 import TrashIcon from "@rsuite/icons/Trash";
-
 const AccessRole = ({ user }) => {
   const dispatch = useAppDispatch();
 

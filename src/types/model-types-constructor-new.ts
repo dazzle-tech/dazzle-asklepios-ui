@@ -49,7 +49,6 @@ export const newDepartment:modelTypes.Department = {
   isActive:true,
 }
 
-
 export const newFacility:modelTypes.Facility = { 
   id:undefined,
   name:'',
