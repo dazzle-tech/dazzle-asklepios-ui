@@ -79,7 +79,7 @@ module.exports = {
       inject: true,
       hash: true,
       path: './',
-     favicon: './public/tab-logo.png',
+     favicon: './public/Ask-Rod-Logo.png',
 
     }),
     new MiniCssExtractPlugin({
