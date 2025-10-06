@@ -920,8 +920,11 @@ const Encounter = () => {
               {expand && (
                 <div className="sticky-sidebar-area">
                   <SideSummaryScreen
-                    patient={propsData?.patient}
-                    encounter={propsData?.encounter}
+                    expand={expand}
+                    setExpand={setExpand}
+                    windowHeight={windowHeight}
+                    patient={propsData.patient}
+                    encounter={propsData.encounter}
                   />
                 </div>
               )}
