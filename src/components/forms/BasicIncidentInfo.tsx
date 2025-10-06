@@ -3,53 +3,106 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar as CalendarIcon, Clock as ClockIcon } from "lucide-react";
+import React from "react";
 
 interface BasicIncidentInfoProps {
   formData: FormData;
   setFormData: (data: FormData) => void;
 }
 
-export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoProps) => {
+
+function InputGroup({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-medium text-foreground">
+    <div
+      style={{
+        display: "flex",
+        alignItems: "stretch",
+        border: "1px solid #E6EBF1",
+        borderRadius: 8,
+        overflow: "hidden",
+        height: 40,
+      }}
+    >
+      <div
+        style={{
+          width: 40,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRight: "1px solid #E6EBF1",
+        }}
+      >
+        {icon}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoProps) => {
+  const fld = { height: 40, fontSize: 14 } as const;
+
+  return (
+    <Card
+      className="!rounded-[12px] !border !border-[#E6EBF1] !shadow-sm"
+    >
+      <CardHeader className="!py-3 !px-4 !border-b !border-[#E6EBF1]">
+        <CardTitle className="!text-[18px] !font-semibold !text-[hsl(var(--foreground))]">
           Basic Incident Information
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="title">Incident Title *</Label>
+
+      <CardContent className="form-strict !space-y-4 !p-4">
+        {/* Title + Incident ID */}
+        <div className="!grid !gap-4 md:!grid-cols-2">
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Incident Title *</Label>
             <Input
               id="title"
               placeholder="Brief description of the incident"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
+              className="!h-10 !text-[14px] placeholder:!text-[hsl(var(--muted-foreground))]"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="incidentId">Incident ID</Label>
+
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Incident ID</Label>
             <Input
-              id="incidentId"
               placeholder="Auto-generated: INC-2024-001"
-              value={`INC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`}
+              value={`INC-${new Date().getFullYear()}-${String(
+                Math.floor(Math.random() * 1000)
+              ).padStart(3, "0")}`}
               disabled
-              className="bg-muted"
+              style={{ ...fld, backgroundColor: "#F7F8FA" }}
             />
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2">
-            <Label htmlFor="severity">Severity Level *</Label>
+        {/* Severity / Priority / Risk */}
+        <div className="!grid !gap-4 md:!grid-cols-3">
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Severity Level *</Label>
             <Select
               value={formData.severity}
-              onValueChange={(value) => setFormData({ ...formData, severity: value })}
+              onValueChange={(v) => setFormData({ ...formData, severity: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger style={fld}>
                 <SelectValue placeholder="Select severity" />
               </SelectTrigger>
               <SelectContent>
@@ -61,13 +114,14 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="priority">Priority *</Label>
+
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Priority *</Label>
             <Select
               value={formData.priority}
-              onValueChange={(value) => setFormData({ ...formData, priority: value })}
+              onValueChange={(v) => setFormData({ ...formData, priority: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger style={fld}>
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
               <SelectContent>
@@ -79,13 +133,14 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="riskLevel">Risk Level *</Label>
+
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Risk Level *</Label>
             <Select
               value={formData.riskLevel}
-              onValueChange={(value) => setFormData({ ...formData, riskLevel: value })}
+              onValueChange={(v) => setFormData({ ...formData, riskLevel: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger style={fld}>
                 <SelectValue placeholder="Risk assessment" />
               </SelectTrigger>
               <SelectContent>
@@ -99,14 +154,15 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="department">Department *</Label>
+        {/* Department / Category */}
+        <div className="!grid !gap-4 md:!grid-cols-2">
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Department *</Label>
             <Select
               value={formData.department}
-              onValueChange={(value) => setFormData({ ...formData, department: value })}
+              onValueChange={(v) => setFormData({ ...formData, department: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger style={fld}>
                 <SelectValue placeholder="Select department" />
               </SelectTrigger>
               <SelectContent>
@@ -129,13 +185,14 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="category">Primary Category *</Label>
+
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Primary Category *</Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData({ ...formData, category: value })}
+              onValueChange={(v) => setFormData({ ...formData, category: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger style={fld}>
                 <SelectValue placeholder="Select primary category" />
               </SelectTrigger>
               <SelectContent>
@@ -159,57 +216,81 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="space-y-2">
-            <Label htmlFor="location">Specific Location *</Label>
+        {/* Location / Building / Date / Time */}
+        <div className="!grid !gap-4 md:!grid-cols-4">
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Specific Location *</Label>
             <Input
-              id="location"
               placeholder="Room 301, OR-2, ICU Bay 5"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               required
+              style={fld}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="building">Building/Wing</Label>
+
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Building/Wing</Label>
             <Input
-              id="building"
               placeholder="Main Building, East Wing"
               value={formData.building}
               onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+              style={fld}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="date">Date of Incident *</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              required
-            />
+
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Date of Incident *</Label>
+            <InputGroup icon={<CalendarIcon size={16} color="#6B7280" />}>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+                style={{
+                  ...fld,
+                  height: 38, 
+                  flex: 1,
+                  border: "none",
+                  outline: "none",
+                  padding: "0 12px",
+                  background: "transparent",
+                }}
+              />
+            </InputGroup>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="time">Time of Incident *</Label>
-            <Input
-              id="time"
-              type="time"
-              value={formData.time}
-              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              required
-            />
+
+          <div className="!space-y-2">
+            <Label className="!text-[12px] !font-medium">Time of Incident *</Label>
+            <InputGroup icon={<ClockIcon size={16} color="#6B7280" />}>
+              <input
+                type="time"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                required
+                style={{
+                  ...fld,
+                  height: 38,
+                  flex: 1,
+                  border: "none",
+                  outline: "none",
+                  padding: "0 12px",
+                  background: "transparent",
+                }}
+              />
+            </InputGroup>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Detailed Description *</Label>
+        {/* Description */}
+        <div className="!space-y-2">
+          <Label className="!text-[12px] !font-medium">Detailed Description *</Label>
           <Textarea
-            id="description"
             placeholder="Provide a comprehensive description of the incident including sequence of events, contributing factors, and immediate outcomes..."
-            className="min-h-[120px]"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             required
+            style={{ fontSize: 14, minHeight: 170 }}
           />
         </div>
       </CardContent>
