@@ -2771,7 +2771,6 @@ export const newApPatient:modelTypes.ApPatient = {
 	cityLkey:undefined,
 	postalCode:'',
 	additionalInfo:'',
-	latitude:0,
 	longitude:'',
 	isActive:'',
 	deathDatetime:null,

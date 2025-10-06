@@ -24,18 +24,18 @@ const DiagnosisAndFindings = ({ encounter, patient }) => {
       {
         fieldName: 'patient_key',
         operator: 'match',
-        value: patient.key
+        value: patient?.key
       },
       {
         fieldName: 'visit_key',
         operator: 'match',
-        value: encounter.key
+        value: encounter?.key
       }
     ]
   });
   const patientDiagnoseListResponse = useGetPatientDiagnosisQuery(listRequest);
   const { data: encounterReviewOfSystemsSummaryResponse, refetch } =
-    useGetEncounterReviewOfSystemsQuery(encounter.key);
+    useGetEncounterReviewOfSystemsQuery(encounter?.key);
   const summaryText =
     encounterReviewOfSystemsSummaryResponse?.object
       ?.map((item, index) => {

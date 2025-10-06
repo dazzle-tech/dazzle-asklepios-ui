@@ -2770,7 +2770,6 @@ export interface ApPatient {
 	cityLkey:string;
 	postalCode:string;
 	additionalInfo:string;
-	latitude:number;
 	longitude:string;
 	isActive:string;
 	deathDatetime:Date;
