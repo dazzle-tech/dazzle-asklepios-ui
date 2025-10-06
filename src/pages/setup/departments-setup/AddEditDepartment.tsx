@@ -1,7 +1,6 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
@@ -10,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
+import { useEnumOptions } from '@/services/enumsApi';
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -28,15 +27,15 @@ const AddEditDepartment = ({
   // Fetch  facility list response
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
   // Fetch  encTypesEnum list response
-  const { data: encTypesEnum } = useGetEnconuterTypesQuery({});  
+  const encTypesEnum = useEnumOptions("EncounterType");
   // Fetch  depTTypesEnum list response
-  const { data: depTTypesEnum } = useGetDepartmentTypesQuery({});
+  const depTypeOptions = useEnumOptions("DepartmentType");
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid>
+          <Form fluid layout='inline'>
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
@@ -56,10 +55,13 @@ const AddEditDepartment = ({
                 fieldName="departmentType"
                 fieldLabel="Department Type"
                 fieldType="select"
-                selectData={depTTypesEnum ?? []}
+                selectData={depTypeOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={department}
                 setRecord={setDepartment}
                 required
+                menuMaxHeight={200}               
               />
             </div>
             <MyInput
@@ -106,7 +108,9 @@ const AddEditDepartment = ({
                   fieldName="encounterType"
                   fieldType="select"
                   fieldLabel="Encounter Type"
-                  selectData={encTypesEnum?? []}
+                  selectData={encTypesEnum ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   record={department}
                   setRecord={setDepartment}
                 />
