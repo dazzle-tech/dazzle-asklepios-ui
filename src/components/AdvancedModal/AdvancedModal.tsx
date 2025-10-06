@@ -40,7 +40,7 @@ const AdvancedModal: React.FC<AdvancedModalProps> = ({
   hideCancel = false,
   position = 'center',
   actionButtonLabel = 'Save',
-  actionButtonFunction = null,
+  actionButtonFunction = () => {},
   height = '90vh',
   size = '80vw',
   leftWidth = '30%',

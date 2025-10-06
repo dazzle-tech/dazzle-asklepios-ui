@@ -22,10 +22,10 @@ const MyModal = ({
   hideActionBtn = false,
   isDisabledActionBtn = false,
   actionButtonLabel = 'Save',
-  actionButtonFunction = null,
+  actionButtonFunction = () => {},
   customClassName = '',
   cancelButtonLabel = 'Cancel',
-  handleCancelFunction=null
+  handleCancelFunction = () => {}
 }) => {
   const [internalStep, setInternalStep] = useState(0);
   const activeStep = internalStep;
@@ -53,7 +53,9 @@ const MyModal = ({
       open={open}
       onClose={handleCancel}
       size={size}
-      className={`${modalClass} ${customClassName} ${mode === 'light' ? 'modal-light' : 'modal-dark'}`}
+      className={`${modalClass} ${customClassName} ${
+        mode === 'light' ? 'modal-light' : 'modal-dark'
+      }`}
     >
       <Modal.Header>
         <Modal.Title>
@@ -63,17 +65,17 @@ const MyModal = ({
       </Modal.Header>
       <Divider className="divider-line" />
       <Modal.Body style={{ height: bodyheight }}>
-            <MyStepper
-              activeStep={activeStep}
-              stepsList={steps.map((step, index) => ({
-                key: index,
-                value: step.title,
-                description: step.description || '',
-                customIcon: step.icon ? step.icon : null,
-                isError: step.isError || false
-              }))}
-            />
-            <br />
+        <MyStepper
+          activeStep={activeStep}
+          stepsList={steps.map((step, index) => ({
+            key: index,
+            value: step.title,
+            description: step.description || '',
+            customIcon: step.icon ? step.icon : null,
+            isError: step.isError || false
+          }))}
+        />
+        <br />
         {typeof content === 'function' ? content(activeStep) : activeStep === 0 && content}
       </Modal.Body>
       {(footerButtons ||
@@ -87,7 +89,13 @@ const MyModal = ({
       <Modal.Footer className="footer-modal">
         <Form className="footer-modal-content">
           {!hideCancel && (
-            <MyButton appearance={'subtle'} onClick={()=>{handleCancel();handleCancelFunction();}}>
+            <MyButton
+              appearance={'subtle'}
+              onClick={() => {
+                handleCancel();
+                handleCancelFunction();
+              }}
+            >
               {cancelButtonLabel}
             </MyButton>
           )}
