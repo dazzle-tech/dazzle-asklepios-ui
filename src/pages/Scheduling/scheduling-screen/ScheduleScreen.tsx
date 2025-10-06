@@ -15,7 +15,8 @@ import {
   Modal,
   Avatar,
   Stack,
-  ButtonGroup
+  ButtonGroup,
+  Text
 } from 'rsuite';
 import './styles.less';
 import SearchIcon from '@rsuite/icons/Search';
@@ -42,10 +43,14 @@ import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
 import ArrowRightLineIcon from '@rsuite/icons/ArrowRightLine';
 import Translate from '@/components/Translate';
 import { useFetchAttachmentsListQuery } from '@/services/attachmentService';
+import { useSelector } from 'react-redux';
+import MyButton from '@/components/MyButton/MyButton';
 
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
+  const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult, setValidationResult] = useState({});
+  const [recordSearchAppointment, setRecordSearchAppointment] = useState({ value: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [ActionsModalOpen, setActionsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -362,20 +367,12 @@ const ScheduleScreen = () => {
         <span className="rbc-btn-group">
           <div style={{ display: 'flex', alignItems: 'center', fontSize: '16px' }}>
             <div
-              style={{
-                borderRadius: '5px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '35px',
-                height: '35px',
-                backgroundColor: '#E3E4E8'
-              }}
+              className='calender-icon-schedule'
             >
               <CalenderSimpleIcon style={{ fontSize: '17px' }} />
             </div>
 
-            <strong style={{ fontSize: '19px', marginInline: '8px', color: '#2D3B4C' }}>
+            <strong style={{ fontSize: '19px', marginInline: '8px', color: mode === 'light' ? '#2D3B4C' : 'var(--white)'}}>
               {localVisibleAppointments.length}
             </strong>
             <span style={{ fontSize: '14px', color: '#969FB0' }}>{totalAppointmentsText}</span>
@@ -384,13 +381,13 @@ const ScheduleScreen = () => {
 
         <div className="rbc-toolbar-label">
           <button
-            style={{ fontSize: '14px', margin: '7px', height: '35px' }}
+            style={{ fontSize: '14px', margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
             onClick={() => onNavigate('TODAY')}
           >
-            Today
+           Today
           </button>
 
-          <button style={{ margin: '7px', height: '35px' }} onClick={() => onNavigate('PREV')}>
+          <button style={{ margin: '7px', height: '35px',color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('PREV')}>
             <ArrowLeftLineIcon />
           </button>
           <Button
@@ -398,7 +395,8 @@ const ScheduleScreen = () => {
             style={{
               display: showDatePicker ? 'none' : 'inline-block',
               border: 'none',
-              height: '35px'
+              height: '35px',
+              color: mode === 'light' ? 'black' : 'var(--white)' 
             }}
           >
             <strong>{label}</strong>
@@ -422,19 +420,19 @@ const ScheduleScreen = () => {
               }}
             />
           )}
-          <button style={{ margin: '7px', height: '35px' }} onClick={() => onNavigate('NEXT')}>
+          <button style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('NEXT')}>
             <ArrowRightLineIcon />
           </button>
         </div>
 
-        <ButtonGroup style={{ borderRadius: '5px', backgroundColor: '#F3F4F6' }} size="md">
+        <ButtonGroup style={{ borderRadius: '5px', backgroundColor:  'var(--rs-border-primary)' }} size="md">
           <Button
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.MONTH), onView(Views.MONTH);
             }}
           >
-            Month
+            <Text>Month</Text>
           </Button>
           <Button
             style={{ border: 'none', height: '35px' }}
@@ -442,7 +440,7 @@ const ScheduleScreen = () => {
               setCurrentView(Views.WEEK), onView(Views.WEEK);
             }}
           >
-            Week
+            <Text>Week</Text>
           </Button>
           <Button
             style={{ border: 'none', height: '35px' }}
@@ -450,7 +448,7 @@ const ScheduleScreen = () => {
               setCurrentView(Views.DAY), onView(Views.DAY);
             }}
           >
-            Day
+            <Text>Day</Text>
           </Button>
           <Button
             style={{ border: 'none', height: '35px' }}
@@ -458,7 +456,7 @@ const ScheduleScreen = () => {
               setCurrentView(Views.AGENDA), onView(Views.AGENDA);
             }}
           >
-            Agenda
+           <Text>Agenda</Text>
           </Button>
         </ButtonGroup>
       </div>
@@ -622,23 +620,23 @@ const ScheduleScreen = () => {
     );
   };
 
-  const eventPropGetter = (event) => {
+  const eventPropGetter = event => {
     const normalize = str => str?.toLowerCase().replace(/[-_]/g, ' ').trim();
-    
+
     const getBackgroundColor = status => {
       const item = legendItems.find(i => normalize(i.label) === normalize(status));
       return item ? hexToRgba(item.color, 0.15) : '#ffffff';
     };
-    
+
     const getBorderColor = status => {
       const item = legendItems.find(i => normalize(i.label) === normalize(status));
       return item ? item.color : '#007bff';
     };
-    
+
     const status = event?.appointmentData?.appointmentStatus;
     const backgroundColor = getBackgroundColor(status);
     const borderColor = getBorderColor(status);
-    
+
     return {
       style: {
         backgroundColor,
@@ -692,7 +690,7 @@ const ScheduleScreen = () => {
     <div>
       <div
         style={{
-          backgroundColor: 'rgba(250, 250, 250, 8)',
+          backgroundColor: mode === 'light' ? 'rgba(250, 250, 250, 8)' : 'var(--extra-dark-black)',
           position: 'relative',
           width: '100%',
           display: 'flex',
@@ -800,17 +798,7 @@ const ScheduleScreen = () => {
 
         {/* =================== Right Side ============= */}
 
-        <Panel
-          bordered
-          className="right-section"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            height: 'fit-content',
-            position: 'relative'
-          }}
-        >
+        <Panel bordered className="right-section">
           <div
             style={{
               marginTop: '27px',
@@ -823,7 +811,7 @@ const ScheduleScreen = () => {
           >
             {/* Left  */}
             <div>
-              <InputGroup
+              {/* <InputGroup
                 inside
                 style={{
                   width: '320px',
@@ -836,65 +824,88 @@ const ScheduleScreen = () => {
                   <SearchIcon style={{ fontSize: '18px', marginRight: 10 }} />
                 </InputGroup.Button>
                 <Input placeholder="Search For Appointment" />
-              </InputGroup>
+              </InputGroup> */}
+              <Form>
+                <MyInput
+                  leftAddon={<SearchIcon />}
+                  fieldName="value"
+                  record={recordSearchAppointment}
+                  setRecord={setRecordSearchAppointment}
+                  placeholder="Search For Appointment"
+                  width={320}
+                  showLabel={false}
+                />
+              </Form>
             </div>
 
             {/* Right  */}
             <div>
-              <ButtonToolbar>
-                <Button
-                  color="blue"
-                  style={{
-                    width: '35%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    borderRadius: '5px',
-                    color: '#2264E5'
-                  }}
+              {/* <ButtonToolbar> */}
+              <div style={{display: 'flex', gap: '5px'}}>
+                <MyButton
+                  // color="blue"
+                  // style={{
+                  //   width: '35%',
+                  //   display: 'flex',
+                  //   alignItems: 'center',
+                  //   justifyContent: 'flex-start',
+                  //   borderRadius: '5px',
+                  //   color: '#2264E5'
+                  // }}
                   appearance="ghost"
+                  prefixIcon={() => (
+                    <FontAwesomeIcon
+                      // color="blue"
+                      icon={faPaperPlane}
+                      // style={{ color: '#2264E5', marginRight: '10px', fontSize: '16px' }}
+                    />
+                  )}
                 >
-                  <FontAwesomeIcon
+                  {/* <FontAwesomeIcon
                     color="blue"
                     icon={faPaperPlane}
                     style={{ color: '#2264E5', marginRight: '10px', fontSize: '16px' }}
-                  />
+                  /> */}
                   View App Requests
-                </Button>
+                </MyButton>
 
-                <Button
-                  color="blue"
-                  style={{
-                    width: '26%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    borderRadius: '5px',
-                    color: 'blue'
-                  }}
+                <MyButton
+                  // color="blue"
+                  // style={{
+                  //   width: '26%',
+                  //   display: 'flex',
+                  //   alignItems: 'center',
+                  //   justifyContent: 'flex-start',
+                  //   borderRadius: '5px',
+                  //   color: 'blue'
+                  // }}
                   appearance="ghost"
+                  prefixIcon={() => <FontAwesomeIcon
+                    icon={faPrint}
+                  />}
                 >
-                  <FontAwesomeIcon
+                  {/* <FontAwesomeIcon
                     icon={faPrint}
                     style={{ color: '#2264E5', marginRight: '10px', fontSize: '18px' }}
-                  />
+                  /> */}
                   Print Report
-                </Button>
-                <Button
+                </MyButton>
+                <MyButton
                   onClick={() => {
                     setModalOpen(true);
                   }}
-                  appearance="primary"
-                  style={{
-                    width: '34%',
-                    backgroundColor: 'var(--primary-blue)',
-                    marginLeft: '3px'
-                  }}
+                  // appearance="primary"
+                  // style={{
+                  //   width: '34%',
+                  //   backgroundColor: 'var(--primary-blue)',
+                  //   marginLeft: '3px'
+                  // }}
+                  prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
                 >
-                  <FontAwesomeIcon icon={faPlus} style={{ marginRight: '5px', color: 'white' }} />
                   <Translate>Add New Appointments</Translate>
-                </Button>
-              </ButtonToolbar>
+                </MyButton>
+                </div>
+              {/* </ButtonToolbar> */}
             </div>
           </div>
 
@@ -916,33 +927,37 @@ const ScheduleScreen = () => {
             timeslots={1}
             onSelectSlot={slotInfo => {
               console.log('Selected slot:', slotInfo);
-              
+
               // Check if the slot is available before opening modal
               if (slotInfo.resourceId) {
                 const currentResource = resourcesWithAvailabilityResponse?.object.find(
                   r => r.key === slotInfo.resourceId
                 );
-                
+
                 if (currentResource && currentResource.availability) {
                   const jsDay = slotInfo.start.getDay();
                   const apiDay = (jsDay + 1) % 7;
-                  const currentMinutes = slotInfo.start.getHours() * 60 + slotInfo.start.getMinutes();
-                  
-                  const isAvailable = currentResource?.availability?.some(period => {
-                    const startMinutes = period.startHour * 60 + (period.startMinute || 0);
-                    const endMinutes = period.endHour * 60 + (period.endMinute || 0);
-                    
-                    return period.dayOfWeek === apiDay &&
-                           currentMinutes >= startMinutes &&
-                           currentMinutes < endMinutes;
-                  }) || false;
-                  
+                  const currentMinutes =
+                    slotInfo.start.getHours() * 60 + slotInfo.start.getMinutes();
+
+                  const isAvailable =
+                    currentResource?.availability?.some(period => {
+                      const startMinutes = period.startHour * 60 + (period.startMinute || 0);
+                      const endMinutes = period.endHour * 60 + (period.endMinute || 0);
+
+                      return (
+                        period.dayOfWeek === apiDay &&
+                        currentMinutes >= startMinutes &&
+                        currentMinutes < endMinutes
+                      );
+                    }) || false;
+
                   if (!isAvailable) {
                     return; // Don't open modal for unavailable slots
                   }
                 }
               }
-              
+
               setSelectedSlot(slotInfo);
               setModalOpen(true);
             }}

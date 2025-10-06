@@ -7,18 +7,21 @@
 }
 
 .right-section {
- 
- 
   background-color: rgb(255, 255, 255);
   height: auto;
   min-height: fit-content;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: fit-content;
+  position: relative;
 }
- 
+
 .left-section {
   width: 16vw;
   max-width: 273px;
   padding: 16px;
-  
+
   background-color: #fff;
   box-sizing: border-box;
   flex-shrink: 1;
@@ -42,21 +45,18 @@
 
 .rbc-row {
   height: 64px;
-
 }
 
- 
 .rbc-time-header {
-  height: 62px;   
+  height: 62px;
 }
 
 .rbc-time-content > * > .rbc-timeslot-group {
-  min-height: 81px; 
-
+  min-height: 81px;
 }
 
 .rbc-time-gutter {
-  width: 41px;  
+  width: 41px;
   font-size: 12px;
 }
 
@@ -66,7 +66,6 @@
   flex: none !important;
 }
 
- 
 .my-calendar.day .rbc-time-view .rbc-time-content > .rbc-day-slot {
   min-width: 300px !important;
 }
@@ -77,13 +76,9 @@
   text-align: center;
 }
 
-
 .rbc-time-header-cell.rbc-today {
   background-color: #04aa6d !important;
 }
-
-
-
 
 .rbc-event,
 .rbc-background-event {
@@ -99,7 +94,6 @@
   display: none !important;
 }
 
-
 .rbc-today {
   background-color: rgba(255, 255, 255, 0.288) !important;
 }
@@ -113,23 +107,41 @@
   white-space: nowrap;
 }
 
- 
 .rbc-month-view .rbc-row:first-child {
   height: 18px;
   // background-color: #b8d3c977;
   overflow: hidden;
 }
 
- 
 .my-calendar.week .rbc-allday-cell,
 .my-calendar.week .rbc-allday-events {
   display: none !important;
 }
 
-.appointment-main-container{
+.appointment-main-container {
   display: flex;
   align-items: center;
   flex-direction: column;
   gap: 10px;
 }
 
+.calender-icon-schedule {
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  background-color: #e3e4e8;
+}
+
+.dark {
+  .left-section,
+  .right-section {
+    background-color: var(--dark-black) !important;
+  }
+  .calender-icon-schedule{
+    background-color: var(--gray-dark) !important;
+    color: var(--white) !important;
+  }
+}
