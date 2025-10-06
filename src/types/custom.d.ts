@@ -8,3 +8,9 @@ declare const require: {
     keys(): string[];
   };
 };
+
+// Extend Window to include Web Speech API types used in MyInput
+interface Window {
+  SpeechRecognition?: any;
+  webkitSpeechRecognition?: any;
+}
