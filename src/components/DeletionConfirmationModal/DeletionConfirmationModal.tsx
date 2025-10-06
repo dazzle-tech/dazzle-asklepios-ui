@@ -50,7 +50,7 @@ const DeletionConfirmationModal = ({
   open,
   setOpen,
   itemToDelete = '',
-  actionButtonFunction = null,
+  actionButtonFunction = () => {},
   actionType = 'delete', // delete | deactivate | reactivate | confirm
   confirmationQuestion = '',
   actionButtonLabel = '',
