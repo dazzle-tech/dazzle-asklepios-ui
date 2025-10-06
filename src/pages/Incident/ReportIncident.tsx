@@ -122,7 +122,7 @@ const ReportIncident = () => {
 
   return (
     <div className="!min-h-screen !bg-[hsl(var(--background))]">
-      <div className="!max-w-[980px] !mx-auto !p-6">
+      <div className="!max-w-[80%] !mx-auto !p-6">
         {/* Header */}
         <div className="!mb-4">
           <h1 className="!text-[22px] !font-extrabold !tracking-[-0.01em] !text-[hsl(var(--foreground))] !flex !items-center">

@@ -13,7 +13,7 @@ import "./style.css";
 const Settings = () => {
   return (
     <div className="settings-v2 !min-h-screen !bg-background">
-      <div className="!max-w-[980px] !mx-auto !p-6 !space-y-6">
+      <div className="!max-w-[80%] !mx-auto !p-6 !space-y-6">
         {/* Header */}
         <div className="!mb-4">
           <h1 className="!text-[22px] !font-extrabold !tracking-[-0.01em] !text-foreground !flex !items-center">

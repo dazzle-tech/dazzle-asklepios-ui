@@ -172,7 +172,7 @@ import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
 import CallOverlay from './components/Overlay/CallOverlay';
-
+import IncidentPortal from './pages/Incident/IncidentPortal';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -322,6 +322,7 @@ const App = () => {
             <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />
+              <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile" element={<PatientProfileCopy />} />
               <Route path="patient-chart" element={<PatientChart />} />
