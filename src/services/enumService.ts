@@ -10,16 +10,11 @@ export const enumService = createApi({
                 method: 'GET',
             }), 
         }),
-        getEnumByName: builder.query({
-            query: ({enumName}) => ({
-                url: `/api/setup/enum/${enumName}`,
-                method: 'GET',
-            }), 
-        }),
+    
     }),
 });
 export const {
-    useGetEnumByNameQuery,
+   
     useGetGenderQuery,
 } = enumService;
 
