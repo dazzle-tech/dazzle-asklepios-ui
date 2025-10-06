@@ -171,7 +171,6 @@ import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
-import { useGetScreensQuery } from './services/userService';
 import { MODULES } from "@/config/modules-config";
 import RoleManegment from './pages/setup/role-managemen';
 import CallOverlay from './components/Overlay/CallOverlay';
@@ -189,7 +188,6 @@ const App = () => {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
 
-const { data: screens, isLoading, error } = useGetScreensQuery(null);
 
 
   const {
