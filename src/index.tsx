@@ -9,7 +9,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-
+import './tw.entry.css';
+import './pages/Incident/style.css'; 
 const RootWrapper = () => {
   const mode = useSelector((state: any) => state.ui.mode);
 

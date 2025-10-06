@@ -43,9 +43,10 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppSelector } from '@/hooks';
 import { useChangeLangMutation } from '@/services/uiService';
 import { setMode } from '@/reducers/uiSlice';
+import { faHospital } from "@fortawesome/free-solid-svg-icons";
 
-const MainScreenBar = ({ setExpandNotes ,displaySearch , setDisplaySearch}) => {
-   const dispatch = useDispatch();
+const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
+  const dispatch = useDispatch();
   const mode = useSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
   const authSlice = useAppSelector(state => state.auth);
@@ -53,6 +54,7 @@ const MainScreenBar = ({ setExpandNotes ,displaySearch , setDisplaySearch}) => {
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth); // window width
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   // container to choose action from more menu
   const contentOfMoreIconMenu = (
@@ -104,28 +106,31 @@ const MainScreenBar = ({ setExpandNotes ,displaySearch , setDisplaySearch}) => {
             Help & Support
           </div>
         </Dropdown.Item>
+
+        {/* الخيار الجديد للبوابة */}
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
-            setExpandNotes(true);
+            navigate("/incident-portal");
           }}
         >
           <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faNoteSticky} />
-            Sticky Notes
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle text-blue-600" icon={faHospital} />
+            MedCare Incident Portal
           </div>
         </Dropdown.Item>
+
         {width < 600 && (
           <Dropdown.Item
-           onClick={() => {
-            setOpenMoreMenu(false);
-            if(mode === 'light'){
-              dispatch(setMode('dark'));
-            }
-            else{
-              dispatch(setMode('light'));
-            }
-            }}>
+            onClick={() => {
+              setOpenMoreMenu(false);
+              if (mode === 'light') {
+                dispatch(setMode('dark'));
+              } else {
+                dispatch(setMode('light'));
+              }
+            }}
+          >
             <div className="container-of-icon-and-key1">
               <FontAwesomeIcon
                 className="header-screen-bar-icon-size-handle"
@@ -341,6 +346,21 @@ const MainScreenBar = ({ setExpandNotes ,displaySearch , setDisplaySearch}) => {
                 />
               </IconButton>
             </Tooltip>
+            <Tooltip title="MedCare Incident Portal">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  navigate("/incident-portal");
+                }}
+              >
+                <FontAwesomeIcon
+                  className="header-screen-bar-icon-size-handle"
+
+                  icon={faHospital}
+                />
+              </IconButton>
+            </Tooltip>
+
           </>
         ) : (
           <>
@@ -376,48 +396,48 @@ const MainScreenBar = ({ setExpandNotes ,displaySearch , setDisplaySearch}) => {
         )}
         {(width > 500 || !displaySearch) && (
           <>
-        <Tooltip title="Switch Department">
-          <IconButton size="small">
-            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faRepeat} />
-          </IconButton>
-        </Tooltip>
-        <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
-          <IconButton size="small">
-            <FaEarthAmericas size={20} color={mode === 'light' ? '#333' : 'var(--white)'} />
-          </IconButton>
-        </Whisper>
-        <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderNoticeSpeaker}>
-          <IconButton size="small">
-            <NoticeIcon
-              style={{ fontSize: 20 }}
-              color={mode === 'light' ? '#333' : 'var(--white)'}
-            />
-          </IconButton>
-        </Whisper>
-        <Divider style={{ height: '31px', fontSize: '4px' }} vertical />
-        <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderAdminSpeaker}>
-          <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-            <Avatar
-              size="md"
-              circle
-              src="https://avatars.githubusercontent.com/u/1203827"
-              alt="@simonguo"
-            />
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'start',
-                marginLeft: 8
-              }}
-            >
-              <span style={{ fontWeight: 'bold', fontSize: '14px' }}></span>
-              <span style={{ color: '#9E9E9E', fontSize: '12px' }}></span>
-            </div>
-            <ArrowDownLineIcon style={{ marginLeft: 8 }} />
-          </div>
-        </Whisper>
-        </>
+            <Tooltip title="Switch Department">
+              <IconButton size="small">
+                <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faRepeat} />
+              </IconButton>
+            </Tooltip>
+            <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
+              <IconButton size="small">
+                <FaEarthAmericas size={20} color={mode === 'light' ? '#333' : 'var(--white)'} />
+              </IconButton>
+            </Whisper>
+            <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderNoticeSpeaker}>
+              <IconButton size="small">
+                <NoticeIcon
+                  style={{ fontSize: 20 }}
+                  color={mode === 'light' ? '#333' : 'var(--white)'}
+                />
+              </IconButton>
+            </Whisper>
+            <Divider style={{ height: '31px', fontSize: '4px' }} vertical />
+            <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderAdminSpeaker}>
+              <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <Avatar
+                  size="md"
+                  circle
+                  src="https://avatars.githubusercontent.com/u/1203827"
+                  alt="@simonguo"
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'start',
+                    marginLeft: 8
+                  }}
+                >
+                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}></span>
+                  <span style={{ color: '#9E9E9E', fontSize: '12px' }}></span>
+                </div>
+                <ArrowDownLineIcon style={{ marginLeft: 8 }} />
+              </div>
+            </Whisper>
+          </>
         )}
       </div>
 
