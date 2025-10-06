@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEye, faClone, faPrint, faPaperclip } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faClone, faPrint, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyTable from '@/components/MyTable';
 import { Form } from 'rsuite';
@@ -22,17 +22,14 @@ const initialForm = {
   endDateTime: '',
   duration: '',
   durationUnit: '',
-  // Repeat fields
   repeatEvery: '',
   repeatUnit: '',
   foodPreferences: '',
   foodAvoidances: '',
   allergyAvoidances: '',
-  // New fields
   extraDocumentation: '',
   notes: '',
   attachments: [],
-  // Conditional fields below
   mealType: '',
   portionSize: '',
   dietCategory: '',
@@ -112,7 +109,6 @@ const sampleRequests = [
   }
 ];
 
-
 const DietaryRequests = () => {
   const [requests, setRequests] = useState(sampleRequests);
   const [modalOpen, setModalOpen] = useState(false);
@@ -143,185 +139,196 @@ const DietaryRequests = () => {
     setModalOpen(true);
   };
 
-  const handleViewRequest = request => {
-    console.log('Viewing request:', request);
-    setModalMode('view');
-    setSelectedRequest(request);
-    setForm({ ...request });
-    setShowPostSaveActions(false);
-    setModalOpen(true);
+  const handleRowClick = rowData => {
+    console.log('Viewing request:', rowData);
+    setSelectedRequest(rowData);
+    setForm({ ...rowData });
   };
 
   // forms
   const renderBasicFields = () => (
     <>
-    <div className='dietary-request-modal-handle'>
-
-<SectionContainer title="Dietary Request Details"
-  content={<><MyInput
-        fieldLabel="Diet Order Type"
-        fieldName="dietOrderType"
-        fieldType="select"
-        selectData={dietOrderTypeLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={form}
-        setRecord={prev => {
-          setForm({
-            ...prev,
-            dietOrderType: prev.dietOrderType
-          });
-        }}
-        onChange={value => {
-          setForm(prev => ({
-            ...prev,
-            dietOrderType: value
-          }));
-        }}
-        required
-        width={250}
-        disabled={modalMode === 'view'}
-        searchable={false}
-      />
-{renderConditionalFields()}
-      </>}
-      minHeight={300}/>
-
-<SectionContainer title="Schedule"
-content={<><MyInput
-        fieldLabel="Start Date & Time"
-        fieldName="startDateTime"
-        fieldType="datetime"
-        record={form}
-        setRecord={setForm}
-        required
-        width={250}
-        disabled={modalMode === 'view'}
-      />
-
-      {/* End Date */}
-      <MyInput
-        fieldType="datetime"
-        fieldName="endDateTime"
-        fieldLabel="End Date & Time"
-        record={form}
-        setRecord={setForm}
-        width={250}
-        disabled={modalMode === 'view'}
-      />
-
-      <div className="two">
-        <MyInput
-          fieldLabel="Duration"
-          fieldName="duration"
-          fieldType="number"
-          record={form}
-          setRecord={setForm}
-          required
-          width={120}
-          disabled={modalMode === 'view'}
+      <div className="dietary-request-modal-handle">
+        <SectionContainer
+          title="Dietary Request Details"
+          content={
+            <>
+              <MyInput
+                fieldLabel="Diet Order Type"
+                fieldName="dietOrderType"
+                fieldType="select"
+                selectData={dietOrderTypeLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={form}
+                setRecord={prev => {
+                  setForm({
+                    ...prev,
+                    dietOrderType: prev.dietOrderType
+                  });
+                }}
+                onChange={value => {
+                  setForm(prev => ({
+                    ...prev,
+                    dietOrderType: value
+                  }));
+                }}
+                required
+                width={250}
+                disabled={true}
+                searchable={false}
+              />
+              {renderConditionalFields()}
+            </>
+          }
+          minHeight={300}
         />
-        <MyInput
-          className="sec"
-          fieldLabel=""
-          fieldName="durationUnit"
-          fieldType="select"
-          selectData={durationLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={form}
-          setRecord={setForm}
-          width={120}
-          disabled={modalMode === 'view'}
-          searchable={false}
+
+        <SectionContainer
+          title="Schedule"
+          content={
+            <>
+              <MyInput
+                fieldLabel="Start Date & Time"
+                fieldName="startDateTime"
+                fieldType="datetime"
+                record={form}
+                setRecord={setForm}
+                required
+                width={250}
+                disabled={true}
+              />
+
+              <MyInput
+                fieldType="datetime"
+                fieldName="endDateTime"
+                fieldLabel="End Date & Time"
+                record={form}
+                setRecord={setForm}
+                width={250}
+                disabled={true}
+              />
+
+              <div className="two">
+                <MyInput
+                  fieldLabel="Duration"
+                  fieldName="duration"
+                  fieldType="number"
+                  record={form}
+                  setRecord={setForm}
+                  required
+                  width={120}
+                  disabled={true}
+                />
+                <MyInput
+                  className="sec"
+                  fieldLabel=""
+                  fieldName="durationUnit"
+                  fieldType="select"
+                  selectData={durationLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={form}
+                  setRecord={setForm}
+                  width={120}
+                  disabled={true}
+                  searchable={false}
+                />
+              </div>
+
+              <div className="two">
+                <MyInput
+                  fieldLabel="Repeat Every"
+                  fieldName="repeatEvery"
+                  fieldType="number"
+                  record={form}
+                  setRecord={setForm}
+                  required
+                  width={119}
+                  disabled={true}
+                />
+                <MyInput
+                  className="sec"
+                  fieldLabel=""
+                  fieldName="repeatUnit"
+                  fieldType="select"
+                  selectData={durationLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={form}
+                  setRecord={setForm}
+                  width={120}
+                  disabled={true}
+                  searchable={false}
+                />
+              </div>
+            </>
+          }
+        />
+
+        <SectionContainer
+          title="Food Preferences"
+          content={
+            <>
+              <MyInput
+                fieldLabel="Food Preferences"
+                fieldName="foodPreferences"
+                fieldType="textarea"
+                record={form}
+                setRecord={setForm}
+                width={250}
+                disabled={true}
+              />
+
+              <MyInput
+                fieldLabel="Food Avoidances"
+                fieldName="foodAvoidances"
+                fieldType="textarea"
+                record={form}
+                setRecord={setForm}
+                width={250}
+                disabled={true}
+              />
+            </>
+          }
+        />
+
+        <SectionContainer
+          title="Additional Notes"
+          content={
+            <>
+              <MyInput
+                fieldLabel="Extra Documentation"
+                fieldName="extraDocumentation"
+                fieldType="textarea"
+                record={form}
+                setRecord={setForm}
+                width={250}
+                disabled={true}
+                rows={4}
+              />
+
+              <MyInput
+                fieldLabel="Notes"
+                fieldName="notes"
+                fieldType="textarea"
+                record={form}
+                setRecord={setForm}
+                width={250}
+                disabled={true}
+                rows={3}
+              />
+            </>
+          }
         />
       </div>
-
-      {/* Repeat Fields */}
-      <div className="two">
-        <MyInput
-          fieldLabel="Repeat Every"
-          fieldName="repeatEvery"
-          fieldType="number"
-          record={form}
-          setRecord={setForm}
-          required
-          width={119}
-          disabled={modalMode === 'view'}
-        />
-        <MyInput
-          className="sec"
-          fieldLabel=""
-          fieldName="repeatUnit"
-          fieldType="select"
-          selectData={durationLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={form}
-          setRecord={setForm}
-          width={120}
-          disabled={modalMode === 'view'}
-          searchable={false}
-        />
-      </div>
-</>}/>
-
-<SectionContainer title="Food Preferences"
-content={<>
-      <MyInput
-        fieldLabel="Food Preferences"
-        fieldName="foodPreferences"
-        fieldType="textarea"
-        record={form}
-        setRecord={setForm}
-        width={250}
-        disabled={modalMode === 'view'}
-      />
-
-      <MyInput
-        fieldLabel="Food Avoidances"
-        fieldName="foodAvoidances"
-        fieldType="textarea"
-        record={form}
-        setRecord={setForm}
-        width={250}
-        disabled={modalMode === 'view'}
-      /></>}/>
-
-<SectionContainer title="Additional Notes"
-content={<>{/* Extra Documentation */}
-      <MyInput
-        fieldLabel="Extra Documentation"
-        fieldName="extraDocumentation"
-        fieldType="textarea"
-        record={form}
-        setRecord={setForm}
-        width={250}
-        disabled={modalMode === 'view'}
-        rows={4}
-      />
-
-      {/* Notes */}
-      <MyInput
-        fieldLabel="Notes"
-        fieldName="notes"
-        fieldType="textarea"
-        record={form}
-        setRecord={setForm}
-        width={250}
-        disabled={modalMode === 'view'}
-        rows={3}
-      /></>}/>
-
-</div>
     </>
   );
 
   const renderConditionalFields = () => {
-    const isDisabled = modalMode === 'view';
+    const isDisabled = true;
 
     switch (form.dietOrderType) {
-      // TODO convert key to code
       case '9487510426587150':
         return (
           <>
@@ -353,7 +360,6 @@ content={<>{/* Extra Documentation */}
             />
           </>
         );
-      // TODO convert key to code
       case '9487527629315307':
         return (
           <>
@@ -393,7 +399,6 @@ content={<>{/* Extra Documentation */}
             />
           </>
         );
-      // TODO convert key to code
       case '9583433916270487':
         return (
           <div>
@@ -425,7 +430,6 @@ content={<>{/* Extra Documentation */}
             </div>
           </div>
         );
-      // TODO convert key to code
       case '9583445779340729':
         return (
           <MyInput
@@ -438,7 +442,6 @@ content={<>{/* Extra Documentation */}
             disabled={isDisabled}
           />
         );
-      // TODO convert key to code
       case '9583463461702679':
         return (
           <MyInput
@@ -452,7 +455,6 @@ content={<>{/* Extra Documentation */}
             disabled={isDisabled}
           />
         );
-      // TODO convert key to code
       case '9583509741073933':
         return (
           <>
@@ -525,7 +527,6 @@ content={<>{/* Extra Documentation */}
             />
           </>
         );
-      // TODO convert key to code
       case '9583532408326686':
         return (
           <>
@@ -581,21 +582,22 @@ content={<>{/* Extra Documentation */}
     }
   };
 
-  const tablebuttons = (<>
-  <div className='table-buttons-left-part-handle-positions'>
+  const tablebuttons = (
+    <>
+      <div className="table-buttons-left-part-handle-positions">
         <MyButton prefixIcon={() => <BlockIcon />}>Cancel</MyButton>
         <Checkbox>Show Cancelled</Checkbox>
-</div>
-        <div className="bt-right">
-                  <MyButton
+      </div>
+      <div className="bt-right">
+        <MyButton
           prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
           onClick={handleAddNewRequest}
         >
           Add New Request
         </MyButton>
-        </div>
-      </>);
-  
+      </div>
+    </>
+  );
 
   const renderModalFooter = (
     <div className="render-modal-footer">
@@ -614,136 +616,312 @@ content={<>{/* Extra Documentation */}
 
   return (
     <>
-
-
       <MyTable
         data={requests}
-columns={[
-  {
-    key: 'dietOrderType',
-    title: 'Diet Order Type',
-    dataKey: 'dietOrderType',
-    width: 160
-  },
-  {
-    key: 'startDateTime',
-    title: 'Start Date Time',
-    dataKey: 'startDateTime',
-    width: 160,
-    render: rowData =>
-      rowData?.startDateTime ? (
-        <>
-          {rowData.startDate}
-          <br />
-          <span className="date-table-style">{rowData.startTime}</span>
-        </>
-      ) : (
-        ' '
-      )
-  },
-  {
-    key: 'duration',
-    title: 'Duration',
-    dataKey: 'duration',
-    width: 100,
-    render: row => `${row.duration} ${row.durationUnit}`
-  },
-  {
-    key: 'repeat',
-    title: 'Repeat',
-    dataKey: 'repeat',
-    width: 120,
-    render: row =>
-      row.repeatEvery && row.repeatUnit
-        ? `Every ${row.repeatEvery} ${row.repeatUnit}${row.repeatEvery > 1 ? 's' : ''}`
-        : 'No repeat'
-  },
-{
-  key: 'orderedBy',
-  title: 'Ordered By\\At',
-  dataKey: 'orderedBy',
-  width: 160,
-  render: row => (
-    <>
-      {row.orderedBy}
-      <br />
-      <span className="date-table-style">{row.orderedAt}</span>
-    </>
-  )
-},
-  {
-    key: 'createdBy',
-    title: 'Created By\\At',
-    dataKey: 'createdBy',
-    width: 160,
-    render: row => (
-      <>
-        {row.createdBy}
-        <br />
-        <span className="date-table-style">{row.createdAt}</span>
-      </>
-    ),
-expandable: true},
-  {
-    key: 'cancelledBy',
-    title: 'Cancelled By\\At',
-    dataKey: 'cancelledBy',
-    width: 160,
-    render: row =>
-      row.cancelledBy ? (
-        <>
-          {row.cancelledBy}
-          <br />
-          <span className="date-table-style">{row.cancelledAt}</span>
-        </>
-      ) : (
-        '-'
-      ),
-expandable: true},
-  {
-    key: 'cancellationReason',
-    title: 'Cancellation Reason',
-    dataKey: 'cancellationReason',
-    width: 200,
-    render: row => row.cancellationReason || '-',
-expandable: true},
-
-  {
-    key: 'status',
-    title: 'Status',
-    dataKey: 'status',
-    width: 100
-  },
-  {
-    key: 'view',
-    title: 'View',
-    width: 80,
-    render: row => (
-      <div className="render-aws">
-        <FontAwesomeIcon
-          onClick={e => {
-            e.stopPropagation();
-            handleViewRequest(row);
-          }}
-          icon={faEye}
-          className="font-aws"
-        />
-        <FontAwesomeIcon icon={faPrint} className="font-aws" />
-        <FontAwesomeIcon icon={faClone} className="font-aws" />
-      </div>
-    )
-  }
-]}
-
+        onRowClick={handleRowClick}
+        columns={[
+          {
+            key: 'dietOrderType',
+            title: 'Diet Order Type',
+            dataKey: 'dietOrderType',
+            width: 160
+          },
+          {
+            key: 'startDateTime',
+            title: 'Start Date Time',
+            dataKey: 'startDateTime',
+            width: 160,
+            render: rowData =>
+              rowData?.startDateTime ? (
+                <>
+                  {rowData.startDate}
+                  <br />
+                  <span className="date-table-style">{rowData.startTime}</span>
+                </>
+              ) : (
+                ' '
+              )
+          },
+          {
+            key: 'duration',
+            title: 'Duration',
+            dataKey: 'duration',
+            width: 100,
+            render: row => `${row.duration} ${row.durationUnit}`
+          },
+          {
+            key: 'repeat',
+            title: 'Repeat',
+            dataKey: 'repeat',
+            width: 120,
+            render: row =>
+              row.repeatEvery && row.repeatUnit
+                ? `Every ${row.repeatEvery} ${row.repeatUnit}${row.repeatEvery > 1 ? 's' : ''}`
+                : 'No repeat'
+          },
+          {
+            key: 'orderedBy',
+            title: 'Ordered By\\At',
+            dataKey: 'orderedBy',
+            width: 160,
+            render: row => (
+              <>
+                {row.orderedBy}
+                <br />
+                <span className="date-table-style">{row.orderedAt}</span>
+              </>
+            )
+          },
+          {
+            key: 'createdBy',
+            title: 'Created By\\At',
+            dataKey: 'createdBy',
+            width: 160,
+            render: row => (
+              <>
+                {row.createdBy}
+                <br />
+                <span className="date-table-style">{row.createdAt}</span>
+              </>
+            ),
+            expandable: true
+          },
+          {
+            key: 'cancelledBy',
+            title: 'Cancelled By\\At',
+            dataKey: 'cancelledBy',
+            width: 160,
+            render: row =>
+              row.cancelledBy ? (
+                <>
+                  {row.cancelledBy}
+                  <br />
+                  <span className="date-table-style">{row.cancelledAt}</span>
+                </>
+              ) : (
+                '-'
+              ),
+            expandable: true
+          },
+          {
+            key: 'cancellationReason',
+            title: 'Cancellation Reason',
+            dataKey: 'cancellationReason',
+            width: 200,
+            render: row => row.cancellationReason || '-',
+            expandable: true
+          },
+          {
+            key: 'status',
+            title: 'Status',
+            dataKey: 'status',
+            width: 100
+          },
+          {
+            key: 'actions',
+            title: 'Actions',
+            width: 80,
+            render: row => (
+              <div className="render-aws">
+                <FontAwesomeIcon
+                  icon={faPrint}
+                  className="font-aws"
+                  onClick={e => {
+                    e.stopPropagation();
+                    // Handle print action
+                  }}
+                />
+                <FontAwesomeIcon
+                  icon={faClone}
+                  className="font-aws"
+                  onClick={e => {
+                    e.stopPropagation();
+                    // Handle clone action
+                  }}
+                />
+              </div>
+            )
+          }
+        ]}
         height={470}
         loading={false}
         tableButtons={tablebuttons}
       />
 
+      {selectedRequest && (
+        <Form fluid>
+          <div className="margin-all-10">
+            <div className="grid-sections-2">
+              <SectionContainer
+                title="Dietary Request Details"
+                content={
+                  <>
+                    <MyInput
+                      fieldLabel="Diet Order Type"
+                      fieldName="dietOrderType"
+                      fieldType="select"
+                      selectData={dietOrderTypeLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={form}
+                      setRecord={setForm}
+                      required
+                      width={250}
+                      disabled={true}
+                      searchable={false}
+                    />
+                    {renderConditionalFields()}
+                  </>
+                }
+                minHeight={300}
+              />
+
+              <SectionContainer
+                title="Schedule"
+                content={
+                  <>
+                    <MyInput
+                      fieldLabel="Start Date & Time"
+                      fieldName="startDateTime"
+                      fieldType="datetime"
+                      record={form}
+                      setRecord={setForm}
+                      required
+                      width={250}
+                      disabled={true}
+                    />
+
+                    <MyInput
+                      fieldType="datetime"
+                      fieldName="endDateTime"
+                      fieldLabel="End Date & Time"
+                      record={form}
+                      setRecord={setForm}
+                      width={250}
+                      disabled={true}
+                    />
+
+                    <div className="two">
+                      <MyInput
+                        fieldLabel="Duration"
+                        fieldName="duration"
+                        fieldType="number"
+                        record={form}
+                        setRecord={setForm}
+                        required
+                        width={120}
+                        disabled={true}
+                      />
+                      <MyInput
+                        className="sec"
+                        fieldLabel=""
+                        fieldName="durationUnit"
+                        fieldType="select"
+                        selectData={durationLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={form}
+                        setRecord={setForm}
+                        width={120}
+                        disabled={true}
+                        searchable={false}
+                      />
+                    </div>
+
+                    <div className="two">
+                      <MyInput
+                        fieldLabel="Repeat Every"
+                        fieldName="repeatEvery"
+                        fieldType="number"
+                        record={form}
+                        setRecord={setForm}
+                        required
+                        width={119}
+                        disabled={true}
+                      />
+                      <MyInput
+                        className="sec"
+                        fieldLabel=""
+                        fieldName="repeatUnit"
+                        fieldType="select"
+                        selectData={durationLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={form}
+                        setRecord={setForm}
+                        width={120}
+                        disabled={true}
+                        searchable={false}
+                      />
+                    </div>
+                  </>
+                }
+              />
+
+              <SectionContainer
+                title="Food Preferences"
+                content={
+                  <>
+                    <MyInput
+                      fieldLabel="Food Preferences"
+                      fieldName="foodPreferences"
+                      fieldType="textarea"
+                      record={form}
+                      setRecord={setForm}
+                      width={250}
+                      disabled={true}
+                    />
+
+                    <MyInput
+                      fieldLabel="Food Avoidances"
+                      fieldName="foodAvoidances"
+                      fieldType="textarea"
+                      record={form}
+                      setRecord={setForm}
+                      width={250}
+                      disabled={true}
+                    />
+                  </>
+                }
+              />
+
+              <SectionContainer
+                title="Additional Notes"
+                content={
+                  <>
+                    <MyInput
+                      fieldLabel="Extra Documentation"
+                      fieldName="extraDocumentation"
+                      fieldType="textarea"
+                      record={form}
+                      setRecord={setForm}
+                      width={250}
+                      disabled={true}
+                      rows={4}
+                    />
+
+                    <MyInput
+                      fieldLabel="Notes"
+                      fieldName="notes"
+                      fieldType="textarea"
+                      record={form}
+                      setRecord={setForm}
+                      width={250}
+                      disabled={true}
+                      rows={3}
+                    />
+                  </>
+                }
+              />
+            </div>
+          </div>
+        </Form>
+      )}
+
       <MyModal
         open={modalOpen}
         setOpen={setModalOpen}
-        title={modalMode === 'add' ? 'New Dietary Request' : 'View Dietary Request'}
+        title="New Dietary Request"
         content={
           <Form fluid className="fields-containers">
             {renderBasicFields()}
@@ -751,6 +929,7 @@ expandable: true},
         }
         footerButtons={renderModalFooter}
       />
+
       <AttachmentModal
         isOpen={attachmentsModalOpen}
         setIsOpen={setAttachmentsModalOpen}
