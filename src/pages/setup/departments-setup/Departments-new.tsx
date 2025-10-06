@@ -26,11 +26,13 @@ import { useAddDepartmentMutation, useGetDepartmentQuery, useLazyGetDepartmentBy
 //  import { useGetEnumByNameQuery } from '@/services/enumService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useEnumOptions } from '@/services/enumsApi';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 
 const Departments = () => {
   const dispatch = useDispatch();
-
+  const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] = useState(false);
+  const [stateOfDeleteDepartmentModal, setStateOfDeleteDepartmentModal] = useState('delete');
   const [department, setDepartment] = useState<Department>({ ...newDepartment });
   const [load, setLoad] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -60,7 +62,7 @@ const Departments = () => {
     allergies: true,
     medicalWarnings: true,
     medicationsRecord: true,
-    vaccineReccord: true,
+    departmentReccord: true,
     diagnosticsResult: true,
     observation: true
   });
@@ -75,7 +77,6 @@ const Departments = () => {
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.id, {
     skip: !department.id
   });
-  console.log("dep list ->",departmentListResponse)
   const totaldepartmentListResponseCount = departmentListResponse?.totalRecords ?? 0;
   // Add New Department
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
@@ -155,7 +156,7 @@ const Departments = () => {
         allergies: true,
         medicalWarnings: true,
         medicationsRecord: true,
-        vaccineReccord: true,
+        departmentReccord: true,
         diagnosticsResult: true,
         observation: true
       });
@@ -280,7 +281,10 @@ const Departments = () => {
           icon={faRotateRight}
           className="icons-style"
           color="var(--primary-gray)"
-          onClick={() => handleToggleActive(rowData.id)}
+          onClick={() => { 
+            setDepartment(rowData);
+            setStateOfDeleteDepartmentModal('reactivate');
+            setOpenConfirmDeleteDepartmentModal(true);}}
         />
       ) : (
         <MdDelete
@@ -288,7 +292,11 @@ const Departments = () => {
           size={24}
           fill="var(--primary-pink)"
           className="icons-style"
-          onClick={() => handleToggleActive(rowData.id)}
+          onClick={() => {
+            setDepartment(rowData);
+            setStateOfDeleteDepartmentModal('deactivate');
+            setOpenConfirmDeleteDepartmentModal(true);
+          }}
         />
       )}
       <FontAwesomeIcon
@@ -398,7 +406,6 @@ const Departments = () => {
     }
   };
 
-
   const filters = () => {
     const selectedFilter = record.filter;
 
@@ -492,6 +499,10 @@ const Departments = () => {
       pageNumber: 1
     });
   };
+  const handleDeactiveReactivateDepartment = () => {
+    handleToggleActive(department.id);
+    setOpenConfirmDeleteDepartmentModal(false);
+  };
 
   return (
     <Panel>
@@ -541,6 +552,13 @@ const Departments = () => {
         setShowScreen={setShowScreen}
         department={department}
         width={width}
+      />
+         <DeletionConfirmationModal
+        open={openConfirmDeleteDepartmentModal}
+        setOpen={setOpenConfirmDeleteDepartmentModal}
+        itemToDelete="Department"
+        actionButtonFunction={handleDeactiveReactivateDepartment}
+        actionType={stateOfDeleteDepartmentModal}
       />
     </Panel>
   );
