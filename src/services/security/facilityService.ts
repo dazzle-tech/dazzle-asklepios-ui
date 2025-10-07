@@ -55,5 +55,4 @@ export const {
     useGetAllFacilitiesQuery,
     useGetFacilityMutation,
     useGetFacilityTypesQuery
-
 } = facilityService;

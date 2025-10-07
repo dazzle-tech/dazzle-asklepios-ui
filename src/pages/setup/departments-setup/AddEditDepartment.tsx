@@ -1,6 +1,7 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
@@ -9,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
 import { useEnumOptions } from '@/services/enumsApi';
 const AddEditDepartment = ({
   open,
@@ -61,7 +63,7 @@ const AddEditDepartment = ({
                 record={department}
                 setRecord={setDepartment}
                 required
-                menuMaxHeight={200}               
+                menuMaxHeight={200}              
               />
             </div>
             <MyInput

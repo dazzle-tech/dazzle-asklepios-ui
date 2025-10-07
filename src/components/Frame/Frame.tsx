@@ -59,6 +59,23 @@ const drawerWidth = 240;
 const collapsedWidth = 60;
 
 const Frame = (props: FrameProps) => {
+
+  // const { navs } = props;
+  // console.log('Navs in Frame:', navs);
+  // const { mode } = props;
+  // const NavItem = props => {
+  //   const { title, eventKey, ...rest } = props;
+  //   return (
+  //     <Nav.Item eventKey={eventKey} as={NavLink} {...rest}>
+  //       {title}
+  //     </Nav.Item>
+  //   );
+  // };
+  // const [expand, setExpand] = useState(false);
+  // const [windowHeight, setWindowHeight] = useState(getHeight(window));
+  // const [recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({ screen: '' });
+  // const [width, setWidth] = useState<number>(window.innerWidth);
+
   const { navs, mode } = props;
 
   // State variables
@@ -367,7 +384,7 @@ const Frame = (props: FrameProps) => {
                           vertical: 'top',
                           horizontal: 'left'
                         }}
-                        getContentAnchorEl={null}
+                        // getContentAnchorEl={null}
                         PaperProps={{
                           sx: {
                             '& .MuiMenuItem-root': {

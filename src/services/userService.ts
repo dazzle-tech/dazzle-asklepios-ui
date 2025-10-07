@@ -83,7 +83,6 @@ export const userService = createApi({
           : '/api/setup/duplication-candidates',
     }),
 
- 
     getRolePermissions: builder.query({
       query: (roleId: number) => `/api/setup/role/${roleId}/screens`,
     }),
@@ -146,9 +145,7 @@ export const {
   useCreateDuplicationCandidateMutation,
   useUpdateDuplicationCandidateMutation,
   useDeactivateDuplicationCandidateMutation,
-  useReactivateDuplicationCandidateMutation
-  ,
-
+  useReactivateDuplicationCandidateMutation,
   useGetRolePermissionsQuery,
   useUpdateRolePermissionsMutation
 } = userService;

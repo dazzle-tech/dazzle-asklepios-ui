@@ -9,7 +9,6 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { newApMedicalSheets } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
 import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
-
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -22,7 +21,6 @@ import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
 import { useAddDepartmentMutation, useGetDepartmentsQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
-//  import { useGetEnumByNameQuery } from '@/services/enumService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useEnumOptions } from '@/services/enumsApi';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -61,7 +59,7 @@ const Departments = () => {
     allergies: true,
     medicalWarnings: true,
     medicationsRecord: true,
-    departmentReccord: true,
+    departmentRecord: true,
     diagnosticsResult: true,
     observation: true
   });
@@ -157,7 +155,7 @@ const Departments = () => {
         allergies: true,
         medicalWarnings: true,
         medicationsRecord: true,
-        departmentReccord: true,
+        departmentRecord: true,
         diagnosticsResult: true,
         observation: true
       });
@@ -212,6 +210,7 @@ const Departments = () => {
       })
       .finally(() => setLoad(false));
   };
+
   const handleFilterChange = async (fieldName, value) => {
     if (!value) {
       setDepartmentList(departmentListResponse?.data ?? []);
@@ -408,6 +407,7 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
+
   const getFilterWidth = (filter: string): string => {
     switch (filter) {
       case 'facilityName':
@@ -519,7 +519,6 @@ const Departments = () => {
     handleToggleActive(department.id);
     setOpenConfirmDeleteDepartmentModal(false);
   };
-
   return (
     <Panel>
       <div className="container-of-add-new-button">
@@ -535,7 +534,7 @@ const Departments = () => {
       <MyTable
         data={
           isFiltered
-            ? departmentList ?? []
+            ? departmentList ??[]
             : departmentListResponse?.data ?? []
         }
         totalCount={isFiltered ? filteredTotal : totaldepartmentListResponseCount}

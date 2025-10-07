@@ -140,9 +140,6 @@ export const store = configureStore({
       roleService.middleware,
       userRoleService.middleware,
       enumService.middleware,
-      facilityService.middleware,
-      roleService.middleware
-
     ])
 });
 
