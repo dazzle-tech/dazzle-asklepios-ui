@@ -99,7 +99,16 @@ const MyInput = ({
 
     if (!isAnyOpen) return;
 
-    const handleScroll = () => {
+    const handleScroll = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      // Ignore scrolls occurring inside rsuite picker menus to allow internal scrolling
+      if (
+        target &&
+        (target.closest('.rs-picker-menu') || target.closest('.rs-picker-select-menu') || target.closest('.rs-virtual-list'))
+      ) {
+        return;
+      }
+
       setIsSelectOpen(false);
       setIsDateOpen(false);
       setIsDateTimeOpen(false);
@@ -134,9 +143,21 @@ const MyInput = ({
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
+  const getDynamicMenuMaxHeight = (dataList?: any[]) => {
+    // If consumer provided a specific height, honor it
+    if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
+      return props.menuMaxHeight as number;
+    }
+    const itemsCount = dataList?.length ?? 0;
+    const estimatedItemHeight = 38; // approx item row height for rsuite pickers
+    const headerAllowance = 24; // search header/padding allowance
+    const capHeight = 240; // sensible default cap
+    return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
+  };
+
   // start speech recognition
   const startListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       dispatch(notify({ msg: 'Your browser does not support Speech Recognition', sev: 'error' }));
@@ -235,9 +256,6 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
-            open={isDateTimeOpen}
-            onOpen={() => setIsDateTimeOpen(true)}
-            onClose={() => setIsDateTimeOpen(false)}
           />
         );
       case 'time':
@@ -264,11 +282,9 @@ const MyInput = ({
             format="HH:mm"
             cleanable
             onKeyDown={focusNextField}
-            open={isTimeOpen}
-            onOpen={() => setIsTimeOpen(true)}
-            onClose={() => setIsTimeOpen(false)}
           />
         );
+
       case 'select':
         return (
           <Form.Control
@@ -279,6 +295,15 @@ const MyInput = ({
             accepter={SelectPicker}
             renderMenuItem={props.renderMenuItem}
             searchBy={props.searchBy}
+            container={
+              props.container ??
+              (() => (document.querySelector('.rs-modal') as HTMLElement) || document.body)
+            }
+            placement={props.placement ?? 'bottomStart'}
+            preventOverflow={props.preventOverflow ?? true}
+            searchable={props.searchable !== undefined ? props.searchable : true}
+            cleanable={props.cleanable !== undefined ? props.cleanable : true}
+            readOnly={props.readOnly !== undefined ? props.readOnly : false}
             name={fieldName}
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
@@ -287,13 +312,13 @@ const MyInput = ({
             onChange={handleValueChange}
             defaultValue={props.defaultSelectValue}
             placeholder={props.placeholder}
-            searchable={props.searchable}
-            menuMaxHeight={props?.menuMaxHeight ?? ''}
+            menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             loading={props?.loading ?? false}
             open={isSelectOpen}
             onOpen={() => setIsSelectOpen(true)}
             onClose={() => setIsSelectOpen(false)}
+            virtualized={props?.virtualized ?? true}
           />
         );
 
@@ -305,6 +330,12 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={TagPicker}
+            container={
+              props.container ??
+              (() => (document.querySelector('.rs-modal') as HTMLElement) || document.body)
+            }
+            placement={props.placement ?? 'bottomStart'}
+            preventOverflow={props.preventOverflow ?? true}
             name={fieldName}
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
@@ -315,7 +346,7 @@ const MyInput = ({
             creatable={props.creatable ?? false} // Optional: Allow users to create new tags
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
             searchBy={props.searchBy} // Optional: Search function for TagPicker
-            menuMaxHeight={props?.menuMaxHeight ?? ''}
+            menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isMultyPickerOpen}
             onOpen={() => setIsMultyPickerOpen(true)}
@@ -329,6 +360,12 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={CheckPicker}
+            container={
+              props.container ??
+              (() => (document.querySelector('.rs-modal') as HTMLElement) || document.body)
+            }
+            placement={props.placement ?? 'bottomStart'}
+            preventOverflow={props.preventOverflow ?? true}
             name={fieldName}
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
@@ -338,7 +375,7 @@ const MyInput = ({
             placeholder={props.placeholder ?? 'Select...'}
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
             searchBy={props.searchBy} // Optional: Search function for checkPicker
-            menuMaxHeight={props?.menuMaxHeight ?? ''}
+            menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isCheckPickerOpen}
             onOpen={() => setIsCheckPickerOpen(true)}
@@ -362,9 +399,6 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
-            open={isDateOpen}
-            onOpen={() => setIsDateOpen(true)}
-            onClose={() => setIsDateOpen(false)}
           />
         );
       case 'number': {

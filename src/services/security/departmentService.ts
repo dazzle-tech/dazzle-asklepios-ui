@@ -60,13 +60,6 @@ export const departmentService = createApi({
         method: 'PATCH',
       }),
     }),
-    getDepartmentTypes: builder.query({
-      query: (id) => `/api/setup/department/department-type`,
-    }),
-    getEnconuterTypes: builder.query({
-      query: (id) => `/api/setup/department/encounter-type`,
-    }),
-
   }),
 
 
@@ -83,7 +76,5 @@ export const {
   useLazyGetDepartmentByNameQuery,
   useAddDepartmentMutation,
   useUpdateDepartmentMutation,
-  useToggleDepartmentIsActiveMutation,
-  useGetDepartmentTypesQuery,
-  useGetEnconuterTypesQuery
+  useToggleDepartmentIsActiveMutation
 } = departmentService;

@@ -25,7 +25,7 @@ const MyModal = ({
   actionButtonFunction = null,
   customClassName = '',
   cancelButtonLabel = 'Cancel',
-  handleCancelFunction=null
+  handleCancelFunction=()=>{}
 }) => {
   const [internalStep, setInternalStep] = useState(0);
   const activeStep = internalStep;

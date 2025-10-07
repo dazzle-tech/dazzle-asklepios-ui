@@ -38,7 +38,6 @@ export const facilityService = createApi({
         method: 'GET',
       }),
     }),
-
     getFacilityTypes: builder.query({
       query: () => ({
         url: '/api/setup/facility/facility-types',

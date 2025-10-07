@@ -26,14 +26,12 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
   onSave,
 }) => {
   const [selected, setSelected] = useState<Role | null>(null);
-
   const handleSave = () => {
     // hook for your save logic (permissions, screens, etc.)
     onSave?.(selected);
     // close after save (optional)
     setOpen(false);
   };
-  
   const content = (
     <Grid fluid className="role-management">
       <Row className="role-row">
@@ -62,17 +60,16 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
       </Row>
     </Grid>
   );
-
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Role Management"
-      size="full"
-     
+      size="70%"
+      bodyheight="70vh"
       content={content}
       hideBack={true}
-     
+      steps={[{ title: "Roles", icon: <FontAwesomeIcon icon={faUserShield} /> }]}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       isDisabledActionBtn={!selected} // disable until a role is selected
