@@ -1,5 +1,4 @@
 import Translate from '@/components/Translate';
-import { initialListRequestId, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
@@ -22,7 +21,7 @@ import ChooseDepartment from './ChooseScreen';
 import { notify } from '@/utils/uiReducerActions';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
-import { useAddDepartmentMutation, useGetDepartmentQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
+import { useAddDepartmentMutation, useGetDepartmentsQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
 //  import { useGetEnumByNameQuery } from '@/services/enumService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -67,24 +66,25 @@ const Departments = () => {
     observation: true
   });
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequestId,
-    pageSize: 15
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc'
   });
 
   // Data fetching
-  const { data: departmentListResponse, isFetching } = useGetDepartmentQuery(listRequest);
+  const { data: departmentListResponse, isFetching } = useGetDepartmentsQuery(paginationParams);
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.id, {
     skip: !department.id
   });
-  const totaldepartmentListResponseCount = departmentListResponse?.totalRecords ?? 0;
+  const totaldepartmentListResponseCount = departmentListResponse?.totalCount ?? 0;
   // Add New Department
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
   // Update Department 
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
 
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
 
   const filterFields = [
     { label: 'Facility', value: 'facilityName' },
@@ -126,13 +126,13 @@ const Departments = () => {
   // Refresh table on successful add/update 
   useEffect(() => {
     if (addDepartmentMutation.data) {
-      setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
+      setPaginationParams(prev => ({ ...prev }));
     }
   }, [addDepartmentMutation.data]);
 
   useEffect(() => {
     if (updateDepartmentMutation.data) {
-      setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
+      setPaginationParams(prev => ({ ...prev }));
     }
   }, [updateDepartmentMutation.data]);
 
@@ -213,22 +213,36 @@ const Departments = () => {
   };
   const handleFilterChange = async (fieldName, value) => {
     if (!value) {
-      setDepartmentList(departmentListResponse?.data??[]);
+      setDepartmentList(departmentListResponse?.data ?? []);
       return;
     }
     try {
       let response;
       if (fieldName === "facilityName") {
-        response = await getDepartmentsByFacility(value).unwrap();
+        response = await getDepartmentsByFacility({ 
+          facilityId: value, 
+          page: 0, 
+          size: paginationParams.size, 
+          sort: paginationParams.sort 
+        }).unwrap();
       } else if (fieldName === "departmentType") {
-        response = await getDepartmentsByType(value?.toUpperCase().replace(/\s+/g, '_')).unwrap();
-
+        response = await getDepartmentsByType({ 
+          type: value?.toUpperCase().replace(/\s+/g, '_'), 
+          page: 0, 
+          size: paginationParams.size, 
+          sort: paginationParams.sort 
+        }).unwrap();
       } else if (fieldName === "name") {
-        response = await getDepartmentsByName(value).unwrap();
+        response = await getDepartmentsByName({ 
+          name: value, 
+          page: 0, 
+          size: paginationParams.size, 
+          sort: paginationParams.sort 
+        }).unwrap();
       }
       setDepartmentList(response?.data ?? []);
       setIsFiltered(true);
-      setFilteredTotal(response?.totalRecords ?? 0);
+      setFilteredTotal(response?.totalCount ?? 0);
 
     } catch (error) {
       console.error("Error fetching departments:", error);
@@ -252,7 +266,7 @@ const Departments = () => {
             sev: 'success'
           })
         );
-        setListRequest(prev => ({ ...prev, timestamp: new Date().getTime() }));
+        setPaginationParams(prev => ({ ...prev }));
       })
       .catch(() => {
         dispatch(
@@ -489,14 +503,14 @@ const Departments = () => {
     );
   };
   const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    setPaginationParams({ ...paginationParams, page: newPage });
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
+    setPaginationParams({
+      ...paginationParams,
+      size: parseInt(event.target.value, 10),
+      page: 0
     });
   };
   const handleDeactiveReactivateDepartment = () => {
@@ -519,10 +533,10 @@ const Departments = () => {
       <MyTable
         data={
           isFiltered
-            ? departmentList ??[]
+            ? departmentList ?? []
             : departmentListResponse?.data ?? []
         }
-        totalCount={isFiltered ? filteredTotal : (totaldepartmentListResponseCount?? 0)}
+        totalCount={isFiltered ? filteredTotal : totaldepartmentListResponseCount}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => setDepartment(rowData)}
