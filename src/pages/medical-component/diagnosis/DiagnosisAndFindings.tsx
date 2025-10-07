@@ -10,8 +10,8 @@ import { Col, Row } from 'rsuite';
 const DiagnosisAndFindings = ({ encounter, patient }) => {
   const [selectedDiagnose, setSelectedDiagnose] = useState<any>({
     ...newApPatientDiagnose,
-    visitKey: encounter.key,
-    patientKey: patient.key,
+    visitKey: encounter?.key,
+    patientKey: patient?.key,
     createdBy: 'Administrator'
   });
   const [listRequest, setListRequest] = useState({
