@@ -69,7 +69,8 @@ const Departments = () => {
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: 'id,asc'
+    sort: 'id,asc',
+    timestamp: Date.now()
   });
 
   // Data fetching
@@ -126,13 +127,13 @@ const Departments = () => {
   // Refresh table on successful add/update 
   useEffect(() => {
     if (addDepartmentMutation.data) {
-      setPaginationParams(prev => ({ ...prev }));
+      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
     }
   }, [addDepartmentMutation.data]);
 
   useEffect(() => {
     if (updateDepartmentMutation.data) {
-      setPaginationParams(prev => ({ ...prev }));
+      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
     }
   }, [updateDepartmentMutation.data]);
 
@@ -266,7 +267,7 @@ const Departments = () => {
             sev: 'success'
           })
         );
-        setPaginationParams(prev => ({ ...prev }));
+        setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
       })
       .catch(() => {
         dispatch(
@@ -503,14 +504,15 @@ const Departments = () => {
     );
   };
   const handlePageChange = (_: unknown, newPage: number) => {
-    setPaginationParams({ ...paginationParams, page: newPage });
+    setPaginationParams({ ...paginationParams, page: newPage, timestamp: Date.now() });
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPaginationParams({
       ...paginationParams,
       size: parseInt(event.target.value, 10),
-      page: 0
+      page: 0,
+      timestamp: Date.now()
     });
   };
   const handleDeactiveReactivateDepartment = () => {

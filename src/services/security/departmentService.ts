@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 
-type PagedParams = { page: number; size: number; sort?: string };
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type PagedResult<T> = { data: T[]; totalCount: number };
 
 export const departmentService = createApi({
@@ -11,7 +11,7 @@ export const departmentService = createApi({
   endpoints: builder => ({
     // GET /api/setup/department?page=&size=&sort=
     getDepartments: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
+      query: ({ page, size, sort = 'id,asc', timestamp }) => ({
         url: '/api/setup/department',
         params: { page, size, sort },
       }),
