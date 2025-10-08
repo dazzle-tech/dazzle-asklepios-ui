@@ -383,14 +383,16 @@ const ScheduleScreen = () => {
           <button
             style={{ fontSize: '14px', margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
             onClick={() => onNavigate('TODAY')}
+            className='btn-scheduling'
           >
            Today
           </button>
 
-          <button style={{ margin: '7px', height: '35px',color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('PREV')}>
+          <button className='btn-scheduling' style={{ margin: '7px', height: '35px',color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('PREV')}>
             <ArrowLeftLineIcon />
           </button>
           <Button
+            className='btn-scheduling'
             onClick={handleClickCalinderSearch}
             style={{
               display: showDatePicker ? 'none' : 'inline-block',
@@ -420,13 +422,14 @@ const ScheduleScreen = () => {
               }}
             />
           )}
-          <button style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('NEXT')}>
+          <button className='btn-scheduling' style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('NEXT')}>
             <ArrowRightLineIcon />
           </button>
         </div>
 
         <ButtonGroup style={{ borderRadius: '5px', backgroundColor:  'var(--rs-border-primary)' }} size="md">
           <Button
+          className='btn-scheduling'
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.MONTH), onView(Views.MONTH);
@@ -435,6 +438,7 @@ const ScheduleScreen = () => {
             <Text>Month</Text>
           </Button>
           <Button
+          className='btn-scheduling'
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.WEEK), onView(Views.WEEK);
@@ -443,6 +447,7 @@ const ScheduleScreen = () => {
             <Text>Week</Text>
           </Button>
           <Button
+          className='btn-scheduling'
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.DAY), onView(Views.DAY);
@@ -451,6 +456,7 @@ const ScheduleScreen = () => {
             <Text>Day</Text>
           </Button>
           <Button
+          className='btn-scheduling'
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.AGENDA), onView(Views.AGENDA);
