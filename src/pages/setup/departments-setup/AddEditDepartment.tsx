@@ -10,7 +10,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetDepartmentTypesQuery, useGetEnconuterTypesQuery } from '@/services/security/departmentService';
 import { useEnumOptions } from '@/services/enumsApi';
 const AddEditDepartment = ({
   open,

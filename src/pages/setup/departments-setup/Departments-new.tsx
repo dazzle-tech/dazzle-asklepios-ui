@@ -356,17 +356,16 @@ const Departments = () => {
         </span>
       )
     },
-
-    {
-      key: 'name',
-      title: <Translate>Department Name</Translate>,
-      flexGrow: 4
-    },
     {
       key: 'departmentType',
       title: <Translate>Department Type</Translate>,
       flexGrow: 4,
       render: rowData => <p>{formatEnumString(rowData?.departmentType)}</p>
+    },
+    {
+      key: 'name',
+      title: <Translate>Department Name</Translate>,
+      flexGrow: 4
     },
     {
       key: 'phoneNumber',
