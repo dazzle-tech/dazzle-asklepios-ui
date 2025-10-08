@@ -74,6 +74,7 @@ import './AppoitmentModal.less';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import SliceBox from './SliceBox';
 import { mapJsDayToCustom, DAYS, DayValue } from '@/utils/dayMapping';
+import { useSelector } from 'react-redux';
 
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
@@ -95,6 +96,7 @@ const AppointmentModal = ({
   } = useGetResourceWithDetailsQuery(selectedSlot?.resourceId || '', {
     skip: !selectedSlot?.resourceId
   });
+  const mode = useSelector((state: any) => state.ui.mode);
   const [selectedSlices, setSelectedSlices] = useState([]);
 
   useEffect(() => {
@@ -901,14 +903,14 @@ const AppointmentModal = ({
                         </div>
                         <div className="input-wrapper" style={{ flex: 1 }}>
                           <div style={{ flexShrink: 0, marginTop: '22px' }}>
-                            <Button
+                            <MyButton
                               appearance="ghost"
                               className="quick-patient-button"
                               onClick={() => setQuickPatientModalOpen(true)}
+                              prefixIcon={() => <FontAwesomeIcon icon={faBolt} className="quick-patient-icon" />}
                             >
-                              <FontAwesomeIcon icon={faBolt} className="quick-patient-icon" />
-                              <span>Quick Patient</span>
-                            </Button>
+                              Quick Patient
+                            </MyButton>
 
                             <QuickPatient
                               open={quickPatientModalOpen}
@@ -1195,9 +1197,9 @@ const AppointmentModal = ({
                       marginBottom: '16px', 
                       flexWrap: 'wrap',
                       padding: '8px',
-                      backgroundColor: '#f8f9fa',
+                      backgroundColor: mode === 'light' ? '#f8f9fa' : '#434343ff',
                       borderRadius: '12px',
-                      border: '1px solid #e9ecef'
+                      border: '1px solid var(--rs-border-primary)'
                     }}
                   >
                     {sortedDaysWithSlices.map(day => {
