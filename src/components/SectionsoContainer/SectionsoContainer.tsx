@@ -8,15 +8,25 @@ interface SectionContainerProps {
   content: React.ReactNode;
   button?: React.ReactNode;
   minHeight?: string | number;
+  maxWidth?: string | number;
 }
 
-const SectionContainer: React.FC<SectionContainerProps> = ({ title, content, button = null, minHeight }) => {
+const SectionContainer: React.FC<SectionContainerProps> = ({
+  title,
+  content,
+  button = null,
+  minHeight,
+  maxWidth
+}) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
   return (
     <div
       className={`container-form-section ${mode === 'dark' ? 'dark' : 'light'}`}
-      style={{ minHeight: minHeight ?? 'auto' }}
+      style={{
+        minHeight: minHeight ?? 'auto',
+        maxWidth: maxWidth ?? 'none',
+      }}
     >
       <div className={`title-div ${mode === 'dark' ? 'dark' : 'light'}`}>{title}</div>
       <Divider />

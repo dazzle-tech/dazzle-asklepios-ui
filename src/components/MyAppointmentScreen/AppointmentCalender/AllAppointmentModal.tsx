@@ -31,7 +31,7 @@ const AllAppointmentModal = () => {
         {viewMode === 'table' ? (
           <SectionContainer title={<></>} content={<MyAppointmentScreenTable />} />
         ) : (
-          <SectionContainer title={<></>} content={<MyAppointmentScreenCard />} />
+          <SectionContainer title={<></>}  content={<MyAppointmentScreenCard />} />
         )}
       </div>
     </>

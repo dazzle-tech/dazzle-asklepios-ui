@@ -18,6 +18,7 @@ import UpcomingAppointmentCard from './UpcomingAppointmentCard';
 import MyPatientAppointmentCard from './MyPatientAppointmentCard';
 import EmergencyContactAppointmentModal from './EmergencyContactAppointmentModal';
 import PatientEMR from '@/pages/patient/patient-emr';
+
 const MyAppointmentScreen = () => {
   const [showAllAppointmentsModal, setShowAllAppointmentsModal] = useState(false);
   const [showPatientRecordsModal, setShowPatientRecordsModal] = useState(false);
