@@ -8,8 +8,9 @@ import { FaArrowRight, FaX } from 'react-icons/fa6';
 import { RadioGroup } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { Button, Form, Nav, Panel, Sidebar, Sidenav } from 'rsuite';
-import './style.less';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useAppSelector } from '@/hooks';
+import './style.less';
 
 interface StickyNote {
   id: number;
@@ -47,6 +48,8 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   const [modalOpen, setModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<StickyNote | null>(null);
 
+  const { data: lowMidHighLovQueryResponse } = useGetLovValuesByCodeQuery('LOW_MOD_HIGH');
+
   const colorOptions = [
     { label: 'Purple', value: '--note-purple' },
     { label: 'Red', value: '--note-red' },
@@ -75,7 +78,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
     <Form fluid>
       {/* Note input */}
       <MyInput
-        width="350px"
+        width="346px"
         fieldType="textarea"
         fieldLabel="Note"
         fieldName="note"
@@ -89,13 +92,10 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
         fieldLabel="Priority Level"
         fieldName="level"
         fieldType="select"
-        selectData={[
-          { key: 'low', Label: 'Low' },
-          { key: 'mid', Label: 'Mid' },
-          { key: 'high', Label: 'High' }
-        ]}
-        selectDataLabel="Label"
+        selectData={lowMidHighLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
         selectDataValue="key"
+        searchable={false}
         record={noteInput}
         setRecord={setNoteInput}
         width={350}
@@ -123,9 +123,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
                 className={`color-circle ${noteInput.color === option.value ? 'active' : ''}`}
                 style={{ backgroundColor: `var(${option.value})` }}
               >
-                {noteInput.color === option.value && (
-                  <span className="checkmark">✓</span>
-                )}
+                {noteInput.color === option.value && <span className="checkmark">✓</span>}
               </div>
             </label>
           ))}
@@ -152,11 +150,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
       {/* Notes list */}
       <div className="note-list-wrapper">
         {notes.map(note => (
-          <div
-            key={note.id}
-            className="note-box"
-            style={{ backgroundColor: `var(${note.color})` }}
-          >
+          <div key={note.id} className="note-box" style={{ backgroundColor: `var(${note.color})` }}>
             <strong className="note-level">{note.level}</strong>
             <div>{note.text}</div>
             <div className="note-footer">
@@ -176,7 +170,12 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   );
 
   return (
-    <div className={clsx(`user-sticky-sidebar-wrapper ${mode === 'light' ? 'light' : 'dark'}`, { expanded: expand, 'not-expanded': !expand })}>
+    <div
+      className={clsx(`user-sticky-sidebar-wrapper ${mode === 'light' ? 'light' : 'dark'}`, {
+        expanded: expand,
+        'not-expanded': !expand
+      })}
+    >
       <Sidebar width={expand ? 370 : 56} collapsible className="profile-sidebar">
         <Sidenav expanded={expand} appearance="subtle" className="profile-sidenav">
           <Sidenav.Body>
