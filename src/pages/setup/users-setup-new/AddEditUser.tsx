@@ -32,8 +32,6 @@ const AddEditUser = ({
     id: type,
     displayValue: type,
   }));
-   console.log("genderList",genderList); 
-   console.log("user",user);
   // Modal content
   const conjureFormContent = stepNumber => {
     switch (stepNumber) {
