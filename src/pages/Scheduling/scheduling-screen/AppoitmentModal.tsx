@@ -752,7 +752,7 @@ const AppointmentModal = ({
     setSelectedDate(null);
   };
   const [openDay, setOpenDay] = useState<DayValue | null>(null);
-
+  
   return (
     <div>
       <AdvancedModal
@@ -808,6 +808,7 @@ const AppointmentModal = ({
                             <QuickPatient
                               open={quickPatientModalOpen}
                               setOpen={() => setQuickPatientModalOpen(false)}
+                              setPatient={setLocalPatient}
                             />
                           </div>
                         </div>
