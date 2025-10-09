@@ -26,6 +26,7 @@ import PatientAppointments from './PatientAppointments';
 import BedsideRegistrationsModal from './BedsideRegistrations';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import BulkRegistration from './BulkRegistration';
+import Translate from '@/components/Translate';
 
 const { getHeight } = DOMHelper;
 
@@ -219,7 +220,7 @@ const PatientProfile = () => {
           <Row className="btm-sections">
             <Col md={12}>
               <SectionContainer
-                title={<Text>Visit history</Text>}
+                title={<Translate>Visit history</Translate>}
                 content={
                   <PatientVisitHistoryTable
                     quickAppointmentModel={quickAppointmentModel}
@@ -231,8 +232,8 @@ const PatientProfile = () => {
             </Col>
             <Col md={12}>
               <SectionContainer
-                title={<Text>Appointments</Text>}
-                content={<PatientAppointments />}
+                title={<Translate>Appointments</Translate>}
+                content={<PatientAppointments patient={localPatient} />}
               />
             </Col>
           </Row>

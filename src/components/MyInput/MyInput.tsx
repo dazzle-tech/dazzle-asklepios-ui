@@ -144,7 +144,7 @@ const MyInput = ({
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = uiSlice.lang === 'en' ? 'en-US' : 'ar-SA';
+    recognition.lang = uiSlice.lang === 'SYS_LANG_ENG' ? 'en-US' : 'ar-SA';
     recognition.interimResults = true;
     recognition.continuous = true;
 

@@ -10,12 +10,16 @@ const Translate = props => {
 
   useEffect(() => {
     if (props.children) {
-      if (lang === 'en') {
+      if (lang === 'SYS_LANG_ENG') {
+        console.log("in if");
         setText(props.children);
       } else {
-        if (translations[props.children]) {
-          setText(translations[props.children]);
+        console.log("in else");
+        if (translations[lang][props.children]) {
+          console.log("in if2");
+          setText(translations[lang][props.children]);
         } else {
+          console.log("in else2");
           setText(props.children);
         }
       }
@@ -23,13 +27,28 @@ const Translate = props => {
   }, []);
 
   useEffect(() => {
-    if (lang === 'en') {
-      setText(props.children);
-    } else {
-      if (translations[props.children]) {
-        setText(translations[props.children]);
-      } else {
+    // if (lang === 'SYS_LANG_ENG') {
+    //   setText(props.children);
+    // } else {
+    //   if (translations[props.children]) {
+    //     setText(translations[props.children]);
+    //   } else {
+    //     setText(props.children);
+    //   }
+    // }
+    if (props.children) {
+      if (lang === 'SYS_LANG_ENG') {
+        console.log("in if");
         setText(props.children);
+      } else {
+        console.log("in else");
+        if (translations[lang][props.children]) {
+          console.log("in if2");
+          setText(translations[lang][props.children]);
+        } else {
+          console.log("in else2");
+          setText(props.children);
+        }
       }
     }
   }, [lang, props.children]);

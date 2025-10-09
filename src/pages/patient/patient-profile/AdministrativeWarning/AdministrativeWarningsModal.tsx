@@ -22,6 +22,7 @@ import { faCalendarDay } from '@fortawesome/free-solid-svg-icons';
 import './styles.less'
 import ChildModal from '@/components/ChildModal';
 import MyButton from '@/components/MyButton/MyButton';
+import Translate from '@/components/Translate';
 interface AdministrativeWarningsModalProps {
   localPatient: ApPatient;
   validationResult: any;
@@ -222,7 +223,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
               <div className="left-side-card">
                 <div className='card-content'>
                   <div className='type-card-content'>
-                    <span className='title-type-card-content'>Type</span>
+                    <span className='title-type-card-content'><Translate>Type</Translate></span>
                     <span className='custom-type-card-content'>
                       {warning.warningTypeLvalue
                         ? warning.warningTypeLvalue.lovDisplayVale
@@ -239,7 +240,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                 </div>
                 <div className='card-content'>
                   <div className='description-card-content'>
-                    <span className='title-type-card-content'>Description</span>
+                    <span className='title-type-card-content'><Translate>Description</Translate></span>
                     <span className='custom-description-card-content'>{warning?.description}</span>
                   </div>
                 </div>
@@ -354,7 +355,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         setOpen={setOpen}
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
-        title="Administrative Warnings"
+        title='Administrative Warnings'
         mainContent={mainContent}
         childTitle="Add New"
         childContent={childContent}

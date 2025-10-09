@@ -5,6 +5,7 @@ import './styles.less';
 import MyButton from '../MyButton/MyButton';
 import MyStepper from '../MyStepper';
 import { useSelector } from 'react-redux';
+import Translate from '../Translate';
 const MyModal = ({
   open,
   setOpen,
@@ -60,7 +61,7 @@ const MyModal = ({
       <Modal.Header>
         <Modal.Title>
           {icon && <FontAwesomeIcon icon={icon} className="icon-title-modal" />}
-          {title}
+          <Translate>{title}</Translate>
         </Modal.Title>
       </Modal.Header>
       <Divider className="divider-line" />

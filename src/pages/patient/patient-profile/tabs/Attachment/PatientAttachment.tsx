@@ -171,14 +171,14 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
         },
         {
             key: 'createdAt',
-            title: 'CREATED AT/BY',
+            title: <Translate>CREATED AT/BY</Translate>,
             fullText: true,
             flexGrow: 3,
             render: (row: any) => row?.createdAt ? <>{row?.createdByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
-            title: 'UPDATED AT/BY',
+            title: <Translate>UPDATED AT/BY</Translate>,
             flexGrow: 3,
             fullText: true,
             render: (row: any) => row?.updatedAt ? <>{row?.updatedByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
@@ -246,8 +246,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
                 <MyButton
                     disabled={!selectedAttachment?.key}
                     onClick={() => handleAttachmentSelected()}
-                    prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}>
-                    Preview / Edit
+                    prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}>Preview / Edit
                 </MyButton>
                 <MyButton
                     disabled={!selectedAttachment?.key}

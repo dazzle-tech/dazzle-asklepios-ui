@@ -200,9 +200,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         <Dropdown.Menu onSelect={handleSelect}>
           <Dropdown.Item divider />
           <Dropdown.Item
-            active={uiSlice.lang === 'en'}
+            active={uiSlice.lang === 'SYS_LANG_ENG'}
             onClick={() => {
-              handleChangeLang('en');
+              handleChangeLang('SYS_LANG_ENG');
             }}
           >
             English
