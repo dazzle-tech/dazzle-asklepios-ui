@@ -20,7 +20,7 @@ const sampleAppointmentsData = [
     date: '2025-09-12T09:00:00Z',
     time: '09:00 AM',
     patientName: 'Bob Marley',
-    patientImage: 'https://randomuser.me/api/portraits/men/3.jpg',
+    patientImage: '',
     status: 'Completed',
     phone: '+962799000002',
     age: 45,
@@ -64,6 +64,7 @@ const MyAppointmentScreenCard = () => {
           key={appt.appointmentId + index}
           avatar={getFinalAvatar(appt.patientName, appt.patientImage)}
           showMore
+          width={550}
           moreClick={() => alert(`Details for ${appt.patientName}`)}
           data={[
             {
@@ -75,33 +76,60 @@ const MyAppointmentScreenCard = () => {
             {
               type: 'text',
               label: 'Date',
-              value: `${formatDateWithoutSeconds(appt.date)} at ${appt.time}`,
               section: 'left',
-              labelGap: 230
             },
-            { type: 'text', label: 'Phone', value: appt.phone, section: 'left', labelGap: 340 },
+            {
+            type: 'text',
+            label: 'Date',
+            value: `${formatDateWithoutSeconds(appt.date)} at ${appt.time}`,
+            section: 'right',
+            showLabel:false,
+            textAlign: 'right'            
+            },
+
+            { type: 'text', label: 'Phone', section: 'left', },
+            { type: 'text', label: 'Phone', value: appt.phone, section: 'right', showLabel:false, textAlign: 'right' },
+            {
+              type: 'text',
+              label: 'Age',
+              section: 'left',
+            },
             {
               type: 'text',
               label: 'Age',
               value: appt.age.toString(),
-              section: 'left',
-              labelGap: 460
+              section: 'right',
+              showLabel:false,
+              textAlign: 'right'
             },
             {
               type: 'text',
               label: 'Visit Type',
-              value: appt.visitType,
               section: 'left',
-              labelGap: 365
+
+            },
+                        {
+              type: 'text',
+              label: 'Visit Type',
+              value: appt.visitType,
+              section: 'right',
+              showLabel:false,
+              textAlign: 'right'
+            },
+            {
+              type: 'text',
+              label: 'Status',
+              section: 'left',
+              showLabel: true,
             },
             {
               type: 'badge',
               label: 'Status',
               value: appt.status,
               color: getStatusColor(appt.status),
-              section: 'left',
-              showLabel: true,
-              labelGap: 370
+              section: 'right',
+              showLabel: false,
+              textAlign: 'right'
             }
           ]}
         />

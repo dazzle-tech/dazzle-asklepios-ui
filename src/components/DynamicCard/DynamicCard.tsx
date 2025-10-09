@@ -24,6 +24,7 @@ interface CardItem {
   labelGap?: number;
   showColon?: boolean;
   sectionDirection?: 'row' | 'column';
+  textAlign?: 'left' | 'right' | 'center';
 }
 
 interface MyCardProps {
@@ -93,21 +94,32 @@ const DynamicCard: React.FC<MyCardProps> = ({
         )}
 
         {item.type === 'badge' ? (
-          <div style={{ marginBottom: valueMarginBottom }}>
-            <MyBadgeStatus contant={item.value} color={item.valueColor || item.color || '#555'} />
-          </div>
-        ) : (
           <div
             style={{
-              fontSize: item.type === 'week' ? 12 : undefined,
-              fontWeight: item.type === 'strong' ? '700' : undefined,
-              fontFamily: item.type === 'week' ? 'Inter Regular' : undefined,
-              color: item.valueColor || (item.type === 'week' ? 'var(--primary-gray)' : undefined),
               marginBottom: valueMarginBottom,
+              textAlign: item.textAlign || (item.section === 'right' ? 'right' : 'left'),
+              width: '100%',
             }}
           >
-            {item.value}
+            <MyBadgeStatus
+              contant={item.value}
+              color={item.valueColor || item.color || '#555'}
+            />
           </div>
+        ) : (
+        <div
+          style={{
+            fontSize: item.type === 'week' ? 12 : undefined,
+            fontWeight: item.type === 'strong' ? '700' : undefined,
+            fontFamily: item.type === 'week' ? 'Inter Regular' : undefined,
+            color: item.valueColor || (item.type === 'week' ? 'var(--primary-gray)' : undefined),
+            marginBottom: valueMarginBottom,
+            textAlign: item.textAlign || 'left',
+            width: '100%',
+          }}
+        >
+          {item.value}
+        </div>
         )}
       </div>
     );

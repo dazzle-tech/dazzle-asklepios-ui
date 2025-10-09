@@ -224,7 +224,8 @@ const InvasiveDeviceICU: React.FC = () => {
                 },
 
                 { label: "Site", value: device.siteEvaluation, section: "left", verticalGap: 20, labelGap: 5 },
-                { label: "Function", value: device.functin, section: "right", verticalGap: 40, labelGap: 5, },
+
+                { label: "Function", value: device.functin, section: "right"},
                 {
                   label: "Added By", value: (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

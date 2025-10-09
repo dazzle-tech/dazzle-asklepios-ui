@@ -402,7 +402,7 @@ const Allergies = (props: AllergiesProps) => {
                 Undo Resolved
               </MyButton>
               <Checkbox checked={!showPrev} onChange={() => setShowPrev(!showPrev)}>
-                Show Previous Warnings
+                Show Previous Allergies
               </Checkbox>
             </>
           )}
