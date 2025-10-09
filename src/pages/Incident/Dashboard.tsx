@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import "./style.css";
+import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 
 const recentIncidents = [
   {
@@ -38,26 +39,85 @@ const recentIncidents = [
   },
 ];
 
+// function SeverityBadge({ value }: { value: string }) {
+//   const base =
+//     "inline-flex items-center rounded-full px-2.5 py-1 !text-[12px] font-semibold";
+//   if (value === "Critical" || value === "High") {
+//     return <span className={`${base} bg-[#E11D48] text-white`}>{value}</span>;
+//   }
+//   if (value === "Medium") {
+//     return <span className={`${base} bg-[#1E60D6] text-white`}>{value}</span>;
+//   }
+//   return <span className={`${base} bg-[#CBD5E1] text-[#111827]`}>{value}</span>;
+// }
+
+// function StatusBadge({ value }: { value: string }) {
+//   const base =
+//     "inline-flex items-center rounded-full px-2.5 py-1 !text-[12px] font-semibold";
+//   if (value === "Resolved") {
+//     return <span className={`${base} bg-[#1E60D6] text-white`}>{value}</span>;
+//   }
+//   return <span className={`${base} bg-[#EEF2F7] text-[#111827]`}>{value}</span>;
+// }
+
+
 function SeverityBadge({ value }: { value: string }) {
-  const base =
-    "inline-flex items-center rounded-full px-2.5 py-1 !text-[12px] font-semibold";
-  if (value === "Critical" || value === "High") {
-    return <span className={`${base} bg-[#E11D48] text-white`}>{value}</span>;
+  let color = "";
+
+  if (value === "Critical") {
+    color = "#e42a52ff";
   }
-  if (value === "Medium") {
-    return <span className={`${base} bg-[#1E60D6] text-white`}>{value}</span>;
+   else if (value === "High") {
+    color = "#f5c21aff";
   }
-  return <span className={`${base} bg-[#CBD5E1] text-[#111827]`}>{value}</span>;
+   else if (value === "Medium") {
+    color = "#2e6edeff";
+  } 
+   else if (value === "Low") {
+    color = "#25f325ff";
+  } 
+   else {
+    color = "#b3b3b3ff";
+  }
+
+  return (
+    <MyBadgeStatus
+      contant={value}
+      color={color}
+    />
+  );
 }
 
 function StatusBadge({ value }: { value: string }) {
-  const base =
-    "inline-flex items-center rounded-full px-2.5 py-1 !text-[12px] font-semibold";
+  let color = "";
+
   if (value === "Resolved") {
-    return <span className={`${base} bg-[#1E60D6] text-white`}>{value}</span>;
+    color = "#4fdc37ff";
   }
-  return <span className={`${base} bg-[#EEF2F7] text-[#111827]`}>{value}</span>;
+  else if (value === "Action Required") {
+    color = "#e42a52ff";
+  }
+  else if (value === "Investigation") {
+    color = "#2e6edeff";
+  }
+  else if (value === "Under Review") {
+    color = "#b3b3b3ff";
+  }
+  else {
+    color = "#217cecff";
+  }
+
+  return (
+    <MyBadgeStatus
+      contant={value}
+      color={color}
+    />
+  );
 }
+
+
+
+
 
 const Dashboard = () => {
   const lastUpdated = new Intl.DateTimeFormat("en-GB", {
@@ -123,46 +183,46 @@ const Dashboard = () => {
         <IncidentChart />
 
         {/* Recent Incidents */}
-        <Card className="bg-white rounded-[12px] border border-[hsl(var(--border))] shadow-sm">
-          <CardHeader className="px-5 py-3">
-            <CardTitle className="!text-[17px] font-semibold text-[hsl(var(--foreground))] flex items-center">
-              <Clock className="!h-[18px] !w-[18px] mr-2 text-[hsl(var(--muted-foreground))]" />
-              Recent Incidents
-            </CardTitle>
-          </CardHeader>
+      <Card className="bg-[var(--card-bg)] rounded-[12px] shadow-sm">
+        <CardHeader className="px-5 py-3">
+          <CardTitle className="!text-[17px] font-semibold text-[var(--text-primary)] flex items-center">
+            <Clock className="!h-[18px] !w-[18px] mr-2 text-[var(--text-muted)]" />
+            Recent Incidents
+          </CardTitle>
+        </CardHeader>
 
-          <CardContent className="px-5 pb-5">
-            <div className="space-y-4">
-              {recentIncidents.map((incident) => (
-                <div
-                  key={incident.id}
-                  className="flex items-center justify-between p-4 bg-[#F7F8FA] rounded-[12px] border border-[#E6EBF1]"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <span className="!text-[16px] font-semibold text-[#1E60D6]">
-                        {incident.id}
-                      </span>
-                      <SeverityBadge value={incident.severity} />
-                    </div>
-
-                    <h3 className="!text-[16px] font-semibold text-[hsl(var(--foreground))] mt-1">
-                      {incident.title}
-                    </h3>
-
-                    <p className="!text-[12px] text-[hsl(var(--muted-foreground))]">
-                      {incident.department} • {incident.date}
-                    </p>
+        <CardContent className="px-5 pb-5">
+          <div className="space-y-4">
+            {recentIncidents.map((incident) => (
+              <div
+                key={incident.id}
+                className="flex items-center justify-between p-4 bg-[var(--item-bg)] rounded-[12px] border "
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <span className="!text-[16px] font-semibold text-[var(--text-primary)]">
+                      {incident.id}
+                    </span>
+                    <SeverityBadge value={incident.severity} />
                   </div>
 
-                  <div className="text-right">
-                    <StatusBadge value={incident.status} />
-                  </div>
+                  <h3 className="!text-[16px] font-semibold text-[var(--text-primary)] mt-1">
+                    {incident.title}
+                  </h3>
+
+                  <p className="!text-[12px] text-[var(--text-muted)]">
+                    {incident.department} • {incident.date}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+
+                <div className="text-right">
+                  <StatusBadge value={incident.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
       </div>
     </div>
   );

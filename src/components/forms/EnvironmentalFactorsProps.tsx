@@ -72,66 +72,79 @@ export const EnvironmentalFactors = ({
 
       <CardContent className="!px-6 !pt-5 !pb-6 !space-y-6">
         <section className="!grid md:!grid-cols-3 !gap-6">
-          <div className="!space-y-2.5">
-            <Label className="!flex !items-center !text-[14px] !font-medium">
-              <Clock className="!h-[16px] !w-[16px] !mr-1" />
-              Shift/Time Period
-            </Label>
-            <Select
-              value={formData.shiftTime}
-              onValueChange={(v) => setFormData({ ...formData, shiftTime: v })}
+        <div className="!space-y-2.5">
+          <Label className="!flex !items-center !text-[14px] !font-medium !text-[var(--foreground)]">
+            <Clock className="!h-[16px] !w-[16px] !mr-1 !text-[var(--primary)]" />
+            Shift/Time Period
+          </Label>
+          <Select
+            value={formData.shiftTime}
+            onValueChange={(v) => setFormData({ ...formData, shiftTime: v })}
+          >
+            <SelectTrigger
+              className="!text-[14px] !bg-[var(--input-bg)] !text-[var(--foreground)] !border !border-[#E6EBF1]"
+              style={inputBox}
             >
-              <SelectTrigger className="!text-[14px]" style={inputBox}>
-                <SelectValue placeholder="Select shift" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day-shift">Day Shift (7AM-7PM)</SelectItem>
-                <SelectItem value="night-shift">Night Shift (7PM-7AM)</SelectItem>
-                <SelectItem value="evening">Evening (3PM-11PM)</SelectItem>
-                <SelectItem value="weekend">Weekend</SelectItem>
-                <SelectItem value="holiday">Holiday</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <SelectValue placeholder="Select shift" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day-shift">Day Shift (7AM-7PM)</SelectItem>
+              <SelectItem value="night-shift">Night Shift (7PM-7AM)</SelectItem>
+              <SelectItem value="evening">Evening (3PM-11PM)</SelectItem>
+              <SelectItem value="weekend">Weekend</SelectItem>
+              <SelectItem value="holiday">Holiday</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div className="!space-y-2.5">
-            <Label className="!flex !items-center !text-[14px] !font-medium">
-              <Users className="!h-[16px] !w-[16px] !mr-1" />
-              Staffing Level
-            </Label>
-            <Select
-              value={formData.staffingLevel}
-              onValueChange={(v) => setFormData({ ...formData, staffingLevel: v })}
+        <div className="!space-y-2.5">
+          <Label className="!flex !items-center !text-[14px] !font-medium !text-[var(--foreground)]">
+            <Users className="!h-[16px] !w-[16px] !mr-1 !text-[var(--primary)]" />
+            Staffing Level
+          </Label>
+          <Select
+            value={formData.staffingLevel}
+            onValueChange={(v) => setFormData({ ...formData, staffingLevel: v })}
+          >
+            <SelectTrigger
+              className="!text-[14px] !bg-[var(--input-bg)] !text-[var(--foreground)] !border !border-[#E6EBF1]"
+              style={inputBox}
             >
-              <SelectTrigger className="!text-[14px]" style={inputBox}>
-                <SelectValue placeholder="Select level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="adequate">Adequate</SelectItem>
-                <SelectItem value="minimal">Minimal</SelectItem>
-                <SelectItem value="short-staffed">Short Staffed</SelectItem>
-                <SelectItem value="critically-low">Critically Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <SelectValue placeholder="Select level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="adequate">Adequate</SelectItem>
+              <SelectItem value="minimal">Minimal</SelectItem>
+              <SelectItem value="short-staffed">Short Staffed</SelectItem>
+              <SelectItem value="critically-low">Critically Low</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div className="!space-y-2.5">
-            <Label className="!text-[14px] !font-medium">Patient Acuity/Workload</Label>
-            <Select
-              value={formData.workload}
-              onValueChange={(v) => setFormData({ ...formData, workload: v })}
+        <div className="!space-y-2.5">
+          <Label className="!text-[14px] !font-medium !text-[var(--foreground)]">
+            Patient Acuity/Workload
+          </Label>
+          <Select
+            value={formData.workload}
+            onValueChange={(v) => setFormData({ ...formData, workload: v })}
+          >
+            <SelectTrigger
+              className="!text-[14px] !bg-[var(--input-bg)] !text-[var(--foreground)] !border !border-[#E6EBF1]"
+              style={inputBox}
             >
-              <SelectTrigger className="!text-[14px]" style={inputBox}>
-                <SelectValue placeholder="Select workload" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="very-high">Very High</SelectItem>
-                <SelectItem value="overwhelming">Overwhelming</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <SelectValue placeholder="Select workload" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="very-high">Very High</SelectItem>
+              <SelectItem value="overwhelming">Overwhelming</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+
         </section>
 
         <section className="!space-y-3">
