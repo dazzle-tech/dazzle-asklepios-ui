@@ -3,6 +3,7 @@ import type { ApPatient } from '@/types/model-types';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import Translate from '@/components/Translate';
 interface ExtraDetailsTabProps {
   localPatient: ApPatient;
   setLocalPatient: (patient: ApPatient) => void;
@@ -133,7 +134,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        fieldLabel=" Details"
+        fieldLabel="Details"
         fieldType="textarea"
         fieldName="extraDetails"
         record={localPatient}

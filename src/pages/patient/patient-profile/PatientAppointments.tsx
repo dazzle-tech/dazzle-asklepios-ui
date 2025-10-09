@@ -8,7 +8,7 @@ import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { faSquareXmark } from '@fortawesome/free-solid-svg-icons';
 
-const PatientAppointments = () => {
+const PatientAppointments = ({patient}) => {
   const data = [
     {
       appointmentDate: '2025-08-28',
@@ -89,7 +89,7 @@ const PatientAppointments = () => {
 
   return (
     <MyTable
-      data={data}
+      data={patient?.key ? data : []}
       columns={tableColumns}
       height={400}
     />

@@ -22,9 +22,10 @@ import { setToken, setUser } from '@/reducers/authSlice';
 // import store + enumsApi to prefetch after auth
 import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
+import { useAppSelector } from '@/hooks';
+import { setLang } from '@/reducers/uiSlice';
 
 const SignIn = () => {
-  const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
   const [newPassword, setNewPassword] = useState<string | undefined>();
   const [newPasswordConfirm, setNewPasswordConfirm] = useState<string | undefined>();
@@ -40,6 +41,8 @@ const SignIn = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+   const uiSlice = useAppSelector(state => state.ui);
+  const [langRecord, setLangRecord] = useState({lang: uiSlice.lang});
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
@@ -78,7 +81,6 @@ const SignIn = () => {
       setErrText(' ');
       navigate('/');
     } catch (err: any) {
-      console.error(err);
       setErrText('Login failed. Please check your credentials.');
     }
   };
@@ -112,6 +114,10 @@ const SignIn = () => {
   useEffect(() => {
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
+
+  useEffect(() => {
+    dispatch(setLang(langRecord['lang']));
+  },[langRecord]);
 
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
@@ -147,10 +153,10 @@ const SignIn = () => {
                   fieldType="select"
                   selectData={langLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectDataValue="valueCode"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
-                  record={{}}
-                  setRecord={() => { }}
+                  record={langRecord}
+                  setRecord={setLangRecord}
                   placeholder="Select Language"
                   showLabel={false}
                 />

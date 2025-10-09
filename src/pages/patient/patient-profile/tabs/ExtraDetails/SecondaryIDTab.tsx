@@ -111,7 +111,7 @@ const SecondaryIDTab = ({ localPatient }) => {
     },
     {
       key: 'createdAt',
-      title: 'CREATED AT/BY',
+      title: <Translate>CREATED AT/BY</Translate>,
       fullText: true,
       render: (row: any) =>
         row?.createdAt ? (
@@ -126,7 +126,7 @@ const SecondaryIDTab = ({ localPatient }) => {
     },
     {
       key: 'updatedAt',
-      title: 'UPDATED AT/BY',
+      title: <Translate>UPDATED AT/BY</Translate>,
       fullText: true,
       render: (row: any) =>
         row?.updatedAt ? (

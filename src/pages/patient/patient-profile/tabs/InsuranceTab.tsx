@@ -16,6 +16,7 @@ import './styles.less'
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import Translate from '@/components/Translate';
 interface InsuranceTabProps {
   localPatient: ApPatient;
 }
@@ -35,7 +36,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const columns = [
     {
       key: 'insuranceProvider',
-      title: 'Insurance Provider',
+      title: <Translate>Insurance Provider</Translate>,
       flexGrow: 4,
       render: (rowData: any) =>
         rowData.primaryInsurance ? (
@@ -50,31 +51,31 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
     },
     {
       key: 'insurancePolicyNumber',
-      title: 'Insurance Policy Number',
+      title: <Translate>Insurance Policy Number</Translate>,
       flexGrow: 4,
       dataKey: 'insurancePolicyNumber',
     },
     {
       key: 'groupNumber',
-      title: 'Group Number',
+      title: <Translate>Group Number</Translate>,
       flexGrow: 4,
       dataKey: 'groupNumber',
     },
     {
       key: 'insurancePlanType',
-      title: 'Insurance Plan Type',
+      title: <Translate>Insurance Plan Type</Translate>,
       flexGrow: 4,
       dataKey: 'insurancePlanType',
     },
     {
       key: 'expirationDate',
-      title: 'Expiration Date',
+      title: <Translate>Expiration Date</Translate>,
       flexGrow: 4,
       dataKey: 'expirationDate',
     },
     {
       key: 'details',
-      title: 'Details',
+      title: <Translate>Details</Translate>,
       flexGrow: 2,
       render: (rowData: any) => (
         <MyButton
@@ -163,19 +164,19 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
           }}
           disabled={!localPatient.key}
           prefixIcon={() => <PlusRound />}
-        > New Insurance
+        >New Insurance
         </MyButton>
         <MyButton
           onClick={handleEditModal}
           disabled={!selectedInsurance?.key}
           prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
-        > Edit
+        >Edit
         </MyButton>
         <MyButton
           onClick={() => setSpecificCoverageModalOpen(true)}
           disabled={!selectedInsurance?.key}
           prefixIcon={() => <FontAwesomeIcon icon={faLock} />}
-        > Specific Coverage
+        >Specific Coverage
         </MyButton>
         <MyButton
           onClick={() => { setOpenDeleteModal(true) }}
