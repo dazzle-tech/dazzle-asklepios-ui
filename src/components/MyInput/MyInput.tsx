@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -73,7 +74,7 @@ const MyInput = ({
 }) => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.ui);
-  const recognitionRef = useRef(null);
+  const recognitionRef = useRef<any>(null);
   const [recording, setRecording] = useState(false);
   // <<< Added this line here to fix the error
 
@@ -125,7 +126,7 @@ const MyInput = ({
     } else {
       setValidationResult(undefined);
     }
-  }, [vr]);
+  }, [vr, fieldName]);
 
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
   const handleValueChange = value => {
@@ -136,7 +137,8 @@ const MyInput = ({
 
   // start speech recognition
   const startListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       dispatch(notify({ msg: 'Your browser does not support Speech Recognition', sev: 'error' }));
@@ -159,6 +161,7 @@ const MyInput = ({
     recognition.start();
     recognitionRef.current = recognition;
   };
+
   // stop speech recognition
   const stopListening = () => {
     recognitionRef.current?.stop();
@@ -192,17 +195,16 @@ const MyInput = ({
               onChange={handleValueChange}
               onKeyDown={focusNextField}
             />
-            <div
-              className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
-              onClick={changeRecordingState}
-              style={{ position: 'relative' }}
-            >
-              <FontAwesomeIcon
-                icon={faMicrophone}
-                className={props.disabled ? 'disabled-icon' : 'active-icon'}
-              />
-              {recording && <span className="pulse-ring"></span>}
-            </div>
+            {!props.disabled && (
+              <div
+                className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
+                onClick={changeRecordingState}
+                style={{ position: 'relative' }}
+              >
+                <FontAwesomeIcon icon={faMicrophone} className="active-icon" />
+                {recording && <span className="pulse-ring"></span>}
+              </div>
+            )}
           </InputGroup>
         );
       case 'checkbox':
@@ -374,6 +376,7 @@ const MyInput = ({
           if (!text) return addonWidth;
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
+          if (!context) return addonWidth;
           context.font =
             '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial';
           const metrics = context.measureText(text.toString());
@@ -473,7 +476,7 @@ const MyInput = ({
           </Checkbox>
         );
 
-      default:
+      default: {
         const inputWidth = props?.width ?? 145;
         const addonWidth = 40;
         const totalWidth =
@@ -482,38 +485,6 @@ const MyInput = ({
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const inputControl = (
-          //  <InputGroup style={{ width: totalWidth + 20 }}>
-          //   <Form.Control
-          //     labelKey={props?.selectDataLabel ?? ''}
-          //     style={{ width: inputWidth, height: props?.height ?? 30 }}
-          //     disabled={props.disabled}
-          //     name={fieldName}
-          //     type={fieldType}
-          //     value={record ? record[fieldName] : ''}
-          //     onChange={handleValueChange}
-          //     placeholder={props.placeholder}
-          //     onKeyDown={async e => {
-          //       if (e.key === 'Enter') {
-          //         e.preventDefault();
-          //         const result = await props.enterClick?.();
-          //         if (result !== false) {
-          //           handleEnterFocusNext(e);
-          //         }
-          //       }
-          //     }}
-          //   />
-          //     <div
-          //     className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-          //     onClick={changeRecordingState}
-          //     style={{ position: 'relative' }}
-          //   >
-          //     <FontAwesomeIcon
-          //       icon={faMicrophone}
-          //       className={props.disabled ? 'disabled-icon' : 'active-icon'}
-          //     />
-          //      {recording && <span className="pulse-ring"></span>}
-          //   </div>
-          //   </InputGroup>
           <div style={{ position: 'relative', display: 'inline-block', width: inputWidth }}>
             <Form.Control
               labelKey={props?.selectDataLabel ?? ''}
@@ -539,16 +510,15 @@ const MyInput = ({
               }}
             />
 
-            <div
-              className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-              onClick={changeRecordingState}
-            >
-              <FontAwesomeIcon
-                icon={faMicrophone}
-                className={props.disabled ? 'disabled-icon' : 'active-icon'}
-              />
-              {recording && <span className="pulse-ring"></span>}
-            </div>
+            {!props.disabled && (
+              <div
+                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
+                onClick={changeRecordingState}
+              >
+                <FontAwesomeIcon icon={faMicrophone} className="active-icon" />
+                {recording && <span className="pulse-ring"></span>}
+              </div>
+            )}
           </div>
         );
 
@@ -571,6 +541,7 @@ const MyInput = ({
         }
 
         return inputControl;
+      }
     }
   };
 
