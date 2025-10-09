@@ -106,6 +106,10 @@
   overflow-y: auto;
 }
 
+.modal-right-body.no-scroll {
+  overflow-y: hidden;
+}
+
 .modal-left-body {
   padding: 20px 20px;
   flex: 1;
@@ -131,7 +135,6 @@
   gap: 5px;
 }
 
-
 // Keep this as the last style in the file to override styles when dark mode is active
 .custom-advanced-modal.dark {
   .modal-left-content {
@@ -140,25 +143,21 @@
   .modal-right-content {
     background-color: var(--dark-black) !important;
   }
-  .modal-left-title{
+  .modal-left-title {
     color: var(--white);
   }
-  .modal-right-title{
-    .modal-right-main-title{
-     color: var(--white) !important;
+  .modal-right-title {
+    .modal-right-main-title {
+      color: var(--white) !important;
     }
-     
   }
   .modal-right-footer {
     background: var(--dark-black) !important;
   }
 }
-.custom-advanced-modal.dark .rs-modal-body{
-    background-color: var(--extra-dark-black) !important;
+.custom-advanced-modal.dark .rs-modal-body {
+  background-color: var(--extra-dark-black) !important;
 }
-.custom-advanced-modal.dark .rs-modal-content{
+.custom-advanced-modal.dark .rs-modal-content {
   box-shadow: var(--dark-mode-box-shadow);
 }
-
-
-
