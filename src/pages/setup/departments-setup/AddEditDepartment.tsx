@@ -1,13 +1,11 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useEnumOptions } from '@/services/enumsApi';
