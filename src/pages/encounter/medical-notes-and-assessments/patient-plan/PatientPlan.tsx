@@ -46,7 +46,7 @@ const PatientPlan = ({ encounter, patient }) => {
           setLocalEncounter(prev => ({
             ...prev,
             planInstructionsNote: selected.lovDisplayVale,
-            planInstructionsLkey: null // ✅ إعادة select إلى فارغ
+            planInstructionsLkey: null 
           }));
         }
       }
