@@ -262,6 +262,7 @@ const Encounter = () => {
       navigate('/encounter-list');
     }
   };
+  
 
   const OpenAllargyModal = () => {
     setOpenAllargyModal(true);
@@ -697,13 +698,13 @@ const Encounter = () => {
           <Panel>
             <div className="container-bt">
               <div className="left">
-                <BackButton onClick={handleGoBack} />
+                <BackButton onClick={handleGoBack} text='To Patients list' />
+
 
                 <MyButton
-                              backgroundColor={'var(--primary-gray)'}
-                              onClick={handleGoBack}
-                              prefixIcon={() => <FaArrowLeft />}
-                            >
+                backgroundColor={'var(--primary-gray)'}
+                onClick={handleGoBack}
+                prefixIcon={() => <FaArrowLeft />}>
                 </MyButton>
 
                 <Form fluid>
@@ -735,26 +736,6 @@ const Encounter = () => {
                   }}
                 >
                   Create Follow-up
-                </MyButton>
-                <MyButton
-                  disabled={propsData?.patient?.hasAllergy ? false : true}
-                  backgroundColor={
-                    propsData?.patient?.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'
-                  }
-                  onClick={OpenAllargyModal}
-                  prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
-                >
-                  Allergy
-                </MyButton>
-                <MyButton
-                  disabled={propsData?.patient?.hasWarning ? false : true}
-                  backgroundColor={
-                    propsData?.patient?.hasWarning ? 'var(--primary-orange)' : 'var(--deep-blue)'
-                  }
-                  onClick={OpenWarningModal}
-                  prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
-                >
-                  Warning
                 </MyButton>
                 {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
                   !(propsData?.encounter?.resourceTypeLkey === '91084250213000') && (

@@ -26,6 +26,8 @@ import { notify } from '@/utils/uiReducerActions';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import SectionContainer from '@/components/SectionsoContainer';
+import PatientPlan from '../../medical-notes-and-assessments/patient-plan';
+import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -224,6 +226,7 @@ const SOAP = props => {
             />
 
             <div className="last-section-clinical-visit">
+            <div className="half-width-section">
               <SectionContainer 
                title={
                 <>
@@ -235,27 +238,12 @@ const SOAP = props => {
                }
                content={
                 <Form fluid>
-                  <MyInput
-                    width="100%"
-                    fieldType="select"
-                    selectData={planLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName="planInstructionsLkey"
-                    record={localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <MyInput
-                    width="100%"
-                    fieldType="textarea"
-                    fieldName="planInstructionsNote"
-                    record={localEncounter}
-                    setRecord={setLocalEncounter}
-                    row={4}
-                  />
+
+                  <PatientPlan  patient={patient} encounter={encounter} />
+
                 </Form>
                }
-              />
+              /></div>
               {/* <div className="clinical-section-box">
                 <div className="clinical-section-header">
                   <Text>Plan</Text>
@@ -285,31 +273,17 @@ const SOAP = props => {
                   />
                 </Form>
               </div> */}
-
-                <SectionContainer 
-                 title={
-                  <>
-                 Summary of Patient History
-                  <MyButton size="small" onClick={saveChanges}>
-                    Save
-                  </MyButton>
-                  </>
-                 }
-                 content={
-                  <Form fluid>
-                  <MyInput
-                    width="100%"
-                    height="150px"
-                    showLabel={false}
-                    placeholder="Summary of Patient History"
-                    fieldType="textarea"
-                    fieldName="assessmentSummery"
-                    record={record}
-                    setRecord={setRecord}
+              <div className="half-width-section">
+                 <PatientHistorySummary
+                  button={<MyButton size="small" onClick={saveChanges}>
+                      Get Summary
+                    </MyButton>}
+                    patient={patient}
+                    encounter={encounter}
+                    edit={edit}
                   />
-                </Form>
-                 }
-                />
+</div>
+
               {/* <div className="clinical-section-box">
                 <div className="clinical-section-header">
                   <Text>Summary of Patient History</Text>
@@ -332,6 +306,7 @@ const SOAP = props => {
                 </Form>
               </div> */}
             </div>
+
           </div>
         </Tabs.Tab>
         <Tabs.Tab eventKey="2" title="Physical Examination & Findings">

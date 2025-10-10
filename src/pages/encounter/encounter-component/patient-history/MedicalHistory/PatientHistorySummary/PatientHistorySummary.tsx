@@ -3,20 +3,23 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import SectionContainer from '@/components/SectionsoContainer';
+import MyButton from '@/components/MyButton/MyButton';
 
 const PatientHistorySummary = ({
   patient = undefined,
   encounter = undefined,
   edit = undefined,
-  title = null
+  title = null,
+  button = null
 }) => {
   return (
     <div className="medical-container-div">
       <SectionContainer
         title={
-          <div className="patient-history-title">
+          <div className="patient-history-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <FontAwesomeIcon icon={faClipboardList} className="patient-history-icon" />
             <span>{title || 'Patient History Summary'} </span>
+            {button && <div>{button}</div>}
           </div>
         }
         content={

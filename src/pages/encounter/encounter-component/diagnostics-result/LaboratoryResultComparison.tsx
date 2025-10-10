@@ -6,7 +6,7 @@ import { Col, Form, Row } from "rsuite";
 import Translate from "@/components/Translate";
 import MyInput from "@/components/MyInput";
 import MyTable from "@/components/MyTable";
-
+import './styles.less'
 const LaboratoryResultComparison = ({ patient, testKey = null }) => {
     const [dateFilter, setDateFilter] = useState({ fromDate: null, toDate: null });
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -108,8 +108,9 @@ const [record, setRecord] = useState<any>({});
     return (<div style={{ overflowX: 'hidden' }}>
         <Row>
             <Col md={24}>
+            <div className="my-table-filters-laboratory-result-comparsion">
                 {filters()}
-
+            </div>
                 {pivotData.tests.map(([testName, results], index) => {
                     const dates = Object.keys(results).sort();
                     const columns = [
