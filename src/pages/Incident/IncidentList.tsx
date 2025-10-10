@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Search, Filter, Eye, Edit } from "lucide-react";
+import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 
 const mockIncidents = [
   {
@@ -95,34 +96,59 @@ const IncidentList = () => {
     return matchesSearch && matchesStatus && matchesSeverity;
   });
 
-  const severityClasses = (s: string) => {
-    switch (s.toLowerCase()) {
-      case "critical":
-      case "high":
-        return "!bg-[#E23B3B] !text-white"; 
-      case "medium":
-        return "!bg-[#0B66FF] !text-white"; 
-      case "low":
-        return "!bg-[#EEF2F7] !text-[#374151]"; 
-      default:
-        return "!bg-[#EEF2F7] !text-[#374151]";
-    }
-  };
+function SeverityBadge({ value }: { value: string }) {
+  let color = "";
 
-  const statusClasses = (s: string) => {
-    switch (s.toLowerCase()) {
-      case "under review":
-        return "!bg-[#F3F4F6] !text-[#334155] !border !border-[#E5E7EB]"; 
-      case "resolved":
-        return "!bg-[#1663E3] !text-white";
-      case "investigation":
-        return "!bg-[#0B66FF] !text-white"; 
-      case "action required":
-        return "!bg-[#E23B3B] !text-white"; 
-      default:
-        return "!bg-[#F3F4F6] !text-[#334155] !border !border-[#E5E7EB]";
-    }
-  };
+  if (value === "Critical") {
+    color = "#e42a52ff";
+  }
+   else if (value === "High") {
+    color = "#f5c21aff";
+  }
+   else if (value === "Medium") {
+    color = "#2e6edeff";
+  } 
+   else if (value === "Low") {
+    color = "#25f325ff";
+  } 
+   else {
+    color = "#b3b3b3ff";
+  }
+
+  return (
+    <MyBadgeStatus
+      contant={value}
+      color={color}
+    />
+  );
+}
+
+function StatusBadge({ value }: { value: string }) {
+  let color = "";
+
+  if (value === "Resolved") {
+    color = "#4fdc37ff";
+  }
+  else if (value === "Action Required") {
+    color = "#e42a52ff";
+  }
+  else if (value === "Investigation") {
+    color = "#2e6edeff";
+  }
+  else if (value === "Under Review") {
+    color = "#b3b3b3ff";
+  }
+  else {
+    color = "#217cecff";
+  }
+
+  return (
+    <MyBadgeStatus
+      contant={value}
+      color={color}
+    />
+  );
+}
 
   const Chip = ({
     children,
@@ -233,13 +259,13 @@ const IncidentList = () => {
                   <TableHead className="!w-[160px] !pl-6 !text-[#6B7280] !text-[12px] !font-semibold !whitespace-nowrap">
                     Incident ID
                   </TableHead>
-                  <TableHead className="!text-[#6B7280] !text-[12px] !font-semibold">Title</TableHead>
-                  <TableHead className="!text-[#6B7280] !text-[12px] !font-semibold !whitespace-nowrap">Department</TableHead>
-                  <TableHead className="!text-[#6B7280] !text-[12px] !font-semibold">Severity</TableHead>
-                  <TableHead className="!text-[#6B7280] !text-[12px] !font-semibold">Status</TableHead>
-                  <TableHead className="!text-[#6B7280] !text-[12px] !font-semibold">Date</TableHead>
-                  <TableHead className="!text-[#6B7280] !text-[12px] !font-semibold">Reporter</TableHead>
-                  <TableHead className="!w-[160px] !text-right !text-[#6B7280] !text-[12px] !font-semibold !whitespace-nowrap !pr-6">
+                  <TableHead className="!text-[#6B7280] !text-[12px] !font-semibold !text-center">Title</TableHead>
+                  <TableHead className="!w-[150px] !text-[#6B7280] !text-[12px] !font-semibold !whitespace-nowrap !text-center">Department</TableHead>
+                  <TableHead className="!w-[150px] !text-[#6B7280] !text-[12px] !font-semibold !text-center">Severity</TableHead>
+                  <TableHead className="!w-[150px] !text-[#6B7280] !text-[12px] !font-semibold !text-center">Status</TableHead>
+                  <TableHead className="!w-[150px] !text-[#6B7280] !text-[12px] !font-semibold !text-center">Date</TableHead>
+                  <TableHead className="!text-[#6B7280] !text-[12px] !font-semibold !text-center">Reporter</TableHead>
+                  <TableHead className="!w-[160px] !text-right !text-[#6B7280] !text-[12px] !font-semibold !whitespace-nowrap !pr-6 !text-center">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -267,25 +293,20 @@ const IncidentList = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell className="!text-[hsl(var(--foreground))]">
+                    <TableCell className="!text-center !text-[hsl(var(--foreground))]">
                       {incident.department}
                     </TableCell>
 
-                    {/* Severity */}
                     <TableCell>
-                      <Chip className={severityClasses(incident.severity)}>
-                        {incident.severity}
-                      </Chip>
+                      <SeverityBadge value={incident.severity} />
                     </TableCell>
 
-                    {/* Status */}
                     <TableCell>
-                      <Chip className={statusClasses(incident.status)}>
-                        {incident.status}
-                      </Chip>
+                      <StatusBadge value={incident.status} />
                     </TableCell>
 
-                    <TableCell className="!text-[12px] !text-[hsl(var(--muted-foreground))]">
+
+                    <TableCell className="!text-[12px] !text-[hsl(var(--muted-foreground))] !text-center">
                       {incident.date}
                     </TableCell>
 

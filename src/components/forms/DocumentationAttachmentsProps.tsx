@@ -71,53 +71,82 @@ export const DocumentationAttachments = ({
 
         {/* Attach Supporting Documentation */}
         <section className="!space-y-3">
-          <Label className="!text-[14px] !font-medium">
+          <Label className="!text-[14px] !font-medium !text-[var(--foreground)]">
             Attach Supporting Documentation
           </Label>
 
           <div className="!grid !grid-cols-4 !gap-5">
-            <Button type="button" variant="outline" className={tileClass} onClick={() => addAttachment("photo")}>
-              <Camera className="!h-[18px] !w-[18px] !mb-1 !text-[#1F2937]" />
-              <span className="!text-[12px] !font-medium">Photos</span>
+            <Button
+              type="button"
+              variant="outline"
+              className={`${tileClass} !bg-[var(--input-bg)] !border-[#E6EBF1] !text-[var(--foreground)] hover:!bg-[var(--muted)]`}
+              onClick={() => addAttachment("photo")}
+            >
+              <Camera className="!h-[18px] !w-[18px] !mb-1 !text-[var(--primary)]" />
+              <span className="!text-[12px] !font-medium !text-[var(--foreground)]">Photos</span>
             </Button>
 
-            <Button type="button" variant="outline" className={tileClass} onClick={() => addAttachment("video")}>
-              <Video className="!h-[18px] !w-[18px] !mb-1 !text-[#1F2937]" />
-              <span className="!text-[12px] !font-medium">Videos</span>
+            <Button
+              type="button"
+              variant="outline"
+              className={`${tileClass} !bg-[var(--input-bg)] !border-[#E6EBF1] !text-[var(--foreground)] hover:!bg-[var(--muted)]`}
+              onClick={() => addAttachment("video")}
+            >
+              <Video className="!h-[18px] !w-[18px] !mb-1 !text-[var(--primary)]" />
+              <span className="!text-[12px] !font-medium !text-[var(--foreground)]">Videos</span>
             </Button>
 
-            <Button type="button" variant="outline" className={tileClass} onClick={() => addAttachment("document")}>
-              <FileText className="!h-[18px] !w-[18px] !mb-1 !text-[#1F2937]" />
-              <span className="!text-[12px] !font-medium">Documents</span>
+            <Button
+              type="button"
+              variant="outline"
+              className={`${tileClass} !bg-[var(--input-bg)] !border-[#E6EBF1] !text-[var(--foreground)] hover:!bg-[var(--muted)]`}
+              onClick={() => addAttachment("document")}
+            >
+              <FileText className="!h-[18px] !w-[18px] !mb-1 !text-[var(--primary)]" />
+              <span className="!text-[12px] !font-medium !text-[var(--foreground)]">Documents</span>
             </Button>
 
-            <Button type="button" variant="outline" className={tileClass} onClick={() => addAttachment("report")}>
-              <Upload className="!h-[18px] !w-[18px] !mb-1 !text-[#1F2937]" />
-              <span className="!text-[12px] !font-medium">Reports</span>
+            <Button
+              type="button"
+              variant="outline"
+              className={`${tileClass} !bg-[var(--input-bg)] !border-[#E6EBF1] !text-[var(--foreground)] hover:!bg-[var(--muted)]`}
+              onClick={() => addAttachment("report")}
+            >
+              <Upload className="!h-[18px] !w-[18px] !mb-1 !text-[var(--primary)]" />
+              <span className="!text-[12px] !font-medium !text-[var(--foreground)]">Reports</span>
             </Button>
           </div>
         </section>
 
+
         {attachments.length > 0 && (
-          <section className="!space-y-3">
-            <Label className="!text-[14px] !font-medium">Attached Files</Label>
-            <div className="!space-y-2.5">
-              {attachments.map((attachment, index) => (
-                <div
-                  key={index}
-                  className="!flex !items-center !justify-between !p-2.5 !rounded-[10px] !border !border-[#E6EBF1] !bg-[#F7F8FA]"
-                >
-                  <div className="!flex !items-center !space-x-2.5">
-                    <FileImage className="!h-[16px] !w-[16px] !text-[hsl(var(--muted-foreground))]" />
-                    <span className="!text-[13px]">{attachment}</span>
-                  </div>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeAttachment(index)} className="!h-8 !px-2">
-                    <Trash2 className="!h-4 !w-4" />
-                  </Button>
+        <section className="!space-y-3">
+          <Label className="!text-[14px] !font-medium !text-[var(--foreground)]">
+            Attached Files
+          </Label>
+          <div className="!space-y-2.5">
+            {attachments.map((attachment, index) => (
+              <div
+                key={index}
+                className="!flex !items-center !justify-between !p-2.5 !rounded-[10px] !border !border-[#E6EBF1] !bg-[var(--input-bg)]"
+              >
+                <div className="!flex !items-center !space-x-2.5">
+                  <FileImage className="!h-[16px] !w-[16px] !text-[var(--muted-foreground)]" />
+                  <span className="!text-[13px] !text-[var(--foreground)]">{attachment}</span>
                 </div>
-              ))}
-            </div>
-          </section>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeAttachment(index)}
+                  className="!h-8 !px-2"
+                >
+                  <Trash2 className="!h-4 !w-4 !text-[var(--foreground)]" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
         )}
 
         {/* Equipment */}

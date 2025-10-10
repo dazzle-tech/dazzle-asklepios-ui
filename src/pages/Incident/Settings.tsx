@@ -26,30 +26,32 @@ const Settings = () => {
         </div>
 
         {/* General Settings */}
-        <Card className="!rounded-[12px] !border !border-[#E6EBF1] !shadow-sm">
+        <Card className="!rounded-[12px] !bg-[var(--card-bg)] !shadow-sm !border !border-[#E6EBF1]">
           <CardHeader className="!py-3 !px-4 !border-b !border-[#E6EBF1]">
-            <CardTitle className="!text-[15px] !font-semibold !text-foreground !flex !items-center">
-              <Database className="!h-[16px] !w-[16px] !mr-2 !text-[#1E60D6]" />
+            <CardTitle className="!text-[15px] !font-semibold !text-[var(--foreground)] !flex !items-center">
+              <Database className="!h-[16px] !w-[16px] !mr-2 !text-[var(--primary)] " />
               General Settings
             </CardTitle>
           </CardHeader>
+
           <CardContent className="!space-y-4 !p-4">
             <div className="!grid !gap-4 md:!grid-cols-2">
               <div className="!space-y-2">
-                <Label htmlFor="hospitalName" className="!text-[12px] !font-medium">Hospital Name</Label>
-                <Input id="hospitalName" defaultValue="MedCare General Hospital" className="sys-field" />
+                <Label htmlFor="hospitalName" className="!text-[12px] !font-medium !text-[var(--foreground)]">Hospital Name</Label>
+                <Input id="hospitalName" defaultValue="MedCare General Hospital" className="sys-field !bg-[var(--input-bg)] !text-[var(--foreground)] !border" />
               </div>
+
               <div className="!space-y-2">
-                <Label htmlFor="adminEmail" className="!text-[12px] !font-medium">Administrator Email</Label>
-                <Input id="adminEmail" type="email" defaultValue="admin@medcare.hospital" className="sys-field" />
+                <Label htmlFor="adminEmail" className="!text-[12px] !font-medium !text-[var(--foreground)]">Administrator Email</Label>
+                <Input id="adminEmail" type="email" defaultValue="admin@medcare.hospital" className="sys-field !bg-[var(--input-bg)] !text-[var(--foreground)] !border" />
               </div>
             </div>
 
             <div className="!grid !gap-4 md:!grid-cols-2">
               <div className="!space-y-2">
-                <Label className="!text-[12px] !font-medium">Timezone</Label>
+                <Label className="!text-[12px] !font-medium !text-[var(--foreground)]">Timezone</Label>
                 <Select defaultValue="est">
-                  <SelectTrigger className="sys-select">
+                  <SelectTrigger className="sys-select !bg-[var(--input-bg)] !text-[var(--foreground)] !border">
                     <SelectValue placeholder="Select timezone" />
                   </SelectTrigger>
                   <SelectContent>
@@ -60,10 +62,11 @@ const Settings = () => {
                   </SelectContent>
                 </Select>
               </div>
+
               <div className="!space-y-2">
-                <Label className="!text-[12px] !font-medium">Language</Label>
+                <Label className="!text-[12px] !font-medium !text-[var(--foreground)]">Language</Label>
                 <Select defaultValue="en">
-                  <SelectTrigger className="sys-select">
+                  <SelectTrigger className="sys-select !bg-[var(--input-bg)] !text-[var(--foreground)] !border">
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
                   <SelectContent>
@@ -76,6 +79,7 @@ const Settings = () => {
             </div>
           </CardContent>
         </Card>
+
 
         {/* Notification Settings */}
         <Card className="!rounded-[12px] !border !border-[#E6EBF1] !shadow-sm">
@@ -148,46 +152,49 @@ const Settings = () => {
         </Card>
 
         {/* User Management */}
-        <Card className="!rounded-[12px] !border !border-[#E6EBF1] !shadow-sm">
-          <CardHeader className="!py-3 !px-4 !border-b !border-[#E6EBF1]">
-            <CardTitle className="!text-[15px] !font-semibold !text-foreground !flex !items-center">
-              <Users className="!h-[16px] !w-[16px] !mr-2 !text-[#1E60D6]" />
-              User Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="!space-y-4 !p-4">
-            <div className="!grid !gap-4 md:!grid-cols-2">
-              <div className="!space-y-2">
-                <Label htmlFor="defaultRole" className="!text-[12px] !font-medium">Default User Role</Label>
-                <Select defaultValue="staff">
-                  <SelectTrigger id="defaultRole" className="sys-select">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="nurse">Nurse</SelectItem>
-                    <SelectItem value="doctor">Doctor</SelectItem>
-                    <SelectItem value="admin">Administrator</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="!space-y-2">
-                <Label htmlFor="sessionTimeout" className="!text-[12px] !font-medium">Session Timeout (minutes)</Label>
-                <Input id="sessionTimeout" type="number" defaultValue="30" className="sys-field" />
-              </div>
-            </div>
+<Card className="!rounded-[12px] !border !border-[#E6EBF1] !bg-[var(--card-bg)] !shadow-sm">
+  <CardHeader className="!py-3 !px-4 !border-b !border-[#E6EBF1]">
+    <CardTitle className="!text-[15px] !font-semibold !text-[var(--foreground)] !flex !items-center">
+      <Users className="!h-[16px] !w-[16px] !mr-2 !text-[var(--primary)]" />
+      User Management
+    </CardTitle>
+  </CardHeader>
 
-            <div className="!flex !items-center !justify-between">
-              <div className="!space-y-0.5">
-                <Label className="!text-[13px]">Allow Anonymous Reporting</Label>
-                <p className="!text-[12px] !text-muted-foreground">
-                  Allow incidents to be reported without user identification
-                </p>
-              </div>
-              <Switch />
-            </div>
-          </CardContent>
-        </Card>
+  <CardContent className="!space-y-4 !p-4">
+    <div className="!grid !gap-4 md:!grid-cols-2">
+      <div className="!space-y-2">
+        <Label htmlFor="defaultRole" className="!text-[12px] !font-medium !text-[var(--foreground)]">Default User Role</Label>
+        <Select defaultValue="staff">
+          <SelectTrigger id="defaultRole" className="sys-select !bg-[var(--input-bg)] !text-[var(--foreground)] !border !border-[#E6EBF1]">
+            <SelectValue placeholder="Select role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="staff">Staff</SelectItem>
+            <SelectItem value="nurse">Nurse</SelectItem>
+            <SelectItem value="doctor">Doctor</SelectItem>
+            <SelectItem value="admin">Administrator</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="!space-y-2">
+        <Label htmlFor="sessionTimeout" className="!text-[12px] !font-medium !text-[var(--foreground)]">Session Timeout (minutes)</Label>
+        <Input id="sessionTimeout" type="number" defaultValue="30" className="sys-field !bg-[var(--input-bg)] !text-[var(--foreground)] !border !border-[#E6EBF1]" />
+      </div>
+    </div>
+
+    <div className="!flex !items-center !justify-between">
+      <div className="!space-y-0.5">
+        <Label className="!text-[13px] !text-[var(--foreground)]">Allow Anonymous Reporting</Label>
+        <p className="!text-[12px] !text-[var(--muted-foreground)]">
+          Allow incidents to be reported without user identification
+        </p>
+      </div>
+      <Switch />
+    </div>
+  </CardContent>
+</Card>
+
 
         {/* Save Button */}
         <div className="!flex !justify-end !pt-2">
