@@ -508,8 +508,6 @@ const MedicalTimeline = ({ patient, encounter }) => {
             </div>
           </div>
         </div>
-
-        {/* Animations (kept in CSS file) */}
       </div>
     </div>
   );
