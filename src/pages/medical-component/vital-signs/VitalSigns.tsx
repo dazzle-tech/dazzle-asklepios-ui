@@ -68,6 +68,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
             record={object}
             setRecord={setObject}
             disabled={disabled}
+            searchable={false}
           />
         </div>
         <div className="vital-signs-handle-position-row">
