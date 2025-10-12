@@ -4,32 +4,7 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 
-const sampleInpatientData = [
-  {
-    admission: '2023-11-15T00:00:00Z',
-    discharge: '2023-11-18T00:00:00Z',
-    ward: 'Cardiology ICU',
-    diagnosis: 'Acute MI',
-    physician: 'Dr. Smith',
-    los: '3 days'
-  },
-  {
-    admission: '2022-08-10T00:00:00Z',
-    discharge: '2022-08-12T00:00:00Z',
-    ward: 'General Medicine',
-    diagnosis: 'Diabetic Ketoacidosis',
-    physician: 'Dr. Johnson',
-    los: '2 days'
-  },
-  {
-    admission: '2021-03-05T00:00:00Z',
-    discharge: '2021-03-07T00:00:00Z',
-    ward: 'Respiratory Unit',
-    diagnosis: 'Pneumonia',
-    physician: 'Dr. Williams',
-    los: '2 days'
-  }
-];
+const sampleInpatientData = [];
 
 const columns: ColumnConfig[] = [
   {

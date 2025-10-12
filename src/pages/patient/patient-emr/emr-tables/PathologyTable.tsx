@@ -5,32 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const samplePathologyData = [
-  {
-    specimen: 'Skin Biopsy',
-    date: '2023-11-20T00:00:00Z',
-    pathologist: 'Dr. Patho',
-    location: 'Left arm',
-    status: 'Final',
-    diagnosis: 'Benign nevus'
-  },
-  {
-    specimen: 'Colonoscopy Biopsy',
-    date: '2023-10-20T00:00:00Z',
-    pathologist: 'Dr. Patho',
-    location: 'Sigmoid colon',
-    status: 'Final',
-    diagnosis: 'Hyperplastic polyp'
-  },
-  {
-    specimen: 'Thyroid Nodule FNA',
-    date: '2023-09-15T00:00:00Z',
-    pathologist: 'Dr. Cytology',
-    location: 'Right lobe',
-    status: 'Final',
-    diagnosis: 'Benign thyroid tissue'
-  }
-];
+const samplePathologyData = [];
 
 const columns: ColumnConfig[] = [
   {

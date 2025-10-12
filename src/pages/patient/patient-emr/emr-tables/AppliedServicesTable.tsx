@@ -5,40 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleServicesData = [
-  {
-    service: 'Physical Therapy',
-    provider: 'PT Sarah Johnson',
-    startDate: '2024-01-15T00:00:00Z',
-    frequency: '3x/week',
-    progress: '8/20',
-    status: 'Active'
-  },
-  {
-    service: 'Occupational Therapy',
-    provider: 'OT Mike Chen',
-    startDate: '2023-12-01T00:00:00Z',
-    frequency: '2x/week',
-    progress: '12/12',
-    status: 'Completed'
-  },
-  {
-    service: 'Speech Therapy',
-    provider: 'SLP Lisa Wong',
-    startDate: '2024-01-20T00:00:00Z',
-    frequency: '1x/week',
-    progress: '0/10',
-    status: 'Scheduled'
-  },
-  {
-    service: 'Dietitian Consultation',
-    provider: 'RD Karen Smith',
-    startDate: '2024-01-08T00:00:00Z',
-    frequency: 'Monthly',
-    progress: '2/6',
-    status: 'Active'
-  }
-];
+const sampleServicesData = [];
 
 const columns: ColumnConfig[] = [
   {

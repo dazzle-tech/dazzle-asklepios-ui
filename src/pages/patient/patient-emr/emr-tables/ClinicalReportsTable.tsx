@@ -5,40 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleReportsData = [
-  {
-    reportType: 'Discharge Summary',
-    date: '2023-11-18T00:00:00Z',
-    provider: 'Dr. Smith',
-    subject: 'Acute MI Management',
-    pages: 3,
-    status: 'Final'
-  },
-  {
-    reportType: 'Consultation Report',
-    date: '2024-01-12T00:00:00Z',
-    provider: 'Dr. Cardio',
-    subject: 'Cardiology Evaluation',
-    pages: 2,
-    status: 'Final'
-  },
-  {
-    reportType: 'Operative Report',
-    date: '2022-06-15T00:00:00Z',
-    provider: 'Dr. Surgeon',
-    subject: 'Laparoscopic Appendectomy',
-    pages: 4,
-    status: 'Final'
-  },
-  {
-    reportType: 'Pathology Report',
-    date: '2023-11-20T00:00:00Z',
-    provider: 'Dr. Patho',
-    subject: 'Skin Biopsy Results',
-    pages: 1,
-    status: 'Final'
-  }
-];
+const sampleReportsData = [];
 
 const columns: ColumnConfig[] = [
   {

@@ -5,35 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleOperationsData = [
-  {
-    date: '2022-06-15T00:00:00Z',
-    operation: 'Appendectomy',
-    surgeon: 'Dr. Surgeon',
-    type: 'Laparoscopic',
-    duration: '45 min',
-    anesthesia: 'General',
-    outcome: 'Successful'
-  },
-  {
-    date: '2020-03-10T00:00:00Z',
-    operation: 'Gallbladder Removal',
-    surgeon: 'Dr. Gastro',
-    type: 'Laparoscopic',
-    duration: '90 min',
-    anesthesia: 'General',
-    outcome: 'Successful'
-  },
-  {
-    date: '2018-11-22T00:00:00Z',
-    operation: 'Hernia Repair',
-    surgeon: 'Dr. Surgeon',
-    type: 'Open',
-    duration: '60 min',
-    anesthesia: 'Regional',
-    outcome: 'Successful'
-  }
-];
+const sampleOperationsData = [];
 
 const columns: ColumnConfig[] = [
   {
@@ -72,38 +44,38 @@ const columns: ColumnConfig[] = [
     title: <Translate>Anesthesia</Translate>,
     dataKey: 'anesthesia'
   },
-{
-  key: 'outcome',
-  title: <Translate>Outcome</Translate>,
-  dataKey: 'outcome',
-  width: 150,
-  render: (row: any) => {
-    const outcome = row.outcome;
+  {
+    key: 'outcome',
+    title: <Translate>Outcome</Translate>,
+    dataKey: 'outcome',
+    width: 150,
+    render: (row: any) => {
+      const outcome = row.outcome;
 
-    let bgColor = 'var(--light-gray)';
-    let color = 'var(--dark-gray)';
+      let bgColor = 'var(--light-gray)';
+      let color = 'var(--dark-gray)';
 
-    if (outcome === 'Successful') {
-      bgColor = 'var(--light-green)';
-      color = 'var(--primary-green)';
-    } else if (outcome === 'Complication') {
-      bgColor = 'var(--light-orange)';
-      color = 'var(--primary-orange)';
-    } else if (outcome === 'Cancelled') {
-      bgColor = 'var(--light-pink)';
-      color = 'var(--primary-pink)';
-    } else if (outcome === 'Pending') {
-      bgColor = 'var(--light-blue)';
-      color = 'var(--primary-blue)';
+      if (outcome === 'Successful') {
+        bgColor = 'var(--light-green)';
+        color = 'var(--primary-green)';
+      } else if (outcome === 'Complication') {
+        bgColor = 'var(--light-orange)';
+        color = 'var(--primary-orange)';
+      } else if (outcome === 'Cancelled') {
+        bgColor = 'var(--light-pink)';
+        color = 'var(--primary-pink)';
+      } else if (outcome === 'Pending') {
+        bgColor = 'var(--light-blue)';
+        color = 'var(--primary-blue)';
+      }
+
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <MyBadgeStatus backgroundColor={bgColor} color={color} contant={outcome} />
+        </div>
+      );
     }
-
-    return (
-      <div style={{ textAlign: 'center' }}>
-        <MyBadgeStatus backgroundColor={bgColor} color={color} contant={outcome} />
-      </div>
-    );
   }
-}
 ];
 
 const OperationsTable = () => {
