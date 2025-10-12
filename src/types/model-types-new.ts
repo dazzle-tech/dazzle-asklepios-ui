@@ -90,7 +90,7 @@ export interface UserRole {
 	roleId?:string;
   userId?:string;
 }
-export interface UserFacilityDepartment {
+export interface UserDepartment {
   id?:number;
   userId: number;
   facilityId?: string | null;

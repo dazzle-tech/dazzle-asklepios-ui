@@ -89,7 +89,7 @@ export const newUserRole:modelTypes.UserRole = {
   roleId:undefined,
   userId:undefined,
 }
-export const newUserFacilityDepartment:modelTypes.UserFacilityDepartment = {
+export const newUserDepartment:modelTypes.UserDepartment = {
   id:undefined,
   userId: undefined,
   departmentId: undefined,

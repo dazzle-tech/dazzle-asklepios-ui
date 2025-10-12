@@ -12,12 +12,12 @@ import { FaBuilding } from 'react-icons/fa';
 import ChildModal from '@/components/ChildModal';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { useAddUserFacilityDepartmentMutation, useGetUserFacilityDepartmentsByUserQuery, useToggleUserFacilityDepartmentIsActiveMutation } from '@/services/security/userFacilityDepartmentsService';
-import {Department, UserFacilityDepartment } from '@/types/model-types-new';
+import { useAddUserDepartmentMutation,useGetUserDepartmentsByUserQuery, useToggleUserDepartmentIsActiveMutation } from '@/services/security/userDepartmentsService';
+import {Department, UserDepartment } from '@/types/model-types-new';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
-import { newUserFacilityDepartment } from '@/types/model-types-constructor-new';
+import { newUserDepartment } from '@/types/model-types-constructor-new';
 import { useGetDepartmentsQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { conjureValueBasedOnIDFromList } from '@/utils';
 
@@ -27,8 +27,8 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
   const { data: departmentListResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
   const departmentList = React.useMemo(() => departmentListResponse?.data ?? [], [departmentListResponse]);
   // Fetch user departments list response
-  const { data: userDepartmentsResponse, refetch: refetchUserDepartments } = useGetUserFacilityDepartmentsByUserQuery(user?.id);
-  const [userFacilityDepartment, setUserFacilityDepartment] = useState<UserFacilityDepartment>({ ...newUserFacilityDepartment });
+  const { data: userDepartmentsResponse, refetch: refetchUserDepartments } = useGetUserDepartmentsByUserQuery(user?.id);
+  const [userDepartment, setuserDepartment] = useState<UserDepartment>({ ...newUserDepartment });
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilityListResponse) ? facilityListResponse : [];
@@ -36,19 +36,19 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
   const [getDepartmentsByFacility, { data: departmentsResponse, isFetching: deptLoading }] = useLazyGetActiveDepartmentByFacilityListQuery();
   console.log('departmentsResponse from lazy query:', departmentsResponse);
   
-  // change Status user facility department
-  const [ChangeStatusUserFacilityDepartment] = useToggleUserFacilityDepartmentIsActiveMutation();
+  // change Status user department
+  const [ChangeStatususerDepartment] = useToggleUserDepartmentIsActiveMutation();
   const [openConfirmChangeStatusOfDepartmentModal, setOpenConfirmChangeStatusOfDepartmentModal] = useState<boolean>(false);
   const [stateOfStatusForUFDModal, setStateOfStatusForUFDModal] =  useState('delete');
   const [openChildModal, setOpenChildModal] = useState<boolean>(false);
 
 
   // Save department
-  const [saveDepartment] = useAddUserFacilityDepartmentMutation();
+  const [saveDepartment] = useAddUserDepartmentMutation();
 
-  // Handle change status of user facility department
-  const handleChangeStatusOfUserFacilityDepartment = UFD => {
-    ChangeStatusUserFacilityDepartment(UFD.id)
+  // Handle change status of user department
+  const handleChangeStatusOfuserDepartment = UFD => {
+    ChangeStatususerDepartment(UFD.id)
       .unwrap()
       .then(() => {
         setOpenConfirmChangeStatusOfDepartmentModal(false);
@@ -62,7 +62,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
   };
   const onChangeFacility = async (next: string) => {
     const nextFacilityId = next;
-    setUserFacilityDepartment(prev => ({
+    setuserDepartment(prev => ({
       ...prev,
       facilityId: nextFacilityId,
       departmentId: undefined, 
@@ -74,7 +74,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
   // Handle Save Facility Department
   const handleFacilityDepartmentSave = () => {
     // Remove facilityId from the object before saving (API expects only userId and departmentId)
-    const { facilityId, ...dataToSave } = userFacilityDepartment;
+    const { facilityId, ...dataToSave } = userDepartment;
     
     saveDepartment(dataToSave)
       .unwrap()
@@ -131,7 +131,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
             className="icons-style"
             color="var(--primary-gray)"
             onClick={() => {
-              setUserFacilityDepartment(rowData);
+              setuserDepartment(rowData);
               setStateOfStatusForUFDModal('reactivate');
               setOpenConfirmChangeStatusOfDepartmentModal(true);
             }}
@@ -143,7 +143,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
             size={24}
             fill="var(--primary-pink)"
             onClick={() => {
-              setUserFacilityDepartment(rowData);
+              setuserDepartment(rowData);
               setStateOfStatusForUFDModal("deactivate");
               setOpenConfirmChangeStatusOfDepartmentModal(true);
             }}
@@ -160,7 +160,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           <MyButton
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"
-            onClick={() => { setUserFacilityDepartment({ ...newUserFacilityDepartment, userId: user?.id }); setOpenChildModal(true); }}
+            onClick={() => { setuserDepartment({ ...newUserDepartment, userId: user?.id }); setOpenChildModal(true); }}
             width={width > 600 ? '150px' : '109px'}
           >
             New Department
@@ -174,8 +174,8 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
         <DeletionConfirmationModal
           open={openConfirmChangeStatusOfDepartmentModal}
           setOpen={setOpenConfirmChangeStatusOfDepartmentModal}
-          itemToDelete="userFacilityDepartment"
-          actionButtonFunction={() => handleChangeStatusOfUserFacilityDepartment(userFacilityDepartment)}
+          itemToDelete="userDepartment"
+          actionButtonFunction={() => handleChangeStatusOfuserDepartment(userDepartment)}
           actionType={stateOfStatusForUFDModal}
         />
       </Form>
@@ -188,7 +188,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
     <Form fluid layout='inline'>
         <MyInput
           column
-          width={250}
+          width={350}
           fieldLabel="Facility"
           fieldName="facilityId"
           required
@@ -196,9 +196,9 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           selectData={facilities}
           selectDataLabel="name"
           selectDataValue="id"
-          record={userFacilityDepartment}
+          record={userDepartment}
           setRecord={updateRecord => {
-            setUserFacilityDepartment(updateRecord);
+            setuserDepartment(updateRecord);
             onChangeFacility(updateRecord.facilityId);
           }}
           searchable
@@ -212,10 +212,10 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           selectDataLabel="name"
           selectDataValue="id"
           width={350}
-          record={userFacilityDepartment}
-          setRecord={setUserFacilityDepartment}
+          record={userDepartment}
+          setRecord={setuserDepartment}
           required
-          disabled={!userFacilityDepartment?.facilityId || deptLoading}
+          disabled={!userDepartment?.facilityId || deptLoading}
         />
       </Form>
     );

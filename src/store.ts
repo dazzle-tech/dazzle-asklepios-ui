@@ -34,7 +34,7 @@ import { departmentService } from './services/security/departmentService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
-import { userFacilityDepartmentService } from './services/security/userFacilityDepartmentsService';
+import { userDepartmentService } from './services/security/userDepartmentsService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -109,7 +109,7 @@ export const store = configureStore({
     [departmentService.reducerPath]: departmentService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
-    [userFacilityDepartmentService.reducerPath]:userFacilityDepartmentService.reducer,
+    [userDepartmentService.reducerPath]:userDepartmentService.reducer,
 
   },
   // @ts-ignore
@@ -141,7 +141,7 @@ export const store = configureStore({
       roleService.middleware,
       userRoleService.middleware,
       enumService.middleware,
-      userFacilityDepartmentService.middleware,
+      userDepartmentService.middleware,
     ])
 });
 
