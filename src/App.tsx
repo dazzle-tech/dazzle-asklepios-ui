@@ -173,6 +173,8 @@ import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
 import CallOverlay from './components/Overlay/CallOverlay';
 import IncidentPortal from './pages/Incident/IncidentPortal';
+import LanguagesSetup from './pages/setup/language-setup/Language';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -483,7 +485,7 @@ const App = () => {
               <Route path="department-stock" element={<DepartmentStock />} />
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
-
+              <Route path="language-setup" element={<LanguagesSetup />} />
               <Route path="service-and-products" element={<ServiceAndProducts />} />
             </Route>
           </Route>
