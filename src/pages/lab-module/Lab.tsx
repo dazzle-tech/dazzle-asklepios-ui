@@ -24,7 +24,8 @@ import {
   faCircleCheck,
   faClock,
   faRectangleList,
-  faTriangleExclamation} from '@fortawesome/free-solid-svg-icons';
+  faTriangleExclamation
+} from '@fortawesome/free-solid-svg-icons';
 
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds } from '@/utils';
@@ -240,43 +241,42 @@ const Lab = () => {
 
   return (
     <>
-    <div className="count-div-on-top-of-page">
-      <DetailsCard
-        title="Result Ready"
-        number={2}
-        icon={faCircleCheck}
-        color="--green-600"
-        backgroundClassName="result-ready-section"
-        width={'20vw'}
+      <div className="count-div-on-top-of-page">
+        <DetailsCard
+          title="Result Ready"
+          number={2}
+          icon={faCircleCheck}
+          color="--green-600"
+          backgroundClassName="result-ready-section"
+          width={'20vw'}
         />
-      <DetailsCard
-        title="Sample Collected"
-        number={2}
-        icon={faClock}
-        color="--primary-yellow"
-        backgroundClassName="sample-collected-section"
-        width={'20vw'}
-      />
-      <DetailsCard
-        title="New"
-        number={2}
-        icon={faRectangleList}
-        color="--primary-blue"
-        backgroundClassName="new-section"
-        width={'20vw'}
-      />
-      <DetailsCard
-        title="Total Test"
-        number={2}
-        icon={faTriangleExclamation}
-        color="--gray-dark"
-        backgroundClassName="total-test-section"
-        width={'20vw'}
-      />
-    </div>
+        <DetailsCard
+          title="Sample Collected"
+          number={2}
+          icon={faClock}
+          color="--primary-yellow"
+          backgroundClassName="sample-collected-section"
+          width={'20vw'}
+        />
+        <DetailsCard
+          title="New"
+          number={2}
+          icon={faRectangleList}
+          color="--primary-blue"
+          backgroundClassName="new-section"
+          width={'20vw'}
+        />
+        <DetailsCard
+          title="Total Test"
+          number={2}
+          icon={faTriangleExclamation}
+          color="--gray-dark"
+          backgroundClassName="total-test-section"
+          width={'20vw'}
+        />
+      </div>
 
       <div className="container">
-        
         <div className="left-boxs">
           <Row>
             <Col xs={14}>
@@ -289,25 +289,25 @@ const Lab = () => {
             </Col>
             <Col xs={10}>
               <Row>
-                <Form fluid layout='inline'>
-                <MyInput 
-                width={230}
-                placeholder="From Date"
-                fieldType='date'
-                fieldName="fromDate"
-                record={dateFilter}
-                setRecord={setDateFilter}
-                showLabel={false}
-                />
-                 <MyInput 
-                width={230}
-                placeholder="To Date"
-                fieldType='date'
-                fieldName="toDate"
-                record={dateFilter}
-                setRecord={setDateFilter}
-                showLabel={false}
-                />
+                <Form fluid layout="inline">
+                  <MyInput
+                    width={230}
+                    placeholder="From Date"
+                    fieldType="date"
+                    fieldName="fromDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                  />
+                  <MyInput
+                    width={230}
+                    placeholder="To Date"
+                    fieldType="date"
+                    fieldName="toDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                  />
                 </Form>
               </Row>
 
