@@ -425,6 +425,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           selectDataValue="key"
                           record={patientObservationSummary}
                           setRecord={setPatientObservationSummary}
+                          searchable={false}
                         />
                       </Col>
                       <Col md={12}>
@@ -440,6 +441,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           record={patientObservationSummary}
                           setRecord={setPatientObservationSummary}
                           menuMaxHeight={150}
+                          searchable={false}
                         />
                       </Col>
                     </Row>
