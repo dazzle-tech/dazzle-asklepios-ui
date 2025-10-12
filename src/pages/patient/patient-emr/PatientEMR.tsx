@@ -62,11 +62,8 @@ import './styles.less';
 const { getHeight } = DOMHelper;
 
 type PatientEMRProps = {
-  /** شغّل الصفحة داخل مودال لتعطيل ترويسة الصفحة وتحديث الـ divContent */
   inModal?: boolean;
-  /** مريض اختياري لو بدك تمرره مباشرة بدل useLocation.state */
   patient?: ApPatient;
-  /** زيارة اختيارية للتمييز أو الاستخدام */
   encounter?: any;
 };
 
@@ -75,7 +72,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-  // نستخدم location.state فقط إذا لم تمرر props
   const propsData = patient || enc ? undefined : (location.state as any);
 
   const [encounter, setLocalEncounter] = useState<any>(
@@ -109,7 +105,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
 
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
 
-  // Page Header Setup (نعطله داخل المودال)
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const [activeSectionCard, setActiveSectionCard] = useState<string | null>(null);
 
@@ -132,7 +127,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
     };
   }, [inModal, dispatch]);
 
-  // Table Columns (لو احتجتها لاحقًا — تبقى كما هي)
   const columns = [
     {
       key: 'visitId',
@@ -676,7 +670,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         {activeCard === 'ledgeraccount' && <LedgerAccountTable />}
         {activeCard === 'pastmedicalhistory' && <PastMedicalHistoryTable />}
 
-        {/* الجداول القديمة المعلّقة تبقى كما هي (معلّقة) */}
         {/* 
         <MyTable
           data={encounterListResponse?.object ?? []}
