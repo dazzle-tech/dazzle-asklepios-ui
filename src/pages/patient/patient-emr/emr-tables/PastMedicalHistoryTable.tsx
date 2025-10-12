@@ -5,32 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleHistoryData = [
-  {
-    condition: 'Hypertension',
-    dateDiagnosed: '2018-06-15T00:00:00Z',
-    status: 'Active',
-    severity: 'Moderate'
-  },
-  {
-    condition: 'Type 2 Diabetes',
-    dateDiagnosed: '2019-03-22T00:00:00Z',
-    status: 'Active',
-    severity: 'Well Controlled'
-  },
-  {
-    condition: 'Asthma',
-    dateDiagnosed: '2010-11-08T00:00:00Z',
-    status: 'Active',
-    severity: 'Mild'
-  },
-  {
-    condition: 'Osteoarthritis',
-    dateDiagnosed: '2020-09-12T00:00:00Z',
-    status: 'Active',
-    severity: 'Moderate'
-  }
-];
+const sampleHistoryData = [];
 
 const columns: ColumnConfig[] = [
   {

@@ -5,29 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleMedicationsData = [
-  {
-    medication: 'Metformin 1000mg',
-    frequency: 'Twice daily',
-    prescriber: 'Dr. Smith',
-    startDate: '2019-03-22T00:00:00Z',
-    status: 'Active'
-  },
-  {
-    medication: 'Lisinopril 10mg',
-    frequency: 'Once daily',
-    prescriber: 'Dr. Johnson',
-    startDate: '2018-06-15T00:00:00Z',
-    status: 'Active'
-  },
-  {
-    medication: 'Albuterol Inhaler',
-    frequency: 'As needed',
-    prescriber: 'Dr. Brown',
-    startDate: '2020-05-10T00:00:00Z',
-    status: 'Active'
-  }
-];
+const sampleMedicationsData = [];
 
 const columns: ColumnConfig[] = [
   {

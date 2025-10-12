@@ -5,32 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleRadiologyData = [
-  {
-    study: 'Chest X-Ray',
-    date: '2024-01-12T00:00:00Z',
-    radiologist: 'Dr. Radio',
-    technique: 'PA/Lateral',
-    status: 'Final',
-    findings: 'No acute findings'
-  },
-  {
-    study: 'Echocardiogram',
-    date: '2024-01-08T00:00:00Z',
-    radiologist: 'Dr. Echo',
-    technique: 'Transthoracic',
-    status: 'Final',
-    findings: 'Normal EF 60%'
-  },
-  {
-    study: 'CT Abdomen/Pelvis',
-    date: '2023-12-15T00:00:00Z',
-    radiologist: 'Dr. Radio',
-    technique: 'With contrast',
-    status: 'Final',
-    findings: 'No acute pathology'
-  }
-];
+const sampleRadiologyData = [];
 
 const columns: ColumnConfig[] = [
   {

@@ -5,32 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleProceduresData = [
-  {
-    date: '2023-12-01T00:00:00Z',
-    procedure: 'Echocardiogram',
-    physician: 'Dr. Smith',
-    location: 'Cardiology Lab',
-    status: 'Completed',
-    results: 'Normal EF 60%'
-  },
-  {
-    date: '2023-11-20T00:00:00Z',
-    procedure: 'Stress Test',
-    physician: 'Dr. Smith',
-    location: 'Cardiac Testing',
-    status: 'Completed',
-    results: 'Negative for ischemia'
-  },
-  {
-    date: '2024-01-25T00:00:00Z',
-    procedure: 'Pulmonary Function Test',
-    physician: 'Dr. Lung',
-    location: 'Pulmonary Lab',
-    status: 'Scheduled',
-    results: 'Pending'
-  }
-];
+const sampleProceduresData = [];
 
 const columns: ColumnConfig[] = [
   {
@@ -79,9 +54,7 @@ const columns: ColumnConfig[] = [
           ? 'var(--primary-pink)'
           : 'var(--primary-pink)';
 
-      return (
-        <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.status} />
-      );
+      return <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.status} />;
     }
   },
   {

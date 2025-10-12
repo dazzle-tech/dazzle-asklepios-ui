@@ -4,32 +4,7 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 
-const sampleClinicVisits = [
-  {
-    date: '2024-01-15T00:00:00Z',
-    provider: 'Dr. Smith',
-    clinic: 'Cardiac Care Center',
-    reason: 'Follow-up HTN',
-    duration: '30 min',
-    notes: 'BP well controlled'
-  },
-  {
-    date: '2024-01-08T00:00:00Z',
-    provider: 'Dr. Johnson',
-    clinic: 'Diabetes Center',
-    reason: 'Routine Check',
-    duration: '45 min',
-    notes: 'A1C improved'
-  },
-  {
-    date: '2023-12-20T00:00:00Z',
-    provider: 'Dr. Brown',
-    clinic: 'Primary Care',
-    reason: 'Annual Physical',
-    duration: '60 min',
-    notes: 'Overall good health'
-  }
-];
+const sampleClinicVisits = [];
 
 const columns: ColumnConfig[] = [
   {

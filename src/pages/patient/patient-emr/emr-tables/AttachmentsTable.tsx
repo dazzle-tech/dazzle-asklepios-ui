@@ -4,36 +4,7 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 
-const sampleAttachmentsData = [
-  {
-    fileName: 'Insurance Card.pdf',
-    type: 'Insurance',
-    uploadDate: '2024-01-01T00:00:00Z',
-    size: '156 KB',
-    uploadedBy: 'Front Desk'
-  },
-  {
-    fileName: 'Previous Records.pdf',
-    type: 'Medical Records',
-    uploadDate: '2023-12-15T00:00:00Z',
-    size: '2.3 MB',
-    uploadedBy: 'Medical Records'
-  },
-  {
-    fileName: 'Medication List.pdf',
-    type: 'Medication',
-    uploadDate: '2024-01-10T00:00:00Z',
-    size: '89 KB',
-    uploadedBy: 'Pharmacy'
-  },
-  {
-    fileName: 'Advance Directive.pdf',
-    type: 'Legal',
-    uploadDate: '2023-11-01T00:00:00Z',
-    size: '234 KB',
-    uploadedBy: 'Patient'
-  }
-];
+const sampleAttachmentsData = [];
 
 const columns: ColumnConfig[] = [
   {
