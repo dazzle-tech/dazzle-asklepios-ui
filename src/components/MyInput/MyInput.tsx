@@ -297,7 +297,18 @@ const MyInput = ({
             searchBy={props.searchBy}
             container={
               props.container ??
-              (() => (document.querySelector('.rs-modal') as HTMLElement) || document.body)
+              (() => {
+                // Check if inside sub-child modal first
+                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                if (subChildModal) return subChildModal;
+                
+                // Check if inside child modal
+                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                if (childModal) return childModal;
+                
+                // Default to any modal or document body
+                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+              })
             }
             placement={props.placement ?? 'bottomStart'}
             preventOverflow={props.preventOverflow ?? true}
@@ -332,7 +343,18 @@ const MyInput = ({
             accepter={TagPicker}
             container={
               props.container ??
-              (() => (document.querySelector('.rs-modal') as HTMLElement) || document.body)
+              (() => {
+                // Check if inside sub-child modal first
+                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                if (subChildModal) return subChildModal;
+                
+                // Check if inside child modal
+                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                if (childModal) return childModal;
+                
+                // Default to any modal or document body
+                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+              })
             }
             placement={props.placement ?? 'bottomStart'}
             preventOverflow={props.preventOverflow ?? true}
@@ -362,7 +384,18 @@ const MyInput = ({
             accepter={CheckPicker}
             container={
               props.container ??
-              (() => (document.querySelector('.rs-modal') as HTMLElement) || document.body)
+              (() => {
+                // Check if inside sub-child modal first
+                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                if (subChildModal) return subChildModal;
+                
+                // Check if inside child modal
+                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                if (childModal) return childModal;
+                
+                // Default to any modal or document body
+                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+              })
             }
             placement={props.placement ?? 'bottomStart'}
             preventOverflow={props.preventOverflow ?? true}

@@ -95,6 +95,11 @@ export const departmentService = createApi({
       }),
       invalidatesTags: ['Department'],
     }),
+
+    // GET /api/setup/department/facility/{facilityId}/active/list
+    getActiveDepartmentByFacilityList: builder.query<any[], { facilityId: number | string }>({
+      query: ({ facilityId }) => `/api/setup/department/facility/${facilityId}/active/list`,
+    }),
   }),
 });
 
@@ -110,4 +115,6 @@ export const {
   useAddDepartmentMutation,
   useUpdateDepartmentMutation,
   useToggleDepartmentIsActiveMutation,
+  useGetActiveDepartmentByFacilityListQuery,
+  useLazyGetActiveDepartmentByFacilityListQuery,
 } = departmentService;

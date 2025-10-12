@@ -18,6 +18,7 @@ export const newApUser: modelTypes.ApUser = {
   phoneNumber: null,
   birthDate: null,
   gender: null,
+
   jobDescription: null,
 };
 
@@ -88,10 +89,16 @@ export const newUserRole:modelTypes.UserRole = {
   roleId:undefined,
   userId:undefined,
 }
-
-
-
-
+export const newUserFacilityDepartment:modelTypes.UserFacilityDepartment = {
+  id:undefined,
+  userId: undefined,
+  departmentId: undefined,
+  isActive: true,
+  createdBy: '',
+  createdDate:undefined,
+  lastModifiedBy:undefined,
+  lastModifiedDate:undefined,
+};
 
 
 

@@ -10,7 +10,7 @@ import { FaAddressCard, FaBuilding, FaMedal } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
 import { RiLockPasswordFill } from 'react-icons/ri';
 import { Panel, Tooltip, Whisper } from 'rsuite';
-import ViewDepartments from './ViewDepartments';
+import ViewDepartments from './ViewDepartments-new';
 import ViewLicenses from './ViewLicenses';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
