@@ -1,31 +1,30 @@
-import { useState, useEffect, useRef } from 'react';
-import {
-  faIdCard,
-  faUser,
-  faFileWaveform,
-  faExclamationTriangle,
-  faHandDots
-} from '@fortawesome/free-solid-svg-icons';
-import React from 'react';
-import { Panel, Avatar, Text, Divider, Badge, Loader } from 'rsuite';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { resetRefetchPatientSide } from '@/reducers/refetchPatientSide';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FaWeight } from 'react-icons/fa';
-import { calculateAgeFormat } from '@/utils';
 import {
-  useGetObservationSummariesQuery,
   useGetAllergiesQuery,
+  useGetObservationSummariesQuery,
   useGetWarningsQuery
 } from '@/services/observationService';
 import { useGetAllergensQuery } from '@/services/setupService';
-import { initialListRequest } from '@/types/types';
+import { RootState } from '@/store';
 import { ApAttachment } from '@/types/model-types';
-import './styles.less';
+import { initialListRequest } from '@/types/types';
+import { calculateAgeFormat } from '@/utils';
+import {
+  faExclamationTriangle,
+  faFileWaveform,
+  faHandDots,
+  faIdCard,
+  faUser
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useRef, useState } from 'react';
+import { FaWeight } from 'react-icons/fa';
 import { GiMedicalThermometer } from 'react-icons/gi';
 import { useDispatch, useSelector } from 'react-redux';
-import { resetRefetchPatientSide } from '@/reducers/refetchPatientSide';
-import { RootState } from '@/store';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { Avatar, Divider, Panel, Text } from 'rsuite';
+import './styles.less';
 
 const PatientSide = ({ patient, encounter, refetchList = null }) => {
   const profileImageFileInputRef = useRef(null);
@@ -146,30 +145,6 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
     return found?.allergenName || 'Unknown';
   };
 
-  // Helper function to get status badge color
-  const getStatusBadgeColor = (statusLkey: string) => {
-    switch (statusLkey) {
-      case '9766169155908512': // Active
-        return 'red';
-      case '9766179572884232': // Resolved
-        return 'green';
-      default:
-        return 'blue';
-    }
-  };
-
-  // Helper function to get allergy severity color
-  const getAllergySeverityColor = (severity: string) => {
-    const lowerSeverity = severity?.toLowerCase();
-    if (lowerSeverity === 'mild' || lowerSeverity === 'minor' || lowerSeverity === 'milk') {
-      return '#28a745'; // Green
-    } else if (lowerSeverity === 'moderate') {
-      return '#fd7e14'; // Orange
-    } else {
-      return '#dc3545'; // Red (for severe/high/critical)
-    }
-  };
-
   // Get active allergies for the alert banner
   const activeAllergies =
     allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
@@ -180,50 +155,19 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
 
   // Helper function to get allergy severity background + text color
   const getAllergySeverityColors = (severity: string) => {
-    const lowerSeverity = severity?.toLowerCase();
+    const lowerSeverity = severity?.toLowerCase()?.trim();
 
-    if (lowerSeverity === 'mild' || lowerSeverity === 'minor' || lowerSeverity === 'milk') {
+    if (
+      lowerSeverity === 'mild' ||
+      lowerSeverity === 'minor' ||
+      lowerSeverity?.includes('mild') ||
+      lowerSeverity?.includes('minor')
+    ) {
       return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
     } else if (lowerSeverity === 'moderate') {
       return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
     } else {
       return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
-    }
-  };
-
-  // Get highest severity (for allergies banner)
-  const getHighestSeverityColors = () => {
-    if (!activeAllergies.length) return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
-
-    const severities = activeAllergies.map(a =>
-      (a.severityLvalue?.lovDisplayVale || '').toLowerCase().trim()
-    );
-
-    if (
-      severities.some(s => s.includes('severe') || s.includes('high') || s.includes('critical'))
-    ) {
-      return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
-    } else if (severities.some(s => s.includes('moderate'))) {
-      return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
-    } else {
-      return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
-    }
-  };
-
-  // Get warning severity colors
-  const getWarningSeverityColors = () => {
-    if (!activeWarnings.length) return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
-
-    const severities = activeWarnings.map(
-      w => w.severityLvalue?.lovDisplayVale?.toLowerCase() || ''
-    );
-
-    if (severities.some(s => s === 'severe' || s === 'high' || s === 'critical')) {
-      return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
-    } else if (severities.some(s => s === 'moderate')) {
-      return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
-    } else {
-      return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
     }
   };
 
