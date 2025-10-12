@@ -63,6 +63,8 @@ const Facilities = () => {
   const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
   // Remove Facility
   const [removeFacility] = useDeleteFacilityMutation(); 
+  // To check if we are in edit mode
+  const [isEditing, setIsEditing] = useState<boolean>(false);
    // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -105,8 +107,9 @@ const Facilities = () => {
   // Handle click on Add New Button
   const handleNew = () => {
     setAddress(newApAddresses);
-    setFacility(newFacility);
+    setCreateFacility({ ...newCreateFacility });
     setDepartments(newApDepartment);
+    setIsEditing(false);
     setPopupOpen(true);
   };
   //icons column (View Departments, Add Details, Edite, Active/Deactivate)
@@ -137,7 +140,8 @@ const Facilities = () => {
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
-          setFacility(facility);
+          setFacility({ ...rowData });
+          setIsEditing(true);
           setPopupOpen(true);
         }}
         className='icons-style'
@@ -168,14 +172,30 @@ const Facilities = () => {
   const handleSave = async () => {
     setPopupOpen(false);
     setLoad(true);
-    console.log(facility);
-   await saveFacility({ ...facility }).unwrap().then(() => {
+    console.log(createFacility);
+   await saveFacility({ ...createFacility }).unwrap().then(() => {
     dispatch(notify({ msg: 'The Facility has been saved successfully', sev: 'success' }));
+    refetchFacility();
    }).catch(() => {
     dispatch(notify({ msg: 'Failed to save this Facility', sev: 'error' }));
    });
    setLoad(false);
   };
+
+    // Handle click on Update Facility button
+  const handleUpdate = async () => {
+    setPopupOpen(false);
+    setLoad(true);
+    console.log(facility);
+   await updateFacility({ ...facility }).unwrap().then(() => {
+    dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
+    refetchFacility();
+   }).catch(() => {
+    dispatch(notify({ msg: 'Failed to update this Facility', sev: 'error' }));
+   });
+   setLoad(false);
+  };
+
   // Handle remove Facility
   const handleRemove = async () => {
     setPopupOpen(false);
@@ -232,10 +252,10 @@ const Facilities = () => {
   //Table columns
   const tableColumns = [
     {
-      key: 'id',
-      title: <Translate>ID</Translate>,
+      key: 'code',
+      title: <Translate>Code</Translate>,
       flexGrow: 1,
-      dataKey: 'id'
+      dataKey: 'code'
     },
     {
       key: 'name',
@@ -259,13 +279,13 @@ const Facilities = () => {
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
-      render: (rowData: Facility) => {return(<p>{rowData?.isActive ? "Active" : "Inactive"}</p>);} 
+      render: (rowData) => {return(<p>{rowData?.isActive ? "Active" : "Inactive"}</p>);} 
     },
     {
       key: 'actions',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: (rowData: Facility) => iconsForActions(rowData)
+      render: (rowData) => iconsForActions(rowData)
     }
   ];
 
@@ -320,11 +340,11 @@ const Facilities = () => {
             <AddEditFacility 
               open={popupOpen}
               setOpen={setPopupOpen}
-              facility={createFacility}
-              setFacility={setCreateFacility}
+              facility={isEditing ? facility : createFacility}
+              setFacility={isEditing ? setFacility : setCreateFacility}
               address={address}
               setAddress={setAddress}
-              handleSave = {handleSave}
+              handleSave={isEditing ? handleUpdate : handleSave}
               width={width}
             />
             <RoleManegment

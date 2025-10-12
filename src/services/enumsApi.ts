@@ -89,3 +89,12 @@ export function useEnumOptions(name: string): { value: string; label: string }[]
     [values]
   );
 }
+
+/** Returns [{ value, label }] for selects/radios */
+export function useEnumCapitalized(name: string): { value: string; label: string }[] {
+  const values = useEnumByName(name);
+  return useMemo(
+    () => values.map((v) => ({ value: v, label: v })),
+    [values]
+  );
+}

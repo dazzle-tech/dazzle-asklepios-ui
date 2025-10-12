@@ -1,5 +1,5 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -9,6 +9,7 @@ import clsx from 'clsx';
 import { faUser, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useGetFacilityTypesQuery } from '@/services/security/facilityService';
+import { useEnumByName, useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 
 const AddEditFacility = ({
   open,
@@ -23,15 +24,18 @@ const AddEditFacility = ({
   const [validationResult] = useState({});
   
 
-  // Fetch facility type Lov list response
-  const { data: facilityTypevQueryResponse } = useGetFacilityTypesQuery({});
+  useEffect(() => {
+    console.log('facility data in modal:', facility);
+  }, [handleSave]);
 
+  // Fetch  facilityTypeOptions list response
+  const facilityTypeOptions = useEnumOptions("FacilityType"); 
+
+  const currencyOptions = useEnumCapitalized("Currency");
   // Fetch country Lov list response
   const { data: contryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   // Fetch state Lov list response
   const { data: stateLovQueryResponse } = useGetLovValuesByCodeQuery('STATE_PROV');
-  // Fetch currency Lov list response
-  const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
   // Fetch city Lov list response
   const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'CITY',
@@ -45,15 +49,15 @@ const AddEditFacility = ({
         return (
           <Form fluid layout="inline">
             <div className={clsx('', { 'container-of-two-fields-facility': width > 600 })}>
-              {/* <MyInput
+              <MyInput
                 fieldLabel="Facility ID"
                 fieldName="code"
-
+                disabled={facility?.id ? true : false}
                 required
                 record={facility}
                 setRecord={setFacility}
                 width={250}
-              /> */}
+              />
               <MyInput
                 column
                 required
@@ -62,7 +66,9 @@ const AddEditFacility = ({
                 fieldLabel="Facility Type"
                 fieldType="select"
                 fieldName="type"
-                selectData={facilityTypevQueryResponse ?? []}
+                selectData={facilityTypeOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={facility}
                 setRecord={setFacility}
               />
@@ -94,9 +100,9 @@ const AddEditFacility = ({
                 fieldLabel="Default Currency"
                 fieldType="select"
                 fieldName="defaultCurrency"
-                selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={currencyOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={facility}
                 setRecord={setFacility}
               />
@@ -235,10 +241,10 @@ const AddEditFacility = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={facility?.key ? 'Edit Facility' : 'New Facility'}
+      title={facility?.id ? 'Edit Facility' : 'New Facility'}
       position="right"
       content={conjureFormContent}
-      actionButtonLabel={facility?.key ? 'Save' : 'Create'}
+      actionButtonLabel={facility?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size={width > 600 ? '36vw' : '25vw'}
       steps={[
