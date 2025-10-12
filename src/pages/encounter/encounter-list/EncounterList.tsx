@@ -16,7 +16,7 @@ import {
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
-import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
+import { faFileWaveform, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import DetailsCard from '@/components/DetailsCard';
@@ -35,17 +35,18 @@ import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
+import PatientEMR from '@/pages/patient/patient-emr/PatientEMR';
 
 const EncounterList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const divContent = (
     <div className="display-flex">
       <h5>Patients Visit List</h5>
@@ -54,17 +55,25 @@ const EncounterList = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent(divContentHTML));
+
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
+
   const [open, setOpen] = useState(false);
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
-  const [record, setRecord] = useState({});
+  const [record, setRecord] = useState<any>({});
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
-  const [encounterStatus, setEncounterStatus] = useState({ key: '' });
+  const [encounterStatus, setEncounterStatus] = useState<{ key: string }>({ key: '' });
+
+  const [openEMRModal, setOpenEMRModal] = useState(false);
+  const [emrPatient, setEmrPatient] = useState<any>(null);
+  const [emrEncounter, setEmrEncounter] = useState<any>(null);
+
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
+
   // lovs
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
@@ -88,12 +97,14 @@ const EncounterList = () => {
       }
     ]
   });
+
   const {
     data: encounterListResponse,
     isFetching,
     refetch: refetchEncounter,
     isLoading
   } = useGetEncountersQuery(listRequest);
+
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: new Date()
@@ -105,8 +116,10 @@ const EncounterList = () => {
       return 'selected-row';
     } else return '';
   };
+
   useEffect(() => {
     handleManualSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listRequest, dateFilter.fromDate, dateFilter.toDate]);
 
   const handleManualSearch = () => {
@@ -152,6 +165,7 @@ const EncounterList = () => {
       });
     }
   };
+
   const handleGoToVisit = async (encounterData, patientData) => {
     await startEncounter(encounterData).unwrap();
     if (encounterData && encounterData.key) {
@@ -161,27 +175,19 @@ const EncounterList = () => {
     const privatePatientPath = '/user-access-patient-private';
     const encounterPath = '/encounter';
     const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
-    if (patientData.privatePatient) {
-      navigate(targetPath, {
-        state: {
-          info: 'toEncounter',
-          fromPage: 'EncounterList',
-          patient: patientData,
-          encounter: encounterData
-        }
-      });
-    } else {
-      navigate(targetPath, {
-        state: {
-          info: 'toEncounter',
-          fromPage: 'EncounterList',
-          patient: patientData,
-          encounter: encounterData
-        }
-      });
-    }
+
+    navigate(targetPath, {
+      state: {
+        info: 'toEncounter',
+        fromPage: 'EncounterList',
+        patient: patientData,
+        encounter: encounterData
+      }
+    });
+
     sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
+
   const handleGoToPreVisitObservations = async (encounterData, patientData) => {
     const privatePatientPath = '/user-access-patient-private';
     const preObservationsPath = '/nurse-station';
@@ -200,6 +206,7 @@ const EncounterList = () => {
       });
     }
   };
+
   const handleCancelEncounter = async () => {
     try {
       if (encounter) {
@@ -213,16 +220,19 @@ const EncounterList = () => {
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
+
   //useEffect
   useEffect(() => {
     dispatch(setPageCode(''));
     dispatch(setDivContent(' '));
   }, [location.pathname, dispatch, isLoading]);
+
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
       setManualSearchTriggered(false);
     }
   }, [isFetching, manualSearchTriggered]);
+
   useEffect(() => {
     // init list
     handleManualSearch();
@@ -234,11 +244,10 @@ const EncounterList = () => {
     } else if (isFetching && isLoading) {
       dispatch(hideSystemLoader());
     }
-
     return () => {
       dispatch(hideSystemLoader());
     };
-  }, [isLoading, isFetching, dispatch]);
+  }, [isLoading, isFetching, dispatch, manualSearchTriggered]);
 
   const tableColumns = [
     {
@@ -367,9 +376,9 @@ const EncounterList = () => {
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-
             <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
               <div>
                 <MyButton
@@ -378,13 +387,14 @@ const EncounterList = () => {
                   onClick={() => {
                     const patientData = rowData.patientObject;
                     setLocalEncounter(rowData);
-                      setOpenNurseAssessment(true);
+                    setOpenNurseAssessment(true);
                   }}
                 >
                   <FontAwesomeIcon icon={faUserNurse} />
                 </MyButton>
               </div>
             </Whisper>
+
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
               <div>
                 <MyButton
@@ -399,13 +409,28 @@ const EncounterList = () => {
                 </MyButton>
               </div>
             </Whisper>
+
             <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
               <div>
-                <MyButton size="small" backgroundColor="violet">
+                <MyButton
+                  size="small"
+                  backgroundColor="violet"
+                  onClick={() => {
+                    setLocalEncounter(rowData);
+                    setEmrEncounter(rowData);
+                    setEmrPatient(rowData?.patientObject || null);
+
+                    dispatch(setEncounter(rowData));
+                    if (rowData?.patientObject) dispatch(setPatient(rowData.patientObject));
+
+                    setOpenEMRModal(true);
+                  }}
+                >
                   <FontAwesomeIcon icon={faFileWaveform} />
                 </MyButton>
               </div>
             </Whisper>
+
             {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
@@ -448,7 +473,7 @@ const EncounterList = () => {
 
   // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
-
+  
   // total number of items in the backend:
   const totalCount = encounterListResponse?.extraNumeric ?? 0;
 
@@ -607,6 +632,7 @@ const EncounterList = () => {
       </>
     );
   };
+
   return (
     <>
       <div className="count-div-on-top-of-page-visit-list">
@@ -690,11 +716,7 @@ const EncounterList = () => {
           setOpen={setOpenRefillModal}
           title="Refill"
           size="90vw"
-          content={
-            <>
-              <RefillModalComponent></RefillModalComponent>
-            </>
-          }
+          content={<RefillModalComponent />}
           actionButtonLabel="Save"
           actionButtonFunction={() => {
             console.log('Save refill clicked');
@@ -713,39 +735,37 @@ const EncounterList = () => {
           cancelButtonLabel="Close"
         />
 
-<DeletionConfirmationModal
-  open={openNurseAssessment}
-  setOpen={setOpenNurseAssessment}
-  actionButtonFunction={() => {
-    if (encounter && encounter.patientObject) {
-      const patientData = encounter.patientObject;
-      handleGoToPreVisitObservations(encounter, patientData);
-    }
-  }}
-  actionType="confirm"
-  confirmationQuestion="Do you want to start Nurse Assessment?"
-  actionButtonLabel="Start"
-  cancelButtonLabel="Close"
-/>
+        {/* Confirm Start Nurse Assessment */}
+        <DeletionConfirmationModal
+          open={openNurseAssessment}
+          setOpen={setOpenNurseAssessment}
+          actionButtonFunction={() => {
+            if (encounter && encounter.patientObject) {
+              const patientData = encounter.patientObject;
+              handleGoToPreVisitObservations(encounter, patientData);
+            }
+          }}
+          actionType="confirm"
+          confirmationQuestion="Do you want to start Nurse Assessment?"
+          actionButtonLabel="Start"
+          cancelButtonLabel="Close"
+        />
 
-
+        {/* Task Management */}
         <MyModal
           open={openPhysicianOrderSummaryModal}
           setOpen={setOpenPhysicianOrderSummaryModal}
           title="Task Management"
           size="90vw"
-          content={
-            <>
-              <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
-            </>
-          }
+          content={<PhysicianOrderSummaryModal />}
           actionButtonLabel="Save"
           actionButtonFunction={() => {
-            console.log('Save refill clicked');
+            console.log('Save task clicked');
           }}
           cancelButtonLabel="Close"
         />
 
+        {/* Encounter Logs */}
         <MyModal
           open={openEncounterLogsModal}
           setOpen={setOpenEncounterLogsModal}
@@ -754,6 +774,23 @@ const EncounterList = () => {
           content={<EncounterLogsTable />}
           actionButtonLabel="Close"
           actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+          cancelButtonLabel="Cancel"
+        />
+
+        <MyModal
+          open={openEMRModal}
+          setOpen={setOpenEMRModal}
+          title="Electronic Medical Record"
+          size="90vw"
+          content={
+            emrPatient && emrEncounter ? (
+              <PatientEMR inModal patient={emrPatient} encounter={emrEncounter} />
+            ) : (
+              <div style={{ padding: 16 }}>No patient selected.</div>
+            )
+          }
+          actionButtonLabel="Close"
+          actionButtonFunction={() => setOpenEMRModal(false)}
           cancelButtonLabel="Cancel"
         />
       </Panel>
