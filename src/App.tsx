@@ -151,8 +151,9 @@ import Metadata from './pages/setup/metadata-view';
 import Modules from './pages/setup/modules-setup';
 import OperationSetup from './pages/setup/operation-setup';
 import Checklist from './pages/setup/operations/checklist';
-import PotintialDuplicate from './pages/setup/potential-duplicate';
+
 import Practitioners from './pages/setup/practioners-setup-new';
+import PotintialDuplicate from './pages/setup/potential-duplicate - new';
 import ProcedureSetup from './pages/setup/procedure-setup';
 import ProductSetup from './pages/setup/product-setup';
 import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';

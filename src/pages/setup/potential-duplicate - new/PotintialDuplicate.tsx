@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
 import { Form, Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { useAppDispatch } from '@/hooks';
@@ -9,10 +8,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { FaUndo } from 'react-icons/fa';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import './styles.less';
-import {
-  useGetDuplicationCandidateSetupListQuery,
-  useSaveDuplicationCandidateSetupMutation
-} from '@/services/setupService';
+
 
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -26,8 +22,9 @@ import {
   useDeactivateDuplicationCandidateMutation,
   useReactivateDuplicationCandidateMutation,
   useCreateDuplicationCandidateMutation,
-  useUpdateDuplicationCandidateMutation
-} from '@/services/userService';
+  useUpdateDuplicationCandidateMutation,
+  useGetAvailableForRoleQuery
+} from '@/services/potintialDuplicateService';
 import { newCandidate } from '@/types/model-types-constructor-new';
 import { Candidate } from '@/types/model-types-new';
 import MyInput from '@/components/MyInput';
@@ -41,23 +38,23 @@ const PotintialDuplicate = () => {
 
   const [openConfirmDeleteRole, setOpenConfirmDeleteRole] = useState<boolean>(false);
   const [stateOfDeleteRole, setStateOfDeleteRole] = useState<string>('delete');
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+
 
   // Mutations
   const [updateCandidate] = useUpdateDuplicationCandidateMutation();
   const [createCandidate] = useCreateDuplicationCandidateMutation();
   const [deactivateCandidate] = useDeactivateDuplicationCandidateMutation();
   const [reactivateCandidate] = useReactivateDuplicationCandidateMutation();
+  const { data:facility } = useGetAvailableForRoleQuery(candidate.id ,{skip:!candidate.id} );
+ console.log("Facilites",facility)
 
-  // Queries
-  const { data: CandidateListResponse, refetch: candfetch, isFetching } =
-    useGetDuplicationCandidateSetupListQuery(listRequest);
  const [searchTerm, setSearchTerm] = useState({search:""});
   const { data: candidateList, isLoading, refetch } = useGetDuplicationCandidatesQuery(searchTerm?.search || undefined);
 
   // Header page setUp
   const divContent = (
     "Potintial Duplicate"
+
   );
   dispatch(setPageCode('Potintial_Duplicate'));
   dispatch(setDivContent(divContent));
@@ -325,7 +322,7 @@ const PotintialDuplicate = () => {
       filters={filters()}
         height={450}
         data={paginatedData ?? []}
-        loading={isFetching}
+        // loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => {
