@@ -70,7 +70,7 @@ const MyModal = ({
           activeStep={activeStep}
           stepsList={steps.map((step, index) => ({
             key: index,
-            value: step.title,
+            value:<Translate>{step.title}</Translate>,
             description: step.description || '',
             customIcon: step.icon ? step.icon : null,
             isError: step.isError || false
