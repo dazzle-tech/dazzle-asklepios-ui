@@ -11,7 +11,7 @@ import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.svg';
 import './styles.less';
-
+import { setLang } from '@/reducers/uiSlice';
 import { useLoginMutation } from '@/services/authServiceApi';
 import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
@@ -30,7 +30,6 @@ const SignIn = () => {
   const [errText, setErrText] = useState(' ');
   const [resetPasswordView, setResetPasswordView] = useState(false);
   const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
-
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
