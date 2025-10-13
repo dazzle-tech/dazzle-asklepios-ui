@@ -146,15 +146,6 @@ const Instructions = ({
       )}
       {selectedOption === '3010573499898196' && (
         <Form fluid layout="inline" className="fill-width-instructions">
-          {/* <textarea
-            rows={4}
-            className="fill-width-instructions"
-            disabled={false}
-            value={munial}
-            onChange={e => setMunial(e.target.value)}
-          /> */}
-
-
           <MyInput
             fieldName="munial"
             fieldType="textarea"
