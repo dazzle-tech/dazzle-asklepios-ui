@@ -143,7 +143,7 @@ const Frame = (props: FrameProps) => {
             position: 'fixed',
             top: 12,
             left: expand ? `${drawerWidth - 28}px` : '22px', // adjust margin-left when closed
-            zIndex: 1400,
+            zIndex: 5,
             background: 'transparent',
             padding: '6px',
             transition: 'left 0.3s ease',
@@ -163,6 +163,7 @@ const Frame = (props: FrameProps) => {
           variant="permanent"
           open={expand}
           sx={{
+            zIndex:1,
             width: expand ? drawerWidth : collapsedWidth,
             flexShrink: 0,
             '& .MuiDrawer-paper': {

@@ -1,49 +1,45 @@
-import { FormData } from "@/types/incident";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { FormData } from '@/types/incident';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar as CalendarIcon, Clock as ClockIcon } from "lucide-react";
-import React from "react";
+  SelectValue
+} from '@/components/ui/select';
+import { Calendar as CalendarIcon, Clock as ClockIcon } from 'lucide-react';
+import React from 'react';
+import { useSelector } from 'react-redux';
 
 interface BasicIncidentInfoProps {
   formData: FormData;
   setFormData: (data: FormData) => void;
 }
 
+function InputGroup({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  const mode = useSelector((state: any) => state.ui.mode);
 
-function InputGroup({
-  icon,
-  children,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "stretch",
-        border: "1px solid #E6EBF1",
+        display: 'flex',
+        alignItems: 'stretch',
+        border: mode === 'light' ? '1px solid rgb(212 212 212)' : '1px solid #3a3a3a',
         borderRadius: 8,
-        overflow: "hidden",
-        height: 40,
+        overflow: 'hidden',
+        height: 40
       }}
     >
       <div
         style={{
           width: 40,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRight: "1px solid #E6EBF1",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRight: mode === 'light' ? '1px solid rgb(212 212 212)' : '1px solid #3a3a3a '
         }}
       >
         {icon}
@@ -57,10 +53,8 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
   const fld = { height: 40, fontSize: 14 } as const;
 
   return (
-    <Card
-      className="!rounded-[12px] !border !border-[#E6EBF1] !shadow-sm"
-    >
-      <CardHeader className="!py-3 !px-4 !border-b !border-[#E6EBF1]">
+    <Card className="!rounded-[12px] !border  !shadow-sm">
+      <CardHeader className="!py-3 !px-4 !border-b ">
         <CardTitle className="!text-[18px] !font-semibold !text-[hsl(var(--foreground))]">
           Basic Incident Information
         </CardTitle>
@@ -75,7 +69,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
               id="title"
               placeholder="Brief description of the incident"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
               required
               className="!h-10 !text-[14px] placeholder:!text-[hsl(var(--muted-foreground))]"
             />
@@ -87,9 +81,9 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
               placeholder="Auto-generated: INC-2024-001"
               value={`INC-${new Date().getFullYear()}-${String(
                 Math.floor(Math.random() * 1000)
-              ).padStart(3, "0")}`}
+              ).padStart(3, '0')}`}
               disabled
-              style={{ ...fld, backgroundColor: "#F7F8FA" }}
+              style={{ ...fld, backgroundColor: '#F7F8FA' }}
             />
           </div>
         </div>
@@ -100,7 +94,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
             <Label className="!text-[12px] !font-medium">Severity Level *</Label>
             <Select
               value={formData.severity}
-              onValueChange={(v) => setFormData({ ...formData, severity: v })}
+              onValueChange={v => setFormData({ ...formData, severity: v })}
             >
               <SelectTrigger style={fld}>
                 <SelectValue placeholder="Select severity" />
@@ -119,7 +113,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
             <Label className="!text-[12px] !font-medium">Priority *</Label>
             <Select
               value={formData.priority}
-              onValueChange={(v) => setFormData({ ...formData, priority: v })}
+              onValueChange={v => setFormData({ ...formData, priority: v })}
             >
               <SelectTrigger style={fld}>
                 <SelectValue placeholder="Select priority" />
@@ -138,7 +132,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
             <Label className="!text-[12px] !font-medium">Risk Level *</Label>
             <Select
               value={formData.riskLevel}
-              onValueChange={(v) => setFormData({ ...formData, riskLevel: v })}
+              onValueChange={v => setFormData({ ...formData, riskLevel: v })}
             >
               <SelectTrigger style={fld}>
                 <SelectValue placeholder="Risk assessment" />
@@ -160,7 +154,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
             <Label className="!text-[12px] !font-medium">Department *</Label>
             <Select
               value={formData.department}
-              onValueChange={(v) => setFormData({ ...formData, department: v })}
+              onValueChange={v => setFormData({ ...formData, department: v })}
             >
               <SelectTrigger style={fld}>
                 <SelectValue placeholder="Select department" />
@@ -190,7 +184,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
             <Label className="!text-[12px] !font-medium">Primary Category *</Label>
             <Select
               value={formData.category}
-              onValueChange={(v) => setFormData({ ...formData, category: v })}
+              onValueChange={v => setFormData({ ...formData, category: v })}
             >
               <SelectTrigger style={fld}>
                 <SelectValue placeholder="Select primary category" />
@@ -223,7 +217,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
             <Input
               placeholder="Room 301, OR-2, ICU Bay 5"
               value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              onChange={e => setFormData({ ...formData, location: e.target.value })}
               required
               style={fld}
             />
@@ -234,7 +228,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
             <Input
               placeholder="Main Building, East Wing"
               value={formData.building}
-              onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+              onChange={e => setFormData({ ...formData, building: e.target.value })}
               style={fld}
             />
           </div>
@@ -245,16 +239,16 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
               <input
                 type="date"
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                onChange={e => setFormData({ ...formData, date: e.target.value })}
                 required
                 style={{
                   ...fld,
-                  height: 38, 
+                  height: 38,
                   flex: 1,
-                  border: "none",
-                  outline: "none",
-                  padding: "0 12px",
-                  background: "transparent",
+                  border: 'none',
+                  outline: 'none',
+                  padding: '0 12px',
+                  background: 'transparent'
                 }}
               />
             </InputGroup>
@@ -266,16 +260,16 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
               <input
                 type="time"
                 value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                onChange={e => setFormData({ ...formData, time: e.target.value })}
                 required
                 style={{
                   ...fld,
                   height: 38,
                   flex: 1,
-                  border: "none",
-                  outline: "none",
-                  padding: "0 12px",
-                  background: "transparent",
+                  border: 'none',
+                  outline: 'none',
+                  padding: '0 12px',
+                  background: 'transparent'
                 }}
               />
             </InputGroup>
@@ -288,7 +282,7 @@ export const BasicIncidentInfo = ({ formData, setFormData }: BasicIncidentInfoPr
           <Textarea
             placeholder="Provide a comprehensive description of the incident including sequence of events, contributing factors, and immediate outcomes..."
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={e => setFormData({ ...formData, description: e.target.value })}
             required
             style={{ fontSize: 14, minHeight: 170 }}
           />

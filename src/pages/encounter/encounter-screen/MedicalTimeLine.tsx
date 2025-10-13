@@ -10,6 +10,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useRef, useState } from 'react';
+import { DatePicker } from 'rsuite';
 import './MedicalTimeline.less';
 
 const MedicalTimeline = ({ patient, encounter }) => {
@@ -20,20 +21,50 @@ const MedicalTimeline = ({ patient, encounter }) => {
   const [viewMode, setViewMode] = useState('all');
   const intervalRef = useRef(null);
 
+  // Get default date range: one month earlier from today
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    return { from: oneMonthAgo, to: today };
+  };
+
+  const [dateRange, setDateRange] = useState(getDefaultDateRange());
+
   const firstVisitDate = patient?.firstVisitDate
     ? new Date(patient.firstVisitDate)
     : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
   const currentTime = new Date();
   const totalDuration = currentTime.getTime() - firstVisitDate.getTime();
-  
-  // Initialize time range
+
+  // Initialize time range based on date filter
   useEffect(() => {
-    setTimeRange({
-      start: firstVisitDate,
-      end: currentTime
-    });
-    setCurrentPlayTime(firstVisitDate);
-  }, [patient]);
+    if (dateRange && dateRange.from && dateRange.to) {
+      setTimeRange({
+        start: dateRange.from,
+        end: dateRange.to
+      });
+      setCurrentPlayTime(dateRange.from);
+    }
+  }, [dateRange]);
+
+  const handleFromDateChange = value => {
+    if (value) {
+      setDateRange(prev => ({ ...prev, from: value }));
+      // Reset play time when date range changes
+      setIsPlaying(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+  };
+
+  const handleToDateChange = value => {
+    if (value) {
+      setDateRange(prev => ({ ...prev, to: value }));
+      // Reset play time when date range changes
+      setIsPlaying(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+  };
 
   const patientHistoricalData = [
     {
@@ -74,8 +105,8 @@ const MedicalTimeline = ({ patient, encounter }) => {
     },
     {
       id: 2,
-      type: 'vitals',
-      title: 'Vitals',
+      type: 'examinations',
+      title: 'Examinations',
       icon: faHeartbeat,
       color: '#2980b9',
       items: [
@@ -279,7 +310,8 @@ const MedicalTimeline = ({ patient, encounter }) => {
   const handlePlay = () => {
     if (!isPlaying) {
       setIsPlaying(true);
-      const timeStep = (totalDuration / 600) * playbackSpeed;
+      const rangeDuration = timeRange.end.getTime() - timeRange.start.getTime();
+      const timeStep = (rangeDuration / 600) * playbackSpeed;
       intervalRef.current = setInterval(() => {
         setCurrentPlayTime(prev => {
           if (!prev || !timeRange.end) return prev;
@@ -320,11 +352,33 @@ const MedicalTimeline = ({ patient, encounter }) => {
         <div className="timeline-header">
           <div>
             <h3 className="timeline-title">
-              Patient ({formatDuration(currentTime.getTime() - firstVisitDate.getTime())})
+              Patient ({formatDuration(timeRange.end.getTime() - timeRange.start.getTime())})
             </h3>
-            <p className="timeline-subtitle">
-              {formatTime(firstVisitDate)} - {formatTime(currentTime)}
-            </p>
+            {/* Date Range Picker */}
+            <div
+              style={{ display: 'flex', gap: '10px', marginRight: '20px', alignItems: 'center' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '500' }}>From</label>
+                <DatePicker
+                  value={dateRange.from}
+                  onChange={handleFromDateChange}
+                  format="MMM dd, yyyy"
+                  style={{ width: '150px' }}
+                  cleanable={false}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '500' }}>To</label>
+                <DatePicker
+                  value={dateRange.to}
+                  onChange={handleToDateChange}
+                  format="MMM dd, yyyy"
+                  style={{ width: '150px' }}
+                  cleanable={false}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Controls */}
@@ -369,6 +423,8 @@ const MedicalTimeline = ({ patient, encounter }) => {
                   {category.items.map((item, itemIndex) => {
                     const position = getTimePosition(item.time);
                     const isVisible = currentPlayTime && item.time <= currentPlayTime;
+                    // Only show items within the selected date range
+                    if (item.time < timeRange.start || item.time > timeRange.end) return null;
                     if (position < 0 || position > 100 || !isVisible) return null;
                     const dotColor = getItemColor(item, category);
 
@@ -431,7 +487,6 @@ const MedicalTimeline = ({ patient, encounter }) => {
               {patientHistoricalData.map(cat => (
                 <div className="legend-item" key={cat.id} style={{ ['--cat-color']: cat.color }}>
                   <FontAwesomeIcon icon={cat.icon} className="legend-icon" />
-                  <span>{cat.title}</span>
                   <span className="legend-count">{cat.items.length}</span>
                 </div>
               ))}
@@ -453,8 +508,6 @@ const MedicalTimeline = ({ patient, encounter }) => {
             </div>
           </div>
         </div>
-
-        {/* Animations (kept in CSS file) */}
       </div>
     </div>
   );

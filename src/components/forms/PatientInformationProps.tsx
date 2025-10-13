@@ -20,8 +20,8 @@ export const PatientInformation = ({ formData, setFormData }: PatientInformation
     "data-[state=checked]:bg-[#1E60D6] data-[state=checked]:text-white";
 
   return (
-    <Card className="!rounded-[12px] !border !border-[#E6EBF1] !shadow-sm">
-      <CardHeader className="!py-4 !px-6 !border-b !border-[#E6EBF1]">
+    <Card className="!rounded-[12px] !border  !shadow-sm">
+      <CardHeader className="!py-4 !px-6 !border-b ">
         <CardTitle className="!text-[17px] !font-semibold !text-[hsl(var(--foreground))] !flex !items-center">
           <User className="!h-[18px] !w-[18px] !mr-2 !text-[#1E60D6]" />
           Patient Information
@@ -47,7 +47,7 @@ export const PatientInformation = ({ formData, setFormData }: PatientInformation
         </div>
 
         {formData.patientInvolved && (
-          <div className="!mt-4 !space-y-4 !p-4 !bg-[#F9FAFB] !rounded-[10px] !border !border-[#E6EBF1]">
+          <div className="!mt-4 !space-y-4 !p-4 !bg-[#F9FAFB] !rounded-[10px] !border">
             <div className="!flex !items-center !text-[13px] !text-amber-600 dark:!text-amber-400">
               <AlertCircle className="!h-[16px] !w-[16px] !mr-2" />
               Patient information is protected under HIPAA. Only provide necessary details.

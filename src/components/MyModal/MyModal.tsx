@@ -63,17 +63,19 @@ const MyModal = ({
       </Modal.Header>
       <Divider className="divider-line" />
       <Modal.Body style={{ height: bodyheight }}>
-            <MyStepper
-              activeStep={activeStep}
-              stepsList={steps.map((step, index) => ({
-                key: index,
-                value: step.title,
-                description: step.description || '',
-                customIcon: step.icon ? step.icon : null,
-                isError: step.isError || false
-              }))}
-            />
-            <br />
+
+        <MyStepper
+          activeStep={activeStep}
+          stepsList={steps.map((step, index) => ({
+            key: index,
+            value:<Translate>{step.title}</Translate>,
+            description: step.description || '',
+            customIcon: step.icon ? step.icon : null,
+            isError: step.isError || false
+          }))}
+        />
+        <br />
+
         {typeof content === 'function' ? content(activeStep) : activeStep === 0 && content}
       </Modal.Body>
       {(footerButtons ||

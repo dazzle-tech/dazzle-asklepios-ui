@@ -262,14 +262,6 @@ const Encounter = () => {
       navigate('/encounter-list');
     }
   };
-  
-
-  const OpenAllargyModal = () => {
-    setOpenAllargyModal(true);
-  };
-  const OpenWarningModal = () => {
-    setOpenWarningModal(true);
-  };
 
   const handleCompleteEncounter = async () => {
     try {
@@ -698,15 +690,12 @@ const Encounter = () => {
           <Panel>
             <div className="container-bt">
               <div className="left">
-                <BackButton onClick={handleGoBack} text='To Patients list' />
-
-
+                <BackButton onClick={handleGoBack} text="To Patients list" />
                 <MyButton
-                backgroundColor={'var(--primary-gray)'}
-                onClick={handleGoBack}
-                prefixIcon={() => <FaArrowLeft />}>
-                </MyButton>
-
+                  backgroundColor={'var(--primary-gray)'}
+                  onClick={() => navigate(-1)}
+                  prefixIcon={() => <FaArrowLeft />}
+                />
                 <Form fluid>
                   <MyInput
                     width="100%"
@@ -809,7 +798,7 @@ const Encounter = () => {
               open={isDrawerOpen}
               onClose={() => setIsDrawerOpen(false)}
               placement="left"
-              style={{zIndex:999999999999}}
+              style={{ zIndex: 999999999999 }}
               className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
             >
               <Drawer.Header className="header-drawer">
@@ -950,13 +939,11 @@ const Encounter = () => {
         onSave={refitchAppointments}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
-        
       />
 
       <EncounterDischarge
         open={openDischargeModal}
         setOpen={setOpenDischargeModal}
-
         encounter={propsData?.encounter}
       />
 

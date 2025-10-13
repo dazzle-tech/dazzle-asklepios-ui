@@ -363,7 +363,7 @@ const DetailsModal = ({
             <CheckIcon /> Save & Close
           </span>
         }
-        size="98vw"
+        size="70vw"
         leftTitle={selectedGeneric ? selectedGeneric.genericName : 'Select Generic'}
         rightTitle="Medication Order Details"
         leftContent={

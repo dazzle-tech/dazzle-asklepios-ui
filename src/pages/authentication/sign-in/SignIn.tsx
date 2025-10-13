@@ -2,6 +2,13 @@ import MyInput from '@/components/MyInput';
 import {  useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
+
+import {
+  useGetFacilitiesQuery,
+  useGetLovValuesByCodeQuery,
+  useSaveUserMutation,
+  useGetLovDefultByCodeQuery
+} from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, { useEffect, useState } from 'react';
@@ -32,11 +39,15 @@ const SignIn = () => {
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
-    orgKey: '',
+    orgKey: ''
   });
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const uiSlice = useAppSelector(state => state.ui);
+  const [langRecord, setLangRecord] = useState({ lang: uiSlice.lang });
+
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
@@ -59,7 +70,7 @@ const SignIn = () => {
         username: credentials.username,
         password: credentials.password,
         facilityId: Number(credentials.orgKey),
-        rememberMe: true,
+        rememberMe: true
       }).unwrap();
 
       // Save token first so prepareHeaders can pick it up
@@ -81,7 +92,6 @@ const SignIn = () => {
       console.log('User Info:', userResp);
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
-
 
       store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
@@ -123,11 +133,20 @@ const SignIn = () => {
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
 
+
+  useEffect(() => {
+    dispatch(setLang(langRecord['lang']));
+  }, [langRecord]);
+
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
       <Panel
         bordered
-        style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '10px' }}
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          padding: '20px',
+          borderRadius: '10px'
+        }}
       >
         <div className="bodySignInDiv">
           <Panel className="logo-panel">
@@ -152,6 +171,7 @@ const SignIn = () => {
                 />
 
                 <MyInput
+
                   width="100%"
                   fieldName="lang"
                   fieldType="select"
@@ -163,7 +183,9 @@ const SignIn = () => {
                   setRecord={() => { }}
                   placeholder="Select Language"
                   showLabel={false}
+                  searchable={false}
                 />
+
 
                 <MyInput
                   width="100%"
@@ -181,7 +203,7 @@ const SignIn = () => {
                     name="password"
                     type="password"
                     value={credentials.password}
-                    onChange={(e) => setCredentials({ ...credentials, password: e })}
+                    onChange={e => setCredentials({ ...credentials, password: e })}
                   />
                 </Form.Group>
 
@@ -213,14 +235,18 @@ const SignIn = () => {
             <Form fluid>
               <Form.Group>
                 <Form.ControlLabel>New Password</Form.ControlLabel>
-                <Form.Control name="New Password" value={newPassword} onChange={(e) => setNewPassword(e)} />
+                <Form.Control
+                  name="New Password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e)}
+                />
               </Form.Group>
               <Form.Group>
                 <Form.ControlLabel>Password Confirm</Form.ControlLabel>
                 <Form.Control
                   name="Password Confirm"
                   value={newPasswordConfirm}
-                  onChange={(e) => setNewPasswordConfirm(e)}
+                  onChange={e => setNewPasswordConfirm(e)}
                 />
               </Form.Group>
             </Form>

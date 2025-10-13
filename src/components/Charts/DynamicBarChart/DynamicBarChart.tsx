@@ -3,6 +3,7 @@ import { Bar } from 'react-chartjs-2';
 import type { ChartOptions, ChartData } from 'chart.js';
 import 'chart.js/auto';
 import { Button } from 'rsuite';
+import { useSelector } from 'react-redux';
 
 // Original single-column data type
 type BarChartDataPoint = {
@@ -43,6 +44,7 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
     value: number;
     dataset?: string;
   } | null>(null);
+  const mode = useSelector((state: any) => state.ui.mode);
 
   const [data, setData] = useState<ChartData<'bar'>>({
     labels: [],
@@ -63,7 +65,7 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
         label: key,
         data: multiData.map(item => Number(item[key])),
         backgroundColor: colors[index % colors.length],
-        borderColor: '#fff',
+        borderColor: mode === 'dark' ? '#565656ff' : '#fff',
         borderWidth: 1,
         borderRadius: 4,
         borderSkipped: false
@@ -86,7 +88,7 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
             label: title || 'Values',
             data: values,
             backgroundColor: color,
-            borderColor: '#fff',
+            borderColor: mode === 'dark' ? '#565656ff' : '#fff',
             borderWidth: 1,
             borderRadius: 4,
             borderSkipped: false
@@ -134,7 +136,7 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
       },
       y: {
         grid: {
-          color: '#eee'
+          color: mode === 'dark' ? '#666' : '#d7d7d7ff'
         },
         ticks: {
           color: '#666'
