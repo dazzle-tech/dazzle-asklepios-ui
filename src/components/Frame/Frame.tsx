@@ -59,23 +59,6 @@ const drawerWidth = 240;
 const collapsedWidth = 60;
 
 const Frame = (props: FrameProps) => {
-
-  // const { navs } = props;
-  // console.log('Navs in Frame:', navs);
-  // const { mode } = props;
-  // const NavItem = props => {
-  //   const { title, eventKey, ...rest } = props;
-  //   return (
-  //     <Nav.Item eventKey={eventKey} as={NavLink} {...rest}>
-  //       {title}
-  //     </Nav.Item>
-  //   );
-  // };
-  // const [expand, setExpand] = useState(false);
-  // const [windowHeight, setWindowHeight] = useState(getHeight(window));
-  // const [recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({ screen: '' });
-  // const [width, setWidth] = useState<number>(window.innerWidth);
-
   const { navs, mode } = props;
 
   // State variables
@@ -87,14 +70,11 @@ const Frame = (props: FrameProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // menu anchor element
   const [activeMenu, setActiveMenu] = useState<string | null>(null); // active menu for popover
   const [expandAllSubmenus, setExpandAllSubmenus] = useState(false);
-
   const authSlice = useAppSelector(state => state.auth);
   const patientSlice = useAppSelector(state => state.patient);
   const [expandNotes, setExpandNotes] = useState(false); // sticky notes panel
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const uiSlice = useAppSelector(state => state.ui);
-  console.log('lang ' + uiSlice.lang);
 
   // Effects - window resize listeners
   useEffect(() => {
@@ -387,7 +367,7 @@ const Frame = (props: FrameProps) => {
                           vertical: 'top',
                           horizontal: 'left'
                         }}
-                        // getContentAnchorEl={null}
+                        getContentAnchorEl={null}
                         PaperProps={{
                           sx: {
                             '& .MuiMenuItem-root': {

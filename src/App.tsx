@@ -181,164 +181,132 @@ import CallOverlay from './components/Overlay/CallOverlay';
 
 
 const App = () => {
-  const authSlice = useAppSelector(state => state.auth);
-  console.log("User Screens from APP", authSlice.user)
-
+const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
-  const [navigationMap, setNavigationMap] = useState([]);
+
+  const [navigationMap, setNavigationMap] = useState<any[]>([]);
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
-  console.log('Tenant in APP:', tenant);
 
-
-  // ⬇️ Call your RTK Query endpoint:
-  const { data: menu , isFetching: isMenuLoading } = useGetMenuQuery(
+  const { data: menu, isFetching: isMenuLoading } = useGetMenuQuery(
     user?.id && selectedFacility?.id
       ? { userId: user.id, facilityId: selectedFacility.id }
       : ({} as any),
     { skip: !(user?.id && selectedFacility?.id) }
   );
 
-   // Types for safety (optional)
-type BackendMenuItem = {
-  module?: string | null; // backend module name (if provided)
-  label?: string | null;  // human title, e.g. "ICD-10"
-  screen?: string | null; // code-ish name, e.g. "ICD_10"
-};
+  // ------------------------------ MENU BUILD HELPERS ---------------------------
+  type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
 
-// ────────────────────────────────────────────────────────────────────────────────
-// Helpers
-const norm = (s?: string | null) =>
-  (s ?? '')
-    .toLowerCase()
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const norm = (s?: string | null) =>
+    (s ?? '').toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-const toTitleCase = (str: string) =>
-  str
-    .toLowerCase()
-    .split(' ')
-    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(' ');
+  const toTitleCase = (str: string) =>
+    str
+      .toLowerCase()
+      .split(' ')
+      .map(w => (w ? w[0].toUpperCase() + w.slice(1) : w))
+      .join(' ');
 
-// Build fast lookups from backend menu
-const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
-  // Global allow-list: screens allowed regardless of module (label or screen code)
-  const globalAllowed = new Set<string>();
+  const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
+    const globalAllowed = new Set<string>();
+    const moduleAllowed = new Map<string, Set<string>>();
 
-  // Per-module allow-list: screens allowed within a module name
-  const moduleAllowed = new Map<string, Set<string>>();
+    for (const m of menuItems ?? []) {
+      const nLabel = norm(m.label);
+      const nScreen = norm((m.screen ?? '').replace(/[_]/g, ' '));
+      const nModule = norm(m.module);
 
-  for (const m of menuItems ?? []) {
-    const nLabel = norm(m.label);
-    const nScreen = norm((m.screen ?? '').replace(/[_]/g, ' ')); // "ICD_10" → "icd 10"
-    const nModule = norm(m.module);
+      if (nLabel) globalAllowed.add(nLabel);
+      if (nScreen) globalAllowed.add(nScreen);
 
-    // Add to global
-    if (nLabel) globalAllowed.add(nLabel);
-    if (nScreen) globalAllowed.add(nScreen);
-
-    // Add to module-specific
-    if (nModule) {
-      if (!moduleAllowed.has(nModule)) moduleAllowed.set(nModule, new Set());
-      if (nLabel) moduleAllowed.get(nModule)!.add(nLabel);
-      if (nScreen) moduleAllowed.get(nModule)!.add(nScreen);
+      if (nModule) {
+        if (!moduleAllowed.has(nModule)) moduleAllowed.set(nModule, new Set());
+        if (nLabel) moduleAllowed.get(nModule)!.add(nLabel);
+        if (nScreen) moduleAllowed.get(nModule)!.add(nScreen);
+      }
     }
-  }
+    return { globalAllowed, moduleAllowed };
+  };
 
-  return { globalAllowed, moduleAllowed };
-};
+  const isScreenAllowed = (
+    screen: { name: string; navPath: string },
+    moduleName: string,
+    lookups: { globalAllowed: Set<string>; moduleAllowed: Map<string, Set<string>> }
+  ) => {
+    const { globalAllowed, moduleAllowed } = lookups;
+    const nScreenName = norm(screen.name);
+    const nScreenCode = norm(screen.name.replace(/-/g, ' '));
+    const nNavPath = norm(screen.navPath);
+    const nModule = norm(moduleName);
+    const modSet = moduleAllowed.get(nModule);
 
-// Robust screen-name matcher against backend entries
-const isScreenAllowed = (
-  screen: { name: string; navPath: string },
-  moduleName: string,
-  lookups: { globalAllowed: Set<string>; moduleAllowed: Map<string, Set<string>> }
-) => {
-  const { globalAllowed, moduleAllowed } = lookups;
+    if (modSet && (modSet.has(nScreenName) || modSet.has(nScreenCode) || modSet.has(nNavPath)))
+      return true;
+    if (globalAllowed.has(nScreenName) || globalAllowed.has(nScreenCode) || globalAllowed.has(nNavPath))
+      return true;
+    return false;
+  };
 
-  const nScreenName = norm(screen.name);               // e.g. "icd 10"
-  const nScreenCode = norm(screen.name.replace(/-/g, ' ')); // loose match variant
-  const nNavPath = norm(screen.navPath);               // e.g. "icd10-setup" → "icd10 setup"
-  const nModule = norm(moduleName);
+  // ------------------------------ BUILD NAVIGATION ----------------------------
+  useEffect(() => {
+    if (!menu || isMenuLoading) return;
+    loadNavs();
+  }, [menu, isMenuLoading]);
 
-  // 1) Check module-specific allow-list first (most precise)
-  const modSet = moduleAllowed.get(nModule);
-  if (modSet && (modSet.has(nScreenName) || modSet.has(nScreenCode) || modSet.has(nNavPath))) {
-    return true;
-  }
+  const loadNavs = () => {
+    const navsTemp: any[] = [];
 
-  // 2) Fallback: global allow-list
-  if (globalAllowed.has(nScreenName) || globalAllowed.has(nScreenCode) || globalAllowed.has(nNavPath)) {
-    return true;
-  }
+    // Dashboard
+    navsTemp.push({
+      eventKey: 'nav:dashboard',
+      icon: <Icon as={MdDashboard} />,
+      title: 'Dashboard',
+      to: '/'
+    });
 
-  return false;
-};
-// ────────────────────────────────────────────────────────────────────────────────
+    const lookups = buildPermissionLookup(menu as BackendMenuItem[]);
 
-useEffect(() => {
-  if (!menu || isMenuLoading) return;
-  loadNavs();
-  // console.log('menu from APP', menu);
-}, [menu, isMenuLoading]);
+    MODULES.forEach((module, mIdx) => {
+      if (!module.screens?.length) return;
 
-const loadNavs = () => {
-  const navsTemp: any[] = [];
+      const childrenNavs: any[] = [];
+      const sortedScreens = [...module.screens].sort((a, b) => (a.viewOrder ?? 0) - (b.viewOrder ?? 0));
 
-  // Always-on Dashboard
-  navsTemp.push({
-    eventKey: 'dashboard',
-    icon: <Icon as={MdDashboard} />,
-    title: 'Dashboard',
-    to: '/',
+      sortedScreens.forEach((screen, sIdx) => {
+        if (isScreenAllowed(screen, module.name, lookups)) {
+          const safeIconKey = (screen?.icon as keyof typeof icons) ?? 'FaCircle';
+          const IconComp = icons[safeIconKey] ?? icons.FaCircle;
 
-  });
+          childrenNavs.push({
+            eventKey: `nav:${module.name}:${screen.navPath}:${sIdx}`,
+            icon: <Icon as={IconComp} />,
+            title: toTitleCase(screen.name),
+            to: `/${screen.navPath}`
+          });
+        }
+      });
 
-  // Build lookups from backend menu
-  const lookups = buildPermissionLookup(menu as BackendMenuItem[]);
+      if (childrenNavs.length > 0) {
+        const safeModuleIconKey = (module?.icon as keyof typeof icons) ?? 'FaBox';
+        const ModuleIconComp = icons[safeModuleIconKey] ?? icons.FaBox;
 
-  // Walk your static MODULES and keep only allowed screens
-  MODULES.forEach((module) => {
-    if (!module.screens || module.screens.length === 0) return;
-
-    const childrenNavs: any[] = [];
-
-    // Sort screens by viewOrder if you want consistent ordering
-    const sortedScreens = [...module.screens].sort((a, b) => (a.viewOrder ?? 0) - (b.viewOrder ?? 0));
-
-    sortedScreens.forEach((screen) => {
-      if (isScreenAllowed(screen, module.name, lookups)) {
-        const safeIconKey = (screen?.icon as keyof typeof icons) ?? 'FaCircle';
-        const IconComp = icons[safeIconKey] ?? icons['FaCircle'];
-
-        childrenNavs.push({
-          icon: <Icon as={IconComp} />,
-          title: toTitleCase(screen.name), // keep a nice title
-          to: `/${screen.navPath}`,
+        navsTemp.push({
+          eventKey: `nav:${module.name}:${mIdx}`,
+          icon: <Icon as={ModuleIconComp} />,
+          title: module.name,
+          children: childrenNavs
         });
       }
     });
 
-    if (childrenNavs.length > 0) {
-      const safeModuleIconKey = (module?.icon as keyof typeof icons) ?? 'FaBox';
-      const ModuleIconComp = icons[safeModuleIconKey] ?? icons['FaBox'];
+    setNavigationMap(navsTemp);
+  };
 
-      navsTemp.push({
-        icon: <Icon as={ModuleIconComp} />,
-        title: module.name,
-        children: childrenNavs,
-      });
-    }
-  });
-
-  setNavigationMap(navsTemp);
-};
 
 
   return (

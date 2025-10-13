@@ -19,9 +19,10 @@ export const facilityService = createApi({
       }),
     }),
     updateFacility: builder.mutation({
-      query: (facilityId) => ({
-        url: `/api/setup/facility/${facilityId}`,
-        method: 'PUT'
+      query: (facility) => ({
+        url: `/api/setup/facility/${facility.id}`,
+        method: 'PUT',
+        body: facility,
       }),
     }),
 
@@ -55,4 +56,5 @@ export const {
     useGetAllFacilitiesQuery,
     useGetFacilityMutation,
     useGetFacilityTypesQuery
+
 } = facilityService;

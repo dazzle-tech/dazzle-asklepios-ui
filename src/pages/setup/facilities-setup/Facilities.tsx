@@ -1,44 +1,30 @@
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
-import {Panel, Form } from 'rsuite';
-import { notify } from '@/utils/uiReducerActions';
-import {
-} from '@fortawesome/free-solid-svg-icons';
-import {
-  useGetFacilitiesQuery,
-  useSaveFacilityMutation,
-  useRemoveFacilityMutation
-} from '@/services/setupService';
-import { MdDelete } from 'react-icons/md';
-import { MdModeEdit } from 'react-icons/md';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import { useAppDispatch } from '@/hooks';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQuery, useUpdateFacilityMutation } from '@/services/security/facilityService';
 import { ApAddresses, ApDepartment } from '@/types/model-types';
 import { newApAddresses, newApDepartment } from '@/types/model-types-constructor';
-import { FaUndo } from 'react-icons/fa';
-import MyInput from '@/components/MyInput';
+import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
+import { CreateFacility, Facility } from '@/types/model-types-new';
+import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { RiInformationFill } from 'react-icons/ri';
-import { Address } from 'cluster';
+import { notify } from '@/utils/uiReducerActions';
+import { } from '@fortawesome/free-solid-svg-icons';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import React, { useEffect, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAppDispatch } from '@/hooks';
-import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
-import './styles.less';
+import { FaBuilding, FaUndo } from 'react-icons/fa';
+import { FaKey } from 'react-icons/fa6';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { Form, Panel } from 'rsuite';
+import RoleManegment from '../role-managemen';
 import AddEditFacility from './AddEditFacility';
 import FacilityDepartment from './FacilityDepartment';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { FaBuilding } from 'react-icons/fa';
-import { CreateFacility, Facility } from '@/types/model-types-new';
-import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
-import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQuery, useUpdateFacilityMutation } from '@/services/security/facilityService';
-import { set } from 'lodash';
-import { Key, KeyOff, KeySharp } from '@mui/icons-material';
-import { FaKey } from 'react-icons/fa6';
-import Role from '../role-managemen/Roles';
-import RoleScreens from '../role-managemen/RoleScreens';
-import RoleManegment from '../role-managemen';
+import './styles.less';
 const Facilities = () => {
 
   const dispatch = useAppDispatch();
