@@ -94,7 +94,6 @@ import ERTabsDepartmentAndWaitingList from './pages/encounter/ER-triage/ERTabsDe
 import ERTriage from './pages/encounter/ER-triage/ERTriage';
 import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
 import ViewTriage from './pages/encounter/ER-triage/ViewTriage';
-import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
 import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
@@ -171,96 +170,144 @@ import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
+import NewDepartments from './pages/setup/departments-setup/Departments-new';
+import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
+import { MODULES } from "@/config/modules-config";
+import RoleManegment from './pages/setup/role-managemen';
+import { useGetMenuQuery } from './services/security/UserRoleService';
 import CallOverlay from './components/Overlay/CallOverlay';
-import IncidentPortal from './pages/Incident/IncidentPortal';
-import LanguagesSetup from './pages/setup/language-setup/Language';
+
+
+
 
 const App = () => {
-  const authSlice = useAppSelector(state => state.auth);
+const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
-  const [navigationMap, setNavigationMap] = useState([]);
+
+  const [navigationMap, setNavigationMap] = useState<any[]>([]);
   const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+  const selectedFacility = tenant?.selectedFacility || null;
 
-  const {
-    data: navigationMapRawData,
-    isLoading: isLoadingNavigationMap,
-    isFetching: isFetchingNavigationMap
-  } = useLoadNavigationMapQuery(String(user?.id || ''), {
-    // Using user ID here because in the old backend, the key matches the value of the new user ID.
-    // This ensures proper mapping and allows the UI team to work smoothly.
-    skip: !user?.id
-  });
+  const { data: menu, isFetching: isMenuLoading } = useGetMenuQuery(
+    user?.id && selectedFacility?.id
+      ? { userId: user.id, facilityId: selectedFacility.id }
+      : ({} as any),
+    { skip: !(user?.id && selectedFacility?.id) }
+  );
 
-  const [screenKeys, setScreenKeys] = useState({});
-  const location = useLocation();
+  // ------------------------------ MENU BUILD HELPERS ---------------------------
+  type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
 
-  useEffect(() => {
-    if (navigationMapRawData && !isLoadingNavigationMap && !isFetchingNavigationMap) {
-      // build navigation map
-      loadNavs();
-    }
-  }, [navigationMapRawData]);
+  const norm = (s?: string | null) =>
+    (s ?? '').toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-  useEffect(() => {
-    if (screenKeys && location) {
-      if (screenKeys[location.pathname]) {
-        dispatch(setScreenKey(screenKeys[location.pathname]));
+  const toTitleCase = (str: string) =>
+    str
+      .toLowerCase()
+      .split(' ')
+      .map(w => (w ? w[0].toUpperCase() + w.slice(1) : w))
+      .join(' ');
+
+  const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
+    const globalAllowed = new Set<string>();
+    const moduleAllowed = new Map<string, Set<string>>();
+
+    for (const m of menuItems ?? []) {
+      const nLabel = norm(m.label);
+      const nScreen = norm((m.screen ?? '').replace(/[_]/g, ' '));
+      const nModule = norm(m.module);
+
+      if (nLabel) globalAllowed.add(nLabel);
+      if (nScreen) globalAllowed.add(nScreen);
+
+      if (nModule) {
+        if (!moduleAllowed.has(nModule)) moduleAllowed.set(nModule, new Set());
+        if (nLabel) moduleAllowed.get(nModule)!.add(nLabel);
+        if (nScreen) moduleAllowed.get(nModule)!.add(nScreen);
       }
     }
-  }, [screenKeys]);
+    return { globalAllowed, moduleAllowed };
+  };
 
-  const loadNavs = async () => {
-    const navs = [];
-    navs.push({
-      eventKey: 'dashboard',
+  const isScreenAllowed = (
+    screen: { name: string; navPath: string },
+    moduleName: string,
+    lookups: { globalAllowed: Set<string>; moduleAllowed: Map<string, Set<string>> }
+  ) => {
+    const { globalAllowed, moduleAllowed } = lookups;
+    const nScreenName = norm(screen.name);
+    const nScreenCode = norm(screen.name.replace(/-/g, ' '));
+    const nNavPath = norm(screen.navPath);
+    const nModule = norm(moduleName);
+    const modSet = moduleAllowed.get(nModule);
+
+    if (modSet && (modSet.has(nScreenName) || modSet.has(nScreenCode) || modSet.has(nNavPath)))
+      return true;
+    if (globalAllowed.has(nScreenName) || globalAllowed.has(nScreenCode) || globalAllowed.has(nNavPath))
+      return true;
+    return false;
+  };
+
+  // ------------------------------ BUILD NAVIGATION ----------------------------
+  useEffect(() => {
+    if (!menu || isMenuLoading) return;
+    loadNavs();
+  }, [menu, isMenuLoading]);
+
+  const loadNavs = () => {
+    const navsTemp: any[] = [];
+
+    // Dashboard
+    navsTemp.push({
+      eventKey: 'nav:dashboard',
       icon: <Icon as={MdDashboard} />,
       title: 'Dashboard',
       to: '/'
     });
 
-    // fill screens without a module (direct links)
-    navigationMapRawData.screens.map(screenWithoutModule => {
-      navs.push({
-        eventKey: screenWithoutModule.key,
-        icon: <Icon as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
-        title: screenWithoutModule.name,
-        to: '/'.concat(screenWithoutModule.navPath)
+    const lookups = buildPermissionLookup(menu as BackendMenuItem[]);
+
+    MODULES.forEach((module, mIdx) => {
+      if (!module.screens?.length) return;
+
+      const childrenNavs: any[] = [];
+      const sortedScreens = [...module.screens].sort((a, b) => (a.viewOrder ?? 0) - (b.viewOrder ?? 0));
+
+      sortedScreens.forEach((screen, sIdx) => {
+        if (isScreenAllowed(screen, module.name, lookups)) {
+          const safeIconKey = (screen?.icon as keyof typeof icons) ?? 'FaCircle';
+          const IconComp = icons[safeIconKey] ?? icons.FaCircle;
+
+          childrenNavs.push({
+            eventKey: `nav:${module.name}:${screen.navPath}:${sIdx}`,
+            icon: <Icon as={IconComp} />,
+            title: toTitleCase(screen.name),
+            to: `/${screen.navPath}`
+          });
+        }
       });
-    });
 
-    const _screenKeys = {};
+      if (childrenNavs.length > 0) {
+        const safeModuleIconKey = (module?.icon as keyof typeof icons) ?? 'FaBox';
+        const ModuleIconComp = icons[safeModuleIconKey] ?? icons.FaBox;
 
-    // fill screens without a module (direct links)
-    navigationMapRawData.modules.map(module => {
-      const childrenScreens = module.screens;
-      const chidlrenNavs = [];
-
-      childrenScreens.map(screen => {
-        chidlrenNavs.push({
-          eventKey: screen.key,
-          icon: <Icon as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
-          title: screen.name,
-          to: '/'.concat(screen.navPath)
+        navsTemp.push({
+          eventKey: `nav:${module.name}:${mIdx}`,
+          icon: <Icon as={ModuleIconComp} />,
+          title: module.name,
+          children: childrenNavs
         });
-
-        _screenKeys['/'.concat(screen.navPath)] = screen.key;
-      });
-
-      navs.push({
-        eventKey: module.key,
-        icon: <Icon as={icons[module?.iconImagePath ?? 'FaBox']} />,
-        title: module.name,
-        children: chidlrenNavs
-      });
+      }
     });
 
-    setScreenKeys(_screenKeys);
+    setNavigationMap(navsTemp);
+  };
 
-    setNavigationMap(navs);
-  };
+
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
@@ -324,7 +371,6 @@ const App = () => {
             <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />
-              <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile" element={<PatientProfileCopy />} />
               <Route path="patient-chart" element={<PatientChart />} />
@@ -437,7 +483,7 @@ const App = () => {
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
-              <Route path="departments" element={<Departments />} />
+              <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
@@ -485,7 +531,7 @@ const App = () => {
               <Route path="department-stock" element={<DepartmentStock />} />
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
-              <Route path="language-setup" element={<LanguagesSetup />} />
+
               <Route path="service-and-products" element={<ServiceAndProducts />} />
             </Route>
           </Route>

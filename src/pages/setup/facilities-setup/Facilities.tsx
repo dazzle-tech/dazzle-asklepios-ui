@@ -1,55 +1,56 @@
-import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
-import {Panel, Form } from 'rsuite';
-import { notify } from '@/utils/uiReducerActions';
-import {
-} from '@fortawesome/free-solid-svg-icons';
-import {
-  useGetFacilitiesQuery,
-  useSaveFacilityMutation,
-  useRemoveFacilityMutation
-} from '@/services/setupService';
-import { MdDelete } from 'react-icons/md';
-import { MdModeEdit } from 'react-icons/md';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { ApFacility } from '@/types/model-types';
-import { newApAddresses, newApFacility, newApDepartment } from '@/types/model-types-constructor';
-import { FaUndo } from 'react-icons/fa';
-import MyInput from '@/components/MyInput';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { RiInformationFill } from 'react-icons/ri';
-import { Address } from 'cluster';
-import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAppDispatch } from '@/hooks';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
-import './styles.less';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAddFacilityMutation, useDeleteFacilityMutation, useGetAllFacilitiesQuery, useUpdateFacilityMutation } from '@/services/security/facilityService';
+import { ApAddresses, ApDepartment } from '@/types/model-types';
+import { newApAddresses, newApDepartment } from '@/types/model-types-constructor';
+import { newCreateFacility, newFacility } from '@/types/model-types-constructor-new';
+import { CreateFacility, Facility } from '@/types/model-types-new';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import { } from '@fortawesome/free-solid-svg-icons';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import React, { useEffect, useState } from 'react';
+import ReactDOMServer from 'react-dom/server';
+import { FaBuilding, FaUndo } from 'react-icons/fa';
+import { FaKey } from 'react-icons/fa6';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { Form, Panel } from 'rsuite';
+import RoleManegment from '../role-managemen';
 import AddEditFacility from './AddEditFacility';
 import FacilityDepartment from './FacilityDepartment';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { FaBuilding } from 'react-icons/fa';
+import './styles.less';
 const Facilities = () => {
 
   const dispatch = useAppDispatch();
-  const [facility, setFacility] = useState<ApFacility>({ ...newApFacility });
-  const [address, setAddress] = useState<Address>({ ...newApAddresses });
-  const [departments, setDepartments] = useState<Address>({ ...newApDepartment });
+  const [facility, setFacility] = useState<Facility>({ ...newFacility });
+  const [createFacility, setCreateFacility] = useState<CreateFacility>({ ...newCreateFacility });
+  const [address, setAddress] = useState<ApAddresses>({ ...newApAddresses });
+  const [departments, setDepartments] = useState<ApDepartment>({ ...newApDepartment });
   const [popupOpen, setPopupOpen] = useState(false);
+  const [popupOpenRole, setPopupOpenRole] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [facilityDepartmentPopupOpen, setFacilityDepartmentPopupOpen] = useState<boolean>(false);
   const [openConfirmDeleteModel, setOpenConfirmDeleteModel] = useState<boolean>(false);
   const [load, setLoad] = useState<boolean>(false);
-  const [recordOfSearchForFacility, setRecordOfSearchForFacility] = useState({ facilityName: '' });
+  const [recordOfSearchForFacility, setRecordOfSearchForFacility] = useState({ name: '' });
   // Initialize list request with default filters
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   // Fetch Facilities list response
-  const { data: facilityListResponse, refetch: refetchFacility, isFetching} = useGetFacilitiesQuery(listRequest);
+  const { data: facilityListResponse, refetch: refetchFacility, isFetching} = useGetAllFacilitiesQuery({});
   // Save Facility
-  const [saveFacility, saveFacilityMutation] = useSaveFacilityMutation();
+  const [saveFacility, saveFacilityMutation] = useAddFacilityMutation();
+    // Update Facility
+  const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
   // Remove Facility
-  const [removeFacility] = useRemoveFacilityMutation();
+  const [removeFacility] = useDeleteFacilityMutation(); 
+  // To check if we are in edit mode
+  const [isEditing, setIsEditing] = useState<boolean>(false);
    // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -92,12 +93,13 @@ const Facilities = () => {
   // Handle click on Add New Button
   const handleNew = () => {
     setAddress(newApAddresses);
-    setFacility(newApFacility);
+    setCreateFacility({ ...newCreateFacility });
     setDepartments(newApDepartment);
+    setIsEditing(false);
     setPopupOpen(true);
   };
   //icons column (View Departments, Add Details, Edite, Active/Deactivate)
-  const iconsForActions = (rowData: ApFacility) => (
+  const iconsForActions = (rowData: Facility) => (
     <div className='container-of-icons'>
       <FaBuilding
         title="View Departments"
@@ -109,12 +111,13 @@ const Facilities = () => {
         }}
         className='icons-style'
       />
-      <RiInformationFill
-        title="Add Details"
+      <FaKey
+        title="Facility Roles"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
           setFacility(rowData);
+          setPopupOpenRole(true);
         }}
         className='icons-style'
       />
@@ -123,13 +126,22 @@ const Facilities = () => {
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
-          setFacility(facility);
+          setFacility({ ...rowData });
+          setIsEditing(true);
           setPopupOpen(true);
         }}
         className='icons-style'
       />
-      {rowData?.deletedAt ?
-      // back to this function when update the filter(status) in back end 
+      {rowData?.isActive ?
+        <MdDelete
+       title="Deactivate"
+       size={24}
+       fill="var(--primary-pink)"
+       onClick={() => setOpenConfirmDeleteModel(true)}
+       className='icons-style'
+       />
+       :
+      // back to this function when update the filter(status) in back end
       <FaUndo
                 className="icons-style"
                 title="Activate"
@@ -137,14 +149,8 @@ const Facilities = () => {
                 fill="var(--primary-gray)"
                 onClick={handleActive}
               />
-      :
-      <MdDelete
-       title="Deactivate"
-       size={24}
-       fill="var(--primary-pink)"
-       onClick={() => setOpenConfirmDeleteModel(true)}
-       className='icons-style'
-       />
+      
+    
       }
     </div>
   );
@@ -152,13 +158,29 @@ const Facilities = () => {
   const handleSave = async () => {
     setPopupOpen(false);
     setLoad(true);
-   await saveFacility({ ...facility, address }).unwrap().then(() => {
+   await saveFacility({ ...createFacility }).unwrap().then(() => {
     dispatch(notify({ msg: 'The Facility has been saved successfully', sev: 'success' }));
+    refetchFacility();
    }).catch(() => {
     dispatch(notify({ msg: 'Failed to save this Facility', sev: 'error' }));
    });
    setLoad(false);
   };
+
+    // Handle click on Update Facility button
+  const handleUpdate = async () => {
+    setPopupOpen(false);
+    setLoad(true);
+    console.log(facility);
+   await updateFacility({ ...facility }).unwrap().then(() => {
+    dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
+    refetchFacility();
+   }).catch(() => {
+    dispatch(notify({ msg: 'Failed to update this Facility', sev: 'error' }));
+   });
+   setLoad(false);
+  };
+
   // Handle remove Facility
   const handleRemove = async () => {
     setPopupOpen(false);
@@ -176,8 +198,8 @@ const Facilities = () => {
   };
   // back to this function when update the filter in back end 
   // Handle Activation Facility
-  const handleActive = async () => { 
-    await saveFacility({ ...facility, deletedAt: null }).unwrap();
+  const handleActive = async () => {
+    await saveFacility({ ...facility, isActive: true }).unwrap();
   };
   // Handle page change in navigation
     const handlePageChange = (_: unknown, newPage: number) => {
@@ -193,7 +215,7 @@ const Facilities = () => {
     };
   // ClassName for selected row
   const isSelected = rowData => {
-    if (rowData && facility && rowData.key === facility.key) {
+    if (rowData && facility && rowData.id === facility.id) {
       return 'selected-row';
     } else return '';
   };
@@ -215,40 +237,41 @@ const Facilities = () => {
   //Table columns
   const tableColumns = [
     {
-      key: 'facilityId',
-      title: <Translate>ID</Translate>,
+
+      key: 'code',
+      title: <Translate>Code</Translate>,
       flexGrow: 1,
-      dataKey: 'facilityId'
+      dataKey: 'code'
     },
     {
-      key: 'facilityName',
+      key: 'name',
       title: <Translate>Facility Name</Translate>,
       flexGrow: 4,
-      dataKey: 'facilityName'
+      dataKey: 'name'
     },
     {
-      key: 'facilityRegistrationDate',
-      title: <Translate>Registration Date</Translate>,
+      key: 'type',
+      title: <Translate>Facility Type</Translate>,
       flexGrow: 4,
-      dataKey: 'facilityRegistrationDate'
+      dataKey: 'type'
     },
     {
-      key: 'facilityEmailAddress',
+      key: 'emailAddress',
       title: <Translate>Email Address</Translate>,
       flexGrow: 4,
-      dataKey: 'facilityEmailAddress'
+      dataKey: 'emailAddress'
     },
     {
-      key: 'deletedAt',
+      key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
-      render: (rowData: ApFacility) => {return(<p>{rowData?.deletedAt ? "Inactive" : "Active"}</p>);} 
+      render: (rowData) => {return(<p>{rowData?.isActive ? "Active" : "Inactive"}</p>);} 
     },
     {
-      key: 'facilityBriefDesc',
+      key: 'actions',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: (rowData: ApFacility) => iconsForActions(rowData)
+      render: (rowData) => iconsForActions(rowData)
     }
   ];
 
@@ -280,7 +303,7 @@ const Facilities = () => {
             </div>
             <MyTable
               height={450}
-              data={facilityListResponse?.object ?? []}
+              data={facilityListResponse ?? []}
               loading={isFetching || load}
               columns={tableColumns}
               rowClassName={isSelected}
@@ -303,12 +326,18 @@ const Facilities = () => {
             <AddEditFacility 
               open={popupOpen}
               setOpen={setPopupOpen}
-              facility={facility}
-              setFacility={setFacility}
+              facility={isEditing ? facility : createFacility}
+              setFacility={isEditing ? setFacility : setCreateFacility}
               address={address}
               setAddress={setAddress}
-              handleSave = {handleSave}
+              handleSave={isEditing ? handleUpdate : handleSave}
               width={width}
+            />
+            <RoleManegment
+              open={popupOpenRole}
+              setOpen={setPopupOpenRole}
+              facility={facility}
+              setFacility={setFacility}
             />
             <FacilityDepartment
              open={facilityDepartmentPopupOpen}

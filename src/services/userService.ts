@@ -74,15 +74,30 @@ export const userService = createApi({
       }),
     }),
 
-    // ==== Duplication Candidates APIs ====
-  getDuplicationCandidates: builder.query({
-  query: (role?: string) =>
-    role
-      ? `/api/setup/duplication-candidates?role=${role}`
-      : '/api/setup/duplication-candidates',
-}),
 
-    
+    // ==== Duplication Candidates APIs ====
+    getDuplicationCandidates: builder.query({
+      query: (role?: string) =>
+        role
+          ? `/api/setup/duplication-candidates?role=${role}`
+          : '/api/setup/duplication-candidates',
+    }),
+
+    getRolePermissions: builder.query({
+      query: (roleId: number) => `/api/setup/role/${roleId}/screens`,
+    }),
+
+    // 🔹 تحديث صلاحيات الرول
+    updateRolePermissions: builder.mutation({
+      query: ({ roleId, permissions }) => ({
+        url: `/api/setup/role/${roleId}/screens`,
+        method: 'PUT',
+        body: permissions, // array of { screen, permission }
+      }),
+    }),
+
+
+
     createDuplicationCandidate: builder.mutation({
       query: (candidate) => ({
         url: '/api/setup/duplication-candidates',
@@ -104,13 +119,14 @@ export const userService = createApi({
       }),
     }),
 
-     reactivateDuplicationCandidate: builder.mutation({
+    reactivateDuplicationCandidate: builder.mutation({
       query: (id) => ({
         url: `/api/setup/duplication-candidates/reactivate/${id}`,
         method: 'PUT',
       }),
     }),
   }),
+
 });
 
 export const {
@@ -128,6 +144,8 @@ export const {
   useGetDuplicationCandidatesQuery,
   useCreateDuplicationCandidateMutation,
   useUpdateDuplicationCandidateMutation,
-  useDeactivateDuplicationCandidateMutation,
-  useReactivateDuplicationCandidateMutation
+  useReactivateDuplicationCandidateMutation,
+  useGetRolePermissionsQuery,
+  useUpdateRolePermissionsMutation
 } = userService;
+

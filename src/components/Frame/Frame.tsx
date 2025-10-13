@@ -75,8 +75,6 @@ const Frame = (props: FrameProps) => {
   const [expandNotes, setExpandNotes] = useState(false); // sticky notes panel
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const uiSlice = useAppSelector(state => state.ui);
-  console.log('lang ' + uiSlice.lang);
 
   // Effects - window resize listeners
   useEffect(() => {

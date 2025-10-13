@@ -34,7 +34,7 @@ const ChildModal = ({
 
   // Sub-child
   showSubChild = false,
-  setShowSubChild = null,
+  setShowSubChild = (b:boolean=false)=>{},
   subChildTitle = "",
   subChildStep = [],
   subChildContent = null,

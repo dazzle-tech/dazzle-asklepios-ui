@@ -20,7 +20,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -74,7 +73,7 @@ const MyInput = ({
 }) => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.ui);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef(null);
   const [recording, setRecording] = useState(false);
   // <<< Added this line here to fix the error
 
@@ -100,7 +99,16 @@ const MyInput = ({
 
     if (!isAnyOpen) return;
 
-    const handleScroll = () => {
+    const handleScroll = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      // Ignore scrolls occurring inside rsuite picker menus to allow internal scrolling
+      if (
+        target &&
+        (target.closest('.rs-picker-menu') || target.closest('.rs-picker-select-menu') || target.closest('.rs-virtual-list'))
+      ) {
+        return;
+      }
+
       setIsSelectOpen(false);
       setIsDateOpen(false);
       setIsDateTimeOpen(false);
@@ -126,7 +134,7 @@ const MyInput = ({
     } else {
       setValidationResult(undefined);
     }
-  }, [vr, fieldName]);
+  }, [vr]);
 
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
   const handleValueChange = value => {
@@ -135,10 +143,21 @@ const MyInput = ({
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
+  const getDynamicMenuMaxHeight = (dataList?: any[]) => {
+    // If consumer provided a specific height, honor it
+    if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
+      return props.menuMaxHeight as number;
+    }
+    const itemsCount = dataList?.length ?? 0;
+    const estimatedItemHeight = 38; // approx item row height for rsuite pickers
+    const headerAllowance = 24; // search header/padding allowance
+    const capHeight = 240; // sensible default cap
+    return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
+  };
+
   // start speech recognition
   const startListening = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       dispatch(notify({ msg: 'Your browser does not support Speech Recognition', sev: 'error' }));
@@ -146,7 +165,7 @@ const MyInput = ({
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = uiSlice.lang === 'SYS_LANG_ENG' ? 'en-US' : 'ar-SA';
+    recognition.lang = uiSlice.lang === 'en' ? 'en-US' : 'ar-SA';
     recognition.interimResults = true;
     recognition.continuous = true;
 
@@ -161,7 +180,6 @@ const MyInput = ({
     recognition.start();
     recognitionRef.current = recognition;
   };
-
   // stop speech recognition
   const stopListening = () => {
     recognitionRef.current?.stop();
@@ -195,16 +213,17 @@ const MyInput = ({
               onChange={handleValueChange}
               onKeyDown={focusNextField}
             />
-            {!props.disabled && (
-              <div
-                className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
-                onClick={changeRecordingState}
-                style={{ position: 'relative' }}
-              >
-                <FontAwesomeIcon icon={faMicrophone} className="active-icon" />
-                {recording && <span className="pulse-ring"></span>}
-              </div>
-            )}
+            <div
+              className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
+              onClick={changeRecordingState}
+              style={{ position: 'relative' }}
+            >
+              <FontAwesomeIcon
+                icon={faMicrophone}
+                className={props.disabled ? 'disabled-icon' : 'active-icon'}
+              />
+              {recording && <span className="pulse-ring"></span>}
+            </div>
           </InputGroup>
         );
       case 'checkbox':
@@ -237,9 +256,6 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
-            open={isDateTimeOpen}
-            onOpen={() => setIsDateTimeOpen(true)}
-            onClose={() => setIsDateTimeOpen(false)}
           />
         );
       case 'time':
@@ -266,11 +282,9 @@ const MyInput = ({
             format="HH:mm"
             cleanable
             onKeyDown={focusNextField}
-            open={isTimeOpen}
-            onOpen={() => setIsTimeOpen(true)}
-            onClose={() => setIsTimeOpen(false)}
           />
         );
+
       case 'select':
         return (
           <Form.Control
@@ -281,6 +295,26 @@ const MyInput = ({
             accepter={SelectPicker}
             renderMenuItem={props.renderMenuItem}
             searchBy={props.searchBy}
+            container={
+              props.container ??
+              (() => {
+                // Check if inside sub-child modal first
+                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                if (subChildModal) return subChildModal;
+                
+                // Check if inside child modal
+                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                if (childModal) return childModal;
+                
+                // Default to any modal or document body
+                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+              })
+            }
+            placement={props.placement ?? 'bottomStart'}
+            preventOverflow={props.preventOverflow ?? true}
+            searchable={props.searchable !== undefined ? props.searchable : true}
+            cleanable={props.cleanable !== undefined ? props.cleanable : true}
+            readOnly={props.readOnly !== undefined ? props.readOnly : false}
             name={fieldName}
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
@@ -289,15 +323,16 @@ const MyInput = ({
             onChange={handleValueChange}
             defaultValue={props.defaultSelectValue}
             placeholder={props.placeholder}
-            searchable={props.searchable}
-            menuMaxHeight={props?.menuMaxHeight ?? ''}
+            menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             loading={props?.loading ?? false}
             open={isSelectOpen}
             onOpen={() => setIsSelectOpen(true)}
             onClose={() => setIsSelectOpen(false)}
+            virtualized={props?.virtualized ?? true}
           />
         );
+
       //<TagPicker data={data} style={{ width: 300 }} />
       case 'multyPicker':
         return (
@@ -306,6 +341,23 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={TagPicker}
+            container={
+              props.container ??
+              (() => {
+                // Check if inside sub-child modal first
+                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                if (subChildModal) return subChildModal;
+                
+                // Check if inside child modal
+                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                if (childModal) return childModal;
+                
+                // Default to any modal or document body
+                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+              })
+            }
+            placement={props.placement ?? 'bottomStart'}
+            preventOverflow={props.preventOverflow ?? true}
             name={fieldName}
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
@@ -316,7 +368,7 @@ const MyInput = ({
             creatable={props.creatable ?? false} // Optional: Allow users to create new tags
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
             searchBy={props.searchBy} // Optional: Search function for TagPicker
-            menuMaxHeight={props?.menuMaxHeight ?? ''}
+            menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isMultyPickerOpen}
             onOpen={() => setIsMultyPickerOpen(true)}
@@ -330,6 +382,23 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={CheckPicker}
+            container={
+              props.container ??
+              (() => {
+                // Check if inside sub-child modal first
+                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                if (subChildModal) return subChildModal;
+                
+                // Check if inside child modal
+                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                if (childModal) return childModal;
+                
+                // Default to any modal or document body
+                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+              })
+            }
+            placement={props.placement ?? 'bottomStart'}
+            preventOverflow={props.preventOverflow ?? true}
             name={fieldName}
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
@@ -339,7 +408,7 @@ const MyInput = ({
             placeholder={props.placeholder ?? 'Select...'}
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
             searchBy={props.searchBy} // Optional: Search function for checkPicker
-            menuMaxHeight={props?.menuMaxHeight ?? ''}
+            menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isCheckPickerOpen}
             onOpen={() => setIsCheckPickerOpen(true)}
@@ -363,9 +432,6 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
-            open={isDateOpen}
-            onOpen={() => setIsDateOpen(true)}
-            onClose={() => setIsDateOpen(false)}
           />
         );
       case 'number': {
@@ -376,7 +442,6 @@ const MyInput = ({
           if (!text) return addonWidth;
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
-          if (!context) return addonWidth;
           context.font =
             '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial';
           const metrics = context.measureText(text.toString());
@@ -476,7 +541,7 @@ const MyInput = ({
           </Checkbox>
         );
 
-      default: {
+      default:
         const inputWidth = props?.width ?? 145;
         const addonWidth = 40;
         const totalWidth =
@@ -485,6 +550,38 @@ const MyInput = ({
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const inputControl = (
+          //  <InputGroup style={{ width: totalWidth + 20 }}>
+          //   <Form.Control
+          //     labelKey={props?.selectDataLabel ?? ''}
+          //     style={{ width: inputWidth, height: props?.height ?? 30 }}
+          //     disabled={props.disabled}
+          //     name={fieldName}
+          //     type={fieldType}
+          //     value={record ? record[fieldName] : ''}
+          //     onChange={handleValueChange}
+          //     placeholder={props.placeholder}
+          //     onKeyDown={async e => {
+          //       if (e.key === 'Enter') {
+          //         e.preventDefault();
+          //         const result = await props.enterClick?.();
+          //         if (result !== false) {
+          //           handleEnterFocusNext(e);
+          //         }
+          //       }
+          //     }}
+          //   />
+          //     <div
+          //     className={`container-of-search-icon ${recording ? 'recording' : ''}`}
+          //     onClick={changeRecordingState}
+          //     style={{ position: 'relative' }}
+          //   >
+          //     <FontAwesomeIcon
+          //       icon={faMicrophone}
+          //       className={props.disabled ? 'disabled-icon' : 'active-icon'}
+          //     />
+          //      {recording && <span className="pulse-ring"></span>}
+          //   </div>
+          //   </InputGroup>
           <div style={{ position: 'relative', display: 'inline-block', width: inputWidth }}>
             <Form.Control
               labelKey={props?.selectDataLabel ?? ''}
@@ -510,15 +607,16 @@ const MyInput = ({
               }}
             />
 
-            {!props.disabled && (
-              <div
-                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-                onClick={changeRecordingState}
-              >
-                <FontAwesomeIcon icon={faMicrophone} className="active-icon" />
-                {recording && <span className="pulse-ring"></span>}
-              </div>
-            )}
+            <div
+              className={`container-of-search-icon ${recording ? 'recording' : ''}`}
+              onClick={changeRecordingState}
+            >
+              <FontAwesomeIcon
+                icon={faMicrophone}
+                className={props.disabled ? 'disabled-icon' : 'active-icon'}
+              />
+              {recording && <span className="pulse-ring"></span>}
+            </div>
           </div>
         );
 
@@ -541,7 +639,6 @@ const MyInput = ({
         }
 
         return inputControl;
-      }
     }
   };
 

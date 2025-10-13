@@ -117,6 +117,21 @@ export const conjureValueBasedOnKeyFromList = (
   });
   return displayValue;
 };
+// new backend
+export const conjureValueBasedOnIDFromList = (
+  list: [],
+  currentKey: string,
+  preferredField: any
+) => {
+  let displayValue = currentKey;
+  list.map(record => {
+
+    if (record['id'] === currentKey) {
+      displayValue = record[preferredField];
+    }
+  });
+  return displayValue;
+};
 
 export const calculateAge = birthdate => {
   const birthDate = new Date(birthdate);
@@ -222,3 +237,14 @@ export function formatDateWithoutSeconds(dateString) {
     hour12: true 
   });
 }
+
+export const formatEnumString = (input: string): string => {
+  if (!input) return '';
+
+  return input
+    .split('_')                          
+    .map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() 
+    )
+    .join(' ');                         
+};

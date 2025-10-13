@@ -1,5 +1,5 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -8,6 +8,9 @@ import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import { faUser, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useGetFacilityTypesQuery } from '@/services/security/facilityService';
+import { useEnumByName, useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
+
 
 const AddEditFacility = ({
   open,
@@ -20,15 +23,21 @@ const AddEditFacility = ({
   handleSave
 }) => {
   const [validationResult] = useState({});
+  
 
-  // Fetch facility type Lov list response
-  const { data: fsltyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('FSLTY_TYP');
+
+  useEffect(() => {
+    console.log('facility data in modal:', facility);
+  }, [handleSave]);
+
+  // Fetch  facilityTypeOptions list response
+  const facilityTypeOptions = useEnumOptions("FacilityType"); 
+
+  const currencyOptions = useEnumCapitalized("Currency");
   // Fetch country Lov list response
   const { data: contryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   // Fetch state Lov list response
   const { data: stateLovQueryResponse } = useGetLovValuesByCodeQuery('STATE_PROV');
-  // Fetch currency Lov list response
-  const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
   // Fetch city Lov list response
   const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'CITY',
@@ -44,7 +53,8 @@ const AddEditFacility = ({
             <div className={clsx('', { 'container-of-two-fields-facility': width > 600 })}>
               <MyInput
                 fieldLabel="Facility ID"
-                fieldName="facilityId"
+                fieldName="code"
+                disabled={facility?.id ? true : false}
                 required
                 record={facility}
                 setRecord={setFacility}
@@ -57,16 +67,17 @@ const AddEditFacility = ({
                 vr={validationResult}
                 fieldLabel="Facility Type"
                 fieldType="select"
-                fieldName="facilityTypeLkey"
-                selectData={fsltyTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                fieldName="type"
+                selectData={facilityTypeOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
+
                 record={facility}
                 setRecord={setFacility}
               />
             </div>
             <MyInput
-              fieldName="facilityName"
+              fieldName="name"
               record={facility}
               setRecord={setFacility}
               width={width > 600 ? 520 : 250}
@@ -78,7 +89,7 @@ const AddEditFacility = ({
             >
               <MyInput
                 column
-                fieldName="facilityRegistrationDate"
+                fieldName="registrationDate"
                 fieldType="date"
                 record={facility}
                 setRecord={setFacility}
@@ -91,10 +102,10 @@ const AddEditFacility = ({
                 column
                 fieldLabel="Default Currency"
                 fieldType="select"
-                fieldName="defaultCurrencyLkey"
-                selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                fieldName="defaultCurrency"
+                selectData={currencyOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={facility}
                 setRecord={setFacility}
               />
@@ -194,7 +205,7 @@ const AddEditFacility = ({
             >
               <MyInput
                 column
-                fieldName="facilityPhone1"
+                fieldName="phone1"
                 fieldLabel="Primary Phone Number"
                 required
                 record={facility}
@@ -203,9 +214,8 @@ const AddEditFacility = ({
               />
               <MyInput
                 column
-                fieldName="facilityPhone2"
+                fieldName="phone2"
                 fieldLabel="Secondary Phone Number"
-                required
                 record={facility}
                 setRecord={setFacility}
                 width={250}
@@ -213,14 +223,14 @@ const AddEditFacility = ({
             </div>
             <MyInput
               column
-              fieldName="facilityEmailAddress"
+              fieldName="emailAddress"
               record={facility}
               setRecord={setFacility}
               width={width > 600 ? 520 : 250}
             />
             <MyInput
               column
-              fieldName="facilityFax"
+              fieldName="fax"
               required
               record={facility}
               setRecord={setFacility}
@@ -234,10 +244,10 @@ const AddEditFacility = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={facility?.key ? 'Edit Facility' : 'New Facility'}
+      title={facility?.id ? 'Edit Facility' : 'New Facility'}
       position="right"
       content={conjureFormContent}
-      actionButtonLabel={facility?.key ? 'Save' : 'Create'}
+      actionButtonLabel={facility?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size={width > 600 ? '36vw' : '25vw'}
       steps={[

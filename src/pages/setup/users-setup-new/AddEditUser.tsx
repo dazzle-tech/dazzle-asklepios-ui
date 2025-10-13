@@ -1,35 +1,37 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React from 'react';
-import { useGetAccessRolesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import {  useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faUser } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
-import { initialListRequest } from '@/types/types';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
+import { useGetAllRolesQuery, useGetRolesByFacilityQuery } from '@/services/security/roleService';
+import MyButton from '@/components/MyButton/MyButton';
+import AccessRole from './AccessRole';
+import { useGetGenderQuery } from '@/services/enumService';
 const AddEditUser = ({
   open,
   setOpen,
   width,
   user,
   setUser,
-  readyUser,
-  setReadyUser,
   handleSave,
-  facilityListResponse
+ 
 }) => {
-  console.log("USERE",user)
   // Fetch accessRoles list response
-  const { data: accessRoleListResponse } = useGetAccessRolesQuery({
-    ...initialListRequest,
-    pageSize: 1000
-  });
+ const {data:accessRoles}=useGetAllRolesQuery(null);
   // Fetch gender lov list response
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   // Fetch jobRole lov list response
   const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
-
+   const {data:genderList}=useGetGenderQuery(null);
+     const genders = (genderList ?? []).map((type) => ({
+    id: type,
+    displayValue: type,
+  }));
   // Modal content
   const conjureFormContent = stepNumber => {
     switch (stepNumber) {
@@ -45,14 +47,7 @@ const AddEditUser = ({
                 setRecord={setUser}
                 width={width > 600 ? 160 : 250}
               />
-              {/* <MyInput
-                  column
-                  fieldName="secondName"
-                  required
-                  record={user}
-                  setRecord={setUser}
-                  width={width > 600 ? 160 : 250}
-                /> */}
+            
               <MyInput
                 column
                 fieldName="lastName"
@@ -78,10 +73,10 @@ const AddEditUser = ({
                 column
                 fieldLabel="sex at birth"
                 fieldType="select"
-                fieldName="genderLkey"
-                selectData={gndrLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                fieldName="gender"
+                selectData={genders?? []}
+                selectDataLabel="displayValue"
+                selectDataValue="id"
                 record={user}
                 setRecord={setUser}
                 width={250}
@@ -136,9 +131,16 @@ const AddEditUser = ({
               setRecord={setUser}
               width={width > 600 ? 520 : 250}
             />
+            
           </Form>
         );
-    }
+    
+
+      case 1:
+      return (
+       <AccessRole user={user}  />
+      );}
+
   };
 
   return (
@@ -148,10 +150,16 @@ const AddEditUser = ({
       title={user?.key ? 'Edit User' : 'New User'}
       position="right"
       content={conjureFormContent}
-      actionButtonLabel={user?.key ? 'Save' : 'Create'}
+      actionButtonLabel={user?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size={width > 600 ? '38vw' : '25vw'}
-      steps={[{ title: 'User Info', icon: <FontAwesomeIcon icon={faUser} /> }]}
+      steps={[{ title: 'User Info', icon: <FontAwesomeIcon icon={faUser} /> ,disabledNext:!user.id, footer: <>
+                    <MyButton
+                        disabled={false}
+                        onClick={handleSave}
+                        prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}>Save</MyButton> </>},{
+        title: 'Roles', icon: <FontAwesomeIcon icon={faUser} />
+      }]}
     />
   );
 };

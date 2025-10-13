@@ -9,8 +9,22 @@ import CssBaseline from '@mui/material/CssBaseline';
 import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import './tw.entry.css';
-import './pages/Incident/style.css'; 
+
+// Suppress benign ResizeObserver loop error from Chrome that can occur with nested modals/pickers
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', event => {
+    if (event?.message && event.message.includes('ResizeObserver loop completed')) {
+      event.preventDefault();
+    }
+  });
+  window.addEventListener('unhandledrejection', event => {
+    const message = (event?.reason && event.reason.message) || '';
+    if (message.includes('ResizeObserver loop completed')) {
+      event.preventDefault();
+    }
+  });
+}
+
 const RootWrapper = () => {
   const mode = useSelector((state: any) => state.ui.mode);
 
