@@ -65,7 +65,7 @@ const initialState = {
     "Address Change Log" : "Registro de alterações de endereço",
     "Save" : 'Salvar',
     "Scan Document": "Digitalizar documento",
-    "Clear" : "Claro",
+    "Clear" : "limpar",
     "Quick Appointment": "Consulta rápida",
     "Administrative Warnings" : "Avisos Administrativos",
     "Marital Status" : 'Estado civil',
