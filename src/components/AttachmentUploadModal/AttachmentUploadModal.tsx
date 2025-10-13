@@ -213,6 +213,7 @@ AttachmentModalProps) => {
           selectDataValue="key"
           record={selectedAttachType}
           setRecord={setSelectedAttachType}
+          searchable={false}
         />
         <MyInput
           width={550}

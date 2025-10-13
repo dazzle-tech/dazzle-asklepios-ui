@@ -68,6 +68,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
             record={object}
             setRecord={setObject}
             disabled={disabled}
+            searchable={false}
           />
         </div>
         <div className="vital-signs-handle-position-row">
@@ -117,8 +118,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
           <Form fluid>
             <MyInput
               fieldLabel="Note"
-              height="100px"
-              width={430}
+              width="100%"
               fieldName="latestnotes"
               fieldType="textarea"
               record={object}

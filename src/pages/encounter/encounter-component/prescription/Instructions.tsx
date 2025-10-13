@@ -4,6 +4,9 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Col, Dropdown, Form, Row } from 'rsuite';
+import './styles.less';
+
+
 const Instructions = ({
   prescriptionMedication,
   selectedOption,
@@ -56,7 +59,7 @@ const Instructions = ({
           <Row gutter={16}>
             <Col md={6}>
               <MyInput
-                width={120}
+                width={95}
                 fieldType="number"
                 fieldName="dose"
                 fieldLabel="Dose"
@@ -66,7 +69,7 @@ const Instructions = ({
             </Col>
             <Col md={6}>
               <MyInput
-                width={120}
+                width={95}
                 fieldType="select"
                 fieldLabel="Unit"
                 selectData={unitLovQueryResponse?.object ?? []}
@@ -79,7 +82,7 @@ const Instructions = ({
             </Col>
             <Col md={6}>
               <MyInput
-                width={120}
+                width={95}
                 fieldType="select"
                 fieldLabel="Frequency"
                 selectData={FrequencyLovQueryResponse?.object ?? []}
@@ -92,7 +95,7 @@ const Instructions = ({
             </Col>
             <Col md={6}>
               <MyInput
-                width={120}
+                width={95}
                 fieldType="select"
                 fieldLabel="ROA"
                 selectData={filteredList ?? []}
@@ -107,9 +110,9 @@ const Instructions = ({
         </Form>
       )}
       {selectedOption === '3010591042600262' && (
-        <Form fluid layout="inline" className="fill-width">
+        <Form fluid layout="inline" className="fill-width-instructions">
           <Dropdown
-            className="fill-width"
+            className="fill-width-instructions"
             title={
               !selectedPreDefine
                 ? 'Pre-defined Instructions'
@@ -142,14 +145,19 @@ const Instructions = ({
         </Form>
       )}
       {selectedOption === '3010573499898196' && (
-        <Form fluid layout="inline" className="fill-width">
-          <textarea
-            rows={4}
-            className="fill-width"
-            disabled={false}
-            value={munial}
-            onChange={e => setMunial(e.target.value)}
+        <Form fluid layout="inline" className="fill-width-instructions">
+          <MyInput
+            fieldName="munial"
+            fieldType="textarea"
+            record={{ munial }}
+            setRecord={newRecord => setMunial(newRecord.munial)}
+            showLabel={false}
+            className='fill-width-instructions'
+            width="100%"
+            height={80}
+            placeholder="Enter instructions..."
           />
+
         </Form>
       )}
     </>

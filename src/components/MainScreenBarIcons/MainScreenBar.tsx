@@ -42,8 +42,9 @@ import { setUser } from '@/reducers/authSlice';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppSelector } from '@/hooks';
 import { useChangeLangMutation } from '@/services/uiService';
-import { setMode } from '@/reducers/uiSlice';
-import { faHospital } from "@fortawesome/free-solid-svg-icons";
+import { setLang, setMode } from '@/reducers/uiSlice';
+import { faHospital } from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   const dispatch = useDispatch();
@@ -54,6 +55,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth); // window width
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
+  const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
+  console.log('langs');
+  console.log(langLovQueryResponse);
   const navigate = useNavigate();
 
   // container to choose action from more menu
@@ -88,12 +92,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
             My Appointments
           </div>
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBookmark} />
-            Bookmarks
-          </div>
-        </Dropdown.Item>
+
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
@@ -111,11 +110,14 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
-            navigate("/incident-portal");
+            navigate('/incident-portal');
           }}
         >
           <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon className="header-screen-bar-icon-size-handle text-blue-600" icon={faHospital} />
+            <FontAwesomeIcon
+              className="header-screen-bar-icon-size-handle text-blue-600"
+              icon={faHospital}
+            />
             MedCare Incident Portal
           </div>
         </Dropdown.Item>
@@ -199,23 +201,18 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
       <Popover ref={ref} className={className} style={{ left, top }} full>
         <Dropdown.Menu onSelect={handleSelect}>
           <Dropdown.Item divider />
-          <Dropdown.Item
-            active={uiSlice.lang === 'SYS_LANG_ENG'}
-            onClick={() => {
-              handleChangeLang('SYS_LANG_ENG');
-            }}
-          >
-            English
-          </Dropdown.Item>
-          <Dropdown.Item divider />
-          <Dropdown.Item
-            active={uiSlice.lang === 'ar'}
-            onClick={() => {
-              handleChangeLang('ar');
-            }}
-          >
-            العربية
-          </Dropdown.Item>
+          {langLovQueryResponse?.object?.map(lang => (
+            <>
+            <Dropdown.Item
+              key={lang.key}
+              active={uiSlice?.lang === lang?.valueCode} 
+              onClick={() => dispatch(setLang(lang?.valueCode))}
+            >
+              {lang.lovDisplayVale}
+            </Dropdown.Item>
+            <Dropdown.Item divider />
+            </>
+          ))}
         </Dropdown.Menu>
       </Popover>
     );
@@ -323,11 +320,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Bookmarks">
-              <IconButton size="small">
-                <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBookmark} />
-              </IconButton>
-            </Tooltip>
             <Tooltip title="Announcements">
               <IconButton size="small">
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
@@ -350,17 +342,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
               <IconButton
                 size="small"
                 onClick={() => {
-                  navigate("/incident-portal");
+                  navigate('/incident-portal');
                 }}
               >
-                <FontAwesomeIcon
-                  className="header-screen-bar-icon-size-handle"
-
-                  icon={faHospital}
-                />
+                <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faHospital} />
               </IconButton>
             </Tooltip>
-
           </>
         ) : (
           <>
@@ -401,12 +388,22 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faRepeat} />
               </IconButton>
             </Tooltip>
-            <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
+            <Whisper
+              placement="bottomEnd"
+              trigger="click"
+              ref={trigger}
+              speaker={renderLangSpeaker}
+            >
               <IconButton size="small">
                 <FaEarthAmericas size={20} color={mode === 'light' ? '#333' : 'var(--white)'} />
               </IconButton>
             </Whisper>
-            <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderNoticeSpeaker}>
+            <Whisper
+              placement="bottomEnd"
+              trigger="click"
+              ref={trigger}
+              speaker={renderNoticeSpeaker}
+            >
               <IconButton size="small">
                 <NoticeIcon
                   style={{ fontSize: 20 }}
@@ -415,7 +412,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
               </IconButton>
             </Whisper>
             <Divider style={{ height: '31px', fontSize: '4px' }} vertical />
-            <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderAdminSpeaker}>
+            <Whisper
+              placement="bottomEnd"
+              trigger="click"
+              ref={trigger}
+              speaker={renderAdminSpeaker}
+            >
               <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                 <Avatar
                   size="md"

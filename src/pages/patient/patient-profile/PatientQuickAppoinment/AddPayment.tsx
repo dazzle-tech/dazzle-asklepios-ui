@@ -52,7 +52,7 @@ const AddPayment = ({ isReadOnly }) => {
             key: 'Price',
             flexGrow: 2,
             title: <Translate>Price</Translate>,
-            dataKey: 'Price'
+            dataKey: 'Price',
         },
         {
             key: 'Currency',
@@ -194,13 +194,14 @@ const AddPayment = ({ isReadOnly }) => {
                         column
                         disabled={true}
                         fieldName={'Patient`s free Balance'}
+                        fieldLabel='Patient`s free Balance'
                         record={{}}
                         setRecord={""}
                     />
                 </div>
                 <div className='payment-method-content'>
-                    <MyButton prefixIcon={() => <ReloadIcon />} appearance="ghost" >refresh</MyButton>
-                    <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBolt} />} appearance="ghost" color="var(--primary-pink)"> Exchange Rate</MyButton>
+                    <MyButton prefixIcon={() => <ReloadIcon />} appearance="ghost" >Refresh</MyButton>
+                    <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBolt} />} appearance="ghost" color="var(--primary-pink)">Exchange Rate</MyButton>
                     {!isReadOnly && <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />} >Save</MyButton>}
                 </div>
             </Form>

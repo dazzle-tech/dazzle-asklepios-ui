@@ -247,7 +247,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                 <div className='card-content'>
                   <div className='card-action-by-at'>
                     <span className='title-type-card-content'>
-                      <FontAwesomeIcon icon={faCalendarDay} className='title-type-card-content' /> ADDITION BY/DATE
+                      <FontAwesomeIcon icon={faCalendarDay} className='title-type-card-content' /><Translate>ADDITION BY/DATE</Translate>
                     </span>
                     <span className='custom-description-card-content'>
                       {warning?.createdBy ? warning?.createdBy : "By User"}
@@ -258,14 +258,14 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                   </div>
                   <div className='card-action-by-at'>
                     <span className='title-type-card-content'>
-                      <FontAwesomeIcon icon={faCalendarCheck} className='title-type-card-content' /> RESOLVED BY/DATE
+                      <FontAwesomeIcon icon={faCalendarCheck} className='title-type-card-content' /><Translate>RESOLVED BY/DATE</Translate>
                     </span>
                     <span className='custom-description-card-content'>{warning?.resolvedBy}</span>
                     <span className='custom-date-card-content'>{warning?.dateResolved}</span>
                   </div>
                   <div className='card-action-by-at'>
                     <span className='title-type-card-content'>
-                      <FontAwesomeIcon icon={faCalendarXmark} className='title-type-card-content' /> RESOLUTION UNDO BY/DATE
+                      <FontAwesomeIcon icon={faCalendarXmark} className='title-type-card-content' /> <Translate>RESOLUTION UNDO BY/DATE</Translate>
                     </span>
                     <span className='custom-description-card-content'>{warning?.resolvedUndoBy}</span>
                     <span className='custom-date-card-content'>{warning?.resolutionUndoDate}</span>

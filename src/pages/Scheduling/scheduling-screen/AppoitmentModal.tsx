@@ -426,6 +426,7 @@ const AppointmentModal = ({
   const conjurePatientSearchBar = target => {
     return (
       <div style={{ width: '100%' }}>
+
         <Form layout="inline" fluid>
           <div
             style={{
@@ -480,6 +481,7 @@ const AppointmentModal = ({
             </div>
           </div>
         </Form>
+
       </div>
     );
   };
@@ -700,6 +702,7 @@ const AppointmentModal = ({
     const availableTimes = generateTimes(mergedPeriods, 30); // 30 دقيقة كفاصل زمني
     setAvailableTimes(availableTimes);
   };
+
   const formatTime = seconds => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -752,7 +755,7 @@ const AppointmentModal = ({
     setSelectedDate(null);
   };
   const [openDay, setOpenDay] = useState<DayValue | null>(null);
-  
+
   return (
     <div>
       <AdvancedModal
@@ -846,9 +849,8 @@ const AppointmentModal = ({
                           <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
                             {/* {localPatient?.genderLkey} */}
                             <FontAwesomeIcon icon={faUser} />
-                            {`${localPatient?.genderLvalue?.lovDisplayVale || 'N/A'}${
-                              patientAge?.patientAge ? `, ${patientAge.patientAge}y old` : ''
-                            }`}
+                            {`${localPatient?.genderLvalue?.lovDisplayVale || 'N/A'}${patientAge?.patientAge ? `, ${patientAge.patientAge}y old` : ''
+                              }`}
                           </p>
 
                           <p style={{ fontSize: '12px', color: '#A1A9B8' }}>
@@ -967,8 +969,8 @@ const AppointmentModal = ({
                               filteredResourcesList.length > 0
                                 ? filteredResourcesList
                                 : !appointment?.resourceTypeLkey
-                                ? resourcesListResponse?.object
-                                : []
+                                  ? resourcesListResponse?.object
+                                  : []
                             }
                             fieldType="select"
                             selectDataLabel="resourceName"
@@ -1366,6 +1368,7 @@ const AppointmentModal = ({
             </div>
           </div>
         }
+
         leftContent={
           <div className="appointment-wrapper-left" style={{ marginBottom: '20px' }}>
             <div className="show-grid">
@@ -1463,10 +1466,9 @@ const AppointmentModal = ({
                     </div>
                   }
                   title="No patient found"
-                  contant={`No patient found matching the entered ${
-                    searchCriteriaOptions.find(opt => opt.value === selectedCriterion?.value)
+                  contant={`No patient found matching the entered ${searchCriteriaOptions.find(opt => opt.value === selectedCriterion?.value)
                       ?.label || 'criteria'
-                  }.`}
+                    }.`}
                 />
               )}
             </div>

@@ -3,6 +3,7 @@ import { Pie } from 'react-chartjs-2';
 import type { ChartOptions, ChartData } from 'chart.js';
 import 'chart.js/auto';
 import { Button } from 'rsuite';
+import { useSelector } from 'react-redux';
 
 type PieChartDataPoint = {
   label: string;
@@ -38,6 +39,7 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
     labels: [],
     datasets: []
   });
+  const mode = useSelector((state: any) => state.ui.mode);
 
   const updateData = () => {
     const labels = chartData.map(d => d.label);
@@ -49,7 +51,7 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
         {
           data: values,
           backgroundColor: colors || ['#2264E5', '#93C6FA', '#FF6384', '#FFCE56', '#4BC0C0'],
-          borderColor: '#fff',
+          borderColor: mode === 'dark' ? '#565656ff' : '#fff',
           borderWidth: 2
         }
       ]
