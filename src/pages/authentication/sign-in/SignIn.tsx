@@ -3,12 +3,6 @@ import {  useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCode
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
 
-import {
-  useGetFacilitiesQuery,
-  useGetLovValuesByCodeQuery,
-  useSaveUserMutation,
-  useGetLovDefultByCodeQuery
-} from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, { useEffect, useState } from 'react';
