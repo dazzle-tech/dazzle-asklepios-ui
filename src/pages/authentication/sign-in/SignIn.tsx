@@ -206,7 +206,7 @@ const SignIn = () => {
         </div>
 
         {/* Modal for Password Change */}
-        <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
+        {/* <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
           <Modal.Body>
             <RemindIcon className="remind-icon" />
             {'New password required!'}
@@ -232,7 +232,7 @@ const SignIn = () => {
             </Button>
             <Button appearance="subtle">Cancel</Button>
           </Modal.Footer>
-        </Modal>
+        </Modal> */}
       </Panel>
     </Panel>
   );
