@@ -99,7 +99,7 @@ export const camelCaseToLabel = (input: string): string => {
 
   // Capitalize the first letter and trim any leading spaces
   return (
-    result.charAt(0).toUpperCase() + result.slice(1).trim().replace('Lkey', '').replace(' Key', '')
+    (result.charAt(0).toUpperCase() + result.slice(1).replace('Lkey', '').replace(' Key', '')).trim()
   );
 };
 

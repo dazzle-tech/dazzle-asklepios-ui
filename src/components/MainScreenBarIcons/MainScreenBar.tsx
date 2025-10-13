@@ -42,8 +42,9 @@ import { setUser } from '@/reducers/authSlice';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppSelector } from '@/hooks';
 import { useChangeLangMutation } from '@/services/uiService';
-import { setMode } from '@/reducers/uiSlice';
+import { setLang, setMode } from '@/reducers/uiSlice';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   const dispatch = useDispatch();
@@ -54,6 +55,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth); // window width
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
+  const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
+  console.log('langs');
+  console.log(langLovQueryResponse);
   const navigate = useNavigate();
 
   // container to choose action from more menu
@@ -197,23 +201,18 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
       <Popover ref={ref} className={className} style={{ left, top }} full>
         <Dropdown.Menu onSelect={handleSelect}>
           <Dropdown.Item divider />
-          <Dropdown.Item
-            active={uiSlice.lang === 'SYS_LANG_ENG'}
-            onClick={() => {
-              handleChangeLang('SYS_LANG_ENG');
-            }}
-          >
-            English
-          </Dropdown.Item>
-          <Dropdown.Item divider />
-          <Dropdown.Item
-            active={uiSlice.lang === 'ar'}
-            onClick={() => {
-              handleChangeLang('ar');
-            }}
-          >
-            العربية
-          </Dropdown.Item>
+          {langLovQueryResponse?.object?.map(lang => (
+            <>
+            <Dropdown.Item
+              key={lang.key}
+              active={uiSlice?.lang === lang?.valueCode} 
+              onClick={() => dispatch(setLang(lang?.valueCode))}
+            >
+              {lang.lovDisplayVale}
+            </Dropdown.Item>
+            <Dropdown.Item divider />
+            </>
+          ))}
         </Dropdown.Menu>
       </Popover>
     );

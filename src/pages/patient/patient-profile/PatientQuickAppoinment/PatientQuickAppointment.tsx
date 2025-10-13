@@ -129,7 +129,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                     disabled={isReadOnly}
                     prefixIcon={() => <AddOutlineIcon />}
                 >
-                    <span>Add payment</span>
+                   Add payment
                 </MyButton>
             }
                 , { title: 'Add Payment', icon: <FontAwesomeIcon icon={faMoneyBillWave} /> }]}
