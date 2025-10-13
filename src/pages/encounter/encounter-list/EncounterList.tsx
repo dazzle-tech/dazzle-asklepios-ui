@@ -387,13 +387,19 @@ const EncounterList = () => {
                   onClick={() => {
                     const patientData = rowData.patientObject;
                     setLocalEncounter(rowData);
-                    setOpenNurseAssessment(true);
+
+                    if (rowData.hasObservation) {
+                      handleGoToPreVisitObservations(rowData, patientData);
+                    } else {
+                      setOpenNurseAssessment(true);
+                    }
                   }}
                 >
                   <FontAwesomeIcon icon={faUserNurse} />
                 </MyButton>
               </div>
             </Whisper>
+
 
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
               <div>
@@ -455,7 +461,6 @@ const EncounterList = () => {
                   onClick={() => {
                     const patientData = rowData.patientObject;
                     setLocalEncounter(rowData);
-                    handleGoToPreVisitObservations(rowData, patientData);
                   }}
                 >
                   <FontAwesomeIcon icon={faPrint} />
