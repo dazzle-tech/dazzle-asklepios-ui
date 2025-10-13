@@ -473,7 +473,7 @@ const EncounterList = () => {
 
   // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
-  
+
   // total number of items in the backend:
   const totalCount = encounterListResponse?.extraNumeric ?? 0;
 
@@ -682,11 +682,6 @@ const EncounterList = () => {
               <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
                 <FontAwesomeIcon icon={faListCheck} />
                 Task Management
-              </MyButton>
-
-              <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
-                <FontAwesomeIcon icon={faFile} />
-                Encounter Logs
               </MyButton>
             </div>
           }
