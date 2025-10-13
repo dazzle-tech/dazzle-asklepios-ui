@@ -3,7 +3,7 @@ import {
   useGetFacilitiesQuery,
   useGetLovValuesByCodeQuery,
   useSaveUserMutation,
-  useGetLovDefultByCodeQuery,
+  useGetLovDefultByCodeQuery
 } from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import RemindIcon from '@rsuite/icons/legacy/Remind';
@@ -36,13 +36,13 @@ const SignIn = () => {
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
-    orgKey: '',
+    orgKey: ''
   });
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-   const uiSlice = useAppSelector(state => state.ui);
-  const [langRecord, setLangRecord] = useState({lang: uiSlice.lang});
+  const uiSlice = useAppSelector(state => state.ui);
+  const [langRecord, setLangRecord] = useState({ lang: uiSlice.lang });
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
@@ -63,7 +63,7 @@ const SignIn = () => {
         username: credentials.username,
         password: credentials.password,
         facilityId: Number(credentials.orgKey),
-        rememberMe: true,
+        rememberMe: true
       }).unwrap();
 
       // Save token first so prepareHeaders can pick it up
@@ -74,7 +74,6 @@ const SignIn = () => {
 
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
-
 
       store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
@@ -117,13 +116,17 @@ const SignIn = () => {
 
   useEffect(() => {
     dispatch(setLang(langRecord['lang']));
-  },[langRecord]);
+  }, [langRecord]);
 
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
       <Panel
         bordered
-        style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '10px' }}
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          padding: '20px',
+          borderRadius: '10px'
+        }}
       >
         <div className="bodySignInDiv">
           <Panel className="logo-panel">
@@ -133,20 +136,6 @@ const SignIn = () => {
           {!resetPasswordView && (
             <Panel className="sign-in-panel ">
               <Form fluid onKeyPress={handleKeyPress}>
-                <MyInput
-                  placeholder="Select Facility"
-                  width="100%"
-                  fieldType="select"
-                  fieldLabel="Facility"
-                  selectData={facilityListResponse?.object ?? []}
-                  selectDataLabel="facilityName"
-                  selectDataValue="key"
-                  fieldName="orgKey"
-                  record={credentials}
-                  setRecord={setCredentials}
-                  showLabel={false}
-                />
-
                 <MyInput
                   width="100%"
                   fieldName="lang"
@@ -159,6 +148,22 @@ const SignIn = () => {
                   setRecord={setLangRecord}
                   placeholder="Select Language"
                   showLabel={false}
+                  searchable={false}
+                />
+
+                <MyInput
+                  placeholder="Select Facility"
+                  width="100%"
+                  fieldType="select"
+                  fieldLabel="Facility"
+                  selectData={facilityListResponse?.object ?? []}
+                  selectDataLabel="facilityName"
+                  selectDataValue="key"
+                  fieldName="orgKey"
+                  record={credentials}
+                  setRecord={setCredentials}
+                  showLabel={false}
+                  searchable={false}
                 />
 
                 <MyInput
@@ -177,7 +182,7 @@ const SignIn = () => {
                     name="password"
                     type="password"
                     value={credentials.password}
-                    onChange={(e) => setCredentials({ ...credentials, password: e })}
+                    onChange={e => setCredentials({ ...credentials, password: e })}
                   />
                 </Form.Group>
 
@@ -209,14 +214,18 @@ const SignIn = () => {
             <Form fluid>
               <Form.Group>
                 <Form.ControlLabel>New Password</Form.ControlLabel>
-                <Form.Control name="New Password" value={newPassword} onChange={(e) => setNewPassword(e)} />
+                <Form.Control
+                  name="New Password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e)}
+                />
               </Form.Group>
               <Form.Group>
                 <Form.ControlLabel>Password Confirm</Form.ControlLabel>
                 <Form.Control
                   name="Password Confirm"
                   value={newPasswordConfirm}
-                  onChange={(e) => setNewPasswordConfirm(e)}
+                  onChange={e => setNewPasswordConfirm(e)}
                 />
               </Form.Group>
             </Form>

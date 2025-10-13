@@ -23,12 +23,23 @@ import ReactDOMServer from 'react-dom/server';
 import { useDispatch, useSelector } from 'react-redux';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import './start-tele-consultation/styles.less';
-import { useGetEncounterByIdQuery, useGetTeleConsultationCallLogListQuery, useGetTeleConsultationListQuery, useGetTeleConsultationProgressNotesListQuery, useSaveTeleConsultationCallLogMutation, useSaveTeleConsultationMutation } from '@/services/encounterService';
+import {
+  useGetEncounterByIdQuery,
+  useGetTeleConsultationCallLogListQuery,
+  useGetTeleConsultationListQuery,
+  useGetTeleConsultationProgressNotesListQuery,
+  useSaveTeleConsultationCallLogMutation,
+  useSaveTeleConsultationMutation
+} from '@/services/encounterService';
 import { initialListRequestId } from '@/types/types';
 import { ApTeleConsultation } from '@/types/model-types';
 import { calculateAge, calculateAgeFormat, formatDateWithoutSeconds } from '@/utils';
 import { render } from 'react-dom';
-import { newApEncounter, newApPatient, newApTeleConsultation } from '@/types/model-types-constructor';
+import {
+  newApEncounter,
+  newApPatient,
+  newApTeleConsultation
+} from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import CallLog from './CallLog';
@@ -36,11 +47,7 @@ import Translate from '@/components/Translate';
 import AdvancedModal from '@/components/AdvancedModal';
 import MyTable from '@/components/MyTable';
 
-
-
 // Define request type
-
-
 
 // State variables
 const TeleconsultationRequests = () => {
@@ -52,7 +59,9 @@ const TeleconsultationRequests = () => {
   const [openLogModal, setOpenLogModal] = useState(false);
   const [actionType, setActionType] = useState<'confirm' | 'reject' | null>(null);
   const [requests, setRequests] = useState<ApTeleConsultation>({ ...newApTeleConsultation });
-  const { data: encounterData } = useGetEncounterByIdQuery(requests?.encounterId ?? '', { skip: !requests?.encounterId });
+  const { data: encounterData } = useGetEncounterByIdQuery(requests?.encounterId ?? '', {
+    skip: !requests?.encounterId
+  });
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [cancelObject, setCancelObject] = useState<any>({});
@@ -62,23 +71,22 @@ const TeleconsultationRequests = () => {
     data: fetchedProgressNotes,
     isLoading,
     isFetching,
-    error,
-
+    error
   } = useGetTeleConsultationProgressNotesListQuery(
     {
-      ...initialListRequestId
-      ,
+      ...initialListRequestId,
       filters: [
         {
-          fieldName: "tele_consultation_id",
-          operator: "match",
-          value: requests?.id,
-        },
-      ],
-
-    }, {
-    skip: !requests?.id
-  });
+          fieldName: 'tele_consultation_id',
+          operator: 'match',
+          value: requests?.id
+        }
+      ]
+    },
+    {
+      skip: !requests?.id
+    }
+  );
 
   // const [pendingAction, setPendingAction] = useState<'confirm' | 'reject' | null>(null);
   const [customConfirmMessage, setCustomConfirmMessage] = useState('');
@@ -87,32 +95,34 @@ const TeleconsultationRequests = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-
-
-  const { data: orders, refetch  ,isLoading:ordersLod} = useGetTeleConsultationListQuery({ ...initialListRequestId, })
+  const {
+    data: orders,
+    refetch,
+    isLoading: ordersLod
+  } = useGetTeleConsultationListQuery({ ...initialListRequestId });
   const { data: callLogs } = useGetTeleConsultationCallLogListQuery(
     {
       ...initialListRequestId,
       filters: [
         {
-          fieldName: "tele_consultation_id",
-          operator: "match",
-          value: requests?.id,
-        },
-      ],
-    }, {
-    skip: !requests?.id
-  });
-  console.log("callLogs", callLogs);
+          fieldName: 'tele_consultation_id',
+          operator: 'match',
+          value: requests?.id
+        }
+      ]
+    },
+    {
+      skip: !requests?.id
+    }
+  );
+  console.log('callLogs', callLogs);
 
   const [save, saveMutation] = useSaveTeleConsultationMutation();
   const [saveCallLog, saveCallLogMutation] = useSaveTeleConsultationCallLogMutation();
 
-
   useEffect(() => {
     if (encounterData) {
       setEncounter(encounterData);
-
     }
   }, [encounterData]);
   useEffect(() => {
@@ -123,72 +133,65 @@ const TeleconsultationRequests = () => {
     if (!requests) return;
 
     try {
-     
       await save({
         ...requests,
         statusLkey: '13828721011417130',
         startedAt: Date.now(),
-        startedBy: sliceauth.user?.login,
+        startedBy: sliceauth.user?.login
       }).unwrap();
 
-    
       await saveCallLog({
         teleConsultationId: requests.id,
         startedDate: Date.now(),
-        startedBy: sliceauth.user?.login 
+        startedBy: sliceauth.user?.login
       }).unwrap();
 
-     
       dispatch(
         notify({
           sev: 'success',
-          msg: 'Teleconsultation started successfully',
+          msg: 'Teleconsultation started successfully'
         })
       );
 
-     
       refetch();
 
-      
       navigate('/start-tele-consultation', {
         state: {
           patient,
           encounter,
           fromPage: 'teleconsultation-requests',
           consultaition: requests,
-          notelist: fetchedProgressNotes ?? [],
-        },
+          notelist: fetchedProgressNotes ?? []
+        }
       });
     } catch (err) {
       console.error('Error while starting teleconsultation:', err);
       dispatch(
         notify({
           sev: 'error',
-          msg: 'Failed to start teleconsultation',
+          msg: 'Failed to start teleconsultation'
         })
       );
     } finally {
-     
       setOpenConfirmModal(false);
     }
   };
 
-
   // Handle cancellation (rejection) with reason
   const handleCancleReject = () => {
     // ORD_STAT_REJCONS
-    save({ ...requests, statusLkey: '32943037809141'
-      ,rejectedAt:Date.now(),rejectedBy:sliceauth.user?.login
-
-     })
+    save({
+      ...requests,
+      statusLkey: '32943037809141',
+      rejectedAt: Date.now(),
+      rejectedBy: sliceauth.user?.login
+    })
       .unwrap()
-      .then((res) => {
-        dispatch(
-          notify({ sev: 'success', msg: 'Request rejected successfully' })
-        );
+      .then(res => {
+        dispatch(notify({ sev: 'success', msg: 'Request rejected successfully' }));
         refetch();
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('Save failed:', err);
         dispatch(notify({ sev: 'error', msg: 'Failed to reject request' }));
       })
@@ -231,9 +234,6 @@ const TeleconsultationRequests = () => {
           setRecord={setRecord}
         />
 
-
-
-
         <MyInput
           width="100%"
           fieldLabel="Priority"
@@ -248,6 +248,7 @@ const TeleconsultationRequests = () => {
           ]}
           selectDataLabel="label"
           selectDataValue="value"
+          searchable={false}
         />
 
         <MyInput
@@ -264,11 +265,11 @@ const TeleconsultationRequests = () => {
           ]}
           selectDataLabel="label"
           selectDataValue="value"
+          searchable={false}
         />
       </Form>
     </div>
   );
-
 
   const filterstable = (
     <>
@@ -303,7 +304,7 @@ const TeleconsultationRequests = () => {
       width: 50,
 
       render: (row: ApTeleConsultation) =>
-        row.expectedResponse === "immediate" ? (
+        row.expectedResponse === 'immediate' ? (
           <FontAwesomeIcon
             icon={faLandMineOn}
             style={{ color: 'red', fontSize: '18px' }}
@@ -316,39 +317,39 @@ const TeleconsultationRequests = () => {
       title: 'Patient Name',
       dataKey: 'patientName',
       width: 200,
-      render: (row: any) => (
-        <div>{row.patient?.fullName}</div>
-      )
+      render: (row: any) => <div>{row.patient?.fullName}</div>
     },
     {
-      key: 'gender', title: 'Gender', dataKey: 'gender', width: 80,
-      render: (row: any) => (
-        <div>{row.patient?.genderLvalue?.lovDisplayVale ?? ''}</div>
-      )
+      key: 'gender',
+      title: 'Gender',
+      dataKey: 'gender',
+      width: 80,
+      render: (row: any) => <div>{row.patient?.genderLvalue?.lovDisplayVale ?? ''}</div>
     },
     {
-      key: 'age', title: 'Age', dataKey: 'age', width: 60,
-      render: (row: any) => (
-        <div>{calculateAgeFormat
-          (row.patient?.dob)}</div>
-      )
+      key: 'age',
+      title: 'Age',
+      dataKey: 'age',
+      width: 60,
+      render: (row: any) => <div>{calculateAgeFormat(row.patient?.dob)}</div>
     },
     {
-      key: 'questionToConsultant', title: 'Question To Consultant', width: 180
-
+      key: 'questionToConsultant',
+      title: 'Question To Consultant',
+      width: 180
     },
     {
-      key:'expectedResponseTime',
-      title:<Translate>Expected Repones Date</Translate>,
+      key: 'expectedResponseTime',
+      title: <Translate>Expected Repones Date</Translate>,
       width: 180,
-      render:(row:any)=>{
-        return formatDateWithoutSeconds(row.expectedResponseTime)
+      render: (row: any) => {
+        return formatDateWithoutSeconds(row.expectedResponseTime);
       }
-
-    }
-   ,
+    },
     {
-      key: 'urgencyLkey', title: 'Urgency', width: 80,
+      key: 'urgencyLkey',
+      title: 'Urgency',
+      width: 80,
       render: row => {
         return row.urgencyLvalue?.lovDisplayVale;
       }
@@ -359,8 +360,12 @@ const TeleconsultationRequests = () => {
       width: 100,
 
       render: row => {
-
-        return <MyBadgeStatus color={row.statusLvalue?.valueColor} contant={row.statusLvalue?.lovDisplayVale} />;
+        return (
+          <MyBadgeStatus
+            color={row.statusLvalue?.valueColor}
+            contant={row.statusLvalue?.lovDisplayVale}
+          />
+        );
       }
     },
     {
@@ -371,17 +376,24 @@ const TeleconsultationRequests = () => {
       render: (rowData: ApTeleConsultation) => (
         <div className="actions-icons-tele-consultation-screen">
           {/* Start Teleconsultation */}
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Start Teleconsultation</Tooltip>}>
+          <Whisper
+            trigger="hover"
+            placement="top"
+            speaker={<Tooltip>Start Teleconsultation</Tooltip>}
+          >
             <div>
               <MyButton
                 size="small"
                 disabled={rowData.statusLkey === '32943037809141'}
                 onClick={async () => {
-                  if (rowData.statusLkey !== '32943037809141' && rowData.statusLkey !== '5959341154465084') {
+                  if (
+                    rowData.statusLkey !== '32943037809141' &&
+                    rowData.statusLkey !== '5959341154465084'
+                  ) {
                     await saveCallLog({
                       teleConsultationId: rowData.id,
                       startedDate: Date.now(),
-                      startedBy: sliceauth.user?.login || 'Admin',
+                      startedBy: sliceauth.user?.login || 'Admin'
                     }).unwrap();
                     navigate('/start-tele-consultation', {
                       state: {
@@ -390,10 +402,7 @@ const TeleconsultationRequests = () => {
                         fromPage: 'teleconsultation-requests',
                         consultaition: requests,
                         notelist: fetchedProgressNotes ?? []
-
-
-
-                      },
+                      }
                     });
                   }
 
@@ -416,7 +425,6 @@ const TeleconsultationRequests = () => {
               <MyButton
                 size="small"
                 onClick={() => {
-
                   setActionType('reject');
                   setOpenCancelModal(true);
                 }}
@@ -437,21 +445,19 @@ const TeleconsultationRequests = () => {
           </Whisper>
           <Whisper trigger="hover" placement="top" speaker={<Tooltip>Call Logs</Tooltip>}>
             <div>
-              <MyButton size="small"
+              <MyButton
+                size="small"
                 onClick={() => {
                   setOpenLogModal(true);
                 }}
               >
-               <FontAwesomeIcon icon={faFileImport} />
+                <FontAwesomeIcon icon={faFileImport} />
               </MyButton>
             </div>
           </Whisper>
         </div>
       )
-    },
- 
-
-
+    }
   ];
 
   const sortedData = [...orders].sort((a, b) => {
@@ -475,7 +481,6 @@ const TeleconsultationRequests = () => {
 
   return (
     <Panel>
-
       <DragDropTable
         data={orders?.object ?? []}
         columns={columns}
@@ -515,7 +520,7 @@ const TeleconsultationRequests = () => {
       <DeletionConfirmationModal
         open={openConfirmModal}
         setOpen={setOpenConfirmModal}
-        itemToDelete={actionType === 'confirm' ? "Confirm" : "Reject"}
+        itemToDelete={actionType === 'confirm' ? 'Confirm' : 'Reject'}
         actionType={actionType}
         actionButtonFunction={handleConfirmAction}
         confirmationQuestion={customConfirmMessage}
@@ -524,47 +529,49 @@ const TeleconsultationRequests = () => {
         open={openLogModal}
         setOpen={setOpenLogModal}
         leftTitle="Action Logs"
-        rightTitle='Access Log'
+        rightTitle="Access Log"
         size="md"
         rightContent={<CallLog list={callLogs ?? []} />}
         leftContent={
-       <>
-     
-  <div style={{ padding: '1rem' }}>
-  <div style={{ marginBottom: '8px' }}>
-    <strong>Requested @</strong>{' '}
-    {`${formatDateWithoutSeconds(requests?.requestedAt)} By ${requests?.requestedBy || ""}`}
-  </div>
+          <>
+            <div style={{ padding: '1rem' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Requested @</strong>{' '}
+                {`${formatDateWithoutSeconds(requests?.requestedAt)} By ${
+                  requests?.requestedBy || ''
+                }`}
+              </div>
 
-  <div style={{ marginBottom: '8px' }}>
-    <strong>Call Started @</strong>{' '}
-    {`${formatDateWithoutSeconds(requests?.callStartedAt)} By ${requests?.callStartedBy || ""}`}
-  </div>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Call Started @</strong>{' '}
+                {`${formatDateWithoutSeconds(requests?.callStartedAt)} By ${
+                  requests?.callStartedBy || ''
+                }`}
+              </div>
 
-  <div style={{ marginBottom: '8px' }}>
-    <strong>Call Close @</strong>{' '}
-    {`${formatDateWithoutSeconds(requests?.callColsedAt)} By ${requests?.callColsedBy || ""}`}
-  </div>
-  {requests?.rejectedAt && (
-  <div style={{ marginBottom: '8px' }}>
-    <strong>Reject @</strong>{' '}
-    {`${formatDateWithoutSeconds(requests.rejectedAt)} By ${requests.rejectedBy || "Unknown"}`}
-    {requests.rejectedReason && requests.rejectedReason !== "0" && (
-      <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-        Reason: {requests.rejectedReason}
-      </div>
-    )}
-  </div>
-)}
-
-
-</div>
-
-
-</>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Call Close @</strong>{' '}
+                {`${formatDateWithoutSeconds(requests?.callColsedAt)} By ${
+                  requests?.callColsedBy || ''
+                }`}
+              </div>
+              {requests?.rejectedAt && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Reject @</strong>{' '}
+                  {`${formatDateWithoutSeconds(requests.rejectedAt)} By ${
+                    requests.rejectedBy || 'Unknown'
+                  }`}
+                  {requests.rejectedReason && requests.rejectedReason !== '0' && (
+                    <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                      Reason: {requests.rejectedReason}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
         }
       />
-
     </Panel>
   );
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { Panel } from 'rsuite';
 import { ArrowUp, ArrowDown } from '@rsuite/icons';
 import './style.less';
+import { useSelector } from 'react-redux';
 interface TableDataItem {
   [key: string]: string | number | React.ReactNode;
   trend?: 'up' | 'down';
@@ -39,6 +40,7 @@ const DynamicMainTableChart: React.FC<DynamicTableChartProps> = ({
   showTrend = true
 }) => {
   const tableColumns = columns || (data.length > 0 ? Object.keys(data[0]) : []);
+  const mode = useSelector((state: any) => state.ui.mode);
 
   return (
     <Panel
@@ -84,7 +86,7 @@ const DynamicMainTableChart: React.FC<DynamicTableChartProps> = ({
               <React.Fragment key={rowIndex}>
                 <tr
                   style={{
-                    borderBottom: '1px solid #f0f0f0',
+                    borderBottom: mode === 'dark' ? '1px solid #343434ff' : '1px solid #f0f0f0',
                     ...rowStyle
                   }}
                 >
