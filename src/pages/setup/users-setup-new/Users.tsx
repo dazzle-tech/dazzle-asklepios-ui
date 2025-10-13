@@ -58,7 +58,6 @@ const Users = () => {
 
    const { data: users, isLoading  ,refetch} = useGetUserQuery();
    const [updateUser] = useUpdateUserMutation();
-  
  
   // Fetch Facilities list response
   const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
@@ -124,6 +123,7 @@ const Users = () => {
   }, [location.pathname, dispatch]);
 
   useEffect(() => {
+   console.log( saveUserMutation)
     if (saveUserMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
@@ -151,26 +151,52 @@ const Users = () => {
  
   // Handle Save User
 const handleSave = async () => {
+  
   try {
     if (user.id !== undefined) {
-    
-      const saveduser=await updateUser({ ...user } ).unwrap();
+
+   const  Response= await updateUser({ ...user } ).unwrap();
       dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
-      setUser({...saveduser})
+      setUser({...Response})
       refetch();
     } else {
    
-     const saveduser= await saveUser({ ...user}).unwrap();
+
+     const Response=await saveUser({ ...user}).unwrap();
       dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
-      setUser({...saveduser})
       refetch();
     }
-   
-    
+  
+    refetchFacility();
+    setPopupOpen(false);
 
-  } catch (error) {
-    dispatch(notify({ msg: 'Failed to save this User', sev: 'error' }));
+  } 
+  catch (error) {
+  console.error("❌ Error saving user:", error);
+
+  let backendMessage = "Failed to save user";
+
+  // Check for validation errors
+  if (error?.data?.fieldErrors?.length > 0) {
+    const fieldError = error.data.fieldErrors[0];
+    if (fieldError.field === "email") {
+      backendMessage = "Email cannot be empty";
+    } else {
+      backendMessage = fieldError.message;
+    }
+  } else if (error?.data?.detail) {
+    backendMessage = error.data.detail;
+  } else if (error?.data?.message === "error.emailExists") {
+    backendMessage = "This email is already in use";
   }
+
+  dispatch(
+    notify({
+      msg: backendMessage,
+      sev: "error",
+    })
+  );
+}
 };
 
   // Filter table
