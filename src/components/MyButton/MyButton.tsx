@@ -3,6 +3,7 @@ import { Button } from 'rsuite';
 import './styles.less';
 import { Box } from '@mui/material';
 import { useSelector } from 'react-redux';
+import Translate from '../Translate';
 type Appearance = 'primary' | 'default' | 'link' | 'subtle' | 'ghost';
 const MyButton = ({
   prefixIcon: Prefix = null,
@@ -42,7 +43,7 @@ const MyButton = ({
     >
       {Prefix && <Prefix c style={{ marginRight: '8px', color: 'inherit' }} />}
 
-      {children && children}
+      {children && <Translate>{children}</Translate>}
 
       {Postfix && <Postfix style={{ marginLeft: '8px', color: 'inherit' }} />}
     </Button>

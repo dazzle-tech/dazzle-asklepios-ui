@@ -1,8 +1,8 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
-
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type PagedResult<T> = { data: T[]; totalCount: number };
+
 
 export const departmentService = createApi({
   reducerPath: 'newDepartmentApi',
@@ -105,6 +105,7 @@ export const departmentService = createApi({
 
 export const {
   useGetDepartmentsQuery,
+
   useGetDepartmentByIdQuery,
   useGetDepartmentByFacilityQuery,
   useLazyGetDepartmentByFacilityQuery,

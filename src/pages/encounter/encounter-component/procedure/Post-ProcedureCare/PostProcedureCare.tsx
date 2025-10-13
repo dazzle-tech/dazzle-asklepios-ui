@@ -1,7 +1,7 @@
 import MyButton from '@/components/MyButton/MyButton';
 import React, { useRef } from 'react';
 import { Col, Divider, Row, Text } from 'rsuite';
-import Diagnosis from '../../../../medical-component/diagnosis/DiagnosisAndFindings';
+import Diagnosis from './Diagnosis';
 import ProcedureVitals from './ProcedureVitals';
 import AdministeredMedications from './AdministeredMedications ';
 import PostProcedureAnesthesia from './PostProcedureAnesthesia';
@@ -34,7 +34,7 @@ const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
           {/* Procedure Care */}
           <Row>
             <Col md={24}>
-              <Diagnosis ref={diagRef} procedure={procedure} user={user} />
+              <Diagnosis ref={diagRef} procedure={procedure} user={user}  />
             </Col>
           </Row>
 

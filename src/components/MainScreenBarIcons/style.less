@@ -5,10 +5,16 @@
   font-weight: lighter;
 }
 
-.main-screen-bar-icons-main-container {
+.main-screen-bar-icons-main-container-header {
   display: flex;
   gap: 10px;
   align-items: center;
+  @media (min-width: 940px) and (max-width: 1093px) {
+    gap: 5px;
+  }
+  @media (max-width: 940px) {
+    gap: 3px;
+  }
 }
 
 .main-screen-bar-buttons-main-container {
@@ -63,7 +69,7 @@
   }
 }
 
-.main-screen-bar-icons-main-container.dark {
+.main-screen-bar-icons-main-container-header.dark {
   .header-screen-bar-icon-size-handle {
     color: var(--white) !important;
   }

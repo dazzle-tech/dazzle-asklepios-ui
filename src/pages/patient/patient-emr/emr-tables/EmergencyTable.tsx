@@ -5,32 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleEmergencyData = [
-  {
-    dateTime: '2023-11-15T02:15:00Z',
-    chiefComplaint: 'Chest Pain',
-    triage: 'ESI 2',
-    provider: 'Dr. Emergency',
-    disposition: 'Admitted',
-    duration: '4h 30m'
-  },
-  {
-    dateTime: '2023-08-22T23:30:00Z',
-    chiefComplaint: 'Shortness of Breath',
-    triage: 'ESI 3',
-    provider: 'Dr. Night',
-    disposition: 'Discharged',
-    duration: '2h 45m'
-  },
-  {
-    dateTime: '2023-05-10T18:45:00Z',
-    chiefComplaint: 'Fall with Injury',
-    triage: 'ESI 4',
-    provider: 'Dr. Trauma',
-    disposition: 'Discharged',
-    duration: '3h 15m'
-  }
-];
+const sampleEmergencyData = [];
 
 const columns: ColumnConfig[] = [
   {
@@ -49,39 +24,39 @@ const columns: ColumnConfig[] = [
     title: <Translate>Chief Complaint</Translate>,
     dataKey: 'chiefComplaint'
   },
-{
-  key: 'triage',
-  title: <Translate>Triage</Translate>,
-  dataKey: 'triage',
-  width: 120,
-  render: (row: any) => {
-    const triage = row.triage;
+  {
+    key: 'triage',
+    title: <Translate>Triage</Translate>,
+    dataKey: 'triage',
+    width: 120,
+    render: (row: any) => {
+      const triage = row.triage;
 
-    const bgColor =
-      triage === 'ESI 1'
-        ? 'var(--light-red)'
-        : triage === 'ESI 2'
-        ? 'var(--light-orange)'
-        : triage === 'ESI 3'
-        ? 'var(--light-yellow)'
-        : triage === 'ESI 4'
-        ? 'var(--light-pink)'
-        : 'var(--light-gray)';
+      const bgColor =
+        triage === 'ESI 1'
+          ? 'var(--light-red)'
+          : triage === 'ESI 2'
+          ? 'var(--light-orange)'
+          : triage === 'ESI 3'
+          ? 'var(--light-yellow)'
+          : triage === 'ESI 4'
+          ? 'var(--light-pink)'
+          : 'var(--light-gray)';
 
-    const color =
-      triage === 'ESI 1'
-        ? 'var(--primary-red)'
-        : triage === 'ESI 2'
-        ? 'var(--primary-orange)'
-        : triage === 'ESI 3'
-        ? 'var(--primary-yellow)'
-        : triage === 'ESI 4'
-        ? 'var(--primary-pink)'
-        : 'var(--dark-gray)';
+      const color =
+        triage === 'ESI 1'
+          ? 'var(--primary-red)'
+          : triage === 'ESI 2'
+          ? 'var(--primary-orange)'
+          : triage === 'ESI 3'
+          ? 'var(--primary-yellow)'
+          : triage === 'ESI 4'
+          ? 'var(--primary-pink)'
+          : 'var(--dark-gray)';
 
-    return <MyBadgeStatus backgroundColor={bgColor} color={color} contant={triage} />;
-  }
-},
+      return <MyBadgeStatus backgroundColor={bgColor} color={color} contant={triage} />;
+    }
+  },
   {
     key: 'provider',
     title: <Translate>Provider</Translate>,
@@ -107,9 +82,7 @@ const columns: ColumnConfig[] = [
           ? 'var(--primary-pink)'
           : 'var(--primary-pink)';
 
-      return (
-        <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.disposition} />
-      );
+      return <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.disposition} />;
     }
   },
   {

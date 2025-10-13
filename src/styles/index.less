@@ -3,6 +3,8 @@
 @import '../components/ErrorPage/styles.less';
 @import '../components/Header/styles.less';
 @import '../components/MyLabel/styles.less';
+// src/index.tsx
+
 
 @font-face {
   font-family: 'Manrope';
@@ -87,18 +89,13 @@ td {
 }
 
 .page-container {
-  // padding-left: 260px;
-  // transition: padding 0.5s;
 
-  // &.container-full {
-  //   padding-left: 60px;
-  // }
 
   padding-left: 17%;
   transition: padding 0.5s;
 
   &.container-full {
-    padding-left: 60px;
+    padding-left: 30vw !important;
   }
 }
 
@@ -358,6 +355,13 @@ aside {
   --card-dark-green: rgb(0, 92, 0);
   --card-yellow: #ffc300;
   --card-gray: #adadad;
+
+
+
+
+
+
+
 }
 
 .rs-form-inline .rs-form-control-label {
@@ -493,6 +497,9 @@ input[disabled] {
   .react-tabs__tab {
     background-color: var(--black) !important;
   }
+  .rs-form-inline .rs-form-control-label{
+    color: var(--white) !important;
+  }
 }
 // To style the Search Input inside the SelectPicker dropdown to match dark mode
 .rs-theme-dark {
@@ -516,3 +523,7 @@ input[disabled] {
 .page-container.rs-container {
   padding-left: 0 !important;
 }
+
+
+
+

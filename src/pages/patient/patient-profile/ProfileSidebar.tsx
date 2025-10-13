@@ -1,5 +1,6 @@
 import MyInput from '@/components/MyInput';
 import PatientCard from '@/components/PatientCard';
+import Translate from '@/components/Translate';
 import UserSearch from '@/images/svgs/UserSearch';
 import { useGetPatientsQuery } from '@/services/patientService';
 import type { ApPatient } from '@/types/model-types';
@@ -41,7 +42,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   setLocalPatient,
   refetchData,
   setRefetchData,
-  title :title= 'Search Patient',
+  title :title = <Translate>Search Patient</Translate>,
   direction : direction = 'left' ,
   showButton : showButton = true,
 }) => {
@@ -66,12 +67,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' });
 
   const searchCriteriaOptions = [
-    { label: 'MRN', value: 'patientMrn' },
-    { label: 'Document Number', value: 'documentNo' },
-    { label: 'Full Name', value: 'fullName' },
-    { label: 'Archiving Number', value: 'archivingNumber' },
-    { label: 'Primary Phone Number', value: 'phoneNumber' },
-    { label: 'Date of Birth', value: 'dob' }
+    { label: <Translate>MRN</Translate>, value: 'patientMrn' },
+    { label: <Translate>Document Number</Translate>, value: 'documentNo' },
+    { label: <Translate>Full Name</Translate>, value: 'fullName' },
+    { label: <Translate>Archiving Number</Translate>, value: 'archivingNumber' },
+    { label: <Translate>Primary Phone Number</Translate>, value: 'phoneNumber' },
+    { label: <Translate>Date of Birth</Translate>, value: 'dob' }
   ];
 
   const handleSelect = value => {

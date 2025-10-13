@@ -26,6 +26,7 @@ import PatientAppointments from './PatientAppointments';
 import BedsideRegistrationsModal from './BedsideRegistrations';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import BulkRegistration from './BulkRegistration';
+import Translate from '@/components/Translate';
 
 const { getHeight } = DOMHelper;
 
@@ -61,43 +62,58 @@ const PatientProfile = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
   // Handle save patient
+  // const handleSave = async () => {
+  //   try {
+  //     const { data: candidateData } = await trigger(authSlice.user.departmentKey);
+
+  //     if (localPatient.key == undefined) {
+  //       const Response = await patientListByRoleCandidate({
+  //         patient: localPatient,
+  //         role: candidateData?.object
+  //       }).unwrap();
+
+  //       if (Response.extraNumeric > 0) {
+  //         setPatientList(Response?.object);
+  //         setOpenPatientsDuplicateModal(true);
+  //       } else {
+  //         await savePatient({
+  //           ...localPatient,
+  //           incompletePatient: false,
+  //           unknownPatient: false
+  //         }).unwrap();
+
+  //         setRefetchData(true);
+  //         dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+  //       }
+  //     } else {
+  //       await savePatient({
+  //         ...localPatient,
+  //         incompletePatient: false,
+  //         unknownPatient: false
+  //       }).unwrap();
+
+  //       setRefetchData(true);
+  //       dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
   const handleSave = async () => {
-    try {
-      const { data: candidateData } = await trigger(authSlice.user.departmentKey);
+  try {
+    await savePatient({
+      ...localPatient,
+      incompletePatient: false,
+      unknownPatient: false
+    }).unwrap();
 
-      if (localPatient.key == undefined) {
-        const Response = await patientListByRoleCandidate({
-          patient: localPatient,
-          role: candidateData?.object
-        }).unwrap();
+    setRefetchData(true);
+    dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-        if (Response.extraNumeric > 0) {
-          setPatientList(Response?.object);
-          setOpenPatientsDuplicateModal(true);
-        } else {
-          await savePatient({
-            ...localPatient,
-            incompletePatient: false,
-            unknownPatient: false
-          }).unwrap();
-
-          setRefetchData(true);
-          dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-        }
-      } else {
-        await savePatient({
-          ...localPatient,
-          incompletePatient: false,
-          unknownPatient: false
-        }).unwrap();
-
-        setRefetchData(true);
-        dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   // Handle clear patient data
   const handleClear = () => {
@@ -204,7 +220,7 @@ const PatientProfile = () => {
           <Row className="btm-sections">
             <Col md={12}>
               <SectionContainer
-                title={<Text>Visit history</Text>}
+                title={<Translate>Visit history</Translate>}
                 content={
                   <PatientVisitHistoryTable
                     quickAppointmentModel={quickAppointmentModel}
@@ -216,8 +232,8 @@ const PatientProfile = () => {
             </Col>
             <Col md={12}>
               <SectionContainer
-                title={<Text>Appointments</Text>}
-                content={<PatientAppointments />}
+                title={<Translate>Appointments</Translate>}
+                content={<PatientAppointments patient={localPatient} />}
               />
             </Col>
           </Row>

@@ -18,6 +18,7 @@ import UpcomingAppointmentCard from './UpcomingAppointmentCard';
 import MyPatientAppointmentCard from './MyPatientAppointmentCard';
 import EmergencyContactAppointmentModal from './EmergencyContactAppointmentModal';
 import PatientEMR from '@/pages/patient/patient-emr';
+
 const MyAppointmentScreen = () => {
   const [showAllAppointmentsModal, setShowAllAppointmentsModal] = useState(false);
   const [showPatientRecordsModal, setShowPatientRecordsModal] = useState(false);
@@ -32,7 +33,7 @@ const MyAppointmentScreen = () => {
           icon={faCalendar}
           color="--gray-dark"
           backgroundClassName="result-ready-section"
-          width={'20vw'}
+          width={'16vw'}
         />
         <DetailsCard
           title="Total Patients"
@@ -40,7 +41,7 @@ const MyAppointmentScreen = () => {
           icon={faPerson}
           color="--primary-blue"
           backgroundClassName="sample-collected-section"
-          width={'20vw'}
+          width={'16vw'}
         />
         <DetailsCard
           title="Next Appointment"
@@ -48,7 +49,7 @@ const MyAppointmentScreen = () => {
           icon={faClock}
           color="--primary-purple"
           backgroundClassName="new-section"
-          width={'20vw'}
+          width={'16vw'}
         />
         <DetailsCard
           title="Pending Reviews"
@@ -56,16 +57,16 @@ const MyAppointmentScreen = () => {
           icon={faFileWaveform}
           color="--green-600"
           backgroundClassName="total-test-section"
-          width={'20vw'}
+          width={'16vw'}
         />
       </div>
       <div className="main-appointment-screen-handle-container">
         <SectionContainer
           title={
-            <h3 className="h3-appointment-screen-handle">
+            <h6 className="h3-appointment-screen-handle">
               <FontAwesomeIcon icon={faCircleInfo} style={{ color: 'var(--primary-blue)' }} />
               Quick Actions
-            </h3>
+            </h6>
           }
           content={
             <div className="appointments-quick-actions-buttons">
@@ -86,10 +87,10 @@ const MyAppointmentScreen = () => {
           <SectionContainer
             title={
               <>
-                <h3 className="h3-appointment-screen-handle">
+                <h6 className="h3-appointment-screen-handle">
                   <FontAwesomeIcon style={{ color: 'var(--primary-blue)' }} icon={faCalendar} />
                   Today's Appointments
-                </h3>
+                </h6>
               </>
             }
             content={
@@ -102,10 +103,10 @@ const MyAppointmentScreen = () => {
             <SectionContainer
               title={
                 <>
-                  <h3 className="h3-appointment-screen-handle">
+                  <h6 className="h3-appointment-screen-handle">
                     <FontAwesomeIcon style={{ color: 'var(--primary-blue)' }} icon={faClock} />
                     Upcoming
-                  </h3>
+                  </h6>
                 </>
               }
               content={
@@ -120,10 +121,10 @@ const MyAppointmentScreen = () => {
         <SectionContainer
           title={
             <>
-              <h3 className="h3-appointment-screen-handle">
+              <h6 className="h3-appointment-screen-handle">
                 <FontAwesomeIcon style={{ color: 'var(--primary-blue)' }} icon={faPerson} />
                 My Patients
-              </h3>
+              </h6>
             </>
           }
           content={

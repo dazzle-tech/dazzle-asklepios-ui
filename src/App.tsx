@@ -172,15 +172,18 @@ import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
 import NewDepartments from './pages/setup/departments-setup/Departments-new';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
-import { useGetScreensQuery } from './services/userService';
 import { MODULES } from "@/config/modules-config";
 import RoleManegment from './pages/setup/role-managemen';
 import { useGetMenuQuery } from './services/security/UserRoleService';
 import CallOverlay from './components/Overlay/CallOverlay';
 
+
+
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   console.log("User Screens from APP", authSlice.user)
+
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
@@ -190,6 +193,7 @@ const App = () => {
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
   console.log('Tenant in APP:', tenant);
+
 
   // ⬇️ Call your RTK Query endpoint:
   const { data: menu , isFetching: isMenuLoading } = useGetMenuQuery(
@@ -293,6 +297,7 @@ const loadNavs = () => {
     icon: <Icon as={MdDashboard} />,
     title: 'Dashboard',
     to: '/',
+
   });
 
   // Build lookups from backend menu

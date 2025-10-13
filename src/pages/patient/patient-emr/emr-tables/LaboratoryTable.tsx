@@ -5,38 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleLaboratoryData = [
-  {
-    testName: 'Complete Blood Count',
-    date: '2024-01-10T00:00:00Z',
-    result: 'Normal',
-    status: 'Final'
-  },
-  {
-    testName: 'HbA1c',
-    date: '2024-01-10T00:00:00Z',
-    result: '7.2%',
-    status: 'Final'
-  },
-  {
-    testName: 'Lipid Panel',
-    date: '2024-01-05T00:00:00Z',
-    result: 'See Report',
-    status: 'Final'
-  },
-  {
-    testName: 'TSH',
-    date: '2024-01-05T00:00:00Z',
-    result: '2.1 mIU/L',
-    status: 'Final'
-  },
-  {
-    testName: 'Creatinine',
-    date: '2024-01-10T00:00:00Z',
-    result: '1.0 mg/dL',
-    status: 'Final'
-  }
-];
+const sampleLaboratoryData = [];
 
 const columns: ColumnConfig[] = [
   {

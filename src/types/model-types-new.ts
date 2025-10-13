@@ -15,25 +15,22 @@ export interface ApUser {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   phoneNumber?: string | null;
-  birthDate?: Date | null; 
+  birthDate?: Date | null;
   gender?: string | null;
-
   jobDescription?: string | null;
 }
 
 
 export interface Candidate {
   id?: number;
-
   role?: string;
   dob?: boolean;
   lastName?: boolean;
   documentNo?: boolean;
   mobileNumber?: boolean;
   gender?: boolean;
-
   createdBy?: string;
-  createdDate?: string; 
+  createdDate?: string;
   lastModifiedBy?: string;
   lastModifiedDate?: string;
   isActive?: boolean;
@@ -101,3 +98,4 @@ export interface UserDepartment {
   lastModifiedBy?: string;
   lastModifiedDate?:Date|null;
 };
+

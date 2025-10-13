@@ -253,7 +253,7 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     },
   ];
 
-  /** 🧱 أعمدة الشاشات */
+
   const screenColumns = (moduleRow: any) => [
     {
       key: "screen",

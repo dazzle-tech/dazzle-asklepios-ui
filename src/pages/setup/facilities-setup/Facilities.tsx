@@ -107,7 +107,7 @@ const Facilities = () => {
   // Handle click on Add New Button
   const handleNew = () => {
     setAddress(newApAddresses);
-    setCreateFacility(newCreateFacility);
+    setCreateFacility({ ...newCreateFacility });
     setDepartments(newApDepartment);
     setIsEditing(false);
     setPopupOpen(true);
@@ -140,7 +140,7 @@ const Facilities = () => {
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
-          setFacility(facility);
+          setFacility({ ...rowData });
           setIsEditing(true);
           setPopupOpen(true);
         }}
@@ -172,9 +172,9 @@ const Facilities = () => {
   const handleSave = async () => {
     setPopupOpen(false);
     setLoad(true);
-    console.log(facility);
-   await saveFacility({ ...facility }).unwrap().then(() => {
+   await saveFacility({ ...createFacility }).unwrap().then(() => {
     dispatch(notify({ msg: 'The Facility has been saved successfully', sev: 'success' }));
+    refetchFacility();
    }).catch(() => {
     dispatch(notify({ msg: 'Failed to save this Facility', sev: 'error' }));
    });
@@ -188,6 +188,7 @@ const Facilities = () => {
     console.log(facility);
    await updateFacility({ ...facility }).unwrap().then(() => {
     dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
+    refetchFacility();
    }).catch(() => {
     dispatch(notify({ msg: 'Failed to update this Facility', sev: 'error' }));
    });
@@ -250,10 +251,11 @@ const Facilities = () => {
   //Table columns
   const tableColumns = [
     {
-      key: 'id',
-      title: <Translate>ID</Translate>,
+
+      key: 'code',
+      title: <Translate>Code</Translate>,
       flexGrow: 1,
-      dataKey: 'id'
+      dataKey: 'code'
     },
     {
       key: 'name',

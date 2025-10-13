@@ -144,7 +144,6 @@ export const {
   useGetDuplicationCandidatesQuery,
   useCreateDuplicationCandidateMutation,
   useUpdateDuplicationCandidateMutation,
-  useDeactivateDuplicationCandidateMutation,
   useReactivateDuplicationCandidateMutation,
   useGetRolePermissionsQuery,
   useUpdateRolePermissionsMutation

@@ -26,6 +26,7 @@ interface AdvancedModalProps {
   isDisabledActionBtn?: boolean;
   defaultClose?: boolean;
   isLeftClosed?: boolean;
+  rightBodyNoScroll?: boolean;
 }
 
 const AdvancedModal: React.FC<AdvancedModalProps> = ({
@@ -40,14 +41,15 @@ const AdvancedModal: React.FC<AdvancedModalProps> = ({
   hideCancel = false,
   position = 'center',
   actionButtonLabel = 'Save',
-  actionButtonFunction = null,
+  actionButtonFunction = () => {},
   height = '90vh',
   size = '80vw',
   leftWidth = '30%',
   rightWidth = '70%',
   isDisabledActionBtn = false,
   defaultClose = false,
-  isLeftClosed = true
+  isLeftClosed = true,
+  rightBodyNoScroll = false
 }) => {
   const modalClass = position === 'left' ? 'left-modal' : position === 'right' ? 'rigth-modal' : '';
   const mode = useSelector((state: any) => state.ui.mode);
@@ -100,9 +102,14 @@ const AdvancedModal: React.FC<AdvancedModalProps> = ({
               </MyButton>
             </div>
           </div>
-          <div className="modal-right-body" style={{ height: `calc(${height} - 108px)` }}>
+
+          <div
+            className={`modal-right-body ${rightBodyNoScroll ? 'no-scroll' : ''}`}
+            style={{ height: `calc(${height} - 108px)` }}
+          >
             {rightContent}
           </div>
+
           <div className="modal-right-footer">
             <div className="modal-right-footer-buttons">
               {!hideCancel && (

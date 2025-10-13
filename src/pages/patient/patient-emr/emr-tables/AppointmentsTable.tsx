@@ -5,32 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleAppointments = [
-  {
-    dateTime: '2024-01-15T09:00:00Z',
-    provider: 'Dr. Smith',
-    department: 'Cardiology',
-    status: 'Completed'
-  },
-  {
-    dateTime: '2024-01-22T14:30:00Z',
-    provider: 'Dr. Johnson',
-    department: 'Endocrinology',
-    status: 'Scheduled'
-  },
-  {
-    dateTime: '2024-01-29T11:15:00Z',
-    provider: 'Dr. Brown',
-    department: 'Primary Care',
-    status: 'Scheduled'
-  },
-  {
-    dateTime: '2024-02-05T15:45:00Z',
-    provider: 'Dr. Wilson',
-    department: 'Orthopedics',
-    status: 'Scheduled'
-  }
-];
+const sampleAppointments = [];
 
 const columns: ColumnConfig[] = [
   {

@@ -114,6 +114,7 @@ export const MODULES: Module[] =
        description: "", 
        icon: "FaVideo", 
        viewOrder: 0, navPath: "tele-consultation-screen" }],
+
   },
   {name: "EMR Module",
     description: null,
@@ -331,6 +332,7 @@ export const MODULES: Module[] =
       { name: "Requisition Approval", code: "REQUISITION_APPROVAL", description: "", icon: "FaRegThumbsUp", viewOrder: 1, navPath: "" },
       { name: "Purchase Orders", code: "PURCHASE_ORDERS", description: "", icon: "FaCubes", viewOrder: 2, navPath: "" },
       { name: "Goods Receipt Note", code: "GOODS_RECEIPT_NOTE", description: "", icon: "FaBoxTissue", viewOrder: 6, navPath: "reset-password" },
+
     ],
   },
  

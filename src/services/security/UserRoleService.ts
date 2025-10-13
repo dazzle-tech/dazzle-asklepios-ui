@@ -24,8 +24,7 @@ export const userRoleService = createApi({
                 url: `/api/setup/user-role/by-user/${userId}`,
                 method: "GET",
             }),
-        }),
-        
+        }), 
       getMenu: builder.query({
       query: ({ userId, facilityId }) => ({
         url: `/api/setup/menu?userId=${userId}&facilityId=${facilityId}`,

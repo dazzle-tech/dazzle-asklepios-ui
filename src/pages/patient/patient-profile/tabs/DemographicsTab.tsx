@@ -6,6 +6,7 @@ import ContactTab from './ContactTab';
 import AddressTab from './AddressTab';
 import BasicInfo from './BasicInfo';
 import DocumentInfo from './DocumentInfo';
+import Translate from '@/components/Translate';
 
 interface DemographicsTabProps {
   localPatient: ApPatient;
@@ -39,7 +40,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
           <Col md={12}>
             <Row>
               <SectionContainer
-                title={<Text>Basic Information</Text>}
+                title={<Translate>Basic Information</Translate>}
                 content={
                   <BasicInfo
                     validationResult={validationResult}
@@ -55,7 +56,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
             </Row>
             <Row>
               <SectionContainer
-                title={<Text>Document</Text>}
+                title={<Translate>Document</Translate>}
                 content={
                   <DocumentInfo
                     validationResult={validationResult}
@@ -71,7 +72,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
           <Col md={12}>
             <Row>
               <SectionContainer
-                title={<Text>Contact</Text>}
+                title={<Translate>Contact</Translate>}
                 content={
                   <ContactTab
                     localPatient={localPatient}
@@ -83,7 +84,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
             </Row>
             <Row>
               <SectionContainer
-                title={<Text>Address</Text>}
+                title={<Translate>Address</Translate>}
                 content={
                   <AddressTab
                     localPatient={localPatient}

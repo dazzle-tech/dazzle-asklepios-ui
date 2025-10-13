@@ -8,8 +8,7 @@ module.exports = {
   entry: './src/index.tsx',
   devtool: 'source-map',
   resolve: {
-    // Add '.ts' and '.tsx' as resolvable extensions.
-    extensions: ['.ts', '.tsx', '.js', '.json']
+    extensions: ['.ts', '.tsx', '.js', '.json'],
   },
   devServer: {
     host: '0.0.0.0',
@@ -29,48 +28,80 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'assets'),
     filename: 'bundle.js',
-    publicPath: './'
+    publicPath: './',
+    clean: true,
   },
 
   module: {
     rules: [
+      // TS/TSX
       {
         test: /\.tsx?$/,
         use: ['babel-loader'],
-        exclude: /node_modules/
+        exclude: /node_modules/,
       },
+
+      // Images
       {
-        test: /\.(jpg|png|svg)$/,
+        test: /\.(jpg|png|svg)$/i,
+        type: 'asset',
+        parser: { dataUrlCondition: { maxSize: 8 * 1024 } },
+        generator: { publicPath: '/', filename: 'images/[name][ext]' },
+      },
+
+      {
+        test: /tw\.build\.css$/i,
         use: [
-          {
-            loader: 'url-loader',
-            options: {
-              limit: 8192,
-              publicPath: '/'
-            }
-          }
-        ]
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+        ],
       },
+
+
       {
-        test: /\.(less|css)$/,
+        test: /\.css$/i,
+        exclude: /tw\.build\.css$/i,
         use: [
           MiniCssExtractPlugin.loader,
           {
-            loader: 'css-loader'
+            loader: 'css-loader',
+            options: { importLoaders: 1, url: true },
           },
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                config: false,
+                plugins: [require('@tailwindcss/postcss')],
+              },
+            },
+          },
+        ],
+      },
+
+      {
+        test: /\.less$/i,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
           {
             loader: 'less-loader',
             options: {
               sourceMap: true,
-              lessOptions: {
-                javascriptEnabled: true
-              }
-            }
-          }
-        ]
-      }
-    ]
+              lessOptions: { javascriptEnabled: true },
+            },
+          },
+        ],
+      },
+
+      {
+        test: /\.(woff2?|eot|ttf|otf)$/i,
+        type: 'asset/resource',
+        generator: { filename: 'fonts/[name][ext]' },
+      },
+    ],
   },
+
   plugins: [
     new HtmlwebpackPlugin({
       title: 'Asklepios',
@@ -78,11 +109,12 @@ module.exports = {
       template: './src/index.html',
       inject: true,
       hash: true,
-      path: './'
+      path: './',
+     favicon: './public/Ask-Rod-Logo.png',
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
-      chunkFilename: '[id].css'
-    })
-  ]
+      chunkFilename: '[id].css',
+    }),
+  ],
 };

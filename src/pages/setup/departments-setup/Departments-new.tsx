@@ -63,7 +63,6 @@ const Departments = () => {
     diagnosticsResult: true,
     observation: true
   });
-
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -81,7 +80,6 @@ const Departments = () => {
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
   // Update Department 
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
-
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
@@ -126,12 +124,14 @@ const Departments = () => {
   useEffect(() => {
     if (addDepartmentMutation.data) {
       setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
+
     }
   }, [addDepartmentMutation.data]);
 
   useEffect(() => {
     if (updateDepartmentMutation.data) {
       setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
+
     }
   }, [updateDepartmentMutation.data]);
 
@@ -406,7 +406,6 @@ const Departments = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
   const getFilterWidth = (filter: string): string => {
     switch (filter) {
       case 'facilityName':

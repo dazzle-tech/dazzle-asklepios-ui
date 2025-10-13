@@ -24,6 +24,7 @@ import { faPersonCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 import { faUsersLine } from '@fortawesome/free-solid-svg-icons';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
+import Translate from '@/components/Translate';
 
 interface ProfileHeaderProps {
   localPatient: ApPatient;
@@ -81,25 +82,25 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faCalendarCheck} />
-            Visit History
+            <Translate>Visit History</Translate>
           </div>
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faThumbsUp} />
-            Approvals
+            <Translate>Approvals</Translate>
           </div>
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faCalendarDay} />
-            Appointments
+            <Translate>Appointments</Translate>
           </div>
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faHandHoldingDollar} />
-            View Price List
+            <Translate>View Price List</Translate>
           </div>
         </Dropdown.Item>
         <Dropdown.Item
@@ -110,7 +111,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faTriangleExclamation} />
-            Warnings Summary
+            <Translate>Warnings Summary</Translate>
           </div>
         </Dropdown.Item>
         <Dropdown.Item
@@ -121,7 +122,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faPersonCircleQuestion} />
-            Bedside Registration
+            <Translate>Bedside Registration</Translate>
           </div>
         </Dropdown.Item>
         <Dropdown.Item
@@ -132,13 +133,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         >
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faUsersLine} />
-            Bulk Registration
+            <Translate>Bulk Registration</Translate>
           </div>
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faBars} />
-            Encounter Transactions
+            <Translate>Encounter Transactions</Translate>
           </div>
         </Dropdown.Item>
       </Dropdown.Menu>
@@ -150,10 +151,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <Popover full>
       <Dropdown.Menu>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1">Print Information</div>
+          <div className="container-of-icon-and-key1"><Translate>Print Information</Translate></div>
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1">Print Patient Label</div>
+          <div className="container-of-icon-and-key1"><Translate>Print Patient Label</Translate></div>
         </Dropdown.Item>
       </Dropdown.Menu>
     </Popover>

@@ -9,29 +9,35 @@ import { useSavePatientMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
-import { useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
 import { calculateAgeFormat } from '@/utils';
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
-const QuickPatient = ({ open, setOpen }) => {
-  const navigate = useNavigate();
+const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const dispatch = useAppDispatch();
   const [isUnknown, setIsUnknown] = useState(false);
   const [validationResult, setValidationResult] = useState({});
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [savePatient, savePatientMutation] = useSavePatientMutation();
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
-  const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
+  const [localEncounter, setLocalEncounter] = useState({
+    ...newApEncounter,
+    visitTypeLkey: '2041082245699228',
+    patientKey: localPatient.key,
+    plannedStartDate: new Date(),
+    patientAge: calculateAgeFormat(localPatient.dob),
+    discharge: false
+  });
+
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
 
   // Fetch LOV data for various fields
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
-  //handle Save Patient 
+  //handle Save Patient
   const handleSave = async () => {
     try {
       // 1. Save patient and wait for the result
@@ -49,19 +55,24 @@ const QuickPatient = ({ open, setOpen }) => {
           ...localEncounter,
           patientKey: savedPatient.key,
           plannedStartDate: new Date(),
-          encounterStatusLkey: "8890456518264959",
+          encounterStatusLkey: '8890456518264959',
           patientAge: calculateAgeFormat(savedPatient.dob),
           visitTypeLkey: '2041082245699228',
           resourceTypeLkey: '6743167799449277',
-          resourceKey: '7101086042442391',
+          resourceKey: '7101086042442391'
         });
         dispatch(setRefetchEncounter(true));
       }
 
       // 3. Update state and navigate
       setLocalPatient(savedPatient);
+      if (setPatient != null) {
+        setPatient(savedPatient);
+      }
       setOpen(false);
-      { pageCode !== 'ER_Triage' && navigate('/patient-profile', { state: { patient: savedPatient } }) };
+      {
+        pageCode !== 'ER_Triage';
+      }
 
       // 4. Clean up
       handleClearModal();
@@ -75,11 +86,10 @@ const QuickPatient = ({ open, setOpen }) => {
     }
   };
 
-
   // Handle Clear Modal Fields
   const handleClearModal = () => {
     setIsUnknown(undefined);
-    setLocalPatient(newApPatient)
+    setLocalPatient(newApPatient);
   };
 
   // Quick Patient Modal Content
@@ -139,7 +149,14 @@ const QuickPatient = ({ open, setOpen }) => {
   useEffect(() => {
     if (!open) {
       setLocalPatient({ ...newApPatient });
-      setLocalEncounter({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
+      setLocalEncounter({
+        ...newApEncounter,
+        visitTypeLkey: '2041082245699228',
+        patientKey: localPatient.key,
+        plannedStartDate: new Date(),
+        patientAge: calculateAgeFormat(localPatient.dob),
+        discharge: false
+      });
     }
   }, [open]);
   return (
@@ -147,9 +164,9 @@ const QuickPatient = ({ open, setOpen }) => {
       open={open}
       setOpen={setOpen}
       title="Quick Patient"
-      steps={[{ title: "Basic Information", icon: <FontAwesomeIcon icon={faBoltLightning} /> }]}
+      steps={[{ title: 'Basic Information', icon: <FontAwesomeIcon icon={faBoltLightning} /> }]}
       size="xs"
-      position='right'
+      position="right"
       actionButtonLabel="Create"
       actionButtonFunction={handleSave}
       content={quickPatientContent}

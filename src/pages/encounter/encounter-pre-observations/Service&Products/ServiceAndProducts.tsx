@@ -39,11 +39,8 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const { data: serviceListResponse } = useGetServicesQuery(listRequest);
 
   // Table data
-  const [data, setData] = useState([
-    { id: 1, category: 'Product', name: 'Central Line', type: 'Consumable', quantity: 30 },
-    { id: 2, category: 'Product', name: 'Syringe', type: 'Consumable', quantity: 5 },
-    { id: 3, category: 'Service', name: 'ER Fees', type: 'Consultation', quantity: 10 }
-  ]);
+  const [data, setData] = useState([]);
+
 
   const location = useLocation();
   const state = location.state || {};

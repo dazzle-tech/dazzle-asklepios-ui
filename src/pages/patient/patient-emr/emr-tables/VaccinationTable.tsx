@@ -5,44 +5,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import Translate from '@/components/Translate';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleVaccinationData = [
-  {
-    vaccine: 'COVID-19 (Pfizer)',
-    date: '2023-11-15T00:00:00Z',
-    dose: 'Booster',
-    lotNumber: 'EK5730',
-    site: 'Left deltoid',
-    provider: 'RN Johnson',
-    reaction: 'None'
-  },
-  {
-    vaccine: 'Influenza',
-    date: '2023-10-10T00:00:00Z',
-    dose: 'Annual',
-    lotNumber: 'FL2023',
-    site: 'Right deltoid',
-    provider: 'RN Smith',
-    reaction: 'Mild soreness'
-  },
-  {
-    vaccine: 'Tdap',
-    date: '2023-05-20T00:00:00Z',
-    dose: 'Booster',
-    lotNumber: 'TD789',
-    site: 'Left deltoid',
-    provider: 'RN Brown',
-    reaction: 'None'
-  },
-  {
-    vaccine: 'Pneumococcal',
-    date: '2022-08-15T00:00:00Z',
-    dose: 'Primary',
-    lotNumber: 'PN456',
-    site: 'Right deltoid',
-    provider: 'RN Wilson',
-    reaction: 'None'
-  }
-];
+const sampleVaccinationData = [];
 
 const columns: ColumnConfig[] = [
   {
@@ -81,35 +44,35 @@ const columns: ColumnConfig[] = [
     title: <Translate>Provider</Translate>,
     dataKey: 'provider'
   },
-{
-  key: 'reaction',
-  title: <Translate>Reaction</Translate>,
-  dataKey: 'reaction',
-  width: 160,
-  render: (row: any) => {
-    const reaction = row.reaction?.toLowerCase();
+  {
+    key: 'reaction',
+    title: <Translate>Reaction</Translate>,
+    dataKey: 'reaction',
+    width: 160,
+    render: (row: any) => {
+      const reaction = row.reaction?.toLowerCase();
 
-    let bgColor = 'var(--light-gray)';
-    let color = 'var(--dark-gray)';
+      let bgColor = 'var(--light-gray)';
+      let color = 'var(--dark-gray)';
 
-    if (reaction === 'none') {
-      bgColor = 'var(--light-green)';
-      color = 'var(--primary-green)';
-    } else if (reaction.includes('mild')) {
-      bgColor = 'var(--light-orange)';
-      color = 'var(--primary-orange)';
-    } else if (reaction.includes('severe')) {
-      bgColor = 'var(--light-red)';
-      color = 'var(--primary-red)';
+      if (reaction === 'none') {
+        bgColor = 'var(--light-green)';
+        color = 'var(--primary-green)';
+      } else if (reaction.includes('mild')) {
+        bgColor = 'var(--light-orange)';
+        color = 'var(--primary-orange)';
+      } else if (reaction.includes('severe')) {
+        bgColor = 'var(--light-red)';
+        color = 'var(--primary-red)';
+      }
+
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.reaction} />
+        </div>
+      );
     }
-
-    return (
-      <div style={{ textAlign: 'center' }}>
-        <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.reaction} />
-      </div>
-    );
   }
-}
 ];
 
 const VaccinationTable = () => {

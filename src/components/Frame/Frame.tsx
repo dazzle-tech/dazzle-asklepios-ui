@@ -87,11 +87,14 @@ const Frame = (props: FrameProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // menu anchor element
   const [activeMenu, setActiveMenu] = useState<string | null>(null); // active menu for popover
   const [expandAllSubmenus, setExpandAllSubmenus] = useState(false);
+
   const authSlice = useAppSelector(state => state.auth);
   const patientSlice = useAppSelector(state => state.patient);
   const [expandNotes, setExpandNotes] = useState(false); // sticky notes panel
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const uiSlice = useAppSelector(state => state.ui);
+  console.log('lang ' + uiSlice.lang);
 
   // Effects - window resize listeners
   useEffect(() => {
@@ -472,7 +475,7 @@ const Frame = (props: FrameProps) => {
             ></Stack>
 
             <div className="content-with-sticky">
-              <div className="main-content-area">
+              <div className="main-content-area" >
                 <Outlet />
               </div>
 
