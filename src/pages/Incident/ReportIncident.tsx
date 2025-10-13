@@ -141,7 +141,7 @@ const ReportIncident = () => {
           <DocumentationAttachments formData={formData} setFormData={setFormData} />
 
           {/* Footer / Submit */}
-          <div className="!mt-4 !pt-4 !border-t !border-[#E6EBF1] !flex !items-center !justify-between">
+          <div className="!mt-4 !pt-4 !border-t  !flex !items-center !justify-between">
             <div className="!flex !items-center !text-[13px] !text-[hsl(var(--muted-foreground))]">
               <AlertTriangle className="!h-[15px] !w-[15px] !mr-2" />
               All information provided will be kept confidential and used for quality improvement
