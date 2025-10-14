@@ -4,7 +4,8 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
-import { useEnumOptions, useEnumCapitalized } from '@/services/enumsApi';
+
+import { useEnumOptions  , useEnumByName} from '@/services/enumsApi';
 
 type AddEditServiceProps = {
   open: boolean;
@@ -26,9 +27,8 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
   actionLoading,
 }) => {
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
-  const currencyOptions = useEnumCapitalized('Currency');
-  console.log('currencyOptions', currencyOptions);
-  console.log('serviceCategoryOptions', serviceCategoryOptions);
+  const currencyOptions = useEnumByName('Currency');
+
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
@@ -112,6 +112,9 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
       actionButtonFunction={handleSave}
       steps={[{ title: 'Service Info', icon: <FaStar /> }]}
       size={width > 600 ? '36vw' : '70vw'}
+      // If MyModal supports it, pass loading:
+      // actionButtonLoading={actionLoading}
+      // disableCloseOnActionLoading={actionLoading}
     />
   );
 };

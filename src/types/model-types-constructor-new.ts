@@ -126,8 +126,6 @@ export const newServiceItem: modelTypes.ServiceItem = {
   lastModifiedDate: null,
   isActive: true,
 };
-
-
 export const newLanguage: modelTypes.Language = {
   id: undefined,
   langKey: undefined,

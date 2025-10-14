@@ -40,6 +40,8 @@ import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
+import { serviceService } from './services/setup/serviceService';
+
 
 export const store = configureStore({
   reducer: {
@@ -166,7 +168,9 @@ export const store = configureStore({
       languageService.middleware,
       translationService.middleware,
       PractitionerService.middleware,
-      PractitionerDepartmentService.middleware
+      PractitionerDepartmentService.middleware,
+      serviceService.middleware
+
 
     ])
 });

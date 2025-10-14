@@ -1,29 +1,48 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { ServiceItemCreate, ServiceItemUpdate } from '@/types/model-types-new';
-
-type PagedParams = { page: number; size: number; sort?: string };
-type PagedResult<T> = { data: T[]; totalCount: number };
+import { parseLinkHeader } from '@/utils/paginationHelper';
 type Id = number | string;
 type WithFacility = { facilityId: Id };
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type LinkMap = {
+  next?: string | null;
+  prev?: string | null;
+  first?: string | null;
+  last?: string | null;
+};
+
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+  links?: LinkMap;
+};
+
+// Helper to unify pagination mapping from headers
+const mapPaged = (response: any[], meta): PagedResult<any> => {
+  const headers = meta?.response?.headers;
+  return {
+    data: response,
+    totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+    links: parseLinkHeader(headers?.get('Link')),
+  };
+};
 
 export const serviceService = createApi({
   reducerPath: 'newServiceApi',
   baseQuery: BaseQuery,
   tagTypes: ['Service', 'ServiceItems', 'ServiceItemsByService', 'ServiceItemsSources'],
   endpoints: (builder) => ({
+
+    // ===== SERVICES (Paginated) =====
     getServices: builder.query<PagedResult<any>, WithFacility & PagedParams>({
       query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/service',
         params: { facilityId, page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: mapPaged,
       providesTags: ['Service'],
     }),
-
 
     getServicesByCategory: builder.query<
       PagedResult<any>,
@@ -33,10 +52,7 @@ export const serviceService = createApi({
         url: `/api/setup/service/by-category/${encodeURIComponent(category)}`,
         params: { facilityId, page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: mapPaged,
       providesTags: ['Service'],
     }),
 
@@ -48,10 +64,7 @@ export const serviceService = createApi({
         url: `/api/setup/service/by-code/${encodeURIComponent(code)}`,
         params: { facilityId, page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: mapPaged,
       providesTags: ['Service'],
     }),
 
@@ -63,30 +76,27 @@ export const serviceService = createApi({
         url: `/api/setup/service/by-name/${encodeURIComponent(name)}`,
         params: { facilityId, page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: mapPaged,
       providesTags: ['Service'],
     }),
 
+    // ===== SERVICES (Mutations - unchanged) =====
     addService: builder.mutation<any, WithFacility & any>({
       query: ({ facilityId, ...body }) => ({
         url: '/api/setup/service',
         method: 'POST',
         params: { facilityId },
-        body: { ...body, facilityId }, 
+        body: { ...body, facilityId },
       }),
       invalidatesTags: ['Service'],
     }),
-
 
     updateService: builder.mutation<any, WithFacility & { id: Id } & any>({
       query: ({ facilityId, id, ...body }) => ({
         url: `/api/setup/service/${id}`,
         method: 'PUT',
-        params: { facilityId },           
-        body: { id, ...body, facilityId }, 
+        params: { facilityId },
+        body: { id, ...body, facilityId },
       }),
       invalidatesTags: ['Service'],
     }),
@@ -99,21 +109,20 @@ export const serviceService = createApi({
       }),
       invalidatesTags: ['Service'],
     }),
+
+    // ===== SERVICE ITEMS (Paginated) =====
     getServiceItems: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/service-items',
         params: { page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: mapPaged,
       providesTags: (result) =>
         result?.data
           ? [
-            ...result.data.map((i: any) => ({ type: 'ServiceItems' as const, id: i.id })),
-            { type: 'ServiceItems', id: 'LIST' },
-          ]
+              ...result.data.map((i: any) => ({ type: 'ServiceItems' as const, id: i.id })),
+              { type: 'ServiceItems', id: 'LIST' },
+            ]
           : [{ type: 'ServiceItems', id: 'LIST' }],
     }),
 
@@ -122,19 +131,17 @@ export const serviceService = createApi({
         url: `/api/setup/service-items/by-service/${serviceId}`,
         params: { page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: mapPaged,
       providesTags: (result, _err, args) =>
         result?.data
           ? [
-            ...result.data.map((i: any) => ({ type: 'ServiceItemsByService' as const, id: i.id })),
-            { type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` },
-          ]
+              ...result.data.map((i: any) => ({ type: 'ServiceItemsByService' as const, id: i.id })),
+              { type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` },
+            ]
           : [{ type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` }],
     }),
 
+    // ===== SERVICE ITEMS (Non-paginated) =====
     getServiceItemById: builder.query<any, Id>({
       query: (id) => `/api/setup/service-items/${id}`,
       providesTags: (_res, _err, id) => [{ type: 'ServiceItems', id }],
@@ -144,7 +151,7 @@ export const serviceService = createApi({
       query: (body) => ({
         url: '/api/setup/service-items',
         method: 'POST',
-        body, 
+        body,
       }),
       invalidatesTags: (_res, _err, body) => [
         { type: 'ServiceItems', id: 'LIST' },

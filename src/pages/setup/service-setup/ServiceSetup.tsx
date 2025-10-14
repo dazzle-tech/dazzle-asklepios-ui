@@ -28,28 +28,34 @@ import {
 import { newService } from '@/types/model-types-constructor-new';
 import { Service } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 const ServiceSetup: React.FC = () => {
   const dispatch = useAppDispatch();
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
   const facilityId: number | undefined = selectedFacility?.id;
+
   const [service, setService] = useState<Service>({ ...newService, facilityId });
   const [popupOpen, setPopupOpen] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [openConfirmDeleteService, setOpenConfirmDeleteService] = useState(false);
   const [stateOfDeleteService, setStateOfDeleteService] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({ filter: '', value: '' });
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [addService, addServiceMutation] = useAddServiceMutation();
-  const [updateService, updateServiceMutation] = useUpdateServiceMutation();
+  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined); // 👈 روابط صفحات نتيجة الفلترة (من Link header)
+
+  const [addService] = useAddServiceMutation();
+  const [updateService] = useUpdateServiceMutation();
   const [toggleServiceIsActive] = useToggleServiceIsActiveMutation();
   const [fetchByCategory] = useLazyGetServicesByCategoryQuery();
   const [fetchByCode] = useLazyGetServicesByCodeQuery();
   const [fetchByName] = useLazyGetServicesByNameQuery();
+
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -59,6 +65,7 @@ const ServiceSetup: React.FC = () => {
 
   // get enum options for ServiceCategory
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
+
   // fetch services
   const { data: servicesPage, isFetching, refetch } = useGetServicesQuery(
     {
@@ -69,11 +76,16 @@ const ServiceSetup: React.FC = () => {
     },
     { skip: !facilityId }
   );
+
   // total count
   const totalCount = useMemo(
     () => (isFiltered ? filteredTotal : servicesPage?.totalCount ?? 0),
     [isFiltered, filteredTotal, servicesPage?.totalCount]
   );
+
+  // links 
+  const links = (isFiltered ? filteredLinks : servicesPage?.links) || {};
+
   // table data
   const tableData = useMemo(
     () => (isFiltered ? filteredData : servicesPage?.data ?? []),
@@ -86,68 +98,102 @@ const ServiceSetup: React.FC = () => {
     { label: 'Name', value: 'name' },
     { label: 'Code', value: 'code' },
   ];
+
   // new service
   const handleNew = () => {
     setService({ ...newService, facilityId });
     setPopupOpen(true);
   };
-  // save service
-const handleSave = async () => {
-  setPopupOpen(false);
-  const isUpdate = !!service.id;
 
-  const payload: any = {
-    ...service,
-    facilityId,
-    price: typeof (service as any).price === 'string'
-      ? Number((service as any).price)
-      : (service as any).price,
+  // save service
+  const handleSave = async () => {
+    setPopupOpen(false);
+    const isUpdate = !!service.id;
+
+    const payload: any = {
+      ...service,
+      facilityId,
+      price:
+        typeof (service as any).price === 'string'
+          ? Number((service as any).price)
+          : (service as any).price,
+    };
+
+    try {
+      if (isUpdate) {
+        await updateService({ facilityId, ...payload, id: service.id! }).unwrap();
+        dispatch(notify({ msg: 'Service updated successfully', sev: 'success' }));
+      } else {
+        await addService({ facilityId, ...payload }).unwrap();
+        dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
+      }
+    } catch (err: any) {
+
+      const data = err?.data ?? {};
+      const traceId = data?.traceId || data?.requestId || data?.correlationId;
+      const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+      const isValidation =
+        data?.message === 'error.validation' ||
+        data?.title === 'Method argument not valid' ||
+        (typeof data?.type === 'string' && data.type.includes('constraint-violation'));
+
+      if (isValidation && Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+        const fieldLabels: Record<string, string> = {
+          name: 'Name',
+          code: 'Code',
+          category: 'Category',
+          price: 'Price',
+          currency: 'Currency',
+          abbreviation: 'Abbreviation',
+          isActive: 'Active',
+          facilityId: 'Facility',
+        };
+
+        const normalizeMsg = (msg: string) => {
+          const m = (msg || '').toLowerCase();
+          if (m.includes('must not be null')) return 'is required';
+          if (m.includes('must not be blank')) return 'must not be blank';
+          if (m.includes('size must be between')) return 'length is out of range';
+          if (m.includes('must be greater than') || m.includes('must be greater than or equal to'))
+            return 'value is too small';
+          if (m.includes('must be less than') || m.includes('must be less than or equal to'))
+            return 'value is too large';
+          return msg || 'invalid value';
+        };
+
+        const lines = data.fieldErrors.map((fe: any) => {
+          const label = fieldLabels[fe.field] ?? fe.field;
+          return `• ${label}: ${normalizeMsg(fe.message)}`;
+        });
+
+        const humanMsg = `Please fix the following fields:\n${lines.join('\n')}`;
+        dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+        return;
+      }
+
+      const messageProp: string = data?.message || '';
+      const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : undefined;
+
+      const keyMap: Record<string, string> = {
+        facilityrequired: 'Facility id is required.',
+        'payload.required': 'Service payload is required.',
+        'unique.facility.name': 'Service name already exists in this facility.',
+        'fk.facility.notfound': 'Facility not found.',
+        'db.constraint': 'Database constraint violation.',
+      };
+
+      const humanMsg =
+        (errorKey && keyMap[errorKey]) ||
+        data?.detail ||
+        data?.title ||
+        'Unexpected error';
+
+      dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+    }
+
   };
 
-  try {
-    if (isUpdate) {
-      await updateService({ facilityId, ...payload, id: service.id! }).unwrap();
-      dispatch(notify({ msg: 'Service updated successfully', sev: 'success' }));
-    } else {
-      await addService({ facilityId, ...payload }).unwrap();
-      dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
-    }
-  } catch (err: any) {
-    const status = err?.status;
-    const backendMsg =
-      err?.data?.message || err?.data?.detail || err?.data?.title || '';
-
-    if (status === 409) {
-      dispatch(
-        notify({
-          msg: 'A service with the same name already exists in this facility.',
-          sev: 'warning',
-        })
-      );
-    } else if (status === 400) {
-      dispatch(
-        notify({
-          msg: backendMsg || 'Bad request. Please check the entered data.',
-          sev: 'error',
-        })
-      );
-    } else if (status === 404) {
-      dispatch(
-        notify({
-          msg: backendMsg || 'Service or Facility not found.',
-          sev: 'error',
-        })
-      );
-    } else {
-      dispatch(
-        notify({
-          msg: backendMsg || 'Unexpected error. Please try again.',
-          sev: 'error',
-        })
-      );
-    }
-  }
-};
 
   // deactivate service
   const handleDeactivate = () => {
@@ -177,19 +223,23 @@ const handleSave = async () => {
         dispatch(notify({ msg: 'Failed to reactivate service', sev: 'error' }));
       });
   };
-  // filter change
+
+  // filter change 
   const handleFilterChange = async (fieldName: string, value: any) => {
     if (!facilityId) return;
     if (!value) {
       setIsFiltered(false);
       setFilteredData([]);
       setFilteredTotal(0);
-      setPaginationParams(prev => ({ ...prev, page: 0 }));
+      setFilteredLinks(undefined);
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       refetch();
       return;
     }
     try {
-      let resp: { data: any[]; totalCount: number } | undefined;
+      let resp:
+        | { data: any[]; totalCount: number; links?: any }
+        | undefined;
 
       if (fieldName === 'category') {
         resp = await fetchByCategory({
@@ -219,30 +269,53 @@ const handleSave = async () => {
 
       setFilteredData(resp?.data ?? []);
       setFilteredTotal(resp?.totalCount ?? 0);
+      setFilteredLinks(resp?.links || {});
       setIsFiltered(true);
-      setPaginationParams(prev => ({ ...prev, page: 0 }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
     } catch {
       setIsFiltered(false);
       setFilteredData([]);
       setFilteredTotal(0);
-      setPaginationParams(prev => ({ ...prev, page: 0 }));
+      setFilteredLinks(undefined);
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       refetch();
     }
   };
-  // page change
+
+  // ───────── PAGINATION─────────
   const handlePageChange = (_: unknown, newPage: number) => {
-    setPaginationParams(prev => ({ ...prev, page: newPage }));
+    const currentPage = paginationParams.page;
+    let targetLink: string | null | undefined = null;
+
+    if (newPage > currentPage && links.next) targetLink = links.next;
+    else if (newPage < currentPage && links.prev) targetLink = links.prev;
+    else if (newPage === 0 && links.first) targetLink = links.first;
+    else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
+
+    if (targetLink) {
+      const { page, size } = extractPaginationFromLink(targetLink);
+      setPaginationParams(prev => ({
+        ...prev,
+        page,
+        size,
+        timestamp: Date.now(),
+      }));
+
+    }
   };
-  // rows per page change
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPaginationParams(prev => ({
       ...prev,
       size: parseInt(event.target.value, 10),
       page: 0,
+      timestamp: Date.now(),
     }));
   };
+
   // row selection
   const isSelected = (rowData: any) => (rowData?.id === service?.id ? 'selected-row' : '');
+
   // icons for actions column
   const iconsForActions = (rowData: Service) => (
     <div className="container-of-icons">
@@ -293,6 +366,7 @@ const handleSave = async () => {
       )}
     </div>
   );
+
   // table columns
   const tableColumns = [
     { key: 'name', title: <Translate>Service Name</Translate>, flexGrow: 4 },
@@ -383,17 +457,18 @@ const handleSave = async () => {
     </Form>
   );
 
-
   // Effects
   useEffect(() => {
     if (!recordOfFilter.value) {
       setIsFiltered(false);
       setFilteredData([]);
       setFilteredTotal(0);
-      setPaginationParams(prev => ({ ...prev, page: 0 }));
+      setFilteredLinks(undefined);
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       if (facilityId) refetch();
     }
   }, [recordOfFilter.value, facilityId]);
+
   useEffect(() => {
     const divContent = (
       <div className="page-title">
@@ -407,15 +482,20 @@ const handleSave = async () => {
       dispatch(setDivContent(''));
     };
   }, [dispatch]);
+
   useEffect(() => {
-    if (addServiceMutation.data || updateServiceMutation.data) {
+    if (addService || updateService) {
       refetch();
       setIsFiltered(false);
       setFilteredData([]);
       setFilteredTotal(0);
+      setFilteredLinks(undefined);
+      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
     }
-  }, [addServiceMutation.data, updateServiceMutation.data]);
-console.log("tableData==>",tableData);
+  }, [addService, updateService]);
+
+  console.log('tableData==>', tableData);
+
   return (
     <Panel>
       <div className="container-of-add-new-button">

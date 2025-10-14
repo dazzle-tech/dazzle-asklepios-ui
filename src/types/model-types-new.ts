@@ -152,8 +152,6 @@ export interface ServiceItemUpdate {
   lastModifiedDate?: Date | null;
 }
 
-
-
 export interface Language {
   id: number;
   langKey: string;
@@ -198,3 +196,17 @@ export interface Practitioner {
   lastModifiedBy?: string | null
 }
 
+export interface Service {
+  id?: number;
+  name: string;
+  abbreviation?: string | null;
+  code: string;
+  category?: string | null;
+  price?: number | null;
+  currency:  string | null;
+  isActive: boolean;
+  createdBy: string;
+  createdDate?: string | null; 
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
