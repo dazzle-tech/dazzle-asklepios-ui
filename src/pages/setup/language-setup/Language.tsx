@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faInfo, faSearch } from '@fortawesome/free-solid-svg-icons';
-import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
-import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import { Form, Checkbox, Input, InputGroup } from 'rsuite';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
-import './styles.less';
 import Translate from '@/components/Translate';
+import { faEdit, faInfo, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState } from 'react';
+import { Form, Radio, RadioGroup } from 'rsuite';
+import './styles.less';
 
 const LanguagesSetup = () => {
   // States for Languages Table
@@ -98,7 +98,7 @@ const LanguagesSetup = () => {
       <MyButton
         prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
         onClick={handleAddValue}
-        disabled={!selectedLanguage}
+        // disabled={!selectedLanguage}
       >
         New
       </MyButton>
@@ -203,6 +203,8 @@ const LanguagesSetup = () => {
         open={languageModalOpen}
         setOpen={setLanguageModalOpen}
         title={languageModalMode === 'add' ? 'Add New Language' : 'Edit Language'}
+        size="22vw"
+        bodyheight="38vh"
         content={
           <Form fluid>
             <MyInput
@@ -248,6 +250,8 @@ const LanguagesSetup = () => {
         open={valueModalOpen}
         setOpen={setValueModalOpen}
         title="Add New Translation Value"
+        size="24vw"
+        bodyheight="52vh"
         content={
           <Form fluid>
             <MyInput
@@ -256,8 +260,7 @@ const LanguagesSetup = () => {
               fieldType="text"
               record={valueForm}
               setRecord={setValueForm}
-              required
-              width={400}
+              width={'100%'}
             />
             <MyInput
               fieldLabel="Value"
@@ -265,40 +268,31 @@ const LanguagesSetup = () => {
               fieldType="textarea"
               record={valueForm}
               setRecord={setValueForm}
-              required
-              width={400}
-              rows={3}
+              width={'100%'}
             />
-            <MyInput
-              fieldLabel="Verify"
-              fieldName="verify"
-              fieldType="select"
-              selectData={[
-                { key: 'Y', lovDisplayVale: 'Yes' },
-                { key: 'N', lovDisplayVale: 'No' }
-              ]}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={valueForm}
-              setRecord={setValueForm}
-              width={200}
-              searchable={false}
-            />
-            <MyInput
-              fieldLabel="Translate"
-              fieldName="translate"
-              fieldType="select"
-              selectData={[
-                { key: 'Y', lovDisplayVale: 'Yes' },
-                { key: 'N', lovDisplayVale: 'No' }
-              ]}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={valueForm}
-              setRecord={setValueForm}
-              width={200}
-              searchable={false}
-            />
+            <Form.Group>
+              <Form.ControlLabel>Verify</Form.ControlLabel>
+              <RadioGroup
+                inline
+                value={valueForm.verify}
+                onChange={val => setValueForm(prev => ({ ...prev, verify: val }))}
+              >
+                <Radio value="Y">Yes</Radio>
+                <Radio value="N">No</Radio>
+              </RadioGroup>
+            </Form.Group>
+
+            <Form.Group>
+              <Form.ControlLabel>Translate</Form.ControlLabel>
+              <RadioGroup
+                inline
+                value={valueForm.translate}
+                onChange={val => setValueForm(prev => ({ ...prev, translate: val }))}
+              >
+                <Radio value="Y">Yes</Radio>
+                <Radio value="N">No</Radio>
+              </RadioGroup>
+            </Form.Group>
           </Form>
         }
       />

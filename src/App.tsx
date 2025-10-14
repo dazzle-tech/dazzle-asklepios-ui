@@ -172,16 +172,14 @@ import { useLoadNavigationMapQuery } from './services/uiService';
 import { setScreenKey } from './utils/uiReducerActions';
 import NewDepartments from './pages/setup/departments-setup/Departments-new';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
-import { MODULES } from "@/config/modules-config";
+import { MODULES } from '@/config/modules-config';
 import RoleManegment from './pages/setup/role-managemen';
 import { useGetMenuQuery } from './services/security/UserRoleService';
 import CallOverlay from './components/Overlay/CallOverlay';
-
-
-
+import LanguagesSetup from './pages/setup/language-setup/Language';
 
 const App = () => {
-const authSlice = useAppSelector(state => state.auth);
+  const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
   const dispatch = useAppDispatch();
@@ -247,7 +245,11 @@ const authSlice = useAppSelector(state => state.auth);
 
     if (modSet && (modSet.has(nScreenName) || modSet.has(nScreenCode) || modSet.has(nNavPath)))
       return true;
-    if (globalAllowed.has(nScreenName) || globalAllowed.has(nScreenCode) || globalAllowed.has(nNavPath))
+    if (
+      globalAllowed.has(nScreenName) ||
+      globalAllowed.has(nScreenCode) ||
+      globalAllowed.has(nNavPath)
+    )
       return true;
     return false;
   };
@@ -275,7 +277,9 @@ const authSlice = useAppSelector(state => state.auth);
       if (!module.screens?.length) return;
 
       const childrenNavs: any[] = [];
-      const sortedScreens = [...module.screens].sort((a, b) => (a.viewOrder ?? 0) - (b.viewOrder ?? 0));
+      const sortedScreens = [...module.screens].sort(
+        (a, b) => (a.viewOrder ?? 0) - (b.viewOrder ?? 0)
+      );
 
       sortedScreens.forEach((screen, sIdx) => {
         if (isScreenAllowed(screen, module.name, lookups)) {
@@ -305,9 +309,7 @@ const authSlice = useAppSelector(state => state.auth);
     });
 
     setNavigationMap(navsTemp);
-  };
-
-
+  };
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
@@ -531,7 +533,7 @@ const authSlice = useAppSelector(state => state.auth);
               <Route path="department-stock" element={<DepartmentStock />} />
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
-
+              <Route path="language-setup" element={<LanguagesSetup />} />
               <Route path="service-and-products" element={<ServiceAndProducts />} />
             </Route>
           </Route>
