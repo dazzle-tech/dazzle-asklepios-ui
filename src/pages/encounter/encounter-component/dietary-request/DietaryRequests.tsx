@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useRef,useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faClone, faPrint, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -139,11 +139,21 @@ const DietaryRequests = () => {
     setModalOpen(true);
   };
 
-  const handleRowClick = rowData => {
-    console.log('Viewing request:', rowData);
+const handleRowClick = rowData => {
+  if (selectedRequest?.id === rowData.id) {
+    setSelectedRequest(null);
+    setForm({});
+  } else {
     setSelectedRequest(rowData);
     setForm({ ...rowData });
-  };
+  }
+};
+
+
+const getRowClassName = rowData => {
+  return selectedRequest?.id === rowData.id ? 'selected-row' : '';
+};
+
 
   // forms
   const renderBasicFields = () => (
@@ -614,11 +624,33 @@ const DietaryRequests = () => {
     </div>
   );
 
+
+const tableRef = useRef<HTMLDivElement>(null);
+const previewRef = useRef<HTMLDivElement>(null);
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      tableRef.current &&
+      !tableRef.current.contains(event.target as Node) &&
+      previewRef.current &&
+      !previewRef.current.contains(event.target as Node)
+    ) {
+      setSelectedRequest(null);
+      setForm(initialForm);
+    }
+  };
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, []);
+
   return (
     <>
+    <div ref={tableRef}>
       <MyTable
         data={requests}
         onRowClick={handleRowClick}
+        rowClassName={getRowClassName}
         columns={[
           {
             key: 'dietOrderType',
@@ -747,8 +779,10 @@ const DietaryRequests = () => {
         loading={false}
         tableButtons={tablebuttons}
       />
+    </div>
 
       {selectedRequest && (
+        <div ref={previewRef} className="my-order-details-margin">
         <Form fluid>
           <div className="margin-all-10">
             <div className="grid-sections-2">
@@ -916,6 +950,7 @@ const DietaryRequests = () => {
             </div>
           </div>
         </Form>
+        </div>
       )}
 
       <MyModal

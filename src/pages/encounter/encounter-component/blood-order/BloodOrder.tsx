@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { Form, Panel, Text, Col, Row } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import {
@@ -230,6 +230,30 @@ const BloodOrder = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const tableRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tableRef.current &&
+        previewRef.current &&
+        !tableRef.current.contains(event.target as Node) &&
+        !previewRef.current.contains(event.target as Node)
+      ) {
+        setExpandedRow(null);
+        setBloodOrder({});
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
   return (
     <Panel>
       <Form fluid layout="inline">
@@ -254,29 +278,37 @@ const BloodOrder = () => {
       </Form>
 
       {/* Table */}
+      <div ref={tableRef}>
       <MyTable
-        data={data}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        expandedRowKeys={[expandedRow || '']}
-        onRowClick={(rowData: any) => {
-          setBloodOrder(rowData);
-          setRecord({
-            ...rowData,
-            submittedByAt: rowData.submittedBy
-              ? `${rowData.submittedBy} (${rowData.submittedAt})`
-              : '',
-            cancelledByAt: rowData.cancelledBy
-              ? `${rowData.cancelledBy} (${rowData.cancelledAt})`
-              : '',
-            cancellationReason: rowData.cancellationReason || ''
-          });
-          setExpandedRow(rowData.key);
-        }}
-      />
+  data={data}
+  columns={tableColumns}
+  rowClassName={isSelected}
+  expandedRowKeys={[expandedRow || '']}
+  onRowClick={(rowData: any) => {
+    if (expandedRow === rowData.key) {
+      setExpandedRow(null);
+      setBloodOrder({});
+      setRecord({});
+    } else {
+      setExpandedRow(rowData.key);
+      setBloodOrder(rowData);
+      setRecord({
+        ...rowData,
+        submittedByAt: rowData.submittedBy
+          ? `${rowData.submittedBy} (${rowData.submittedAt})`
+          : '',
+        cancelledByAt: rowData.cancelledBy
+          ? `${rowData.cancelledBy} (${rowData.cancelledAt})`
+          : '',
+        cancellationReason: rowData.cancellationReason || ''
+      });
+    }
+  }}
+/></div>
 
-      {/* Order Details Section - Now showing modal content instead of simple inputs */}
+
       {bloodOrder?.key && (
+      <div ref={previewRef} className="my-order-details-margin">
         <div className="my-order-details-margin">
           <SectionContainer
             title={
@@ -288,6 +320,7 @@ const BloodOrder = () => {
             content={renderOrderDetailsContent()}
           />
         </div>
+      </div>
       )}
 
       {/* Modals */}

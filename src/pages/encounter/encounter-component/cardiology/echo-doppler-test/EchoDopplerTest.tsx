@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useRef,useEffect } from 'react';
 import MyTable from '@/components/MyTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -198,6 +198,25 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
     setRecord(rowData.record);
   };
 
+  
+  const tableRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        previewRef.current &&
+        !previewRef.current.contains(event.target as Node)
+      ) {
+        setSelectedRow(null);
+        setEchoTest({ indication: '', indicationOther: '' });
+        setRecord({});
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const [echoData, setEchoData] = useState([
     {
       key: 1,
@@ -364,37 +383,21 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
-      {selectedRow && (
-        <div style={{ margin: '10px' }}>
-          <Form fluid disabled={true}>
-            <div className="sections-handle-position">
-              <TestInformation
-                echoTest={echoTest}
-                setEchoTest={setEchoTest}
-                physicians={physicians}
-                usersList={usersList}
-              />
-
-              <TechnicalQuality record={record} setRecord={setRecord} />
-
-              <Measurements record={record} setRecord={setRecord} />
-
-              <DopplerValves record={record} setRecord={setRecord} />
-
-              <ColorDopplerFindings record={record} setRecord={setRecord} />
-
-              <OtherFindings record={record} setRecord={setRecord} rwmaOptions={rwmaOptions} />
-
-              <Conclusion
-                record={record}
-                setRecord={setRecord}
-                usersList={usersList}
-                currentUserId={authSlice?.user?.id}
-              />
-            </div>
-          </Form>
-        </div>
-      )}
+        {selectedRow && (
+                <div ref={previewRef} style={{ margin: '10px' }}>
+                  <Form fluid disabled={true}>
+                    <div className="sections-handle-position">
+                      <TestInformation echoTest={echoTest} setEchoTest={setEchoTest} physicians={physicians} usersList={usersList} />
+                      <TechnicalQuality record={record} setRecord={setRecord} />
+                      <Measurements record={record} setRecord={setRecord} />
+                      <DopplerValves record={record} setRecord={setRecord} />
+                      <ColorDopplerFindings record={record} setRecord={setRecord} />
+                      <OtherFindings record={record} setRecord={setRecord} rwmaOptions={rwmaOptions} />
+                      <Conclusion record={record} setRecord={setRecord} usersList={usersList} currentUserId={authSlice?.user?.id} />
+                    </div>
+                  </Form>
+                </div>
+              )}
 
       <EchoDopplerTestModal
         open={openModal}
@@ -407,7 +410,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         }}
         edit={false}
       />
-    </>
+</>
   );
 };
 

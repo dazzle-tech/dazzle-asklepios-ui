@@ -1,5 +1,5 @@
 import MyButton from '@/components/MyButton/MyButton';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './styles.less';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
@@ -8,16 +8,17 @@ import AddEditReferralRequest from './AddEditReferralRequest';
 import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CancellationModal from '@/components/CancellationModal';
+import ReferralRequestPreview from './ReferralRequestPreview';
 
 const ReferralRequest = () => {
-  const [referral, setReferral] = useState({ referralType: '' });
+  const [referral, setReferral] = useState<any>({ referralType: '' });
   const [openAddEditReferralPopup, setOpenAddEditReferralPopup] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [cancelObject, setCancelObject] = useState<any>({});
   const [openCancelModal, setOpenCancelModal] = useState(false);
-
+  const [openPreview, setOpenPreview] = useState(false);
   // Class name of selected row
-  const isSelected = rowData => {
+  const isSelected = (rowData: any) => {
     if (rowData && referral && rowData.key === referral.key) {
       return 'selected-row';
     } else return '';
@@ -131,6 +132,9 @@ const ReferralRequest = () => {
     setReferral({ referralType: '' });
   };
 
+
+
+  // ✅ Handle resize
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
@@ -162,18 +166,56 @@ const ReferralRequest = () => {
     </div>
   );
 
+  const tableRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tableRef.current &&
+        previewRef.current &&
+        !tableRef.current.contains(event.target as Node) &&
+        !previewRef.current.contains(event.target as Node)
+      ) {
+        setOpenPreview(false);
+        setReferral({ referralType: '' });
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div>
+    <div style={{ position: 'relative' }} ref={tableRef}>
       <MyTable
         height={450}
         data={data}
         tableButtons={tablebuttons}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={rowData => {
-          setReferral(rowData);
+        onRowClick={(rowData: any) => {
+          if (referral?.key === rowData.key && openPreview) {
+            setOpenPreview(false);
+            setReferral({ referralType: '' });
+          } else {
+            setReferral(rowData);
+            setOpenPreview(true);
+          }
         }}
       />
+
+      {openPreview && (
+                <div ref={previewRef}>
+          <ReferralRequestPreview referral={referral} onClose={() => setOpenPreview(false)} />
+        </div>
+      )}
+
       <AddEditReferralRequest
         open={openAddEditReferralPopup}
         setOpen={setOpenAddEditReferralPopup}
@@ -198,4 +240,5 @@ const ReferralRequest = () => {
     </div>
   );
 };
+
 export default ReferralRequest;
