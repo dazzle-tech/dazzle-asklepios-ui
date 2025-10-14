@@ -20,7 +20,7 @@ import CheckIcon from '@rsuite/icons/Check';
 import DrugOrderPreview from './DrugOrderPreview';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
 import { Checkbox, Divider, Form, SelectPicker } from 'rsuite';
 import DetailsModal from './DetailsModal';
@@ -37,6 +37,35 @@ import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNur
 import UrgencyButton from './UrgencyButton';
 const DrugOrder = props => {
   const location = useLocation();
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Was the click on an input/edit item?
+  const isFormField = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest(
+        `
+      input, textarea, select, button, [contenteditable="true"],
+      .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-picker-toggle,
+      .rs-calendar, .rs-dropdown, .rs-auto-complete, .rs-input-group
+    `
+      ) !== null
+    );
+  };
+
+  // Ignore clicks inside modules/popups (RSuite or your components)
+  const isInsideModalOrPopup = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest(
+        `
+      .rs-modal, .rs-drawer, .rs-picker-select-menu, .rs-picker-popup,
+      .my-modal, .my-popup
+    `
+      ) !== null
+    );
+  };
+
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
     'MED_ORDER_ADMIN_NSTRUCTIONS'
   );
@@ -122,7 +151,6 @@ const DrugOrder = props => {
     ]
   });
 
-
   const [filteredList, setFilteredList] = useState([]);
 
   const { data: orderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MEDCATION_ORDER_TYPE');
@@ -140,8 +168,6 @@ const DrugOrder = props => {
   const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
   // Fetch units OF TIME Lov response
   const { data: unitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-
-
 
   const [orderMedication, setOrderMedication] = useState<any>({
     ...newApDrugOrderMedications,
@@ -224,6 +250,40 @@ const DrugOrder = props => {
       setIsDraft(foundOrder?.saveDraft);
     }
   }, [orders, drugKey]);
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node | null;
+
+      // If click inside table container => do nothing
+      if (tableContainerRef.current?.contains(target as Node)) return;
+
+      // If on input element or inside modal/popup => ignore
+      if (isFormField(e.target) || isInsideModalOrPopup(e.target)) return;
+
+      // Hide the preview and clean up the selections
+      setShowPreview(false);
+      setSelectedRows([]);
+      handleCleare();// reset the selected row
+    };
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowPreview(false);
+        setSelectedRows([]);
+        // handleCleare();
+      }
+    };
+
+    document.addEventListener('mousedown', handleGlobalClick);
+    document.addEventListener('touchstart', handleGlobalClick);
+    document.addEventListener('keydown', handleEsc);
+
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClick);
+      document.removeEventListener('touchstart', handleGlobalClick);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, []);
 
   //functions
   const saveDraft = async () => {
@@ -343,22 +403,20 @@ const DrugOrder = props => {
       });
   };
 
-const handleCheckboxChangeRow = rowData => {
-  setSelectedRows(prev => {
-    let newSelected;
-    if (prev.includes(rowData)) {
-      newSelected = prev.filter(item => item !== rowData);
-      setShowPreview(false);
-    } else {
-      newSelected = [...prev, rowData];
-      setOrderMedication(rowData);
-      setShowPreview(true);
-    }
-    return newSelected;
-  });
-};
-
-
+  const handleCheckboxChangeRow = rowData => {
+    setSelectedRows(prev => {
+      let newSelected;
+      if (prev.includes(rowData)) {
+        newSelected = prev.filter(item => item !== rowData);
+        setShowPreview(false);
+      } else {
+        newSelected = [...prev, rowData];
+        setOrderMedication(rowData);
+        setShowPreview(true);
+      }
+      return newSelected;
+    });
+  };
 
   const handleCleare = () => {
     setOrderMedication({
@@ -718,27 +776,30 @@ const handleCheckboxChangeRow = rowData => {
             </Checkbox>
           </div>
         </div>
-        <MyTable
-          columns={tableColumns}
-          data={orderMedications?.object || []}
-          loading={fetchingOrderMed}
-          onRowClick={rowData => {
-            setOrderMedication(rowData);
-            setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
-            setOpenToAdd(false);
-            setSelectedGeneric(
-              genericMedicationListResponse?.object?.find(
-                item => item.key === rowData.genericMedicationsKey
-              )
-            );
-          }}
-          rowClassName={isSelected}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        ></MyTable>
+        <div ref={tableContainerRef}>
+          <MyTable
+            columns={tableColumns}
+            data={orderMedications?.object || []}
+            loading={fetchingOrderMed}
+            onRowClick={rowData => {
+              setOrderMedication(rowData);
+              setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
+              setOpenToAdd(false);
+              setSelectedGeneric(
+                genericMedicationListResponse?.object?.find(
+                  item => item.key === rowData.genericMedicationsKey
+                )
+              );
+              setShowPreview(true);
+            }}
+            rowClassName={isSelected}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+          />
+        </div>
 
         <CancellationModal
           open={openCancellationReasonModel}
@@ -751,44 +812,38 @@ const handleCheckboxChangeRow = rowData => {
           title={'Cancellation'}
         />
 
-<DetailsModal
-  edit={edit}
-  open={openDetailsModel}
-  setOpen={setOpenDetailsModel}
-  orderMedication={orderMedication}
-  setOrderMedication={setOrderMedication}
-  drugKey={drugKey}
-  editing={editing}
-  patient={patient}
-  encounter={encounter}
-  medicRefetch={medicRefetch}
-  openToAdd={openToAdd}
-  isFavorite={isFavorite}
-/>
+        <DetailsModal
+          edit={edit}
+          open={openDetailsModel}
+          setOpen={setOpenDetailsModel}
+          orderMedication={orderMedication}
+          setOrderMedication={setOrderMedication}
+          drugKey={drugKey}
+          editing={editing}
+          patient={patient}
+          encounter={encounter}
+          medicRefetch={medicRefetch}
+          openToAdd={openToAdd}
+          isFavorite={isFavorite}
+        />
 
-{showPreview && orderMedication && orderTypeLovQueryResponse && (
-  <DrugOrderPreview
-    orderMedication={orderMedication}
-    fluidOrder={fluidOrder}
-    genericMedicationListResponse={genericMedicationListResponse}
-    orderTypeLovQueryResponse={orderTypeLovQueryResponse}
-    unitLovQueryResponse={unitLovQueryResponse}
-    unitsLovQueryResponse={unitsLovQueryResponse}
-    DurationTypeLovQueryResponse={DurationTypeLovQueryResponse}
-    filteredList={filteredList}
-    indicationLovQueryResponse={indicationLovQueryResponse}
-    administrationInstructionsLovQueryResponse={administrationInstructionsLovQueryResponse}
-    routeLovQueryResponse={routeLovQueryResponse}
-    frequencyLovQueryResponse={frequencyLovQueryResponse}
-    infusionDeviceLovQueryResponse={infusionDeviceLovQueryResponse}
-  />
-)}
-
-
-
-
-
-
+        {showPreview && orderMedication && orderTypeLovQueryResponse && (
+          <DrugOrderPreview
+            orderMedication={orderMedication}
+            fluidOrder={fluidOrder}
+            genericMedicationListResponse={genericMedicationListResponse}
+            orderTypeLovQueryResponse={orderTypeLovQueryResponse}
+            unitLovQueryResponse={unitLovQueryResponse}
+            unitsLovQueryResponse={unitsLovQueryResponse}
+            DurationTypeLovQueryResponse={DurationTypeLovQueryResponse}
+            filteredList={filteredList}
+            indicationLovQueryResponse={indicationLovQueryResponse}
+            administrationInstructionsLovQueryResponse={administrationInstructionsLovQueryResponse}
+            routeLovQueryResponse={routeLovQueryResponse}
+            frequencyLovQueryResponse={frequencyLovQueryResponse}
+            infusionDeviceLovQueryResponse={infusionDeviceLovQueryResponse}
+          />
+        )}
 
         <AddEditFluidOrder
           open={openAddEditFluidOrderPopup}
@@ -894,8 +949,7 @@ const handleCheckboxChangeRow = rowData => {
           }
         />
       </div>
-            <AllergyFloatingButton patientKey={patient.key} />
-      
+      <AllergyFloatingButton patientKey={patient.key} />
     </>
   );
 };

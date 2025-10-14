@@ -1,11 +1,10 @@
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { formatDateWithoutSeconds } from '@/utils';
-import PrescriptionPreview from './PrescriptionPreview';
 import {
   useGetCustomeInstructionsQuery,
   useGetPrescriptionMedicationsQuery,
@@ -17,31 +16,32 @@ import {
   useGetGenericMedicationWithActiveIngredientQuery,
   useGetPrescriptionInstructionQuery
 } from '@/services/medicationsSetupService';
-import { FaFilePrescription } from 'react-icons/fa6';
-import { MdModeEdit } from 'react-icons/md';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { ApPrescriptionMedications } from '@/types/model-types';
 import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { formatDateWithoutSeconds } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
-import React, { useEffect, useState } from 'react';
-import { Checkbox, Divider, Form, SelectPicker, Table } from 'rsuite';
-import DetailsModal from './DetailsModal';
-import './styles.less';
-import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import UrgencyButton from '../drug-order/UrgencyButton';
-import MyInput from '@/components/MyInput';
+import React, { useEffect, useRef, useState } from 'react';
+import { FaFilePrescription } from 'react-icons/fa6';
+import { MdModeEdit } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
+import { Checkbox, Divider, Form } from 'rsuite';
 import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNurse/AllergyFloatingButton';
+import UrgencyButton from '../drug-order/UrgencyButton';
+import DetailsModal from './DetailsModal';
+import PrescriptionPreview from './PrescriptionPreview';
+import './styles.less';
 
-const { Column, HeaderCell, Cell } = Table;
 const Prescription = props => {
   const location = useLocation();
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
@@ -88,11 +88,18 @@ const Prescription = props => {
     numberOfRefills: null
   });
 
-
   const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null);
   const [favoriteMedications, setFavoriteMedications] = useState([]);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
 
+  const isFormField = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest(
+        'input, textarea, select, button, [contenteditable="true"], .rs-input, .rs-picker, .rs-checkbox, .rs-btn'
+      ) !== null
+    );
+  };
   const addToFavorites = rowData => {
     const alreadyExists = favoriteMedications.some(
       item => item.genericMedicationsKey === rowData.genericMedicationsKey
@@ -183,7 +190,8 @@ const Prescription = props => {
   });
 
   const [isdraft, setIsDraft] = useState(
-    prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])?.saveDraft
+    prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
+      ?.saveDraft
   );
 
   // Effects
@@ -254,6 +262,44 @@ const Prescription = props => {
     }
   }, [showCanceled]);
 
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node | null;
+
+      // If inside table: ignore
+      if (tableContainerRef.current?.contains(target as Node)) return;
+
+      // If on field/button: ignore
+      if (isFormField(e.target)) return;
+
+      // Hide under table + clean row selection
+      setSelectedPreviewMedication(null);
+      setPrescriptionMedications(prev => ({
+        ...prev,
+        key: undefined // if you want to clear everything Or call handleCleare() .
+      }));
+      setSelectedRows([]);
+    };
+
+    document.addEventListener('mousedown', handleGlobalClick);
+    document.addEventListener('touchstart', handleGlobalClick);
+
+    // Support ESC to hide the preview
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedPreviewMedication(null);
+        setSelectedRows([]);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClick);
+      document.removeEventListener('touchstart', handleGlobalClick);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, []);
+
   // Functions
   const handleCheckboxChange = (rowData: any) => {
     setSelectedRows(prev => {
@@ -267,7 +313,6 @@ const Prescription = props => {
       return updatedRows;
     });
   };
-
 
   const handleCancle = async () => {
     try {
@@ -285,12 +330,12 @@ const Prescription = props => {
       dispatch(notify({ msg: 'All Medication Deleted Successfully', sev: 'success' }));
       setOpenCancellation(false);
       medicRefetch()
-        .then(() => { })
-        .catch(error => { });
+        .then(() => {})
+        .catch(error => {});
 
       medicRefetch()
-        .then(() => { })
-        .catch(error => { });
+        .then(() => {})
+        .catch(error => {});
 
       setSelectedRows([]);
     } catch (error) {
@@ -346,7 +391,7 @@ const Prescription = props => {
         dispatch(notify({ msg: 'Saved Draft successfully', sev: 'success' }));
         setIsDraft(true);
       });
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const cancleDraft = async () => {
@@ -358,7 +403,7 @@ const Prescription = props => {
         dispatch(notify({ msg: 'Draft Cancelled', sev: 'success' }));
         setIsDraft(false);
       });
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const handleSavePrescription = async () => {
@@ -528,7 +573,7 @@ const Prescription = props => {
           item => item.genericMedicationsKey === rowData.genericMedicationsKey
         );
         return (
-          <div className='flex-c8'>
+          <div className="flex-c8">
             <MdModeEdit
               title="Edit"
               size={20}
@@ -627,7 +672,7 @@ const Prescription = props => {
             <MyInput
               placeholder="Prescription"
               fieldName="preKey"
-              fieldType='select'
+              fieldType="select"
               record={preKeyRecord}
               setRecord={setPreKeyRecord}
               selectData={filteredPrescriptions ?? []}
@@ -643,8 +688,9 @@ const Prescription = props => {
         <div>
           <div className="prescripton-word-style">Prescription</div>
           <div className="prescripton-number-style">
-            {prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
-              ?.prescriptionId || '_'}
+            {prescriptions?.object?.find(
+              prescription => prescription.key === preKeyRecord['preKey']
+            )?.prescriptionId || '_'}
           </div>
         </div>
         <div
@@ -682,8 +728,9 @@ const Prescription = props => {
             onClick={handleSubmitPres}
             disabled={
               preKeyRecord['preKey']
-                ? prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
-                  ?.statusLkey === '1804482322306061'
+                ? prescriptions?.object?.find(
+                    prescription => prescription.key === preKeyRecord['preKey']
+                  )?.statusLkey === '1804482322306061'
                 : true
             }
             prefixIcon={() => <CheckIcon />}
@@ -697,8 +744,9 @@ const Prescription = props => {
               prefixIcon={() => <DocPassIcon />}
               disabled={
                 preKeyRecord['preKey']
-                  ? prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
-                    ?.statusLkey === '1804482322306061'
+                  ? prescriptions?.object?.find(
+                      prescription => prescription.key === preKeyRecord['preKey']
+                    )?.statusLkey === '1804482322306061'
                   : true
               }
             >
@@ -722,25 +770,27 @@ const Prescription = props => {
         </div>
       </div>
 
-      <MyTable
-        columns={tableColumns}
-        data={prescriptionMedications?.object ?? []}
-        onRowClick={rowData => {
-          setSelectedPreviewMedication(rowData)
-          setPrescriptionMedications(rowData);
-          setOpenToAdd(false);
-          if (rowData.instructionsTypeLkey == '3010606785535008') {
-            setSelectedRowoMedicationKey(rowData.key);
-          }
-        }}
-        loading={isLoadingPrescriptionMedications}
-        rowClassName={isSelected}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
+      <div ref={tableContainerRef}>
+        <MyTable
+          columns={tableColumns}
+          data={prescriptionMedications?.object ?? []}
+          onRowClick={rowData => {
+            setSelectedPreviewMedication(rowData);
+            setPrescriptionMedications(rowData);
+            setOpenToAdd(false);
+            if (rowData.instructionsTypeLkey == '3010606785535008') {
+              setSelectedRowoMedicationKey(rowData.key);
+            }
+          }}
+          loading={isLoadingPrescriptionMedications}
+          rowClassName={isSelected}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+      </div>
 
       {selectedPreviewMedication && (
         <div className="mt-4">
@@ -761,8 +811,6 @@ const Prescription = props => {
           />
         </div>
       )}
-
-
 
       <DetailsModal
         edit={edit}
@@ -872,7 +920,7 @@ const Prescription = props => {
                         <FontAwesomeIcon
                           icon={faStar}
                           onClick={() => addToFavorites(rowData)}
-                          className='star-favorite-icon'
+                          className="star-favorite-icon"
                           title="Remove from favorites"
                         />
                       </div>
