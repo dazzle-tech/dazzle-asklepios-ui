@@ -99,6 +99,22 @@ export const newUserDepartment:modelTypes.UserDepartment = {
   lastModifiedDate:undefined,
 };
 
+export const newService: modelTypes.Service = {
+  id: undefined,
+  name: '',
+  abbreviation: null,
+  code: '',
+  category: null,
+  price: null,
+  currency: 'USD',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+
 
 
 

@@ -1,34 +1,41 @@
-import MyModal from '@/components/MyModal/MyModal';
+// src/features/services/AddEditService.tsx
 import React from 'react';
+import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-const AddEditService = ({ open, setOpen, width, service, setService, handleSave }) => {
-  // Fetch  service Type Lov response
-  const { data: serviceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('SERVICE_TYPE');
-  // Fetch  service Category Lov response
-  const { data: serviceCategoryLovQueryResponse } = useGetLovValuesByCodeQuery('SERVICE_CATEGORY');
-   // Fetch  currency Lov response
-  const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
+import { useEnumOptions  , useEnumByName} from '@/services/enumsApi';
 
-  // Modal content
+type AddEditServiceProps = {
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  width: number;
+  service: any;
+  setService: (next: any) => void;
+  handleSave: () => void;
+  actionLoading?: boolean; // optional - if your MyModal supports it
+};
+
+const AddEditService: React.FC<AddEditServiceProps> = ({
+  open,
+  setOpen,
+  width,
+  service,
+  setService,
+  handleSave,
+  actionLoading,
+}) => {
+  const serviceCategoryOptions = useEnumOptions('ServiceCategory');
+  const currencyOptions = useEnumByName('Currency');
+console.log('currencyOptions', currencyOptions);
+console.log('serviceCategoryOptions', serviceCategoryOptions);
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
+      default:
         return (
           <Form fluid>
-            <MyInput
-              width="100%"
-              fieldName="typeLkey"
-              fieldType="select"
-              selectData={serviceTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={service}
-              setRecord={setService}
-            />
             <div className="container-of-two-fields-service">
               <div className="container-of-field-service">
                 <MyInput width="100%" fieldName="name" record={service} setRecord={setService} />
@@ -42,7 +49,9 @@ const AddEditService = ({ open, setOpen, width, service, setService, handleSave 
                 />
               </div>
             </div>
-            <br/>
+
+            <br />
+
             <div className="container-of-two-fields-service">
               <div className="container-of-field-service">
                 <MyInput width="100%" fieldName="code" record={service} setRecord={setService} />
@@ -50,17 +59,19 @@ const AddEditService = ({ open, setOpen, width, service, setService, handleSave 
               <div className="container-of-field-service">
                 <MyInput
                   width="100%"
-                  fieldName="categoryLkey"
+                  fieldName="category"
                   fieldType="select"
-                  selectData={serviceCategoryLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={serviceCategoryOptions}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   record={service}
                   setRecord={setService}
                 />
               </div>
             </div>
-            <br/>
+
+            <br />
+
             <div className="container-of-two-fields-service">
               <div className="container-of-field-service">
                 <MyInput
@@ -74,11 +85,11 @@ const AddEditService = ({ open, setOpen, width, service, setService, handleSave 
               <div className="container-of-field-service">
                 <MyInput
                   width="100%"
-                  fieldName="currencyLkey"
+                  fieldName="currency"
                   fieldType="select"
-                  selectData={currencyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={currencyOptions ?? []}
+                  selectDataLabel="value"
+                  selectDataValue="value"
                   record={service}
                   setRecord={setService}
                 />
@@ -88,18 +99,25 @@ const AddEditService = ({ open, setOpen, width, service, setService, handleSave 
         );
     }
   };
+
+  const isEdit = !!(service?.id ?? service?.key);
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={service?.key ? 'Edit Service' : 'New Service'}
+      title={isEdit ? 'Edit Service' : 'New Service'}
       position="right"
       content={conjureFormContent}
-      actionButtonLabel={service?.key ? 'Save' : 'Create'}
+      actionButtonLabel={isEdit ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      steps={[{ title: 'Service Info', icon: <FaStar /> }]} 
+      steps={[{ title: 'Service Info', icon: <FaStar /> }]}
       size={width > 600 ? '36vw' : '70vw'}
+      // If MyModal supports it, pass loading:
+      // actionButtonLoading={actionLoading}
+      // disableCloseOnActionLoading={actionLoading}
     />
   );
 };
+
 export default AddEditService;

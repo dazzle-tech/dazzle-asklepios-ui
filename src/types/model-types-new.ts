@@ -65,6 +65,7 @@ export interface Facility {
   isActive?: boolean;
 } 
 
+
 export interface CreateFacility { 
 	name?:string;
   code?:string;
@@ -98,4 +99,22 @@ export interface UserDepartment {
   lastModifiedBy?: string;
   lastModifiedDate?:Date|null;
 };
+
+export interface Service {
+  id?: number;
+  name: string;
+  abbreviation?: string | null;
+  code: string;
+  category?: string | null;
+  price?: number | null;
+  currency:  string | null;
+  isActive: boolean;
+  createdBy: string;
+  createdDate?: string | null; 
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+
+
 

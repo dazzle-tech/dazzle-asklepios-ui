@@ -35,6 +35,9 @@ import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
 import { MedicalsheetsService } from './services/MedicalSheetsService';
+import { serviceService } from './services/setup/serviceService';
+
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -115,6 +118,8 @@ export const store = configureStore({
     [userDepartmentService.reducerPath]:userDepartmentService.reducer,
 
 
+    //service
+    [serviceService.reducerPath]: serviceService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -146,7 +151,8 @@ export const store = configureStore({
       userRoleService.middleware,
       enumService.middleware,
       userDepartmentService.middleware,
-      MedicalsheetsService.middleware
+      MedicalsheetsService.middleware,
+      serviceService.middleware
 
     ])
 });
