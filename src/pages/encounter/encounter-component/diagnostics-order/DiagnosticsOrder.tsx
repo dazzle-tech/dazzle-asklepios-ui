@@ -12,7 +12,7 @@ import {
 import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { GrTestDesktop } from 'react-icons/gr';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import {
@@ -85,6 +85,37 @@ const handleDownload = attachment => {
 
 const DiagnosticsOrder = props => {
   const location = useLocation();
+  // Reference to table container
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Check if the click is on an input element (or RSuite elements/your editable components)
+  const isFormField = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest(
+        `
+      input, textarea, select, button, [contenteditable="true"],
+      .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-datepicker,
+      .rs-picker-toggle, .rs-calendar, .rs-dropdown, .rs-auto-complete,
+      .rs-input-group, .rs-select, .rs-slider
+    `
+      ) !== null
+    );
+  };
+
+  // Ignore clicks inside modals/popups (RSuite or your components)
+  const isInsideModalOrPopup = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest(
+        `
+      .rs-modal, .rs-drawer, .rs-picker-select-menu, .rs-picker-popup,
+      .my-modal, .my-popup
+    `
+      ) !== null
+    );
+  };
+
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
@@ -112,7 +143,6 @@ const DiagnosticsOrder = props => {
   const [drugKey, setDrugKey] = useState(null);
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openSampleModal, setOpenSampleModal] = useState(false);
-
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
   const [orderMedication, setOrderMedication] = useState<any>({
@@ -338,6 +368,37 @@ const DiagnosticsOrder = props => {
     setSelectedCategory(null);
   }, [orders.type]);
 
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node | null;
+
+      // If click inside table container => ignore
+      if (tableContainerRef.current?.contains(target as Node)) return;
+
+      // If on an input element or inside a module/menu => ignore
+      if (isFormField(e.target) || isInsideModalOrPopup(e.target)) return;
+
+      //clean up the selections
+      handleClearDiagnostics();
+    };
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClearDiagnostics();
+      }
+    };
+
+    document.addEventListener('mousedown', handleGlobalClick);
+    document.addEventListener('touchstart', handleGlobalClick);
+    document.addEventListener('keydown', handleEsc);
+
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClick);
+      document.removeEventListener('touchstart', handleGlobalClick);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, []);
+
   // Handlers
   const OpenDetailsModel = () => {
     setOpenDetailsModel(true);
@@ -491,9 +552,9 @@ const DiagnosticsOrder = props => {
     setIsDraft(false);
     setFlag(true);
     await ordersRefetch();
-
     orderTestRefetch().then(() => '');
     setOrders({ ...newApDiagnosticOrders });
+    handleClearDiagnostics(); // Reset status after sending
   };
 
   //   const handleSaveOrders = async ({ isDraft = false } = {}) => {
@@ -565,6 +626,17 @@ const DiagnosticsOrder = props => {
   const handleRequestNewTestSetup = () => {
     // Implementation for requesting new test setup
     dispatch(notify({ msg: 'New Test Setup Request Submitted', sev: 'info' }));
+  };
+
+  // Clean up the test selection and hide the preview and any associated states
+  const handleClearDiagnostics = () => {
+    setOrderTest({
+      ...newApDiagnosticOrderTests,
+      processingStatusLkey: '6055029972709625'
+    });
+    setTest({ ...newApDiagnosticTest });
+    setPreviewDiagnosticsOrder(null);
+    setSelectedRows([]);
   };
 
   const addToFavorites = rowData => {
@@ -896,6 +968,7 @@ const DiagnosticsOrder = props => {
                 const selectedItem =
                   filteredOrders.find(item => item.key === value) || newApDiagnosticOrders;
                 setOrders(selectedItem);
+                handleClearDiagnostics(); // Clean up previous selection
               }}
             />
             <div className="top-container">
@@ -989,8 +1062,8 @@ const DiagnosticsOrder = props => {
                   orders.type === 'Laboratory'
                     ? labCategoriesLovResponse?.object ?? []
                     : orders.type === 'Radiology'
-                      ? radCategoriesLovResponse?.object ?? []
-                      : []
+                    ? radCategoriesLovResponse?.object ?? []
+                    : []
                 }
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
@@ -1091,34 +1164,35 @@ const DiagnosticsOrder = props => {
         </Row>
       </div>
       <Row className="table-row-margins">
-        <MyTable
-          columns={tableColumns}
-          sortColumn={listOrdersRequest.sortBy}
-          sortType={listOrdersRequest.sortType}
-          loading={loadTests}
-          onSortChange={(sortBy, sortType) => {
-            setListOrdersRequest({ ...listOrdersRequest, sortBy, sortType });
-          }}
-          data={orderTestList?.object ?? []}
-          onRowClick={rowData => {
-            setOrderTest(rowData);
-            setTest(rowData.test);
-            setPreviewDiagnosticsOrder(rowData);
-          }}
-          rowClassName={isSelected}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
+        <div ref={tableContainerRef}>
+          <MyTable
+            columns={tableColumns}
+            sortColumn={listOrdersRequest.sortBy}
+            sortType={listOrdersRequest.sortType}
+            loading={loadTests}
+            onSortChange={(sortBy, sortType) => {
+              setListOrdersRequest({ ...listOrdersRequest, sortBy, sortType });
+            }}
+            data={orderTestList?.object ?? []}
+            onRowClick={rowData => {
+              setOrderTest(rowData);
+              setTest(rowData.test);
+              setPreviewDiagnosticsOrder(rowData); // Show preview when selecting a row
+            }}
+            rowClassName={isSelected}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+          />
+        </div>
 
         <PreviewDiagnosticsOrder
           open={!!previewDiagnosticsOrder}
           setOpen={() => setPreviewDiagnosticsOrder(null)}
           orderTest={previewDiagnosticsOrder}
         />
-
 
         <Panel header="Patient Orders Test" collapsible expanded={true} className="panel-style">
           <PatientPrevTests patient={patient} />

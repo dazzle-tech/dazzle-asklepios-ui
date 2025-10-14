@@ -5,6 +5,7 @@ import './styles.less';
 import MyButton from '../MyButton/MyButton';
 import MyStepper from '../MyStepper';
 import { useSelector } from 'react-redux';
+import Translate from '../Translate';
 const MyModal = ({
   open,
   setOpen,
