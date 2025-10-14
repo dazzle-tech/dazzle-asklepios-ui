@@ -43,6 +43,7 @@ import {
 } from 'rsuite';
 import './AppoitmentModal.less';
 import SliceBox from './SliceBox';
+import SectionContainer from '@/components/SectionsoContainer';
 
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
@@ -819,13 +820,10 @@ const AppointmentModal = ({
                     </div>
                   </Panel>
                 )}
-                <Panel
-                  header={
-                    <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
-                      <Translate>Patient Information</Translate>
-                    </p>
-                  }
-                >
+
+                <div className='left-content-sections-main-conatainer'>
+                <SectionContainer title={"Patient Information"}
+                content={
                   <Panel bordered style={{ padding: '0' }}>
                     <div className="flex-container">
                       <div
@@ -893,15 +891,10 @@ const AppointmentModal = ({
                         </div>
                       </div>
                     </div>
-                  </Panel>
-                </Panel>
-                <Panel
-                  header={
-                    <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
-                      <Translate>Visit Details</Translate>
-                    </p>
-                  }
-                >
+                  </Panel>}/>
+
+                <SectionContainer title={"Visit Details"}
+                content={
                   <Form layout="inline" fluid>
                     <div className="show-grid">
                       <div className="flex-container">
@@ -942,10 +935,10 @@ const AppointmentModal = ({
                     </div>
                     <div className="show-grid">
                       <div className="flex-container">
-                        <div className="input-wrapper" style={{ flex: 2 }}>
+                        <div className="input-wrapper" style={{ flex: 3 }}>
                           <MyInput
                             disabled={showOnly}
-                            width={'100%'}
+                            width={'15vw'}
                             vr={validationResult}
                             column
                             fieldLabel="Resource Type"
@@ -959,10 +952,10 @@ const AppointmentModal = ({
                             searchable={false}
                           />
                         </div>
-                        <div className="input-wrapper" style={{ flex: 4 }}>
+                        <div className="input-wrapper" style={{ flex: 3 }}>
                           <MyInput
                             disabled={showOnly}
-                            width={'100%'}
+                            width={'15vw'}
                             column
                             fieldLabel="Resources"
                             selectData={
@@ -979,14 +972,10 @@ const AppointmentModal = ({
                             record={appointment}
                             setRecord={setAppointment}
                           />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="show-grid">
-                      <div className="flex-container">
-                        <div className="input-wrapper" style={{ flex: 1 }}>
+                          </div>
+                          <div className="input-wrapper" style={{ flex: 3 }}>
                           <MyInput
-                            width={'100%'}
+                            width={'15vw'}
                             vr={validationResult}
                             column
                             fieldLabel="Visit Type"
@@ -1000,42 +989,16 @@ const AppointmentModal = ({
                             disabled={showOnly}
                             searchable={false}
                           />
-                        </div>
-                        <div className="input-wrapper" style={{ flex: 2 }}>
-                          <div style={{ display: 'flex', gap: '10px' }}>
-                            <div style={{ flex: 1 }}>
-                              {/* <MyInput
-                                
-                                width={'100%'}
-                                vr={validationResult}
-                                column
-                                fieldLabel="Duration"
-                                fieldType="select"
-                                fieldName="durationLkey"
-                                selectData={durationLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={appointment}
-                                setRecord={setAppointment}
-                                disabled={showOnly}
-                                searchable={false}
-                              /> */}
-                            </div>
                           </div>
-                        </div>
                       </div>
                     </div>
-                  </Form>
-                </Panel>
+                  </Form>}/>
+                </div>
               </div>
               <div className="right-input">
-                <Panel
-                  header={
-                    <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
-                      <Translate>Schedule Appointment</Translate>
-                    </p>
-                  }
-                >
+                <div className='right-content-sections-main-conatainer'> 
+                <SectionContainer title={"Schedule Appointment"}
+                content={<>
                   <Form layout="inline" fluid>
                     <div className="show-grid">
                       <div className="flex-container">
@@ -1085,7 +1048,9 @@ const AppointmentModal = ({
                       </div>
                     </div>
                   </Form>
-                </Panel>
+
+
+
                 <div style={{ width: '100%' }}>
                   <div
                     style={{
@@ -1160,210 +1125,209 @@ const AppointmentModal = ({
                     }}
                   />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 8 }}>
-                  <MyButton
-                    appearance={showMore ? 'ghost' : 'primary'}
-                    onClick={() => setShowMore(v => !v)}
-                  >
-                    {showMore ? 'Hide' : 'Show More'}
-                  </MyButton>
+                </>}
+                  />
+                <SectionContainer title={"Additional Information"}
+                content={<>
+                          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 8 }}>
+                            <MyButton
+                              appearance={showMore ? 'ghost' : 'primary'}
+                              onClick={() => setShowMore(v => !v)}
+                            >
+                              {showMore ? 'Hide' : 'Show More'}
+                            </MyButton>
+                          </div>
+                          <div style={{ display: showMore ? 'block' : 'none' }}>
+                            <Panel>
+                              <Form layout="inline" fluid>
+                                <div className="show-grid">
+                                  <div className="flex-container">
+                                    <div className="input-wrapper" style={{ flex: 1 }}>
+                                      <MyInput
+                                        disabled={showOnly}
+                                        width={'100%'}
+                                        vr={validationResult}
+                                        column
+                                        fieldLabel="Instructions"
+                                        fieldType="select"
+                                        fieldName="instructionsLkey"
+                                        selectData={instractionsTypeQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        record={instructionKey}
+                                        searchable={false}
+                                        setRecord={setInstructionsKey}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', width: '100%' }}>
+                                    <div className="input-wrapper" style={{ flex: 1 }}>
+                                      <Input
+                                        as="textarea"
+                                        disabled={showOnly}
+                                        onChange={setInstructions}
+                                        value={instructions}
+                                        style={{ width: '100%', height: '50px' }}
+                                        rows={3}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="show-grid">
+                                  <div className="flex-container">
+                                    <div className="input-wrapper" style={{ flex: 1 }}>
+                                      <MyInput
+                                        disabled={showOnly}
+                                        width={'100%'}
+                                        vr={validationResult}
+                                        column
+                                        fieldLabel="Refering Physician"
+                                        fieldType="select"
+                                        fieldName="referingPhysician"
+                                        selectData={[]}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        searchable={false}
+                                        record={appointment}
+                                        setRecord={setAppointment}
+                                      />
+                                    </div>
+                                    <div className="input-wrapper" style={{ flex: 1 }}>
+                                      <MyInput
+                                        disabled={showOnly}
+                                        width={'100%'}
+                                        vr={validationResult}
+                                        column
+                                        fieldName="externalPhysician"
+                                        record={appointment}
+                                        setRecord={setAppointment}
+                                      />
+                                    </div>
+                                    <div className="input-wrapper" style={{ flex: 1 }}>
+                                      <MyInput
+                                        disabled={showOnly}
+                                        width={'100%'}
+                                        vr={validationResult}
+                                        column
+                                        fieldLabel="Procedure Level"
+                                        fieldType="select"
+                                        fieldName="procedureLevelLkey"
+                                        selectData={procedureLevelQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        searchable={false}
+                                        record={appointment}
+                                        setRecord={setAppointment}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="show-grid">
+                                  <div className="flex-container">
+                                    <div className="input-wrapper" style={{ flex: 9 }}>
+                                      <MyInput
+                                        disabled={showOnly}
+                                        width={'100%'}
+                                        vr={validationResult}
+                                        column
+                                        fieldLabel="Priority"
+                                        fieldType="select"
+                                        fieldName="priority"
+                                        selectData={priorityQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        record={appointment}
+                                        setRecord={setAppointment}
+                                        searchable={false}
+                                      />
+                                    </div>
+                                    <Button
+                                      onClick={() => setAttachmentsModalOpen(true)}
+                                      appearance="primary"
+                                      className="icon-button-primary"
+                                      disabled={!localPatient?.key || showOnly}
+                                    >
+                                      <FontAwesomeIcon className="icon-button-primary-icon" icon={faUpload} />
+                                      <Translate>Attach File</Translate>
+                                    </Button>
+
+                                    <AttachmentModal
+                                      isOpen={attachmentsModalOpen}
+                                      setIsOpen={setAttachmentsModalOpen}
+                                      attachmentSource={localPatient}
+                                      attatchmentType={'APPOINTMENT_ATTACHMENT'}
+                                      patientKey={localPatient?.key}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="show-grid">
+                                  <div className="flex-container">
+                                    <div className="input-wrapper">
+                                      <MyInput
+                                        disabled={showOnly}
+                                        width={'100%'}
+                                        column
+                                        fieldLabel="Consent Form"
+                                        fieldType="checkbox"
+                                        fieldName="consentForm"
+                                        record={appointment}
+                                        setRecord={setAppointment}
+                                      />
+                                    </div>
+                                    <div className="input-wrapper">
+                                      <MyInput
+                                        disabled={showOnly}
+                                        width={165}
+                                        column
+                                        fieldLabel="Reminder"
+                                        fieldType="checkbox"
+                                        fieldName="isReminder"
+                                        record={appointment}
+                                        setRecord={setAppointment}
+                                      />
+                                    </div>
+                                    <div className="input-wrapper">
+                                      <MyInput
+                                        disabled={!appointment?.isReminder}
+                                        width={170}
+                                        vr={validationResult}
+                                        column
+                                        fieldLabel="Reminder Type"
+                                        fieldType="select"
+                                        fieldName="reminderLkey"
+                                        selectData={reminderTypeLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        searchable={false}
+                                        record={appointment}
+                                        setRecord={setAppointment}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex-container">
+                                  <div className="input-wrapper" style={{ flex: 1 }}>
+                                    <MyInput
+                                      disabled={showOnly}
+                                      vr={validationResult}
+                                      fieldType="textarea"
+                                      column
+                                      fieldName="Notes"
+                                      width={'100%'}
+                                      height={70}
+                                      record={appointment}
+                                      setRecord={setAppointment}
+                                    />
+                                  </div>
+                                </div>
+                              </Form>
+                            </Panel></div></>}/>
                 </div>
-                <div style={{ display: showMore ? 'block' : 'none' }}>
-                  <Panel
-                    header={
-                      <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
-                        <Translate>Additional Information</Translate>
-                      </p>
-                    }
-                  >
-                    <Form layout="inline" fluid>
-                      <div className="show-grid">
-                        <div className="flex-container">
-                          <div className="input-wrapper" style={{ flex: 1 }}>
-                            <MyInput
-                              disabled={showOnly}
-                              width={'100%'}
-                              vr={validationResult}
-                              column
-                              fieldLabel="Instructions"
-                              fieldType="select"
-                              fieldName="instructionsLkey"
-                              selectData={instractionsTypeQueryResponse?.object ?? []}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              record={instructionKey}
-                              searchable={false}
-                              setRecord={setInstructionsKey}
-                            />
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', width: '100%' }}>
-                          <div className="input-wrapper" style={{ flex: 1 }}>
-                            <Input
-                              as="textarea"
-                              disabled={showOnly}
-                              onChange={setInstructions}
-                              value={instructions}
-                              style={{ width: '100%', height: '50px' }}
-                              rows={3}
-                            />
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="show-grid">
-                        <div className="flex-container">
-                          <div className="input-wrapper" style={{ flex: 1 }}>
-                            <MyInput
-                              disabled={showOnly}
-                              width={'100%'}
-                              vr={validationResult}
-                              column
-                              fieldLabel="Refering Physician"
-                              fieldType="select"
-                              fieldName="referingPhysician"
-                              selectData={[]}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              searchable={false}
-                              record={appointment}
-                              setRecord={setAppointment}
-                            />
-                          </div>
-                          <div className="input-wrapper" style={{ flex: 1 }}>
-                            <MyInput
-                              disabled={showOnly}
-                              width={'100%'}
-                              vr={validationResult}
-                              column
-                              fieldName="externalPhysician"
-                              record={appointment}
-                              setRecord={setAppointment}
-                            />
-                          </div>
-                          <div className="input-wrapper" style={{ flex: 1 }}>
-                            <MyInput
-                              disabled={showOnly}
-                              width={'100%'}
-                              vr={validationResult}
-                              column
-                              fieldLabel="Procedure Level"
-                              fieldType="select"
-                              fieldName="procedureLevelLkey"
-                              selectData={procedureLevelQueryResponse?.object ?? []}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              searchable={false}
-                              record={appointment}
-                              setRecord={setAppointment}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="show-grid">
-                        <div className="flex-container">
-                          <div className="input-wrapper" style={{ flex: 9 }}>
-                            <MyInput
-                              disabled={showOnly}
-                              width={'100%'}
-                              vr={validationResult}
-                              column
-                              fieldLabel="Priority"
-                              fieldType="select"
-                              fieldName="priority"
-                              selectData={priorityQueryResponse?.object ?? []}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              record={appointment}
-                              setRecord={setAppointment}
-                              searchable={false}
-                            />
-                          </div>
-                          <Button
-                            onClick={() => setAttachmentsModalOpen(true)}
-                            appearance="primary"
-                            className="icon-button-primary"
-                            disabled={!localPatient?.key || showOnly}
-                          >
-                            <FontAwesomeIcon className="icon-button-primary-icon" icon={faUpload} />
-                            <Translate>Attach File</Translate>
-                          </Button>
-
-                          <AttachmentModal
-                            isOpen={attachmentsModalOpen}
-                            setIsOpen={setAttachmentsModalOpen}
-                            attachmentSource={localPatient}
-                            attatchmentType={'APPOINTMENT_ATTACHMENT'}
-                            patientKey={localPatient?.key}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="show-grid">
-                        <div className="flex-container">
-                          <div className="input-wrapper">
-                            <MyInput
-                              disabled={showOnly}
-                              width={'100%'}
-                              column
-                              fieldLabel="Consent Form"
-                              fieldType="checkbox"
-                              fieldName="consentForm"
-                              record={appointment}
-                              setRecord={setAppointment}
-                            />
-                          </div>
-                          <div className="input-wrapper">
-                            <MyInput
-                              disabled={showOnly}
-                              width={165}
-                              column
-                              fieldLabel="Reminder"
-                              fieldType="checkbox"
-                              fieldName="isReminder"
-                              record={appointment}
-                              setRecord={setAppointment}
-                            />
-                          </div>
-                          <div className="input-wrapper">
-                            <MyInput
-                              disabled={!appointment?.isReminder}
-                              width={170}
-                              vr={validationResult}
-                              column
-                              fieldLabel="Reminder Type"
-                              fieldType="select"
-                              fieldName="reminderLkey"
-                              selectData={reminderTypeLovQueryResponse?.object ?? []}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              searchable={false}
-                              record={appointment}
-                              setRecord={setAppointment}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex-container">
-                        <div className="input-wrapper" style={{ flex: 1 }}>
-                          <MyInput
-                            disabled={showOnly}
-                            vr={validationResult}
-                            fieldType="textarea"
-                            column
-                            fieldName="Notes"
-                            width={'100%'}
-                            height={70}
-                            record={appointment}
-                            setRecord={setAppointment}
-                          />
-                        </div>
-                      </div>
-                    </Form>
-                  </Panel>
-                </div>
               </div>
             </div>
           </div>

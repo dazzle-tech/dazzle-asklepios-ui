@@ -24,6 +24,7 @@ import Section from '@/components/Section';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import MyModal from '@/components/MyModal/MyModal';
 import CompanionCardModal from './CompanionCardModal';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 const InformationDesk = () => {
   const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({
@@ -47,6 +48,9 @@ const InformationDesk = () => {
   const { data: bedListResponse } = useGetBedListQuery(bedListRequest);
   const { data: bedStatusLovQueryResponse } = useGetLovValuesByCodeQuery('BED_STATUS');
   const { data: practitionerListResponse } = useGetPractitionersQuery(initialListRequest);
+
+
+  const [record, setRecord] = useState<any>({});
 
   const [searchPatient, setSearchPatient] = useState<ApPatient>({
     ...newApPatient,
@@ -275,6 +279,7 @@ const content = (
             selectData={departmentsResponse?.object ?? []}
             selectDataLabel="name"
             selectDataValue="key"
+            placeholder=" "
             fieldName="selectedDepartments"
             record={{ selectedDepartments }}
             setRecord={value => setSelectedDepartments(value.selectedDepartments)}
@@ -290,6 +295,7 @@ const content = (
             record={searchPatient}
             setRecord={setSearchPatient}
             searchable={false}
+            placeholder=" "
           />
           <MyInput
             fieldLabel="Select Room"
@@ -301,6 +307,7 @@ const content = (
             record={{ selectedRooms }}
             setRecord={val => setSelectedRooms(val.selectedRooms)}
             searchable={false}
+            placeholder=" "
           />
           <MyInput
             fieldLabel="Select Bed"
@@ -312,6 +319,7 @@ const content = (
             record={{ selectedBeds }}
             setRecord={val => setSelectedBeds(val.selectedBeds)}
             searchable={false}
+            placeholder=" "
           />
           <MyInput
             fieldLabel="Bed Status"
@@ -323,6 +331,7 @@ const content = (
             record={searchPatient}
             setRecord={setSearchPatient}
             searchable={false}
+            placeholder=" "
           />
           <MyInput
             fieldLabel="Responsible Physician"
@@ -334,12 +343,14 @@ const content = (
             record={{ responsiblePhysicians }}
             setRecord={val => setResponsiblePhysicians(val.responsiblePhysicians)}
             searchable={false}
+            placeholder=" "
           />
         </Form></div>);
 
 const tablefilters = (<>
   <div className="field-btn-div">
     <Form layout="inline" fluid>
+      <div className='information-desk-filters-handle-position-row'>
       {/* Basic filters */}
       <MyInput
         column
@@ -366,11 +377,13 @@ const tablefilters = (<>
             selectDataLabel="lovDisplayVale"
             selectDataValue="key"
             record={searchPatient}
+            placeholder=" "
             setRecord={setSearchPatient}
             searchable={false}
       />
-
-
+          <SearchPatientCriteria record={record} setRecord={setRecord}/>
+          
+          </div>
         </Form>
 
 

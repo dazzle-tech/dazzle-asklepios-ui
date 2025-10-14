@@ -45,6 +45,7 @@ import Translate from '@/components/Translate';
 import { useFetchAttachmentsListQuery } from '@/services/attachmentService';
 import { useSelector } from 'react-redux';
 import MyButton from '@/components/MyButton/MyButton';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
@@ -520,21 +521,18 @@ const ScheduleScreen = () => {
           <div style={{ fontSize: '14px' }} className="font-semibold text-sm">
             {resource?.resourceName}
           </div>
-          <div style={{ color: 'gray', fontSize: '12px' }}>{'Physician'}</div>
+          <div style={{ color: 'gray', fontSize: '12px' }}>{resource?.resource_type}</div>
         </div>
       </div>
     );
   };
 
+
   const formats = {
     timeGutterFormat: (date, culture, localizer) => localizer.format(date, 'h A', culture)
   };
 
-  const data = [
-    { id: 1, name: 'Name', date: '20-01-2025', avatar: 'https://i.pravatar.cc/150?u=1' },
-    { id: 2, name: 'Name', date: '20-01-2025', avatar: 'https://i.pravatar.cc/150?u=3' },
-    { id: 3, name: 'Name', date: '20-01-2025', avatar: 'https://i.pravatar.cc/150?u=1' }
-  ];
+  const data = [];
   const minTime = new Date();
   minTime.setHours(8, 0, 0);
 
@@ -705,9 +703,10 @@ const ScheduleScreen = () => {
         }}
         className="inline-two-four-container"
       >
+<div className='schedual-screen-filters-waiting-list-position'>
+<SectionContainer title={"Filters"}
+content={
         <Panel className="left-section" bordered>
-          <p style={{ color: 'gray', fontSize: '14px' }}>FILTERS</p>
-
           <div>
             <Form fluid layout="inline">
               <MyInput
@@ -785,8 +784,13 @@ const ScheduleScreen = () => {
             <Checkbox onChange={() => setShowCanceled(!showCanceled)}>Show Canceled</Checkbox>
           </div>
 
-          <p style={{ color: 'gray', marginTop: '30px' }}>WAITING LIST</p>
 
+
+
+        </Panel>}/>
+
+<SectionContainer title={"WAITING LIST"}
+content={
           <div style={{ width: '100%', height: 300, marginTop: 18, overflow: 'auto' }}>
             {data.map(item => (
               <Panel key={item.id} style={{ height: '37', marginBottom: 10 }}>
@@ -799,9 +803,8 @@ const ScheduleScreen = () => {
                 </Stack>
               </Panel>
             ))}
-          </div>
-        </Panel>
-
+          </div>}/>
+</div>
         {/* =================== Right Side ============= */}
 
         <Panel bordered className="right-section">
