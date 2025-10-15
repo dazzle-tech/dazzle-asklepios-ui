@@ -23,7 +23,7 @@ const MyModal = ({
   hideActionBtn = false,
   isDisabledActionBtn = false,
   actionButtonLabel = 'Save',
-  actionButtonFunction = null,
+  actionButtonFunction = ()=>{},
   customClassName = '',
   cancelButtonLabel = 'Cancel',
   handleCancelFunction=()=>{}
