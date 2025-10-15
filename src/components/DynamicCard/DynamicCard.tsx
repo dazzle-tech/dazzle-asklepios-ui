@@ -109,9 +109,6 @@ const DynamicCard: React.FC<MyCardProps> = ({
         ) : (
         <div
           style={{
-            fontSize: item.type === 'week' ? 12 : undefined,
-            fontWeight: item.type === 'strong' ? '700' : undefined,
-            fontFamily: item.type === 'week' ? 'Inter Regular' : undefined,
             color: item.valueColor || (item.type === 'week' ? 'var(--primary-gray)' : undefined),
             marginBottom: valueMarginBottom,
             textAlign: item.textAlign || 'left',

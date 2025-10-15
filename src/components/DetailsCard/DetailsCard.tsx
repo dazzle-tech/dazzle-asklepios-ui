@@ -32,7 +32,7 @@ const DetailsCard: React.FC<DetailsCardProps> = ({
       shaded
       bordered
       bodyFill
-      className={`details-card ${backgroundClassName} ${mode === 'light' ? 'light' : 'dark'}`}
+      className={`details-card ${backgroundClassName} ${mode}`}
       style={{ width }}
     >
       <div className={`details-card-content position-${position}`}>
@@ -44,7 +44,7 @@ const DetailsCard: React.FC<DetailsCardProps> = ({
           />
         )}
         <div className="details-card-text">
-          <h4 style={{ color: `var(${color})` }}>{number}</h4>
+          <h5 style={{ color: `var(${color})` }}>{number}</h5>
           <p>{title}</p>
         </div>
       </div>
