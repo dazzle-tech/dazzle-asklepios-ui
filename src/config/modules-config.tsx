@@ -1,3 +1,38 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React from 'react';
+import {
+  faBed,
+  faBraille,
+  faG,
+  faUserDoctor,
+  faBedPulse,
+  faPersonDotsFromLine,
+  faTriangleExclamation,
+  faFileWaveform,
+  faSyringe,
+  faFilePrescription,
+  faPills,
+  faVials,
+  faStethoscope,
+  faNotesMedical,
+  faClockRotateLeft,
+  faComment,
+  faRightFromBracket,
+  faSuitcaseMedical,
+  faDroplet,
+  faSquarePollHorizontal,
+  faPersonFallingBurst,
+  faHeartPulse,
+  faTooth,
+  faEye,
+  faEarListen,
+  faFileLines,
+  faBrain,
+  faLeaf,
+  faCapsules,
+  faPersonWalking,
+} from '@fortawesome/free-solid-svg-icons';
+import { GiKidneys } from 'react-icons/gi';
 export interface Screen {
   name: string;
   code:string;
@@ -14,6 +49,71 @@ export interface Module {
   viewOrder: number;
   screens: Screen[];
 }
+
+export interface MedicalSheet {
+  name: string;
+  code: string;
+  icon: JSX.Element;
+  type?: string;
+  path:string;
+}
+
+export const MedicalSheets: MedicalSheet[] = [
+  
+  { name: 'ICU', code: 'ICU', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/icu' },
+  { name: 'Pregnancy Follow-up', code: 'PREGNANCY_FOLLOW_UP', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pregnancy-follow-up',type:"Specialty" },
+  { name: 'VTE Risk Assessment', code: 'VTE_RISK_ASSESSMENT', icon: <FontAwesomeIcon icon={faBraille} className="icon" />, path: '/vte-risk-assessment' },
+  { name: 'Pressure Ulcer Risk Assessment', code: 'BRADEN_SCALE_FOR_PRESSURE_ULCER', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pressure-ulce-risk-assessment' },
+  { name: 'Glasgow Coma Scale', code: 'GLASGOW_COMA_SCALE', icon: <FontAwesomeIcon icon={faG} className="icon" />, path: '/glasgow-coma-scale' },
+  { name: 'Clinical Visit', code: 'CLINICAL_VISIT', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/clinical-visit' },
+  { name: 'Observation', code: 'OBSERVATION', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/observations' },
+  { name: 'Allergies', code: 'ALLERGIES', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />, path: '/allergies' },
+  { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings' },
+  { name: 'Diagnostics Test Result', code: 'DIAGNOSTICS_RESULT', icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />, path: '/diagnostics-result' },
+  { name: 'Dialysis Request', code: 'DIALYSIS_REQUEST', icon: <GiKidneys className="icon" />, path: '/dialysis-request' },
+  { name: 'Vaccination', code: 'VACCINATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccination' ,type:"Specialty"},
+  { name: 'Prescription', code: 'PRESCRIPTION', icon: <FontAwesomeIcon icon={faFilePrescription} className="icon" />, path: '/prescription' },
+  { name: 'Medication Order', code: 'DRUG_ORDER', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medication-order' },
+  { name: 'Diagnostics Order', code: 'DIAGNOSTICS_ORDER', icon: <FontAwesomeIcon icon={faVials} className="icon" />, path: '/diagnostics-order' },
+  { name: 'Consultation', code: 'CONSULTATION', icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: '/consultation' },
+  { name: 'Operation Requests', code: 'OPERATION_REQUESTS', icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />, path: '/operation-request' },
+  { name: 'Procedures', code: 'PROCEDURES', icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />, path: '/procedures' },
+  { name: 'Patient History', code: 'PATIENT_HISTORY', icon: <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />, path: '/patient-history' },
+  { name: 'Referral Request', code: 'REFERRAL_REQUEST', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/referral-request' },
+  { name: 'Multidisciplinary Team Notes', code: 'MULTIDISCIPLINARY_TEAM_NOTES', icon: <FontAwesomeIcon icon={faComment} className="icon" />, path: '/multidisciplinary-team-notes' },
+  { name: 'Discharge Planning', code: 'DISCHARGE_PLANNING', icon: <FontAwesomeIcon icon={faRightFromBracket} className="icon" />, path: '/discharge-planning' },
+  { name: 'Bedside Procedures', code: 'BEDSIDE_PROCEDURES_REQUEST', icon: <FontAwesomeIcon icon={faSuitcaseMedical} className="icon" />, path: '/bedside-procedures-requests' },
+  { name: 'Blood Order', code: 'BLOOD_ORDER', icon: <FontAwesomeIcon icon={faDroplet} className="icon" />, path: '/blood-order' },
+  { name: 'Intake Output Balance', code: 'INTAKE_OUTPUT_BALANCE', icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />, path: '/intake-output-balance' },
+  { name: 'Care Plan & Goals', code: 'CARE_PLAN_AND_GOALS', icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />, path: '/care-plan-and-goals' },
+  { name: 'Johns Hopkins Tool', code: 'JOHNS_HOPKINS_FALL_RISK_ASSESSMENT_TOOL', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/johns-hopkins-tool' },
+  { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record' },
+  { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record' },
+  { name: 'Cardiology', code: 'CARDIOLOGY', icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />, path: '/cardiology',type:"Specialty" },
+  { name: 'Dental Care', code: 'DENTAL_CARE', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-care' ,type:"Specialty" },
+  { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam',type:"Specialty" },
+  { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry',type:"Specialty" },
+  { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes' },
+  { name: 'Psychological Exam', code: 'PSYCHOLOGICAL_EXAM', icon: <FontAwesomeIcon icon={faBrain} className="icon" />, path: '/psychological-exam'  ,type:"Specialty"},
+  { name: 'DayCase', code: 'DAY_CASE', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/day-case' },
+  { name: 'IV Fluid Order', code: 'IV_FLUID_ORDER', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-order' },
+  { name: 'Morse Fall Scale', code: 'MORSE_FALL_SCALE', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/morse-fall-scale' },
+  { name: 'STRATIFY Scale', code: 'STRATIFY_SCALE', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/stratify-scale' },
+  { name: 'Hendrich II Fall Risk Model', code: 'HENDRICH_FALL_RISK', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/hendrich-fall-risk' },
+  { name: 'Doctor Round', code: 'DOCTOR_ROUND', icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />, path: '/doctor-round' },
+  { name: 'Nutrition State', code: 'NUTRITION_STATE_ASSESSMENT', icon: <FontAwesomeIcon icon={faLeaf} className="icon" />, path: '/nutrition-state-asssessment' },
+  { name: 'Dietary Request', code: 'DIETARY_REQUEST', icon: <FontAwesomeIcon icon={faLeaf} className="icon" />, path: '/dietary-request' },
+  { name: 'MAR', code: 'MEDICATION_ADMINISTRATION_RECORD', icon: <FontAwesomeIcon icon={faCapsules} className="icon" />, path: '/medication-administration-record' },
+  { name: 'Physiotherapy Plan', code: 'PHYSIOTHERAPY_PLAN', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/physiotherapy-plan',type:"Specialty" },
+  { name: 'Occupational Therapy', code: 'OCCUPATIONAL_THERAPY', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/occupational-therapy',type:"Specialty" },
+  { name: 'Speech Therapy', code: 'SPEECH_THERAPY', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/speech-therapy' ,type:"Specialty"},
+  { name: 'IV Fluid Administration', code: 'IV_FLUID_ADMINISTRATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-administration' },
+  { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
+  { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
+  { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
+];
+
+
 
 export const MODULES: Module[] =
  [

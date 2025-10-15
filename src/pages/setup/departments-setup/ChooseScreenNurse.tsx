@@ -1,27 +1,33 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
-  useBulkSaveMedicalSheetsMutation,
-  useGetMedicalSheetsByDepartmentQuery,
+   useBulkSaveNurseMedicalSheetsMutation,
+  useGetNurseMedicalSheetsByDepartmentQuery,
 } from '@/services/MedicalSheetsService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { useDispatch } from 'react-redux';
 import { notify } from '@/utils/uiReducerActions';
-import { faSheetPlastic } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { MedicalSheets } from '@/config/modules-config';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSheetPlastic } from '@fortawesome/free-solid-svg-icons';
 
-const ChooseDepartment = ({ open, setOpen, width, department ,showScreen, setShowScreen}) => {
-  const dispatch = useDispatch();
+const ChooseScreenNurse = ({
+  open,
+  setOpen,
+  width,
+  department,
+  showScreen,
+  setShowScreen,
+}) => {
+   const dispatch = useDispatch();
 
  
-  const { data: departmentSheets = [], isLoading } =
-    useGetMedicalSheetsByDepartmentQuery(department?.id, { skip: !department?.id});
+  const { data: departmentSheets = [], isLoading } =useGetNurseMedicalSheetsByDepartmentQuery(department?.id, { skip: !department?.id});
    console.log("id",department?.id)
    console.log("sheets",departmentSheets)
-  const [bulkSaveMedicalSheets] = useBulkSaveMedicalSheetsMutation();
+  const [bulkSaveMedicalSheets] = useBulkSaveNurseMedicalSheetsMutation();
 
 
  
@@ -184,7 +190,7 @@ useEffect(() => {
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Medical Sheets"
+      title="  Nurse Medical Sheets"
       position="right"
       content={conjureFormContent}
       actionButtonLabel="Save"
@@ -198,6 +204,7 @@ useEffect(() => {
       ]}
     />
   );
+  
 };
 
-export default ChooseDepartment;
+export default ChooseScreenNurse;

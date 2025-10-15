@@ -2,7 +2,7 @@ import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
-import { faSheetPlastic, faRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { faSheetPlastic, faRotateRight, faUserNurse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -22,8 +22,9 @@ import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
 import { useAddDepartmentMutation, useGetDepartmentsQuery, useLazyGetDepartmentByFacilityQuery, useLazyGetDepartmentByNameQuery, useLazyGetDepartmentByTypeQuery, useToggleDepartmentIsActiveMutation, useUpdateDepartmentMutation } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useEnumByName, useEnumOptions } from '@/services/enumsApi';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import ChooseScreenNurse from './ChooseScreenNurse';
 
 
 const Departments = () => {
@@ -33,7 +34,10 @@ const Departments = () => {
   const [department, setDepartment] = useState<Department>({ ...newDepartment });
   const [load, setLoad] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
+  const [showScreen, setShowScreen] = useState({});
+  const [showNurseScreen, setShowNurseScreen] = useState({});
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
+  const [openScreensNursePopup,setOpenScreensNursePopup]=useState(false)
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [generateCode, setGenerateCode] = useState<string>('');
@@ -44,25 +48,7 @@ const Departments = () => {
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [showScreen, setShowScreen] = useState({
-    ...newApMedicalSheets,
-    departmentId: department.id,
-    facilityId: department.facilityId,
-    patientDashboard: true,
-    clinicalVisit: true,
-    diagnosticsOrder: true,
-    prescription: true,
-    drugOrder: true,
-    consultation: true,
-    procedures: true,
-    patientHistory: true,
-    allergies: true,
-    medicalWarnings: true,
-    medicationsRecord: true,
-    departmentRecord: true,
-    diagnosticsResult: true,
-    observation: true
-  });
+
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -70,13 +56,13 @@ const Departments = () => {
     timestamp: Date.now()
   });
 
+
   // Data fetching
   const { data: departmentListResponse, isFetching } = useGetDepartmentsQuery(paginationParams);
-  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.id, {
-    skip: !department.id
-  });
+
   const totaldepartmentListResponseCount = departmentListResponse?.totalCount ?? 0;
   // Add New Department
+
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
   // Update Department 
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
@@ -88,6 +74,8 @@ const Departments = () => {
     { label: 'Department Name', value: 'name' },
     { label: 'Department Type', value: 'departmentType' }
   ];
+
+
 
   // Header setup
   useEffect(() => {
@@ -113,6 +101,15 @@ const Departments = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+
+  useEffect(() => {
+    console.log("ShowScreen", showScreen)
+  }, [showScreen])
+  
+
+
+
+
   // Update department code field when department or code changes
   useEffect(() => {
     setRecordOfDepartmentCode({
@@ -135,33 +132,7 @@ const Departments = () => {
     }
   }, [updateDepartmentMutation.data]);
 
-  // Update screen state on medicalSheet fetch
-  useEffect(() => {
-    if (medicalSheet?.object?.key) {
-      setShowScreen({ ...medicalSheet.object });
-    } else {
-      setShowScreen({
-        ...newApMedicalSheets,
-        departmentId: department.id,
-        facilityId: department.facilityId,
-        patientDashboard: true,
-        clinicalVisit: true,
-        diagnosticsOrder: true,
-        prescription: true,
-        drugOrder: true,
-        consultation: true,
-        procedures: true,
-        patientHistory: true,
-        allergies: true,
-        medicalWarnings: true,
-        medicationsRecord: true,
-        departmentRecord: true,
-        diagnosticsResult: true,
-        observation: true
-      });
-    }
-  }, [medicalSheet, department.id, department.facilityId]);
-  //handle get facility and department type data for search
+
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const [facilitiesList, setFacilitiesList] = useState<{ label: string; value: string }[]>([]);
   useEffect(() => {
@@ -219,25 +190,25 @@ const Departments = () => {
     try {
       let response;
       if (fieldName === "facilityName") {
-        response = await getDepartmentsByFacility({ 
-          facilityId: value, 
-          page: 0, 
-          size: paginationParams.size, 
-          sort: paginationParams.sort 
+        response = await getDepartmentsByFacility({
+          facilityId: value,
+          page: 0,
+          size: paginationParams.size,
+          sort: paginationParams.sort
         }).unwrap();
       } else if (fieldName === "departmentType") {
-        response = await getDepartmentsByType({ 
-          type: value?.toUpperCase().replace(/\s+/g, '_'), 
-          page: 0, 
-          size: paginationParams.size, 
-          sort: paginationParams.sort 
+        response = await getDepartmentsByType({
+          type: value?.toUpperCase().replace(/\s+/g, '_'),
+          page: 0,
+          size: paginationParams.size,
+          sort: paginationParams.sort
         }).unwrap();
       } else if (fieldName === "name") {
-        response = await getDepartmentsByName({ 
-          name: value, 
-          page: 0, 
-          size: paginationParams.size, 
-          sort: paginationParams.sort 
+        response = await getDepartmentsByName({
+          name: value,
+          page: 0,
+          size: paginationParams.size,
+          sort: paginationParams.sort
         }).unwrap();
       }
       setDepartmentList(response?.data ?? []);
@@ -295,10 +266,11 @@ const Departments = () => {
           icon={faRotateRight}
           className="icons-style"
           color="var(--primary-gray)"
-          onClick={() => { 
+          onClick={() => {
             setDepartment(rowData);
             setStateOfDeleteDepartmentModal('reactivate');
-            setOpenConfirmDeleteDepartmentModal(true);}}
+            setOpenConfirmDeleteDepartmentModal(true);
+          }}
         />
       ) : (
         <MdDelete
@@ -318,14 +290,27 @@ const Departments = () => {
         title="Medical Sheets"
         size="lg"
         style={{
-       
+
           color: 'var(--primary-gray)'
         }}
         onClick={() => {
-       
-            setDepartment(rowData);
-            setOpenScreensPopup(true);
           
+          setDepartment(rowData);
+          setOpenScreensPopup(true);
+        }}
+
+      />
+      <FontAwesomeIcon icon={faUserNurse}
+       title="Medical Sheets Nurse"
+        size="lg"
+        style={{
+          color: 'var(--primary-gray)'
+        }}
+        onClick={() => {
+          
+          setDepartment(rowData);
+         
+          setOpenScreensNursePopup(true);
         }}
       />
     </div>
@@ -521,7 +506,7 @@ const Departments = () => {
       <MyTable
         data={
           isFiltered
-            ? departmentList ??[]
+            ? departmentList ?? []
             : departmentListResponse?.data ?? []
         }
         totalCount={isFiltered ? filteredTotal : totaldepartmentListResponseCount}
@@ -555,7 +540,15 @@ const Departments = () => {
         department={department}
         width={width}
       />
-         <DeletionConfirmationModal
+      <ChooseScreenNurse
+      open={openScreensNursePopup}
+        setOpen={setOpenScreensNursePopup}
+        showScreen={showNurseScreen}
+        setShowScreen={setShowNurseScreen}
+        department={department}
+        width={width}
+       />
+      <DeletionConfirmationModal
         open={openConfirmDeleteDepartmentModal}
         setOpen={setOpenConfirmDeleteDepartmentModal}
         itemToDelete="Department"

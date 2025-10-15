@@ -34,6 +34,7 @@ import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
+import { MedicalsheetsService } from './services/MedicalSheetsService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -90,7 +91,8 @@ export const store = configureStore({
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
-
+    
+    [MedicalsheetsService.reducerPath]:MedicalsheetsService.reducer,
 
     //refetch Encounters
     refetch: refetchReducer,
@@ -144,6 +146,7 @@ export const store = configureStore({
       userRoleService.middleware,
       enumService.middleware,
       userDepartmentService.middleware,
+      MedicalsheetsService.middleware
 
     ])
 });
