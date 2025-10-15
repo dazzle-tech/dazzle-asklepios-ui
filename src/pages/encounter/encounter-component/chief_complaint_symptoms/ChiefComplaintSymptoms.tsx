@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useRef } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
 import { Checkbox, Form } from 'rsuite';
@@ -368,6 +368,27 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
     }
   ];
 
+
+  const tableRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        previewRef.current &&
+        !previewRef.current.contains(event.target as Node)
+      ) {
+        setSelectedRowData(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+
   return (
     <div>
       <AddChiefComplaintSymptoms
@@ -442,6 +463,8 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
         }
       />
 
+      {selectedRowData && (
+        <div ref={previewRef} className="margin-ver-10">
       {/* Details Form Section */}
       {selectedRowData && (
         <div className="margin-ver-10">
@@ -548,7 +571,8 @@ const ChiefComplaintSymptoms = ({ patient, encounter, edit }) => {
           </Form>
         </div>
       )}
-
+        </div>
+      )}
       <CancellationModal
         title="Cancel Chief Complaint"
         fieldLabel="Cancellation Reason"

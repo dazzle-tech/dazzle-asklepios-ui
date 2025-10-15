@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useRef  } from 'react';
 import { Form, Checkbox, Text } from 'rsuite';
 import { CloseOutline } from '@rsuite/icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -178,27 +178,56 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+
+
+  const tableRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tableRef.current &&
+        !tableRef.current.contains(event.target as Node) &&
+        previewRef.current &&
+        !previewRef.current.contains(event.target as Node)
+      ) {
+        setFluidOrder({});
+        setRecord({});
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+
   return (
     <div>
+            <div ref={tableRef}>
       <MyTable
         height={450}
         data={data}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => {
-          setFluidOrder(rowData);
-          setRecord({
-            ...rowData,
-            createdByAt: rowData.createdBy ? `${rowData.createdBy} (${rowData.createdAt})` : '',
-            submittedByAt: rowData.submittedBy
-              ? `${rowData.submittedBy} (${rowData.submittedAt})`
-              : '',
-            cancelledByAt: rowData.cancelledBy
-              ? `${rowData.cancelledBy} (${rowData.cancelledAt})`
-              : '',
-            cancellationReason: rowData.cancellationReason || ''
-          });
-        }}
+  if (fluidOrder?.key === rowData.key) {
+    setFluidOrder({});
+    setRecord({});
+  } else {
+    setFluidOrder(rowData);
+    setRecord({
+      ...rowData,
+      createdByAt: rowData.createdBy ? `${rowData.createdBy} (${rowData.createdAt})` : '',
+      submittedByAt: rowData.submittedBy
+        ? `${rowData.submittedBy} (${rowData.submittedAt})`
+        : '',
+      cancelledByAt: rowData.cancelledBy
+        ? `${rowData.cancelledBy} (${rowData.cancelledAt})`
+        : '',
+      cancellationReason: rowData.cancellationReason || ''
+    });
+  }
+}}
+
         tableButtons={
           <div className="bt-div-2">
             <div className="bt-left-2">
@@ -228,9 +257,13 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
           </div>
         }
       />
+          </div>
+
 
       {/* Order Details Section */}
       {fluidOrder?.key && (
+                <div ref={previewRef} className="my-order-details-margin">
+
         <div className="my-order-details-margin">
           <SectionContainer
             title={<Text>Order Details</Text>}
@@ -360,7 +393,7 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
               </Form>
             }
           />
-        </div>
+        </div></div>
       )}
 
       <AddEditFluidOrder

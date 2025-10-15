@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useRef } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
 import { Checkbox, Form } from 'rsuite';
@@ -356,8 +356,30 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
     }
   ];
 
+  const tableRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        previewRef.current &&
+        !previewRef.current.contains(event.target as Node)
+      ) {
+        setSelectedRowData(null);
+        setTreadmillStress({});
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+
   return (
     <div>
+
       <MyTable
         data={treadmillStressResponse?.object ?? []}
         columns={columns}
@@ -422,6 +444,8 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
         }
       />
 
+      {selectedRowData && (
+        <div ref={previewRef} className="margin-det-10">
       {/* Details Form Section */}
       {selectedRowData && (
         <div className="margin-det-10">
@@ -624,6 +648,8 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
           </div>
         </div>
       )}
+      </div>
+    )}
 
       <AddTreadmillStress
         open={open}
