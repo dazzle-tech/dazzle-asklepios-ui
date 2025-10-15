@@ -178,25 +178,19 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
     selected.some((sel) => sel.screen === screen.code)
   );
 
-  return (
-    <div className="flex items-center gap-2">
-      {/* 🔵 المؤشر في بداية السطر */}
-      {hasPermissions && (
-        <div
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            backgroundColor: "#1976d2", // 🔵 أزرق أنيق
-            marginRight: 4,
-          }}
-        ></div>
-      )}
-      <span style={{ fontWeight: hasPermissions ? 500 : 400 }}>
-        {rowData.name}
-      </span>
-    </div>
-  );
+ return (
+  <div className="flex items-center gap-2">
+    <span
+      style={{
+        fontWeight: hasPermissions ? 500 : 400,
+        color: hasPermissions ? "#1976d2" : "inherit", // 🔵 أزرق للنص
+      }}
+    >
+      {rowData.name}
+    </span>
+  </div>
+);
+
 },
 
       width: 250,

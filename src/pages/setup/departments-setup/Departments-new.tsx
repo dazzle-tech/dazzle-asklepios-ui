@@ -318,25 +318,14 @@ const Departments = () => {
         title="Medical Sheets"
         size="lg"
         style={{
-          cursor: [
-            '5673990729647001',
-            '5673990729647002',
-            '5673990729647005',
-            '5673990729647004'
-          ].includes(rowData?.departmentType)
-            ? 'pointer'
-            : 'not-allowed',
+       
           color: 'var(--primary-gray)'
         }}
         onClick={() => {
-          if (
-            ['5673990729647001', '5673990729647002', '5673990729647005', '5673990729647004'].includes(
-              rowData?.departmentType
-            )
-          ) {
+       
             setDepartment(rowData);
             setOpenScreensPopup(true);
-          }
+          
         }}
       />
     </div>
