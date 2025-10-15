@@ -18,6 +18,7 @@ import UpcomingAppointmentCard from './UpcomingAppointmentCard';
 import MyPatientAppointmentCard from './MyPatientAppointmentCard';
 import EmergencyContactAppointmentModal from './EmergencyContactAppointmentModal';
 import PatientEMR from '@/pages/patient/patient-emr';
+import { Col, Row } from 'rsuite';
 
 const MyAppointmentScreen = () => {
   const [showAllAppointmentsModal, setShowAllAppointmentsModal] = useState(false);
@@ -26,6 +27,7 @@ const MyAppointmentScreen = () => {
 
   return (
     <>
+    <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
       <div className="count-div-on-top-of-page">
         <DetailsCard
           title="Today's Appointments"
@@ -60,7 +62,9 @@ const MyAppointmentScreen = () => {
           width={'16vw'}
         />
       </div>
-      <div className="main-appointment-screen-handle-container">
+      <Row gutter={15} className="d container-of-blood-card-questions">
+        <Col md={12}>
+        <Row>
         <SectionContainer
           title={
             <h6 className="h3-appointment-screen-handle">
@@ -82,8 +86,8 @@ const MyAppointmentScreen = () => {
             </div>
           }
         />
-
-        <div className="middle-part-appointment-screen-handle">
+         </Row>
+         <Row>
           <SectionContainer
             title={
               <>
@@ -99,7 +103,10 @@ const MyAppointmentScreen = () => {
               </div>
             }
           />
-          <div className="upcoming-appointment-screen-handle">
+          </Row>
+          </Col>
+           <Col md={12}>
+           <Row>
             <SectionContainer
               title={
                 <>
@@ -115,9 +122,10 @@ const MyAppointmentScreen = () => {
                 </div>
               }
             />
-          </div>
-        </div>
-
+            </Row>
+        </Col>
+      </Row>
+      <Row>
         <SectionContainer
           title={
             <>
@@ -133,13 +141,13 @@ const MyAppointmentScreen = () => {
             </div>
           }
         />
+        </Row>
       </div>
-
       <MyModal
         open={showAllAppointmentsModal}
         setOpen={setShowAllAppointmentsModal}
         title="All Appointments"
-        size="70vw"
+        size="90vw"
         bodyheight="83vh"
         content={<AllAppointmentModal />}
         hideBack={true}

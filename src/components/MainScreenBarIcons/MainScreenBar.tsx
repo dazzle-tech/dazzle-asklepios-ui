@@ -468,8 +468,8 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         open={showAppointmentsModal}
         setOpen={setShowAppointmentsModal}
         title="My Appointments"
-        size="90vw"
-        bodyheight="83vh"
+        size="70vw"
+        bodyheight="78vh"
         content={<MyAppointmentScreen />}
         hideBack={true}
         actionButtonLabel="Save"
