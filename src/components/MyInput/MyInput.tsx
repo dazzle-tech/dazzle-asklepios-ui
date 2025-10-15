@@ -138,7 +138,9 @@ const MyInput = ({
 
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
   const handleValueChange = value => {
-    setRecord({ ...record, [fieldName]: value });
+    if (setRecord && typeof setRecord === 'function') {
+      setRecord({ ...record, [fieldName]: value });
+    }
   };
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
@@ -174,7 +176,9 @@ const MyInput = ({
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
       }
-      setRecord({ ...record, [fieldName]: transcript });
+      if (setRecord && typeof setRecord === 'function') {
+        setRecord({ ...record, [fieldName]: transcript });
+      }
     };
 
     recognition.start();
@@ -306,8 +310,14 @@ const MyInput = ({
                 const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
                 if (childModal) return childModal;
                 
-                // Default to any modal or document body
-                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+                // Check for any modal body - look for the last one (most recent modal)
+                const allModalBodies = document.querySelectorAll('.rs-modal-body');
+                if (allModalBodies.length > 0) {
+                  return allModalBodies[allModalBodies.length - 1] as HTMLElement;
+                }
+                
+                // Default to document body
+                return document.body;
               })
             }
             placement={props.placement ?? 'bottomStart'}
@@ -326,7 +336,6 @@ const MyInput = ({
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             loading={props?.loading ?? false}
-            open={isSelectOpen}
             onOpen={() => setIsSelectOpen(true)}
             onClose={() => setIsSelectOpen(false)}
             virtualized={props?.virtualized ?? true}
@@ -352,8 +361,14 @@ const MyInput = ({
                 const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
                 if (childModal) return childModal;
                 
-                // Default to any modal or document body
-                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+                // Check for any modal body - look for the last one (most recent modal)
+                const allModalBodies = document.querySelectorAll('.rs-modal-body');
+                if (allModalBodies.length > 0) {
+                  return allModalBodies[allModalBodies.length - 1] as HTMLElement;
+                }
+                
+                // Default to document body
+                return document.body;
               })
             }
             placement={props.placement ?? 'bottomStart'}
@@ -370,7 +385,6 @@ const MyInput = ({
             searchBy={props.searchBy} // Optional: Search function for TagPicker
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
-            open={isMultyPickerOpen}
             onOpen={() => setIsMultyPickerOpen(true)}
             onClose={() => setIsMultyPickerOpen(false)}
           />
@@ -393,8 +407,14 @@ const MyInput = ({
                 const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
                 if (childModal) return childModal;
                 
-                // Default to any modal or document body
-                return (document.querySelector('.rs-modal') as HTMLElement) || document.body;
+                // Check for any modal body - look for the last one (most recent modal)
+                const allModalBodies = document.querySelectorAll('.rs-modal-body');
+                if (allModalBodies.length > 0) {
+                  return allModalBodies[allModalBodies.length - 1] as HTMLElement;
+                }
+                
+                // Default to document body
+                return document.body;
               })
             }
             placement={props.placement ?? 'bottomStart'}
@@ -410,7 +430,6 @@ const MyInput = ({
             searchBy={props.searchBy} // Optional: Search function for checkPicker
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
-            open={isCheckPickerOpen}
             onOpen={() => setIsCheckPickerOpen(true)}
             onClose={() => setIsCheckPickerOpen(false)}
           />
