@@ -56,8 +56,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   const [width, setWidth] = useState<number>(window.innerWidth); // window width
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
-  console.log('langs');
-  console.log(langLovQueryResponse);
   const navigate = useNavigate();
 
   // container to choose action from more menu
