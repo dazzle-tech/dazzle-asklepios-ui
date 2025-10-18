@@ -11,7 +11,6 @@ import {
   faPrint,
   faBoxOpen,
   faListCheck,
-  faFile
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
@@ -66,6 +65,8 @@ const EncounterList = () => {
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
   const [encounterStatus, setEncounterStatus] = useState<{ key: string }>({ key: '' });
+  const [completesVisits, setCompletedVisits] = useState<number>(0);
+  const [activeVisits, setActiveVisits] = useState<number>(0);
 
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
@@ -105,10 +106,42 @@ const EncounterList = () => {
     isLoading
   } = useGetEncountersQuery(listRequest);
 
+
+   const [listRequestForToday, setListRequestForToday] = useState<ListRequest>({
+    ...initialListRequest,
+    ignore: true,
+    filters: [
+      {
+        fieldName: 'resource_type_lkey',
+        operator: 'in',
+        value: ['2039534205961578', '2039620472612029', '2039516279378421']
+          .map(key => `(${key})`)
+          .join(' ')
+      },
+      {
+       fieldName:'planned_start_date',
+        operator: 'between',
+        value:  formatDate(new Date()) + '_' + formatDate(new Date()),
+      }
+    ]
+  });
+  
+  const {
+    data: encounterListForTodayResponse,
+  } = useGetEncountersQuery(listRequestForToday);
+ 
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: new Date()
   });
+
+   const pageIndex = listRequest.pageNumber - 1;
+
+  // how many rows per page:
+  const rowsPerPage = listRequest.pageSize;
+
+  // total number of items in the backend:
+  const totalCount = encounterListResponse?.extraNumeric ?? 0;
 
   //Functions
   const isSelected = rowData => {
@@ -116,11 +149,6 @@ const EncounterList = () => {
       return 'selected-row';
     } else return '';
   };
-
-  useEffect(() => {
-    handleManualSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listRequest, dateFilter.fromDate, dateFilter.toDate]);
 
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
@@ -164,6 +192,19 @@ const EncounterList = () => {
         ]
       });
     }
+  };
+
+  const handleCountForToday = () => {
+      const formattedFromDate = formatDate(new Date());
+      const formattedToDate = formatDate(new Date());
+      setListRequestForToday(
+        addFilterToListRequest(
+          'planned_start_date',
+          'between',
+          formattedFromDate + '_' + formattedToDate,
+          listRequestForToday
+        )
+      );
   };
 
   const handleGoToVisit = async (encounterData, patientData) => {
@@ -216,38 +257,26 @@ const EncounterList = () => {
         setOpen(false);
       }
     } catch (error) {
-      console.error('Encounter completion error:', error);
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
 
-  //useEffect
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
+    // handler when the user clicks a new page number:
+  const handlePageChange = (_: unknown, newPage: number) => {
+    // MUI gives you a zero-based page, so add 1 for your API
+    setManualSearchTriggered(true);
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
 
-  useEffect(() => {
-    if (!isFetching && manualSearchTriggered) {
-      setManualSearchTriggered(false);
-    }
-  }, [isFetching, manualSearchTriggered]);
-
-  useEffect(() => {
-    // init list
-    handleManualSearch();
-  }, []);
-
-  useEffect(() => {
-    if (isLoading || (manualSearchTriggered && isFetching)) {
-      dispatch(showSystemLoader());
-    } else if (isFetching && isLoading) {
-      dispatch(hideSystemLoader());
-    }
-    return () => {
-      dispatch(hideSystemLoader());
-    };
-  }, [isLoading, isFetching, dispatch, manualSearchTriggered]);
+  // handler when the user chooses a different rows-per-page:
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setManualSearchTriggered(true);
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1 // reset to first page
+    });
+  };
 
   const tableColumns = [
     {
@@ -459,7 +488,6 @@ const EncounterList = () => {
                   size="small"
                   backgroundColor="light-blue"
                   onClick={() => {
-                    const patientData = rowData.patientObject;
                     setLocalEncounter(rowData);
                   }}
                 >
@@ -473,31 +501,6 @@ const EncounterList = () => {
       expandable: false
     }
   ];
-
-  const pageIndex = listRequest.pageNumber - 1;
-
-  // how many rows per page:
-  const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
-  const totalCount = encounterListResponse?.extraNumeric ?? 0;
-
-  // handler when the user clicks a new page number:
-  const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-    setManualSearchTriggered(true);
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-
-  // handler when the user chooses a different rows-per-page:
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setManualSearchTriggered(true);
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
-  };
 
   const filters = () => {
     return (
@@ -638,12 +641,64 @@ const EncounterList = () => {
     );
   };
 
+
+  //useEffect
+  useEffect(() => {
+    handleCountForToday();
+    let count = 0;
+    if(encounterListForTodayResponse?.object)
+    for(const visit of encounterListForTodayResponse?.object){
+     if(visit?.encounterStatusLvalue?.key === "91109811181900"){
+      count++;
+     }
+    }
+    setCompletedVisits(count);
+  }, [encounterListForTodayResponse]);
+
+  useEffect(() => {
+    setActiveVisits((encounterListForTodayResponse?.object?.length - completesVisits) ? (encounterListForTodayResponse?.object?.length - completesVisits) : 0);
+  }, [completesVisits]);
+
+  useEffect(() => {
+    handleManualSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ dateFilter.fromDate, dateFilter.toDate]);
+
+  useEffect(() => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(' '));
+  }, [location.pathname, dispatch, isLoading]);
+
+  useEffect(() => {
+    if (!isFetching && manualSearchTriggered) {
+      setManualSearchTriggered(false);
+    }
+  }, [isFetching, manualSearchTriggered]);
+
+  useEffect(() => {
+    // init list
+    handleManualSearch();
+  }, []);
+
+  useEffect(() => {
+    if (isLoading || (manualSearchTriggered && isFetching)) {
+      dispatch(showSystemLoader());
+    } else if (isFetching && isLoading) {
+      dispatch(hideSystemLoader());
+    }
+    return () => {
+      dispatch(hideSystemLoader());
+    };
+  }, [isLoading, isFetching, dispatch, manualSearchTriggered]);
+
+
+
   return (
     <>
       <div className="count-div-on-top-of-page-visit-list">
         <DetailsCard
           title="Total Patients"
-          number={4}
+          number={encounterListForTodayResponse?.object?.length}
           color="--primary-blue"
           backgroundClassName="result-ready-section"
           position="center"
@@ -651,7 +706,7 @@ const EncounterList = () => {
         />
         <DetailsCard
           title="Active Cases"
-          number={3}
+          number={activeVisits}
           color="--green-600"
           backgroundClassName="sample-collected-section"
           position="center"
@@ -659,7 +714,7 @@ const EncounterList = () => {
         />
         <DetailsCard
           title="Completed"
-          number={1}
+          number={completesVisits}
           color="--primary-purple "
           backgroundClassName="new-section"
           position="center"
@@ -718,9 +773,6 @@ const EncounterList = () => {
           size="90vw"
           content={<RefillModalComponent />}
           actionButtonLabel="Save"
-          actionButtonFunction={() => {
-            console.log('Save refill clicked');
-          }}
           cancelButtonLabel="Close"
         />
 
@@ -759,9 +811,6 @@ const EncounterList = () => {
           size="90vw"
           content={<PhysicianOrderSummaryModal />}
           actionButtonLabel="Save"
-          actionButtonFunction={() => {
-            console.log('Save task clicked');
-          }}
           cancelButtonLabel="Close"
         />
 
@@ -799,3 +848,5 @@ const EncounterList = () => {
 };
 
 export default EncounterList;
+
+
