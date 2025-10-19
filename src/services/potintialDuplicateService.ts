@@ -42,7 +42,7 @@ export const potintialService = createApi({
       }),
     }),
 
-    // ✅ Endpoint جديدة بناءً على الـ Controller
+   
     getAvailableForRole: builder.query({
       query: (roleId: number) => `/api/setup/duplication-candidates/available-for-role/${roleId}`,
     }),

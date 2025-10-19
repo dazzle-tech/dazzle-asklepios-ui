@@ -28,13 +28,22 @@ import {
 import { newCandidate } from '@/types/model-types-constructor-new';
 import { Candidate } from '@/types/model-types-new';
 import MyInput from '@/components/MyInput';
+import { useEnumByName } from '@/services/enumsApi';
 
 const PotintialDuplicate = () => {
   const dispatch = useAppDispatch();
   const [popupOpen, setPopupOpen] = useState(false);
   const [OpenFacilityModal, setOpenFacilityModal] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const [candidate, setCandidate] = useState<Candidate>({ ...newCandidate });
+  const fieldsEnum = useEnumByName("DuplicationField");
+
+  const defaultFields: Record<string, boolean> = fieldsEnum.reduce((acc, key) => {
+    acc[key] = false;
+    return acc;
+  }, {} as Record<string, boolean>);
+  console.log("def", defaultFields);
+  const [candidate, setCandidate] = useState<Candidate>({ ...newCandidate, fields: defaultFields });
+  console.log("candidate", candidate)
 
   const [openConfirmDeleteRole, setOpenConfirmDeleteRole] = useState<boolean>(false);
   const [stateOfDeleteRole, setStateOfDeleteRole] = useState<string>('delete');
@@ -45,10 +54,10 @@ const PotintialDuplicate = () => {
   const [createCandidate] = useCreateDuplicationCandidateMutation();
   const [deactivateCandidate] = useDeactivateDuplicationCandidateMutation();
   const [reactivateCandidate] = useReactivateDuplicationCandidateMutation();
-  const { data:facility } = useGetAvailableForRoleQuery(candidate.id ,{skip:!candidate.id} );
- console.log("Facilites",facility)
+  const { data: facility } = useGetAvailableForRoleQuery(candidate.id, { skip: !candidate.id });
+  console.log("Facilites", facility)
 
- const [searchTerm, setSearchTerm] = useState({search:""});
+  const [searchTerm, setSearchTerm] = useState({ search: "" });
   const { data: candidateList, isLoading, refetch } = useGetDuplicationCandidatesQuery(searchTerm?.search || undefined);
 
   // Header page setUp
@@ -110,40 +119,30 @@ const PotintialDuplicate = () => {
   );
 
   // Table columns
+  const duplicationFields = useEnumByName("DuplicationField") || [];
+
+  const dynamicFieldColumns = duplicationFields.map(field => ({
+    key: field,
+    title: <Translate>{field.replace(/_/g, ' ')}</Translate>,
+    render: rowData => (rowData.fields?.[field] ? 'True' : 'False')
+  }));
+
   const tableColumns = [
     { key: 'role', title: <Translate>Role</Translate>, render: rowData => rowData.role },
-    {
-      key: 'dob',
-      title: <Translate>Date Of Birth</Translate>,
-      render: rowData => (rowData.dob ? 'True' : 'False')
-    },
-    {
-      key: 'lastName',
-      title: <Translate>Last Name</Translate>,
-      render: rowData => (rowData.lastName ? 'True' : 'False')
-    },
-    {
-      key: 'mobileNumber',
-      title: <Translate>Mobile Number</Translate>,
-      render: rowData => (rowData.mobileNumber ? 'True' : 'False')
-    },
-    {
-      key: 'gender',
-      title: <Translate>Sex At Birth</Translate>,
-      render: rowData => (rowData.gender ? 'True' : 'False')
-    },
+    ...dynamicFieldColumns,
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      render: rowData => (rowData.isActive ? 'active' : 'inActive')
+      render: rowData => (rowData.isActive ? 'active' : 'inactive')
     },
     {
       key: 'icons',
-      title: <Translate></Translate>,
+      title: '',
       flexGrow: 3,
       render: rowData => iconsForActions(rowData)
     }
   ];
+
 
   // Pagination values
   const [pageIndex, setPageIndex] = useState(0);
@@ -201,18 +200,20 @@ const PotintialDuplicate = () => {
 
   // handle save role
   const handleSave = async () => {
+    console.log("Candidate in Save", candidate)
     setPopupOpen(false);
     if (!candidate.id) {
       try {
+
         await createCandidate(candidate).unwrap().then(() => {
           refetch();
         });
-        dispatch(notify({ msg: 'The Role has been saved successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'The Role has been created successfully', sev: 'success' }));
       } catch (error) {
         if (error.data && error.data.message) {
           dispatch(notify(error.data.message));
         } else {
-          dispatch(notify('An unexpected error occurred'));
+          dispatch(notify({ msg: error, sev: "error" }));
         }
       }
     } else {
@@ -220,25 +221,20 @@ const PotintialDuplicate = () => {
         await updateCandidate({
           id: candidate.id,
           data: {
-            dob: candidate.dob,
-            lastName: candidate.lastName,
-            documentNo: candidate.documentNo,
-            mobileNumber: candidate.mobileNumber,
-            gender: candidate.gender,
+            fields: candidate.fields,
             isActive: candidate.isActive,
-            facilityId: candidate.facilityId
           }
-        })
-          .unwrap()
+        }).unwrap()
+
           .then(() => {
             refetch();
           });
-        dispatch(notify({ msg: 'The Role has been saved successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'The Role has been updated successfully', sev: 'success' }));
       } catch (error) {
         if (error.data && error.data.message) {
           dispatch(notify(error.data.message));
         } else {
-          dispatch(notify('An unexpected error occurred'));
+          dispatch(notify({ msg: error, sev: "error" }));
         }
       }
     }
@@ -299,10 +295,10 @@ const PotintialDuplicate = () => {
             setRecord={setSearchTerm}
             placeholder="Search by Role"
           />
-        
+
         </Form>
 
-      
+
       </>
     );
   };
@@ -319,7 +315,7 @@ const PotintialDuplicate = () => {
         </MyButton>
       </div>
       <MyTable
-      filters={filters()}
+        filters={filters()}
         height={450}
         data={paginatedData ?? []}
         // loading={isFetching}

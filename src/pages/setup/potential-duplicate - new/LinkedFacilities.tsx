@@ -10,47 +10,16 @@ import {
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { useGetAvailableForRoleQuery } from '@/services/potintialDuplicateService';
 
 const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filterLogic: 'or',
-    filters: [
-      {
-        fieldName: 'rool_key',
-        operator: 'isNull',
-        value: true
-      },
-      {
-        fieldName: 'rool_key',
-        operator: 'match',
-        value: Candidate?.key
-      }
-    ]
-  });
+  
   // Fetch Facility list response
-   const { data: facilityListResponse, refetch: fetchFaci, isFetching } = useGetFacilitiesQuery(listRequest);
+   const { data: facilityListResponse, refetch: fetchFaci, isFetching } = useGetAvailableForRoleQuery(Candidate?.id ,{skip:!Candidate?.id});
    // save facility
    const [saveFacility] = useSaveFacilityMutation();
-  useEffect(() => {
-    setListRequest({
-      ...initialListRequest,
-      filterLogic: 'or',
-      filters: [
-        {
-          fieldName: 'rool_key',
-          operator: 'isNull',
-          value: true
-        },
-        {
-          fieldName: 'rool_key',
-          operator: 'match',
-          value: Candidate?.key
-        }
-      ]
-    });
-  }, [Candidate]);
+  
  
   //Table columns
   const tableColumns = [
@@ -60,16 +29,16 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
       render: rowData => (
         <Checkbox
           key={rowData.id}
-          checked={rowData.roolKey !== null ? true : false}
+          checked={rowData.roolId !== null ? true : false}
           onChange={(value, checked) => {
             if (checked) {
-              saveFacility({ ...rowData, roolKey: Candidate.key })
+              saveFacility({ ...rowData, roolId: Candidate.id })
                 .unwrap()
                 .then(() => {
                   fetchFaci();
                 });
             } else {
-              saveFacility({ ...rowData, roolKey: null })
+              saveFacility({ ...rowData, roolId: null })
                 .unwrap()
                 .then(() => {
                   fetchFaci();
@@ -79,19 +48,15 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
         />
       )
     },
+   
     {
-      key: 'id',
-      title: <Translate>ID</Translate>,
-      render: rowData => rowData.facilityId
-    },
-    {
-      key: 'facilityName',
+      key: 'name',
       title: <Translate>Name</Translate>
     },
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      render: rowData => rowData.facilityType
+      render: rowData => rowData.type
     }
   ];
 
@@ -103,7 +68,7 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
           <Form fluid>
             <MyTable
               height={450}
-              data={facilityListResponse?.object ?? []}
+              data={facilityListResponse ?? []}
               loading={isFetching}
               columns={tableColumns}
             />
