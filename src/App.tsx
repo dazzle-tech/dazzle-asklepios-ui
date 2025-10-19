@@ -177,6 +177,7 @@ import RoleManegment from './pages/setup/role-managemen';
 import { useGetMenuQuery } from './services/security/UserRoleService';
 import CallOverlay from './components/Overlay/CallOverlay';
 import LanguagesSetup from './pages/setup/language-setup/Language';
+import Pediatric from './pages/encounter/encounter-component/pediatric';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -424,6 +425,7 @@ const App = () => {
                 <Route path="operation-request" element={<OperationRequest />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
+                <Route path="pediatric" element={<Pediatric />} />
                 <Route
                   path="multidisciplinary-team-notes"
                   element={<MultidisciplinaryTeamNotes />}
