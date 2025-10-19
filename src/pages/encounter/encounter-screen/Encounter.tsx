@@ -14,6 +14,7 @@ import { GiKidneys } from 'react-icons/gi';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faLeaf } from '@fortawesome/free-solid-svg-icons';
 import { FaArrowLeft } from 'react-icons/fa6';
+import { faBaby } from '@fortawesome/free-solid-svg-icons';
 import {
   faBedPulse,
   faCheckDouble,
@@ -326,10 +327,17 @@ const Encounter = () => {
     '/encounter/continuous-observation': 'Continuous Observation',
     '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment',
     '/encounter/sliding-scale ': 'Sliding Scale',
-    '/encounter/icu': 'ICU'
+    '/encounter/icu': 'ICU',
+    '/encounter/pediatric': 'Pediatric'
   };
 
   const menuItems = [
+    {
+      key: 'pediatric',
+      label: 'Pediatric',
+      icon: <FontAwesomeIcon icon={faBaby} className="icon" />,
+      path: 'pediatric'
+    },
     {
       key: 'icu',
       label: 'ICU',
