@@ -1,20 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import MyInput from '@/components/MyInput';
-import './styles.less'
+import { Form } from 'rsuite';
+import './styles.less';
+import { FaSearch } from 'react-icons/fa';
+
 interface SearchPatientCriteriaProps {
   record: any;
   setRecord: (value: any) => void;
+  onSearchClick?: () => void;
 }
 
-const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({ record, setRecord }) => {
+const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({ record, setRecord, onSearchClick }) => {
+
+useEffect(() => {
+  if (record?.searchByField === undefined) {
+    setRecord({ ...record, searchByField: 'fullName' });
+  }
+}, []);
+
   return (
     <div className='search-patient-criteria-handle-position-row'>
+        <div style={{marginTop:'0.9vw'}}>
       <MyInput
         width="9vw"
-        fieldLabel="Select Search Criteria"
+        column
         fieldType="select"
         fieldName="searchByField"
-        column
+        showLabel={false}
         record={record}
         setRecord={setRecord}
         selectData={[
@@ -27,17 +39,25 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({ record, s
         ]}
         selectDataLabel="label"
         selectDataValue="value"
-      />
-
+      /></div>
+        <div style={{marginTop:'0.9vw'}}>
       <MyInput
         width="100%"
         column
         fieldLabel="Search Patients"
         fieldType={record?.searchByField === 'dob' ? 'date' : 'text'}
         fieldName="patientName"
+        placeholder="Search Patients"
+        showLabel={false}
+        rightAddon={
+          <FaSearch
+            className="icons-style-2"
+            onClick={onSearchClick}
+          />
+        }
         record={record}
         setRecord={setRecord}
-      />
+      /></div>
     </div>
   );
 };

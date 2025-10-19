@@ -4,7 +4,7 @@ import { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
 import { Form } from 'rsuite';
 import MyInput from '../MyInput';
-
+import SearchPatientCriteria from '../SearchPatientCriteria';
 
 
 const samplePatientsData = [
@@ -56,33 +56,7 @@ const [record, setRecord] = useState<any>({});
 
 const filters = (
     <Form fluid className="dissss">
-      <MyInput
-        width="100%"
-        fieldLabel="Select Search Criteria"
-        fieldType="select"
-        fieldName="searchByField"
-        record={record}
-        setRecord={setRecord}
-        selectData={[
-          { label: 'MRN', value: 'patientMrn' },
-          { label: 'Document Number', value: 'documentNo' },
-          { label: 'Full Name', value: 'fullName' },
-          { label: 'Archiving Number', value: 'archivingNumber' },
-          { label: 'Primary Phone Number', value: 'phoneNumber' },
-          { label: 'Date of Birth', value: 'dob' }
-        ]}
-        selectDataLabel="label"
-        selectDataValue="value"
-      />
-
-      <MyInput
-        width="100%"
-        fieldLabel="Search Patients"
-        fieldType="text"
-        fieldName="patientName"
-        record={record}
-        setRecord={setRecord}
-      />
+        <SearchPatientCriteria record={record} setRecord={setRecord}/>
     </Form>
   );
 

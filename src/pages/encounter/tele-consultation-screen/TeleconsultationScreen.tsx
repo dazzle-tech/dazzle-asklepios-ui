@@ -46,6 +46,7 @@ import CallLog from './CallLog';
 import Translate from '@/components/Translate';
 import AdvancedModal from '@/components/AdvancedModal';
 import MyTable from '@/components/MyTable';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 // Define request type
 
@@ -205,40 +206,17 @@ const TeleconsultationRequests = () => {
 
   const contents = (
     <div className="advanced-filters">
-      <Form fluid className="dissss">
-        <MyInput
-          width="100%"
-          fieldLabel="Select Search Criteria"
-          fieldType="select"
-          fieldName="searchByField"
-          record={record}
-          setRecord={setRecord}
-          selectData={[
-            { label: 'MRN', value: 'patientMrn' },
-            { label: 'Document Number', value: 'documentNo' },
-            { label: 'Full Name', value: 'fullName' },
-            { label: 'Archiving Number', value: 'archivingNumber' },
-            { label: 'Primary Phone Number', value: 'phoneNumber' },
-            { label: 'Date of Birth', value: 'dob' }
-          ]}
-          selectDataLabel="label"
-          selectDataValue="value"
-        />
+      <Form fluid layout='inline' className="dissss">
 
-        <MyInput
-          width="100%"
-          fieldLabel="Search Patients"
-          fieldType="text"
-          fieldName="patientName"
-          record={record}
-          setRecord={setRecord}
-        />
+      <SearchPatientCriteria record={record} setRecord={setRecord}/>
+
 
         <MyInput
           width="100%"
           fieldLabel="Priority"
           fieldType="select"
           fieldName="priority"
+          column
           record={record}
           setRecord={setRecord}
           selectData={[
@@ -256,6 +234,7 @@ const TeleconsultationRequests = () => {
           fieldLabel="Status"
           fieldType="select"
           fieldName="status"
+          column
           record={record}
           setRecord={setRecord}
           selectData={[

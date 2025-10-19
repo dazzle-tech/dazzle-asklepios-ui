@@ -26,7 +26,7 @@ import InsuranceModal from './InsuranceModal';
 
 import SpecificCoverageModa from './SpecificCoverageModa';
 import ReloadIcon from '@rsuite/icons/Reload';
-
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import { saveAs } from 'file-saver';
 import {
   newApAttachment,
@@ -193,14 +193,7 @@ const PatientProfile = () => {
   //Administrative Warning
   const [patientAdministrativeWarnings, setPatientAdministrativeWarnings] =
     useState<ApPatientAdministrativeWarnings>({ ...newApPatientAdministrativeWarnings });
-  const searchCriteriaOptions = [
-    { label: 'MRN', value: 'patientMrn' },
-    { label: 'Document Number', value: 'documentNo' },
-    { label: 'Full Name', value: 'fullName' },
-    { label: 'Archiving Number', value: 'archivingNumber' },
-    { label: 'Primary Phone Number', value: 'phoneNumber' },
-    { label: 'Date of Birth', value: 'dob' }
-  ];
+
 
   const {
     data: patientListResponse,
@@ -1026,30 +1019,19 @@ const isSelectedRelation = rowData => {
     return (
       <Panel>
         <ButtonToolbar>
-          <SelectPicker
-            label="Search Criteria"
-            data={searchCriteriaOptions}
-            onChange={e => {
-              setSelectedCriterion(e);
-            }}
-            style={{ width: 250 }}
-          />
-
-          <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
-            <Input
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  search(target);
-                }
-              }}
-              placeholder={'Search Patients '}
-              value={searchKeyword}
-              onChange={e => setSearchKeyword(e)}
-            />
-            <InputGroup.Button onClick={() => search(target)}>
-              <SearchIcon />
-            </InputGroup.Button>
-          </InputGroup>
+      <Form fluid layout='inline'>
+        <SearchPatientCriteria
+        record={{
+          searchByField: selectedCriterion || 'fullName',
+          patientName: searchKeyword || '',
+        }}
+        setRecord={(newRecord) => {
+          setSelectedCriterion(newRecord?.searchByField);
+          setSearchKeyword(newRecord?.patientName);
+        }}
+        onSearchClick={() => search(target)}
+      />
+      </Form>
         </ButtonToolbar>
       </Panel>
     );

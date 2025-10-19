@@ -9,18 +9,12 @@ import { useGetPatientsQuery } from '@/services/patientService';
 import SearchIcon from '@rsuite/icons/Search';
 import { fromCamelCaseToDBName } from '@/utils';
 import { Box, Skeleton } from '@mui/material';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+
 const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, searchResultVisible, setSearchResultVisible, patientSearchTarget, setPatientSearchTarget }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [selectedCriterion, setSelectedCriterion] = useState('fullName');
-    // Define the available search criteria options
-    const searchCriteriaOptions = [
-        { label: 'MRN', value: 'patientMrn' },
-        { label: 'Document Number', value: 'documentNo' },
-        { label: 'Full Name', value: 'fullName' },
-        { label: 'Archiving Number', value: 'archivingNumber' },
-        { label: 'Primary Phone Number', value: 'phoneNumber' },
-        { label: 'Date of Birth', value: 'dob' }
-    ];
+    
     // Define state to store the initial list request, ignoring the search if the keyword is too short
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -44,47 +38,19 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
     // Function to render the patient search bar based on the target (primary or relation)
     const conjurePatientSearchBar = target => {
         return (
-            <Form fluid className='patient-search-fields-container'>
-                <MyInput
-                    fieldType="select"
-                    fieldName="searchCriteria"
-                    selectData={searchCriteriaOptions}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    showLabel={false}
-                    record={{ searchCriteria: selectedCriterion }}
-                    setRecord={record => {
-                        const newValue = record?.searchCriteria;
-                        setSelectedCriterion(newValue);
-                    }}
-                    placeholder="Select Search Criteria"
-                    searchable={false}
-                    width="250px"
-                    height={40}
+            <Form layout='inline' fluid className='patient-search-fields-container'>
+            <SearchPatientCriteria
+                record={{
+                    searchByField: selectedCriterion || 'fullName',
+                    patientName: searchKeyword || '',
+                }}
+                setRecord={(newRecord) => {
+                    setSelectedCriterion(newRecord?.searchByField);
+                    setSearchKeyword(newRecord?.patientName);
+                }}
+                onSearchClick={() => search(target)}
                 />
-                <InputGroup className='family-member-input-search' inside>
-                    <Form fluid style={{ width: '100%' }}>
-                        <InputGroup inside>
-                            <Input
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        if (target === 'relation') {
-                                            search(target);
-                                        }
-                                    }
-                                }}
-                                placeholder={'Search Patients'}
-                                value={searchKeyword}
-                                onChange={e => setSearchKeyword(e)}
-                                width="auto"
-                            />
-                            <InputGroup.Button onClick={() => search(target)}>
-                                <SearchIcon />
-                            </InputGroup.Button>
-                        </InputGroup>
-                    </Form>
-                </InputGroup>
+
             </Form>
         );
     };

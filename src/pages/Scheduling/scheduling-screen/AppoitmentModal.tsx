@@ -44,7 +44,7 @@ import {
 import './AppoitmentModal.less';
 import SliceBox from './SliceBox';
 import SectionContainer from '@/components/SectionsoContainer';
-
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
 const AppointmentModal = ({
@@ -437,49 +437,19 @@ const AppointmentModal = ({
               alignItems: 'flex-end'
             }}
           >
-            {/* Search Criteria */}
-            <div style={{ marginBottom: '3px' }}>
-              <MyInput
-                width={150}
-                height={34}
-                vr={validationResult}
-                column
-                fieldLabel="Search Criteria"
-                fieldType="select"
-                fieldName="value"
-                selectData={searchCriteriaOptions ?? []}
-                searchable={false}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={selectedCriterion}
-                setRecord={setSelectedCriterion}
-              />
-            </div>
-            {/* Search Patients */}
-            <div style={{ flex: 1 }} className="input-wrapper">
-              <Form.Group controlId="search">
-                <Form.ControlLabel>Search Patients</Form.ControlLabel>
-                <InputGroup inside style={{ height: '38px', width: '100%', direction: 'ltr' }}>
-                  <Input
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        search(target);
-                      }
-                    }}
-                    placeholder="Search Patients"
-                    value={searchKeyword}
-                    onChange={e => setSearchKeyword(e)}
-                  />
-                  <InputGroup.Button
-                    style={{ marginTop: '1px' }}
-                    disabled={!selectedCriterion}
-                    onClick={() => search(target)}
-                  >
-                    <SearchIcon />
-                  </InputGroup.Button>
-                </InputGroup>
-              </Form.Group>
-            </div>
+        {/* Search Criteria + Search Patients */}
+        <SearchPatientCriteria
+          record={{
+            searchByField: selectedCriterion || 'fullName',
+            patientName: searchKeyword || '',
+          }}
+          setRecord={(newRecord) => {
+            setSelectedCriterion(newRecord?.searchByField);
+            setSearchKeyword(newRecord?.patientName);
+          }}
+          onSearchClick={() => search(target)}
+        />
+
           </div>
         </Form>
 
