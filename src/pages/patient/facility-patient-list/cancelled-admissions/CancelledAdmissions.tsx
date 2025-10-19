@@ -4,7 +4,16 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import '../styles.less';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetDepartmentsQuery } from '@/services/setupService';
 import MyButton from '@/components/MyButton/MyButton';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { ApPatient, ApPatientInsurance } from '@/types/model-types';
+import { newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
+
+
+
 const dummyRow = {
   fullName: 'Jane Smith',
   patientMrn: 'MRN345678',
@@ -69,6 +78,16 @@ const CancelledAdmissions = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedDepartments, setSelectedDepartments] = useState<any[]>([]);
+  const [searchPatient, setSearchPatient] = useState<ApPatient>({
+    ...newApPatient,
+    encounterTypeLkey: '',
+    bedStatusLkey: ''
+  });
+
+
+  const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+  const { data: departmentsResponse } = useGetDepartmentsQuery(initialListRequest);
 
   const data = [dummyRow];
   const sorted = [...data].sort((a, b) => {
@@ -79,12 +98,43 @@ const CancelledAdmissions = () => {
   });
   const paginated = sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+const content = (
+            <div className="advanced-filters">
+              <Form fluid className="dissss">
+                <MyInput
+            fieldLabel="Select Department"
+            fieldType="checkPicker"
+            selectData={departmentsResponse?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            placeholder=" "
+            fieldName="selectedDepartments"
+            record={{ selectedDepartments }}
+            setRecord={value => setSelectedDepartments(value.selectedDepartments)}
+            searchable={false}
+          />
+          <MyInput
+            fieldLabel="Encounter Type"
+            fieldType="select"
+            fieldName="encounterTypeLkey"
+            selectData={encounterTypeLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={searchPatient}
+            setRecord={setSearchPatient}
+            searchable={false}
+            placeholder=" "
+          />
+                </Form></div>);
+
+
 const filterss = (<>
-<Form fluid >
+<Form fluid layout='inline'>
         <div className='table-filters-handle-positions'>   
         <MyInput
           fieldLabel="Cancelled From"
           fieldType="date"
+          column
           fieldName="from"
           record={filters}
           setRecord={setFilters}
@@ -93,51 +143,18 @@ const filterss = (<>
         <MyInput
           fieldLabel="Cancelled To"
           fieldType="date"
+          column
           fieldName="to"
           width="10vw"
           record={filters}
           setRecord={setFilters}
         />
-          <MyInput
-          width="10vw"
-          fieldLabel="Select Filter"
-          fieldName="selectfilter"
-          fieldType="select"
-          selectData={[
-            { key: 'MRN', value: 'MRN' },
-            { key: 'Document Number', value: 'Document Number' },
-            { key: 'Full Name', value: 'Full Name' },
-            { key: 'Archiving Number', value: 'Archiving Number' },
-            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-            { key: 'Date of Birth', value: 'Date of Birth' }
-          ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={filters}
-          setRecord={setFilters}
-        />
-        <MyInput
-          fieldLabel="Search by"
-          fieldName="searchCriteria"
-          fieldType="text"
-          placeholder="Search"
-          width="10vw"
-          record={filters}
-          setRecord={setFilters}
-        />
-                <MyInput
-          fieldLabel="Visit ID"
-          fieldName="searchCriteria"
-          fieldType="text"
-          placeholder="Search"
-          width="10vw"
-          record={filters}
-          setRecord={setFilters}
-        />
+
+<SearchPatientCriteria record={filters} setRecord={setFilters}/>
 
 </div>
       </Form>
-              <AdvancedSearchFilters searchFilter={true}/>
+              <AdvancedSearchFilters searchFilter={true} content={content}/>
 
       </>);
 

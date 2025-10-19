@@ -6,6 +6,7 @@ import DocPassIcon from '@rsuite/icons/DocPass';
 import ChangeListIcon from '@rsuite/icons/ChangeList';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import ReloadIcon from '@rsuite/icons/Reload';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 import {
   addFilterToListRequest
@@ -66,6 +67,8 @@ import {
   newApPatientRelation
 } from '@/types/model-types-constructor';
 import BackButton from '@/components/BackButton/BackButton';
+
+
 const EncounterRegistration = () => {
   const encounter = useSelector((state: RootState) => state.patient.encounter);
   const patientSlice = useAppSelector(state => state.patient);
@@ -82,6 +85,10 @@ const EncounterRegistration = () => {
   const [editing, setEditing] = useState(false);
   const [validationResult, setValidationResult] = useState({});
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [record, setRecord] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
    const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
       useState<ListRequest>({
         ...initialListRequest,
@@ -275,14 +282,7 @@ const EncounterRegistration = () => {
     setLocalEncounter({ ...newApEncounter ,discharge:false });
     navigate('/patient-profile');
   };
-  const searchCriteriaOptions = [
-    { label: 'MRN', value: 'patientMrn' },
-    { label: 'Document Number', value: 'documentNo' },
-    { label: 'Full Name', value: 'fullName' },
-    { label: 'Archiving Number', value: 'archivingNumber' },
-    { label: 'Primary Phone Number', value: 'mobileNumber' },
-    { label: 'Date of Birth', value: 'dob' }
-  ];
+
   const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
     ...newApPatientRelation
   });
@@ -350,32 +350,36 @@ const EncounterRegistration = () => {
 
   }, [searchKeyword]);
 
+
+useEffect(() => {
+  setSelectedCriterion(record?.searchByField);
+  setSearchKeyword(record?.patientName);
+}, [record]);
+
+const handleSearch = () => {
+  const searchBy = record?.searchByField;
+  const keyword = record?.patientName;
+
+  if (!keyword) return;
+
+  search({ searchBy, keyword });
+};
+
+
+console.log('searchByField:', record.searchByField);
+console.log('patientName:', record.patientName);
+
   const conjurePatientSearchBar = target => {
     return (
       <Panel>
 
         <ButtonToolbar>
-          <SelectPicker label="Search Criteria" data={searchCriteriaOptions} 
-          onChange={(e) => {if(e!==null) {setSelectedCriterion(e) }
-            else{}
-            ;console.log(e) }} 
-          style={{ width: 250 }} />
-
-          <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
-            <Input
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  search(target);
-                }
-              }}
-              placeholder={'Search Patients '}
-              value={searchKeyword}
-              onChange={e => setSearchKeyword(e)}
-            />
-            <InputGroup.Button onClick={() => search(target)} >
-              <SearchIcon />
-            </InputGroup.Button>
-          </InputGroup>
+<Form fluid layout='inline'>
+        <SearchPatientCriteria
+            record={record}
+            setRecord={setRecord}
+            onSearchClick={handleSearch}
+          /></Form>
         </ButtonToolbar>
       </Panel>
 
