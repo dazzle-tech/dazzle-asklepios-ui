@@ -107,14 +107,50 @@ export interface Service {
   code: string;
   category?: string | null;
   price?: number | null;
-  currency:  string | null;
-  isActive: boolean;
-  createdBy: string;
-  createdDate?: string | null; 
+  currency: string | null;
+  isActive?: boolean;
+  createdBy?: string;
+  createdDate?: Date | null;
   lastModifiedBy?: string | null;
-  lastModifiedDate?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number; 
 }
 
+
+export interface ServiceItem {
+  id?: number;
+  type: string;       // @Enumerated(EnumType.STRING)
+  sourceId: number;             // FK to the source entity (e.g., Department id)
+  serviceId?: number | null;    // ManyToOne -> Service (nullable on the wire)
+  createdBy: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive: boolean;
+}
+
+/** Create payload (POST /api/setup/service-items) */
+export interface ServiceItemCreate {
+  type: string;
+  sourceId: number;
+  serviceId: number;            // required by backend create
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive?: boolean | null;
+}
+
+/** Update payload (PUT /api/setup/service-items/{id}) */
+export interface ServiceItemUpdate {
+  id: number;
+  type?: string | null;
+  sourceId?: number | null;
+  serviceId: number;            // required by backend update
+  isActive?: boolean | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
 
 
 

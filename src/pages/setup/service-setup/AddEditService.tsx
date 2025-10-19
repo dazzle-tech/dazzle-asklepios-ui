@@ -1,11 +1,10 @@
-// src/features/services/AddEditService.tsx
 import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
-import { useEnumOptions  , useEnumByName} from '@/services/enumsApi';
+import { useEnumOptions, useEnumCapitalized } from '@/services/enumsApi';
 
 type AddEditServiceProps = {
   open: boolean;
@@ -27,9 +26,9 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
   actionLoading,
 }) => {
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
-  const currencyOptions = useEnumByName('Currency');
-console.log('currencyOptions', currencyOptions);
-console.log('serviceCategoryOptions', serviceCategoryOptions);
+  const currencyOptions = useEnumCapitalized('Currency');
+  console.log('currencyOptions', currencyOptions);
+  console.log('serviceCategoryOptions', serviceCategoryOptions);
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
@@ -113,9 +112,6 @@ console.log('serviceCategoryOptions', serviceCategoryOptions);
       actionButtonFunction={handleSave}
       steps={[{ title: 'Service Info', icon: <FaStar /> }]}
       size={width > 600 ? '36vw' : '70vw'}
-      // If MyModal supports it, pass loading:
-      // actionButtonLoading={actionLoading}
-      // disableCloseOnActionLoading={actionLoading}
     />
   );
 };

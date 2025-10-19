@@ -66,7 +66,6 @@ export const newFacility:modelTypes.Facility = {
 
 export const newCreateFacility:modelTypes.CreateFacility = { 
   name:'',
-
   code:'',
 	emailAddress:'',
 	phone1:'',
@@ -112,8 +111,20 @@ export const newService: modelTypes.Service = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
+  facilityId: undefined, 
 };
 
+export const newServiceItem: modelTypes.ServiceItem = {
+  id: undefined,
+  type: 'DEPARTMENTS',    
+  sourceId: 0,            
+  serviceId: undefined,  
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  isActive: true,
+};
 
 
 

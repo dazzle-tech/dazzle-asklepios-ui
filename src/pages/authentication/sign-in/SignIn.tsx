@@ -86,7 +86,9 @@ const SignIn = () => {
       console.log('User Info:', userResp);
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
-
+      console.log('Facility Info:', selectedFacility);
+      localStorage.setItem('facility', JSON.stringify(selectedFacility));
+      localStorage.setItem('tenant', JSON.stringify({ ...existingTenant, selectedFacility }));
       store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
       setErrText(' ');
