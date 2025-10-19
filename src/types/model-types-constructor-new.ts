@@ -58,6 +58,8 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
+  roolId:undefined,
+
 } 
 
 export const newCreateFacility: modelTypes.CreateFacility = {

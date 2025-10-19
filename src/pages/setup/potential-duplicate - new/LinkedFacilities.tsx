@@ -3,24 +3,22 @@ import React, { useEffect, useState } from 'react';
 import { Checkbox, Form } from 'rsuite';
 import './styles.less';
 import { HiDocumentDuplicate } from 'react-icons/hi2';
-import {
-  useGetFacilitiesQuery,
-  useSaveFacilityMutation
-} from '@/services/setupService';
+
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetAvailableForRoleQuery } from '@/services/potintialDuplicateService';
+import { useUpdateFacilityMutation } from '@/services/security/facilityService';
 
 const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
 
-  
+
   // Fetch Facility list response
-   const { data: facilityListResponse, refetch: fetchFaci, isFetching } = useGetAvailableForRoleQuery(Candidate?.id ,{skip:!Candidate?.id});
-   // save facility
-   const [saveFacility] = useSaveFacilityMutation();
-  
- 
+  const { data: facilityListResponse, refetch: fetchFaci, isFetching } = useGetAvailableForRoleQuery(Candidate?.id, { skip: !Candidate?.id });
+  console.log("Facilitys", facilityListResponse)
+  // save facility
+
+  const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
   //Table columns
   const tableColumns = [
     {
@@ -32,23 +30,22 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
           checked={rowData.roolId !== null ? true : false}
           onChange={(value, checked) => {
             if (checked) {
-              saveFacility({ ...rowData, roolId: Candidate.id })
+              console.log({...rowData, roolId: Candidate.id})
+              updateFacility({ ...rowData, roolId: Candidate.id })
                 .unwrap()
-                .then(() => {
-                  fetchFaci();
-                });
+                .then(fetchFaci);
+
             } else {
-              saveFacility({ ...rowData, roolId: null })
+              updateFacility({ ...rowData, roolId: null })
                 .unwrap()
-                .then(() => {
-                  fetchFaci();
-                });
+                .then(fetchFaci);
+
             }
           }}
         />
       )
     },
-   
+
     {
       key: 'name',
       title: <Translate>Name</Translate>

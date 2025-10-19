@@ -54,8 +54,7 @@ const PotintialDuplicate = () => {
   const [createCandidate] = useCreateDuplicationCandidateMutation();
   const [deactivateCandidate] = useDeactivateDuplicationCandidateMutation();
   const [reactivateCandidate] = useReactivateDuplicationCandidateMutation();
-  const { data: facility } = useGetAvailableForRoleQuery(candidate.id, { skip: !candidate.id });
-  console.log("Facilites", facility)
+
 
   const [searchTerm, setSearchTerm] = useState({ search: "" });
   const { data: candidateList, isLoading, refetch } = useGetDuplicationCandidatesQuery(searchTerm?.search || undefined);
