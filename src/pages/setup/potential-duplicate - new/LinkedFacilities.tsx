@@ -19,7 +19,6 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
   // save facility
 
   const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
-
   //Table columns
   const tableColumns = [
     {
@@ -37,7 +36,6 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
 
             } else {
               updateFacility({ ...rowData, roolId: null })
-
                 .unwrap()
                 .then(fetchFaci);
 
