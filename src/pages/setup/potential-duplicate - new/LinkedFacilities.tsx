@@ -19,6 +19,7 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
   // save facility
 
   const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
+
   //Table columns
   const tableColumns = [
     {
@@ -30,13 +31,13 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
           checked={rowData.roolId !== null ? true : false}
           onChange={(value, checked) => {
             if (checked) {
-              console.log({...rowData, roolId: Candidate.id})
               updateFacility({ ...rowData, roolId: Candidate.id })
                 .unwrap()
                 .then(fetchFaci);
 
             } else {
               updateFacility({ ...rowData, roolId: null })
+
                 .unwrap()
                 .then(fetchFaci);
 

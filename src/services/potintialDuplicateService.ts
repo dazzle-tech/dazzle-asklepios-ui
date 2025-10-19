@@ -41,7 +41,6 @@ export const potintialService = createApi({
         method: 'PUT',
       }),
     }),
-
     getAvailableForRole: builder.query({
       query: (roleId: number) => `/api/setup/duplication-candidates/available-for-role/${roleId}`,
     }),
