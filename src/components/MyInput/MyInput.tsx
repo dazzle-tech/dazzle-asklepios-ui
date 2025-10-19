@@ -76,7 +76,7 @@ const MyInput = ({
   const recognitionRef = useRef(null);
   const [recording, setRecording] = useState(false);
   // <<< Added this line here to fix the error
-
+//  console.log("RECORE",record)
   const inputColor = props.inputColor || record?.inputColor || '';
   const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult, setValidationResult] = useState(undefined);
@@ -141,6 +141,7 @@ const MyInput = ({
     if (setRecord && typeof setRecord === 'function') {
       setRecord({ ...record, [fieldName]: value });
     }
+
   };
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;

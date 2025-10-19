@@ -8,7 +8,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useEnumByName, useEnumOptions } from '@/services/enumsApi';
 const AddEditDepartment = ({
   open,
   setOpen,
@@ -30,6 +30,8 @@ const AddEditDepartment = ({
   // Fetch  depTTypesEnum list response
   const depTypeOptions = useEnumOptions("DepartmentType");
   // Modal content
+    
+
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
