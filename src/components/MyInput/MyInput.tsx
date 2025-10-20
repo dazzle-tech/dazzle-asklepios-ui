@@ -76,7 +76,7 @@ const MyInput = ({
   const recognitionRef = useRef(null);
   const [recording, setRecording] = useState(false);
   // <<< Added this line here to fix the error
-//  console.log("RECORE",record)
+  //  console.log("RECORE",record)
   const inputColor = props.inputColor || record?.inputColor || '';
   const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult, setValidationResult] = useState(undefined);
@@ -104,7 +104,9 @@ const MyInput = ({
       // Ignore scrolls occurring inside rsuite picker menus to allow internal scrolling
       if (
         target &&
-        (target.closest('.rs-picker-menu') || target.closest('.rs-picker-select-menu') || target.closest('.rs-virtual-list'))
+        (target.closest('.rs-picker-menu') ||
+          target.closest('.rs-picker-select-menu') ||
+          target.closest('.rs-virtual-list'))
       ) {
         return;
       }
@@ -136,12 +138,18 @@ const MyInput = ({
     }
   }, [vr]);
 
+  useEffect(() => {
+    if (props.disabled && recording) {
+      stopListening();
+      setRecording(false);
+    }
+  }, [props.disabled]);
+
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
   const handleValueChange = value => {
     if (setRecord && typeof setRecord === 'function') {
       setRecord({ ...record, [fieldName]: value });
     }
-
   };
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
@@ -160,7 +168,8 @@ const MyInput = ({
 
   // start speech recognition
   const startListening = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       dispatch(notify({ msg: 'Your browser does not support Speech Recognition', sev: 'error' }));
@@ -218,17 +227,19 @@ const MyInput = ({
               onChange={handleValueChange}
               onKeyDown={focusNextField}
             />
-            <div
-              className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
-              onClick={changeRecordingState}
-              style={{ position: 'relative' }}
-            >
-              <FontAwesomeIcon
-                icon={faMicrophone}
-                className={props.disabled ? 'disabled-icon' : 'active-icon'}
-              />
-              {recording && <span className="pulse-ring"></span>}
-            </div>
+            {!props.disabled && (
+              <div
+                className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
+                onClick={changeRecordingState}
+                style={{ position: 'relative' }}
+              >
+                <FontAwesomeIcon
+                  icon={faMicrophone}
+                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
+                />
+                {recording && <span className="pulse-ring"></span>}
+              </div>
+            )}
           </InputGroup>
         );
       case 'checkbox':
@@ -304,19 +315,23 @@ const MyInput = ({
               props.container ??
               (() => {
                 // Check if inside sub-child modal first
-                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                const subChildModal = document.querySelector(
+                  '.sub-child-right-modal .rs-modal-body'
+                ) as HTMLElement;
                 if (subChildModal) return subChildModal;
-                
+
                 // Check if inside child modal
-                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                const childModal = document.querySelector(
+                  '.child-right-modal .rs-modal-body'
+                ) as HTMLElement;
                 if (childModal) return childModal;
-                
+
                 // Check for any modal body - look for the last one (most recent modal)
                 const allModalBodies = document.querySelectorAll('.rs-modal-body');
                 if (allModalBodies.length > 0) {
                   return allModalBodies[allModalBodies.length - 1] as HTMLElement;
                 }
-                
+
                 // Default to document body
                 return document.body;
               })
@@ -355,19 +370,23 @@ const MyInput = ({
               props.container ??
               (() => {
                 // Check if inside sub-child modal first
-                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                const subChildModal = document.querySelector(
+                  '.sub-child-right-modal .rs-modal-body'
+                ) as HTMLElement;
                 if (subChildModal) return subChildModal;
-                
+
                 // Check if inside child modal
-                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                const childModal = document.querySelector(
+                  '.child-right-modal .rs-modal-body'
+                ) as HTMLElement;
                 if (childModal) return childModal;
-                
+
                 // Check for any modal body - look for the last one (most recent modal)
                 const allModalBodies = document.querySelectorAll('.rs-modal-body');
                 if (allModalBodies.length > 0) {
                   return allModalBodies[allModalBodies.length - 1] as HTMLElement;
                 }
-                
+
                 // Default to document body
                 return document.body;
               })
@@ -401,19 +420,23 @@ const MyInput = ({
               props.container ??
               (() => {
                 // Check if inside sub-child modal first
-                const subChildModal = document.querySelector('.sub-child-right-modal .rs-modal-body') as HTMLElement;
+                const subChildModal = document.querySelector(
+                  '.sub-child-right-modal .rs-modal-body'
+                ) as HTMLElement;
                 if (subChildModal) return subChildModal;
-                
+
                 // Check if inside child modal
-                const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+                const childModal = document.querySelector(
+                  '.child-right-modal .rs-modal-body'
+                ) as HTMLElement;
                 if (childModal) return childModal;
-                
+
                 // Check for any modal body - look for the last one (most recent modal)
                 const allModalBodies = document.querySelectorAll('.rs-modal-body');
                 if (allModalBodies.length > 0) {
                   return allModalBodies[allModalBodies.length - 1] as HTMLElement;
                 }
-                
+
                 // Default to document body
                 return document.body;
               })
@@ -626,17 +649,18 @@ const MyInput = ({
                 }
               }}
             />
-
-            <div
-              className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-              onClick={changeRecordingState}
-            >
-              <FontAwesomeIcon
-                icon={faMicrophone}
-                className={props.disabled ? 'disabled-icon' : 'active-icon'}
-              />
-              {recording && <span className="pulse-ring"></span>}
-            </div>
+            {!props.disabled && (
+              <div
+                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
+                onClick={changeRecordingState}
+              >
+                <FontAwesomeIcon
+                  icon={faMicrophone}
+                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
+                />
+                {recording && <span className="pulse-ring"></span>}
+              </div>
+            )}
           </div>
         );
 
