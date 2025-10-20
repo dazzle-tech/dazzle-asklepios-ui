@@ -10,7 +10,7 @@ import {
   faUserDoctor,
   faPrint,
   faBoxOpen,
-  faListCheck,
+  faListCheck
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
@@ -106,8 +106,7 @@ const EncounterList = () => {
     isLoading
   } = useGetEncountersQuery(listRequest);
 
-
-   const [listRequestForToday, setListRequestForToday] = useState<ListRequest>({
+  const [listRequestForToday, setListRequestForToday] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true,
     filters: [
@@ -119,23 +118,21 @@ const EncounterList = () => {
           .join(' ')
       },
       {
-       fieldName:'planned_start_date',
+        fieldName: 'planned_start_date',
         operator: 'between',
-        value:  formatDate(new Date()) + '_' + formatDate(new Date()),
+        value: formatDate(new Date()) + '_' + formatDate(new Date())
       }
     ]
   });
-  
-  const {
-    data: encounterListForTodayResponse,
-  } = useGetEncountersQuery(listRequestForToday);
- 
+
+  const { data: encounterListForTodayResponse } = useGetEncountersQuery(listRequestForToday);
+
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: new Date()
   });
 
-   const pageIndex = listRequest.pageNumber - 1;
+  const pageIndex = listRequest.pageNumber - 1;
 
   // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
@@ -195,16 +192,16 @@ const EncounterList = () => {
   };
 
   const handleCountForToday = () => {
-      const formattedFromDate = formatDate(new Date());
-      const formattedToDate = formatDate(new Date());
-      setListRequestForToday(
-        addFilterToListRequest(
-          'planned_start_date',
-          'between',
-          formattedFromDate + '_' + formattedToDate,
-          listRequestForToday
-        )
-      );
+    const formattedFromDate = formatDate(new Date());
+    const formattedToDate = formatDate(new Date());
+    setListRequestForToday(
+      addFilterToListRequest(
+        'planned_start_date',
+        'between',
+        formattedFromDate + '_' + formattedToDate,
+        listRequestForToday
+      )
+    );
   };
 
   const handleGoToVisit = async (encounterData, patientData) => {
@@ -261,7 +258,7 @@ const EncounterList = () => {
     }
   };
 
-    // handler when the user clicks a new page number:
+  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
     // MUI gives you a zero-based page, so add 1 for your API
     setManualSearchTriggered(true);
@@ -428,7 +425,6 @@ const EncounterList = () => {
                 </MyButton>
               </div>
             </Whisper>
-
 
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
               <div>
@@ -641,28 +637,31 @@ const EncounterList = () => {
     );
   };
 
-
   //useEffect
   useEffect(() => {
     handleCountForToday();
     let count = 0;
-    if(encounterListForTodayResponse?.object)
-    for(const visit of encounterListForTodayResponse?.object){
-     if(visit?.encounterStatusLvalue?.key === "91109811181900"){
-      count++;
-     }
-    }
+    if (encounterListForTodayResponse?.object)
+      for (const visit of encounterListForTodayResponse?.object) {
+        if (visit?.encounterStatusLvalue?.key === '91109811181900') {
+          count++;
+        }
+      }
     setCompletedVisits(count);
   }, [encounterListForTodayResponse]);
 
   useEffect(() => {
-    setActiveVisits((encounterListForTodayResponse?.object?.length - completesVisits) ? (encounterListForTodayResponse?.object?.length - completesVisits) : 0);
+    setActiveVisits(
+      encounterListForTodayResponse?.object?.length - completesVisits
+        ? encounterListForTodayResponse?.object?.length - completesVisits
+        : 0
+    );
   }, [completesVisits]);
 
   useEffect(() => {
     handleManualSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ dateFilter.fromDate, dateFilter.toDate]);
+  }, [dateFilter.fromDate, dateFilter.toDate]);
 
   useEffect(() => {
     dispatch(setPageCode(''));
@@ -690,8 +689,6 @@ const EncounterList = () => {
       dispatch(hideSystemLoader());
     };
   }, [isLoading, isFetching, dispatch, manualSearchTriggered]);
-
-
 
   return (
     <>
@@ -739,10 +736,6 @@ const EncounterList = () => {
                 <FontAwesomeIcon icon={faBoxOpen} />
                 Refill Stock
               </MyButton>
-              <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
-                <FontAwesomeIcon icon={faListCheck} />
-                Task Management
-              </MyButton>
             </div>
           }
           height={600}
@@ -772,7 +765,7 @@ const EncounterList = () => {
           title="Refill"
           size="90vw"
           content={<RefillModalComponent />}
-          actionButtonLabel="Save"
+          hideActionBtn={true}
           cancelButtonLabel="Close"
         />
 
@@ -848,5 +841,3 @@ const EncounterList = () => {
 };
 
 export default EncounterList;
-
-
