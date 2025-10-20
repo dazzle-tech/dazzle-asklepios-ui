@@ -1,4 +1,3 @@
-// Import required modules
 import AdvancedModal from '@/components/AdvancedModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import CancellationModal from '@/components/CancellationModal';
@@ -6,9 +5,14 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import Translate from '@/components/Translate';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import {
+  setEncounter as setEncounterRedux,
+  setPatient as setPatientRedux
+} from '@/reducers/patientSlice';
 import {
   useGetEncounterByIdQuery,
   useGetTeleConsultationCallLogListQuery,
@@ -39,13 +43,11 @@ import ReactDOMServer from 'react-dom/server';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Form, Panel, Tooltip, Whisper } from 'rsuite';
+import PatientEMR from '@/pages/patient/patient-emr/PatientEMR';
 import CallLog from './CallLog';
 import DragDropTable from './DragDropTable';
 import './start-tele-consultation/styles.less';
 
-// Define request type
-
-// State variables
 const TeleconsultationRequests = () => {
   const sliceauth = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
@@ -55,9 +57,14 @@ const TeleconsultationRequests = () => {
   const [openLogModal, setOpenLogModal] = useState(false);
   const [actionType, setActionType] = useState<'confirm' | 'reject' | null>(null);
   const [requests, setRequests] = useState<ApTeleConsultation>({ ...newApTeleConsultation });
+  const [openEMRModal, setOpenEMRModal] = useState(false);
+  const [emrPatient, setEmrPatient] = useState<any>(null);
+  const [emrEncounter, setEmrEncounter] = useState<any>(null);
+
   const { data: encounterData } = useGetEncounterByIdQuery(requests?.encounterId ?? '', {
     skip: !requests?.encounterId
   });
+
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [cancelObject, setCancelObject] = useState<any>({});
@@ -84,7 +91,6 @@ const TeleconsultationRequests = () => {
     }
   );
 
-  // const [pendingAction, setPendingAction] = useState<'confirm' | 'reject' | null>(null);
   const [customConfirmMessage, setCustomConfirmMessage] = useState('');
   const [sortColumn, setSortColumn] = useState('patientName');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
@@ -96,6 +102,7 @@ const TeleconsultationRequests = () => {
     refetch,
     isLoading: ordersLod
   } = useGetTeleConsultationListQuery({ ...initialListRequestId });
+
   const { data: callLogs } = useGetTeleConsultationCallLogListQuery(
     {
       ...initialListRequestId,
@@ -111,6 +118,7 @@ const TeleconsultationRequests = () => {
       skip: !requests?.id
     }
   );
+
   console.log('callLogs', callLogs);
 
   const [save, saveMutation] = useSaveTeleConsultationMutation();
@@ -121,6 +129,7 @@ const TeleconsultationRequests = () => {
       setEncounter(encounterData);
     }
   }, [encounterData]);
+
   useEffect(() => {
     setPatient(requests?.patient ?? {});
   }, [requests]);
@@ -173,9 +182,7 @@ const TeleconsultationRequests = () => {
     }
   };
 
-  // Handle cancellation (rejection) with reason
   const handleCancleReject = () => {
-    // ORD_STAT_REJCONS
     save({
       ...requests,
       statusLkey: '32943037809141',
@@ -192,9 +199,7 @@ const TeleconsultationRequests = () => {
         dispatch(notify({ sev: 'error', msg: 'Failed to reject request' }));
       })
       .finally(() => {
-        // Close modal and reset
         setOpenCancelModal(false);
-
         setCancelObject({});
       });
   };
@@ -274,7 +279,6 @@ const TeleconsultationRequests = () => {
       key: 'priorityIcon',
       title: '',
       width: 50,
-
       render: (row: ApTeleConsultation) =>
         row.expectedResponse === 'immediate' ? (
           <FontAwesomeIcon
@@ -330,7 +334,6 @@ const TeleconsultationRequests = () => {
       key: 'statusLkey',
       title: 'Status',
       width: 100,
-
       render: row => {
         return (
           <MyBadgeStatus
@@ -344,10 +347,8 @@ const TeleconsultationRequests = () => {
       key: 'actions',
       title: 'Actions',
       width: 120,
-
       render: (rowData: ApTeleConsultation) => (
         <div className="actions-icons-tele-consultation-screen">
-          {/* Start Teleconsultation */}
           <Whisper
             trigger="hover"
             placement="top"
@@ -376,10 +377,7 @@ const TeleconsultationRequests = () => {
                         notelist: fetchedProgressNotes ?? []
                       }
                     });
-                  }
-
-                  // setPendingAction('confirm');
-                  else {
+                  } else {
                     setCustomConfirmMessage(`Start The Call With ${rowData.patient?.fullName}?`);
                     setActionType('confirm');
                     setOpenConfirmModal(true);
@@ -391,7 +389,6 @@ const TeleconsultationRequests = () => {
             </div>
           </Whisper>
 
-          {/* Reject Request */}
           <Whisper trigger="hover" placement="top" speaker={<Tooltip>Reject Request</Tooltip>}>
             <div>
               <MyButton
@@ -400,6 +397,7 @@ const TeleconsultationRequests = () => {
                   setActionType('reject');
                   setOpenCancelModal(true);
                 }}
+                backgroundColor="light-blue"
                 disabled={rowData.statusLkey !== '5959341154465084'}
               >
                 <FontAwesomeIcon icon={faCircleXmark} />
@@ -407,18 +405,32 @@ const TeleconsultationRequests = () => {
             </div>
           </Whisper>
 
-          {/* View EMR File */}
           <Whisper trigger="hover" placement="top" speaker={<Tooltip>View EMR File</Tooltip>}>
             <div>
-              <MyButton size="small">
+              <MyButton
+                size="small"
+                backgroundColor="violet"
+                onClick={() => {
+                  setRequests(rowData);
+                  setEmrEncounter(rowData);
+                  setEmrPatient(rowData?.patient || null);
+
+                  dispatch(setEncounterRedux(rowData));
+                  if (rowData?.patient) dispatch(setPatientRedux(rowData.patient));
+
+                  setOpenEMRModal(true);
+                }}
+              >
                 <FontAwesomeIcon icon={faFileWaveform} />
               </MyButton>
             </div>
           </Whisper>
+
           <Whisper trigger="hover" placement="top" speaker={<Tooltip>Call Logs</Tooltip>}>
             <div>
               <MyButton
                 size="small"
+                backgroundColor="black"
                 onClick={() => {
                   setOpenLogModal(true);
                 }}
@@ -432,7 +444,7 @@ const TeleconsultationRequests = () => {
     }
   ];
 
-  const sortedData = [...orders].sort((a, b) => {
+  const sortedData = [...(orders?.object ?? [])].sort((a, b) => {
     const aValue = a[sortColumn as keyof ApTeleConsultation];
     const bValue = b[sortColumn as keyof ApTeleConsultation];
 
@@ -441,13 +453,17 @@ const TeleconsultationRequests = () => {
   });
 
   const paginatedData = sortedData?.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+
   console.log(paginatedData);
+
   const divContent = (
     <div className="page-title">
       <h5>Tele Consultation Screen</h5>
     </div>
   );
+
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
   dispatch(setPageCode('tele_consultation_screen'));
   dispatch(setDivContent(divContentHTML));
 
@@ -497,6 +513,7 @@ const TeleconsultationRequests = () => {
         actionButtonFunction={handleConfirmAction}
         confirmationQuestion={customConfirmMessage}
       />
+
       <AdvancedModal
         open={openLogModal}
         setOpen={setOpenLogModal}
@@ -527,6 +544,7 @@ const TeleconsultationRequests = () => {
                   requests?.callColsedBy || ''
                 }`}
               </div>
+
               {requests?.rejectedAt && (
                 <div style={{ marginBottom: '8px' }}>
                   <strong className="strong-request">Reject @</strong>{' '}
@@ -543,6 +561,23 @@ const TeleconsultationRequests = () => {
             </div>
           </>
         }
+      />
+
+      <MyModal
+        open={openEMRModal}
+        setOpen={setOpenEMRModal}
+        title="Electronic Medical Record"
+        size="90vw"
+        content={
+          emrPatient && emrEncounter ? (
+            <PatientEMR inModal patient={emrPatient} encounter={emrEncounter} />
+          ) : (
+            <div style={{ padding: 16 }}>No patient selected.</div>
+          )
+        }
+        actionButtonLabel="Close"
+        actionButtonFunction={() => setOpenEMRModal(false)}
+        cancelButtonLabel="Cancel"
       />
     </Panel>
   );
