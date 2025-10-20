@@ -21,17 +21,23 @@ const AddEditUser = ({
   handleSave,
  
 }) => {
+
   // Fetch accessRoles list response
  const {data:accessRoles}=useGetAllRolesQuery(null);
   // Fetch gender lov list response
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   // Fetch jobRole lov list response
   const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
-   const {data:genderList}=useGetGenderQuery(null);
-     const genders = (genderList ?? []).map((type) => ({
-    id: type,
-    displayValue: type,
-  }));
+
+  const genders =[{
+    id:"MALE", 
+    displayValue: "Male",
+  },
+{
+  id:"FEMALE",
+  displayValue:"Female"
+}]
+
   // Modal content
   const conjureFormContent = stepNumber => {
     switch (stepNumber) {
@@ -47,7 +53,7 @@ const AddEditUser = ({
                 setRecord={setUser}
                 width={width > 600 ? 160 : 250}
               />
-            
+
               <MyInput
                 column
                 fieldName="lastName"
