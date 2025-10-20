@@ -1,28 +1,14 @@
 // Import required modules
-import React, { useEffect, useState } from 'react';
-import { Panel } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import DragDropTable from './DragDropTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import AdvancedModal from '@/components/AdvancedModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { Tooltip, Whisper } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
-import { Form } from 'rsuite';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import CancellationModal from '@/components/CancellationModal';
-import { useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faCirclePlay,
-  faCircleXmark,
-  faFileImport,
-  faFileWaveform,
-  faLandMineOn
-} from '@fortawesome/free-solid-svg-icons';
-import ReactDOMServer from 'react-dom/server';
-import { useDispatch, useSelector } from 'react-redux';
-import { setPageCode, setDivContent } from '@/reducers/divSlice';
-import './start-tele-consultation/styles.less';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import Translate from '@/components/Translate';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useGetEncounterByIdQuery,
   useGetTeleConsultationCallLogListQuery,
@@ -31,22 +17,31 @@ import {
   useSaveTeleConsultationCallLogMutation,
   useSaveTeleConsultationMutation
 } from '@/services/encounterService';
-import { initialListRequestId } from '@/types/types';
 import { ApTeleConsultation } from '@/types/model-types';
-import { calculateAge, calculateAgeFormat, formatDateWithoutSeconds } from '@/utils';
-import { render } from 'react-dom';
 import {
   newApEncounter,
   newApPatient,
   newApTeleConsultation
 } from '@/types/model-types-constructor';
+import { initialListRequestId } from '@/types/types';
+import { calculateAgeFormat, formatDateWithoutSeconds } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import MyModal from '@/components/MyModal/MyModal';
+import {
+  faCirclePlay,
+  faCircleXmark,
+  faFileImport,
+  faFileWaveform,
+  faLandMineOn
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useState } from 'react';
+import ReactDOMServer from 'react-dom/server';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import CallLog from './CallLog';
-import Translate from '@/components/Translate';
-import AdvancedModal from '@/components/AdvancedModal';
-import MyTable from '@/components/MyTable';
-import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import DragDropTable from './DragDropTable';
+import './start-tele-consultation/styles.less';
 
 // Define request type
 
@@ -206,10 +201,8 @@ const TeleconsultationRequests = () => {
 
   const contents = (
     <div className="advanced-filters">
-      <Form fluid layout='inline' className="dissss">
-
-      <SearchPatientCriteria record={record} setRecord={setRecord}/>
-
+      <Form fluid layout="inline" className="dissss">
+        <SearchPatientCriteria record={record} setRecord={setRecord} />
 
         <MyInput
           width="100%"
@@ -515,28 +508,28 @@ const TeleconsultationRequests = () => {
           <>
             <div style={{ padding: '1rem' }}>
               <div style={{ marginBottom: '8px' }}>
-                <strong>Requested @</strong>{' '}
+                <strong className="strong-request">Requested @</strong>{' '}
                 {`${formatDateWithoutSeconds(requests?.requestedAt)} By ${
                   requests?.requestedBy || ''
                 }`}
               </div>
 
               <div style={{ marginBottom: '8px' }}>
-                <strong>Call Started @</strong>{' '}
+                <strong className="strong-request">Call Started @</strong>{' '}
                 {`${formatDateWithoutSeconds(requests?.callStartedAt)} By ${
                   requests?.callStartedBy || ''
                 }`}
               </div>
 
               <div style={{ marginBottom: '8px' }}>
-                <strong>Call Close @</strong>{' '}
+                <strong className="strong-request">Call Close @</strong>{' '}
                 {`${formatDateWithoutSeconds(requests?.callColsedAt)} By ${
                   requests?.callColsedBy || ''
                 }`}
               </div>
               {requests?.rejectedAt && (
                 <div style={{ marginBottom: '8px' }}>
-                  <strong>Reject @</strong>{' '}
+                  <strong className="strong-request">Reject @</strong>{' '}
                   {`${formatDateWithoutSeconds(requests.rejectedAt)} By ${
                     requests.rejectedBy || 'Unknown'
                   }`}
