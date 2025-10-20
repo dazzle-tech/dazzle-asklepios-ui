@@ -444,7 +444,7 @@ const TeleconsultationRequests = () => {
     }
   ];
 
-  const sortedData = (orders?.object ?? []).sort((a, b) => {
+  const sortedData = [...(orders?.object ?? [])].sort((a, b) => {
     const aValue = a[sortColumn as keyof ApTeleConsultation];
     const bValue = b[sortColumn as keyof ApTeleConsultation];
 
