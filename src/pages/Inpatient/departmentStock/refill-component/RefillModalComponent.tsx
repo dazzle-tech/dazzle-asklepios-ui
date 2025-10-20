@@ -79,22 +79,6 @@ const RefillModalComponent = () => {
     }
   ];
 
-  useEffect(() => {
-    const divContent = (
-      <div className="page-title">
-        <h5>Department Stock</h5>
-      </div>
-    );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('DepartmentStock'));
-    dispatch(setDivContent(divContentHTML));
-
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(''));
-    };
-  }, [dispatch]);
-
   const startIndex = page * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const paginatedData = itemsData.slice(startIndex, endIndex);
