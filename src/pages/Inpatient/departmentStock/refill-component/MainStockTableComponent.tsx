@@ -67,43 +67,6 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
     )
   };
 
-  const actionsForItems = rowData => {
-    const handleViewTransactions = () => {
-      console.log('View transactions for:', rowData.name);
-    };
-
-    const handleAdjustQuantity = () => {
-      console.log('Adjust quantity for:', rowData.name);
-    };
-
-    const handleProductCard = () => {
-      console.log('Product card for:', rowData.name);
-    };
-
-    return (
-      <div className="container-of-actions">
-        <FontAwesomeIcon
-          icon={faEye}
-          title="View Transactions"
-          className="action-icon"
-          onClick={handleViewTransactions}
-        />
-        <FontAwesomeIcon
-          icon={faCalculator}
-          title="Adjust Quantity"
-          className="action-icon"
-          onClick={handleAdjustQuantity}
-        />
-        <FontAwesomeIcon
-          icon={faCreditCard}
-          title="Product Card"
-          className="action-icon"
-          onClick={handleProductCard}
-        />
-      </div>
-    );
-  };
-
   const filters = () => (
     <>
       <Form layout="inline" fluid className="filter-fields-pharmacey">
@@ -117,7 +80,6 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           selectDataValue="key"
           width="140px"
           record={{}}
-          placeholder="Select Product Types"
         />
         <MyInput
           column
@@ -129,14 +91,12 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           selectDataValue="key"
           width="130px"
           record={{}}
-          placeholder="Select Status"
         />
         <MyInput
           column
           fieldType="text"
           fieldName="productName"
           fieldLabel="Product Name"
-          placeholder="Enter Product Name"
           width="154px"
           record={{}}
           setRecord={{}}
@@ -146,7 +106,6 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           fieldType="text"
           fieldName="productCode"
           fieldLabel="Product Code"
-          placeholder="Enter Product Code"
           width="149px"
           record={{}}
           setRecord={{}}
@@ -156,7 +115,6 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           fieldType="text"
           fieldName="barcode"
           fieldLabel="Barcode"
-          placeholder="Enter Barcode"
           width="115px"
           record={{}}
           setRecord={{}}
@@ -171,7 +129,11 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      width: 150
+      width: 150,
+      isLink: true,
+      onLinkClick: row => {
+        console.log('Clicked', row.code);
+      }
     },
     {
       key: 'code',
@@ -315,12 +277,6 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
         const config = getStatusConfig(status);
         return <MyBadgeStatus {...config} />;
       }
-    },
-    {
-      key: 'actions',
-      title: <Translate>Actions</Translate>,
-      width: 120,
-      render: rowData => actionsForItems(rowData)
     }
   ];
 
