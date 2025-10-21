@@ -92,39 +92,63 @@ const ServiceSetup: React.FC = () => {
     setPopupOpen(true);
   };
   // save service
-  const handleSave = () => {
-    setPopupOpen(false);
-    const isUpdate = !!service.id;
+const handleSave = async () => {
+  setPopupOpen(false);
+  const isUpdate = !!service.id;
 
-    const payload: any = {
-      ...service,
-      facilityId,
-      price: typeof (service as any).price === 'string' ? Number((service as any).price) : (service as any).price,
-    };
-
-    const call = isUpdate
-      ? updateService({ facilityId, ...payload, id: service.id! })
-      : addService({ facilityId, ...payload });
-
-    call
-      .unwrap()
-      .then(() => {
-        dispatch(
-          notify({
-            msg: isUpdate ? 'Service updated successfully' : 'Service added successfully',
-            sev: 'success',
-          })
-        );
-      })
-      .catch(() => {
-        dispatch(
-          notify({
-            msg: isUpdate ? 'Failed to update service' : 'Failed to add service',
-            sev: 'error',
-          })
-        );
-      });
+  const payload: any = {
+    ...service,
+    facilityId,
+    price: typeof (service as any).price === 'string'
+      ? Number((service as any).price)
+      : (service as any).price,
   };
+
+  try {
+    if (isUpdate) {
+      await updateService({ facilityId, ...payload, id: service.id! }).unwrap();
+      dispatch(notify({ msg: 'Service updated successfully', sev: 'success' }));
+    } else {
+      await addService({ facilityId, ...payload }).unwrap();
+      dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
+    }
+  } catch (err: any) {
+    const status = err?.status;
+    const backendMsg =
+      err?.data?.message || err?.data?.detail || err?.data?.title || '';
+
+    if (status === 409) {
+      dispatch(
+        notify({
+          msg: 'A service with the same name already exists in this facility.',
+          sev: 'warning',
+        })
+      );
+    } else if (status === 400) {
+      dispatch(
+        notify({
+          msg: backendMsg || 'Bad request. Please check the entered data.',
+          sev: 'error',
+        })
+      );
+    } else if (status === 404) {
+      dispatch(
+        notify({
+          msg: backendMsg || 'Service or Facility not found.',
+          sev: 'error',
+        })
+      );
+    } else {
+      dispatch(
+        notify({
+          msg: backendMsg || 'Unexpected error. Please try again.',
+          sev: 'error',
+        })
+      );
+    }
+  }
+};
+
   // deactivate service
   const handleDeactivate = () => {
     setOpenConfirmDeleteService(false);
@@ -391,7 +415,7 @@ const ServiceSetup: React.FC = () => {
       setFilteredTotal(0);
     }
   }, [addServiceMutation.data, updateServiceMutation.data]);
-
+console.log("tableData==>",tableData);
   return (
     <Panel>
       <div className="container-of-add-new-button">

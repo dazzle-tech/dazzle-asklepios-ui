@@ -317,26 +317,6 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
           }
           disabled={!formItem.type || isLoadingSources || (sourcesLocal?.length ?? 0) === 0}
         />
-
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <MyButton
-            onClick={() => {
-              setEditingId(null);
-              resetChildForm();
-              setOpenChildModal(false);
-            }}
-            variant="ghost"
-          >
-            <Translate>Cancel</Translate>
-          </MyButton>
-          <MyButton
-            color="var(--deep-blue)"
-            onClick={handleSave}
-            disabled={!formItem.type || !formItem.sourceId || isAdding || isUpdating}
-          >
-            <Translate>{mode === 'create' ? 'Link' : 'Update'}</Translate>
-          </MyButton>
-        </div>
       </div>
     </Form>
   );
@@ -391,10 +371,10 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
         childTitle={mode === 'create' ? 'Link New Item to Service' : 'Edit Linked Item'}
         childContent={conjureFormChildContent}
         mainSize="sm"
+        actionButtonLabel='Link'
         mainStep={[{ title: 'Linked Items', icon: <MdMedicalServices /> }]}
         childStep={[{ title: mode === 'create' ? 'Item' : 'Edit', icon: <MdMedicalServices /> }]}
       />
-
       <DeletionConfirmationModal
         open={openConfirmDeleteService}
         setOpen={setOpenConfirmDeleteService}
