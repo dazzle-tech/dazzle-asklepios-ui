@@ -216,45 +216,79 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
       return;
     }
 
-    if (mode === 'create') {
-      const payload: ServiceItemCreate = {
-        type: String(formItem.type), // enum name
+    const isCreate = mode === 'create';
+
+    const payload = isCreate
+      ? ({
+        type: String(formItem.type),
         sourceId: Number(formItem.sourceId),
         serviceId: Number(serviceId),
         isActive: true,
         createdBy: formItem.createdBy ?? '',
-      };
-      try {
-        await addServiceItem(payload).unwrap();
-        dispatch(notify({ msg: 'Item linked successfully', sev: 'success' }));
-        resetChildForm();
-        setOpenChildModal(false);
-        await refetchItems();
-      } catch {
-        dispatch(notify({ msg: 'Failed to link item', sev: 'error' }));
-      }
-    } else {
-      if (!editingId) return;
-      const payload: ServiceItemUpdate = {
+      } as ServiceItemCreate)
+      : ({
         id: Number(editingId),
         serviceId: Number(serviceId),
         type: String(formItem.type),
         sourceId: Number(formItem.sourceId),
         isActive: formItem.isActive ?? undefined,
         lastModifiedBy: formItem.lastModifiedBy ?? undefined,
-      };
-      try {
-        await updateServiceItem(payload).unwrap();
+      } as ServiceItemUpdate);
+
+    try {
+      if (isCreate) {
+        await addServiceItem(payload as ServiceItemCreate).unwrap();
+        dispatch(notify({ msg: 'Item linked successfully', sev: 'success' }));
+      } else {
+        await updateServiceItem(payload as ServiceItemUpdate).unwrap();
         dispatch(notify({ msg: 'Item updated successfully', sev: 'success' }));
-        setEditingId(null);
-        resetChildForm();
-        setOpenChildModal(false);
-        await refetchItems();
-      } catch {
-        dispatch(notify({ msg: 'Failed to update item', sev: 'error' }));
+      }
+
+      // Reset UI after success
+      resetChildForm();
+      setOpenChildModal(false);
+      setEditingId(null);
+      await refetchItems();
+    } catch (err: any) {
+      console.error('Error saving service item:', err);
+
+      const status = err?.status;
+      const backendMsg =
+        err?.data?.message || err?.data?.detail || err?.data?.title || '';
+
+      if (status === 409) {
+        // Duplicate detected (like existing ServiceItem with same type + source)
+        dispatch(
+          notify({
+            msg: 'An item with the same type and source already exists in this service.',
+            sev: 'warning',
+          })
+        );
+      } else if (status === 400) {
+        dispatch(
+          notify({
+            msg: backendMsg || 'Bad request. Please check the entered data.',
+            sev: 'error',
+          })
+        );
+      } else if (status === 404) {
+        dispatch(
+          notify({
+            msg: backendMsg || 'Service or linked item not found.',
+            sev: 'error',
+          })
+        );
+      } else {
+        dispatch(
+          notify({
+            msg: backendMsg || 'Unexpected error occurred. Please try again.',
+            sev: 'error',
+          })
+        );
       }
     }
   };
+
 
   // Child and Main content for ChildModal
   const conjureFormMainContent = () => (
