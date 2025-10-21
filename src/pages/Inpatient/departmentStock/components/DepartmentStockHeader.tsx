@@ -56,7 +56,7 @@ const DepartmentStockHeader = ({ onExportXLS, onRefillRequest }: any) => {
           fieldType="select"
           fieldName="departmentName"
           fieldLabel="Department Name"
-          placeholder="Select Department Name"
+          placeholder=" "
           width="210px"
           record={{}}
           selectData={departmentOptions}
@@ -67,7 +67,7 @@ const DepartmentStockHeader = ({ onExportXLS, onRefillRequest }: any) => {
           fieldType="select"
           fieldName="stock"
           fieldLabel="Stock"
-          placeholder="Select Stock"
+          placeholder=" "
           width="140px"
           record={{}}
           selectData={stockOptions}

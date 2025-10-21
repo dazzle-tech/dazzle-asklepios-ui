@@ -80,6 +80,7 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           selectDataValue="key"
           width="140px"
           record={{}}
+          placeholder=" "
         />
         <MyInput
           column
@@ -91,12 +92,14 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           selectDataValue="key"
           width="130px"
           record={{}}
+          placeholder=" "
         />
         <MyInput
           column
           fieldType="text"
           fieldName="productName"
           fieldLabel="Product Name"
+          placeholder=" "
           width="154px"
           record={{}}
           setRecord={{}}
@@ -106,6 +109,7 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           fieldType="text"
           fieldName="productCode"
           fieldLabel="Product Code"
+          placeholder=" "
           width="149px"
           record={{}}
           setRecord={{}}
@@ -115,6 +119,7 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
           fieldType="text"
           fieldName="barcode"
           fieldLabel="Barcode"
+          placeholder=" "
           width="115px"
           record={{}}
           setRecord={{}}
