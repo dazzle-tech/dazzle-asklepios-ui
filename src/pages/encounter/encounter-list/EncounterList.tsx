@@ -39,7 +39,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
-import PatientEMR from '@/pages/patient/patient-emr/PatientEMR';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 const EncounterList = () => {
@@ -844,7 +844,7 @@ const EncounterList = () => {
           size="90vw"
           content={
             emrPatient && emrEncounter ? (
-              <PatientEMR inModal patient={emrPatient} encounter={emrEncounter} />
+              <PatientEMRModal inModal patient={emrPatient} encounter={emrEncounter} />
             ) : (
               <div style={{ padding: 16 }}>No patient selected.</div>
             )

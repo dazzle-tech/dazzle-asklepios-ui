@@ -10,19 +10,27 @@ import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
-// Suppress benign ResizeObserver loop error from Chrome that can occur with nested modals/pickers
+
+// Only in development; avoid in production if you can.
 if (typeof window !== 'undefined') {
-  window.addEventListener('error', event => {
-    if (event?.message && event.message.includes('ResizeObserver loop completed')) {
-      event.preventDefault();
+  const ignoreRO = (e: ErrorEvent) => {
+    const msg = e?.message || '';
+    if (msg.includes('ResizeObserver loop completed')) {
+      // Stop the React overlay and any other listeners from seeing it
+      e.stopImmediatePropagation();
     }
-  });
-  window.addEventListener('unhandledrejection', event => {
-    const message = (event?.reason && event.reason.message) || '';
-    if (message.includes('ResizeObserver loop completed')) {
-      event.preventDefault();
+  };
+
+  const ignoreRORejection = (e: PromiseRejectionEvent) => {
+    const msg = (e?.reason && e.reason.message) || '';
+    if (msg.includes('ResizeObserver loop completed')) {
+      e.stopImmediatePropagation();
     }
-  });
+  };
+
+  // note the third argument: useCapture = true
+  window.addEventListener('error', ignoreRO, true);
+  window.addEventListener('unhandledrejection', ignoreRORejection, true);
 }
 
 const RootWrapper = () => {
