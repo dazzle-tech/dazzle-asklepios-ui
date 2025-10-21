@@ -6,7 +6,9 @@ import {
   faPlay,
   faProcedures,
   faStop,
-  faVial
+  faVial,
+  faChevronDown,
+  faChevronUp
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useRef, useState } from 'react';
@@ -19,6 +21,8 @@ const MedicalTimeline = ({ patient, encounter }) => {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [timeRange, setTimeRange] = useState({ start: null, end: null });
   const [viewMode, setViewMode] = useState('all');
+  const [showLegendIcons, setShowLegendIcons] = useState(true);
+  const [hideTimeline, setHideTimeline] = useState(false);
   const intervalRef = useRef(null);
 
   // Get default date range: one month earlier from today
@@ -307,26 +311,34 @@ const MedicalTimeline = ({ patient, encounter }) => {
     return category.color || '#2980b9';
   };
 
+  const canStart =
+    !!currentPlayTime && !!timeRange.end && currentPlayTime < timeRange.end && !isPlaying;
+
   const handlePlay = () => {
-    if (!isPlaying) {
-      setIsPlaying(true);
-      const rangeDuration = timeRange.end.getTime() - timeRange.start.getTime();
-      const timeStep = (rangeDuration / 600) * playbackSpeed;
-      intervalRef.current = setInterval(() => {
-        setCurrentPlayTime(prev => {
-          if (!prev || !timeRange.end) return prev;
-          const nextTime = new Date(prev.getTime() + timeStep * playbackSpeed);
-          if (nextTime >= timeRange.end) {
-            setIsPlaying(false);
-            return timeRange.end;
-          }
-          return nextTime;
-        });
-      }, 100);
-    } else {
+    if (isPlaying) {
       setIsPlaying(false);
       if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
     }
+    if (!currentPlayTime || !timeRange.end || currentPlayTime >= timeRange.end) return;
+
+    setIsPlaying(true);
+
+    const rangeDuration = timeRange.end.getTime() - timeRange.start.getTime();
+    const timeStep = (rangeDuration / 600) * playbackSpeed;
+
+    intervalRef.current = setInterval(() => {
+      setCurrentPlayTime(prev => {
+        if (!prev || !timeRange.end) return prev;
+        const nextTime = new Date(prev.getTime() + timeStep);
+        if (nextTime >= timeRange.end) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          setIsPlaying(false);
+          return timeRange.end;
+        }
+        return nextTime;
+      });
+    }, 100);
   };
 
   const handleStop = () => {
@@ -351,39 +363,46 @@ const MedicalTimeline = ({ patient, encounter }) => {
         {/* Header */}
         <div className="timeline-header">
           <div>
-            <h3 className="timeline-title">
-              Patient ({formatDuration(timeRange.end.getTime() - timeRange.start.getTime())})
-            </h3>
+            <h3 className="timeline-title">Patient Story in 60 Seconds</h3>
             {/* Date Range Picker */}
-            <div
-              style={{ display: 'flex', gap: '10px', marginRight: '20px', alignItems: 'center' }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <label style={{ fontSize: '12px', fontWeight: '500' }}>From</label>
-                <DatePicker
-                  value={dateRange.from}
-                  onChange={handleFromDateChange}
-                  format="MMM dd, yyyy"
-                  style={{ width: '150px' }}
-                  cleanable={false}
-                />
+            {!hideTimeline && (
+              <div
+                style={{ display: 'flex', gap: '10px', marginRight: '20px', alignItems: 'center' }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: '500' }}>From</label>
+                  <DatePicker
+                    value={dateRange.from}
+                    onChange={handleFromDateChange}
+                    format="MMM dd, yyyy"
+                    style={{ width: '150px' }}
+                    cleanable={false}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: '500' }}>To</label>
+                  <DatePicker
+                    value={dateRange.to}
+                    onChange={handleToDateChange}
+                    format="MMM dd, yyyy"
+                    style={{ width: '150px' }}
+                    cleanable={false}
+                  />
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <label style={{ fontSize: '12px', fontWeight: '500' }}>To</label>
-                <DatePicker
-                  value={dateRange.to}
-                  onChange={handleToDateChange}
-                  format="MMM dd, yyyy"
-                  style={{ width: '150px' }}
-                  cleanable={false}
-                />
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Controls */}
           <div className="timeline-controls">
-            <button onClick={handlePlay} className={`btn-play ${isPlaying ? 'pause' : ''}`}>
+            <button
+              onClick={handlePlay}
+              disabled={!isPlaying && !canStart}
+              className={`btn-play ${isPlaying ? 'pause' : ''} ${
+                !isPlaying && !canStart ? 'disabled' : ''
+              }`}
+              title={!isPlaying && !canStart ? 'click reset first ' : ''}
+            >
               <FontAwesomeIcon icon={isPlaying ? faPause : faPlay} />
               <span className="btn-text">{isPlaying ? 'Pause' : 'Play'}</span>
             </button>
@@ -393,9 +412,20 @@ const MedicalTimeline = ({ patient, encounter }) => {
               <span className="btn-text">Reset</span>
             </button>
 
+            <button
+              onClick={() => setHideTimeline(!hideTimeline)}
+              className="btn-reset"
+              style={{
+                background: hideTimeline ? '#249241ff' : '#95a5a6'
+              }}
+            >
+              <FontAwesomeIcon icon={hideTimeline ? faChevronDown : faChevronUp} />
+              <span className="btn-text">{hideTimeline ? 'Show' : 'Hide'}</span>
+            </button>
+
             <div className="divider" />
 
-            {[0.5, 1, 2, 5].map(speed => (
+            {[0.5, 1, 4, 10].map(speed => (
               <button
                 key={speed}
                 onClick={() => handleSpeedChange(speed)}
@@ -408,13 +438,27 @@ const MedicalTimeline = ({ patient, encounter }) => {
         </div>
 
         {/* Timeline */}
-        <div className="timeline-body">
+        <div className="timeline-body" style={{ display: hideTimeline ? 'none' : 'block' }}>
           <div className="timeline-categories">
             {patientHistoricalData.map((category, cIndex) => (
               <div key={category.id} className="timeline-row">
-                <div className="category-label" style={{ ['--cat-color']: category.color }}>
-                  <FontAwesomeIcon icon={category.icon} className="category-icon" />
-                  <span className="category-title">{category.title}</span>
+                <div
+                  className="category-label"
+                  style={{
+                    ['--cat-color']: category.color,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: '0',
+                    minWidth: '50px',
+                    backgroundColor: 'transparent'
+                  }}
+                >
+                  <FontAwesomeIcon
+                    icon={category.icon}
+                    className="category-icon"
+                    style={{ fontSize: '24px', color: category.color }}
+                  />
                 </div>
 
                 <div className="timeline-track">
@@ -487,7 +531,8 @@ const MedicalTimeline = ({ patient, encounter }) => {
               {patientHistoricalData.map(cat => (
                 <div className="legend-item" key={cat.id} style={{ ['--cat-color']: cat.color }}>
                   <FontAwesomeIcon icon={cat.icon} className="legend-icon" />
-                  <span className="legend-count">{cat.items.length}</span>
+                  {/* <span className="legend-count">{cat.items.length}</span> */}
+                  <span style={{ fontSize: '12px' }}>{cat.title}</span>
                 </div>
               ))}
             </div>
