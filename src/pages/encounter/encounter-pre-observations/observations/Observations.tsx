@@ -21,7 +21,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Col, Form, Row } from 'rsuite';
+import { Col, Form, Row, Slider } from 'rsuite';
 import './styles.less';
 export type ObservationsRef = {
   handleSave: () => void;
@@ -62,6 +62,18 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const [saveencounter] = useSaveEncounterChangesMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
+
+
+const [painLevel, setPainLevel] = useState(0);
+
+    const getTrackColor = (value: number): string => {
+      if (value === 0) return 'transparent';
+      if (value >= 1 && value <= 3) return '#28a745';
+      if (value >= 4 && value <= 7) return 'orange';
+      return 'red';
+    };
+
+
 
   // Define state for the request used to fetch the patient's last observations list
   const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] =
@@ -429,20 +441,35 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                         />
                       </Col>
                       <Col md={12}>
-                        <MyInput
-                          disabled={isEncounterStatusClosed || readOnly}
-                          width="100%"
-                          fieldLabel="Pain Score"
-                          fieldType="select"
-                          fieldName=""
-                          selectData={numbersLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={patientObservationSummary}
-                          setRecord={setPatientObservationSummary}
-                          menuMaxHeight={150}
-                          searchable={false}
-                        />
+                        <div className="pain-level-container">
+                            <MyLabel label={`Pain Level (${painLevel}-10)`} />
+
+                          <div className="slider-class" style={{ position: 'relative' }}>
+                            <Slider
+                              value={painLevel}
+                              onChange={value => setPainLevel(value)}
+                              min={0}
+                              max={10}
+                              step={1}
+                              progress
+                            />
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '52%',
+                                left: 0,
+                                height: '7px',
+                                width: `${(painLevel / 10) * 100}%`,
+                                backgroundColor: getTrackColor(painLevel),
+                                transform: 'translateY(-50%)',
+                                zIndex: 1,
+                                transition: 'background-color 0.2s ease',
+                                borderRadius: '4px'
+                              }}
+                            />
+                          </div>
+                        </div>
+
                       </Col>
                     </Row>
                     <Row>

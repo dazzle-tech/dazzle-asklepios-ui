@@ -217,36 +217,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const [echoData, setEchoData] = useState([
-    {
-      key: 1,
-      testIndication: 'Chest Pain',
-      echotype: 'Transthoracic Echo',
-      referringphysician: 'Dr. Smith',
-      finalimpression: 'Normal function',
-      recommendation: 'Follow-up in 6 months',
-      cardiologist: 'Dr. Heart',
-      createdBy: 'Nurse Jane',
-      createdAt: '2025-08-20 10:30 AM',
-      canceledBy: 'Admin Joe',
-      canceledAt: '2025-08-21 09:15 AM',
-      cancellationResult: 'Patient rescheduled'
-    },
-    {
-      key: 2,
-      testIndication: 'Shortness of breath',
-      echotype: 'Transesophageal Echo',
-      referringphysician: 'Dr. Adams',
-      finalimpression: 'Mild regurgitation',
-      recommendation: 'Cardiology consult',
-      cardiologist: 'Dr. Valve',
-      createdBy: 'Nurse Sam',
-      createdAt: '2025-08-19 11:45 AM',
-      canceledBy: '',
-      canceledAt: '',
-      cancellationResult: ''
-    }
-  ]);
+  const [echoData, setEchoData] = useState([]);
 
   const columns: ColumnConfig[] = [
     {

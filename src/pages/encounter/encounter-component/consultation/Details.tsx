@@ -79,7 +79,7 @@ const Details = ({
       <AdvancedModal
         open={open}
         setOpen={setOpen}
-        size="50vw"
+        size="75vw"
         leftWidth="40%"
         rightWidth="60%"
         actionButtonFunction={handleSave}
@@ -114,9 +114,23 @@ const Details = ({
                 title={'Choose Consultant'}
                 content={
                   <div className="consultion-details-modal-handle-position">
+
+                    <MyInput
+                      width={'12vw'}
+                      disabled={editing}
+                      fieldType="select"
+                      fieldLabel="City"
+                      selectData={cityLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName={'cityLkey'}
+                      record={consultationOrders}
+                      setRecord={setConsultationOrder}
+                    />
+
                     <MyInput
                       disabled={editing}
-                      width={'8vw'}
+                      width={'12vw'}
                       fieldType="select"
                       fieldLabel="Consultant Specialty"
                       selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
@@ -127,7 +141,7 @@ const Details = ({
                       setRecord={setConsultationOrder}
                     />
                     <MyInput
-                      width={'8vw'}
+                      width={'12vw'}
                       disabled={editing}
                       fieldType="select"
                       fieldLabel="Preferred Consultant"
@@ -135,18 +149,6 @@ const Details = ({
                       selectData={practitionerListResponse?.object ?? []}
                       selectDataLabel="practitionerFullName"
                       selectDataValue="key"
-                      record={consultationOrders}
-                      setRecord={setConsultationOrder}
-                    />
-                    <MyInput
-                      width={'8vw'}
-                      disabled={editing}
-                      fieldType="select"
-                      fieldLabel="City"
-                      selectData={cityLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      fieldName={'cityLkey'}
                       record={consultationOrders}
                       setRecord={setConsultationOrder}
                     />
@@ -158,7 +160,7 @@ const Details = ({
                 content={
                   <div className="consultion-details-modal-handle-position">
                     <MyInput
-                      width={'8vw'}
+                      width={'12vw'}
                       disabled={editing}
                       fieldType="select"
                       fieldLabel="Consultation Method"
@@ -171,7 +173,7 @@ const Details = ({
                       searchable={false}
                     />
                     <MyInput
-                      width={'8vw'}
+                      width={'12vw'}
                       disabled={editing}
                       fieldType="select"
                       fieldLabel="Consultation Type"
@@ -184,7 +186,7 @@ const Details = ({
                       searchable={false}
                     />
                     <MyInput
-                      width={'8vw'}
+                      width={'12vw'}
                       disabled={editing}
                       fieldType="select"
                       fieldLabel="Priority Level"
@@ -203,7 +205,7 @@ const Details = ({
                 content={
                   <div className="text-area-positions-detail-consultion">
                     <MyInput
-                      width={'24vw'}
+                      width={'35vw'}
                       disabled={editing}
                       fieldName="consultationContent"
                       rows={6}
@@ -219,7 +221,7 @@ const Details = ({
                 content={
                   <div className="text-area-positions-detail-consultion">
                     <MyInput
-                      width={'8vw'}
+                      width={'12vw'}
                       disabled={editing}
                       fieldName="notes"
                       rows={6}
@@ -228,7 +230,7 @@ const Details = ({
                       setRecord={setConsultationOrder}
                     />
                     <MyInput
-                      width={'8vw'}
+                      width={'12vw'}
                       disabled={editing}
                       fieldName="extra documentation"
                       rows={6}
@@ -237,7 +239,7 @@ const Details = ({
                       setRecord={setConsultationOrder}
                     />
                     <MyInput
-                      width={'8vw'}
+                      width={'12vw'}
                       disabled={editing}
                       fieldType="text"
                       fieldLabel="Approval Number"

@@ -40,6 +40,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 import PatientEMR from '@/pages/patient/patient-emr/PatientEMR';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 const EncounterList = () => {
   const location = useLocation();
@@ -498,6 +499,44 @@ const EncounterList = () => {
     }
   ];
 
+
+  const handleClearFilters = () => {
+    setRecord({});
+    setEncounterStatus({ key: '' });
+    setDateFilter({
+      fromDate: null,
+      toDate: null
+    });
+
+    // reset listRequest to initial with ONLY default filters
+    setListRequest({
+      ...initialListRequest,
+      pageNumber: 1,
+      pageSize: listRequest.pageSize,
+      ignore: true,
+      filters: [
+        {
+          fieldName: 'resource_type_lkey',
+          operator: 'in',
+          value: ['2039534205961578', '2039620472612029', '2039516279378421']
+            .map(key => `(${key})`)
+            .join(' ')
+        },
+        {
+          fieldName: 'encounter_status_lkey',
+          operator: 'in',
+          value: ['91063195286200', '91084250213000']
+            .map(key => `(${key})`)
+            .join(' ')
+        }
+      ]
+    });
+
+    // trigger refresh
+    setManualSearchTriggered(true);
+  };
+
+
   const filters = () => {
     return (
       <>
@@ -520,35 +559,9 @@ const EncounterList = () => {
             record={dateFilter}
             setRecord={setDateFilter}
           />
-          <MyInput
-            width="10vw"
-            column
-            fieldLabel="Select Filter"
-            fieldName="selectfilter"
-            fieldType="select"
-            selectData={[
-              { key: 'MRN', value: 'MRN' },
-              { key: 'Document Number', value: 'Document Number' },
-              { key: 'Full Name', value: 'Full Name' },
-              { key: 'Archiving Number', value: 'Archiving Number' },
-              { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-              { key: 'Date of Birth', value: 'Date of Birth' }
-            ]}
-            selectDataLabel="value"
-            selectDataValue="key"
-            record={record}
-            setRecord={setRecord}
-          />
-          <MyInput
-            fieldLabel="Search by"
-            column
-            fieldName="searchCriteria"
-            fieldType="text"
-            placeholder="Search"
-            width="15vw"
-            record={record}
-            setRecord={setRecord}
-          />
+
+          <SearchPatientCriteria record={record} setRecord={setRecord}/>
+
           <MyInput
             column
             width={200}
@@ -561,75 +574,80 @@ const EncounterList = () => {
             record={encounterStatus}
             setRecord={setEncounterStatus}
           />
+
         </Form>
 
         <AdvancedSearchFilters
           searchFilter={true}
+          clearOnClick={handleClearFilters}
           content={
             <div className="advanced-filters">
-              <Form fluid className="dissss">
-                {/* Visit Type LOV */}
-                <MyInput
-                  fieldName="accessTypeLkey"
-                  fieldType="select"
-                  selectData={bookVisitLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  fieldLabel="Visit Type"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                  searchable={false}
-                  width={150}
-                />
-                {/* Chief Complain Text */}
-                <MyInput
-                  width={150}
-                  fieldName="chiefComplain"
-                  fieldType="text"
-                  record={record}
-                  setRecord={setRecord}
-                  fieldLabel="Chief Complain"
-                />
-                {/* Checkboxes*/}
-                <MyInput
-                  width={110}
-                  fieldName="withPrescription"
-                  fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
-                  label="With Prescription"
-                />
-                <MyInput
-                  width={80}
-                  fieldName="hasOrders"
-                  fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
-                  label="Has Orders"
-                />
-                <MyInput
-                  width={80}
-                  fieldName="isObserved"
-                  fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
-                  label="Is Observed"
-                />
-                {/* Priority LOV */}
-                <MyInput
-                  width={150}
-                  fieldName="priority"
-                  fieldType="select"
-                  record={record}
-                  setRecord={setRecord}
-                  selectData={EncPriorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  placeholder="Select Priority"
-                  fieldLabel="Priority"
-                  searchable={false}
-                />
-              </Form>
+
+                <Form fluid className="dissss">
+                  {/* Visit Type LOV */}
+                  <MyInput
+                    fieldName="accessTypeLkey"
+                    fieldType="select"
+                    selectData={bookVisitLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    fieldLabel="Visit Type"
+                    selectDataValue="key"
+                    record={record}
+                    setRecord={setRecord}
+                    searchable={false}
+                    width={150}
+                  />
+                  {/* Chief Complain Text */}
+                  <MyInput
+                    width={150}
+                    fieldName="chiefComplain"
+                    fieldType="text"
+                    record={record}
+                    setRecord={setRecord}
+                    fieldLabel="Chief Complain"
+                  />
+                  {/* Checkboxes*/}
+                  <MyInput
+                    width={110}
+                    fieldName="withPrescription"
+                    fieldType="checkbox"
+                    record={record}
+                    setRecord={setRecord}
+                    label="With Prescription"
+                  />
+                  <MyInput
+                    width={80}
+                    fieldName="hasOrders"
+                    fieldType="checkbox"
+                    record={record}
+                    setRecord={setRecord}
+                    label="Has Orders"
+                  />
+                  <MyInput
+                    width={80}
+                    fieldName="isObserved"
+                    fieldType="checkbox"
+                    record={record}
+                    setRecord={setRecord}
+                    label="Is Observed"
+                  />
+                  {/* Priority LOV */}
+                  <MyInput
+                    width={150}
+                    fieldName="priority"
+                    fieldType="select"
+                    record={record}
+                    setRecord={setRecord}
+                    selectData={EncPriorityLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    placeholder="Select Priority"
+                    fieldLabel="Priority"
+                    searchable={false}
+                  />
+
+                </Form>
+
             </div>
           }
         />
