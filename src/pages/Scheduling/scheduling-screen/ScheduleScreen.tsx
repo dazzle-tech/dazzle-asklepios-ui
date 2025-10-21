@@ -46,6 +46,9 @@ import { useFetchAttachmentsListQuery } from '@/services/attachmentService';
 import { useSelector } from 'react-redux';
 import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
+import MyModal from '@/components/MyModal/MyModal';
+import ViewAppointmentRequests from './ViewAppointmentRequests';
+
 
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
@@ -57,6 +60,7 @@ const ScheduleScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedStartDate, setSelectedStartDate] = useState();
+  const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
   //Calendar Filters
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
@@ -740,6 +744,7 @@ content={
                 fieldName="facilityKey"
                 record={selectedFacility}
                 setRecord={setSelectedFacility}
+                searchable={false}
               />
             </Form>
             <Form fluid layout="inline">
@@ -756,6 +761,7 @@ content={
                 selectDataValue="key"
                 record={selectedResourceType}
                 setRecord={setSelectedResourceType}
+                searchable={false}
               />
             </Form>
 
@@ -851,32 +857,14 @@ content={
             <div>
               {/* <ButtonToolbar> */}
               <div style={{display: 'flex', gap: '5px'}}>
-                <MyButton
-                  // color="blue"
-                  // style={{
-                  //   width: '35%',
-                  //   display: 'flex',
-                  //   alignItems: 'center',
-                  //   justifyContent: 'flex-start',
-                  //   borderRadius: '5px',
-                  //   color: '#2264E5'
-                  // }}
-                  appearance="ghost"
-                  prefixIcon={() => (
-                    <FontAwesomeIcon
-                      // color="blue"
-                      icon={faPaperPlane}
-                      // style={{ color: '#2264E5', marginRight: '10px', fontSize: '16px' }}
-                    />
-                  )}
-                >
-                  {/* <FontAwesomeIcon
-                    color="blue"
-                    icon={faPaperPlane}
-                    style={{ color: '#2264E5', marginRight: '10px', fontSize: '16px' }}
-                  /> */}
-                  View App Requests
-                </MyButton>
+
+              <MyButton
+                appearance="ghost"
+                onClick={() => setAppRequestModalOpen(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
+              >
+                View App Requests
+              </MyButton>
 
                 <MyButton
                   // color="blue"
@@ -1084,6 +1072,22 @@ content={
           <br />
         </Modal.Body>
       </Modal>
+
+        <MyModal
+          open={appRequestModalOpen}
+          setOpen={setAppRequestModalOpen}
+          title={"View Appoimtment Request"}
+          bodyheight="80vh"
+          size="70vw"
+          actionButtonLabel="Confirm"
+          actionButtonFunction={() => {
+            console.log('Action confirmed!');
+            setModalOpen(false);
+          }}
+          content={<ViewAppointmentRequests></ViewAppointmentRequests>}
+          >
+        </MyModal>
+
     </div>
   );
 };

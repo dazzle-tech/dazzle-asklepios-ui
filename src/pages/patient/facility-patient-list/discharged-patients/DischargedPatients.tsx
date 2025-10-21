@@ -5,6 +5,12 @@ import MyTable from '@/components/MyTable';
 import '../styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import { newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
+import { ApPatient, ApPatientInsurance } from '@/types/model-types';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetDepartmentsQuery } from '@/services/setupService';
+
 
 const dummyRow = {
   fullName: 'Ali Hassan',
@@ -76,6 +82,13 @@ const DischargedPatients = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedDepartments, setSelectedDepartments] = useState<any[]>([]);
+  const [searchPatient, setSearchPatient] = useState<ApPatient>({
+    ...newApPatient
+  });
+
+  const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+  const { data: departmentsResponse } = useGetDepartmentsQuery(initialListRequest);
 
   const data = [dummyRow];
 
@@ -87,6 +100,36 @@ const DischargedPatients = () => {
   });
 
   const paginated = sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+
+const content = (
+            <div className="advanced-filters">
+              <Form fluid className="dissss">
+                <MyInput
+            fieldLabel="Select Department"
+            fieldType="checkPicker"
+            selectData={departmentsResponse?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            placeholder=" "
+            fieldName="selectedDepartments"
+            record={{ selectedDepartments }}
+            setRecord={value => setSelectedDepartments(value.selectedDepartments)}
+            searchable={false}
+          />
+          <MyInput
+            fieldLabel="Encounter Type"
+            fieldType="select"
+            fieldName="encounterTypeLkey"
+            selectData={encounterTypeLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={searchPatient}
+            setRecord={setSearchPatient}
+            searchable={false}
+            placeholder=" "
+          />
+                </Form></div>);
 
   const filterss = (<>
     <Form fluid>
@@ -146,7 +189,7 @@ const DischargedPatients = () => {
 
       </div>
     </Form>
-    <AdvancedSearchFilters searchFilter={false}/>
+    <AdvancedSearchFilters searchFilter={false} content={content}/>
   </>);
 
   return (
