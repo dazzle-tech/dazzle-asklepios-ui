@@ -296,7 +296,7 @@ const Encounter = () => {
     '/encounter/patient-history': 'Patient History',
     '/encounter/medications-record': 'Medications Record',
     '/encounter/vaccine-record': 'Vaccine Record',
-    '/encounter/diagnostics-result': 'Diagnostics Result ',
+    '/encounter/diagnostics-result': 'Diagnostics Result',
     '/encounter/dialysis-request': 'Dialysis Request ',
     '/encounter/operation-request': 'Operation Requests',
     '/encounter/multidisciplinary-team-notes': 'Multidisciplinary Team Notes',
