@@ -11,15 +11,17 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds, fromCamelCaseToDBName } from '@/utils';
-import { faBarcode, faFileWaveform } from '@fortawesome/free-solid-svg-icons';
+import { faBarcode, faFileWaveform,faPrint,faBedPulse,faFileArrowDown,faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { FaBedPulse, FaFileArrowDown, FaPrint } from 'react-icons/fa6';
 import { MdAttachFile } from 'react-icons/md';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-
+import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
 import Perform from '../encounter/encounter-component/procedure/Perform';
+import MyButton from '@/components/MyButton/MyButton';
+
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -64,6 +66,9 @@ const ProcedureModule = () => {
       return 'selected-row';
     } else return '';
   };
+
+  const [openEMRModal, setOpenEMRModal] = useState(false);
+
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -368,7 +373,7 @@ const ProcedureModule = () => {
         const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
 
         return (
-          <HStack spacing={2}>
+             <HStack spacing={2}>
             {lastAttachment && (
               <FaFileArrowDown
                 size={20}
@@ -383,10 +388,8 @@ const ProcedureModule = () => {
               fill="var(--primary-gray)"
               onClick={() => setAttachmentsModalOpen(true)}
               style={{ cursor: 'pointer' }}
-            />
-          </HStack>
-        );
-      }
+            /></HStack>);
+          }
     },
     {
       key: 'perform',
@@ -396,13 +399,16 @@ const ProcedureModule = () => {
       render: (rowData: any) => {
         const isDisabled = rowData.currentDepartment;
 
-        return (
-          <FaBedPulse
-            size={22}
-            fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
-            style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
-            onClick={!isDisabled ? OpenPerformModel : undefined}
-          />
+        return (   <HStack spacing={10}> 
+                    <Whisper trigger="hover" placement="top" speaker={<Tooltip>Perform Details</Tooltip>}>
+                      <div>
+                        <MyButton
+                          size="small"
+                          onClick={!isDisabled ? OpenPerformModel : undefined}>
+                          <FontAwesomeIcon icon={faBedPulse} />
+                        </MyButton>
+                      </div>
+                    </Whisper></HStack>
         );
       }
     },
@@ -412,7 +418,21 @@ const ProcedureModule = () => {
       render: (rowData: any) => {
         const isDisabled = rowData.currentDepartment;
 
-        return <FaPrint size={22} fill="var(--primary-gray)" style={{ cursor: 'pointer' }} />;
+        return(<HStack spacing={10}>
+    <Whisper trigger="hover" placement="top" speaker={<Tooltip>Print</Tooltip>}>
+                      <div>
+                        <MyButton
+                          size="small"
+                          backgroundColor="light-blue"
+                          onClick={() => {
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faPrint} />
+                        </MyButton>
+                      </div>
+                    </Whisper>
+                    </HStack>);
+        
       }
     },
     {
@@ -421,12 +441,38 @@ const ProcedureModule = () => {
       render: (rowData: any) => {
         return (
           <HStack spacing={10}>
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Wristband</Tooltip>}>
-              <FontAwesomeIcon icon={faBarcode} style={{ color: 'var(--primary-gray)' }} />
+
+            <Whisper
+              placement="top"
+              trigger="hover"
+              speaker={<Tooltip>Wristband</Tooltip>}>
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="black">
+                  <FontAwesomeIcon icon={faBarcode} />
+                </MyButton>
+              </div>
             </Whisper>
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Report</Tooltip>}>
-              <FontAwesomeIcon icon={faFileWaveform} style={{ color: 'var(--primary-gray)' }} />
+
+
+
+            <Whisper
+              placement="top"
+              trigger="hover"
+              speaker={<Tooltip>EMR</Tooltip>}>
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="violet"
+                  onClick={() => setOpenEMRModal(true)}
+                >
+                  <FontAwesomeIcon icon={faFileWaveform} />
+                </MyButton>
+              </div>
             </Whisper>
+
+
           </HStack>
         );
       }
@@ -659,6 +705,24 @@ const ProcedureModule = () => {
           />
         }
       ></MyModal>
+
+        <MyModal
+          open={openEMRModal}
+          setOpen={setOpenEMRModal}
+          title="Electronic Medical Record"
+          size="90vw"
+          content={
+            patient && encounter ? (
+              <PatientEMRModal inModal patient={patient} encounter={encounter} />
+            ) : (
+              <div style={{ padding: 16 }}>No patient selected.</div>
+            )
+          }
+          actionButtonLabel="Close"
+          actionButtonFunction={() => setOpenEMRModal(false)}
+          cancelButtonLabel="Cancel"
+        />
+
     </>
   );
 };

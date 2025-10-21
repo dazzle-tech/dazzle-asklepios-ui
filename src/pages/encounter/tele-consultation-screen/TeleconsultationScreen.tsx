@@ -43,7 +43,7 @@ import ReactDOMServer from 'react-dom/server';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Form, Panel, Tooltip, Whisper } from 'rsuite';
-import PatientEMR from '@/pages/patient/patient-emr/PatientEMR';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import CallLog from './CallLog';
 import DragDropTable from './DragDropTable';
 import './start-tele-consultation/styles.less';
@@ -570,7 +570,7 @@ const TeleconsultationRequests = () => {
         size="90vw"
         content={
           emrPatient && emrEncounter ? (
-            <PatientEMR inModal patient={emrPatient} encounter={emrEncounter} />
+            <PatientEMRModal inModal patient={emrPatient} encounter={emrEncounter} />
           ) : (
             <div style={{ padding: 16 }}>No patient selected.</div>
           )

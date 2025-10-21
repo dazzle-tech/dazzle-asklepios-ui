@@ -17,7 +17,7 @@ import TodayAppointmentCard from './TodayAppointmentCard';
 import UpcomingAppointmentCard from './UpcomingAppointmentCard';
 import MyPatientAppointmentCard from './MyPatientAppointmentCard';
 import EmergencyContactAppointmentModal from './EmergencyContactAppointmentModal';
-import PatientEMR from '@/pages/patient/patient-emr';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import { Col, Row } from 'rsuite';
 
 const MyAppointmentScreen = () => {
@@ -160,7 +160,7 @@ const MyAppointmentScreen = () => {
         title="Patient Records"
         size="70vw"
         bodyheight="83vh"
-        content={<PatientEMR />}
+        content={<PatientEMRModal />}
         hideBack={true}
         actionButtonLabel="Save"
       />
