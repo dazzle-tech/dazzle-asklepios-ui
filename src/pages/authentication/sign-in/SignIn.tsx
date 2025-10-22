@@ -21,6 +21,7 @@ import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
 import { useAppSelector } from '@/hooks';
 import { useGetMenuQuery, useLazyGetMenuQuery } from '@/services/security/UserRoleService';
+import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 
 
 const SignIn = () => {
@@ -50,6 +51,9 @@ const SignIn = () => {
     data: facilityListResponse,
   } = useGetAllFacilitiesQuery({});
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
+  const { data: langData, isFetching: langsLoading, refetch: refetchLangs } = useGetAllLanguagesQuery({});
+  console.log("langData");
+  console.log(langData);
   const [saveUser] = useSaveUserMutation();
    const [getMenuTrigger] = useLazyGetMenuQuery();
   // Handle login
@@ -148,6 +152,7 @@ const SignIn = () => {
 
   useEffect(() => {
     dispatch(setLang(langRecord['lang']));
+    console.log("lang: "+ langRecord['lang']);
   }, [langRecord]);
 
   return (
@@ -187,12 +192,12 @@ const SignIn = () => {
                   width="100%"
                   fieldName="lang"
                   fieldType="select"
-                  selectData={langLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={langData}
+                  selectDataLabel="langName"
+                  selectDataValue="langKey"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
-                  record={{}}
-                  setRecord={() => { }}
+                  record={langRecord}
+                  setRecord={setLangRecord}
                   placeholder="Select Language"
                   showLabel={false}
                   searchable={false}

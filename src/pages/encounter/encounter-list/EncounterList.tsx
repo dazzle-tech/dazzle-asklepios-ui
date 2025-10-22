@@ -128,7 +128,7 @@ const EncounterList = () => {
     ]
   });
 
-  const { data: encounterListForTodayResponse } = useGetEncountersQuery(listRequestForToday);
+  const { data: encounterListForTodayResponse, refetch: refetchListForToday } = useGetEncountersQuery(listRequestForToday);
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
@@ -253,6 +253,7 @@ const EncounterList = () => {
       if (encounter) {
         await cancelEncounter(encounter).unwrap();
         refetchEncounter();
+        refetchListForToday();
         dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
         setOpen(false);
       }
@@ -684,7 +685,7 @@ const EncounterList = () => {
     }
     setCompletedVisits(CompletedCount);
     setCancelledVisits(CancelledCount);
-  }, [listRequestForToday]);
+  }, [listRequestForToday, encounterListForTodayResponse]);
 
   useEffect(() => {
     setActiveVisits(
