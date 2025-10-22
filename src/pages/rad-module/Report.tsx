@@ -64,6 +64,7 @@ type props = {
   patient: any;
   order: any;
   saveReportMutation: any;
+  fetchAllTests: any;
 };
 const Report = forwardRef<unknown, props>(
   (
@@ -78,7 +79,8 @@ const Report = forwardRef<unknown, props>(
       saveTest,
       patient,
       order,
-      saveReportMutation
+      saveReportMutation,
+      fetchAllTests
     },
     ref
   ) => {
@@ -216,7 +218,6 @@ const Report = forwardRef<unknown, props>(
     // save note when write it in chatModal
 
     useEffect(() => {
-      console.log('iam in report ref', attachmentRefetch);
       if (attachmentRefetch) {
         const updatedFilters = [
           {
@@ -407,6 +408,7 @@ const Report = forwardRef<unknown, props>(
                         // await fetchTest();
 
                         await reportFetch();
+                        await fetchAllTests();
                       } catch (error) {
                         dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
                       }

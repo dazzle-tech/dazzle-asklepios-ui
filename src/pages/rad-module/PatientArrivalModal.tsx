@@ -7,7 +7,7 @@ import { faHospitalUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
-const PatientArrivalModal = ({ open, setOpen, saveTest, test, setTest, fetchTest }) => {
+const PatientArrivalModal = ({ open, setOpen, saveTest, test, setTest, fetchTest,fetchAllTests }) => {
   const dispatch = useAppDispatch();
       const [width, setWidth] = useState("30vw");
    
@@ -50,6 +50,7 @@ useEffect(() => {
           setOpen(false);
           setTest({ ...newApDiagnosticOrderTests });
           await fetchTest();
+          await fetchAllTests();
           //orderFetch();
           setTest({ ...Response });
         }}

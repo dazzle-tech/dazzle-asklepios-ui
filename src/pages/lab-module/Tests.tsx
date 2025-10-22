@@ -46,10 +46,11 @@ type Props = {
   setTest: any;
   samplesList: any;
   resultFetch: any;
+  fetchAllTests: any;
   fecthSample: () => void;
 };
 const Tests = forwardRef<unknown, Props>(
-  ({ order, test, setTest, samplesList, resultFetch, fecthSample }, ref) => {
+  ({ order, test, setTest, samplesList, resultFetch,fetchAllTests ,fecthSample }, ref) => {
     useImperativeHandle(ref, () => ({
       fetchTest
     }));
@@ -220,6 +221,7 @@ const Tests = forwardRef<unknown, Props>(
           dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
 
           await fetchTest();
+          await fetchAllTests();
           try {
             await resultFetch();
           } catch (error) {
@@ -642,6 +644,8 @@ const Tests = forwardRef<unknown, Props>(
         </Form>
       );
     };
+    console.log("testsList: ");
+    console.log(testsList);
 return (
   <Panel ref={ref} header="Order's Tests" defaultExpanded>
     <MyTable
@@ -675,6 +679,7 @@ return (
       test={test}
       setTest={setTest}
       fecthSample={fecthSample}
+      fetchAllTests={fetchAllTests}
     />
     <ChatModal
       open={openNoteModal}

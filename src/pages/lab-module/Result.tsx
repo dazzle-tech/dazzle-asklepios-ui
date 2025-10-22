@@ -55,6 +55,7 @@ type ResultProps = {
   samplesList: any;
   fecthSample: () => void;
   fetchTest: () => void;
+  fetchAllTests: () => void;
   listResultResponse: any;
   setListResultResponse: any;
 };
@@ -73,7 +74,8 @@ const Result = forwardRef<unknown, ResultProps>(
       fetchTest,
       fecthSample,
       listResultResponse,
-      setListResultResponse
+      setListResultResponse,
+      fetchAllTests
     },
     ref
   ) => {
@@ -269,8 +271,7 @@ const Result = forwardRef<unknown, ResultProps>(
     };
 
     const joinValuesFromArray = keys => {
-      return keys
-        .map(key => lovValues?.object?.find(lov => lov.key === key))
+      return keys.map(key => lovValues?.object?.find(lov => lov.key === key))
         .filter(obj => obj !== undefined)
         .map(obj => obj.lovDisplayVale)
         .join(', ');
@@ -871,7 +872,6 @@ const Result = forwardRef<unknown, ResultProps>(
                           }
                           return 'Not Defined';
                         }
-
                         const resultValue = value(rowData);
                         const object = rowData;
 
@@ -894,6 +894,7 @@ const Result = forwardRef<unknown, ResultProps>(
 
                         await fetchTest();
                         await resultFetch();
+                        await fetchAllTests();
                       } catch (error) {
                         dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
                       }
@@ -1074,7 +1075,6 @@ const Result = forwardRef<unknown, ResultProps>(
             {
               try {
                 const object = result;
-                console.log({ object });
                 await saveResult({
                   ...object,
                   statusLkey: '6488555526802885',

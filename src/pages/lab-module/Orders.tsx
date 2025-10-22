@@ -6,20 +6,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatDateWithoutSeconds } from '@/utils';
 import './styles.less';
 import React, { useState } from 'react';
-import { Panel, Tooltip, Whisper } from 'rsuite';
-import { orderBy } from 'lodash';
+import { Tooltip, Whisper } from 'rsuite';
 const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) => {
-  const {
-    data: ordersList,
-    refetch: orderFetch,
-    isFetching: isOrderFetcheng
-  } = useGetDiagnosticOrderQuery({ ...listOrdersResponse, sortBy: 'isUrgent', sortType: 'desc' });
+  const { data: ordersList, isFetching: isOrderFetcheng } = useGetDiagnosticOrderQuery({
+    ...listOrdersResponse,
+    sortBy: 'isUrgent',
+    sortType: 'desc'
+  });
   const filterdOrderList = ordersList?.object.filter(item => item.hasLaboratory === true);
   const isSelected = rowData => {
     if (rowData && order && rowData.key === order.key) {
       return 'selected-row';
     } else return '';
   };
+
   const tableColomns = [
     {
       key: 'orderId',
