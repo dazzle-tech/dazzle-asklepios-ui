@@ -36,8 +36,8 @@ import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
 import { MedicalsheetsService } from './services/MedicalSheetsService';
 import { serviceService } from './services/setup/serviceService';
-
-
+import { languageService } from './services/setup/languageService';
+import { translationService } from './services/setup/translationService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -94,7 +94,6 @@ export const store = configureStore({
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
-    
     [MedicalsheetsService.reducerPath]:MedicalsheetsService.reducer,
 
     //refetch Encounters
@@ -117,6 +116,12 @@ export const store = configureStore({
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]:userDepartmentService.reducer,
 
+    
+     // Language slice
+    [languageService.reducerPath]: languageService.reducer,
+
+    // Translation slice
+    [translationService.reducerPath]: translationService.reducer,
 
     //service
     [serviceService.reducerPath]: serviceService.reducer,
@@ -153,6 +158,8 @@ export const store = configureStore({
       userDepartmentService.middleware,
       MedicalsheetsService.middleware,
       serviceService.middleware
+      languageService.middleware,
+      translationService.middleware,
 
     ])
 });

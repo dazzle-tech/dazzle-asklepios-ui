@@ -33,69 +33,70 @@ export const newCandidate: modelTypes.Candidate = {
 
 };
 
-export const newDepartment:modelTypes.Department = { 
-  id:undefined,
-  facilityId:undefined,
-  name:'',
-  createdBy:'',
-  createdDate:undefined,
-  lastModifiedBy:undefined,
-  lastModifiedDate:undefined,
-  departmentType:undefined,
-  appointable:undefined,
-  departmentCode:'',
-  phoneNumber:'',
-  email:'',
-  encounterType:undefined,
-  isActive:true,
+export const newDepartment: modelTypes.Department = {
+  id: undefined,
+  facilityId: undefined,
+  name: '',
+  createdBy: '',
+  createdDate: undefined,
+  lastModifiedBy: undefined,
+  lastModifiedDate: undefined,
+  departmentType: undefined,
+  appointable: undefined,
+  departmentCode: '',
+  phoneNumber: '',
+  email: '',
+  encounterType: undefined,
+  isActive: true,
 }
 
-export const newFacility:modelTypes.Facility = { 
-  id:undefined,
-  name:'',
-  code:'',
-	emailAddress:'',
-	phone1:'',
-	phone2:'',
-	fax:'',
-	addressId:'',
-	type:'',
-	defaultCurrency:'',
+export const newFacility: modelTypes.Facility = {
+  id: undefined,
+  name: '',
+  code: '',
+  emailAddress: '',
+  phone1: '',
+  phone2: '',
+  fax: '',
+  addressId: '',
+  type: '',
+  defaultCurrency: '',
   isActive: true,
 } 
 
-export const newCreateFacility:modelTypes.CreateFacility = { 
-  name:'',
-  code:'',
-	emailAddress:'',
-	phone1:'',
-	phone2:'',
-	fax:'',
-	addressId:'',
-	type:'',
-	defaultCurrency:'',
-  isActive: true,
-} 
+export const newCreateFacility: modelTypes.CreateFacility = {
+  name: '',
 
-export const newRole:modelTypes.Role = { 
-	id:undefined,
-	name:'',
-	type:'',
-	facilityId: null,
-} 
-export const newUserRole:modelTypes.UserRole = { 
-  roleId:undefined,
-  userId:undefined,
+  code: '',
+  emailAddress: '',
+  phone1: '',
+  phone2: '',
+  fax: '',
+  addressId: '',
+  type: '',
+  defaultCurrency: '',
+  isActive: true,
 }
-export const newUserDepartment:modelTypes.UserDepartment = {
-  id:undefined,
+
+export const newRole: modelTypes.Role = {
+  id: undefined,
+  name: '',
+  type: '',
+  facilityId: null,
+}
+export const newUserRole: modelTypes.UserRole = {
+  roleId: undefined,
+  userId: undefined,
+}
+export const newUserDepartment: modelTypes.UserDepartment = {
+  id: undefined,
   userId: undefined,
   departmentId: undefined,
   isActive: true,
   createdBy: '',
-  createdDate:undefined,
-  lastModifiedBy:undefined,
-  lastModifiedDate:undefined,
+  createdDate: undefined,
+  lastModifiedBy: undefined,
+  lastModifiedDate: undefined,
 };
 
 export const newService: modelTypes.Service = {
@@ -126,9 +127,20 @@ export const newServiceItem: modelTypes.ServiceItem = {
   isActive: true,
 };
 
+export const newLanguage: modelTypes.Language = {
+  id: undefined,
+  langKey: undefined,
+  langName: undefined,
+  direction: undefined,
+  details: undefined,
+}
 
-
-
-
-
-
+export const newLanguageTranslation: modelTypes.LanguageTranslation = {
+  id: undefined,
+  langKey: undefined,          
+  translationKey: undefined,   
+  originalText: undefined,     
+  translationText: undefined,
+  verified: undefined,
+  translated: undefined,
+}
