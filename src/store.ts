@@ -38,6 +38,9 @@ import { MedicalsheetsService } from './services/MedicalSheetsService';
 import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
+import { PractitionerService } from './services/practitioner/PractitionerService';
+import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -115,6 +118,8 @@ export const store = configureStore({
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]:userDepartmentService.reducer,
+    [PractitionerService.reducerPath]:PractitionerService.reducer,
+    [PractitionerDepartmentService.reducerPath]:PractitionerDepartmentService.reducer,
 
     
      // Language slice
@@ -160,6 +165,8 @@ export const store = configureStore({
       serviceService.middleware
       languageService.middleware,
       translationService.middleware,
+      PractitionerService.middleware,
+      PractitionerDepartmentService.middleware
 
     ])
 });

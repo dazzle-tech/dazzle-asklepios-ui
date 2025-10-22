@@ -26,8 +26,8 @@ export const userRoleService = createApi({
             }),
         }), 
       getMenu: builder.query({
-      query: ({ userId, facilityId }) => ({
-        url: `/api/setup/menu?userId=${userId}&facilityId=${facilityId}`,
+      query: () => ({
+        url: `/api/setup/menu`,
         method: 'GET',
       }),
     }),
@@ -37,7 +37,8 @@ export const {
     useAddUserRoleMutation,
     useDeleteUserRoleMutation,
     useGetUserRolesByUserIdQuery,
-    useGetMenuQuery
+    useGetMenuQuery,
+    useLazyGetMenuQuery
 
 } = userRoleService;
 

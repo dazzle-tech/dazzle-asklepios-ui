@@ -358,6 +358,74 @@ const MyInput = ({
           />
         );
 
+      case "selectPagination":
+
+        const labelKey = props.selectDataLabel ?? "name";
+        const valueKey = props.selectDataValue ?? "id";
+
+        return (
+          <Form.Control
+            name={fieldName}
+            style={{ width: styleWidth, height: props?.height ?? 30 }}
+            className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ""}`}
+            block
+            disabled={props.disabled}
+            accepter={SelectPicker}
+            data={[
+              ...(props.selectData ?? []),
+              ...(props.hasMore
+                ? [
+                  {
+                    [valueKey]: "__load_more__",
+                    [labelKey]: "Load more...",
+                    isLoadMore: true,
+                  },
+                ]
+                : []),
+            ]}
+            labelKey={labelKey}
+            valueKey={valueKey}
+            value={record?.[fieldName] ?? ""}
+            onChange={(value, item, event) => {
+              if (item?.isLoadMore) {
+                event?.preventDefault();
+                event?.stopPropagation();
+                props.onFetchMore?.(); 
+              } else {
+                handleValueChange(value);
+              }
+            }}
+            renderMenuItem={(label, item) => {
+              if (item?.isLoadMore) {
+                return (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      color: "#1675E0",
+                      cursor: "pointer",
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      props.onFetchMore?.(); // ✅ نفس السلوك عند الضغط
+                    }}
+                  >
+                    {item[labelKey]}
+                  </div>
+                );
+              }
+              return label;
+            }}
+            placeholder={props.placeholder ?? "Select..."}
+            searchable
+            cleanable
+            loading={props.loading ?? false}
+            menuMaxHeight={props.menuMaxHeight ?? 240}
+          />
+        );
+
+
       //<TagPicker data={data} style={{ width: 300 }} />
       case 'multyPicker':
         return (
@@ -699,8 +767,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
+                  ? 'orange'
+                  : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>

@@ -127,6 +127,7 @@ export const newServiceItem: modelTypes.ServiceItem = {
   isActive: true,
 };
 
+
 export const newLanguage: modelTypes.Language = {
   id: undefined,
   langKey: undefined,
@@ -134,6 +135,28 @@ export const newLanguage: modelTypes.Language = {
   direction: undefined,
   details: undefined,
 }
+
+export const newPractitioner: modelTypes.Practitioner = {
+  id: undefined,
+  facilityId: null,
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
+  specialty: '',
+  subSpecialty: '',
+  defaultMedicalLicense: '',
+  secondaryMedicalLicense: '',
+  educationalLevel: '',
+  appointable: true,
+  userId: null,
+  defaultLicenseValidUntil: undefined,
+  secondaryLicenseValidUntil: undefined,
+  dateOfBirth: undefined,
+  jobRole: '',
+  gender: '',
+  isActive: true,
+};
 
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   id: undefined,

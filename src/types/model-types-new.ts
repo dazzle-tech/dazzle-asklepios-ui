@@ -172,3 +172,29 @@ export interface LanguageTranslation {
   translated: boolean;
 }
 
+
+export interface Practitioner {
+  id?: number;
+  facilityId: number;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phoneNumber?: string | null;
+  specialty: string;
+  subSpecialty?: string | null;
+  defaultMedicalLicense?: string | null;
+  secondaryMedicalLicense?: string | null;
+  educationalLevel?: string | null;
+  appointable?: boolean;
+  userId: number;
+  defaultLicenseValidUntil?: string | null;
+  secondaryLicenseValidUntil?: string | null;
+  dateOfBirth?: string | null;
+  jobRole?: string | null;
+  gender?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null
+}
+

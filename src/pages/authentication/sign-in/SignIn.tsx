@@ -15,11 +15,13 @@ import { setLang } from '@/reducers/uiSlice';
 import { useLoginMutation } from '@/services/authServiceApi';
 import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
-import { setTenant, setToken, setUser } from '@/reducers/authSlice';
+import { setMenu, setTenant, setToken, setUser } from '@/reducers/authSlice';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
 import { useAppSelector } from '@/hooks';
+import { useGetMenuQuery, useLazyGetMenuQuery } from '@/services/security/UserRoleService';
+import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 
 
 const SignIn = () => {
@@ -48,56 +50,74 @@ const SignIn = () => {
   const {
     data: facilityListResponse,
   } = useGetAllFacilitiesQuery({});
-  console.log( facilityListResponse);
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
+  const { data: langData, isFetching: langsLoading, refetch: refetchLangs } = useGetAllLanguagesQuery({});
+  console.log("langData");
+  console.log(langData);
   const [saveUser] = useSaveUserMutation();
-
+   const [getMenuTrigger] = useLazyGetMenuQuery();
   // Handle login
-  const handleLogin = async () => {
-    if (!credentials.username || !credentials.password || !credentials.orgKey) {
-      setErrText('Please fill all required fields.');
-      return;
-    }
+ const handleLogin = async () => {
+  if (!credentials.username || !credentials.password || !credentials.orgKey) {
+    setErrText('Please fill all required fields.');
+    return;
+  }
 
-    try {
-      const resp = await login({
-        username: credentials.username,
-        password: credentials.password,
-        facilityId: Number(credentials.orgKey),
-        rememberMe: true
+  try {
+    const resp = await login({
+      username: credentials.username,
+      password: credentials.password,
+      facilityId: Number(credentials.orgKey),
+      rememberMe: true,
+    }).unwrap();
+
+    dispatch(setToken(resp.id_token));
+
+    const userResp = await getAccount().unwrap();
+    dispatch(setUser(userResp));
+
+    const selectedFacility =
+      (facilityListResponse ?? []).find(
+        (f: any) => f.id === Number(credentials.orgKey)
+      ) || null;
+
+    const existingTenant =
+      JSON.parse(localStorage.getItem('tenant') || 'null') || {};
+    dispatch(setTenant({ ...existingTenant, selectedFacility }));
+
+    if (userResp?.id && selectedFacility?.id) {
+      const menuResponse = await getMenuTrigger({
+        userId: userResp.id,
+        facilityId: selectedFacility.id,
       }).unwrap();
 
-      // Save token first so prepareHeaders can pick it up
-      dispatch(setToken(resp.id_token));
-
-      const userResp = await getAccount().unwrap();
-      dispatch(setUser(userResp));
-
-    // NEW ⬇︎ merge the selected facility into tenant as `selectedFacility`
-      const selectedFacility =
-        (facilityListResponse ?? []).find((f: any) => f.id === Number(credentials.orgKey)) || null;
-     const existingTenant = JSON.parse(localStorage.getItem('tenant') || 'null') || {};
-     dispatch(setTenant({ ...existingTenant, selectedFacility }));
-
-     // (Optional cleanup) If you previously stored standalone 'facility' in localStorage, remove it:
-     // localStorage.removeItem('facility');
-     // and stop dispatching any setFacility action you might have had.
-
-      console.log('User Info:', userResp);
-      localStorage.setItem('id_token', resp.id_token);
-      localStorage.setItem('user', JSON.stringify(userResp));
-      console.log('Facility Info:', selectedFacility);
-      localStorage.setItem('facility', JSON.stringify(selectedFacility));
-      localStorage.setItem('tenant', JSON.stringify({ ...existingTenant, selectedFacility }));
-      store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
-
-      setErrText(' ');
-      navigate('/');
-    } catch (err: any) {
-      console.error(err);
-      setErrText('Login failed. Please check your credentials.');
+      dispatch(setMenu(menuResponse));
+      localStorage.setItem('menu', JSON.stringify(menuResponse));
     }
-  };
+
+    localStorage.setItem('id_token', resp.id_token);
+    localStorage.setItem('user', JSON.stringify(userResp));
+
+    store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
+
+    setErrText(' ');
+    navigate('/');
+ } catch (err: any) {
+  console.error(err);
+
+  if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
+    setErrText('Invalid username or password.');
+  } else if (err?.status === 'FETCH_ERROR') {
+    setErrText('Server Cannot be Reached, Please Contact System Administrator');
+  } else if (err?.status) {
+    setErrText(`Server error (${err.status}). Please try again.`);
+  } else {
+    setErrText('Unexpected error occurred.');
+  }
+}
+};
+
+
 
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -132,6 +152,7 @@ const SignIn = () => {
 
   useEffect(() => {
     dispatch(setLang(langRecord['lang']));
+    console.log("lang: "+ langRecord['lang']);
   }, [langRecord]);
 
   return (
@@ -171,12 +192,12 @@ const SignIn = () => {
                   width="100%"
                   fieldName="lang"
                   fieldType="select"
-                  selectData={langLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={langData}
+                  selectDataLabel="langName"
+                  selectDataValue="langKey"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
-                  record={{}}
-                  setRecord={() => { }}
+                  record={langRecord}
+                  setRecord={setLangRecord}
                   placeholder="Select Language"
                   showLabel={false}
                   searchable={false}
