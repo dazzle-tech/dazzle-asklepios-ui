@@ -1,5 +1,9 @@
 import MyInput from '@/components/MyInput';
-import {  useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
+import {
+  useGetLovValuesByCodeQuery,
+  useSaveUserMutation,
+  useGetLovDefultByCodeQuery
+} from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
 
@@ -23,7 +27,6 @@ import { useAppSelector } from '@/hooks';
 import { useGetMenuQuery, useLazyGetMenuQuery } from '@/services/security/UserRoleService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 
-
 const SignIn = () => {
   const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
@@ -44,80 +47,76 @@ const SignIn = () => {
   const uiSlice = useAppSelector(state => state.ui);
   const [langRecord, setLangRecord] = useState({ lang: uiSlice.lang });
 
-
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
-  const {
-    data: facilityListResponse,
-  } = useGetAllFacilitiesQuery({});
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
-  const { data: langData, isFetching: langsLoading, refetch: refetchLangs } = useGetAllLanguagesQuery({});
-  console.log("langData");
+  const {
+    data: langData,
+    isFetching: langsLoading,
+    refetch: refetchLangs
+  } = useGetAllLanguagesQuery({});
+  console.log('langData');
   console.log(langData);
   const [saveUser] = useSaveUserMutation();
-   const [getMenuTrigger] = useLazyGetMenuQuery();
+  const [getMenuTrigger] = useLazyGetMenuQuery();
   // Handle login
- const handleLogin = async () => {
-  if (!credentials.username || !credentials.password || !credentials.orgKey) {
-    setErrText('Please fill all required fields.');
-    return;
-  }
-
-  try {
-    const resp = await login({
-      username: credentials.username,
-      password: credentials.password,
-      facilityId: Number(credentials.orgKey),
-      rememberMe: true,
-    }).unwrap();
-
-    dispatch(setToken(resp.id_token));
-
-    const userResp = await getAccount().unwrap();
-    dispatch(setUser(userResp));
-
-    const selectedFacility =
-      (facilityListResponse ?? []).find(
-        (f: any) => f.id === Number(credentials.orgKey)
-      ) || null;
-
-    const existingTenant =
-      JSON.parse(localStorage.getItem('tenant') || 'null') || {};
-    dispatch(setTenant({ ...existingTenant, selectedFacility }));
-
-    if (userResp?.id && selectedFacility?.id) {
-      const menuResponse = await getMenuTrigger({
-        userId: userResp.id,
-        facilityId: selectedFacility.id,
-      }).unwrap();
-
-      dispatch(setMenu(menuResponse));
-      localStorage.setItem('menu', JSON.stringify(menuResponse));
+  const handleLogin = async () => {
+    if (!credentials.username || !credentials.password || !credentials.orgKey) {
+      setErrText('Please fill all required fields.');
+      return;
     }
 
-    localStorage.setItem('id_token', resp.id_token);
-    localStorage.setItem('user', JSON.stringify(userResp));
+    try {
+      const resp = await login({
+        username: credentials.username,
+        password: credentials.password,
+        facilityId: Number(credentials.orgKey),
+        rememberMe: true
+      }).unwrap();
 
-    store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
+      dispatch(setToken(resp.id_token));
 
-    setErrText(' ');
-    navigate('/');
- } catch (err: any) {
-  console.error(err);
+      const userResp = await getAccount().unwrap();
+      dispatch(setUser(userResp));
 
-  if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
-    setErrText('Invalid username or password.');
-  } else if (err?.status === 'FETCH_ERROR') {
-    setErrText('Server Cannot be Reached, Please Contact System Administrator');
-  } else if (err?.status) {
-    setErrText(`Server error (${err.status}). Please try again.`);
-  } else {
-    setErrText('Unexpected error occurred.');
-  }
-}
-};
+      const selectedFacility =
+        (facilityListResponse ?? []).find((f: any) => f.id === Number(credentials.orgKey)) || null;
 
+      const existingTenant = JSON.parse(localStorage.getItem('tenant') || 'null') || {};
+      dispatch(setTenant({ ...existingTenant, selectedFacility }));
 
+      if (userResp?.id && selectedFacility?.id) {
+        const menuResponse = await getMenuTrigger({
+          userId: userResp.id,
+          facilityId: selectedFacility.id
+        }).unwrap();
+
+        dispatch(setMenu(menuResponse));
+        localStorage.setItem('menu', JSON.stringify(menuResponse));
+      }
+
+      localStorage.setItem('id_token', resp.id_token);
+      localStorage.setItem('user', JSON.stringify(userResp));
+
+      store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
+
+      setErrText(' ');
+      navigate('/');
+    } catch (err: any) {
+      console.error(err);
+
+      if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
+        setErrText('Invalid username or password.');
+      } else if (err?.status === 'FETCH_ERROR') {
+        setErrText('Server Cannot be Reached, Please Contact System Administrator');
+      } else if (err?.status) {
+        setErrText(`Server error (${err.status}). Please try again.`);
+      } else {
+        setErrText('Unexpected error occurred.');
+      }
+    }
+  };
 
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -149,10 +148,9 @@ const SignIn = () => {
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
 
-
   useEffect(() => {
     dispatch(setLang(langRecord['lang']));
-    console.log("lang: "+ langRecord['lang']);
+    console.log('lang: ' + langRecord['lang']);
   }, [langRecord]);
 
   return (
@@ -174,21 +172,6 @@ const SignIn = () => {
             <Panel className="sign-in-panel ">
               <Form fluid onKeyPress={handleKeyPress}>
                 <MyInput
-                  placeholder="Select Facility"
-                  width="100%"
-                  fieldType="select"
-                  fieldLabel="Facility"
-                  selectData={facilityListResponse ?? []}
-                  selectDataLabel="name"
-                  selectDataValue="id"
-                  fieldName="orgKey"
-                  record={credentials}
-                  setRecord={setCredentials}
-                  showLabel={false}
-                />
-
-                <MyInput
-
                   width="100%"
                   fieldName="lang"
                   fieldType="select"
@@ -203,6 +186,20 @@ const SignIn = () => {
                   searchable={false}
                 />
 
+                <MyInput
+                  placeholder="Select Facility"
+                  width="100%"
+                  fieldType="select"
+                  fieldLabel="Facility"
+                  selectData={facilityListResponse ?? []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  fieldName="orgKey"
+                  record={credentials}
+                  setRecord={setCredentials}
+                  showLabel={false}
+                  searchable={false}
+                />
 
                 <MyInput
                   width="100%"
