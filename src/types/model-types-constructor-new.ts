@@ -62,7 +62,7 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-}
+} 
 
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
@@ -99,7 +99,33 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   lastModifiedDate: undefined,
 };
 
+export const newService: modelTypes.Service = {
+  id: undefined,
+  name: '',
+  abbreviation: null,
+  code: '',
+  category: null,
+  price: null,
+  currency: 'USD',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  facilityId: undefined, 
+};
 
+export const newServiceItem: modelTypes.ServiceItem = {
+  id: undefined,
+  type: 'DEPARTMENTS',    
+  sourceId: 0,            
+  serviceId: undefined,  
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  isActive: true,
+};
 export const newLanguage: modelTypes.Language = {
   id: undefined,
   langKey: undefined,
