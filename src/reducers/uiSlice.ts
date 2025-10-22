@@ -1,6 +1,6 @@
 import { uiService } from '@/services/uiService';
 import { createSlice } from '@reduxjs/toolkit';
-const savedLang = localStorage.getItem('lang') || 'SYS_LANG_ENG';
+const savedLang = localStorage.getItem('lang') || 'en';
 
 const initialState = {
   sev: 'info',
@@ -10,7 +10,7 @@ const initialState = {
   mode: 'light',
   translations: {
 
-    SYS_LANG_PORT: { // اللغة البرتغالية
+    pt: { // اللغة البرتغالية
     "First Name" : "primeiro nome",
     "Basic Information": "Informações Básicas",
     "Demographics" : "Demografia",
@@ -177,6 +177,7 @@ const initialState = {
     "Next" : "Próximo",
     "Add payment" : "Adicionar pagamento"
     }
+    
   },
   screenKey: '',
   loading: false,

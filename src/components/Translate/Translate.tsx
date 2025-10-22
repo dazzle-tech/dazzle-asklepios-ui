@@ -7,7 +7,7 @@ const Translate = props => {
   const [text, setText] = useState('');
     useEffect(() => {
     if (props.children) {
-      if (lang === 'SYS_LANG_ENG') {
+      if (lang === 'en') {
         setText(props.children);
       } else {
         if (translations[lang]?.[props?.children]) {
@@ -21,7 +21,7 @@ const Translate = props => {
 
   useEffect(() => {
     if (props.children) {
-      if (lang === 'SYS_LANG_ENG') {
+      if (lang === 'en') {
         setText(props.children);
       } else {
         if (translations[lang]?.[props?.children]) {
