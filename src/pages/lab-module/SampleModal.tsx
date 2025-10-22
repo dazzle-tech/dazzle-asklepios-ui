@@ -21,7 +21,7 @@ import {
 import './styles.less';
 import { formatDateWithoutSeconds } from "@/utils";
 
-const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, saveTest, fetchTest, fecthSample }) => {
+const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, saveTest, fetchTest, fecthSample, fetchAllTests }) => {
   const dispatch = useAppDispatch();
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
   const [selectedSampleDate, setSelectedSampleDate] = useState({ dateTime: null });
@@ -45,6 +45,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
       setTest({ ...Response });
       await fetchTest();
       await fecthSample();
+      await fetchAllTests();
       setOpen(false);
       setSample({ ...newApDiagnosticOrderTestsSamples });
       setSelectedSampleDate({ dateTime: null });

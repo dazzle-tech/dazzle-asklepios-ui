@@ -67,6 +67,7 @@ const EncounterList = () => {
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
   const [encounterStatus, setEncounterStatus] = useState<{ key: string }>({ key: '' });
   const [completesVisits, setCompletedVisits] = useState<number>(0);
+  const [cancelledVisits, setCancelledVisits] = useState<number>(0);
   const [activeVisits, setActiveVisits] = useState<number>(0);
 
   const [openEMRModal, setOpenEMRModal] = useState(false);
@@ -118,11 +119,12 @@ const EncounterList = () => {
           .map(key => `(${key})`)
           .join(' ')
       },
-      {
-        fieldName: 'planned_start_date',
-        operator: 'between',
-        value: formatDate(new Date()) + '_' + formatDate(new Date())
-      }
+
+      // {
+      //  fieldName:'planned_start_date',
+      //   operator: 'between',
+      //   value:  formatDate(new Date()) + '_' + formatDate(new Date()),
+      // }
     ]
   });
 
@@ -658,15 +660,31 @@ const EncounterList = () => {
   //useEffect
   useEffect(() => {
     handleCountForToday();
-    let count = 0;
-    if (encounterListForTodayResponse?.object)
-      for (const visit of encounterListForTodayResponse?.object) {
-        if (visit?.encounterStatusLvalue?.key === '91109811181900') {
-          count++;
-        }
-      }
-    setCompletedVisits(count);
+    // let count = 0;
+    // if(encounterListForTodayResponse?.object)
+    // for(const visit of encounterListForTodayResponse?.object){
+    //  if(visit?.encounterStatusLvalue?.key === "91109811181900"){
+    //   count++;
+    //  }
+    // }
+    // setCompletedVisits(count);
   }, [encounterListForTodayResponse]);
+
+  useEffect(() => {
+       let CompletedCount = 0;
+       let CancelledCount = 0;
+    if(encounterListForTodayResponse?.object)
+    for(const visit of encounterListForTodayResponse?.object){
+     if(visit?.encounterStatusLvalue?.key === "91109811181900"){
+      CompletedCount++;
+     }
+     if(visit?.encounterStatusLvalue?.key === "91098528988200"){
+      CancelledCount++;
+     }
+    }
+    setCompletedVisits(CompletedCount);
+    setCancelledVisits(CancelledCount);
+  }, [listRequestForToday]);
 
   useEffect(() => {
     setActiveVisits(
@@ -721,7 +739,7 @@ const EncounterList = () => {
         />
         <DetailsCard
           title="Active Cases"
-          number={activeVisits}
+          number={encounterListForTodayResponse?.object?.length - (completesVisits + cancelledVisits)}
           color="--green-600"
           backgroundClassName="sample-collected-section"
           position="center"
@@ -736,8 +754,8 @@ const EncounterList = () => {
           width={'15vw'}
         />
         <DetailsCard
-          title="Avg Progress"
-          number={'80%'}
+          title="Cancelled"
+          number={cancelledVisits}
           color="--primary-yellow"
           backgroundClassName="total-test-section"
           position="center"

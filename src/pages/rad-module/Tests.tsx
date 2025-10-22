@@ -40,7 +40,8 @@ const Tests = ({
   saveTest,
   saveReport,
   saveReportMutation,
-  reportFetch
+  reportFetch,
+  fetchAllTests
 }) => {
   const dispatch = useAppDispatch();
   const [openNoteModal, setOpenNoteModal] = useState(false);
@@ -125,7 +126,6 @@ const Tests = ({
       try {
         await reportFetch();
       } catch (error) {
-        console.error('Fetch error:', error);
       }
     };
 
@@ -175,10 +175,10 @@ const Tests = ({
 
         await fetchTest();
         await reportFetch();
+        await fetchAllTests();
         setTest({ ...Response });
       } catch (error) {
         dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
-        console.error('Error saving test or report:', error);
       }
     } else {
       dispatch(notify({ msg: 'Wait for the patient to arrive', sev: 'warning' }));
@@ -591,6 +591,7 @@ const Tests = ({
         setTest={setTest}
         saveTest={saveTest}
         fetchTest={fetchTest}
+        fetchAllTests={fetchAllTests}
       />
     </>
   );

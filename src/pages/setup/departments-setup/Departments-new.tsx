@@ -318,7 +318,7 @@ const Departments = () => {
   const tableColumns = [
     {
       key: 'facilityId',
-      title: <Translate>Facility Name</Translate>,
+      title: <Translate key="FACILITY_NAME">Facility Name</Translate>,
       flexGrow: 4,
       render: rowData => (
         <span>
@@ -332,44 +332,44 @@ const Departments = () => {
     },
     {
       key: 'departmentType',
-      title: <Translate>Department Type</Translate>,
+      title: <Translate key="DEPARTMENT_TYPE">Department Type</Translate>,
       flexGrow: 4,
       render: rowData => <p>{formatEnumString(rowData?.departmentType)}</p>
     },
     {
       key: 'name',
-      title: <Translate>Department Name</Translate>,
+      title: <Translate key="DEPARTMENT_NAME">Department Name</Translate>,
       flexGrow: 4
     },
     {
       key: 'phoneNumber',
-      title: <Translate>Phone Number</Translate>,
+      title: <Translate key="PHONE_NUMBER">Phone Number</Translate>,
       flexGrow: 4
     },
     {
       key: 'email',
-      title: <Translate>Email</Translate>,
+      title: <Translate keY="EMAIL">Email</Translate>,
       flexGrow: 4
     },
     {
       key: 'departmentCode',
-      title: <Translate>Department Code</Translate>,
+      title: <Translate key="DEPARTMENT_CODE">Department Code</Translate>,
       flexGrow: 1
     },
     {
       key: 'appointable',
-      title: <Translate>Appointable</Translate>,
+      title: <Translate key='APPOINTABLE'>Appointable</Translate>,
       render: rowData => <p>{rowData?.appointable ? 'Yes' : 'No'}</p>
     },
     {
       key: 'encounterType',
-      title: <Translate>Encounter Type</Translate>,
+      title: <Translate key="ENCOUNTER_TYPE">Encounter Type</Translate>,
       flexGrow: 4,
       render: rowData => <p>{formatEnumString(rowData?.encounterType)}</p>
     },
     {
       key: 'isActive',
-      title: <Translate>Status</Translate>,
+      title: <Translate key='STATUS'>Status</Translate>,
       flexGrow: 4,
       render: rowData => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
     },
@@ -470,7 +470,7 @@ const Departments = () => {
           }}
           width="80px"
         >
-          Search
+         <Translate key="SEARCH">Search</Translate>
         </MyButton>
       </Form>
     );
@@ -500,7 +500,7 @@ const Departments = () => {
           onClick={handleNew}
           width="109px"
         >
-          Add New
+         <Translate key="ADD_NEW">Add New</Translate>
         </MyButton>
       </div>
       <MyTable
