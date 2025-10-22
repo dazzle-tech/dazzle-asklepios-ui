@@ -13,12 +13,16 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import MyModal from '@/components/MyModal/MyModal';
+import DiagnosticsResult from '../../diagnostics-result/DiagnosticsResult';
 
 const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
   const dispatch = useAppDispatch();
   const [procedureAssessment, setProocedureAssessment] = useState({
     ...newApPreProcedureAssessment
   });
+  const [diagnosticTestResults, setDiagnosticTestResults] = useState(false);
+
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [saveAssessment] = useSavePreProcedureAssessmentMutation();
   const { data: airwayLovQueryResponse } = useGetLovValuesByCodeQuery('AIRWAY_GRADES');
@@ -217,7 +221,10 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                     >
                       Attachments File
                     </MyButton>
-                    <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileWaveform} />}>
+                    <MyButton
+                      onClick={() => setDiagnosticTestResults(true)}
+                      prefixIcon={() => <FontAwesomeIcon icon={faFileWaveform} />}
+                    >
                       Open Results Screen
                     </MyButton>
                   </div>
@@ -242,6 +249,14 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
         attachmentSource={procedure}
         attatchmentType="PROCEDURE_ASSESSMENT"
         patientKey={patient?.key}
+      />
+      <MyModal
+        open={diagnosticTestResults}
+        setOpen={setDiagnosticTestResults}
+        content={<DiagnosticsResult />}
+        title={'Diagnostic Test Results'}
+        size="70vw"
+        bodyheight="80vh"
       />
     </>
   );

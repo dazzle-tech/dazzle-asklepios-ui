@@ -371,9 +371,12 @@ const ProcedureModule: React.FC = () => {
             <HStack spacing={10}>
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Perform Details</Tooltip>}>
                 <div>
-                  <MyButton size="small" onClick={!isDisabled ? OpenPerformModel : undefined}>
-                    <FaBedPulse />
-                  </MyButton>
+                  <FaBedPulse
+                    size={22}
+                    fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
+                    style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
+                    onClick={!isDisabled ? OpenPerformModel : undefined}
+                  />
                 </div>
               </Whisper>
             </HStack>
