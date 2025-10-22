@@ -6,74 +6,148 @@ import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { faEdit, faInfo, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form, Radio, RadioGroup } from 'rsuite';
 import './styles.less';
+import {
+  useGetAllLanguagesQuery,
+  useAddLanguageMutation,
+  useUpdateLanguageMutation,
+} from '@/services/setup/languageService';
+
+import {
+  useGetAllTranslationsQuery,
+  useAddTranslationMutation,
+  useUpdateTranslationMutation,
+  useGetTranslationsByLangQuery,
+} from '@/services/setup/translationService';
+import { ApLanguages } from '@/types/model-types';
+import { newLanguage, newLanguageTranslation } from '@/types/model-types-constructor-new';
+import { Language, LanguageTranslation } from '@/types/model-types-new';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+import { useEnumCapitalized } from '@/services/enumsApi';
+import { set } from 'lodash';
 
 const LanguagesSetup = () => {
   // States for Languages Table
-  const [languages, setLanguages] = useState([]);
-  const [selectedLanguage, setSelectedLanguage] = useState(null);
+  const [languages, setLanguages] = useState<Language>({ ...newLanguage });
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>({ ...newLanguage });
+  const [valueForm, setValueForm] = useState<LanguageTranslation>({ ...newLanguageTranslation });
+  const [selectedValue, setSelectedValue] = useState<LanguageTranslation>({ ...newLanguageTranslation });
+  const dispatch = useAppDispatch();
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
   const [languageModalMode, setLanguageModalMode] = useState('add');
-  const [languageForm, setLanguageForm] = useState({
-    languageName: '',
-    languageCode: '',
-    direction: ''
-  });
 
-  // States for Language Values Table
-  const [languageValues, setLanguageValues] = useState([]);
   const [valueModalOpen, setValueModalOpen] = useState(false);
-  const [valueForm, setValueForm] = useState({
-    key: '',
-    value: '',
-    verify: 'N',
-    translate: 'N'
-  });
 
-  // States for Search
-  const [searchText, setSearchText] = useState('');
-  const [exactValue, setExactValue] = useState(false);
-
-  // Language Handlers
   const handleAddLanguage = () => {
     setLanguageModalMode('add');
-    setLanguageForm({
-      languageName: '',
-      languageCode: '',
-      direction: ''
-    });
+    setLanguages({ ...newLanguage });
     setLanguageModalOpen(true);
   };
 
   const handleEditLanguage = () => {
-    if (!selectedLanguage) return;
+    if (!languages?.id) return;
     setLanguageModalMode('edit');
-    setLanguageForm({ ...selectedLanguage });
+    setLanguages({ ...languages });
     setLanguageModalOpen(true);
   };
 
   const handleLanguageRowClick = rowData => {
-    setSelectedLanguage(rowData);
+    setLanguages(rowData);
+    setValueForm({ ...newLanguageTranslation, langKey: rowData.langKey }) ; 
+  };
+
+
+  const handleEditLanguageTranslation = () => {
+    if (!valueForm?.id) return;
+    setValueForm({ ...valueForm , langKey: languages.langKey });
+    setValueModalOpen(true);
+  };
+
+  const handleLanguageTranslationRowClick = rowData => {
+    setValueForm(rowData);
   };
 
   // Language Values Handlers
   const handleAddValue = () => {
-    setValueForm({
-      key: '',
-      value: '',
-      verify: 'N',
-      translate: 'N'
-    });
+    setValueForm({ ...newLanguageTranslation, langKey: languages.langKey });
     setValueModalOpen(true);
   };
 
-  // Search Handler
-  const handleSearch = () => {
-    // Add your search logic here
-    console.log('Search:', searchText, 'Exact:', exactValue);
+
+  
+  const { data: langData, isFetching: langsLoading, refetch: refetchLangs } = useGetAllLanguagesQuery({});
+
+
+
+  const {
+  data: transData = [],          
+  isFetching: transLoading,
+  refetch: refetchTrans,
+} = useGetTranslationsByLangQuery(
+  languages?.langKey ?? '',     
+  { skip: !languages?.langKey } 
+);
+
+  const directionOptions = useEnumCapitalized("Direction");
+
+  // --- RTK: Mutations ---
+  const [addLanguage, addLanguageState] = useAddLanguageMutation();
+  const [updateLanguage, updateLanguageState] = useUpdateLanguageMutation();
+
+  const [addTranslation, addTranslationState] = useAddTranslationMutation();
+  const [updateTranslation, updateTranslationState] = useUpdateTranslationMutation(); 
+
+
+
+  // Handle click on Save Language button
+  const handleSave = async () => {
+    try {
+      setLanguageModalOpen(false);
+      if (languages?.id) {
+        await updateLanguage({ ...languages }).unwrap().then(() => {
+          dispatch(notify({ msg: 'The language has been updated successfully', sev: 'success' }));
+        });
+        refetchLangs();
+      } else {
+        await addLanguage({ ...languages }).unwrap().then(() => {
+          dispatch(notify({ msg: 'The language has been saved successfully', sev: 'success' }));
+        });
+        refetchLangs();
+      }
+    } catch (error) {
+      dispatch(notify({ msg: 'Failed to save this language', sev: 'error' }));
+    }
   };
+
+  
+  // Handle click on Save Language button
+  const handleSaveTranslation = async () => {
+    try {
+      setValueModalOpen(false);
+      if (valueForm?.id) {
+        await updateTranslation({ ...valueForm }).unwrap().then(() => {
+          dispatch(notify({ msg: 'The Translation has been updated successfully', sev: 'success' }));
+        });
+        refetchTrans();
+      } else {
+        await addTranslation({ ...valueForm, originalText: valueForm?.translationKey }).unwrap().then(() => {
+          dispatch(notify({ msg: 'The Translation has been saved successfully', sev: 'success' }));
+        });
+        refetchTrans();
+      }
+    } catch (error) {
+      dispatch(notify({ msg: 'Failed to save this translation', sev: 'error' }));
+    }
+  };
+
+useEffect(() => {
+  if (languages?.langKey) {
+    refetchTrans();           
+  }
+}, [languages?.langKey, refetchTrans]);
 
   // Language Table Buttons
   const languageTableButtons = (
@@ -84,7 +158,7 @@ const LanguagesSetup = () => {
       <MyButton
         prefixIcon={() => <FontAwesomeIcon icon={faEdit} />}
         onClick={handleEditLanguage}
-        disabled={!selectedLanguage}
+        disabled={!languages?.id}
       >
         Edit
       </MyButton>
@@ -98,9 +172,16 @@ const LanguagesSetup = () => {
       <MyButton
         prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
         onClick={handleAddValue}
-        // disabled={!selectedLanguage}
+        disabled={!languages?.id}
       >
         New
+      </MyButton>
+        <MyButton
+        prefixIcon={() => <FontAwesomeIcon icon={faEdit} />}
+        onClick={handleEditLanguageTranslation}
+        disabled={!valueForm?.id}
+      >
+        Edit
       </MyButton>
     </div>
   );
@@ -123,18 +204,18 @@ const LanguagesSetup = () => {
           }
           content={
             <MyTable
-              data={languages}
+              data={langData ?? []}
               columns={[
                 {
-                  key: 'languageName',
+                  key: 'langName',
                   title: 'Language Name',
-                  dataKey: 'languageName',
+                  dataKey: 'langName',
                   width: 150
                 },
                 {
-                  key: 'languageCode',
+                  key: 'langKey',
                   title: 'Language Code',
-                  dataKey: 'languageCode',
+                  dataKey: 'langKey',
                   width: 150
                 },
                 {
@@ -148,7 +229,7 @@ const LanguagesSetup = () => {
               loading={false}
               onRowClick={handleLanguageRowClick}
               rowClassName={rowData =>
-                selectedLanguage?.languageCode === rowData.languageCode ? 'selected-row' : ''
+                languages?.id === rowData.id ? 'selected-row' : ''
               }
             />
           }
@@ -164,35 +245,39 @@ const LanguagesSetup = () => {
           }
           content={
             <MyTable
-              data={languageValues}
+              data={transData ?? []}
               columns={[
                 {
-                  key: 'key',
+                  key: 'translationKey',
                   title: 'Key',
-                  dataKey: 'key',
+                  dataKey: 'translationKey',
                   width: 200
                 },
                 {
-                  key: 'value',
+                  key: 'translationText',
                   title: 'Value',
-                  dataKey: 'value',
+                  dataKey: 'translationText',
                   width: 200
                 },
                 {
-                  key: 'verify',
+                  key: 'verified',
                   title: 'Verify',
-                  dataKey: 'verify',
+                  dataKey: 'verified',
                   width: 80
                 },
                 {
-                  key: 'translate',
+                  key: 'translated',
                   title: 'Translate',
-                  dataKey: 'translate',
+                  dataKey: 'translated',
                   width: 80
                 }
               ]}
               height={400}
               loading={false}
+              onRowClick={handleLanguageTranslationRowClick}
+              rowClassName={rowData =>
+                valueForm?.id === rowData.id ? 'selected-row' : ''
+              }
             />
           }
         ></SectionContainer>
@@ -203,41 +288,41 @@ const LanguagesSetup = () => {
         open={languageModalOpen}
         setOpen={setLanguageModalOpen}
         title={languageModalMode === 'add' ? 'Add New Language' : 'Edit Language'}
+        actionButtonFunction={handleSave}
         size="22vw"
         bodyheight="38vh"
         content={
           <Form fluid>
             <MyInput
               fieldLabel="Language Name"
-              fieldName="languageName"
+              fieldName="langName"
               fieldType="text"
-              record={languageForm}
-              setRecord={setLanguageForm}
+              record={languages}
+              setRecord={setLanguages}
               required
               width={300}
             />
             <MyInput
               fieldLabel="Language Code"
-              fieldName="languageCode"
+              fieldName="langKey"
               fieldType="text"
-              record={languageForm}
-              setRecord={setLanguageForm}
+              disabled={languages?.id ? true : false}
+              record={languages}
+              setRecord={setLanguages}
               required
               width={300}
             />
             <MyInput
-              fieldLabel="Direction"
-              fieldName="direction"
-              fieldType="select"
-              selectData={[
-                { key: 'LTR', lovDisplayVale: 'LTR' },
-                { key: 'RTL', lovDisplayVale: 'RTL' }
-              ]}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={languageForm}
-              setRecord={setLanguageForm}
               required
+              column
+              fieldLabel="Direction"
+              fieldType="select"
+              fieldName="direction"
+              selectData={directionOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={languages}
+              setRecord={setLanguages}
               width={300}
               searchable={false}
             />
@@ -249,22 +334,23 @@ const LanguagesSetup = () => {
       <MyModal
         open={valueModalOpen}
         setOpen={setValueModalOpen}
-        title="Add New Translation Value"
+        title={valueForm?.id ? 'Add New Translation Value' : 'Edit Translation Value'}
         size="24vw"
         bodyheight="52vh"
         content={
           <Form fluid>
             <MyInput
               fieldLabel="Key"
-              fieldName="key"
+              fieldName="translationKey"
               fieldType="text"
+              disabled={valueForm?.id ? true : false}
               record={valueForm}
               setRecord={setValueForm}
               width={'100%'}
             />
             <MyInput
               fieldLabel="Value"
-              fieldName="value"
+              fieldName="translationText"
               fieldType="textarea"
               record={valueForm}
               setRecord={setValueForm}
@@ -274,8 +360,8 @@ const LanguagesSetup = () => {
               <Form.ControlLabel>Verify</Form.ControlLabel>
               <RadioGroup
                 inline
-                value={valueForm.verify}
-                onChange={val => setValueForm(prev => ({ ...prev, verify: val }))}
+                value={valueForm.verified ? 'Y' : 'N'}
+                onChange={val => setValueForm(prev => ({ ...prev, verified: val === 'Y' }))}
               >
                 <Radio value="Y">Yes</Radio>
                 <Radio value="N">No</Radio>
@@ -286,8 +372,8 @@ const LanguagesSetup = () => {
               <Form.ControlLabel>Translate</Form.ControlLabel>
               <RadioGroup
                 inline
-                value={valueForm.translate}
-                onChange={val => setValueForm(prev => ({ ...prev, translate: val }))}
+                value={valueForm.translated ? 'Y' : 'N'}
+                onChange={val => setValueForm(prev => ({ ...prev, translated: val === 'Y' }))}
               >
                 <Radio value="Y">Yes</Radio>
                 <Radio value="N">No</Radio>
@@ -295,6 +381,7 @@ const LanguagesSetup = () => {
             </Form.Group>
           </Form>
         }
+        actionButtonFunction={handleSaveTranslation}
       />
     </div>
   );
