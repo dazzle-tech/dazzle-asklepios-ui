@@ -65,16 +65,16 @@ export interface Facility {
   isActive?: boolean;
 }
 
-export interface CreateFacility { 
-	name?:string;
-  code?:string;
-	emailAddress?:string;
-	phone1?:string;
-	phone2?:string;
-	fax?:string;
-	addressId?:string;
-	type:string;
-	defaultCurrency:string;
+export interface CreateFacility {
+  name?: string;
+  code?: string;
+  emailAddress?: string;
+  phone1?: string;
+  phone2?: string;
+  fax?: string;
+  addressId?: string;
+  type: string;
+  defaultCurrency: string;
   isActive?: boolean;
 }
 export interface Role {
@@ -113,7 +113,7 @@ export interface Service {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-  facilityId?: number; 
+  facilityId?: number;
 }
 
 
@@ -203,10 +203,10 @@ export interface Service {
   code: string;
   category?: string | null;
   price?: number | null;
-  currency:  string | null;
-  isActive: boolean;
-  createdBy: string;
-  createdDate?: string | null; 
+  currency: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
   lastModifiedBy?: string | null;
-  lastModifiedDate?: string | null;
+  lastModifiedDate?: Date | null;
 }
