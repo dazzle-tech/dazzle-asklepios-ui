@@ -2,7 +2,6 @@ import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
 import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
 import { useGetEncounterByIdQuery } from '@/services/encounterService';
 import { useGetPatientByIdQuery, useLazyGetPatientByIdQuery } from '@/services/patientService';
@@ -11,10 +10,10 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds, fromCamelCaseToDBName } from '@/utils';
-import { faBarcode, faFileWaveform,faPrint,faBedPulse,faFileArrowDown,faPaperclip } from '@fortawesome/free-solid-svg-icons';
+import { faBarcode, faFileWaveform, faPrint } from '@fortawesome/free-solid-svg-icons'; // FontAwesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useState } from 'react';
-import { FaBedPulse, FaFileArrowDown, FaPrint } from 'react-icons/fa6';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { FaBedPulse, FaFileArrowDown } from 'react-icons/fa6'; // React Icons
 import { MdAttachFile } from 'react-icons/md';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
@@ -22,37 +21,45 @@ import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
 import Perform from '../encounter/encounter-component/procedure/Perform';
 import MyButton from '@/components/MyButton/MyButton';
 
-const handleDownload = attachment => {
+// --- Utils ---
+const handleDownload = (attachment: any) => {
+  if (!attachment?.fileContent) return;
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
     byteNumbers[i] = byteCharacters.charCodeAt(i);
   }
   const byteArray = new Uint8Array(byteNumbers);
-  const blob = new Blob([byteArray], { type: attachment.contentType });
+  const blob = new Blob([byteArray], {
+    type: attachment.contentType || 'application/octet-stream'
+  });
 
-  // Create a temporary  element and trigger the download
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.style.display = 'none';
   a.href = url;
-  a.download = attachment.fileName;
+  a.download = attachment.fileName || 'download';
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);
+  a.remove();
 };
-const ProcedureModule = () => {
-  const dispatch = useAppDispatch();
+
+const ProcedureModule: React.FC = () => {
   const [showCanceled, setShowCanceled] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [procedure, setProcedure] = useState<any>({
-    ...newApProcedure
-  });
-  const [dateFilter, setDateFilter] = useState({
+  const [procedure, setProcedure] = useState<any>({ ...newApProcedure });
+
+  const [dateFilter, setDateFilter] = useState<{ fromDate: Date | null; toDate: Date | null }>({
     fromDate: new Date(),
     toDate: null
   });
-  const [record, setRecord] = useState({ filter: '', value: '' });
+
+  const [record, setRecord] = useState<{ filter: string; value: string }>({
+    filter: '',
+    value: ''
+  });
+
   const { data: patient } = useGetPatientByIdQuery(procedure?.patientKey, {
     skip: !procedure?.patientKey
   });
@@ -61,24 +68,16 @@ const ProcedureModule = () => {
   });
   const [openPerformModal, setOpenPerformModal] = useState(false);
   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const isSelected = rowData => {
-    if (rowData && procedure && rowData.key === procedure.key) {
-      return 'selected-row';
-    } else return '';
-  };
+
+  const isSelected = (rowData: any) =>
+    rowData && procedure && rowData.key === procedure.key ? 'selected-row' : '';
 
   const [openEMRModal, setOpenEMRModal] = useState(false);
-
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
-      {
-        fieldName: 'current_department',
-        operator: 'match',
-        value: 'false'
-      },
-
+      { fieldName: 'current_department', operator: 'match', value: 'false' },
       {
         fieldName: 'status_lkey',
         operator: showCanceled ? 'notMatch' : 'match',
@@ -86,33 +85,24 @@ const ProcedureModule = () => {
       }
     ]
   });
+
   const {
     data: procedures,
     refetch: proRefetch,
     isLoading: procedureLoding
   } = useGetProceduresQuery(listRequest);
+
   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-
-      {
-        fieldName: 'attachment_type',
-        operator: 'match',
-        value: 'PROCEDURE'
-      }
+      { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+      { fieldName: 'attachment_type', operator: 'match', value: 'PROCEDURE' }
     ]
   });
 
-  const {
-    data: fetchPatintAttachmentsResponce,
-    refetch: attachmentRefetch,
-    isLoading: loadAttachment
-  } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
+  const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
+    useGetPatientAttachmentsListQuery(attachmentsListRequest);
+
   const [trigger] = useLazyGetPatientByIdQuery();
 
   const filterFields = [
@@ -120,95 +110,93 @@ const ProcedureModule = () => {
     { label: 'Procedure Name', value: 'procedureName' },
     { label: 'INDICATIONS', value: 'indications' }
   ];
+
+  // Keep latest patients map in ref to avoid over-broad deps
+  const [patients, setPatients] = useState<Record<string, any>>({});
+  const patientsRef = useRef(patients);
+  useEffect(() => {
+    patientsRef.current = patients;
+  }, [patients]);
+
+  // Refresh attachments list filters when modal closes
   useEffect(() => {
     if (!attachmentsModalOpen) {
       const updatedFilters = [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-
-        {
-          fieldName: 'attachment_type',
-          operator: 'match',
-          value: 'PROCEDURE'
-        }
+        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+        { fieldName: 'attachment_type', operator: 'match', value: 'PROCEDURE' }
       ];
-      setAttachmentsListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
-      }));
+      setAttachmentsListRequest(prevRequest => ({ ...prevRequest, filters: updatedFilters }));
     }
     attachmentRefetch();
-  }, [attachmentsModalOpen]);
+  }, [attachmentsModalOpen, attachmentRefetch]);
 
-  const [patients, setPatients] = useState({});
-  // Fetch patients for each procedure
-
+  // Fetch patients for each procedure (FIX: never iterate over undefined)
   useEffect(() => {
     const fetchPatients = async () => {
-      for (const procedure of procedures?.object) {
-        const key = procedure.patientKey;
-        if (!patients[key]) {
+      const list = Array.isArray(procedures?.object) ? procedures!.object : [];
+      if (list.length === 0) return;
+
+      const toFetch = list
+        .map((p: any) => p?.patientKey)
+        .filter((key: any) => key && !patientsRef.current[key]);
+
+      for (const key of toFetch) {
+        try {
           const result = await trigger(key).unwrap();
           setPatients(prev => ({ ...prev, [key]: result }));
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to fetch patient', key, e);
         }
       }
     };
 
     fetchPatients();
-  }, [procedures]);
-  // Update the listRequest filters when record changes
-  const addOrUpdateFilter = (filters, newFilter) => {
-    const index = filters.findIndex(f => f.fieldName === newFilter.fieldName);
-    if (index > -1) {
-      filters[index] = newFilter;
-    } else {
-      filters.push(newFilter);
-    }
-    return filters;
+  }, [procedures?.object, trigger]);
+
+  // Helpers
+  const addOrUpdateFilter = (filters: any[], newFilter: any) => {
+    const next = [...filters];
+    const index = next.findIndex(f => f.fieldName === newFilter.fieldName);
+    if (index > -1) next[index] = newFilter;
+    else next.push(newFilter);
+    return next;
   };
-  // Update the listRequest filters when showCanceled changes
+
+  // Update filters when showCanceled toggles
   useEffect(() => {
     setListRequest(prev => {
       let updatedFilters = [...prev.filters];
-
       updatedFilters = addOrUpdateFilter(updatedFilters, {
         fieldName: 'current_department',
         operator: 'match',
         value: 'false'
       });
-
       updatedFilters = addOrUpdateFilter(updatedFilters, {
         fieldName: 'status_lkey',
         operator: showCanceled ? 'notMatch' : 'match',
         value: '3621690096636149'
       });
-
-      return {
-        ...prev,
-        filters: updatedFilters
-      };
+      return { ...prev, filters: updatedFilters };
     });
   }, [showCanceled]);
 
+  // Update filters when record changes
   useEffect(() => {
-    if (record['filter']) {
-      handleFilterChange(record['filter'], record['value']);
+    if (record.filter) {
+      handleFilterChange(record.filter, record.value);
     } else {
       setListRequest(prev => ({
         ...prev,
-        filters: addOrUpdateFilter([...prev.filters], {
+        filters: addOrUpdateFilter(prev.filters, {
           fieldName: 'current_department',
           operator: 'match',
           value: 'false'
         })
       }));
-
       setListRequest(prev => ({
         ...prev,
-        filters: addOrUpdateFilter([...prev.filters], {
+        filters: addOrUpdateFilter(prev.filters, {
           fieldName: 'status_lkey',
           operator: showCanceled ? 'notMatch' : 'match',
           value: '3621690096636149'
@@ -217,250 +205,216 @@ const ProcedureModule = () => {
     }
   }, [record]);
 
+  // Date filter logic (clone dates to avoid mutating state refs)
   useEffect(() => {
     let updatedFilters = [...listRequest.filters];
 
-    if (dateFilter.fromDate && dateFilter.toDate) {
-      dateFilter.fromDate.setHours(0, 0, 0, 0);
-      dateFilter.toDate.setHours(23, 59, 59, 999);
+    const from = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
+    const to = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
 
+    if (from && to) {
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
       updatedFilters = addOrUpdateFilter(updatedFilters, {
         fieldName: 'scheduled_date_time',
         operator: 'between',
-        value: dateFilter.fromDate.getTime() + '-' + dateFilter.toDate.getTime()
+        value: `${from.getTime()}-${to.getTime()}`
       });
-    } else if (dateFilter.fromDate) {
-      dateFilter.fromDate.setHours(0, 0, 0, 0);
-
+    } else if (from) {
+      from.setHours(0, 0, 0, 0);
       updatedFilters = addOrUpdateFilter(updatedFilters, {
         fieldName: 'scheduled_date_time',
         operator: 'gte',
-        value: dateFilter.fromDate.getTime()
+        value: from.getTime()
       });
-    } else if (dateFilter.toDate) {
-      dateFilter.toDate.setHours(23, 59, 59, 999);
-
+    } else if (to) {
+      to.setHours(23, 59, 59, 999);
       updatedFilters = addOrUpdateFilter(updatedFilters, {
         fieldName: 'scheduled_date_time',
         operator: 'lte',
-        value: dateFilter.toDate.getTime()
+        value: to.getTime()
       });
     }
 
-    setListRequest(prev => ({
-      ...prev,
-      filters: updatedFilters
-    }));
+    setListRequest(prev => ({ ...prev, filters: updatedFilters }));
   }, [dateFilter]);
 
-  const handleFilterChange = (fieldName, value) => {
+  const handleFilterChange = (fieldName: string, value: string) => {
+    if (!fieldName) return;
     if (value) {
       const newFilter = {
         fieldName: fromCamelCaseToDBName(fieldName),
         operator: 'containsIgnoreCase',
         value
       };
-
-      setListRequest(prev => ({
-        ...prev,
-        filters: addOrUpdateFilter([...prev.filters], newFilter)
-      }));
+      setListRequest(prev => ({ ...prev, filters: addOrUpdateFilter(prev.filters, newFilter) }));
     }
   };
 
-  const OpenPerformModel = () => {
-    setOpenPerformModal(true);
-  };
+  const OpenPerformModel = () => setOpenPerformModal(true);
 
-  const tableColumns = [
-    {
-      key: 'patientKey',
-      title: <Translate>Patient</Translate>,
-      render: (rowData: any) => {
-        return (
+  // Columns memo to avoid re-renders
+  const tableColumns = useMemo(
+    () => [
+      {
+        key: 'patientKey',
+        title: <Translate>Patient</Translate>,
+        render: (rowData: any) => (
           <Whisper
             placement="top"
             speaker={<Tooltip>{patients[rowData.patientKey]?.patientMrn}</Tooltip>}
           >
             {patients[rowData.patientKey]?.fullName}
           </Whisper>
-        );
-      }
-    },
-    {
-      key: 'procedureId',
-      dataKey: 'procedureId',
-      title: <Translate>PROCEDURE ID</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.procedureId;
-      }
-    },
-    {
-      key: 'Procedure Name',
-      dataKey: 'procedureName',
-      title: <Translate>Procedure Name</Translate>,
-      flexGrow: 1
-    },
-    {
-      key: 'scheduledDateTime',
-      dataKey: 'scheduledDateTime',
-      title: <Translate>SCHEDULED DATE TIME</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.scheduledDateTime
-          ? formatDateWithoutSeconds(rowData.scheduledDateTime)
-          : ' ';
-      }
-    },
-    {
-      key: 'categoryKey',
-      dataKey: 'categoryKey',
-      title: <Translate>CATEGORY</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        const category = CategoryLovQueryResponse?.object?.find(item => {
-          return item.key === rowData.categoryKey;
-        });
-
-        return category?.lovDisplayVale || ' ';
-      }
-    },
-    {
-      key: 'priorityLkey',
-      dataKey: 'priorityLkey',
-      title: <Translate>PRIORITY</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.priorityLkey ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey;
-      }
-    },
-    {
-      key: 'procedureLevelLkey',
-      dataKey: 'procedureLevelLkey',
-      title: <Translate>LEVEL</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.procedureLevelLkey
-          ? rowData.procedureLevelLvalue?.lovDisplayVale
-          : rowData.procedureLevelLkey;
-      }
-    },
-    {
-      key: 'indications',
-      dataKey: 'indications',
-      title: <Translate>INDICATIONS</Translate>,
-      flexGrow: 1
-    },
-    {
-      key: 'statusLkey',
-      dataKey: 'statusLkey',
-      title: <Translate>STATUS</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.statusLvalue?.lovDisplayVale ?? null;
-      }
-    },
-    {
-      key: '',
-      dataKey: '',
-      title: <Translate>ATTACHED FILE</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
-          item => item.referenceObjectKey === rowData.key
-        );
-        const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
-
-        return (
-             <HStack spacing={2}>
-            {lastAttachment && (
-              <FaFileArrowDown
+        )
+      },
+      {
+        key: 'procedureId',
+        dataKey: 'procedureId',
+        title: <Translate>PROCEDURE ID</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => rowData.procedureId
+      },
+      {
+        key: 'procedureName',
+        dataKey: 'procedureName',
+        title: <Translate>Procedure Name</Translate>,
+        flexGrow: 1
+      },
+      {
+        key: 'scheduledDateTime',
+        dataKey: 'scheduledDateTime',
+        title: <Translate>SCHEDULED DATE TIME</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) =>
+          rowData.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
+      },
+      {
+        key: 'categoryKey',
+        dataKey: 'categoryKey',
+        title: <Translate>CATEGORY</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => {
+          const category = CategoryLovQueryResponse?.object?.find(
+            (item: any) => item.key === rowData.categoryKey
+          );
+          return category?.lovDisplayVale || ' ';
+        }
+      },
+      {
+        key: 'priorityLkey',
+        dataKey: 'priorityLkey',
+        title: <Translate>PRIORITY</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) =>
+          rowData.priorityLkey ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
+      },
+      {
+        key: 'procedureLevelLkey',
+        dataKey: 'procedureLevelLkey',
+        title: <Translate>LEVEL</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) =>
+          rowData.procedureLevelLkey
+            ? rowData.procedureLevelLvalue?.lovDisplayVale
+            : rowData.procedureLevelLkey
+      },
+      {
+        key: 'indications',
+        dataKey: 'indications',
+        title: <Translate>INDICATIONS</Translate>,
+        flexGrow: 1
+      },
+      {
+        key: 'statusLkey',
+        dataKey: 'statusLkey',
+        title: <Translate>STATUS</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale ?? null
+      },
+      {
+        key: 'attachment',
+        dataKey: 'attachment',
+        title: <Translate>ATTACHED FILE</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => {
+          const list = fetchPatintAttachmentsResponce?.object || [];
+          const matchingAttachments = list.filter(
+            (item: any) => item.referenceObjectKey === rowData.key
+          );
+          const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
+          return (
+            <HStack spacing={2}>
+              {lastAttachment && (
+                <FaFileArrowDown
+                  size={20}
+                  onClick={() => handleDownload(lastAttachment)}
+                  style={{ cursor: 'pointer' }}
+                />
+              )}
+              <MdAttachFile
                 size={20}
-                fill="var(--primary-gray)"
-                onClick={() => handleDownload(lastAttachment)}
+                onClick={() => setAttachmentsModalOpen(true)}
                 style={{ cursor: 'pointer' }}
               />
-            )}
-
-            <MdAttachFile
-              size={20}
-              fill="var(--primary-gray)"
-              onClick={() => setAttachmentsModalOpen(true)}
-              style={{ cursor: 'pointer' }}
-            /></HStack>);
-          }
-    },
-    {
-      key: 'perform',
-
-      title: <Translate>PERFORM</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        const isDisabled = rowData.currentDepartment;
-
-        return (   <HStack spacing={10}> 
-                    <Whisper trigger="hover" placement="top" speaker={<Tooltip>Perform Details</Tooltip>}>
-                      <div>
-                        <MyButton
-                          size="small"
-                          onClick={!isDisabled ? OpenPerformModel : undefined}>
-                          <FontAwesomeIcon icon={faBedPulse} />
-                        </MyButton>
-                      </div>
-                    </Whisper></HStack>
-        );
-      }
-    },
-    {
-      key: 'print',
-      title: <Translate>Print</Translate>,
-      render: (rowData: any) => {
-        const isDisabled = rowData.currentDepartment;
-
-        return(<HStack spacing={10}>
-    <Whisper trigger="hover" placement="top" speaker={<Tooltip>Print</Tooltip>}>
-                      <div>
-                        <MyButton
-                          size="small"
-                          backgroundColor="light-blue"
-                          onClick={() => {
-                          }}
-                        >
-                          <FontAwesomeIcon icon={faPrint} />
-                        </MyButton>
-                      </div>
-                    </Whisper>
-                    </HStack>);
-        
-      }
-    },
-    {
-      key: 'action',
-      title: <Translate>Action</Translate>,
-      render: (rowData: any) => {
-        return (
+            </HStack>
+          );
+        }
+      },
+      {
+        key: 'perform',
+        title: <Translate>PERFORM</Translate>,
+        flexGrow: 1,
+        render: (rowData: any) => {
+          const isDisabled = rowData.currentDepartment;
+          return (
+            <HStack spacing={10}>
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Perform Details</Tooltip>}>
+                <div>
+                  <MyButton size="small" onClick={!isDisabled ? OpenPerformModel : undefined}>
+                    <FaBedPulse />
+                  </MyButton>
+                </div>
+              </Whisper>
+            </HStack>
+          );
+        }
+      },
+      {
+        key: 'print',
+        title: <Translate>Print</Translate>,
+        render: (_rowData: any) => (
           <HStack spacing={10}>
-
-            <Whisper
-              placement="top"
-              trigger="hover"
-              speaker={<Tooltip>Wristband</Tooltip>}>
+            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Print</Tooltip>}>
               <div>
                 <MyButton
                   size="small"
-                  backgroundColor="black">
+                  backgroundColor="light-blue"
+                  onClick={() => {
+                    /* TODO: implement print */
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPrint} />
+                </MyButton>
+              </div>
+            </Whisper>
+          </HStack>
+        )
+      },
+      {
+        key: 'action',
+        title: <Translate>Action</Translate>,
+        render: (_rowData: any) => (
+          <HStack spacing={10}>
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Wristband</Tooltip>}>
+              <div>
+                <MyButton size="small" backgroundColor="black">
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
               </div>
             </Whisper>
 
-
-
-            <Whisper
-              placement="top"
-              trigger="hover"
-              speaker={<Tooltip>EMR</Tooltip>}>
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>EMR</Tooltip>}>
               <div>
                 <MyButton
                   size="small"
@@ -471,69 +425,56 @@ const ProcedureModule = () => {
                 </MyButton>
               </div>
             </Whisper>
-
-
           </HStack>
-        );
-      }
-    },
-    {
-      key: 'facilityKey',
-      dataKey: 'facilityKey',
-      title: <Translate>FACILITY</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.facilityKey ? rowData.facility?.facilityName : '';
-      }
-    },
-    {
-      key: 'departmentTypeLkey',
-      dataKey: 'departmentTypeLkey',
-      title: <Translate>DEPARTMENT</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.departmentKey
-          ? rowData.department?.departmentTypeLvalue?.lovDisplayVale
-          : '';
-      }
-    },
-
-    {
-      key: 'bodyPartLkey',
-      dataKey: 'bodyPartLkey',
-      title: <Translate>BODY PART</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.bodyPartLkey ? rowData.bodyPartLvalue.lovDisplayVale : rowData.bodyPartLkey;
-      }
-    },
-    {
-      key: 'sideLkey',
-      dataKey: 'sideLkey',
-      title: <Translate>SIDE</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.sideLkey ? rowData.sideLvalue.lovDisplayVale : rowData.sideLkey;
-      }
-    },
-    {
-      key: 'notes',
-      dataKey: 'notes',
-      title: <Translate>NOTE</Translate>,
-      flexGrow: 1,
-      expandable: true
-    },
-    ,
-    {
-      key: '',
-      title: <Translate>CREATED AT/BY</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
+        )
+      },
+      {
+        key: 'facilityKey',
+        dataKey: 'facilityKey',
+        title: <Translate>FACILITY</Translate>,
+        flexGrow: 1,
+        expandable: true,
+        render: (rowData: any) => (rowData.facilityKey ? rowData.facility?.facilityName : '')
+      },
+      {
+        key: 'departmentTypeLkey',
+        dataKey: 'departmentTypeLkey',
+        title: <Translate>DEPARTMENT</Translate>,
+        flexGrow: 1,
+        expandable: true,
+        render: (rowData: any) =>
+          rowData.departmentKey ? rowData.department?.departmentTypeLvalue?.lovDisplayVale : ''
+      },
+      {
+        key: 'bodyPartLkey',
+        dataKey: 'bodyPartLkey',
+        title: <Translate>BODY PART</Translate>,
+        flexGrow: 1,
+        expandable: true,
+        render: (rowData: any) =>
+          rowData.bodyPartLkey ? rowData.bodyPartLvalue?.lovDisplayVale : rowData.bodyPartLkey
+      },
+      {
+        key: 'sideLkey',
+        dataKey: 'sideLkey',
+        title: <Translate>SIDE</Translate>,
+        flexGrow: 1,
+        expandable: true,
+        render: (rowData: any) =>
+          rowData.sideLkey ? rowData.sideLvalue?.lovDisplayVale : rowData.sideLkey
+      },
+      {
+        key: 'notes',
+        dataKey: 'notes',
+        title: <Translate>NOTE</Translate>,
+        flexGrow: 1,
+        expandable: true
+      },
+      {
+        key: 'createdMeta',
+        title: <Translate>CREATED AT/BY</Translate>,
+        expandable: true,
+        render: (rowData: any) => (
           <>
             <span>{rowData.createdBy}</span>
             <br />
@@ -541,31 +482,27 @@ const ProcedureModule = () => {
               {rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
             </span>
           </>
-        );
-      }
-    },
-    {
-      key: '',
-      title: <Translate>UPDATED AT/BY</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
+        )
+      },
+      {
+        key: 'updatedMeta',
+        title: <Translate>UPDATED AT/BY</Translate>,
+        expandable: true,
+        render: (rowData: any) => (
           <>
             <span>{rowData.updatedBy}</span>
             <br />
             <span className="date-table-style">
-              {rowData.createdAt ? formatDateWithoutSeconds(rowData.updatedAt) : ''}
+              {rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : ''}
             </span>
           </>
-        );
-      }
-    },
-    {
-      key: '',
-      title: <Translate>CANCELLED AT/BY</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
+        )
+      },
+      {
+        key: 'cancelledMeta',
+        title: <Translate>CANCELLED AT/BY</Translate>,
+        expandable: true,
+        render: (rowData: any) => (
           <>
             <span>{rowData.deletedBy}</span>
             <br />
@@ -573,39 +510,33 @@ const ProcedureModule = () => {
               {rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}
             </span>
           </>
-        );
+        )
+      },
+      {
+        key: 'cancellationReason',
+        dataKey: 'cancellationReason',
+        title: <Translate>CANCELLITON REASON</Translate>,
+        flexGrow: 1,
+        expandable: true
       }
-    },
-    {
-      key: 'cancellationReason',
-      dataKey: 'cancellationReason',
-      title: <Translate>CANCELLITON REASON</Translate>,
-      flexGrow: 1,
-      expandable: true
-    }
-  ];
-  const pageIndex = listRequest.pageNumber - 1;
+    ],
+    [CategoryLovQueryResponse, patients]
+  );
 
-  // how many rows per page:
+  const pageIndex = (listRequest.pageNumber || 1) - 1;
   const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
   const totalCount = procedures?.extraNumeric ?? 0;
 
-  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    setListRequest(prev => ({ ...prev, pageNumber: newPage + 1 }));
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
+    setListRequest(prev => ({
+      ...prev,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
+      pageNumber: 1
+    }));
   };
 
   const filters = () => (
@@ -635,11 +566,7 @@ const ProcedureModule = () => {
           fieldType="select"
           record={record}
           setRecord={updatedRecord => {
-            setRecord({
-              ...record,
-              filter: updatedRecord.filter,
-              value: ''
-            });
+            setRecord({ ...record, filter: (updatedRecord as any).filter, value: '' });
           }}
           showLabel={false}
           placeholder="Select Filter"
@@ -653,33 +580,29 @@ const ProcedureModule = () => {
           showLabel={false}
           placeholder="Search"
         />
-        <Checkbox
-          checked={!showCanceled}
-          onChange={() => {
-            setShowCanceled(!showCanceled);
-          }}
-        >
+        <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
           Show Cancelled
         </Checkbox>
       </Form>
       <AdvancedSearchFilters searchFilter={true} />
     </>
   );
+
   return (
     <>
       <MyTable
         filters={filters()}
         columns={tableColumns}
         data={procedures?.object ?? []}
-        onRowClick={rowData => {
+        onRowClick={(rowData: any) => {
           setProcedure(rowData);
         }}
         loading={procedureLoding}
         rowClassName={isSelected}
         sortColumn={listRequest.sortBy}
         sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          setListRequest({ ...listRequest, sortBy, sortType });
+        onSortChange={(sortBy: any, sortType: any) => {
+          setListRequest(prev => ({ ...prev, sortBy, sortType }));
         }}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
@@ -704,26 +627,26 @@ const ProcedureModule = () => {
             edit={false}
           />
         }
-      ></MyModal>
+      />
 
-        <MyModal
-          open={openEMRModal}
-          setOpen={setOpenEMRModal}
-          title="Electronic Medical Record"
-          size="90vw"
-          content={
-            patient && encounter ? (
-              <PatientEMRModal inModal patient={patient} encounter={encounter} />
-            ) : (
-              <div style={{ padding: 16 }}>No patient selected.</div>
-            )
-          }
-          actionButtonLabel="Close"
-          actionButtonFunction={() => setOpenEMRModal(false)}
-          cancelButtonLabel="Cancel"
-        />
-
+      <MyModal
+        open={openEMRModal}
+        setOpen={setOpenEMRModal}
+        title="Electronic Medical Record"
+        size="90vw"
+        content={
+          patient && encounter ? (
+            <PatientEMRModal inModal patient={patient} encounter={encounter} />
+          ) : (
+            <div style={{ padding: 16 }}>No patient selected.</div>
+          )
+        }
+        actionButtonLabel="Close"
+        actionButtonFunction={() => setOpenEMRModal(false)}
+        cancelButtonLabel="Cancel"
+      />
     </>
   );
 };
+
 export default ProcedureModule;
