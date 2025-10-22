@@ -36,7 +36,9 @@ function isTokenExpired(token: string): boolean {
 interface AuthState {
   user: any | null;                 // logged-in user object
   token: string | null;             // JWT token
-  tenant: any | null;               // tenant (organization) info
+  tenant: any | null;
+  menu: any[] | null;
+  menuLoading: boolean;     // tenant (organization) info
   sessionExpiredBackdrop: boolean;  // flag for showing session expired modal/backdrop
 }
 
@@ -45,6 +47,8 @@ const initialState: AuthState = {
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   token: localStorage.getItem('id_token') || null,
   tenant: JSON.parse(localStorage.getItem('tenant') || 'null'),
+  menu: JSON.parse(localStorage.getItem('menu') || 'null'),
+  menuLoading: false,
   sessionExpiredBackdrop: false
 };
 
@@ -69,6 +73,20 @@ const authSlice = createSlice({
         localStorage.removeItem('user');
       }
     },
+
+   setMenu: (state, action: PayloadAction<any[] | null>) => {
+  state.menu = action.payload;
+  if (action.payload) {
+    localStorage.setItem('menu', JSON.stringify(action.payload));
+  } else {
+    localStorage.removeItem('menu');
+  }
+},
+
+setMenuLoading: (state, action: PayloadAction<boolean>) => {
+  state.menuLoading = action.payload;
+},
+
 
     // Save token to state and localStorage
     setToken: (state, action: PayloadAction<string | null>) => {
@@ -122,6 +140,7 @@ export const {
   setToken,
   setTenant,
   logout,
+  setMenu,
   checkTokenValidity
 } = authSlice.actions;
 

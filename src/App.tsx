@@ -152,7 +152,7 @@ import Modules from './pages/setup/modules-setup';
 import OperationSetup from './pages/setup/operation-setup';
 import Checklist from './pages/setup/operations/checklist';
 import PotintialDuplicate from './pages/setup/potential-duplicate';
-import Practitioners from './pages/setup/practioners-setup';
+import Practitioners from './pages/setup/practioners-setup-new';
 import ProcedureSetup from './pages/setup/procedure-setup';
 import ProductSetup from './pages/setup/product-setup';
 import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
@@ -191,12 +191,7 @@ const App = () => {
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
 
-  const { data: menu, isFetching: isMenuLoading } = useGetMenuQuery(
-    user?.id && selectedFacility?.id
-      ? { userId: user.id, facilityId: selectedFacility.id }
-      : ({} as any),
-    { skip: !(user?.id && selectedFacility?.id) }
-  );
+
 
   // ------------------------------ MENU BUILD HELPERS ---------------------------
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
@@ -257,9 +252,9 @@ const App = () => {
 
   // ------------------------------ BUILD NAVIGATION ----------------------------
   useEffect(() => {
-    if (!menu || isMenuLoading) return;
+    if (!authSlice?.menu ) return;
     loadNavs();
-  }, [menu, isMenuLoading]);
+  }, [authSlice?.menu]);
 
   const loadNavs = () => {
     const navsTemp: any[] = [];
@@ -272,7 +267,7 @@ const App = () => {
       to: '/'
     });
 
-    const lookups = buildPermissionLookup(menu as BackendMenuItem[]);
+    const lookups = buildPermissionLookup(authSlice?.menu as BackendMenuItem[]);
 
     MODULES.forEach((module, mIdx) => {
       if (!module.screens?.length) return;

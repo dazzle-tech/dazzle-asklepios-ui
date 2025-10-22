@@ -87,7 +87,7 @@ export const userService = createApi({
       query: (roleId: number) => `/api/setup/role/${roleId}/screens`,
     }),
 
-    // 🔹 تحديث صلاحيات الرول
+
     updateRolePermissions: builder.mutation({
       query: ({ roleId, permissions }) => ({
         url: `/api/setup/role/${roleId}/screens`,
