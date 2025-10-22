@@ -163,7 +163,7 @@ const Frame = (props: FrameProps) => {
           variant="permanent"
           open={expand}
           sx={{
-            zIndex:1,
+            zIndex: 1,
             width: expand ? drawerWidth : collapsedWidth,
             flexShrink: 0,
             '& .MuiDrawer-paper': {
@@ -174,7 +174,24 @@ const Frame = (props: FrameProps) => {
             }
           }}
         >
-          <Toolbar />
+          {/* Logo */}
+          {expand && (
+            <img
+              onClick={() => {
+                navigate('/');
+                setExpand(false);
+              }}
+              className="logo logo-clickable"
+              src={
+                authSlice.tenant && authSlice.tenant.tenantLogoPath
+                  ? authSlice.tenant.tenantLogoPath
+                  : mode === 'light'
+                  ? Logo
+                  : DLogo
+              }
+            />
+          )}
+          {!expand && <Toolbar />}
           <MuiDivider />
 
           <div
@@ -183,24 +200,6 @@ const Frame = (props: FrameProps) => {
               'scroll-container-collapsed': !expand
             })}
           >
-            {/* Logo */}
-            {expand && (
-              <img
-                onClick={() => {
-                  navigate('/');
-                  setExpand(false);
-                }}
-                className="logo logo-clickable"
-                src={
-                  authSlice.tenant && authSlice.tenant.tenantLogoPath
-                    ? authSlice.tenant.tenantLogoPath
-                    : mode === 'light'
-                    ? Logo
-                    : DLogo
-                }
-              />
-            )}
-
             {/* Organization info */}
             {expand && (
               <div className="container-of-organization-info">
@@ -456,7 +455,7 @@ const Frame = (props: FrameProps) => {
             ></Stack>
 
             <div className="content-with-sticky">
-              <div className="main-content-area" >
+              <div className="main-content-area">
                 <Outlet />
               </div>
 
