@@ -13,24 +13,19 @@ import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
 // Only in development; avoid in production if you can.
 if (typeof window !== 'undefined') {
-  const ignoreRO = (e: ErrorEvent) => {
-    const msg = e?.message || '';
-    if (msg.includes('ResizeObserver loop completed')) {
-      // Stop the React overlay and any other listeners from seeing it
+  const resizeObserverErr = (e: ErrorEvent) => {
+    if (
+      e.message === 'ResizeObserver loop limit exceeded' ||
+      e.message === 'ResizeObserver loop completed with undelivered notifications.'
+    ) {
+      const resizeObserverErrDiv = document.getElementById('webpack-dev-server-client-overlay');
+      if (resizeObserverErrDiv) {
+        resizeObserverErrDiv.style.display = 'none';
+      }
       e.stopImmediatePropagation();
     }
   };
-
-  const ignoreRORejection = (e: PromiseRejectionEvent) => {
-    const msg = (e?.reason && e.reason.message) || '';
-    if (msg.includes('ResizeObserver loop completed')) {
-      e.stopImmediatePropagation();
-    }
-  };
-
-  // note the third argument: useCapture = true
-  window.addEventListener('error', ignoreRO, true);
-  window.addEventListener('unhandledrejection', ignoreRORejection, true);
+  window.addEventListener('error', resizeObserverErr);
 }
 
 const RootWrapper = () => {

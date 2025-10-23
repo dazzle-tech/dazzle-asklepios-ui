@@ -1,5 +1,5 @@
 import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
-import React, { useEffect, useState, ForwardedRef, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CheckPicker, TimePicker } from 'rsuite';
 import {
   Checkbox,
@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -28,21 +29,9 @@ const CustomDatePicker = React.forwardRef((props, ref: any) => (
   <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
 ));
 
-const CustomDateTimePicker = React.forwardRef((props: any, ref: ForwardedRef<HTMLDivElement>) => (
+const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
   <DatePicker {...props} oneTap format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
 ));
-
-const handleEnterFocusNext = e => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const form = e.target.form;
-    const index = Array.prototype.indexOf.call(form, e.target);
-    const next = form?.elements[index + 1];
-    if (next && typeof next.focus === 'function') {
-      next.focus();
-    }
-  }
-};
 
 const focusNextField = e => {
   if (e.key === 'Enter') {
@@ -129,33 +118,33 @@ const MyInput = ({
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
     if (vr && vr.details && vr.details[fieldDbName]) {
-      // keep local state updated when props changes
-      setValidationResult(preValue => {
-        return [...vr.details[fieldDbName]];
-      });
+            // keep local state updated when props changes
+      setValidationResult([...vr.details[fieldDbName]]);
     } else {
       setValidationResult(undefined);
     }
-  }, [vr]);
+  }, [vr, fieldName]);
 
   useEffect(() => {
     if (props.disabled && recording) {
       stopListening();
       setRecording(false);
     }
-  }, [props.disabled]);
+  }, [props.disabled, recording]);
 
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
+
   const handleValueChange = value => {
     if (setRecord && typeof setRecord === 'function') {
       setRecord({ ...record, [fieldName]: value });
     }
   };
+
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
   const getDynamicMenuMaxHeight = (dataList?: any[]) => {
-    // If consumer provided a specific height, honor it
+        // If consumer provided a specific height, honor it
     if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
       return props.menuMaxHeight as number;
     }
@@ -166,7 +155,7 @@ const MyInput = ({
     return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
   };
 
-  // start speech recognition
+    // start speech recognition
   const startListening = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -242,6 +231,7 @@ const MyInput = ({
             )}
           </InputGroup>
         );
+
       case 'checkbox':
         return (
           <Toggle
@@ -255,6 +245,7 @@ const MyInput = ({
             onKeyDown={focusNextField}
           />
         );
+
       case 'datetime':
         return (
           <Form.Control
@@ -272,8 +263,12 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
+            open={isDateTimeOpen}
+            onOpen={() => setIsDateTimeOpen(true)}
+            onClose={() => setIsDateTimeOpen(false)}
           />
         );
+
       case 'time':
         return (
           <Form.Control
@@ -288,16 +283,15 @@ const MyInput = ({
             name={fieldName}
             value={record[fieldName] ? record[fieldName] : null}
             accepter={TimePicker}
-            onChange={value => {
-              handleValueChange(value);
-            }}
-            onClean={() => {
-              handleValueChange(null);
-            }}
+            onChange={handleValueChange}
+            onClean={() => handleValueChange(null)}
             placeholder={props.placeholder}
             format="HH:mm"
             cleanable
             onKeyDown={focusNextField}
+            open={isTimeOpen}
+            onOpen={() => setIsTimeOpen(true)}
+            onClose={() => setIsTimeOpen(false)}
           />
         );
 
@@ -352,22 +346,22 @@ const MyInput = ({
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             loading={props?.loading ?? false}
+            open={isSelectOpen}
             onOpen={() => setIsSelectOpen(true)}
             onClose={() => setIsSelectOpen(false)}
             virtualized={props?.virtualized ?? true}
           />
         );
 
-      case "selectPagination":
-
-        const labelKey = props.selectDataLabel ?? "name";
-        const valueKey = props.selectDataValue ?? "id";
+      case 'selectPagination': {
+        const labelKey = props.selectDataLabel ?? 'name';
+        const valueKey = props.selectDataValue ?? 'id';
 
         return (
           <Form.Control
             name={fieldName}
             style={{ width: styleWidth, height: props?.height ?? 30 }}
-            className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ""}`}
+            className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -375,22 +369,22 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                  {
-                    [valueKey]: "__load_more__",
-                    [labelKey]: "Load more...",
-                    isLoadMore: true,
-                  },
-                ]
-                : []),
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
+                : [])
             ]}
             labelKey={labelKey}
             valueKey={valueKey}
-            value={record?.[fieldName] ?? ""}
+            value={record?.[fieldName] ?? ''}
             onChange={(value, item, event) => {
               if (item?.isLoadMore) {
                 event?.preventDefault();
                 event?.stopPropagation();
-                props.onFetchMore?.(); 
+                props.onFetchMore?.();
               } else {
                 handleValueChange(value);
               }
@@ -400,15 +394,15 @@ const MyInput = ({
                 return (
                   <div
                     style={{
-                      textAlign: "center",
-                      fontWeight: "bold",
-                      color: "#1675E0",
-                      cursor: "pointer",
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      color: '#1675E0',
+                      cursor: 'pointer'
                     }}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
-                      props.onFetchMore?.(); // ✅ نفس السلوك عند الضغط
+                      props.onFetchMore?.();
                     }}
                   >
                     {item[labelKey]}
@@ -417,16 +411,18 @@ const MyInput = ({
               }
               return label;
             }}
-            placeholder={props.placeholder ?? "Select..."}
+            placeholder={props.placeholder ?? 'Select...'}
             searchable
             cleanable
             loading={props.loading ?? false}
             menuMaxHeight={props.menuMaxHeight ?? 240}
+            open={isSelectOpen}
+            onOpen={() => setIsSelectOpen(true)}
+            onClose={() => setIsSelectOpen(false)}
           />
         );
+      }
 
-
-      //<TagPicker data={data} style={{ width: 300 }} />
       case 'multyPicker':
         return (
           <Form.Control
@@ -473,10 +469,12 @@ const MyInput = ({
             searchBy={props.searchBy} // Optional: Search function for TagPicker
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
+            open={isMultyPickerOpen}
             onOpen={() => setIsMultyPickerOpen(true)}
             onClose={() => setIsMultyPickerOpen(false)}
           />
         );
+
       case 'checkPicker':
         return (
           <Form.Control
@@ -522,10 +520,12 @@ const MyInput = ({
             searchBy={props.searchBy} // Optional: Search function for checkPicker
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
+            open={isCheckPickerOpen}
             onOpen={() => setIsCheckPickerOpen(true)}
             onClose={() => setIsCheckPickerOpen(false)}
           />
         );
+
       case 'date':
         return (
           <Form.Control
@@ -543,10 +543,14 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
+            open={isDateOpen}
+            onOpen={() => setIsDateOpen(true)}
+            onClose={() => setIsDateOpen(false)}
           />
         );
+
       case 'number': {
-        const inputWidth = props?.width ?? 145;
+        const numInputWidth = props?.width ?? 145;
         const addonWidth = 40;
 
         const calculateTextWidth = text => {
@@ -559,28 +563,23 @@ const MyInput = ({
           return Math.ceil(metrics.width) + 18;
         };
 
-        const leftWidth = leftAddon
-          ? leftAddonwidth === 'auto'
-            ? calculateTextWidth(leftAddon)
-            : leftAddonwidth ?? addonWidth
-          : 0;
-
-        const rightWidth = rightAddon
-          ? rightAddonwidth === 'auto'
-            ? calculateTextWidth(rightAddon)
-            : rightAddonwidth ?? addonWidth
-          : 0;
-
-        const totalWidth = inputWidth + rightWidth + (rightAddon ? 2 : 0);
+        const totalWidth =
+          numInputWidth +
+          (rightAddon
+            ? rightAddonwidth === 'auto'
+              ? calculateTextWidth(rightAddon)
+              : rightAddonwidth ?? addonWidth
+            : 0) +
+          (rightAddon ? 2 : 0);
 
         const inputControl = (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
             style={{
-              width: inputWidth,
+              width: numInputWidth,
               height: props?.height ?? 30,
-              minWidth: inputWidth,
-              maxWidth: inputWidth,
+              minWidth: numInputWidth,
+              maxWidth: numInputWidth,
               flexShrink: 0,
               paddingRight: rightAddon ? '2px' : undefined
             }}
@@ -652,48 +651,16 @@ const MyInput = ({
           </Checkbox>
         );
 
-      default:
-        const inputWidth = props?.width ?? 145;
+      default: {
+        const defaultInputWidth = props?.width ?? 145;
         const addonWidth = 40;
         const totalWidth =
-          inputWidth +
+          defaultInputWidth +
           (leftAddon ? (leftAddonwidth ? leftAddonwidth : addonWidth) : 0) +
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const inputControl = (
-          //  <InputGroup style={{ width: totalWidth + 20 }}>
-          //   <Form.Control
-          //     labelKey={props?.selectDataLabel ?? ''}
-          //     style={{ width: inputWidth, height: props?.height ?? 30 }}
-          //     disabled={props.disabled}
-          //     name={fieldName}
-          //     type={fieldType}
-          //     value={record ? record[fieldName] : ''}
-          //     onChange={handleValueChange}
-          //     placeholder={props.placeholder}
-          //     onKeyDown={async e => {
-          //       if (e.key === 'Enter') {
-          //         e.preventDefault();
-          //         const result = await props.enterClick?.();
-          //         if (result !== false) {
-          //           handleEnterFocusNext(e);
-          //         }
-          //       }
-          //     }}
-          //   />
-          //     <div
-          //     className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-          //     onClick={changeRecordingState}
-          //     style={{ position: 'relative' }}
-          //   >
-          //     <FontAwesomeIcon
-          //       icon={faMicrophone}
-          //       className={props.disabled ? 'disabled-icon' : 'active-icon'}
-          //     />
-          //      {recording && <span className="pulse-ring"></span>}
-          //   </div>
-          //   </InputGroup>
-          <div style={{ position: 'relative', display: 'inline-block', width: inputWidth }}>
+          <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
             <Form.Control
               labelKey={props?.selectDataLabel ?? ''}
               style={{
@@ -712,7 +679,7 @@ const MyInput = ({
                   e.preventDefault();
                   const result = await props.enterClick?.();
                   if (result !== false) {
-                    handleEnterFocusNext(e);
+                    focusNextField(e);
                   }
                 }
               }}
@@ -751,12 +718,14 @@ const MyInput = ({
         }
 
         return inputControl;
+      }
     }
   };
 
   const conjureValidationMessages = () => {
-    const msgs = [];
+    if (!validationResult) return null;
 
+    const msgs = [];
     let i = 0;
     for (const vrs of validationResult) {
       msgs.push(
@@ -767,8 +736,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                  ? 'orange'
-                  : 'grey'
+                ? 'orange'
+                : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
