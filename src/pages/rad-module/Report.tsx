@@ -65,7 +65,10 @@ type props = {
   order: any;
   saveReportMutation: any;
   fetchAllTests: any;
+  refetchTests?: () => void;
 };
+
+
 const Report = forwardRef<unknown, props>(
   (
     {
@@ -80,7 +83,8 @@ const Report = forwardRef<unknown, props>(
       patient,
       order,
       saveReportMutation,
-      fetchAllTests
+      fetchAllTests,
+      refetchTests
     },
     ref
   ) => {
@@ -391,29 +395,31 @@ const Report = forwardRef<unknown, props>(
                   onClick={async () => {
                     if (rowData.statusLkey !== '265089168359400') {
                       try {
-                        saveReport({
+                        await saveReport({
                           ...rowData,
                           statusLkey: '265089168359400',
                           approvedAt: Date.now()
                         }).unwrap();
+
                         const Response = await saveTest({
                           ...test,
                           processingStatusLkey: '265089168359400',
                           approvedAt: Date.now()
                         }).unwrap();
 
-                        setTest({ ...newApDiagnosticOrderTests });
                         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                         setTest({ ...Response });
-                        // await fetchTest();
 
                         await reportFetch();
                         await fetchAllTests();
+                        await new Promise(r => setTimeout(r, 300));
+                        refetchTests?.();
                       } catch (error) {
-                        dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                        dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
                       }
                     }
                   }}
+
                 />
               </Whisper>
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject</Tooltip>}>
@@ -547,21 +553,25 @@ const Report = forwardRef<unknown, props>(
           object={report}
           setObject={setReport}
           handleCancle={async () => {
-            {
-              try {
-                await saveReport({
-                  ...report,
-                  statusLkey: '6488555526802885',
-                  rejectedAt: Date.now()
-                }).unwrap();
-                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                reportFetch();
-                setOpenRejectedResultModal(false);
-              } catch (error) {
-                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-              }
+            try {
+              await saveReport({
+                ...report,
+                statusLkey: '6488555526802885',
+                rejectedAt: Date.now()
+              }).unwrap();
+
+              dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+
+              await reportFetch();
+              await new Promise(r => setTimeout(r, 300));
+              refetchTests?.();
+
+              setOpenRejectedResultModal(false);
+            } catch (error) {
+              dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
             }
           }}
+
         />
         <AddReportModal
           open={openReportModal}

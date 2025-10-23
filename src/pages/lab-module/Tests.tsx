@@ -159,6 +159,12 @@ const Tests = forwardRef<unknown, Props>(
       }
     }, [selectedCatValue, laboratoryListToFilter]);
 
+
+    useEffect(() => {
+      fetchTest();
+    }, [saveTestMutation.isSuccess]);
+
+
     useEffect(() => {
       const updatedFilters = [
         {
@@ -439,12 +445,12 @@ const Tests = forwardRef<unknown, Props>(
                     marginRight: 10,
                     color:
                       rowData.processingStatusLkey !== '6055029972709625' &&
-                      rowData.processingStatusLkey !== '6055207372976955'
+                        rowData.processingStatusLkey !== '6055207372976955'
                         ? 'gray'
                         : 'inherit',
                     cursor:
                       rowData.processingStatusLkey !== '6055029972709625' &&
-                      rowData.processingStatusLkey !== '6055207372976955'
+                        rowData.processingStatusLkey !== '6055207372976955'
                         ? 'not-allowed'
                         : 'pointer'
                   }}
@@ -482,12 +488,12 @@ const Tests = forwardRef<unknown, Props>(
                     marginRight: 10,
                     color:
                       rowData.processingStatusLkey !== '6055029972709625' &&
-                      rowData.processingStatusLkey !== '6055207372976955'
+                        rowData.processingStatusLkey !== '6055207372976955'
                         ? 'gray'
                         : 'inherit',
                     cursor:
                       rowData.processingStatusLkey !== '6055029972709625' &&
-                      rowData.processingStatusLkey !== '6055207372976955'
+                        rowData.processingStatusLkey !== '6055207372976955'
                         ? 'not-allowed'
                         : 'pointer'
                   }}
