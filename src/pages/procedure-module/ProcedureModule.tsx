@@ -20,9 +20,10 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
 import Perform from '../encounter/encounter-component/procedure/Perform';
 import MyButton from '@/components/MyButton/MyButton';
-import SearchPatientCriteria from '@/components/SearchPatientCriteria';
-import './styles.less';
-import Icd10Search from '../medical-component/Icd10Search';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
+import { useLocation } from 'react-router-dom';
 
 // --- Utils ---
 const handleDownload = (attachment: any) => {
@@ -49,10 +50,11 @@ const handleDownload = (attachment: any) => {
 };
 
 const ProcedureModule: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { pathname } = useLocation();
   const [showCanceled, setShowCanceled] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [procedure, setProcedure] = useState<any>({ ...newApProcedure });
-
   const [dateFilter, setDateFilter] = useState<{ fromDate: Date | null; toDate: Date | null }>({
     fromDate: new Date(),
     toDate: null
@@ -248,6 +250,23 @@ const ProcedureModule: React.FC = () => {
 
     setListRequest(prev => ({ ...prev, filters: updatedFilters }));
   }, [dateFilter]);
+
+  useEffect(() => {
+    const divContent = (
+      <div className="page-title">
+        <h5>Procedure Requests List</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
+    dispatch(setPageCode('Procedure_Requests_List'));
+    dispatch(setDivContent(divContentHTML));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
 
   const handleFilterChange = (fieldName: string, value: string) => {
     if (!fieldName) return;
