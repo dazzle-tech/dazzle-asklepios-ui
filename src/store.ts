@@ -39,6 +39,7 @@ import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
+import { patientAttachmentService } from './services/patients/attachmentService';
 
 export const store = configureStore({
   reducer: {
@@ -85,6 +86,7 @@ export const store = configureStore({
 
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
+    [patientAttachmentService.reducerPath]: patientAttachmentService.reducer,
     //lab module
     [labService.reducerPath]: labService.reducer,
     //operation
@@ -145,6 +147,7 @@ export const store = configureStore({
       dentalService.middleware,
       observationService.middleware,
       attachmentService.middleware,
+      patientAttachmentService.middleware,
       labService.middleware,
       radService.middleware,
       procedureService.middleware,

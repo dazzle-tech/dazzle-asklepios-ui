@@ -116,7 +116,7 @@ import PatientEMR from './pages/patient/patient-emr';
 import PatientList from './pages/patient/patient-list';
 import PatientMergeFiles from './pages/patient/patient-merge-files';
 import PatientProfile from './pages/patient/patient-profile';
-import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
+import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
 import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
 import ControlledMedications from './pages/pharmacy/controlled-medications';
 import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescription';
@@ -370,7 +370,7 @@ const App = () => {
               <Route index element={<Dashboard />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />
               <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
-              <Route path="patient-profile" element={<PatientProfileCopy />} />
+              <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="tele-consultation-screen" element={<TeleconsultationScreen />} />
