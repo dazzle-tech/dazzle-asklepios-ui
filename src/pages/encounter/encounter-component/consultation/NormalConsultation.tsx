@@ -2,9 +2,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import {
-  useGetPatientAttachmentsListQuery
-} from '@/services/attachmentService';
+import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
 import {
   useGetConsultationOrdersQuery,
   useSaveConsultationOrdersMutation
@@ -13,7 +11,7 @@ import { ApConsultationOrder } from '@/types/model-types';
 import { newApConsultationOrder } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faPrint, faClone } from '@fortawesome/free-solid-svg-icons';
+import { faPrint, faClone, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
@@ -79,9 +77,7 @@ const NormalConsultation = (props: any) => {
     ...initialListRequest,
     filters: [
       { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-      ...(showPrev
-        ? [{ fieldName: 'visit_key', operator: 'match', value: encounter?.key }]
-        : []),
+      ...(showPrev ? [{ fieldName: 'visit_key', operator: 'match', value: encounter?.key }] : []),
       {
         fieldName: 'status_lkey',
         operator: showCanceled ? 'notMatch' : 'match',
@@ -184,9 +180,7 @@ const NormalConsultation = (props: any) => {
       ...prev,
       filters: [
         { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-        ...(showPrev
-          ? [{ fieldName: 'visit_key', operator: 'match', value: encounter?.key }]
-          : []),
+        ...(showPrev ? [{ fieldName: 'visit_key', operator: 'match', value: encounter?.key }] : []),
         {
           fieldName: 'status_lkey',
           operator: showCanceled ? 'notMatch' : 'match',
@@ -442,13 +436,6 @@ const NormalConsultation = (props: any) => {
             <div className="bt-div-2">
               <div className="bt-left-2">
                 <MyButton
-                  onClick={handleSubmit}
-                  disabled={selectedRows.length === 0 || edit}
-                  prefixIcon={() => <CheckIcon />}
-                >
-                  Submit
-                </MyButton>
-                <MyButton
                   prefixIcon={() => <BlockIcon />}
                   onClick={OpenConfirmDeleteModel}
                   disabled={selectedRows.length === 0}
@@ -462,16 +449,10 @@ const NormalConsultation = (props: any) => {
                 >
                   Print
                 </MyButton>
-                <Checkbox
-                  checked={!showCanceled}
-                  onChange={() => setShowCanceled(!showCanceled)}
-                >
+                <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
                   Show Cancelled
                 </Checkbox>
-                <Checkbox
-                  checked={!showPrev}
-                  onChange={() => setShowPrev(!showPrev)}
-                >
+                <Checkbox checked={!showPrev} onChange={() => setShowPrev(!showPrev)}>
                   Show Previous Consultations
                 </Checkbox>
               </div>
@@ -481,7 +462,19 @@ const NormalConsultation = (props: any) => {
                   'disabled-panel': edit
                 })}
               >
-                <MyButton onClick={handelAddNew}>Add Consultation</MyButton>
+                <MyButton
+                  onClick={handelAddNew}
+                  prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+                >
+                  Add Consultation
+                </MyButton>
+                <MyButton
+                  onClick={handleSubmit}
+                  disabled={selectedRows.length === 0 || edit}
+                  prefixIcon={() => <CheckIcon />}
+                >
+                  Submit
+                </MyButton>
               </div>
             </div>
           }
