@@ -1,6 +1,6 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyTable from '@/components/MyTable';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { Form, Panel } from 'rsuite';
@@ -15,6 +15,7 @@ import AddPurchaseApprovalSetup from './AddPurchaseApprovalSetup';
 import { MdModeEdit } from 'react-icons/md';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import './styles.less';
+import { useLocation } from 'react-router-dom';
 //Table Data
 const sampleData = [
   {
@@ -66,6 +67,8 @@ const sampleData = [
 //declares
 const PurchaseApprovalSetup = () => {
   const dispatch = useDispatch();
+  const { pathname } = useLocation();
+
   const [sortColumn, setSortColumn] = useState('typeOfPurchase');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
@@ -122,9 +125,7 @@ const PurchaseApprovalSetup = () => {
       render: rowData => {
         return (
           <div className="container-of-icons">
-                        <MdModeEdit
-                          title="Edit"
-                          id="icon0-0"/>
+            <MdModeEdit title="Edit" id="icon0-0" />
             {rowData.active ? (
               <MdDelete
                 className="icons-style"
@@ -150,7 +151,6 @@ const PurchaseApprovalSetup = () => {
                 }}
               />
             )}
-
           </div>
         );
       }
@@ -167,15 +167,22 @@ const PurchaseApprovalSetup = () => {
 
   const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
-  // Header page setUp
-  const divContent = (
-    <div className="page-title">
-      <h5>Purchase Approval Setup</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Purchase_Approval'));
-  dispatch(setDivContent(divContentHTML));
+  useEffect(() => {
+    const divContent = (
+      <div className="page-title">
+        <h5>Purchase Approval</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
+    dispatch(setPageCode('Purchase_Approval'));
+    dispatch(setDivContent(divContentHTML));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
 
   return (
     <>
