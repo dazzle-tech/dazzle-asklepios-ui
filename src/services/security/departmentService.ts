@@ -1,7 +1,20 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
+import { parseLinkHeader } from '@/utils/paginationHelper';
+
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
-type PagedResult<T> = { data: T[]; totalCount: number };
+type LinkMap = {
+  next?: string | null;
+  prev?: string | null;
+  first?: string | null;
+  last?: string | null;
+};
+
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+  links?: LinkMap;
+};
 
 
 export const departmentService = createApi({
@@ -15,10 +28,14 @@ export const departmentService = createApi({
         url: '/api/setup/department',
         params: { page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
       providesTags: (_res) => ['Department'],
     }),
 
@@ -28,42 +45,54 @@ export const departmentService = createApi({
       providesTags: (_res, _err, id) => ['Department'],
     }),
 
-    // GET /api/setup/department/facility/{facilityId}?page=&size=&sort=
+    // GET /api/setup/department/by-facility/{facilityId}?page=&size=&sort=
     getDepartmentByFacility: builder.query<PagedResult<any>, { facilityId: number | string } & PagedParams>({
       query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
-        url: `/api/setup/department/facility/${facilityId}`,
+        url: `/api/setup/department/by-facility/${facilityId}`,
         params: { page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
       providesTags: ['Department'],
     }),
 
-    // GET /api/setup/department/department-list-by-type?type=&page=&size=&sort=
+    // GET /api/setup/department/by-type/{type}?page=&size=&sort=
     getDepartmentByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
       query: ({ type, page, size, sort = 'id,asc' }) => ({
-        url: '/api/setup/department/department-list-by-type',
-        params: { type, page, size, sort },
+        url: `/api/setup/department/by-type/${type}`,
+        params: { page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
       providesTags: ['Department'],
     }),
 
-    // GET /api/setup/department/department-list-by-name?name=&page=&size=&sort=
+    // GET /api/setup/department/by-name/{name}?page=&size=&sort=
     getDepartmentByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
-        url: '/api/setup/department/department-list-by-name',
-        params: { name, page, size, sort },
+        url: `/api/setup/department/by-name/${name}`,
+        params: { page, size, sort },
       }),
-      transformResponse: (response: any[], meta): PagedResult<any> => ({
-        data: response,
-        totalCount: Number(meta?.response?.headers.get('X-Total-Count') ?? 0),
-      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
       providesTags: ['Department'],
     }),
 
