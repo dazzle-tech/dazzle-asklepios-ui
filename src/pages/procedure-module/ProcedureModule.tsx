@@ -20,6 +20,9 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
 import Perform from '../encounter/encounter-component/procedure/Perform';
 import MyButton from '@/components/MyButton/MyButton';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import './styles.less';
+import Icd10Search from '../medical-component/Icd10Search';
 
 // --- Utils ---
 const handleDownload = (attachment: any) => {
@@ -104,6 +107,13 @@ const ProcedureModule: React.FC = () => {
     useGetPatientAttachmentsListQuery(attachmentsListRequest);
 
   const [trigger] = useLazyGetPatientByIdQuery();
+
+  const { data: procedureStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROC_STATUS');
+  const { data: procedureCatStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const { data: procedurePrioStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+  const { data: procedureLevelStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
+  const { data: procedureIndStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ICD-10');
+
 
   const filterFields = [
     { label: 'PROCEDURE ID', value: 'procedureId' },
@@ -542,9 +552,49 @@ const ProcedureModule: React.FC = () => {
     }));
   };
 
+
+  const contents = (
+    <div className="advanced-filters">
+      <Form fluid className="dissss">
+          <MyInput
+            fieldType="select"
+            fieldName="Category"
+            selectData={procedureCatStatusLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+
+          <MyInput
+            fieldType="select"
+            fieldName="Priority"
+            selectData={procedurePrioStatusLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+
+          <MyInput
+            fieldType="select"
+            fieldName="Level"
+            selectData={procedureLevelStatusLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+<div className='indication-procedure-handle-position'>
+          <Icd10Search object={record} setOpject={setRecord} fieldName="indication" fieldLabel="Indication" />
+          </div>
+      </Form>
+    </div>
+  );
+
   const filters = () => (
     <>
-      <Form layout="inline" fluid>
+      <Form fluid className='procedure-module-table-filters-handle-position'>
         <MyInput
           fieldType="date"
           fieldLabel="From Date"
@@ -552,6 +602,7 @@ const ProcedureModule: React.FC = () => {
           record={dateFilter}
           setRecord={setDateFilter}
           showLabel={false}
+          column
         />
         <MyInput
           fieldType="date"
@@ -560,6 +611,7 @@ const ProcedureModule: React.FC = () => {
           record={dateFilter}
           setRecord={setDateFilter}
           showLabel={false}
+          column
         />
         <MyInput
           selectDataValue="value"
@@ -587,7 +639,7 @@ const ProcedureModule: React.FC = () => {
           Show Cancelled
         </Checkbox>
       </Form>
-      <AdvancedSearchFilters searchFilter={true} />
+      <AdvancedSearchFilters searchFilter={true} content={contents}/>
     </>
   );
 
