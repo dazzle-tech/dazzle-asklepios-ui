@@ -142,3 +142,15 @@ export interface Practitioner {
   lastModifiedBy?: string | null
 }
 
+export interface Allergen {
+  id?: number;
+  code: string;
+  name: string;
+  type: string ;
+  description?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}

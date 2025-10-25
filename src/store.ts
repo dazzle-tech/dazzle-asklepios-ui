@@ -39,7 +39,7 @@ import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
-
+import { allergensService } from './services/setup/allergensService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -127,6 +127,8 @@ export const store = configureStore({
     // Translation slice
     [translationService.reducerPath]: translationService.reducer,
 
+    [allergensService.reducerPath]:allergensService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -162,7 +164,8 @@ export const store = configureStore({
       languageService.middleware,
       translationService.middleware,
       PractitionerService.middleware,
-      PractitionerDepartmentService.middleware
+      PractitionerDepartmentService.middleware,
+      allergensService.middleware,
 
     ])
 });

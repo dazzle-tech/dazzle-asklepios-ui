@@ -3,11 +3,12 @@ import React from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { MdSick } from 'react-icons/md';
+import { useEnumOptions } from '@/services/enumsApi';
+
 const AddEditAllergens = ({ open, setOpen, width, allergens, setAllergens, handleSave }) => {
-  // Fetch allergens Type Lov response
-  const { data: allergensTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
+  // Fetch allergen type enum options
+  const allergenTypeOptions = useEnumOptions('AllergenType');
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -15,26 +16,29 @@ const AddEditAllergens = ({ open, setOpen, width, allergens, setAllergens, handl
         return (
           <Form fluid>
             <MyInput
+              required
               width="100%"
-              fieldName="allergenCode"
+              fieldName="code"
               record={allergens}
               setRecord={setAllergens}
             />
             <MyInput
+              required
               width="100%"
-              fieldName="allergenName"
+              fieldName="name"
               record={allergens}
               setRecord={setAllergens}
             />
             <div className="container-of-two-fields-allergens">
               <div className="container-of-field-allergens">
                 <MyInput
+                  required
                   width="100%"
-                  fieldName="allergenTypeLkey"
+                  fieldName="type"
                   fieldType="select"
-                  selectData={allergensTypeLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={allergenTypeOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   record={allergens}
                   setRecord={setAllergens}
                 />
@@ -56,10 +60,10 @@ const AddEditAllergens = ({ open, setOpen, width, allergens, setAllergens, handl
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={allergens?.key ? 'Edit Allergens' : 'New Allergens'}
+      title={allergens?.id ? 'Edit Allergens' : 'New Allergens'}
       position="right"
       content={conjureFormContent}
-      actionButtonLabel={allergens?.key ? 'Save' : 'Create'}
+      actionButtonLabel={allergens?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Allergens Info', icon: <MdSick /> }]}
       size={width > 600 ? '36vw' : '70vw'}
