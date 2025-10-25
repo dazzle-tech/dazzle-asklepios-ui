@@ -29,7 +29,7 @@ import { newService } from '@/types/model-types-constructor-new';
 import { Service } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
-
+import { formatEnumString } from '@/utils';
 const ServiceSetup: React.FC = () => {
   const dispatch = useAppDispatch();
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
@@ -376,14 +376,14 @@ const ServiceSetup: React.FC = () => {
       key: 'category',
       title: <Translate>Category</Translate>,
       flexGrow: 3,
-      render: (row: any) => row?.category ?? row?.categoryLkey ?? '',
+      render: (row: any) =>row?.category ?  formatEnumString(row?.category) : '',
     },
     { key: 'price', title: <Translate>Price</Translate>, flexGrow: 2 },
     {
       key: 'currency',
       title: <Translate>Currency</Translate>,
       flexGrow: 2,
-      render: (row: any) => row?.currency ?? row?.currencyLkey ?? '',
+      render: (row: any) => row?.currency || '',
     },
     {
       key: 'isActive',
