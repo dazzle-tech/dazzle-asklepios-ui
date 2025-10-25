@@ -5,7 +5,7 @@ import { Form } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
 
-import { useEnumOptions  , useEnumByName} from '@/services/enumsApi';
+import { useEnumOptions  , useEnumByName, useEnumCapitalized} from '@/services/enumsApi';
 
 type AddEditServiceProps = {
   open: boolean;
@@ -27,7 +27,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
   actionLoading,
 }) => {
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
-  const currencyOptions = useEnumByName('Currency');
+  const currencyOptions = useEnumCapitalized('Currency');
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
@@ -88,7 +88,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   fieldName="currency"
                   fieldType="select"
                   selectData={currencyOptions ?? []}
-                  selectDataLabel="value"
+                  selectDataLabel="label"
                   selectDataValue="value"
                   record={service}
                   setRecord={setService}
