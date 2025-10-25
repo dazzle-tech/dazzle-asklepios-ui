@@ -1,3 +1,4 @@
+import { tr } from "date-fns/locale";
 import * as modelTypes from "./model-types-new";
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
@@ -120,7 +121,7 @@ export const newPractitioner: modelTypes.Practitioner = {
   defaultMedicalLicense: '',
   secondaryMedicalLicense: '',
   educationalLevel: '',
-  appointable: true,
+  appointable: false,
   userId: null,
   defaultLicenseValidUntil: undefined,
   secondaryLicenseValidUntil: undefined,
