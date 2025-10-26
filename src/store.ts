@@ -41,7 +41,7 @@ import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
 import { patientAttachmentService } from './services/patients/attachmentService';
-
+import { ageGroupService } from './services/setup/ageGroupService';
 
 export const store = configureStore({
   reducer: {
@@ -133,6 +133,9 @@ export const store = configureStore({
 
     //service
     [serviceService.reducerPath]: serviceService.reducer,
+
+    //age group
+    [ageGroupService.reducerPath]: ageGroupService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -171,6 +174,7 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+      ageGroupService.middleware,
     ])
 });
 
