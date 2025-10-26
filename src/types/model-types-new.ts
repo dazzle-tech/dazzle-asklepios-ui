@@ -190,6 +190,43 @@ export interface Practitioner {
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null
+};
+
+//Patient Attachment
+export interface PatientAttachment {
+  id: number;
+  patientId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  type?: string;
+  details?: string;
+  source?: string;
+}
+// Response Types
+export interface UploadResponse {
+  id: number;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  downloadUrl: string;
+}
+
+
+
+export interface DownloadTicket {
+  url: string;
+  expiresInSeconds: number;
+}
+
+// Request Types
+export interface UploadAttachmentParams {
+  patientId: number;
+  files: File[];
+  type?: string;
+  details?: string;
+  source?: string;
 }
 
 export interface Service {

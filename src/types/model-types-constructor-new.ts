@@ -96,6 +96,40 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   isActive: true
 };
 
+
+// Patient Attachment Constructors
+export const newPatientAttachment: modelTypes.PatientAttachment = {
+  id: undefined,
+  patientId: undefined,
+  spaceKey: '',
+  filename: '',
+  mimeType: '',
+  sizeBytes: 0,
+  type: undefined,
+  details: undefined,
+  source: undefined,
+};
+
+export const newUploadResponse: modelTypes.UploadResponse = {
+  id: undefined,
+  filename: '',
+  mimeType: '',
+  sizeBytes: 0,
+  downloadUrl: '',
+};
+
+export const newDownloadTicket: modelTypes.DownloadTicket = {
+  url: '',
+  expiresInSeconds: 0,
+};
+
+export const newUploadAttachmentParams: modelTypes.UploadAttachmentParams = {
+  patientId: undefined,
+  files: [],
+  type: undefined,
+  details: undefined,
+  source: undefined,
+}
 export const newService: modelTypes.Service = {
   id: undefined,
   name: '',
@@ -110,6 +144,7 @@ export const newService: modelTypes.Service = {
   lastModifiedBy: null,
   lastModifiedDate: null,
   facilityId: undefined, 
+
 };
 
 export const newServiceItem: modelTypes.ServiceItem = {
