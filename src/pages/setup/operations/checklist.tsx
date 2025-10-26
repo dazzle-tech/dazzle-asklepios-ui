@@ -42,9 +42,7 @@ const Checklist = () => {
   useEffect(() => {
       // Header page setUp
       const divContent = (
-        <div className="page-title">
-          <h5><Translate>Checklists</Translate></h5>
-        </div>
+        "Checklists"
       );
       dispatch(setPageCode('Checklists'));
       dispatch(setDivContent(divContent));

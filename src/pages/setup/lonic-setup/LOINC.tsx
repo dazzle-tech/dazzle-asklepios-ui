@@ -34,9 +34,7 @@ const LOINCSetup = () => {
 
     // Header setup
     const divContent = (
-        <div className='page-title'>
-            <h5><Translate>LOINC List</Translate></h5>
-        </div>
+       "LOINC List"
     );
     dispatch(setPageCode('LOINC'));
     dispatch(setDivContent(divContent));

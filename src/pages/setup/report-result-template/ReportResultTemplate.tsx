@@ -166,9 +166,7 @@ const ReportResultTemplate = () => {
 
     useEffect(() => {
       const divContent = (
-        <div className="page-title">
-          <h5><Translate>Report Result Template</Translate></h5>
-        </div>
+        "Report Result Template"
       );
       dispatch(setPageCode('Report_Result_Template'));
       dispatch(setDivContent(divContent));

@@ -62,9 +62,7 @@ const Vaccine = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>Vaccine</Translate></h5>
-    </div>
+    "Vaccine"
   );
   dispatch(setPageCode('Vaccine'));
   dispatch(setDivContent(divContent));

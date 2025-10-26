@@ -47,13 +47,7 @@ const InpatientNurseStation = ({}) => {
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>
-        <Translate>
-        Nurse Anamnesis
-        </Translate>
-        </h5>
-    </div>
+        "Nurse Anamnesis"
   );
   dispatch(setPageCode('Nurse_Station'));
   dispatch(setDivContent(divContent));

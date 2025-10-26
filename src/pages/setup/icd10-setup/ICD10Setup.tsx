@@ -34,9 +34,7 @@ const ICD10Setup = () => {
 
     // Header page setUp
     const divContent = (
-        <div className='page-title'>
-            <h5><Translate>ICD-10 Diagnosis List</Translate></h5>
-        </div>
+       "ICD-10 Diagnosis List"
     );
     dispatch(setPageCode('ICD10'));
     dispatch(setDivContent(divContent));

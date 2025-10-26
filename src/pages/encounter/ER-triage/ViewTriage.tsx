@@ -70,9 +70,7 @@ const ViewTriage = () => {
 
     // Header setup
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5><Translate>ER View Triage</Translate></h5>
-        </div>
+            "ER View Triage"
     );
     dispatch(setPageCode('ER_View_Triage'));
     dispatch(setDivContent(divContent));

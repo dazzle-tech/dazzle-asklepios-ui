@@ -15,6 +15,7 @@ import { useLocation } from 'react-router-dom';
 import { Col, Grid, Panel, Row, Table } from 'rsuite';
 import { getHeight } from 'rsuite/esm/DOMHelper';
 import ProfileSidebar from '../patient-profile/ProfileSidebar';
+import Translate from '@/components/Translate';
 const { Column, HeaderCell, Cell } = Table;
 
 const PatientMergeFiles: React.FC = () => {
@@ -28,7 +29,6 @@ const PatientMergeFiles: React.FC = () => {
 
   const dispatch = useAppDispatch();
   const { pathname } = useLocation();
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
 
   const handleClear = () => {
     setToPatient(newApPatient);
@@ -49,11 +49,8 @@ const PatientMergeFiles: React.FC = () => {
 
   useEffect(() => {
     const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>Files Merge</h5>
-      </div>
+        "Files Merge"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Files_Merge'));
     dispatch(setDivContent(divContent));

@@ -54,9 +54,7 @@ const AccessRoles = () => {
   const totalCount = accessRoleListResponse?.extraNumeric ?? 0;
   // Page header setup
   const divContent = (
-    <div title="page-title">
-      <h5><Translate>Access Roles</Translate></h5>
-    </div>
+    "Access Roles"
   );
   dispatch(setPageCode('Access_Roles'));
   dispatch(setDivContent(divContent));

@@ -599,9 +599,7 @@ const InventoryTransaction = () => {
     }, [dateFilter]);
 
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5><Translate>Inventory Transaction</Translate></h5>
-        </div>
+            "Inventory Transaction"
     );
     // page header setup
     dispatch(setPageCode('Inventory_Transaction'));

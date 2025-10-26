@@ -50,13 +50,7 @@ const Resources = () => {
   const [deactiveResource] = useDeactiveActiveResourceMutation();
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5>
-        <Translate>
-        Resources
-        </Translate>
-        </h5>
-    </div>
+        "Resources"
   );
   dispatch(setPageCode('Resources'));
   dispatch(setDivContent(divContent));

@@ -457,9 +457,7 @@ const TeleconsultationRequests = () => {
   console.log(paginatedData);
 
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Tele Consultation Screen</Translate></h5>
-    </div>
+      "Tele Consultation Screen"
   );
 
   dispatch(setPageCode('tele_consultation_screen'));

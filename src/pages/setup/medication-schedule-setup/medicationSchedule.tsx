@@ -124,14 +124,11 @@ const MedicationSchedule = () => {
   // Header page setup: dispatch inside useEffect bound to path
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Medication Schedule Setup</h5>
-      </div>
+    "Medication Schedule Setup"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Medication_Schedule_Setup'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

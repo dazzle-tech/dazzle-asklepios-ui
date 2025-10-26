@@ -61,9 +61,7 @@ const InpatientList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5><Translate>Inpatient Visit List</Translate></h5>
-    </div>
+      "Inpatient Visit List"
   );
   dispatch(setPageCode('In_Patient_Encounters'));
   dispatch(setDivContent(divContent));

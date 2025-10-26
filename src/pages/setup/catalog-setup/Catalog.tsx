@@ -59,9 +59,7 @@ const Catalog = () => {
     useSaveDiagnosticsTestCatalogHeaderMutation();
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Catalog</Translate></h5>
-    </div>
+   "Catalog"
   );
   dispatch(setPageCode('Catalog'));
   dispatch(setDivContent(divContent));

@@ -69,9 +69,7 @@ const ProductSetup = () => {
   } = useGetProductQuery(listRequest);
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>Inventory Products Setup</Translate></h5>
-    </div>
+    "Inventory Products Setup"
   );
   dispatch(setPageCode('Product'));
   dispatch(setDivContent(divContent));

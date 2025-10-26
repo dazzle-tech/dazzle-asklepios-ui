@@ -82,9 +82,7 @@ const Facilities = () => {
   
   // Page header setup
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Facilities</Translate></h5>
-    </div>
+    "Facilities"
   );
   dispatch(setPageCode('Facilities'));
   dispatch(setDivContent(divContent));

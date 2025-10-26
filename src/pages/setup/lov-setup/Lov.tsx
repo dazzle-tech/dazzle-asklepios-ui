@@ -53,9 +53,7 @@ const Lov = () => {
     { label: 'Description', value: 'lovDescription' }
   ];
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>LOVs</Translate></h5>
-    </div>
+    "LOVs"
   );
   dispatch(setPageCode('Lovs'));
   dispatch(setDivContent(divContent));

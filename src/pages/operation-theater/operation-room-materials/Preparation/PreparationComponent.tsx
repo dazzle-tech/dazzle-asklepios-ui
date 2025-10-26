@@ -2,8 +2,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import ReactDOMServer from 'react-dom/server';
-
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import MaterialTable from './MaterialTable';
@@ -66,13 +64,10 @@ const Preparation: React.FC = () => {
   // Header page setup inside useEffect (with cleanup)
   useEffect(() => {
     const header = (
-      <div className="page-title">
-        <h5>Operation Room Materials</h5>
-      </div>
+      "Operation Room Materials"
     );
-    const html = ReactDOMServer.renderToStaticMarkup(header);
     dispatch(setPageCode('Operation-Room-Materials'));
-    dispatch(setDivContent(html));
+    dispatch(setDivContent(header));
 
     return () => {
       dispatch(setPageCode(''));

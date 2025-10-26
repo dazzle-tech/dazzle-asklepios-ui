@@ -123,9 +123,7 @@ const Rad = () => {
   const [saveReport, saveReportMutation] = useSaveDiagnosticOrderTestRadReportMutation();
 
   const divContent = (
-    <div className="flexs">
-      <h5><Translate>Clinical Radiology</Translate></h5>
-    </div>
+    "Clinical Radiology"
   );
   dispatch(setPageCode('Rad'));
   dispatch(setDivContent(divContent));

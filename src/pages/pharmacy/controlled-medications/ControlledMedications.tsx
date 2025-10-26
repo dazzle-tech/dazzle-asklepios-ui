@@ -254,9 +254,7 @@ const ControlledMedications = () => {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="page-title">
-        <h5><Translate>Controlled Medications</Translate></h5>
-      </div>
+    "Controlled Medications"
     );
     dispatch(setPageCode('Controlled Medications'));
     dispatch(setDivContent(divContent));

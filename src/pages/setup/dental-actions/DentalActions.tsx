@@ -58,9 +58,7 @@ const DentalActions = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Dental Actions</Translate></h5>
-    </div>
+   "Dental Actions"
   );
   dispatch(setPageCode('Dental_Actions'));
   dispatch(setDivContent(divContent));

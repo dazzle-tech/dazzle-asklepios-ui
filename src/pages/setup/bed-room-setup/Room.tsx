@@ -57,9 +57,7 @@ const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequ
     ];
     // Header page setUp
     const divContent = (
-        <div className='page-title'>
-            <h5><Translate>Rooms</Translate></h5>
-        </div>
+        "Rooms"
     );
     dispatch(setPageCode('Rooms'));
     dispatch(setDivContent(divContent));

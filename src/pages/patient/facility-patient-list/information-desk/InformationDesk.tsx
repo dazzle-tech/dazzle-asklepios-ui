@@ -1,7 +1,6 @@
 import { faAddressCard, faFileCsv, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
-import ReactDOMServer from 'react-dom/server';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Form } from 'rsuite';
@@ -25,6 +24,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest } from '@/utils';
 import '../styles.less';
 import CompanionCardModal from './CompanionCardModal';
+import Translate from '@/components/Translate';
 
 const InformationDesk: React.FC = () => {
   const dispatch = useDispatch();
@@ -77,13 +77,10 @@ const InformationDesk: React.FC = () => {
   // Header (moved to useEffect)
   useEffect(() => {
     const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>Information Desk</h5>
-      </div>
+        "Information Desk"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('P_Facility'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

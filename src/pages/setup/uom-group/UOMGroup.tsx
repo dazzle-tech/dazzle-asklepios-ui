@@ -44,9 +44,7 @@ const UOMGroup = () => {
   } = useGetUomGroupsQuery(listRequest);
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>UOM Groups</Translate></h5>
-    </div>
+    "UOM Groups"
   );
   dispatch(setPageCode('UOM_Groups'));
   dispatch(setDivContent(divContent));

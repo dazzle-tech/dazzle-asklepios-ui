@@ -82,9 +82,7 @@ const Lab = () => {
     { skip: test.key == null }
   );
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5><Translate>Clinical Laboratory</Translate></h5>
-    </div>
+      "Clinical Laboratory"
   );
   dispatch(setPageCode('Lab'));
   dispatch(setDivContent(divContent));

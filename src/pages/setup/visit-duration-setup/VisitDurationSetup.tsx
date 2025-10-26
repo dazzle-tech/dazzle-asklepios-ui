@@ -12,6 +12,7 @@ import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import { formatDateWithoutSeconds } from '@/utils';
 import VisitDurationSetupModal from './VisitDurationSetupModal';
 import { useLocation } from 'react-router-dom';
+import Translate from '@/components/Translate';
 
 
 // Sample table data
@@ -186,14 +187,11 @@ const VisitDurationSetup = () => {
   // Header page setup: dispatch inside useEffect bound to path
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Visit Duration Setup</h5>
-      </div>
+      "Visit Duration Setup"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Visit_Duration_Setup'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

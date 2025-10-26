@@ -90,9 +90,7 @@ const ERStartTriage = () => {
 
   // Header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5><Translate>ER Start Triage</Translate></h5>
-    </div>
+      "ER Start Triage"
   );
   dispatch(setPageCode('Start_Triage'));
   dispatch(setDivContent(divContent));

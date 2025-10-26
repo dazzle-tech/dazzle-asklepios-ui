@@ -604,9 +604,7 @@ const InternalDrugOrder = () => {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="page-title">
-        <h5><Translate>Internal Drug Order</Translate></h5>
-      </div>
+      "Internal Drug Order"
     );
     dispatch(setPageCode('Internal Drug Order'));
     dispatch(setDivContent(divContent));

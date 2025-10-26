@@ -42,9 +42,7 @@ const QuickVisit = ({ }) => {
     const [openDischargeModal, setOpenDischargeModal] = useState(false);
     // Page header setup
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5><Translate>Quick Visit</Translate></h5>
-        </div>
+            "Quick Visit"
     );
     dispatch(setPageCode('Quick_Visit'));
     dispatch(setDivContent(divContent));

@@ -180,9 +180,7 @@ const Shifts = () => {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="page-title">
-        <h5><Translate>Shift Setup</Translate></h5>
-      </div>
+      "Shift Setup"
     );
     dispatch(setPageCode('Shift Setup'));
     dispatch(setDivContent(divContent));

@@ -648,9 +648,7 @@ const Encounter = () => {
 
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <Text className="title-font-style"><Translate>Patient Visit &gt; {currentHeader}</Translate></Text>
-    </div>
+      `Patient Visit > ${currentHeader}`
   );
   useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));

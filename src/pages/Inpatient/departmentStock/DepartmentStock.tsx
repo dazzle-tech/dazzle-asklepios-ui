@@ -280,9 +280,7 @@ const DepartmentStock = () => {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="page-title">
-        <h5><Translate>Department Stock</Translate></h5>
-      </div>
+        "Department Stock"
     );
     dispatch(setPageCode('DepartmentStock'));
     dispatch(setDivContent(divContent));

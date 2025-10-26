@@ -14,13 +14,7 @@ import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icon
 const Dashboard = () => {
   const dispatch = useAppDispatch();
   const divContent = (
-    <div className="display-flex">
-      <h5>
-        <Translate>
-        Dashboard
-        </Translate>
-        </h5>
-    </div>
+        "Dashboard"
   );
   dispatch(setPageCode('Dashboard'));
   dispatch(setDivContent(divContent));

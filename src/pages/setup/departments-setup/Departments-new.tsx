@@ -82,9 +82,7 @@ const Departments = () => {
   // Header setup
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5><Translate>Departments</Translate></h5>
-      </div>
+      "Departments"
     );
     dispatch(setPageCode('Departments'));
     dispatch(setDivContent(divContent));

@@ -34,9 +34,7 @@ const CPTSetup = () => {
 
     // Header page setUp
     const divContent = (
-        <div className='page-title'>
-            <h5><Translate>CPT Diagnosis List</Translate></h5>
-        </div>
+        "CPT Diagnosis List"
     );
     dispatch(setPageCode('CPT')); // Set page code in Redux
     dispatch(setDivContent(divContent)); // Set header content in Redux

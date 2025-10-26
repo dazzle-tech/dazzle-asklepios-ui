@@ -28,9 +28,7 @@ const WaitingList = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5><Translate>Inpatient Waiting List</Translate></h5>
-        </div>
+           "Inpatient Waiting List"
     );
     dispatch(setPageCode('Waiting_Patient_Encounters'));
     dispatch(setDivContent(divContent));

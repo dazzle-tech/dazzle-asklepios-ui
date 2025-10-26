@@ -56,9 +56,7 @@ const ProcedureSetup = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='page-title '>
-      <h5><Translate>Procedure Setup</Translate></h5>
-    </div>
+   "Procedure Setup"
   );
   dispatch(setPageCode('Procedure_Setup'));
   dispatch(setDivContent(divContent));

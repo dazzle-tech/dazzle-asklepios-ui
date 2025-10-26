@@ -257,9 +257,7 @@ const ProcedureModule: React.FC = () => {
 
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Procedure Requests List</h5>
-      </div>
+     "Procedure Requests List"
     );
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 

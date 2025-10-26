@@ -43,9 +43,7 @@ const ERWaitingList = () => {
 
   // header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5><Translate>ER Wating List</Translate></h5>
-    </div>
+      "ER Wating List"
   );
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');

@@ -107,9 +107,7 @@ const MedicationMatrix = () => {
 
   // Page header setup
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Medication Matrix SetUp</Translate></h5>
-    </div>
+    "Medication Matrix SetUp"
   );
   dispatch(setPageCode('Medication Matrix SetUp'));
   dispatch(setDivContent(divContent));

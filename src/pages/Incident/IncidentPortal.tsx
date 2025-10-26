@@ -30,10 +30,7 @@ const IncidentPortal: React.FC = () => {
     // Page Header
     useEffect(() => {
         const divContent = (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <FontAwesomeIcon icon={faShieldAlt} style={{ color: "#1976d2" }} />
-                <h5 style={{ margin: 0 }}><Translate>MedCare Incident Portal</Translate></h5>
-            </div>
+                "MedCare Incident Portal"
         );
         dispatch(setPageCode("MedCare_Incident_Portal"));
         dispatch(setDivContent(divContent));

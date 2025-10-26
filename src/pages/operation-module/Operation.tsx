@@ -22,9 +22,7 @@ const Operation = () => {
        reqRef.current?.refetch();
      }
        const divContent = (
-         <div style={{ display: 'flex' }}>
-           <Text className="title-font-style"><Translate>Operations</Translate></Text>
-         </div>
+           "Operations"
        );
        useEffect(() => {
 

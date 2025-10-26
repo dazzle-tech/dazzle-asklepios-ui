@@ -57,13 +57,7 @@ const OptometricExam = () => {
   const [time, setTime] = useState({ time: '' });
   const dispatch = useAppDispatch();
   const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>
-          <Translate>
-          Optometric Exam
-          </Translate>
-          </h5>
-      </div>
+      "Optometric Exam"
     );
     dispatch(setPageCode('Clinical_Visit'));
     dispatch(setDivContent(divContent));

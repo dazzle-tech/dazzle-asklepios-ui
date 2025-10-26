@@ -47,9 +47,7 @@ const Allergens = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Allergens</Translate></h5>
-    </div>
+    "Allergens"
   );
   dispatch(setPageCode('Allergens'));
   dispatch(setDivContent(divContent));

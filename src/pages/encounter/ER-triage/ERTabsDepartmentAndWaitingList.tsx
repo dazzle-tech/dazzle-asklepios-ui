@@ -15,9 +15,7 @@ const ERTabsDepartmentAndWaitingList = () => {
 
   // header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5><Translate>Emergency Department Management</Translate></h5>
-    </div>
+      "Emergency Department Management"
   );
   useEffect(() => {
     dispatch(setPageCode('ER_Management'));

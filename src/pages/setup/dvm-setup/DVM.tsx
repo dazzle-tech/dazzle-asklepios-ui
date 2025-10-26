@@ -64,9 +64,7 @@ const DVM = () => {
   const [saveDvm] = useSaveDvmRuleMutation();
   // Page header
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Data Validation Manager</Translate></h5>
-    </div>
+    "Data Validation Manager"
   );
   dispatch(setPageCode('Data_Validation'));
   dispatch(setDivContent(divContent));

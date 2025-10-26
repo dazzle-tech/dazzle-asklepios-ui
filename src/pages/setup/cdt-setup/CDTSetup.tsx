@@ -41,9 +41,7 @@ const CDTSetup = () => {
 
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>CDT Codes</Translate></h5>
-    </div>
+    "CDT Codes"
   );
   dispatch(setPageCode('CDT_Codes'));
   dispatch(setDivContent(divContent));

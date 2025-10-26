@@ -265,9 +265,7 @@ const inventoryTransferApproval = () => {
 
     const dispatch = useDispatch();
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5><Translate>Transfer Product</Translate></h5>
-        </div>
+            "Transfer Product"
     );
     // page header setup
     dispatch(setPageCode('Inventory_Transfer'));

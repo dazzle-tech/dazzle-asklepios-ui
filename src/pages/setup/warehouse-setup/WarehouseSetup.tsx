@@ -72,9 +72,7 @@ const WarehouseSetup = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='title'>
-      <h5><Translate>Warehouse</Translate></h5>
-    </div>
+    "Warehouse"
   );
   dispatch(setPageCode('Warehouse'));
   dispatch(setDivContent(divContent));

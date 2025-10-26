@@ -597,9 +597,7 @@ function DashboardTransaction() {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="page-title">
-        <h5><Translate>Inventory Transaction</Translate></h5>
-      </div>
+       "Inventory Transaction"
     );
     dispatch(setPageCode('DepartmentStock'));
     dispatch(setDivContent(divContent));

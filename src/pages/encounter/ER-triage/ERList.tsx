@@ -49,9 +49,7 @@ const ERList = () => {
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5><Translate>ER Department</Translate></h5>
-    </div>
+      "ER Department"
   );
   dispatch(setPageCode('ER_Patient_Encounters'));
   dispatch(setDivContent(divContent));

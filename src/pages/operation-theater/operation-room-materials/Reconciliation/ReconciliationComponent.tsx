@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Form } from 'rsuite';
-import ReactDOMServer from 'react-dom/server';
 import { useLocation } from 'react-router-dom';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
@@ -11,6 +10,7 @@ import MaterialTableReconciliation from './MaterialTableReconciliation';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds } from '@/utils';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
+import Translate from '@/components/Translate';
 
 // Table Data (dummy)
 const sampleData = [
@@ -61,13 +61,10 @@ const Reconciliation: React.FC = () => {
   // Header page setup inside effect (with cleanup)
   useEffect(() => {
     const header = (
-      <div className="page-title">
-        <h5>Operation Room Materials</h5>
-      </div>
+      "Operation Room Materials"
     );
-    const html = ReactDOMServer.renderToStaticMarkup(header);
     dispatch(setPageCode('Operation-Room-Materials'));
-    dispatch(setDivContent(html));
+    dispatch(setDivContent(header));
 
     return () => {
       dispatch(setPageCode(''));

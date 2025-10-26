@@ -58,9 +58,7 @@ const PrescriptionInstructions = () => {
   ];
  // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>Prescription Instructions</Translate></h5>
-    </div>
+      "Prescription Instructions"
   );
   dispatch(setPageCode('Prescription_Instructions'));
   dispatch(setDivContent(divContent));

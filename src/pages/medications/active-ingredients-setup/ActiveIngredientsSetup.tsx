@@ -49,9 +49,7 @@ const ActiveIngredientsSetup = () => {
 
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>Active Ingredients</Translate></h5>
-    </div>
+      "Active Ingredients"
   );
   dispatch(setPageCode('Active_Ingredients'));
   dispatch(setDivContent(divContent));

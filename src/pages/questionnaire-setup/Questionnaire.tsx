@@ -131,9 +131,7 @@ const Questionnaire = () => {
    useEffect(() => {
       // Header page setUp
       const divContent = (
-        <div className="page-title">
-          <h5><Translate>Questionnaire</Translate></h5>
-        </div>
+       "Questionnaire"
       );
       dispatch(setPageCode('Questionnaire'));
       dispatch(setDivContent(divContent));

@@ -56,9 +56,7 @@ const Practitioners = () => {
 
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>Practitioners</Translate></h5>
-    </div>
+    "Practitioners"
   );
   dispatch(setPageCode('Practitioners'));
   dispatch(setDivContent(divContent));

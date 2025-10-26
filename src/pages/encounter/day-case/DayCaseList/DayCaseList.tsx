@@ -44,15 +44,7 @@ const DayCaseList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
-  const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>
-        <Translate>
-         DayCase List
-         </Translate>
-         </h5>
-    </div>
-  );
+  const divContent = 'DayCase List';
 
   dispatch(setPageCode('P_DayCaseEncounters'));
   const [cancelEncounter] = useCancelEncounterMutation();
@@ -570,15 +562,7 @@ const DayCaseList = () => {
     };
   }, [isLoading, isFetching, dispatch]);
   useEffect(() => {
-    const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>
-          <Translate>
-           DayCase List
-           </Translate>
-           </h5>
-      </div>
-    );
+    const divContent = 'DayCase List';
     dispatch(setPageCode('P_DayCaseEncounters'));
     dispatch(setDivContent(divContent));
   }, [dispatch]);

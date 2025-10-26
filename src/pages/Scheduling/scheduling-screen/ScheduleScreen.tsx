@@ -484,9 +484,7 @@ const ScheduleScreen = () => {
 
   const [currentCalView, setCurrentCalView] = useState('month'); // Force "month" view
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5><Translate>Scheduling</Translate></h5>
-    </div>
+    "Scheduling"
   );
   dispatch(setPageCode('Schedule_Screen'));
   dispatch(setDivContent(divContent));

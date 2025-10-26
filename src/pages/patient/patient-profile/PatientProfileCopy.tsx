@@ -13,7 +13,6 @@ import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
-import ReactDOMServer from 'react-dom/server';
 import { useLocation } from 'react-router-dom';
 import { Col, DOMHelper, Panel, Row } from 'rsuite';
 import BedsideRegistrationsModal from './BedsideRegistrations';
@@ -27,7 +26,6 @@ import ProfileHeader from './ProfileHeader';
 import ProfileSidebar from './ProfileSidebar';
 import ProfileTabs from './ProfileTabs';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
-import Translate from '@/components/Translate';
 
 const { getHeight } = DOMHelper;
 
@@ -57,13 +55,7 @@ const PatientProfile = () => {
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
   // Page header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>
-      <Translate>
-        Patient Registration
-        </Translate>
-        </h5>
-    </div>
+        "Patient Registration" 
   );
 
   const handleSave = async () => {
@@ -141,9 +133,7 @@ const PatientProfile = () => {
 
   useEffect(() => {
     const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>Patient Registration</h5>
-      </div>
+        "Patient Registration"
     );
 
     dispatch(setPageCode('Patient_Registration'));

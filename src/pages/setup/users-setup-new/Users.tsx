@@ -94,9 +94,7 @@ const Users = () => {
   ];
   // Page header setup
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>Users</Translate></h5>
-    </div>
+    "Users"
   );
   dispatch(setPageCode('Users'));
   dispatch(setDivContent(divContent));

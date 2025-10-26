@@ -67,9 +67,7 @@ const DiagnosticsTest = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>Diagnostics Tests Definition</Translate></h5>
-    </div>
+    "Diagnostics Tests Definition"
   );
   dispatch(setPageCode('Diagnostics_Tests'));
   dispatch(setDivContent(divContent));

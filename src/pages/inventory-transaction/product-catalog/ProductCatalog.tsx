@@ -182,9 +182,7 @@ const ProductCatalog = () => {
 
     const dispatch = useDispatch();
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5><Translate>Product Catalog</Translate></h5>
-        </div>
+           "Product Catalog"
     );
     // page header setup
     dispatch(setPageCode('ProductCatalog'));

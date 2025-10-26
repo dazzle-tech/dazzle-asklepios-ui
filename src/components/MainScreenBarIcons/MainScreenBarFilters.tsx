@@ -9,6 +9,7 @@ import { setMode } from '@/reducers/uiSlice';
 import SearchIcon from '@rsuite/icons/Search';
 import { RootState } from '@/store';
 import { IoMdClose } from 'react-icons/io';
+import Translate from '../Translate';
 
 const MainScreenBarFilters = ({displaySearch, setDisplaySearch}) => {
   const dispatch = useAppDispatch();
@@ -17,6 +18,8 @@ const MainScreenBarFilters = ({displaySearch, setDisplaySearch}) => {
   const [isLightMode, setIsLightMode] = useState({ state: mode == 'light' ? true : false });
   const [width, setWidth] = useState<number>(window.innerWidth); // window width
   const divElement = useSelector((state: RootState) => state.div?.divElement);
+  console.log("divElement: ");
+  console.log(typeof divElement);
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -39,7 +42,16 @@ const MainScreenBarFilters = ({displaySearch, setDisplaySearch}) => {
   return (
     <div className="main-screen-bar-filters-header-main-container">
       {(width > 800 || !displaySearch) && width > 600 && (
-        <div>{divElement}</div>
+        <div>
+          {/* {divElement} */}
+          <div className="display-flex">
+                <h5>
+                  <Translate>
+                  {divElement}
+                  </Translate>
+                  </h5>
+              </div>
+        </div>
       )}
       <div className="main-screen-bar-filters-header">
         <Form fluid layout="inline">

@@ -471,12 +471,10 @@ const ServiceSetup: React.FC = () => {
 
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Services</h5>
-      </div>
+      "Services"
     );
     dispatch(setPageCode('Services'));
-    dispatch(setDivContent(ReactDOMServer.renderToStaticMarkup(divContent)));
+    dispatch(setDivContent(divContent));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));

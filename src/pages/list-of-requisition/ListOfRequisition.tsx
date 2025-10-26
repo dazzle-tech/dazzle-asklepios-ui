@@ -124,9 +124,7 @@ const ListOfRequisition = () => {
   // Header page setUp - moved to useEffect
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5><Translate>List of Requisition</Translate></h5>
-      </div>
+        "List of Requisition"
     );
     dispatch(setPageCode('List_of_Requisition'));
     dispatch(setDivContent(divContent));

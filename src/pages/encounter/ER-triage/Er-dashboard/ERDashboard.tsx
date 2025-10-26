@@ -15,9 +15,7 @@ const ERDashboards: React.FC = () => {
 
   useLayoutEffect(() => {
     const header = (
-      <div className="page-title">
-        <h5><Translate>ER Dashboard</Translate></h5>
-      </div>
+      "ER Dashboard"
     );
 
     const id = requestAnimationFrame(() => {

@@ -52,9 +52,7 @@ const GenericMedications = () => {
   const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Brand Medications List</Translate></h5>
-    </div>
+      "Brand Medications List"
   );
   dispatch(setPageCode('Brand_Medications'));
   dispatch(setDivContent(divContent));

@@ -51,13 +51,10 @@ const ProgressNotes: React.FC = () => {
   // Header (page title) setup
   useEffect(() => {
     const header = (
-      <div className="page-title">
-        <h5>Progress Notes</h5>
-      </div>
+      "Progress Notes"
     );
-    const html = ReactDOMServer.renderToStaticMarkup(header);
     dispatch(setPageCode('Progress_Notes'));
-    dispatch(setDivContent(html));
+    dispatch(setDivContent(header));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));

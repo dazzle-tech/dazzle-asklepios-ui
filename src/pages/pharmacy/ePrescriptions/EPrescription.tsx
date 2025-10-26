@@ -486,9 +486,7 @@ const EPrescriptions = () => {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="page-title">
-        <h5><Translate>ePrescriptions</Translate></h5>
-      </div>
+        "ePrescriptions"
     );
     dispatch(setPageCode('ePrescriptions'));
     dispatch(setDivContent(divContent));

@@ -32,9 +32,7 @@ const AgeGroup = () => {
   const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5><Translate>Age Group</Translate></h5>
-    </div>
+    "Age Group"
   );
   dispatch(setPageCode('Age_Group'));
   dispatch(setDivContent(divContent));

@@ -31,9 +31,7 @@ const Metadata = () => {
   const totalCount = metadataListResponse?.extraNumeric ?? 0;
   // Page header setup
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Metadata</Translate></h5>
-    </div>
+    "Metadata"
   );
   dispatch(setPageCode('Metadata'));
   dispatch(setDivContent(divContent));

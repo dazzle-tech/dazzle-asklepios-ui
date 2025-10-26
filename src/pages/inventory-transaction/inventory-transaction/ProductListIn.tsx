@@ -123,9 +123,7 @@ const ProductListIn = ({
  
   // Header page setUp
   const divContent = (
-    <div className='title'>
-      <h5><Translate>Inventory Transaction Products/</Translate></h5>
-    </div>
+      "Inventory Transaction Products"
   );
   dispatch(setPageCode('ProductList'));
   dispatch(setDivContent(divContent));

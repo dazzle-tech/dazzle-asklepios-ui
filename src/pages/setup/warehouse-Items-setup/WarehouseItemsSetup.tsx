@@ -100,9 +100,7 @@ const WarehouseItemsSetup = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='title'>
-      <h5><Translate>Warehouse Products</Translate></h5>
-    </div>
+    "Warehouse Products"
   );
   dispatch(setPageCode('Warehouse_Items_Setup'));
   dispatch(setDivContent(divContent));

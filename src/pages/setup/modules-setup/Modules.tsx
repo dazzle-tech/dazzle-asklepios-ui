@@ -50,9 +50,7 @@ const Modules = () => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = moduleListResponse?.extraNumeric ?? 0;
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Modules</Translate></h5>
-    </div>
+    "Modules"
   );
   dispatch(setPageCode('Modules'));
   dispatch(setDivContent(divContent));

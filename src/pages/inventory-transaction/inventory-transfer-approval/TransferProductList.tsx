@@ -127,9 +127,7 @@ const TransferProductList = ({
 
   // Header page setUp
   const divContent = (
-    <div className='title'>
-      <h5><Translate>Inventory Transfer Products</Translate></h5>
-    </div>
+      "Inventory Transfer Products"
   );
   dispatch(setPageCode('ProductList'));
   dispatch(setDivContent(divContent));

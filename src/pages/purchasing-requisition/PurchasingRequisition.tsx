@@ -349,9 +349,7 @@ const PurchasingRequisition = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5><Translate>Purchasing Requisition</Translate></h5>
-    </div>
+    "Purchasing Requisition"
   );
   // Render the divContent as HTML string
   // This is used to set the page code and content in the Redux store

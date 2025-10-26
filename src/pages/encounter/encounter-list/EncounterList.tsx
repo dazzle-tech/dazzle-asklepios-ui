@@ -48,13 +48,7 @@ const EncounterList = () => {
   const dispatch = useDispatch();
 
   const divContent = (
-    <div className="display-flex">
-      <h5>
-        <Translate>
-        Patients Visit List
-        </Translate>
-        </h5>
-    </div>
+        "Patients Visit List"
   );
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent(divContent));
