@@ -146,10 +146,6 @@ export interface Practitioner {
 export interface PatientAttachment {
   id: number;
   patientId: number;
-  createdBy: string;
-  createdDate: string;
-  lastModifiedBy?: string;
-  lastModifiedDate?: string;
   spaceKey: string;
   filename: string;
   mimeType: string;

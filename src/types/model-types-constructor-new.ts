@@ -99,10 +99,6 @@ export const newUserDepartment: modelTypes.UserDepartment = {
 export const newPatientAttachment: modelTypes.PatientAttachment = {
   id: undefined,
   patientId: undefined,
-  createdBy: '',
-  createdDate: '',
-  lastModifiedBy: undefined,
-  lastModifiedDate: undefined,
   spaceKey: '',
   filename: '',
   mimeType: '',
