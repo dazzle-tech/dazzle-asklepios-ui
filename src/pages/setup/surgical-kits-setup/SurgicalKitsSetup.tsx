@@ -1,66 +1,81 @@
-import Translate from '@/components/Translate';
-import React, { useState, useEffect } from 'react';
-import { Panel } from 'rsuite';
-import { MdMedicalServices } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
-import { MdModeEdit } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { ApService } from '@/types/model-types';
-import { newApService } from '@/types/model-types-constructor';
-import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAppDispatch } from '@/hooks';
-import MyTable from '@/components/MyTable';
-import AddEditKits from './AddEditKits';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { ApService } from '@/types/model-types';
+import { newApService } from '@/types/model-types-constructor';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import React, { useEffect, useState } from 'react';
+import ReactDOMServer from 'react-dom/server';
+import { FaUndo } from 'react-icons/fa';
+import { MdDelete, MdMedicalServices, MdModeEdit } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
+import { Form, Panel } from 'rsuite';
+import AddEditKits from './AddEditKits';
 import LinkedItems from './LinkedItems';
-const SurgicalKitsSetup = () => {
+
+const SurgicalKitsSetup: React.FC = () => {
   const dispatch = useAppDispatch();
-  const [surgicalKits, setSurgicalKits] = useState({});
+  const { pathname } = useLocation();
+
+  const [surgicalKits, setSurgicalKits] = useState<any>({});
   const [popupOpen, setPopupOpen] = useState(false);
   const [addItemPopupOpen, setAddItemPopupOpen] = useState(false);
-  const [openConfirmDeleteSurgicalKits, setOpenConfirmDeleteSurgicalKits] = useState<boolean>(false);
-  const [stateOfDeleteSurgicalKits, setStateOfDeleteSurgicalKits] = useState<string>('delete');
+  const [openConfirmDeleteSurgicalKits, setOpenConfirmDeleteSurgicalKits] =
+    useState<boolean>(false);
+  const [stateOfDeleteSurgicalKits, setStateOfDeleteSurgicalKits] = useState<
+    'delete' | 'deactivate' | 'reactivate'
+  >('delete');
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
- 
-  // Header page setUp
-  const divContent = (
-    <div className="page-title">
-      <h5>Surgical Kits Setup</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Surgical Kits Setup'));
-  dispatch(setDivContent(divContentHTML));
- 
+  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: string }>({
+    filter: '',
+    value: ''
+  });
+
+  // ---- Header page setup (inside useEffect) ----
+  useEffect(() => {
+    const divContent = (
+      <div className="page-title">
+        <h5>Surgical Kits Setup</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
+    dispatch(setPageCode('Surgical_Kits_Setup'));
+    dispatch(setDivContent(divContentHTML));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
+
   // Available fields for filtering
   const filterFields = [
     { label: 'Code', value: 'code' },
-    { label: 'Name', value: 'name' },
-    
+    { label: 'Name', value: 'name' }
   ];
+
   // class name for selected row
-  const isSelected = rowData => {
+  const isSelected = (rowData: any) => {
     if (rowData && surgicalKits && rowData.key === surgicalKits.key) {
       return 'selected-row';
     } else return '';
   };
 
   // dummy data
-   const data = [
+  const data: any[] = [
     {
       key: '0',
       code: 'KIT001',
       name: 'Basic Surgery Kit',
       isValid: true,
       items: [
-        {key: "0", kitCode: "KIT001", lookup: 'ZOCOR 10MG', quantity: 1 },
-        {key: "1",kitCode: "KIT001", lookup: 'Syringe', quantity: 5 }
+        { key: '0', kitCode: 'KIT001', lookup: 'ZOCOR 10MG', quantity: 1 },
+        { key: '1', kitCode: 'KIT001', lookup: 'Syringe', quantity: 5 }
       ]
     },
     {
@@ -69,8 +84,8 @@ const SurgicalKitsSetup = () => {
       name: 'Emergency Kit',
       isValid: false,
       items: [
-        {key: "0", kitCode: "KIT002", lookup: 'BSM Kit', quantity: 2 },
-        {key: "1", kitCode: "KIT002", lookup: 'Artificial Joint', quantity: 2 }
+        { key: '0', kitCode: 'KIT002', lookup: 'BSM Kit', quantity: 2 },
+        { key: '1', kitCode: 'KIT002', lookup: 'Artificial Joint', quantity: 2 }
       ]
     },
     {
@@ -79,20 +94,23 @@ const SurgicalKitsSetup = () => {
       name: 'Orthopedic Kit',
       isValid: true,
       items: [
-        {key: "0", kitCode: "KIT003", lookup: 'ZOCOR 10MG', quantity: 4 },
-        {key: "1", kitCode: "KIT003", lookup: 'BSM Kit', quantity: 1 }
+        { key: '0', kitCode: 'KIT003', lookup: 'ZOCOR 10MG', quantity: 4 },
+        { key: '1', kitCode: 'KIT003', lookup: 'BSM Kit', quantity: 1 }
       ]
     },
-    { key: '3', code: 'KIT004', name: 'ENT Surgery Kit',
+    {
+      key: '3',
+      code: 'KIT004',
+      name: 'ENT Surgery Kit',
       isValid: true,
       items: [
-        {key: "0", kitCode: "KIT004", lookup: 'Syringe', quantity: 2},
-        {key: "1", kitCode: "KIT004", lookup: 'Artificial Joint', quantity: 1 }
+        { key: '0', kitCode: 'KIT004', lookup: 'Syringe', quantity: 2 },
+        { key: '1', kitCode: 'KIT004', lookup: 'Artificial Joint', quantity: 1 }
       ]
-     }
+    }
   ];
 
-  // Icons column (Edit,Add Items, reactive/Deactivate)
+  // Icons column (Edit, Add Items, Reactivate/Deactivate)
   const iconsForActions = (rowData: ApService) => (
     <div className="container-of-icons">
       <MdMedicalServices
@@ -134,8 +152,8 @@ const SurgicalKitsSetup = () => {
       )}
     </div>
   );
- 
-  //Table columns
+
+  // Table columns
   const tableColumns = [
     {
       key: 'code',
@@ -148,11 +166,11 @@ const SurgicalKitsSetup = () => {
     {
       key: 'icons',
       title: <Translate></Translate>,
-      render: rowData => iconsForActions(rowData)
+      render: (rowData: ApService) => iconsForActions(rowData)
     }
   ];
 
-  // Filter table
+  // Filters UI
   const filters = () => (
     <Form layout="inline" fluid>
       <MyInput
@@ -184,16 +202,15 @@ const SurgicalKitsSetup = () => {
     </Form>
   );
 
-  // handle save 
+  // handle save
   const handleSave = () => {
     setPopupOpen(false);
   };
 
-  // handle deactivate Surgical Kit
+  // handle deactivate/reactivate Surgical Kit
   const handleDeactivate = () => {
     setOpenConfirmDeleteSurgicalKits(false);
   };
-  // handle reactivate Surgical Kit
   const handleReactivate = () => {
     setOpenConfirmDeleteSurgicalKits(false);
   };
@@ -204,20 +221,13 @@ const SurgicalKitsSetup = () => {
     setPopupOpen(true);
   };
 
-  //Effects
+  // Effects
   // change the width variable when the size of window is changed
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   return (
     <Panel>

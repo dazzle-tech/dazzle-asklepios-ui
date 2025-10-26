@@ -8,10 +8,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import ReloadIcon from '@rsuite/icons/Reload';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
-import {
-  addFilterToListRequest
-
-} from '@/utils';
+import { addFilterToListRequest } from '@/utils';
 import { DatePicker } from 'rsuite';
 
 const { Column, HeaderCell, Cell } = Table;
@@ -46,11 +43,10 @@ import {
   useGetFacilitiesQuery,
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery,
-  useGetPractitionersQuery,
-  
+  useGetPractitionersQuery
 } from '@/services/setupService';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
   useGetEncountersQuery,
@@ -62,17 +58,16 @@ import {
   useGetPatientsQuery,
   useGetPatientAdministrativeWarningsQuery
 } from '@/services/patientService';
-import {
-
-  newApPatientRelation
-} from '@/types/model-types-constructor';
+import { newApPatientRelation } from '@/types/model-types-constructor';
 import BackButton from '@/components/BackButton/BackButton';
-
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import ReactDOMServer from 'react-dom/server';
 
 const EncounterRegistration = () => {
   const encounter = useSelector((state: RootState) => state.patient.encounter);
   const patientSlice = useAppSelector(state => state.patient);
-  
+  const { pathname } = useLocation();
+
   const dispatch = useAppDispatch();
   // dispatch(setPatient(null));
   const navigate = useNavigate();
@@ -80,8 +75,8 @@ const EncounterRegistration = () => {
   const [openModelPayment, setOpenModelPayment] = React.useState(false);
   const [openModelCompanionCard, setOpenModelCompanionCard] = React.useState(false);
   const [openModelAppointmentView, setOpenModelAppointmentView] = React.useState(false);
-  const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter ,discharge:false});
-   const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
+  const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, discharge: false });
+  const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [validationResult, setValidationResult] = useState({});
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -89,22 +84,22 @@ const EncounterRegistration = () => {
     searchByField: 'fullName',
     patientName: ''
   });
-   const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
-      useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'patient_key',
-            operator: 'match',
-            value: patientSlice.patient?.key || undefined
-          },
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          }
-        ]
-      });
+  const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
+    useState<ListRequest>({
+      ...initialListRequest,
+      filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: patientSlice.patient?.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ]
+    });
 
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
 
@@ -139,22 +134,22 @@ const EncounterRegistration = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [patientSearchTarget, setPatientSearchTarget] = useState('primary');
   const [searchResultVisible, setSearchResultVisible] = useState(false);
-   const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
-      warningsAdmistritiveListRequest
-    );
+  const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
+    warningsAdmistritiveListRequest
+  );
   const {
     data: patientListResponse,
     isLoading: isGettingPatients,
     isFetching: isFetchingPatients,
     refetch: refetchPatients
   } = useGetPatientsQuery({
-    ...listRequest, filters: [
+    ...listRequest,
+    filters: [
       {
-        fieldName: fromCamelCaseToDBName(selectedCriterion) || "document_no",
+        fieldName: fromCamelCaseToDBName(selectedCriterion) || 'document_no',
         operator: 'containsIgnoreCase',
-        value: searchKeyword || "-1",
-      },
-
+        value: searchKeyword || '-1'
+      }
     ]
   });
   const [paymentMethodSelected, setPaymentMethodSelected] = useState(null);
@@ -173,32 +168,33 @@ const EncounterRegistration = () => {
     }
   };
 
-
   const initEncounterFromPatient = () => {
     if (patientSlice.patient) {
       setLocalEncounter({
         ...newApEncounter,
         patientKey: patientSlice.patient.key,
         patientFullName: patientSlice.patient.fullName,
-        patientAge: patientSlice.patient.dob ? calculateAgeFormat(patientSlice.patient.dob) + '' : '',
-        encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
+        patientAge: patientSlice.patient.dob
+          ? calculateAgeFormat(patientSlice.patient.dob) + ''
+          : '',
+        encounterStatusLkey: '91063195286200', //change this to be loaded from cache lov values by code
         plannedStartDate: new Date(),
-        discharge:false
+        discharge: false
       });
     } else {
       console.warn('No patient found in state');
     }
-  }
+  };
 
   // dispatch(setPatient(cachedPatient));
   useEffect(() => {
     if (!patientSlice.patient && !localEncounter.patientKey) {
-      console.log("case1-no patient");
+      console.log('case1-no patient');
       dispatch(setPatient({ ...newApPatient }));
-      dispatch(setEncounter({ ...newApEncounter ,discharge:false}));
+      dispatch(setEncounter({ ...newApEncounter, discharge: false }));
       // navigate('/patient-profile');
     } else {
-      console.log("case2 patient");
+      console.log('case2 patient');
       setEditing(true);
       initEncounterFromPatient();
     }
@@ -216,14 +212,13 @@ const EncounterRegistration = () => {
           value: undefined
         }
       ]
-    })
+    });
   }, [patientSlice.patient]);
-
 
   const handleCancel = () => {
     dispatch(setPatient(null));
     dispatch(setEncounter(null));
-    setLocalEncounter({ ...newApEncounter ,discharge:false});
+    setLocalEncounter({ ...newApEncounter, discharge: false });
     // navigate('/patient-profile');
   };
   const handleGoToPatientAppointment = () => {
@@ -241,7 +236,7 @@ const EncounterRegistration = () => {
   const handleOpenNoteModel = () => setOpenModelVisitNote(true);
   const handleCloseNoteModel = () => setOpenModelVisitNote(false);
   const handleSaveNote = () => {
-    console.log(localEncounter.encounterNotes)
+    console.log(localEncounter.encounterNotes);
     setOpenModelVisitNote(false);
   };
   const handleOpenPaymentModel = () => setOpenModelPayment(true);
@@ -253,11 +248,8 @@ const EncounterRegistration = () => {
   const handleOpenAppointmentViewModel = () => setOpenModelAppointmentView(true);
   const handleCloseAppointmentViewModel = () => setOpenModelAppointmentView(false);
   const handleSave = () => {
-
     if (localEncounter && localEncounter.patientKey) {
-
-      saveEncounter(localEncounter).unwrap() 
-
+      saveEncounter(localEncounter).unwrap();
     } else {
       dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
     }
@@ -279,7 +271,7 @@ const EncounterRegistration = () => {
     setEditing(true);
     dispatch(setPatient(null));
     dispatch(setEncounter(null));
-    setLocalEncounter({ ...newApEncounter ,discharge:false });
+    setLocalEncounter({ ...newApEncounter, discharge: false });
     navigate('/patient-profile');
   };
 
@@ -292,19 +284,17 @@ const EncounterRegistration = () => {
       console.log(data);
       dispatch(setPatient(data));
 
-      setLocalEncounter(
-        {
-          ...newApEncounter,
-          patientKey: patientSlice.patient.key,
-          patientFullName: patientSlice.patient.fullName,
-          patientAge: patientSlice.patient.dob ? calculateAgeFormat(patientSlice.patient.dob) + '' : '',
-          encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
-          plannedStartDate: new Date(),
-          discharge:false
-        }
-      )
-      
-
+      setLocalEncounter({
+        ...newApEncounter,
+        patientKey: patientSlice.patient.key,
+        patientFullName: patientSlice.patient.fullName,
+        patientAge: patientSlice.patient.dob
+          ? calculateAgeFormat(patientSlice.patient.dob) + ''
+          : '',
+        encounterStatusLkey: '91063195286200', //change this to be loaded from cache lov values by code
+        plannedStartDate: new Date(),
+        discharge: false
+      });
     } else if (patientSearchTarget === 'relation') {
       // selecting patient for relation patient key
       setSelectedPatientRelation({
@@ -318,12 +308,10 @@ const EncounterRegistration = () => {
   };
 
   const search = target => {
-
     setPatientSearchTarget(target);
     setSearchResultVisible(true);
     console.log(patientSearchTarget);
-    if (searchKeyword !== "" && searchKeyword.length >= 3 && selectedCriterion) {
-
+    if (searchKeyword !== '' && searchKeyword.length >= 3 && selectedCriterion) {
       setListRequest({
         ...listRequest,
         ignore: false,
@@ -331,87 +319,94 @@ const EncounterRegistration = () => {
           {
             fieldName: fromCamelCaseToDBName(selectedCriterion),
             operator: 'containsIgnoreCase',
-            value: searchKeyword,
-          },
+            value: searchKeyword
+          }
         ]
       });
     }
-    console.log("kw" + searchKeyword);
-    console.log("PatientSearchTarget" + patientListResponse?.object);
+    console.log('kw' + searchKeyword);
+    console.log('PatientSearchTarget' + patientListResponse?.object);
     console.log(listRequest);
-
   };
 
+  useEffect(() => {}, [paymentMethodSelected]);
+  useEffect(() => {}, [searchKeyword]);
+
   useEffect(() => {
+    setSelectedCriterion(record?.searchByField);
+    setSearchKeyword(record?.patientName);
+  }, [record]);
 
-  }, [paymentMethodSelected]);
   useEffect(() => {
-    
+    const header = (
+      <div style={{ display: 'flex' }}>
+        <h5>Patient Registration</h5>
+      </div>
+    );
+    const headerHTML = ReactDOMServer.renderToStaticMarkup(header);
+    dispatch(setPageCode('Patient_Registration'));
+    dispatch(setDivContent(headerHTML));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
 
-  }, [searchKeyword]);
+  const handleSearch = () => {
+    const searchBy = record?.searchByField;
+    const keyword = record?.patientName;
 
+    if (!keyword) return;
 
-useEffect(() => {
-  setSelectedCriterion(record?.searchByField);
-  setSearchKeyword(record?.patientName);
-}, [record]);
+    search({ searchBy, keyword });
+  };
 
-const handleSearch = () => {
-  const searchBy = record?.searchByField;
-  const keyword = record?.patientName;
-
-  if (!keyword) return;
-
-  search({ searchBy, keyword });
-};
-
-
-console.log('searchByField:', record.searchByField);
-console.log('patientName:', record.patientName);
+  console.log('searchByField:', record.searchByField);
+  console.log('patientName:', record.patientName);
 
   const conjurePatientSearchBar = target => {
     return (
       <Panel>
-
         <ButtonToolbar>
-<Form fluid layout='inline'>
-        <SearchPatientCriteria
-            record={record}
-            setRecord={setRecord}
-            onSearchClick={handleSearch}
-          /></Form>
+          <Form fluid layout="inline">
+            <SearchPatientCriteria
+              record={record}
+              setRecord={setRecord}
+              onSearchClick={handleSearch}
+            />
+          </Form>
         </ButtonToolbar>
       </Panel>
-
     );
   };
-    const handleFilterChangeInWarning = (fieldName, value) => {
-      if (value) {
-        setWarningsAdmistritiveListRequest(
-          addFilterToListRequest(
-            fromCamelCaseToDBName(fieldName),
-            'containsIgnoreCase',
-            String(value),
-            warningsAdmistritiveListRequest
-          )
-        );
-      } else {
-        setWarningsAdmistritiveListRequest({
-          ...warningsAdmistritiveListRequest, filters: [
-            {
-              fieldName: 'patient_key',
-              operator: 'match',
-              value: localPatient.key || undefined
-            },
-            {
-              fieldName: 'deleted_at',
-              operator: 'isNull',
-              value: undefined
-            }
-          ]
-        });
-      }
-    };
+  const handleFilterChangeInWarning = (fieldName, value) => {
+    if (value) {
+      setWarningsAdmistritiveListRequest(
+        addFilterToListRequest(
+          fromCamelCaseToDBName(fieldName),
+          'containsIgnoreCase',
+          String(value),
+          warningsAdmistritiveListRequest
+        )
+      );
+    } else {
+      setWarningsAdmistritiveListRequest({
+        ...warningsAdmistritiveListRequest,
+        filters: [
+          {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: localPatient.key || undefined
+          },
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ]
+      });
+    }
+  };
   return (
     <>
       {patientSlice.patient && (
@@ -424,36 +419,39 @@ console.log('patientName:', record.patientName);
         >
           <Panel bordered>
             <ButtonToolbar>
-              <BackButton onClick={handleGoBack}/>
+              <BackButton onClick={handleGoBack} />
               <IconButton appearance="primary" color="blue" icon={<Block />} onClick={handleCancel}>
                 <Translate>Cancel</Translate>
               </IconButton>
-              <IconButton
-
-                appearance="primary"
-                color="violet"
-                icon={<Check />}
-                onClick={handleSave}
-              >
+              <IconButton appearance="primary" color="violet" icon={<Check />} onClick={handleSave}>
                 <Translate>Save</Translate>
               </IconButton>
               <Divider vertical />
               <IconButton
-                
                 appearance="primary"
                 color="orange"
                 icon={<icons.Danger />}
-                onClick={()=>{
-                  setAdministrativeWarningsModalOpen(true)
+                onClick={() => {
+                  setAdministrativeWarningsModalOpen(true);
                 }}
               >
                 <Translate>Administrative Warnings</Translate>
               </IconButton>
-              <IconButton appearance="primary" color='cyan' onClick={() => handleOpenAppointmentViewModel()} icon={<ChangeListIcon />} >
+              <IconButton
+                appearance="primary"
+                color="cyan"
+                onClick={() => handleOpenAppointmentViewModel()}
+                icon={<ChangeListIcon />}
+              >
                 <Translate>Patient Appointment</Translate>
               </IconButton>
 
-              <IconButton  onClick={() => handleOpenNoteModel()} appearance="primary" color='cyan' icon={<icons.PublicOpinion />}>
+              <IconButton
+                onClick={() => handleOpenNoteModel()}
+                appearance="primary"
+                color="cyan"
+                icon={<icons.PublicOpinion />}
+              >
                 <Translate>Visit Note</Translate>
               </IconButton>
               <IconButton
@@ -470,19 +468,16 @@ console.log('patientName:', record.patientName);
                 <Modal.Title>Visit Note</Modal.Title>
               </Modal.Header>
               <Modal.Body>
-
                 <Form layout="inline" fluid>
                   <MyInput
                     width={250}
                     column
                     disabled={false}
-                    fieldType='textarea'
+                    fieldType="textarea"
                     fieldLabel="Note"
                     fieldName={'encounterNotes'}
                     setRecord={setLocalEncounter}
-                  
                     record={localEncounter}
-
                   />
                 </Form>
               </Modal.Body>
@@ -501,7 +496,7 @@ console.log('patientName:', record.patientName);
               </Modal.Header>
               <Modal.Body>
                 <Form layout="inline" fluid>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <MyInput
                       vr={validationResult}
                       column
@@ -512,34 +507,41 @@ console.log('patientName:', record.patientName);
                       selectDataLabel="lovDisplayVale"
                       selectDataValue="key"
                       record={{}}
-                      setRecord={(newValue) => {
-                        console.log("Selected Payment Method:", newValue.PaymentMethod);
+                      setRecord={newValue => {
+                        console.log('Selected Payment Method:', newValue.PaymentMethod);
                         setPaymentMethodSelected(newValue.PaymentMethod);
                       }}
                     />
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "5px" }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        marginTop: '5px'
+                      }}
+                    >
                       <MyInput
                         column
                         width={180}
                         fieldLabel="Amount"
                         fieldName={'Amount'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
-                      <div style={{ marginTop: "5px", display: "flex", alignItems: "center" }}>
+                      <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center' }}>
                         <input
                           type="checkbox"
                           id="addFreeBalance"
                           name="addFreeBalance"
-                          style={{ marginRight: "8px" }}
+                          style={{ marginRight: '8px' }}
                         />
-                        <label htmlFor="addFreeBalance" style={{ fontSize: "12px" }}>
+                        <label htmlFor="addFreeBalance" style={{ fontSize: '12px' }}>
                           Add to Free Balance
                         </label>
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       <p>refresh</p>
                       <IconButton size="xs" icon={<ReloadIcon />} appearance="ghost" />
                     </div>
@@ -553,35 +555,43 @@ console.log('patientName:', record.patientName);
                       selectDataLabel="lovDisplayVale"
                       selectDataValue="key"
                       record={{}}
-                      setRecord={""}
+                      setRecord={''}
                     />
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "20px" }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        paddingTop: '20px'
+                      }}
+                    >
                       <Button
                         appearance="ghost"
-                        style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)' }}
-
+                        style={{
+                          border: '1px solid rgb(130, 95, 196)',
+                          color: 'rgb(130, 95, 196)'
+                        }}
                       >
                         <FontAwesomeIcon icon={faBolt} style={{ marginRight: '8px' }} />
                         <span>Exchange Rate</span>
                       </Button>
-
                     </div>
                   </div>
-                  {paymentMethodSelected === '3623962430163299'
-                    && (<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {paymentMethodSelected === '3623962430163299' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <MyInput
                         column
                         width={180}
                         fieldName={'CardNumber'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
                       <MyInput
                         column
                         width={180}
                         fieldName={'HolderName'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
 
                       <MyInput
@@ -589,26 +599,25 @@ console.log('patientName:', record.patientName);
                         fieldType="date"
                         fieldName="ValidUntil"
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
-                    </div>)
-                  }
-                  {paymentMethodSelected === '3623993823412902'
-                    &&
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    </div>
+                  )}
+                  {paymentMethodSelected === '3623993823412902' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <MyInput
                         column
                         width={180}
                         fieldName={'ChequeNumber'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
                       <MyInput
                         column
                         width={180}
                         fieldName={'BankName'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
 
                       <MyInput
@@ -616,25 +625,25 @@ console.log('patientName:', record.patientName);
                         fieldType="date"
                         fieldName="ChequeDueDate"
                         record={{}}
-                        setRecord={""}
-                      /></div>
-                  }
-                  {paymentMethodSelected === '91849731565300'
-                    &&
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        setRecord={''}
+                      />
+                    </div>
+                  )}
+                  {paymentMethodSelected === '91849731565300' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <MyInput
                         column
                         width={180}
                         fieldName={'transferNumber'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
                       <MyInput
                         column
                         width={180}
                         fieldName={'BankName'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
 
                       <MyInput
@@ -642,13 +651,14 @@ console.log('patientName:', record.patientName);
                         fieldType="date"
                         fieldName="transferDate"
                         record={{}}
-                        setRecord={""}
-                      /></div>
-                  }
-                  <div style={{ width: "100%", display: "flex", gap: "10px" }}>
-                    <div style={{ border: '1px solid #b6b7b8', flex: "2", borderRadius: "5px" }}>
+                        setRecord={''}
+                      />
+                    </div>
+                  )}
+                  <div style={{ width: '100%', display: 'flex', gap: '10px' }}>
+                    <div style={{ border: '1px solid #b6b7b8', flex: '2', borderRadius: '5px' }}>
                       <Table
-                        style={{ maxHeight: 200, overflowY: "auto" }}
+                        style={{ maxHeight: 200, overflowY: 'auto' }}
                         sortColumn={listRequest.sortBy}
                         sortType={listRequest.sortType}
                         onSortColumn={(sortBy, sortType) => {
@@ -687,51 +697,44 @@ console.log('patientName:', record.patientName);
                         </Column>
                         <Column flexGrow={4}>
                           <HeaderCell>
-
                             <Translate>Service Name</Translate>
                           </HeaderCell>
                           <Cell dataKey="ServiceName" />
                         </Column>
                         <Column flexGrow={1}>
                           <HeaderCell>
-
                             <Translate>Type</Translate>
                           </HeaderCell>
                           <Cell dataKey="Type" />
                         </Column>
                         <Column flexGrow={3}>
                           <HeaderCell>
-
                             <Translate>Quantity</Translate>
                           </HeaderCell>
                           <Cell dataKey="Quantity" />
                         </Column>
                         <Column flexGrow={2}>
                           <HeaderCell>
-
                             <Translate>Price</Translate>
                           </HeaderCell>
                           <Cell dataKey="Price" />
                         </Column>
                         <Column flexGrow={3}>
                           <HeaderCell>
-
                             <Translate>Currency</Translate>
                           </HeaderCell>
                           <Cell dataKey="Currency" />
                         </Column>
-
-
                       </Table>
                     </div>
-                    <div style={{ flex: "1", display: "flex", flexDirection: "column" }}>
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
                       <MyInput
                         column
                         disabled={true}
                         width={180}
                         fieldName={'DueAmount'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
                       <MyInput
                         column
@@ -739,12 +742,11 @@ console.log('patientName:', record.patientName);
                         width={180}
                         fieldName={'Patient`s free Balance'}
                         record={{}}
-                        setRecord={""}
+                        setRecord={''}
                       />
                     </div>
                   </div>
                 </Form>
-
               </Modal.Body>
               <Modal.Footer>
                 <Button onClick={handleSavePayment} appearance="primary">
@@ -757,9 +759,7 @@ console.log('patientName:', record.patientName);
             </Modal>
           </Panel>
           <br />
-          <Panel bordered>
-            {conjurePatientSearchBar('primary')}
-          </Panel>
+          <Panel bordered>{conjurePatientSearchBar('primary')}</Panel>
           <br />
           <Panel
             bordered
@@ -873,7 +873,6 @@ console.log('patientName:', record.patientName);
                   <MyInput
                     vr={validationResult}
                     column
-
                     fieldType="select"
                     fieldLabel="Visit Type"
                     fieldName="encounterTypeLkey"
@@ -886,7 +885,6 @@ console.log('patientName:', record.patientName);
                   <MyInput
                     vr={validationResult}
                     column
-
                     fieldType="select"
                     fieldName="departmentKey"
                     selectData={departmentListResponse?.object ?? []}
@@ -899,7 +897,6 @@ console.log('patientName:', record.patientName);
                   <MyInput
                     vr={validationResult}
                     column
-
                     fieldType="select"
                     fieldLabel="Physician"
                     fieldName="physicianKey"
@@ -910,11 +907,9 @@ console.log('patientName:', record.patientName);
                     setRecord={setLocalEncounter}
                   />
 
-                  
                   <MyInput
                     vr={validationResult}
                     column
-
                     fieldType="select"
                     fieldLabel="Priority"
                     fieldName="encounterPriorityLkey"
@@ -928,7 +923,6 @@ console.log('patientName:', record.patientName);
                   <MyInput
                     vr={validationResult}
                     column
-
                     fieldType="select"
                     fieldName="reasonLkey"
                     selectData={encounterReasonLovQueryResponse?.object ?? []}
@@ -940,7 +934,6 @@ console.log('patientName:', record.patientName);
                   <MyInput
                     vr={validationResult}
                     column
-
                     fieldType="select"
                     fieldName="admissionOrigin"
                     selectData={patOriginLovQueryResponse?.object ?? []}
@@ -952,7 +945,6 @@ console.log('patientName:', record.patientName);
                   <MyInput
                     vr={validationResult}
                     column
-
                     fieldLabel="Source Name"
                     fieldName="sourceName"
                     record={localEncounter}
@@ -968,7 +960,6 @@ console.log('patientName:', record.patientName);
                     setRecord={setLocalEncounter}
                   /> */}
                   <MyInput
-
                     vr={validationResult}
                     column
                     fieldLabel="Booking Status"
@@ -986,7 +977,6 @@ console.log('patientName:', record.patientName);
             </Stack>
           </Panel>
 
-
           <br />
           <Panel
             bordered
@@ -1003,7 +993,6 @@ console.log('patientName:', record.patientName);
                     vr={validationResult}
                     column
                     disabled={true}
-
                     fieldName="PatientBalance"
                     selectData={[]}
                     selectDataLabel=""
@@ -1015,7 +1004,6 @@ console.log('patientName:', record.patientName);
                     vr={validationResult}
                     column
                     disabled={true}
-
                     fieldName="Fees"
                     selectData={[]}
                     selectDataLabel=""
@@ -1026,7 +1014,6 @@ console.log('patientName:', record.patientName);
                   <MyInput
                     vr={validationResult}
                     column
-
                     fieldType="select"
                     fieldName="paymentTypeLkey"
                     selectData={paymentTypeLovQueryResponse?.object ?? []}
@@ -1098,8 +1085,12 @@ console.log('patientName:', record.patientName);
                     setRecord={setLocalEncounter}
                   />
                   <div>
-
-                    <IconButton onClick={() => handleOpenPaymentModel()} appearance="primary" color='cyan' icon={<AddOutlineIcon />} >
+                    <IconButton
+                      onClick={() => handleOpenPaymentModel()}
+                      appearance="primary"
+                      color="cyan"
+                      icon={<AddOutlineIcon />}
+                    >
                       <Translate>Add payment</Translate>
                     </IconButton>
                   </div>
@@ -1117,7 +1108,7 @@ console.log('patientName:', record.patientName);
             }
           >
             <ButtonToolbar>
-              <IconButton appearance="primary" color='cyan' icon={<DocPassIcon />} >
+              <IconButton appearance="primary" color="cyan" icon={<DocPassIcon />}>
                 <Translate>Patient wrist band</Translate>
               </IconButton>
 
@@ -1134,7 +1125,7 @@ console.log('patientName:', record.patientName);
 
               <Divider vertical />
 
-              <IconButton appearance="primary" color='cyan' icon={<DocPassIcon />} >
+              <IconButton appearance="primary" color="cyan" icon={<DocPassIcon />}>
                 <Translate>Appointment Card</Translate>
               </IconButton>
 
@@ -1150,7 +1141,7 @@ console.log('patientName:', record.patientName);
 
               <Divider vertical />
 
-              <IconButton appearance="primary" color='cyan' icon={<DocPassIcon />} >
+              <IconButton appearance="primary" color="cyan" icon={<DocPassIcon />}>
                 <Translate>Visit Finance Report</Translate>
               </IconButton>
 
@@ -1171,35 +1162,32 @@ console.log('patientName:', record.patientName);
                 <Modal.Title>Companion Card</Modal.Title>
               </Modal.Header>
               <Modal.Body>
-
                 <Form layout="inline" fluid>
                   <MyInput
                     width={250}
                     column
                     disabled={false}
-
                     fieldLabel="Companion Name"
                     fieldName={'VisitNote'}
                     setRecord={setLocalEncounter}
                     vr={validationResult}
                     record={encounter ? encounter : localEncounter}
-
                   />
                   <br />
                   <MyInput
                     width={250}
                     column
                     disabled={false}
-                    fieldType='number'
+                    fieldType="number"
                     fieldLabel="Phone Number"
                     fieldName={'Visitname'}
                     setRecord={setLocalEncounter}
                     vr={validationResult}
                     record={encounter ? encounter : localEncounter}
-
                   />
                   <br />
-                  {//relation
+                  {
+                    //relation
                   }
                   <MyInput
                     vr={validationResult}
@@ -1225,29 +1213,46 @@ console.log('patientName:', record.patientName);
                 </Button>
               </Modal.Footer>
             </Modal>
-            <Modal open={openModelAppointmentView} style={{ width: '90%', marginLeft: '80px' }} onClose={handleCloseAppointmentViewModel}>
+            <Modal
+              open={openModelAppointmentView}
+              style={{ width: '90%', marginLeft: '80px' }}
+              onClose={handleCloseAppointmentViewModel}
+            >
               <Modal.Header>
                 <Modal.Title>Patient's Appointment</Modal.Title>
               </Modal.Header>
               <Modal.Body>
-
-                <div style={{ padding: '10px', height: "100%" }}>
+                <div style={{ padding: '10px', height: '100%' }}>
                   <PanelGroup>
                     {/* First Panel with a title on the border */}
                     <fieldset style={{ border: '2px solid #a0a3a8', marginBottom: '10px' }}>
-                      <legend style={{ padding: '10px', fontWeight: 'bold', fontSize: "20px" }}>Search</legend>
+                      <legend style={{ padding: '10px', fontWeight: 'bold', fontSize: '20px' }}>
+                        Search
+                      </legend>
                       <Panel style={{ height: '130px', display: 'flex', alignItems: 'center' }}>
-                        <label htmlFor="fromDate" style={{ margin: '0 5px', fontWeight: 'bold', fontSize: "17px" }}>From Date</label>
+                        <label
+                          htmlFor="fromDate"
+                          style={{ margin: '0 5px', fontWeight: 'bold', fontSize: '17px' }}
+                        >
+                          From Date
+                        </label>
                         <DatePicker id="fromDate" style={{ width: '240px' }} format="MM/dd/yyyy" />
 
-                        <label htmlFor="toDate" style={{ margin: '0 5px', fontWeight: 'bold', fontSize: "17px" }}>To Date</label>
+                        <label
+                          htmlFor="toDate"
+                          style={{ margin: '0 5px', fontWeight: 'bold', fontSize: '17px' }}
+                        >
+                          To Date
+                        </label>
                         <DatePicker id="toDate" style={{ width: '240px' }} format="MM/dd/yyyy" />
                       </Panel>
                     </fieldset>
 
                     {/* Second Panel with a title on the border */}
                     <fieldset style={{ border: '2px solid #a0a3a8', marginBottom: '10px' }}>
-                      <legend style={{ padding: '10px', fontWeight: 'bold', fontSize: "20px" }}>Patient's Appointment</legend>
+                      <legend style={{ padding: '10px', fontWeight: 'bold', fontSize: '20px' }}>
+                        Patient's Appointment
+                      </legend>
                       <Panel>
                         <Table
                           height={400}
@@ -1266,10 +1271,7 @@ console.log('patientName:', record.patientName);
                           bordered
                           cellBordered
                           data={[]}
-
-
                         >
-
                           <Column sortable flexGrow={4}>
                             <HeaderCell>
                               <Input onChange={e => handleFilterChange('AppointmentDate', e)} />
@@ -1297,7 +1299,6 @@ console.log('patientName:', record.patientName);
                             <HeaderCell>
                               <Input onChange={e => handleFilterChange('Physician', e)} />
                               <Translate>Physician</Translate>
-
                             </HeaderCell>
                             <Cell dataKey="Physician" />
                           </Column>
@@ -1306,14 +1307,11 @@ console.log('patientName:', record.patientName);
                             <HeaderCell>
                               <Input onChange={e => handleFilterChange('BookingSource', e)} />
                               <Translate>Booking Source</Translate>
-
                             </HeaderCell>
                             <Cell dataKey="BookingSource" />
                           </Column>
                           <Column sortable flexGrow={4}>
                             <HeaderCell>
-
-
                               <Input onChange={e => handleFilterChange('Follow-up', e)} />
                               <Translate>Follow-up</Translate>
                             </HeaderCell>
@@ -1321,8 +1319,6 @@ console.log('patientName:', record.patientName);
                           </Column>
                           <Column sortable flexGrow={4}>
                             <HeaderCell>
-
-
                               <Input onChange={e => handleFilterChange('Bookingdate', e)} />
                               <Translate>Booking date</Translate>
                             </HeaderCell>
@@ -1332,7 +1328,6 @@ console.log('patientName:', record.patientName);
                             <HeaderCell>
                               <Input onChange={e => handleFilterChange('CompleteDate', e)} />
                               <Translate>Complete Date</Translate>
-
                             </HeaderCell>
                             <Cell dataKey="CompleteDate" />
                           </Column>
@@ -1340,7 +1335,6 @@ console.log('patientName:', record.patientName);
                             <HeaderCell>
                               <Input onChange={e => handleFilterChange('CancelDate', e)} />
                               <Translate>Cancel Date </Translate>
-
                             </HeaderCell>
                             <Cell dataKey="CancelDate" />
                           </Column>
@@ -1348,7 +1342,6 @@ console.log('patientName:', record.patientName);
                             <HeaderCell>
                               <Input onChange={e => handleFilterChange('CancellationReason', e)} />
                               <Translate>Cancellation Reason</Translate>
-
                             </HeaderCell>
                             <Cell dataKey="CancellationReason" />
                           </Column>
@@ -1356,7 +1349,6 @@ console.log('patientName:', record.patientName);
                             <HeaderCell>
                               <Input onChange={e => handleFilterChange('BookedBy', e)} />
                               <Translate>Booked By</Translate>
-
                             </HeaderCell>
                             <Cell dataKey="BookedBy" />
                           </Column>
@@ -1364,11 +1356,9 @@ console.log('patientName:', record.patientName);
                             <HeaderCell>
                               <Input onChange={e => handleFilterChange('CancelledBy ', e)} />
                               <Translate>Cancelled By </Translate>
-
                             </HeaderCell>
                             <Cell dataKey="CancelledBy " />
                           </Column>
-
                         </Table>
                         <div style={{ padding: 20 }}>
                           <Pagination
@@ -1399,8 +1389,11 @@ console.log('patientName:', record.patientName);
                 </div>
               </Modal.Body>
               <Modal.Footer>
-
-                <Button style={{ padding: "5px", marginTop: "10px", fontSize: "16px" }} onClick={handleCloseAppointmentViewModel} appearance="subtle">
+                <Button
+                  style={{ padding: '5px', marginTop: '10px', fontSize: '16px' }}
+                  onClick={handleCloseAppointmentViewModel}
+                  appearance="subtle"
+                >
                   Cancle
                 </Button>
               </Modal.Footer>
@@ -1520,147 +1513,146 @@ console.log('patientName:', record.patientName);
             </Drawer>
           </Panel>
           <Modal
-          size="lg"
-          open={administrativeWarningsModalOpen}
-          onClose={() => setAdministrativeWarningsModalOpen(false)}
-        >
-          <Modal.Header>
-            <Modal.Title>Administrative Warnings</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-           
-           
-            <Panel>
-              <Table
-                height={310}
-                sortColumn={warningsAdmistritiveListRequest.sortBy}
-                sortType={warningsAdmistritiveListRequest.sortType}
-                onSortColumn={(sortBy, sortType) => {
-                  if (sortBy)
-                    setWarningsAdmistritiveListRequest({
-                      ...warningsAdmistritiveListRequest,
-                      sortBy,
-                      sortType
-                    });
-                }}
-                headerHeight={80}
-                rowHeight={50}
-                bordered
-                cellBordered
-                // onRowClick={rowData => {
-                //   setSelectedPatientAdministrativeWarnings(rowData);
-                //   setSelectedRowId(rowData.key);
-                // }}
-                // rowClassName={isSelected}
-                data={warnings?.object ?? []}
-              >
-                <Column sortable flexGrow={3} fullText>
-                  <HeaderCell>
-                    <Input
-                      onChange={e =>
-                        handleFilterChangeInWarning('warningTypeLvalue.lovDisplayVale', e)
+            size="lg"
+            open={administrativeWarningsModalOpen}
+            onClose={() => setAdministrativeWarningsModalOpen(false)}
+          >
+            <Modal.Header>
+              <Modal.Title>Administrative Warnings</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Panel>
+                <Table
+                  height={310}
+                  sortColumn={warningsAdmistritiveListRequest.sortBy}
+                  sortType={warningsAdmistritiveListRequest.sortType}
+                  onSortColumn={(sortBy, sortType) => {
+                    if (sortBy)
+                      setWarningsAdmistritiveListRequest({
+                        ...warningsAdmistritiveListRequest,
+                        sortBy,
+                        sortType
+                      });
+                  }}
+                  headerHeight={80}
+                  rowHeight={50}
+                  bordered
+                  cellBordered
+                  // onRowClick={rowData => {
+                  //   setSelectedPatientAdministrativeWarnings(rowData);
+                  //   setSelectedRowId(rowData.key);
+                  // }}
+                  // rowClassName={isSelected}
+                  data={warnings?.object ?? []}
+                >
+                  <Column sortable flexGrow={3} fullText>
+                    <HeaderCell>
+                      <Input
+                        onChange={e =>
+                          handleFilterChangeInWarning('warningTypeLvalue.lovDisplayVale', e)
+                        }
+                      />
+                      <Translate>Warning Type</Translate>
+                    </HeaderCell>
+
+                    <Cell dataKey="warningTypeLvalue.lovDisplayVale" />
+                  </Column>
+                  <Column sortable flexGrow={3} fullText>
+                    <HeaderCell>
+                      <Input onChange={e => handleFilterChangeInWarning('description', e)} />
+                      <Translate>Description</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="description" />
+                  </Column>
+                  <Column sortable flexGrow={4} fullText>
+                    <HeaderCell>
+                      <Input onChange={e => handleFilterChangeInWarning('createdAt', e)} />
+                      <Translate> Addition Date</Translate>
+                    </HeaderCell>
+
+                    <Cell>
+                      {rowData =>
+                        rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''
                       }
-                    />
-                    <Translate>Warning Type</Translate>
-                  </HeaderCell>
+                    </Cell>
+                  </Column>
+                  <Column sortable flexGrow={3} fullText>
+                    <HeaderCell>
+                      <Input onChange={e => handleFilterChangeInWarning('createdBy', e)} />
+                      <Translate> Added By</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="createdBy" />
+                  </Column>
+                  <Column sortable flexGrow={3} fullText>
+                    <HeaderCell>
+                      <Translate> Status </Translate>
+                    </HeaderCell>
 
-                  <Cell dataKey="warningTypeLvalue.lovDisplayVale" />
-                </Column>
-                <Column sortable flexGrow={3} fullText>
-                  <HeaderCell>
-                    <Input onChange={e => handleFilterChangeInWarning('description', e)} />
-                    <Translate>Description</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="description" />
-                </Column>
-                <Column sortable flexGrow={4} fullText>
-                  <HeaderCell>
-                    <Input onChange={e => handleFilterChangeInWarning('createdAt', e)} />
-                    <Translate> Addition Date</Translate>
-                  </HeaderCell>
-                  
-                  <Cell  >
-                            {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
-                        </Cell>
-                </Column>
-                <Column sortable flexGrow={3} fullText>
-                  <HeaderCell>
-                    <Input onChange={e => handleFilterChangeInWarning('createdBy', e)} />
-                    <Translate> Added By</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="createdBy" />
-                </Column>
-                <Column sortable flexGrow={3} fullText>
-                  <HeaderCell>
-                    <Translate> Status </Translate>
-                  </HeaderCell>
-
-                  <Cell dataKey="isValid">
-                    {rowData => (rowData.isValid ? 'Active' : 'Resolved')}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={4} fullText>
-                  <HeaderCell>
-                    <Input onChange={e => handleFilterChangeInWarning('dateResolved', e)} />
-                    <Translate> Resolution Date</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="dateResolved" />
-                </Column>
-                <Column sortable flexGrow={3} fullText>
-                  <HeaderCell>
-                    <Input onChange={e => handleFilterChangeInWarning('resolvedBy', e)} />
-                    <Translate> Resolved By </Translate>
-                  </HeaderCell>
-                  <Cell dataKey="resolvedBy" />
-                </Column>
-                <Column sortable flexGrow={4} fullText>
-                  <HeaderCell>
-                    <Input onChange={e => handleFilterChangeInWarning('resolutionUndoDate', e)} />
-                    <Translate> Resolution Undo Date</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="resolutionUndoDate" />
-                </Column>
-                <Column sortable flexGrow={4} fullText>
-                  <HeaderCell>
-                    <Input onChange={e => handleFilterChangeInWarning('resolvedUndoBy', e)} />
-                    <Translate>Resolution Undo By</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="resolvedUndoBy" />
-                </Column>
-              
-              </Table>
-              <div style={{ padding: 20 }}>
-                <Pagination
-                  prev
-                  next
-                  first
-                  last
-                  ellipsis
-                  boundaryLinks
-                  maxButtons={5}
-                  size="xs"
-                  layout={['limit', '|', 'pager']}
-                  limitOptions={[5, 15, 30]}
-                  limit={warningsAdmistritiveListRequest.pageSize}
-                  activePage={warningsAdmistritiveListRequest.pageNumber}
-                  onChangePage={pageNumber => {
-                    setWarningsAdmistritiveListRequest({
-                      ...warningsAdmistritiveListRequest,
-                      pageNumber
-                    });
-                  }}
-                  onChangeLimit={pageSize => {
-                    setWarningsAdmistritiveListRequest({
-                      ...warningsAdmistritiveListRequest,
-                      pageSize
-                    });
-                  }}
-                  total={warnings?.extraNumeric ?? 0}
-                />
-              </div>
-            </Panel>
-          </Modal.Body>
-        </Modal>
+                    <Cell dataKey="isValid">
+                      {rowData => (rowData.isValid ? 'Active' : 'Resolved')}
+                    </Cell>
+                  </Column>
+                  <Column sortable flexGrow={4} fullText>
+                    <HeaderCell>
+                      <Input onChange={e => handleFilterChangeInWarning('dateResolved', e)} />
+                      <Translate> Resolution Date</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="dateResolved" />
+                  </Column>
+                  <Column sortable flexGrow={3} fullText>
+                    <HeaderCell>
+                      <Input onChange={e => handleFilterChangeInWarning('resolvedBy', e)} />
+                      <Translate> Resolved By </Translate>
+                    </HeaderCell>
+                    <Cell dataKey="resolvedBy" />
+                  </Column>
+                  <Column sortable flexGrow={4} fullText>
+                    <HeaderCell>
+                      <Input onChange={e => handleFilterChangeInWarning('resolutionUndoDate', e)} />
+                      <Translate> Resolution Undo Date</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="resolutionUndoDate" />
+                  </Column>
+                  <Column sortable flexGrow={4} fullText>
+                    <HeaderCell>
+                      <Input onChange={e => handleFilterChangeInWarning('resolvedUndoBy', e)} />
+                      <Translate>Resolution Undo By</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="resolvedUndoBy" />
+                  </Column>
+                </Table>
+                <div style={{ padding: 20 }}>
+                  <Pagination
+                    prev
+                    next
+                    first
+                    last
+                    ellipsis
+                    boundaryLinks
+                    maxButtons={5}
+                    size="xs"
+                    layout={['limit', '|', 'pager']}
+                    limitOptions={[5, 15, 30]}
+                    limit={warningsAdmistritiveListRequest.pageSize}
+                    activePage={warningsAdmistritiveListRequest.pageNumber}
+                    onChangePage={pageNumber => {
+                      setWarningsAdmistritiveListRequest({
+                        ...warningsAdmistritiveListRequest,
+                        pageNumber
+                      });
+                    }}
+                    onChangeLimit={pageSize => {
+                      setWarningsAdmistritiveListRequest({
+                        ...warningsAdmistritiveListRequest,
+                        pageSize
+                      });
+                    }}
+                    total={warnings?.extraNumeric ?? 0}
+                  />
+                </div>
+              </Panel>
+            </Modal.Body>
+          </Modal>
         </Panel>
       )}
     </>

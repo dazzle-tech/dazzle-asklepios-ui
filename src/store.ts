@@ -35,11 +35,13 @@ import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
 import { MedicalsheetsService } from './services/MedicalSheetsService';
+import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
 import { patientAttachmentService } from './services/patients/attachmentService';
+
 
 export const store = configureStore({
   reducer: {
@@ -129,6 +131,8 @@ export const store = configureStore({
     // Translation slice
     [translationService.reducerPath]: translationService.reducer,
 
+    //service
+    [serviceService.reducerPath]: serviceService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -162,11 +166,11 @@ export const store = configureStore({
       enumService.middleware,
       userDepartmentService.middleware,
       MedicalsheetsService.middleware,
+      serviceService.middleware,
       languageService.middleware,
       translationService.middleware,
       PractitionerService.middleware,
-      PractitionerDepartmentService.middleware
-
+      PractitionerDepartmentService.middleware,
     ])
 });
 

@@ -93,11 +93,60 @@ export interface UserDepartment {
   facilityId?: string | null;
   departmentId: number;
   isActive?: boolean;
+};
+
+
+export interface Service {
+  id?: number;
+  name: string;
+  abbreviation?: string | null;
+  code: string;
+  category?: string | null;
+  price?: number | null;
+  currency: string | null;
+  isActive?: boolean;
   createdBy?: string;
   createdDate?: Date | null;
-  lastModifiedBy?: string;
+  lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-};
+  facilityId?: number;
+}
+
+
+export interface ServiceItem {
+  id?: number;
+  type: string;       // @Enumerated(EnumType.STRING)
+  sourceId: number;             // FK to the source entity (e.g., Department id)
+  serviceId?: number | null;    // ManyToOne -> Service (nullable on the wire)
+  createdBy: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive: boolean;
+}
+
+/** Create payload (POST /api/setup/service-items) */
+export interface ServiceItemCreate {
+  type: string;
+  sourceId: number;
+  serviceId: number;            // required by backend create
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive?: boolean | null;
+}
+
+/** Update payload (PUT /api/setup/service-items/{id}) */
+export interface ServiceItemUpdate {
+  id: number;
+  type?: string | null;
+  sourceId?: number | null;
+  serviceId: number;            // required by backend update
+  isActive?: boolean | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
 
 export interface Language {
   id: number;
@@ -116,6 +165,7 @@ export interface LanguageTranslation {
   verified: boolean;
   translated: boolean;
 }
+
 
 export interface Practitioner {
   id?: number;
@@ -179,3 +229,17 @@ export interface UploadAttachmentParams {
   source?: string;
 }
 
+export interface Service {
+  id?: number;
+  name: string;
+  abbreviation?: string | null;
+  code: string;
+  category?: string | null;
+  price?: number | null;
+  currency: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}

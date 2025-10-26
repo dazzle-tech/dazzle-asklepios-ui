@@ -130,6 +130,9 @@ const Frame = (props: FrameProps) => {
     return module.title.toLowerCase().includes(recordOfSearchedScreenName['screen'].toLowerCase());
   };
 
+  const isCodingModule = (nav: NavItemData) =>
+    /coding module/i.test(nav.title) || nav.eventKey === 'coding-module';
+
   return (
     <Container className={`frame ${mode === 'light' ? 'light' : 'dark'}`}>
       <Box sx={{ display: 'flex' }}>
@@ -346,7 +349,13 @@ const Frame = (props: FrameProps) => {
                                 ) : (
                                   <FontAwesomeIcon icon={faHospital} />
                                 )}
-                                {expand && <ListItemText primary={child.title} />}
+                                {expand && (
+                                  <ListItemText
+                                    primary={
+                                      isCodingModule(item) ? child.title.toUpperCase() : child.title
+                                    }
+                                  />
+                                )}
                               </ListItemButton>
                             ))}
                         </List>
@@ -430,7 +439,7 @@ const Frame = (props: FrameProps) => {
                             ) : (
                               <FontAwesomeIcon icon={faHospital} className="menu-item-icon-small" />
                             )}
-                            {child.title}
+                            {isCodingModule(item) ? child.title.toUpperCase() : child.title}
                           </MenuItem>
                         ))}
                       </Menu>

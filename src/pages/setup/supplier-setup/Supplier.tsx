@@ -1,8 +1,8 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyTable from '@/components/MyTable';
-import React, { useState } from 'react';
-import { MdDelete } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
+import React, { useEffect, useMemo, useState } from 'react';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { FaUndo, FaCreditCard } from 'react-icons/fa';
 import { Form, Panel } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -12,14 +12,13 @@ import { useDispatch } from 'react-redux';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import AddSupplierSetup from './AddSupplierSetup';
-import { MdModeEdit } from 'react-icons/md';
-import { FaCreditCard } from 'react-icons/fa';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyModal from '@/components/MyModal/MyModal';
 import Card from './Card';
 import './style.less';
+import { useLocation } from 'react-router-dom';
 
-//Table Data
+// Table Data
 const sampleData = [
   {
     id: 1,
@@ -98,9 +97,11 @@ const sampleData = [
   }
 ];
 
-const SupplierSetup = () => {
+const SupplierSetup: React.FC = () => {
   const dispatch = useDispatch();
-  const [sortColumn, setSortColumn] = useState('supplierName');
+  const { pathname } = useLocation();
+
+  const [sortColumn, setSortColumn] = useState<keyof (typeof sampleData)[number]>('supplierName');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -122,104 +123,112 @@ const SupplierSetup = () => {
     address: ''
   });
 
-  // Move columns definition here
-  const columns: ColumnConfig[] = [
-    { key: 'supplierName', title: 'Supplier Name', dataKey: 'supplierName', width: 180 },
-    {
-      key: 'supplierCode',
-      title: 'Supplier Code',
-      dataKey: 'supplierCode',
-      width: 120,
-      expandable: true
-    },
-    { key: 'contactPerson', title: 'Contact Person', dataKey: 'contactPerson', width: 140 },
-    { key: 'phone', title: 'Phone', dataKey: 'phone', width: 120 },
-    { key: 'email', title: 'Email', dataKey: 'email', width: 180 },
-    { key: 'currency', title: 'Currency', dataKey: 'currency', width: 100, expandable: true },
-    {
-      key: 'approvedCategory',
-      title: 'Approved Category',
-      dataKey: 'approvedCategory',
-      width: 150,
-      expandable: true
-    },
-    {
-      key: 'supplierType',
-      title: 'Supplier Type',
-      dataKey: 'supplierType',
-      width: 130,
-      expandable: true
-    },
-    { key: 'address', title: 'Address', dataKey: 'address', width: 200 },
-    {
-      key: 'status',
-      title: 'Status',
-      dataKey: 'status',
-      width: 100,
-      render: (row: any) => (
-        <MyBadgeStatus
-          backgroundColor={
-            row.status === 'Active' ? 'var(--light-green)' : 'var(--background-gray)'
-          }
-          color={row.status === 'Active' ? 'var(--primary-green)' : 'var(--primary-gray)'}
-          contant={row.status}
-        />
-      )
-    },
-    {
-      key: 'paymentTerms',
-      title: 'Payment Terms',
-      dataKey: 'paymentTerms',
-      width: 130,
-      expandable: true
-    },
-    {
-      key: 'actions',
-      title: '',
-      width: 120,
-      align: 'center',
-      render: rowData => {
-        return (
-          <div className="container-of-icons">
-            <MdModeEdit title="Edit" id="icon0-0" size={24} onClick={() => setOpenModal(true)} />
-            <FaCreditCard
-              title="Card"
-              size={24}
-              fill="var(--primary-gray)"
-              onClick={() => setOpenCardModal(true)}
-            />
-            {rowData.active ? (
-              <MdDelete
-                className="icons-style"
-                title="Deactivate"
-                size={24}
-                fill="var(--primary-pink)"
-                onClick={() => {
-                  setSelectedItemId(rowData.id);
-                  setActionType('deactivate');
-                  setOpenConfirmDeleteModal(true);
-                }}
-              />
-            ) : (
-              <FaUndo
-                className="icons-style"
-                title="Reactivate"
-                fill="var(--primary-gray)"
-                size={24}
-                onClick={() => {
-                  setSelectedItemId(rowData.id);
-                  setActionType('reactivate');
-                  setOpenConfirmDeleteModal(true);
-                }}
-              />
-            )}
-          </div>
-        );
-      }
-    }
-  ];
+  const [filtersForm, setFiltersForm] = useState<{ filter: string; value: string }>({
+    filter: '',
+    value: ''
+  });
 
-  //Active/Deactive the Status
+  // Columns
+  const columns: ColumnConfig[] = useMemo(
+    () => [
+      { key: 'supplierName', title: 'Supplier Name', dataKey: 'supplierName', width: 180 },
+      {
+        key: 'supplierCode',
+        title: 'Supplier Code',
+        dataKey: 'supplierCode',
+        width: 120,
+        expandable: true
+      },
+      { key: 'contactPerson', title: 'Contact Person', dataKey: 'contactPerson', width: 140 },
+      { key: 'phone', title: 'Phone', dataKey: 'phone', width: 120 },
+      { key: 'email', title: 'Email', dataKey: 'email', width: 180 },
+      { key: 'currency', title: 'Currency', dataKey: 'currency', width: 100, expandable: true },
+      {
+        key: 'approvedCategory',
+        title: 'Approved Category',
+        dataKey: 'approvedCategory',
+        width: 150,
+        expandable: true
+      },
+      {
+        key: 'supplierType',
+        title: 'Supplier Type',
+        dataKey: 'supplierType',
+        width: 130,
+        expandable: true
+      },
+      { key: 'address', title: 'Address', dataKey: 'address', width: 200 },
+      {
+        key: 'status',
+        title: 'Status',
+        dataKey: 'status',
+        width: 100,
+        render: (row: any) => (
+          <MyBadgeStatus
+            backgroundColor={
+              row.status === 'Active' ? 'var(--light-green)' : 'var(--background-gray)'
+            }
+            color={row.status === 'Active' ? 'var(--primary-green)' : 'var(--primary-gray)'}
+            contant={row.status}
+          />
+        )
+      },
+      {
+        key: 'paymentTerms',
+        title: 'Payment Terms',
+        dataKey: 'paymentTerms',
+        width: 130,
+        expandable: true
+      },
+      {
+        key: 'actions',
+        title: '',
+        width: 120,
+        align: 'center',
+        render: (rowData: any) => {
+          return (
+            <div className="container-of-icons">
+              <MdModeEdit title="Edit" id="icon0-0" size={24} onClick={() => setOpenModal(true)} />
+              <FaCreditCard
+                title="Card"
+                size={24}
+                fill="var(--primary-gray)"
+                onClick={() => setOpenCardModal(true)}
+              />
+              {rowData.active ? (
+                <MdDelete
+                  className="icons-style"
+                  title="Deactivate"
+                  size={24}
+                  fill="var(--primary-pink)"
+                  onClick={() => {
+                    setSelectedItemId(rowData.id);
+                    setActionType('deactivate');
+                    setOpenConfirmDeleteModal(true);
+                  }}
+                />
+              ) : (
+                <FaUndo
+                  className="icons-style"
+                  title="Reactivate"
+                  fill="var(--primary-gray)"
+                  size={24}
+                  onClick={() => {
+                    setSelectedItemId(rowData.id);
+                    setActionType('reactivate');
+                    setOpenConfirmDeleteModal(true);
+                  }}
+                />
+              )}
+            </div>
+          );
+        }
+      }
+    ],
+    []
+  );
+
+  // Active/Deactive the Status
   const handleDeleteConfirm = () => {
     if (selectedItemId !== null) {
       setTableData(prev =>
@@ -238,25 +247,41 @@ const SupplierSetup = () => {
     setSelectedItemId(null);
   };
 
-  //Table Sort Data
-  const sortedData = [...tableData].sort((a, b) => {
-    const aValue = a[sortColumn];
-    const bValue = b[sortColumn];
-    if (aValue === bValue) return 0;
-    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
-  });
+  // Sorting
+  const sortedData = useMemo(() => {
+    const copy = [...tableData];
+    return copy.sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+      if (aValue === bValue) return 0;
+      const av = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
+      const bv = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
+      return sortType === 'asc' ? (av > bv ? 1 : -1) : av < bv ? 1 : -1;
+    });
+  }, [tableData, sortColumn, sortType]);
 
-  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-
-  // Header page setUp
-  const divContent = (
-    <div className="page-title">
-      <h5>Supplier Setup</h5>
-    </div>
+  const paginatedData = useMemo(
+    () => sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage),
+    [sortedData, page, rowsPerPage]
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Supplier_Setup'));
-  dispatch(setDivContent(divContentHTML));
+
+  // Header page setup: dispatch inside useEffect bound to path
+  useEffect(() => {
+    const divContent = (
+      <div className="page-title">
+        <h5>Supplier Setup</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
+    dispatch(setPageCode('Supplier_Setup'));
+    dispatch(setDivContent(divContentHTML));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
 
   return (
     <>
@@ -276,16 +301,16 @@ const SupplierSetup = () => {
                 selectDataValue="value"
                 selectDataLabel="label"
                 selectData={[
-                  { label: 'Supplier Name', key: 1 },
-                  { label: 'Contact Person', key: 2 },
-                  { label: 'Phone', key: 3 },
-                  { label: 'Email', key: 4 },
-                  { label: 'Status', key: 5 }
+                  { label: 'Supplier Name', value: 'supplierName' },
+                  { label: 'Contact Person', value: 'contactPerson' },
+                  { label: 'Phone', value: 'phone' },
+                  { label: 'Email', value: 'email' },
+                  { label: 'Status', value: 'status' }
                 ]}
                 fieldName="filter"
                 fieldType="select"
-                record={''}
-                setRecord={''}
+                record={filtersForm}
+                setRecord={setFiltersForm}
                 showLabel={false}
                 placeholder="Select Filter"
                 searchable={false}
@@ -293,8 +318,8 @@ const SupplierSetup = () => {
               <MyInput
                 fieldName="value"
                 fieldType="text"
-                record={''}
-                setRecord={''}
+                record={filtersForm}
+                setRecord={setFiltersForm}
                 showLabel={false}
                 placeholder="Search"
               />
@@ -302,21 +327,22 @@ const SupplierSetup = () => {
           }
           height={470}
           loading={false}
-          sortColumn={sortColumn}
+          sortColumn={sortColumn as string}
           sortType={sortType}
-          onSortChange={(col, type) => {
-            setSortColumn(col);
+          onSortChange={(col: any, type: 'asc' | 'desc') => {
+            setSortColumn(col as keyof (typeof sampleData)[number]);
             setSortType(type);
           }}
           page={page}
           rowsPerPage={rowsPerPage}
           totalCount={tableData.length}
           onPageChange={(_, newPage) => setPage(newPage)}
-          onRowsPerPageChange={e => {
+          onRowsPerPageChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
             setRowsPerPage(parseInt(e.target.value, 10));
             setPage(0);
           }}
         />
+
         <DeletionConfirmationModal
           open={openConfirmDeleteModal}
           setOpen={setOpenConfirmDeleteModal}

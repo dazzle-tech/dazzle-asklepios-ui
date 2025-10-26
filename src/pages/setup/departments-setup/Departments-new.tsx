@@ -25,6 +25,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useEnumByName, useEnumOptions } from '@/services/enumsApi';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import ChooseScreenNurse from './ChooseScreenNurse';
+import { extractPaginationFromLink } from "@/utils/paginationHelper";
 
 
 const Departments = () => {
@@ -61,13 +62,14 @@ const Departments = () => {
   const { data: departmentListResponse, isFetching } = useGetDepartmentsQuery(paginationParams);
 
   const totaldepartmentListResponseCount = departmentListResponse?.totalCount ?? 0;
+  const links = departmentListResponse?.links || {};
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
   // Add New Department
 
   const [addDepartment, addDepartmentMutation] = useAddDepartmentMutation();
   // Update Department 
   const [updateDepartment, updateDepartmentMutation] = useUpdateDepartmentMutation();
-  const pageIndex = paginationParams.page;
-  const rowsPerPage = paginationParams.size;
 
   const filterFields = [
     { label: 'Facility', value: 'facilityName' },
@@ -106,9 +108,6 @@ const Departments = () => {
     console.log("ShowScreen", showScreen)
   }, [showScreen])
   
-
-
-
 
   // Update department code field when department or code changes
   useEffect(() => {
@@ -185,6 +184,8 @@ const Departments = () => {
   const handleFilterChange = async (fieldName, value) => {
     if (!value) {
       setDepartmentList(departmentListResponse?.data ?? []);
+      setIsFiltered(false);
+      setFilteredTotal(0);
       return;
     }
     try {
@@ -476,7 +477,24 @@ const Departments = () => {
     );
   };
   const handlePageChange = (_: unknown, newPage: number) => {
-    setPaginationParams({ ...paginationParams, page: newPage, timestamp: Date.now() });
+    let targetLink: string | null | undefined = null;
+
+    if (newPage > paginationParams.page && links.next) targetLink = links.next;
+    else if (newPage < paginationParams.page && links.prev)
+      targetLink = links.prev;
+    else if (newPage === 0 && links.first) targetLink = links.first;
+    else if (newPage > paginationParams.page + 1 && links.last)
+      targetLink = links.last;
+
+    if (targetLink) {
+      const { page, size } = extractPaginationFromLink(targetLink);
+      setPaginationParams({
+        ...paginationParams,
+        page,
+        size,
+        timestamp: Date.now(),
+      });
+    }
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {

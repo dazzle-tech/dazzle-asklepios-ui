@@ -1,6 +1,6 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyTable from '@/components/MyTable';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { Form, Panel } from 'rsuite';
@@ -11,6 +11,7 @@ import { useDispatch } from 'react-redux';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import { formatDateWithoutSeconds } from '@/utils';
 import VisitDurationSetupModal from './VisitDurationSetupModal';
+import { useLocation } from 'react-router-dom';
 
 // Sample table data
 const sampleData = [
@@ -54,6 +55,7 @@ const sampleData = [
 
 const VisitDurationSetup = () => {
   const dispatch = useDispatch();
+  const { pathname } = useLocation();
 
   // State for table sorting, pagination, and modal control
   const [sortColumn, setSortColumn] = useState('visitType');
@@ -113,9 +115,7 @@ const VisitDurationSetup = () => {
           <>
             {row?.createdBy}
             <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(row.createdAt)}
-            </span>
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
           </>
         ) : (
           ' '
@@ -182,15 +182,23 @@ const VisitDurationSetup = () => {
   // Pagination logic
   const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
-  // Setup page header using Redux
-  const divContent = (
-    <div className="page-title">
-      <h5>Visit Duration Setup</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Visit_Duration_Setup'));
-  dispatch(setDivContent(divContentHTML));
+  // Header page setup: dispatch inside useEffect bound to path
+  useEffect(() => {
+    const divContent = (
+      <div className="page-title">
+        <h5>Visit Duration Setup</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
+    dispatch(setPageCode('Visit_Duration_Setup'));
+    dispatch(setDivContent(divContentHTML));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
 
   return (
     <Panel className="main-visit-duration-page-gaps">

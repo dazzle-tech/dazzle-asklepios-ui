@@ -144,7 +144,7 @@ const AddEditPractitioner = ({
 
   // Table columns for user search
   const tableColumns = [
-    { key: 'login', title: <Translate>User Name</Translate>, flexGrow: 2 },
+    { key: 'login', title: <Translate>User Name </Translate>, flexGrow: 2 },
     { key: 'firstName', title: <Translate>Full Name</Translate>, flexGrow: 3 },
     { key: 'phoneNumber', title: <Translate>Mobile Number</Translate>, flexGrow: 2 },
     { key: 'email', title: <Translate>Email</Translate>, flexGrow: 3 },
@@ -283,6 +283,46 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
+             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+            
+                          <MyInput
+                            column
+                            fieldLabel="Default Medical License"
+                            fieldName="defaultMedicalLicense"
+                            record={practitioner}
+                            setRecord={setPractitioner}
+                            width={250}
+                          />
+                          <MyInput
+                            column
+                            fieldType="date"
+                            fieldLabel="Valid Until"
+                            fieldName="defaultLicenseValidUntil"
+                            record={practitioner}
+                            setRecord={setPractitioner}
+                            width={250}
+                          />
+                        </div>
+                        <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+            
+                          <MyInput
+                            column
+                            fieldLabel="Secondary License"
+                            fieldName="secondaryMedicalLicense"
+                            record={practitioner}
+                            setRecord={setPractitioner}
+                            width={250}
+                          />
+                          <MyInput
+                            column
+                            fieldType="date"
+                            fieldLabel="Valid Until"
+                            fieldName="secondaryLicenseValidUntil"
+                            record={practitioner}
+                            setRecord={setPractitioner}
+                            width={250}
+                          />
+                        </div>
 
             {/* Facility */}
             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>

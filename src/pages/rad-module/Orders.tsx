@@ -4,7 +4,7 @@ import { useGetDiagnosticOrderQuery } from '@/services/encounterService';
 import { formatDateWithoutSeconds } from '@/utils';
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useState} from 'react';
+import React, { useState,useEffect} from 'react';
 import { Tooltip, Whisper } from 'rsuite';
 const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) => {
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
@@ -112,6 +112,16 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
       pageNumber: 1 // reset to first page
     });
   };
+
+  console.log("Second test", ordersList?.object.filter(item => item.hasRadiology === true))
+console.log("All orders", ordersList?.object);
+
+useEffect(() => {
+  if (ordersList?.object) {
+    console.log("All orders", ordersList.object);
+  }
+}, [ordersList]);
+
   return (
     <MyTable
       data={filterdOrderList ?? []}

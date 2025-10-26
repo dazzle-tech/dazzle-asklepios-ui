@@ -12,11 +12,9 @@ import { FaBuilding } from 'react-icons/fa';
 import ChildModal from '@/components/ChildModal';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { useAddUserDepartmentMutation,useGetUserDepartmentsByUserQuery, useToggleUserDepartmentIsActiveMutation } from '@/services/security/userDepartmentsService';
+import { useAddUserDepartmentMutation,useGetUserDepartmentsByUserQuery, useDeleteUserDepartmentMutation } from '@/services/security/userDepartmentsService';
 import {Department, UserDepartment } from '@/types/model-types-new';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { newUserDepartment } from '@/types/model-types-constructor-new';
 import { useGetDepartmentsQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { conjureValueBasedOnIDFromList } from '@/utils';
@@ -36,28 +34,27 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
   const [getDepartmentsByFacility, { data: departmentsResponse, isFetching: deptLoading }] = useLazyGetActiveDepartmentByFacilityListQuery();
   console.log('departmentsResponse from lazy query:', departmentsResponse);
   
-  // change Status user department
-  const [ChangeStatususerDepartment] = useToggleUserDepartmentIsActiveMutation();
-  const [openConfirmChangeStatusOfDepartmentModal, setOpenConfirmChangeStatusOfDepartmentModal] = useState<boolean>(false);
-  const [stateOfStatusForUFDModal, setStateOfStatusForUFDModal] =  useState('delete');
+  // Delete user department
+  const [deleteUserDepartment] = useDeleteUserDepartmentMutation();
+  const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] = useState<boolean>(false);
   const [openChildModal, setOpenChildModal] = useState<boolean>(false);
 
 
   // Save department
   const [saveDepartment] = useAddUserDepartmentMutation();
 
-  // Handle change status of user department
-  const handleChangeStatusOfuserDepartment = UFD => {
-    ChangeStatususerDepartment(UFD.id)
+  // Handle delete user department
+  const handleDeleteUserDepartment = UFD => {
+    deleteUserDepartment(UFD.id)
       .unwrap()
       .then(() => {
-        setOpenConfirmChangeStatusOfDepartmentModal(false);
-        dispatch(notify({ msg: 'The department was successfully deactivated for this user', sev: 'success' }));
+        setOpenConfirmDeleteDepartmentModal(false);
+        dispatch(notify({ msg: 'The department was successfully deleted for this user', sev: 'success' }));
         refetchUserDepartments();
       })
       .catch(() => {
-        setOpenConfirmChangeStatusOfDepartmentModal(false);
-        dispatch(notify({ msg: 'Failed to deactivated department for this User', sev: 'error' }));
+        setOpenConfirmDeleteDepartmentModal(false);
+        dispatch(notify({ msg: 'Failed to delete department for this User', sev: 'error' }));
       });
   };
   const onChangeFacility = async (next: string) => {
@@ -120,32 +117,25 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       )
     },
     {
+      key: 'isActive',
+      title: <Translate key='STATUS'>Status</Translate>,
+      flexGrow: 4,
+      render: rowData => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
+    },
+    {
       key: 'icon',
       title: <Translate></Translate>,
       flexGrow: 2,
       render: rowData => {
-        return !rowData?.isActive ? (
-          <FontAwesomeIcon
-            title="Activate"
-            icon={faRotateRight}
-            className="icons-style"
-            color="var(--primary-gray)"
-            onClick={() => {
-              setuserDepartment(rowData);
-              setStateOfStatusForUFDModal('reactivate');
-              setOpenConfirmChangeStatusOfDepartmentModal(true);
-            }}
-          />
-        ) : (
+        return (
           <MdDelete
             style={{ cursor: 'pointer' }}
-            title="Deactivate"
+            title="Delete"
             size={24}
             fill="var(--primary-pink)"
             onClick={() => {
               setuserDepartment(rowData);
-              setStateOfStatusForUFDModal("deactivate");
-              setOpenConfirmChangeStatusOfDepartmentModal(true);
+              setOpenConfirmDeleteDepartmentModal(true);
             }}
           />
         );
@@ -172,11 +162,11 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           columns={userDepartmentTableColumns}
         />
         <DeletionConfirmationModal
-          open={openConfirmChangeStatusOfDepartmentModal}
-          setOpen={setOpenConfirmChangeStatusOfDepartmentModal}
+          open={openConfirmDeleteDepartmentModal}
+          setOpen={setOpenConfirmDeleteDepartmentModal}
           itemToDelete="userDepartment"
-          actionButtonFunction={() => handleChangeStatusOfuserDepartment(userDepartment)}
-          actionType={stateOfStatusForUFDModal}
+          actionButtonFunction={() => handleDeleteUserDepartment(userDepartment)}
+          actionType="delete"
         />
       </Form>
 

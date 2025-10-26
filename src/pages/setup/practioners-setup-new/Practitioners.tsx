@@ -138,14 +138,28 @@ const Practitioners = () => {
         isActive: practitioner.isActive,
       };
 
-      await createPractitioner(payload).unwrap();
+     const Response= await createPractitioner(payload).unwrap();
       dispatch(
         notify({ msg: "Practitioner added successfully", sev: "success" })
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
-    } catch {
-      dispatch(notify({ msg: "Failed to add practitioner", sev: "error" }));
+      setPractitioner({...Response});
+      console.log(Response);
+    }   catch (error) {
+    console.error("Error updating practitioner:", error);
+
+    
+    if (error?.data?.fieldErrors?.length) {
+      const messages = error.data.fieldErrors
+        .map((fe) => `${fe.field}: ${fe.message}`)
+        .join("\n");
+      dispatch(notify({ msg: messages, sev: "error" }));
+    } else if (error?.data?.detail) {
+      dispatch(notify({ msg: error.data.detail, sev: "error" }));
+    } else {
+      dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
     }
+  }
   };
 
   const handleUpdate = async () => {
@@ -181,9 +195,21 @@ const Practitioners = () => {
         notify({ msg: "Practitioner updated successfully", sev: "success" })
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
-    } catch {
+    } catch (error) {
+    console.error("Error updating practitioner:", error);
+
+   
+    if (error?.data?.fieldErrors?.length) {
+      const messages = error.data.fieldErrors
+        .map((fe) => `${fe.field}: ${fe.message}`)
+        .join("\n");
+      dispatch(notify({ msg: messages, sev: "error" }));
+    } else if (error?.data?.detail) {
+      dispatch(notify({ msg: error.data.detail, sev: "error" }));
+    } else {
       dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
     }
+  }
   };
 
   const handleToggleActive = async (id: number) => {
