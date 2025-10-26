@@ -30,10 +30,18 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const dispatch = useDispatch();
-  console.log('encountr==>', encounter);
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
+
+  // ===== Helpers to avoid NaN / bad output =====
+  const toNumber = (v: any) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const fmt = (v: number | null | undefined, digits = 2, fallback = '') =>
+    Number.isFinite(v as number) ? (v as number).toFixed(digits) : fallback;
+  const textOr = (v: any, fallback = '') => (v == null || v === '' ? fallback : v);
 
   // Existing queries
   const { data: patirntObservationlist, refetch } = useGetObservationSummariesQuery({
@@ -50,7 +58,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
   });
 
   // New queries for allergies and warnings
-  const { data: allergiesResponse, isLoading: allergiesLoading } = useGetAllergiesQuery(
+  const { data: allergiesResponse } = useGetAllergiesQuery(
     {
       ...initialListRequest,
       pageSize: 5, // Limit to show only recent ones
@@ -64,7 +72,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
     { skip: !patient?.key }
   );
 
-  const { data: warningsResponse, isLoading: warningsLoading } = useGetWarningsQuery(
+  const { data: warningsResponse } = useGetWarningsQuery(
     {
       ...initialListRequest,
       pageSize: 5, // Limit to show only recent ones
@@ -80,7 +88,11 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
 
   const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
 
-  const [bodyMeasurements, setBodyMeasurements] = useState({
+  const [bodyMeasurements, setBodyMeasurements] = useState<{
+    height: number | string | null;
+    weight: number | string | null;
+    headcircumference: number | string | null;
+  }>({
     height: null,
     weight: null,
     headcircumference: null
@@ -100,10 +112,10 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
         item => item.latestheight != null && item.latestheight != 0
       )?.latestheight,
       weight: patirntObservationlist?.object?.find(
-        item => item.latestweight != null && item.latestheight != 0
+        item => item.latestweight != null && item.latestweight != 0
       )?.latestweight,
       headcircumference: patirntObservationlist?.object?.find(
-        item => item.latestheadcircumference != null && item.latestheight != 0
+        item => item.latestheadcircumference != null && item.latestheadcircumference != 0
       )?.latestheadcircumference
     });
   }, [patirntObservationlist]);
@@ -124,19 +136,18 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
     if (refetchList) {
       refetch();
     }
-  }, [refetchList]);
+  }, [refetchList, refetch]);
 
   const handleImageClick = type => {
-    if (patient.key) profileImageFileInputRef.current.click();
+    if (patient?.key) profileImageFileInputRef.current?.click();
   };
 
   useEffect(() => {
-    console.log('refetchPatientSide ====>', refetchPatientSide);
     if (refetchPatientSide) {
       refetch();
       dispatch(resetRefetchPatientSide());
     }
-  }, [refetchPatientSide]);
+  }, [refetchPatientSide, refetch, dispatch]);
 
   // Helper function to get allergen name
   const getAllergenName = (allergenKey: string) => {
@@ -145,11 +156,9 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
     return found?.allergenName || 'Unknown';
   };
 
-  // Get active allergies for the alert banner
+  // Get active allergies & warnings
   const activeAllergies =
     allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
-
-  // Get active warnings for the alert banner
   const activeWarnings =
     warningsResponse?.object?.filter(warning => warning.statusLkey === '9766169155908512') || [];
 
@@ -171,6 +180,13 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
     }
   };
 
+  // ===== Safe calculations for BMI / BSA =====
+  const w = toNumber(bodyMeasurements?.weight);
+  const h = toNumber(bodyMeasurements?.height); // h is in cm
+
+  const bmi = w != null && h != null && h > 0 ? w / Math.pow(h / 100, 2) : null;
+  const bsa = w != null && h != null ? Math.sqrt((w * h) / 3600) : null;
+
   return (
     <Panel className="patient-panel">
       <div className="div-avatar">
@@ -187,9 +203,9 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
         />
         <div>
           <div className="patient-info">
-            <Text className="patient-name">{patient?.fullName ?? 'Patient Name'}</Text>
+            <Text className="patient-name">{textOr(patient?.fullName, 'Patient Name')}</Text>
           </div>
-          <div className="info-label"># {patient?.patientMrn ?? 'MRN'}</div>
+          <div className="info-label"># {textOr(patient?.patientMrn, 'MRN')}</div>
         </div>
       </div>
 
@@ -202,12 +218,14 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
       <div className="info-section">
         <div className="info-column">
           <Text className="info-label">Document Type</Text>
-          <Text className="info-value">{patient?.documentTypeLvalue?.lovDisplayVale}</Text>
+          <Text className="info-value">
+            {textOr(patient?.documentTypeLvalue?.lovDisplayVale, '')}
+          </Text>
         </div>
 
         <div className="info-column">
           <Text className="info-label">Document No</Text>
-          <Text className="info-value"> {patient?.documentNo}</Text>
+          <Text className="info-value"> {textOr(patient?.documentNo, '')}</Text>
         </div>
       </div>
       <Divider className="divider-style" />
@@ -226,7 +244,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
 
         <div className="info-column">
           <Text className="info-label">Sex at Birth</Text>
-          <Text className="info-value"> {patient?.genderLvalue?.lovDisplayVale}</Text>
+          <Text className="info-value"> {textOr(patient?.genderLvalue?.lovDisplayVale, '')}</Text>
         </div>
       </div>
       <Divider className="divider-style" />
@@ -240,39 +258,42 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
         <div className="info-section">
           <div className="info-column">
             <Text className="info-label">Weight</Text>
-            <Text className="info-value">{bodyMeasurements?.weight}</Text>
+            <Text className="info-value">
+              {fmt(w, 2, '')}
+              {w != null ? ' kg' : ''}
+            </Text>
           </div>
 
           <div className="info-column">
             <Text className="info-label">Height</Text>
-            <Text className="info-value"> {bodyMeasurements?.height}</Text>
+            <Text className="info-value">
+              {fmt(h, 2, '')}
+              {h != null ? ' cm' : ''}
+            </Text>
           </div>
         </div>
         <div className="info-section">
           <div className="info-column">
             <Text className="info-label">H.C</Text>
-            <Text className="info-value">{bodyMeasurements?.headcircumference}</Text>
+            <Text className="info-value">{textOr(bodyMeasurements?.headcircumference, '')}</Text>
           </div>
 
           <div className="info-column">
             <Text className="info-label">BMI</Text>
-            <Text className="info-value">
-              {' '}
-              {(bodyMeasurements?.weight / (bodyMeasurements?.height / 100) ** 2).toFixed(2)}
-            </Text>
+            <Text className="info-value">{fmt(bmi, 2, '')}</Text>
           </div>
         </div>
         <div className="info-section">
           <div className="info-column">
             <Text className="info-label">BSA</Text>
-            <Text className="info-value">
-              {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}
-            </Text>
+            <Text className="info-value">{fmt(bsa, 2, '')}</Text>
           </div>
 
           <div className="info-column">
             <Text className="info-label">Blood Group</Text>
-            <Text className="info-value">{patient?.bloodGroupLvalue?.lovDisplayVale ?? 'Nan'}</Text>
+            <Text className="info-value">
+              {textOr(patient?.bloodGroupLvalue?.lovDisplayVale, '')}
+            </Text>
           </div>
         </div>
       </div>
@@ -293,26 +314,27 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
           <div className="info-section">
             <div className="info-column">
               <Text className="info-label">Visit Date</Text>
-              <Text className="info-value">{encounter?.plannedStartDate}</Text>
+              <Text className="info-value">{textOr(encounter?.plannedStartDate, '')}</Text>
             </div>
 
             <div className="info-column">
               <Text className="info-label">Visit ID</Text>
-              <Text className="info-value"> {encounter?.visitId}</Text>
+              <Text className="info-value"> {textOr(encounter?.visitId, '')}</Text>
             </div>
           </div>
 
           <div className="info-section">
             <div className="info-column">
               <Text className="info-label">Visit Type</Text>
-              <Text className="info-value">{encounter?.visitTypeLvalue?.lovDisplayVale}</Text>
+              <Text className="info-value">
+                {textOr(encounter?.visitTypeLvalue?.lovDisplayVale, '')}
+              </Text>
             </div>
 
             <div className="info-column">
               <Text className="info-label">Priority</Text>
               <Text className="info-value">
-                {' '}
-                {encounter?.encounterPriorityLvalue?.lovDisplayVale}
+                {textOr(encounter?.encounterPriorityLvalue?.lovDisplayVale, '')}
               </Text>
             </div>
           </div>
@@ -320,12 +342,17 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
           <div className="info-section">
             <div className="info-column">
               <Text className="info-label">Reason</Text>
-              <Text className="info-value">{encounter?.reasonLvalue?.lovDisplayVale}</Text>
+              <Text className="info-value">
+                {textOr(encounter?.reasonLvalue?.lovDisplayVale, '')}
+              </Text>
             </div>
 
             <div className="info-column">
               <Text className="info-label">Origin</Text>
-              <Text className="info-value"> {encounter?.originLvalue?.lovDisplayVale}</Text>
+              <Text className="info-value">
+                {' '}
+                {textOr(encounter?.originLvalue?.lovDisplayVale, '')}
+              </Text>
             </div>
           </div>
         </div>
@@ -337,24 +364,24 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
             <div className="info-section">
               <div className="info-column">
                 <Text className="info-label">Room</Text>
-                <Text className="info-value">{encounter?.apRoom?.name}</Text>
+                <Text className="info-value">{textOr(encounter?.apRoom?.name, '')}</Text>
               </div>
 
               <div className="info-column">
                 <Text className="info-label">Bed</Text>
-                <Text className="info-value">{encounter?.apBed?.name}</Text>
+                <Text className="info-value">{textOr(encounter?.apBed?.name, '')}</Text>
               </div>
             </div>
 
             <div className="info-section">
               <div className="info-column">
                 <Text className="info-label">Ward</Text>
-                <Text className="info-value">{encounter?.departmentName}</Text>
+                <Text className="info-value">{textOr(encounter?.departmentName, '')}</Text>
               </div>
 
               <div className="info-column">
                 <Text className="info-label">Date of Admission</Text>
-                <Text className="info-value">{encounter?.actualStartDate}</Text>
+                <Text className="info-value">{textOr(encounter?.actualStartDate, '')}</Text>
               </div>
             </div>
           </div>
@@ -367,7 +394,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
           </Text>
 
           <div className="margin-top-8">
-            <Text>{encounter?.diagnosis}</Text>
+            <Text>{textOr(encounter?.diagnosis, '')}</Text>
           </div>
         </>
       )}

@@ -1,30 +1,28 @@
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import {
-  useGetObservationSummariesQuery,
   useGetAllergiesQuery,
+  useGetObservationSummariesQuery,
   useGetWarningsQuery
 } from '@/services/observationService';
 import { useGetAllergensQuery } from '@/services/setupService';
+import { ApAttachment } from '@/types/model-types';
 import { initialListRequest } from '@/types/types';
 import { calculateAgeFormat } from '@/utils';
 import {
+  faExclamationTriangle,
   faHandDots,
   faIdCard,
-  faTriangleExclamation,
-  faUser,
-  faExclamationTriangle
+  faUser
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaWeight } from 'react-icons/fa';
+import { GiMedicalThermometer } from 'react-icons/gi';
 import { Avatar, Divider, Panel, Text } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { ApAttachment } from '@/types/model-types';
 import AllergiesModal from '../encounter/encounter-screen/AllergiesModal';
 import WarningiesModal from '../encounter/encounter-screen/WarningiesModal';
 import './styles.less';
-import { GiMedicalThermometer } from 'react-icons/gi';
 
 const PatientSide = ({ patient, encounter }) => {
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
@@ -49,7 +47,7 @@ const PatientSide = ({ patient, encounter }) => {
   const { data: allergiesResponse, isLoading: allergiesLoading } = useGetAllergiesQuery(
     {
       ...initialListRequest,
-      pageSize: 5, // Limit to show only recent ones
+      pageSize: 5,
       sortBy: 'createdAt',
       sortType: 'desc',
       filters: [
@@ -63,7 +61,7 @@ const PatientSide = ({ patient, encounter }) => {
   const { data: warningsResponse, isLoading: warningsLoading } = useGetWarningsQuery(
     {
       ...initialListRequest,
-      pageSize: 5, // Limit to show only recent ones
+      pageSize: 5,
       sortBy: 'createdAt',
       sortType: 'desc',
       filters: [
@@ -76,7 +74,11 @@ const PatientSide = ({ patient, encounter }) => {
 
   const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
 
-  const [bodyMeasurements, setBodyMeasurements] = useState({
+  const [bodyMeasurements, setBodyMeasurements] = useState<{
+    height: number | string | null;
+    weight: number | string | null;
+    headcircumference: number | string | null;
+  }>({
     height: null,
     weight: null,
     headcircumference: null
@@ -89,6 +91,16 @@ const PatientSide = ({ patient, encounter }) => {
     },
     { skip: !patient?.key }
   );
+
+  const toNumber = (v: any) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const fmt = (v: number | null | undefined, digits = 2, fallback = '') =>
+    Number.isFinite(v as number) ? (v as number).toFixed(digits) : fallback;
+
+  const textOr = (v: any, fallback = '') => (v == null || v === '' ? fallback : v);
 
   // Helper function to get allergen name
   const getAllergenName = (allergenKey: string) => {
@@ -142,16 +154,18 @@ const PatientSide = ({ patient, encounter }) => {
   }, [fetchPatientImageResponse]);
 
   const handleImageClick = type => {
-    if (patient.key) profileImageFileInputRef.current.click();
+    if (patient?.key) profileImageFileInputRef.current?.click();
   };
 
-  const OpenAllargyModal = () => {
-    setOpenAllargyModal(true);
-  };
+  const w = toNumber(bodyMeasurements?.weight);
+  const h = toNumber(bodyMeasurements?.height);
 
-  const OpenWarningModal = () => {
-    setOpenWarningModal(true);
-  };
+  const bmi =
+    w != null && h != null && h > 0
+      ? w / Math.pow(h / 100, 2) 
+      : null;
+
+  const bsa = w != null && h != null ? Math.sqrt((w * h) / 3600) : null;
 
   return (
     <Panel className="patient-panel">
@@ -169,9 +183,9 @@ const PatientSide = ({ patient, encounter }) => {
         />
         <div>
           <div className="patient-info">
-            <Text className="info-label">{patient?.fullName ?? 'Patient Name'}</Text>
+            <Text className="info-label">{textOr(patient?.fullName, 'Patient Name')}</Text>
           </div>
-          <div className="info-label"># {patient?.patientMrn ?? 'MRN'}</div>
+          <div className="info-label"># {textOr(patient?.patientMrn, 'MRN')}</div>
         </div>
       </div>
 
@@ -184,12 +198,14 @@ const PatientSide = ({ patient, encounter }) => {
       <div className="info-section">
         <div className="info-column">
           <Text className="info-label">Document No</Text>
-          <Text className="info-value">{patient?.documentTypeLvalue?.lovDisplayVale}</Text>
+          <Text className="info-value">{textOr(patient?.documentNo, '')}</Text>
         </div>
 
         <div className="info-column">
           <Text className="info-label">Document Type</Text>
-          <Text className="info-value"> {patient?.documentNo}</Text>
+          <Text className="info-value">
+            {textOr(patient?.documentTypeLvalue?.lovDisplayVale, '')}
+          </Text>
         </div>
       </div>
       <Divider className="divider-thin" />
@@ -208,7 +224,7 @@ const PatientSide = ({ patient, encounter }) => {
 
         <div className="info-column">
           <Text className="info-label">Sex at Birth</Text>
-          <Text className="info-value"> {patient?.genderLvalue?.lovDisplayVale}</Text>
+          <Text className="info-value">{textOr(patient?.genderLvalue?.lovDisplayVale, '')}</Text>
         </div>
       </div>
       <Divider className="divider-thin" />
@@ -223,39 +239,42 @@ const PatientSide = ({ patient, encounter }) => {
         <div className="info-section">
           <div className="info-column">
             <Text className="info-label">Weight</Text>
-            <Text className="info-value">{bodyMeasurements?.weight}</Text>
+            <Text className="info-value">
+              {fmt(w, 2, '')}
+              {w != null ? ' kg' : ''}
+            </Text>
           </div>
 
           <div className="info-column">
             <Text className="info-label">Height</Text>
-            <Text className="info-value"> {bodyMeasurements?.height}</Text>
+            <Text className="info-value">
+              {fmt(h, 2, '')}
+              {h != null ? ' cm' : ''}
+            </Text>
           </div>
         </div>
         <div className="info-section">
           <div className="info-column">
             <Text className="info-label">H.C</Text>
-            <Text className="info-value">{bodyMeasurements?.headcircumference}</Text>
+            <Text className="info-value">{textOr(bodyMeasurements?.headcircumference, '')}</Text>
           </div>
 
           <div className="info-column">
             <Text className="info-label">BMI</Text>
-            <Text className="info-value">
-              {' '}
-              {(bodyMeasurements?.weight / (bodyMeasurements?.height / 100) ** 2).toFixed(2)}
-            </Text>
+            <Text className="info-value">{fmt(bmi, 2, '')}</Text>
           </div>
         </div>
         <div className="info-section">
           <div className="info-column">
             <Text className="info-label">BSA</Text>
-            <Text className="info-value">
-              {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}
-            </Text>
+            <Text className="info-value">{fmt(bsa, 2, '')}</Text>
           </div>
 
           <div className="info-column">
             <Text className="info-label">Blood Group</Text>
-            <Text className="info-value">{patient?.bloodGroupLvalue?.lovDisplayVale ?? 'Nan'}</Text>
+            <Text className="info-value">
+              {textOr(patient?.bloodGroupLvalue?.lovDisplayVale, '')}
+            </Text>
           </div>
         </div>
       </div>
@@ -268,7 +287,7 @@ const PatientSide = ({ patient, encounter }) => {
       </Text>
       <div>
         <br />
-        <Text>{encounter?.diagnosis}</Text>
+        <Text>{textOr(encounter?.diagnosis, '')}</Text>
       </div>
       <Divider className="divider-thin" />
       {/* ==== Allergy & Warning Banners ==== */}
