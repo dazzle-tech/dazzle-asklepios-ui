@@ -41,6 +41,7 @@ import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
 import { patientAttachmentService } from './services/patients/attachmentService';
+import {potintialService} from '@/services/potintialDuplicateService';
 
 
 export const store = configureStore({
@@ -114,6 +115,7 @@ export const store = configureStore({
 
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
+    [potintialService.reducerPath] :potintialService.reducer,
     call: callReducer,
 
     [facilityService.reducerPath]: facilityService.reducer,
@@ -171,6 +173,7 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+      potintialService.middleware
     ])
 });
 

@@ -24,14 +24,9 @@ export const newApUser: modelTypes.ApUser = {
 
 export const newCandidate: modelTypes.Candidate = {
   id: undefined,
-  role: '',
-  dob: false,
-  lastName: false,
-  documentNo: false,
-  mobileNumber: false,
-  gender: false,
+  rule: '',
+  fields: {}, 
   isActive: true,
-
 };
 
 export const newDepartment: modelTypes.Department = {
@@ -63,6 +58,8 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
+  ruleId:undefined,
+
 } 
 
 export const newCreateFacility: modelTypes.CreateFacility = {
