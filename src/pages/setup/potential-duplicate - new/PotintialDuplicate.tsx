@@ -41,9 +41,9 @@ const PotintialDuplicate = () => {
     acc[key] = false;
     return acc;
   }, {} as Record<string, boolean>);
-  console.log("def", defaultFields);
+
   const [candidate, setCandidate] = useState<Candidate>({ ...newCandidate, fields: defaultFields });
-  console.log("candidate", candidate)
+
 
   const [openConfirmDeleteRole, setOpenConfirmDeleteRole] = useState<boolean>(false);
   const [stateOfDeleteRole, setStateOfDeleteRole] = useState<string>('delete');
@@ -61,7 +61,6 @@ const PotintialDuplicate = () => {
   // Header page setUp
   const divContent = (
     "Potintial Duplicate"
-
   );
   dispatch(setPageCode('Potintial_Duplicate'));
   dispatch(setDivContent(divContent));
@@ -126,7 +125,7 @@ const PotintialDuplicate = () => {
   }));
 
   const tableColumns = [
-    { key: 'role', title: <Translate>Role</Translate>, render: rowData => rowData.role },
+    { key: 'role', title: <Translate>Rule</Translate>, render: rowData => rowData.rule },
     ...dynamicFieldColumns,
     {
       key: 'status',

@@ -23,19 +23,19 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
   const tableColumns = [
     {
       key: 'role',
-      title: <Translate>Role</Translate>,
+      title: <Translate>Rule</Translate>,
       render: rowData => (
         <Checkbox
           key={rowData.id}
-          checked={rowData.roolId !== null ? true : false}
+          checked={rowData.ruleId !== null ? true : false}
           onChange={(value, checked) => {
             if (checked) {
-              updateFacility({ ...rowData, roolId: Candidate.id })
+              updateFacility({ ...rowData, ruleId: Candidate.id })
                 .unwrap()
                 .then(fetchFaci);
 
             } else {
-              updateFacility({ ...rowData, roolId: null })
+              updateFacility({ ...rowData, ruleId: null })
                 .unwrap()
                 .then(fetchFaci);
 

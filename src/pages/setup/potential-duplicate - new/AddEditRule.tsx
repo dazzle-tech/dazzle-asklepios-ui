@@ -10,7 +10,6 @@ const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave
   const fieldsEnum = useEnumByName("DuplicationField");
   const [fieldsState, setFieldsState] = useState<Record<string, boolean>>({});
 
-  // تهيئة أولية مرة واحدة فقط عند فتح المودال أو تغير الـ enum
   useEffect(() => {
     if (fieldsEnum && fieldsEnum.length > 0 && open) {
       const defaults = fieldsEnum.reduce((acc, key) => {
@@ -18,13 +17,13 @@ const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave
         return acc;
       }, {} as Record<string, boolean>);
 
-      // إذا موجود قيم من candidate استخدمها
+    
       const initial = candidate?.fields ? { ...defaults, ...candidate.fields } : defaults;
       setFieldsState(initial);
     }
   }, [fieldsEnum, open]);
 
-  // تحديث candidate فقط عندما تتغير قيم الـ fieldsState فعلاً
+ 
   useEffect(() => {
     if (Object.keys(fieldsState).length > 0) {
       setCandidate((prev) => ({

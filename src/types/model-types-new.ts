@@ -24,7 +24,7 @@ export interface ApUser {
 
 export interface Candidate {
   id?: number;
-  role?: string;
+  rule?: string;
   fields?: Record<string, boolean>; 
   createdBy?: string;
   createdDate?: string;
@@ -60,6 +60,7 @@ export interface Facility {
   type: string;
   defaultCurrency: string;
   isActive?: boolean;
+  ruleId?:number;
 } 
 
 
