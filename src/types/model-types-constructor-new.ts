@@ -93,11 +93,7 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   id: undefined,
   userId: undefined,
   departmentId: undefined,
-  isActive: true,
-  createdBy: '',
-  createdDate: undefined,
-  lastModifiedBy: undefined,
-  lastModifiedDate: undefined,
+  isActive: true
 };
 
 export const newService: modelTypes.Service = {

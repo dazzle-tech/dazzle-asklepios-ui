@@ -93,10 +93,6 @@ export interface UserDepartment {
   facilityId?: string | null;
   departmentId: number;
   isActive?: boolean;
-  createdBy?: string;
-  createdDate?: Date | null;
-  lastModifiedBy?: string;
-  lastModifiedDate?: Date | null;
 };
 
 
