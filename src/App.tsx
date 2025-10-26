@@ -178,6 +178,7 @@ import { useGetMenuQuery } from './services/security/UserRoleService';
 import CallOverlay from './components/Overlay/CallOverlay';
 import LanguagesSetup from './pages/setup/language-setup/Language';
 import Pediatric from './pages/encounter/encounter-component/pediatric';
+import IncidentPortal from './pages/Incident/IncidentPortal';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -368,6 +369,7 @@ const App = () => {
             {/* TODO load them dynamically based on user authorization matrix */}
             <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
+              <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />
               <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile" element={<PatientProfileNew />} />

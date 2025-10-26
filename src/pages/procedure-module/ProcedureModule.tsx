@@ -26,6 +26,7 @@ import { useAppDispatch } from '@/hooks';
 import { useLocation } from 'react-router-dom';
 import Icd10Search from '../medical-component/Icd10Search';
 import './styles.less';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 // --- Utils ---
 const handleDownload = (attachment: any) => {
@@ -619,7 +620,7 @@ const ProcedureModule: React.FC = () => {
 
   const filters = () => (
     <>
-      <Form fluid className="procedure-module-table-filters-handle-position">
+      <Form fluid layout='inline' className='procedure-module-table-filters-handle-position'>
         <MyInput
           fieldType="date"
           fieldLabel="From Date"
@@ -666,7 +667,11 @@ const ProcedureModule: React.FC = () => {
           checked={!showCanceled}
           onChange={() => setShowCanceled(!showCanceled)}
           className="margin-21"
-        >
+        />
+
+        <SearchPatientCriteria record={record} setRecord={setRecord} searchMarginTop={0}/>
+
+        <Checkbox style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
           Show Cancelled
         </Checkbox>
       </Form>
