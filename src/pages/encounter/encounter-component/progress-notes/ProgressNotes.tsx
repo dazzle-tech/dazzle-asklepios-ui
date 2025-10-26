@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch } from '@/hooks';
 import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
@@ -13,202 +13,249 @@ import AddProgressNotes from './AddProgressNotes';
 import { useLocation } from 'react-router-dom';
 import { newApProgressNotes } from '@/types/model-types-constructor';
 import { ApProgressNotes } from '@/types/model-types';
-import { useGetProgressNotesListQuery, useSaveProgressNotesMutation } from '@/services/encounterService';
+import {
+  useGetProgressNotesListQuery,
+  useSaveProgressNotesMutation
+} from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import ReactDOMServer from 'react-dom/server';
 
-const ProgressNotes = () => {
+const NURSE_ROLE_KEY = '157153858530600';
+const PHYSICIAN_ROLE_KEY = '157153854130600';
+
+const ProgressNotes: React.FC = () => {
+  const dispatch = useAppDispatch();
+
+  const location = useLocation();
+  const { patient, encounter, edit } = (location.state || {}) as {
+    patient?: any;
+    encounter?: any;
+    edit?: boolean;
+  };
+
   const [openAddModal, setOpenAddModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
   const [progressNotes, setProgressNotes] = useState<ApProgressNotes>({ ...newApProgressNotes });
   const [popupCancelOpen, setPopupCancelOpen] = useState(false);
   const [saveProgressNotes] = useSaveProgressNotesMutation();
+
   const [filterForm, setFilterForm] = useState({
     showCancelled: false,
     showAll: false,
     showNurseNotes: false,
     showPhysicianNotes: false
   });
-  const dispatch = useAppDispatch();
 
-  const location = useLocation();
-  const { patient, encounter, edit } = location.state || {};
+  // Header (page title) setup
+  useEffect(() => {
+    const header = (
+      <div className="page-title">
+        <h5>Progress Notes</h5>
+      </div>
+    );
+    const html = ReactDOMServer.renderToStaticMarkup(header);
+    dispatch(setPageCode('Progress_Notes'));
+    dispatch(setDivContent(html));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
-  // Initialize list request with default filters
+  // Initialize list request
   const [progressNotesListRequest, setProgressNotesListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-      , {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key
-      },
-      {
-        fieldName: 'encounter_key',
-        operator: 'match',
-        value: encounter?.key
-      }
-    ],
+      { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+      { fieldName: 'encounter_key', operator: 'match', value: encounter?.key }
+    ]
   });
 
-  // Fetch the list of Progress Notes based on the provided request, and provide a refetch function
-  const { data: progressNotesResponse, refetch, isLoading } = useGetProgressNotesListQuery(progressNotesListRequest);
+  // Fetch list
+  const {
+    data: progressNotesResponse,
+    refetch,
+    isLoading
+  } = useGetProgressNotesListQuery(progressNotesListRequest);
 
-  // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
-  const isSelected = rowData => {
-    if (rowData && progressNotes && progressNotes.key === rowData.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  // Selected row highlight
+  const isSelected = (rowData: any) =>
+    rowData && progressNotes && progressNotes.key === rowData.key ? 'selected-row' : '';
 
-  // Handle Cancel Progress Note Record
-  const handleCancel = () => {
-    //TODO convert key to code
-    saveProgressNotes({ ...progressNotes, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime() }).unwrap().then(() => {
+  // Cancel current note
+  const handleCancel = async () => {
+    try {
+      await saveProgressNotes({
+        ...progressNotes,
+        statusLkey: '3196709905099521', // cancelled
+        deletedAt: Date.now()
+      }).unwrap();
       dispatch(notify({ msg: 'Progress Notes Canceled Successfully', sev: 'success' }));
-      refetch();
-    });
-    setPopupCancelOpen(false);
-  };
-  // Handle Clear Fields
-  const handleClearField = () => {
-    setProgressNotes({ ...newApProgressNotes });
+      await refetch();
+    } catch (e) {
+      dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
+    } finally {
+      setPopupCancelOpen(false);
+    }
   };
 
-  // Handle Add New Progress Notes Record
+  const handleClearField = () => setProgressNotes({ ...newApProgressNotes });
+
   const handleAddNewProgressNotes = () => {
     handleClearField();
     setOpenAddModal(true);
   };
 
-  // Effects
+  // Compose filters from form state
   useEffect(() => {
-    let updatedFilters = [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key
-      },
-      {
-        fieldName: 'encounter_key',
-        operator: 'match',
-        value: encounter?.key
-      }
+    const next: any[] = [
+      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+      { fieldName: 'encounter_key', operator: 'match', value: encounter?.key }
     ];
 
+    // Cancelled / not-cancelled
     if (!filterForm.showCancelled) {
-      updatedFilters.push({
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      });
+      next.push({ fieldName: 'deleted_at', operator: 'isNull', value: undefined });
     }
 
-    if (filterForm.showNurseNotes) {
-      updatedFilters.push({
-        fieldName: 'job_role_lkey',
-        operator: 'match',
-        value: '157153858530600'
-      });
+    // Roles
+    if (!filterForm.showAll) {
+      const wantNurse = filterForm.showNurseNotes;
+      const wantPhysician = filterForm.showPhysicianNotes;
+
+      if (wantNurse && wantPhysician) {
+        // combine with IN when both checked
+        next.push({
+          fieldName: 'job_role_lkey',
+          operator: 'in',
+          value: [NURSE_ROLE_KEY, PHYSICIAN_ROLE_KEY].map(k => `(${k})`).join(' ')
+        });
+      } else if (wantNurse) {
+        next.push({ fieldName: 'job_role_lkey', operator: 'match', value: NURSE_ROLE_KEY });
+      } else if (wantPhysician) {
+        next.push({ fieldName: 'job_role_lkey', operator: 'match', value: PHYSICIAN_ROLE_KEY });
+      }
     }
 
-    if (filterForm.showPhysicianNotes) {
-      updatedFilters.push({
-        fieldName: 'job_role_lkey',
-        operator: 'match',
-        value: '157153854130600'
-      });
-    }
-
-    setProgressNotesListRequest(prev => ({
-      ...prev,
-      filters: updatedFilters
-    }));
+    setProgressNotesListRequest(prev => ({ ...prev, pageNumber: 1, filters: next }));
   }, [filterForm, patient?.key, encounter?.key]);
 
-  // Table Column
-  const columns = [
-    {
-      key: 'progressNotes',
-      title: 'Progress Notes',
-      dataKey: 'progressNotes',
-      render: (rowData: any) => rowData?.progressNotes
-    },
-    {
-      key: 'jobRoleLkey',
-      title: 'JOB ROLE',
-      dataKey: 'jobRoleLkey',
-      render: rowData =>
-        rowData?.jobRoleLvalue
-          ? rowData.jobRoleLvalue.lovDisplayVale
-          : rowData.jobRoleLkey,
-    },
-    {
-      key: 'createdAt',
-      title: 'CREATED AT/BY',
-      render: (row: any) => row?.createdAt ? <>{row?.createdByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
-    },
+  // Table columns (memoized)
+  const columns = useMemo(
+    () => [
+      {
+        key: 'progressNotes',
+        title: 'Progress Notes',
+        dataKey: 'progressNotes',
+        render: (rowData: any) => rowData?.progressNotes
+      },
+      {
+        key: 'jobRoleLkey',
+        title: 'JOB ROLE',
+        dataKey: 'jobRoleLkey',
+        render: (rowData: any) =>
+          rowData?.jobRoleLvalue ? rowData.jobRoleLvalue.lovDisplayVale : rowData.jobRoleLkey
+      },
+      {
+        key: 'createdAt',
+        title: 'CREATED AT/BY',
+        render: (row: any) =>
+          row?.createdAt ? (
+            <>
+              {row?.createdByUser?.fullName}
+              <br />
+              <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
+            </>
+          ) : (
+            ' '
+          )
+      },
+      {
+        key: 'details',
+        title: <Translate>EDIT</Translate>,
+        flexGrow: 2,
+        render: (rowData: any) => (
+          <MdModeEdit
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setProgressNotes(rowData);
+              setOpenAddModal(true);
+            }}
+          />
+        )
+      },
+      {
+        key: 'updatedAt',
+        title: 'UPDATED AT/BY',
+        expandable: true,
+        render: (row: any) =>
+          row?.updatedAt ? (
+            <>
+              {row?.updatedByUser?.fullName}
+              <br />
+              <span className="date-table-style">{formatDateWithoutSeconds(row.updatedAt)}</span>
+            </>
+          ) : (
+            ' '
+          )
+      },
+      {
+        key: 'deletedAt',
+        title: 'CANCELLED AT/BY',
+        expandable: true,
+        render: (row: any) =>
+          row?.deletedAt ? (
+            <>
+              {row?.deletedByUser?.fullName}
+              <br />
+              <span className="date-table-style">{formatDateWithoutSeconds(row.deletedAt)}</span>
+            </>
+          ) : (
+            ' '
+          )
+      },
+      {
+        key: 'cancellationReason',
+        title: 'CANCELLATION REASON',
+        dataKey: 'cancellationReason',
+        expandable: true
+      }
+    ],
+    []
+  );
 
-    {
-      key: 'details',
-      title: <Translate>EDIT</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => (
-        <MdModeEdit
-          title="Edit"
-          size={24}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setProgressNotes(rowData);
-            setOpenAddModal(true);
-          }}
-        />
-      )
-    },
-    {
-      key: 'updatedAt',
-      title: 'UPDATED AT/BY',
-      expandable: true,
-      render: (row: any) => row?.updatedAt ? <>{row?.updatedByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
-    },
-    {
-      key: 'deletedAt',
-      title: 'CANCELLED AT/BY',
-      expandable: true,
-      render: (row: any) => row?.deletedAt ? <>{row?.deletedByUser?.fullName}  <br /><span className='date-table-style'>{formatDateWithoutSeconds(row.deletedAt)}</span></> : ' '
-    },
-    {
-      key: 'cancellationReason',
-      title: 'CANCELLATION REASON',
-      dataKey: 'cancellationReason',
-      expandable: true,
-    },
-  ];
   // Pagination values
-  const pageIndex = progressNotesListRequest.pageNumber - 1;
+  const pageIndex = (progressNotesListRequest.pageNumber ?? 1) - 1;
   const rowsPerPage = progressNotesListRequest.pageSize;
   const totalCount = progressNotesResponse?.extraNumeric ?? 0;
 
   return (
     <div>
-      <AddProgressNotes open={openAddModal} setOpen={setOpenAddModal} progressNotesObj={progressNotes} patient={patient} encounter={encounter} edit={edit} refetch={refetch} />
+      <AddProgressNotes
+        open={openAddModal}
+        setOpen={setOpenAddModal}
+        progressNotesObj={progressNotes}
+        patient={patient}
+        encounter={encounter}
+        edit={!!edit}
+        refetch={refetch}
+      />
+
       <div className="bt-div">
         <MyButton
-          onClick={() => {
-            setPopupCancelOpen(true);
-          }}
+          onClick={() => setPopupCancelOpen(true)}
           prefixIcon={() => <CloseOutlineIcon />}
           disabled={!progressNotes?.key}
         >
           <Translate>Cancel</Translate>
         </MyButton>
-        <Form fluid layout='inline' >
+
+        <Form fluid layout="inline">
           <MyInput
             column
             showLabel={false}
@@ -219,7 +266,6 @@ const ProgressNotes = () => {
             record={filterForm}
             setRecord={setFilterForm}
           />
-
           <MyInput
             column
             width={200}
@@ -230,10 +276,9 @@ const ProgressNotes = () => {
             record={filterForm}
             setRecord={setFilterForm}
           />
-
           <MyInput
             column
-            width={200}
+            width={220}
             fieldLabel="Show Nurse Notes"
             fieldType="check"
             showLabel={false}
@@ -241,37 +286,37 @@ const ProgressNotes = () => {
             record={filterForm}
             setRecord={setFilterForm}
           />
-
           <MyInput
             column
-            width={200}
+            width={240}
             fieldLabel="Show Physician Notes"
             fieldType="check"
             fieldName="showPhysicianNotes"
-            record={filterForm}
             showLabel={false}
+            record={filterForm}
             setRecord={setFilterForm}
           />
-
         </Form>
+
         <div className="bt-right">
           <MyButton onClick={handleAddNewProgressNotes} prefixIcon={() => <PlusIcon />}>
-            Add{' '}
+            Add
           </MyButton>
         </div>
       </div>
+
       <MyTable
         data={progressNotesResponse?.object ?? []}
         columns={columns}
         height={600}
-        onRowClick={rowData => {
-          setProgressNotes({ ...rowData });
-        }}
+        loading={isLoading}
+        onRowClick={rowData => setProgressNotes({ ...rowData })}
         rowClassName={isSelected}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
       />
+
       <CancellationModal
         title="Cancel Progress Notes"
         fieldLabel="Cancellation Reason"

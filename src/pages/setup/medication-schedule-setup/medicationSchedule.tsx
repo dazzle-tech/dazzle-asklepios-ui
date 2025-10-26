@@ -1,21 +1,20 @@
-import React, { useState } from 'react';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Form, Panel } from 'rsuite';
-import MyModal from '@/components/MyModal/MyModal';
-import MyInput from '@/components/MyInput';
-import ReactDOMServer from 'react-dom/server';
-import { useDispatch } from 'react-redux';
-import { setPageCode, setDivContent } from '@/reducers/divSlice';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { faPills } from '@fortawesome/free-solid-svg-icons';
-import { MdDelete } from 'react-icons/md';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import React, { useEffect, useState } from 'react';
+import ReactDOMServer from 'react-dom/server';
 import { FaUndo } from 'react-icons/fa';
-import { MdModeEdit } from 'react-icons/md';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { Form, Panel } from 'rsuite';
 
 const MedicationSchedule = () => {
   //
@@ -45,7 +44,7 @@ const MedicationSchedule = () => {
     {
       key: 'status',
       title: 'Status',
-      dataKey: 'status',
+      dataKey: 'status'
     },
     {
       key: 'actions',
@@ -102,15 +101,17 @@ const MedicationSchedule = () => {
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [Data, setData] = useState(data);
   const dispatch = useDispatch();
+  const { pathname } = useLocation();
+
   //
-  const divContent = (
-    <div className="page-title">
-      <h5>Medication Schedule Setup</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Medication_Schedule_Setup'));
-  dispatch(setDivContent(divContentHTML));
+  // const divContent = (
+  //   <div className="page-title">
+  //     <h5>Medication Schedule Setup</h5>
+  //   </div>
+  // );
+  // const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  // dispatch(setPageCode('Medication_Schedule_Setup'));
+  // dispatch(setDivContent(divContentHTML));
   //
   const handleDeleteConfirm = () => {
     if (selectedItemId !== null) {
@@ -130,6 +131,23 @@ const MedicationSchedule = () => {
     setSelectedItemId(null);
   };
 
+  // Header page setup: dispatch inside useEffect bound to path
+  useEffect(() => {
+    const divContent = (
+      <div className="page-title">
+        <h5>Medication Schedule Setup</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
+    dispatch(setPageCode('Medication_Schedule_Setup'));
+    dispatch(setDivContent(divContentHTML));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
   return (
     <>
       <Panel className="main-supplier-setup-page-gaps">

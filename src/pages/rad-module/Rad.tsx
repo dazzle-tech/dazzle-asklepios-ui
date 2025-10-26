@@ -13,7 +13,8 @@ import {
   faCircleCheck,
   faClock,
   faRectangleList,
-  faTriangleExclamation} from '@fortawesome/free-solid-svg-icons';
+  faTriangleExclamation
+} from '@fortawesome/free-solid-svg-icons';
 
 import { RootState } from '@/store';
 import {
@@ -54,6 +55,13 @@ const Rad = () => {
   const refetchReport = () => {
     ReportRef.current?.reportFetch();
   };
+
+  const TestsRef = useRef(null);
+  const refetchTests = () => {
+    TestsRef.current?.fetchTest();
+  };
+
+
 
   const [listReportResponse, setListReportResponse] = useState<ListRequest>({
     ...initialListRequest,
@@ -272,6 +280,40 @@ const Rad = () => {
         width={'20vw'}
       />
     </div>
+      <div className="count-div-on-top-of-page">
+        <DetailsCard
+          title="Result Ready"
+          number={2}
+          icon={faCircleCheck}
+          color="--green-600"
+          backgroundClassName="result-ready-section"
+          width={'20vw'}
+        />
+        <DetailsCard
+          title="Patient Arrived"
+          number={2}
+          icon={faClock}
+          color="--primary-yellow"
+          backgroundClassName="sample-collected-section"
+          width={'20vw'}
+        />
+        <DetailsCard
+          title="New"
+          number={2}
+          icon={faRectangleList}
+          color="--primary-blue"
+          backgroundClassName="new-section"
+          width={'20vw'}
+        />
+        <DetailsCard
+          title="Total Test"
+          number={2}
+          icon={faTriangleExclamation}
+          color="--gray-dark"
+          backgroundClassName="total-test-section"
+          width={'20vw'}
+        />
+      </div>
 
 
       <div className="container">
@@ -302,7 +344,9 @@ const Rad = () => {
           <Row>
             <Col md={24}>
               <Panel header="Order's Tests" defaultExpanded>
+
                 <Tests
+                  ref={TestsRef}
                   saveReportMutation={saveReportMutation}
                   test={test}
                   setTest={setTest}
@@ -314,11 +358,14 @@ const Rad = () => {
                   reportFetch={refetchReport}
                   fetchAllTests={fetchAllTests}
                 />
+
+
               </Panel>
             </Col>
           </Row>
           <Row>
             <Col md={24}>
+
               <Panel header="Test's Results Processing" defaultExpanded>
                 <div className="flexs-end">
                   <MyButton
@@ -342,12 +389,15 @@ const Rad = () => {
                   patient={patient}
                   order={order}
                   fetchAllTests={fetchAllTests}
+                  refetchTests={refetchTests}
                 />
+
                 <FilmAndReagentsTableModal
                   open={openFilmAndReagentsModal}
                   setOpen={setOpenFilmAndReagentsModal}
                 />
               </Panel>
+
             </Col>
           </Row>
         </div>

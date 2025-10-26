@@ -43,12 +43,15 @@ const Lab = () => {
   const dispatch = useAppDispatch();
   const ResultRef = useRef(null);
   const TestRef = useRef(null);
+
   const refetchTest = () => {
-    TestRef.current?.refetchTest();
+    TestRef.current?.fetchTest();
   };
+
   const refetchResult = () => {
     ResultRef.current?.resultFetch();
   };
+  useEffect(() => { }, [refetchResult]);
   const [currentStep, setCurrentStep] = useState('6055029972709625');
   const [encounter, setEncounter] = useState({ ...newApEncounter, discharge: false });
   const [patient, setPatient] = useState({ ...newApPatient });
@@ -406,6 +409,7 @@ const Lab = () => {
           </Row>
           <Row>
             <Tests
+              ref={TestRef}
               order={order}
               setTest={setTest}
               test={test}
@@ -426,11 +430,13 @@ const Lab = () => {
               patient={patient}
               samplesList={samplesList}
               fetchTest={refetchTest}
+              refetchTest={refetchTest}
               fecthSample={fecthSample}
               listResultResponse={listResultResponse}
               setListResultResponse={setListResultResponse}
               fetchAllTests={fetchAllTests}
             />
+
           </Row>
         </div>
 

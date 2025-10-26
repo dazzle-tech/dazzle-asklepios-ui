@@ -55,7 +55,7 @@ type ResultProps = {
   samplesList: any;
   fecthSample: () => void;
   fetchTest: () => void;
-  fetchAllTests: () => void;
+  refetchTest: () => void;
   listResultResponse: any;
   setListResultResponse: any;
 };
@@ -72,11 +72,13 @@ const Result = forwardRef<unknown, ResultProps>(
       labDetails,
       samplesList,
       fetchTest,
+      refetchTest,
       fecthSample,
       listResultResponse,
       setListResultResponse,
       fetchAllTests
     },
+
     ref
   ) => {
     useImperativeHandle(ref, () => ({
@@ -266,7 +268,7 @@ const Result = forwardRef<unknown, ResultProps>(
         await fetchTest();
         await resultFetch();
       }
-      await resultFetch().then(() => {});
+      await resultFetch().then(() => { });
       setActiveRowKey(null);
     };
 
@@ -679,8 +681,8 @@ const Result = forwardRef<unknown, ResultProps>(
             if (rowData.normalRange?.resultTypeLkey == '6209578532136054') {
               return (
                 joinValuesFromArray(rowData.normalRange?.lovList) +
-                  ' ' +
-                  labDetails?.resultUnitLvalue?.lovDisplayVale || ''
+                ' ' +
+                labDetails?.resultUnitLvalue?.lovDisplayVale || ''
               );
             } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618') {
               if (rowData.normalRange?.normalRangeTypeLkey == '6221150241292558') {
@@ -842,38 +844,11 @@ const Result = forwardRef<unknown, ResultProps>(
                     setResult(rowData);
                     if (rowData.statusLkey !== '265089168359400') {
                       try {
-                        function value(rowData) {
-                          if (rowData.normalRange?.resultTypeLkey === '6209578532136054') {
-                            return joinValuesFromArray(rowData.normalRange?.lovList);
-                          } else if (rowData.normalRange?.resultTypeLkey === '6209569237704618') {
-                            if (rowData.normalRange?.normalRangeTypeLkey === '6221150241292558') {
-                              return (
-                                rowData.normalRange?.rangeFrom + '_' + rowData.normalRange?.rangeTo
-                              );
-                            } else if (
-                              rowData.normalRange?.normalRangeTypeLkey === '6221162489019880'
-                            ) {
-                              return (
-                                'Less Than ' +
-                                rowData.normalRange?.rangeFrom +
-                                ' ' +
-                                labDetails?.resultUnitLvalue?.lovDisplayVale
-                              );
-                            } else if (
-                              rowData.normalRange?.normalRangeTypeLkey === '6221175556193180'
-                            ) {
-                              return (
-                                'More Than ' +
-                                rowData.normalRange?.rangeTo +
-                                ' ' +
-                                labDetails?.resultUnitLvalue?.lovDisplayVale
-                              );
-                            }
-                          }
-                          return 'Not Defined';
-                        }
-                        const resultValue = value(rowData);
-                        const object = rowData;
+                        const resultValue =
+                          rowData.resultValueNumber ??
+                          rowData.resultText ??
+                          rowData.resultLvalue?.lovDisplayVale ??
+                          '';
 
                         const response = await saveTest({
                           ...test,
@@ -882,24 +857,30 @@ const Result = forwardRef<unknown, ResultProps>(
                         }).unwrap();
 
                         await saveResult({
-                          ...object,
+                          ...rowData,
+                          orderKey: test?.orderKey,
+                          testKey: test?.testKey,
+                          patientKey: test?.patientKey,
+                          normalRangeValue: String(resultValue),
                           statusLkey: '265089168359400',
-                          approvedAt: Date.now(),
-                          normalRangeValue: String(resultValue)
+                          approvedAt: Date.now()
                         }).unwrap();
 
-                        setTest({ ...newApDiagnosticOrderTests });
                         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                         setTest({ ...response });
 
-                        await fetchTest();
                         await resultFetch();
-                        await fetchAllTests();
+                        await fetchTest();
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        await refetchTest();
                       } catch (error) {
+                        console.error('❌ Save error:', error);
                         dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
                       }
                     }
                   }}
+
+
                 />
               </Whisper>
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject</Tooltip>}>
@@ -1072,21 +1053,25 @@ const Result = forwardRef<unknown, ResultProps>(
           setOpen={setOpenRejectedResultModal}
           fieldName="rejectedReason"
           handleCancle={async () => {
-            {
-              try {
-                const object = result;
-                await saveResult({
-                  ...object,
-                  statusLkey: '6488555526802885',
-                  rejectedAt: Date.now()
-                }).unwrap();
-                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                setTest({ ...test });
-                resultFetch();
-                setOpenRejectedResultModal(false);
-              } catch (error) {
-                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-              }
+            try {
+              const object = result;
+
+              await saveResult({
+                ...object,
+                statusLkey: '6488555526802885', // Rejected status
+                rejectedAt: Date.now()
+              }).unwrap();
+
+              dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+
+              await resultFetch();
+              await fetchTest();
+              await new Promise(resolve => setTimeout(resolve, 300));
+              await refetchTest();
+
+              setOpenRejectedResultModal(false);
+            } catch (error) {
+              dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
             }
           }}
           object={test}

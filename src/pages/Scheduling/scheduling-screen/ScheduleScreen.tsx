@@ -754,7 +754,7 @@ content={
                 vr={validationResult}
                 column
                 fieldLabel="Resources Type"
-                fieldType="select"
+                fieldType="multyPicker"
                 fieldName="resourcesType"
                 selectData={resourceTypeQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
