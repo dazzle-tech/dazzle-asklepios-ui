@@ -63,22 +63,15 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
     }
   };
 
-  /**
-   * ينفّذ "ضغطة" على زر Add Medication الموجود داخل DrugOrder Modal
-   * بدون أي تعديل على DrugOrder.
-   * - نحاول نلاقي الزر بالنص الداخلي.
-   * - نكرّر المحاولة لفترة قصيرة لحد ما يركّب DOM تبع المودال.
-   */
+
   const clickAddMedicationInsideDrugOrder = () => {
-    const MAX_ATTEMPTS = 30; // ~1.5s إذا كانت الفجوة 50ms
+    const MAX_ATTEMPTS = 30;
     const INTERVAL_MS = 50;
 
     const tryClick = (attempt = 0) => {
-      // نأخذ آخر .rs-modal (عادةً آخر مودال مفتوح)
       const modals = Array.from(document.querySelectorAll('.rs-modal'));
       const container = (modals[modals.length - 1] || document) as HTMLElement;
 
-      // دوّر على أزرار فيها النص "Add Medication"
       const candidates = Array.from(container.querySelectorAll('button, .rs-btn')) as HTMLElement[];
 
       const target = candidates.find(el => {
@@ -350,16 +343,13 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
         <div className="bt-right">
           <MyButton onClick={handelSave}>Save</MyButton>
 
-          {/* زر Pre-medication: افتح مودال الأدوية واضغط Add Medication تلقائياً */}
           <MyButton
             onClick={() => {
               setOpenDrugOrder(true);
-              // ننتظر دورة Event Loop ثم نحاول نضغط الزر مع إعادة المحاولة السريعة
               setTimeout(() => {
                 try {
                   clickAddMedicationInsideDrugOrder();
                 } catch {
-                  /* لا شيء */
                 }
               }, 0);
             }}
