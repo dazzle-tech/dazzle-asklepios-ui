@@ -24,8 +24,6 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import { useLocation } from 'react-router-dom';
-import Icd10Search from '../medical-component/Icd10Search';
-import './styles.less';
 
 // --- Utils ---
 const handleDownload = (attachment: any) => {
@@ -70,7 +68,6 @@ const ProcedureModule: React.FC = () => {
   const { data: patient } = useGetPatientByIdQuery(procedure?.patientKey, {
     skip: !procedure?.patientKey
   });
-
   const { data: encounter } = useGetEncounterByIdQuery(procedure?.encounterKey, {
     skip: !procedure?.encounterKey
   });
@@ -115,11 +112,10 @@ const ProcedureModule: React.FC = () => {
 
   const { data: procedureStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROC_STATUS');
   const { data: procedureCatStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: procedurePrioStatusLovQueryResponse } =
-    useGetLovValuesByCodeQuery('ORDER_PRIORITY');
-  const { data: procedureLevelStatusLovQueryResponse } =
-    useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
+  const { data: procedurePrioStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+  const { data: procedureLevelStatusLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
   const { data: procedureIndStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ICD-10');
+
 
   const filterFields = [
     { label: 'PROCEDURE ID', value: 'procedureId' },
@@ -575,53 +571,49 @@ const ProcedureModule: React.FC = () => {
     }));
   };
 
+
   const contents = (
     <div className="advanced-filters">
       <Form fluid className="dissss">
-        <MyInput
-          fieldType="select"
-          fieldName="Category"
-          selectData={procedureCatStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-
-        <MyInput
-          fieldType="select"
-          fieldName="Priority"
-          selectData={procedurePrioStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-
-        <MyInput
-          fieldType="select"
-          fieldName="Level"
-          selectData={procedureLevelStatusLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
-        <div className="indication-procedure-handle-position">
-          <Icd10Search
-            object={record}
-            setOpject={setRecord}
-            fieldName="indication"
-            fieldLabel="Indication"
+          <MyInput
+            fieldType="select"
+            fieldName="Category"
+            selectData={procedureCatStatusLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
           />
-        </div>
+
+          <MyInput
+            fieldType="select"
+            fieldName="Priority"
+            selectData={procedurePrioStatusLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+
+          <MyInput
+            fieldType="select"
+            fieldName="Level"
+            selectData={procedureLevelStatusLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+<div className='indication-procedure-handle-position'>
+          <Icd10Search object={record} setOpject={setRecord} fieldName="indication" fieldLabel="Indication" />
+          </div>
       </Form>
     </div>
   );
 
   const filters = () => (
     <>
-      <Form fluid className="procedure-module-table-filters-handle-position">
+      <Form fluid className='procedure-module-table-filters-handle-position'>
         <MyInput
           fieldType="date"
           fieldLabel="From Date"
@@ -653,7 +645,6 @@ const ProcedureModule: React.FC = () => {
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
-          className="margin-21"
         />
         <MyInput
           fieldName="value"
@@ -662,17 +653,12 @@ const ProcedureModule: React.FC = () => {
           setRecord={setRecord}
           showLabel={false}
           placeholder="Search"
-          className="margin-21"
         />
-        <Checkbox
-          checked={!showCanceled}
-          onChange={() => setShowCanceled(!showCanceled)}
-          className="margin-21"
-        >
+        <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
           Show Cancelled
         </Checkbox>
       </Form>
-      <AdvancedSearchFilters searchFilter={true} content={contents} />
+      <AdvancedSearchFilters searchFilter={true} content={contents}/>
     </>
   );
 
