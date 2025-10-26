@@ -55,11 +55,8 @@ const PatientProfile = () => {
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
   // Page header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>Patient Registration</h5>
-    </div>
+    "Patient Registration"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
   // Handle save patient
   // const handleSave = async () => {
@@ -148,7 +145,7 @@ console.log('inside patient profile copy new');
   // Effects
   useEffect(() => {
     dispatch(setPageCode('Patient_Registration'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
     dispatch(setPatient({ ...newApPatient }));
 
     return () => {
@@ -174,7 +171,7 @@ console.log('inside patient profile copy new');
   }, [savePatientMutation]);
   useEffect(() => {
     dispatch(setPageCode('Patient_Registration'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
     dispatch(setPatient({ ...newApPatient }));
 
     return () => {
