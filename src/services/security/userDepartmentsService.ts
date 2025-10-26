@@ -12,6 +12,7 @@ export const userDepartmentService = createApi({
         query: (userId) => ({
           url: `/api/setup/user-departments/user/${userId}`,
         }),
+        providesTags: ['UserDepartment'],
       }),
   
       // GET /api/user-departments/exists?facilityId=&userId=&departmentId=
@@ -29,14 +30,16 @@ export const userDepartmentService = createApi({
           method: 'POST',
           body: ufd,
         }),
+        invalidatesTags: ['UserDepartment'],
       }),
   
-      // PATCH /api/user-departments/{id}/toggle
-      toggleUserDepartmentIsActive: builder.mutation<void, number | string>({
+      // DELETE /api/user-departments/{id}
+      deleteUserDepartment: builder.mutation<void, number | string>({
         query: (id) => ({
-          url: `/api/setup/user-departments/${id}/toggle`,
-          method: 'PATCH',
+          url: `/api/setup/user-departments/${id}`,
+          method: 'DELETE',
         }),
+        invalidatesTags: ['UserDepartment'],
       }),
     }),
   });
@@ -46,5 +49,5 @@ export const userDepartmentService = createApi({
     useLazyGetUserDepartmentsByUserQuery,
     useExistsUfdQuery,
     useAddUserDepartmentMutation,
-    useToggleUserDepartmentIsActiveMutation,
+    useDeleteUserDepartmentMutation,
   } = userDepartmentService;
