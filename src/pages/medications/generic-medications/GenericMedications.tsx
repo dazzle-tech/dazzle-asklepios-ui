@@ -53,12 +53,11 @@ const GenericMedications = () => {
   // Header page setUp
   const divContent = (
     <div className="page-title">
-      <h5>Brand Medications List</h5>
+      <h5><Translate>Brand Medications List</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Brand_Medications'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;

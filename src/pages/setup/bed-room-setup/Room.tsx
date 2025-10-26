@@ -58,12 +58,11 @@ const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequ
     // Header page setUp
     const divContent = (
         <div className='page-title'>
-            <h5>Rooms</h5>
+            <h5><Translate>Rooms</Translate></h5>
         </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Rooms'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
     // class name for selected row
     const isSelected = rowData => {
         if (rowData && room && room.key === rowData.key) {

@@ -15,12 +15,15 @@ const Dashboard = () => {
   const dispatch = useAppDispatch();
   const divContent = (
     <div className="display-flex">
-      <h5>Dashboard</h5>
+      <h5>
+        <Translate>
+        Dashboard
+        </Translate>
+        </h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Dashboard'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));

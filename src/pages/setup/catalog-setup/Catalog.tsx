@@ -60,12 +60,11 @@ const Catalog = () => {
   // Header page setUp
   const divContent = (
     <div className="page-title">
-      <h5>Catalog</h5>
+      <h5><Translate>Catalog</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Catalog'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;

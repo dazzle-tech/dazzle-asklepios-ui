@@ -73,12 +73,11 @@ const Practitioners = () => {
   useEffect(() => {
     const divContent = (
       <div className="page-title">
-        <h5>Practitioners</h5>
+        <h5><Translate>Practitioners</Translate></h5>
       </div>
     );
-    const html = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode("Practitioners"));
-    dispatch(setDivContent(html));
+    dispatch(setDivContent(divContent));
     return () => {
       dispatch(setPageCode(""));
       dispatch(setDivContent(""));

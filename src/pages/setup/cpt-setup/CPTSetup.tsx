@@ -8,6 +8,7 @@ import MyInput from '@/components/MyInput';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import Translate from '@/components/Translate';
 
 const CPTSetup = () => {
     const dispatch = useAppDispatch();
@@ -34,12 +35,11 @@ const CPTSetup = () => {
     // Header page setUp
     const divContent = (
         <div className='page-title'>
-            <h5>CPT Diagnosis List</h5>
+            <h5><Translate>CPT Diagnosis List</Translate></h5>
         </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('CPT')); // Set page code in Redux
-    dispatch(setDivContent(divContentHTML)); // Set header content in Redux
+    dispatch(setDivContent(divContent)); // Set header content in Redux
 
     // Handle changes in filter fields
     const handleFilterChange = (fieldName, value) => {

@@ -51,12 +51,11 @@ const Modules = () => {
   const totalCount = moduleListResponse?.extraNumeric ?? 0;
   const divContent = (
     <div className="page-title">
-      <h5>Modules</h5>
+      <h5><Translate>Modules</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Modules'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // Effects
   useEffect(() => {

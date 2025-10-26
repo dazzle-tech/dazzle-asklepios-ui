@@ -39,7 +39,7 @@ const MainScreenBarFilters = ({displaySearch, setDisplaySearch}) => {
   return (
     <div className="main-screen-bar-filters-header-main-container">
       {(width > 800 || !displaySearch) && width > 600 && (
-        <div dangerouslySetInnerHTML={{ __html: divElement }} />
+        <div>{divElement}</div>
       )}
       <div className="main-screen-bar-filters-header">
         <Form fluid layout="inline">

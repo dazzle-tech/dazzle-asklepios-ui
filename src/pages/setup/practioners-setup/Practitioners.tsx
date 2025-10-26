@@ -57,12 +57,11 @@ const Practitioners = () => {
   // Header page setUp
   const divContent = (
     <div className='page-title'>
-      <h5>Practitioners</h5>
+      <h5><Translate>Practitioners</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Practitioners'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;

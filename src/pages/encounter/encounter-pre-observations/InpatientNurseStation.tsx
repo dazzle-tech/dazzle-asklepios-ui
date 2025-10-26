@@ -48,12 +48,15 @@ const InpatientNurseStation = ({}) => {
   // Page header setup
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <h5>Nurse Anamnesis</h5>
+      <h5>
+        <Translate>
+        Nurse Anamnesis
+        </Translate>
+        </h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const handleCompleteEncounter = async () => {
     try {

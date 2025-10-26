@@ -124,12 +124,11 @@ const ProductListIn = ({
   // Header page setUp
   const divContent = (
     <div className='title'>
-      <h5>Inventory Transaction Products</h5>
+      <h5><Translate>Inventory Transaction Products/</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('ProductList'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // class name for selected row
   const isSelected = rowData => {

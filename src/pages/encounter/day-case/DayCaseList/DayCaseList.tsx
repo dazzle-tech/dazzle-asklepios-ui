@@ -46,14 +46,17 @@ const DayCaseList = () => {
   const [open, setOpen] = useState(false);
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <h5> DayCase List</h5>
+      <h5>
+        <Translate>
+         DayCase List
+         </Translate>
+         </h5>
     </div>
   );
 
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('P_DayCaseEncounters'));
   const [cancelEncounter] = useCancelEncounterMutation();
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
@@ -569,12 +572,15 @@ const DayCaseList = () => {
   useEffect(() => {
     const divContent = (
       <div style={{ display: 'flex' }}>
-        <h5> DayCase List</h5>
+        <h5>
+          <Translate>
+           DayCase List
+           </Translate>
+           </h5>
       </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('P_DayCaseEncounters'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
   }, [dispatch]);
 
   return (

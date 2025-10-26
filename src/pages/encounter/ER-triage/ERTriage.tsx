@@ -63,12 +63,11 @@ const ERTriage = () => {
     // Create a JSX element to display as the page header content
     const divContent = (
         <div style={{ display: 'flex' }}>
-            <h5>ER Triage</h5>
+            <h5><Translate>ER Triage</Translate></h5>
         </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('ER_Triage'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
     // Get the refetchEncounter flag from Redux state
 
     const refetch = useSelector((state: any) => state?.refetch?.refetchEncounter);

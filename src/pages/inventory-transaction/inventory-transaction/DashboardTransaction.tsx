@@ -598,12 +598,11 @@ function DashboardTransaction() {
     // Header page setUp
     const divContent = (
       <div className="page-title">
-        <h5>Inventory Transaction</h5>
+        <h5><Translate>Inventory Transaction</Translate></h5>
       </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('DepartmentStock'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

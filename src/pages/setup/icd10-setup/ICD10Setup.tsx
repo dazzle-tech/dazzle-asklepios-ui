@@ -8,6 +8,7 @@ import MyInput from '@/components/MyInput';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import Translate from '@/components/Translate';
 
 const ICD10Setup = () => {
     const dispatch = useAppDispatch();
@@ -34,12 +35,11 @@ const ICD10Setup = () => {
     // Header page setUp
     const divContent = (
         <div className='page-title'>
-            <h5>ICD-10 Diagnosis List</h5>
+            <h5><Translate>ICD-10 Diagnosis List</Translate></h5>
         </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('ICD10'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     // Handle changes in filter fields
     const handleFilterChange = (fieldName, value) => {

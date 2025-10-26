@@ -90,12 +90,11 @@ const Users = () => {
   // Page header setup
   const divContent = (
     <div className='page-title'>
-      <h5>Users</h5>
+      <h5><Translate>Users</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Users'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // ClassName for selected row
   const isSelected = rowData => {
     if (rowData && user && rowData.key === user.key) {

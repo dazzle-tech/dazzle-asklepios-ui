@@ -55,12 +55,11 @@ const AccessRoles = () => {
   // Page header setup
   const divContent = (
     <div title="page-title">
-      <h5>Access Roles</h5>
+      <h5><Translate>Access Roles</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Access_Roles'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // Effects
   useEffect(() => {

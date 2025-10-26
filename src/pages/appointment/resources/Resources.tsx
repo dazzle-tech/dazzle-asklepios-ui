@@ -51,12 +51,15 @@ const Resources = () => {
   // Header page setUp
   const divContent = (
     <div className='page-title'>
-      <h5>Resources</h5>
+      <h5>
+        <Translate>
+        Resources
+        </Translate>
+        </h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Resources'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   const { data: resourcesWithAvailabilityResponse } = useGetResourcesWithAvailabilityQuery(listRequest);
   const { data: resourceAvailabilityDetails, error, isLoading } = useGetResourceWithDetailsQuery(selectedResources.key || '', {
     skip: !selectedResources.key

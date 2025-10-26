@@ -47,12 +47,11 @@ const PotintialDuplicate = () => {
    // Header page setUp
   const divContent = (
     <div className='page-title'>
-      <h5>Potintial Duplicate</h5>
+      <h5><Translate>Potintial Duplicate</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Potintial_Duplicate'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && candidate && rowData.key === candidate.key) {

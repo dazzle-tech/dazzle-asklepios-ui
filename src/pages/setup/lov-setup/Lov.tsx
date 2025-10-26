@@ -54,12 +54,11 @@ const Lov = () => {
   ];
   const divContent = (
     <div className='page-title'>
-      <h5>LOVs</h5>
+      <h5><Translate>LOVs</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Lovs'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   const isSelected = rowData => {
     if (rowData && lov && rowData.key === lov.key) {
       return 'selected-row';

@@ -101,12 +101,11 @@ const WarehouseItemsSetup = () => {
   // Header page setUp
   const divContent = (
     <div className='title'>
-      <h5>Warehouse Products</h5>
+      <h5><Translate>Warehouse Products</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Warehouse_Items_Setup'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && warehouse && warehouse.key === rowData.key) {

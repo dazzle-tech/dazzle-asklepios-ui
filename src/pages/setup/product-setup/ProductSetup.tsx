@@ -70,12 +70,11 @@ const ProductSetup = () => {
   // Header page setUp
   const divContent = (
     <div className='page-title'>
-      <h5>Inventory Products Setup</h5>
+      <h5><Translate>Inventory Products Setup</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Product'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;

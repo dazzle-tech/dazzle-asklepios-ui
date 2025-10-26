@@ -91,12 +91,11 @@ const ERStartTriage = () => {
   // Header setup
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <h5>ER Start Triage</h5>
+      <h5><Translate>ER Start Triage</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Start_Triage'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // handle Complete Encounter Function
   const handleCompleteEncounter = async () => {

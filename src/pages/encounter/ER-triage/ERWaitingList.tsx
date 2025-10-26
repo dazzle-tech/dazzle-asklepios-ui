@@ -44,14 +44,13 @@ const ERWaitingList = () => {
   // header setup
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <h5>ER Wating List</h5>
+      <h5><Translate>ER Wating List</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
   dispatch(setPageCode('ER_Waiting_List'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,

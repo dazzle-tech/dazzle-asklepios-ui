@@ -45,12 +45,11 @@ const UOMGroup = () => {
   // Header page setUp
   const divContent = (
     <div className='page-title'>
-      <h5>UOM Groups</h5>
+      <h5><Translate>UOM Groups</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('UOM_Groups'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
  // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;

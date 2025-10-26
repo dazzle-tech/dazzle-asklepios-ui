@@ -103,16 +103,6 @@ const MedicationSchedule = () => {
   const dispatch = useDispatch();
   const { pathname } = useLocation();
 
-  //
-  // const divContent = (
-  //   <div className="page-title">
-  //     <h5>Medication Schedule Setup</h5>
-  //   </div>
-  // );
-  // const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  // dispatch(setPageCode('Medication_Schedule_Setup'));
-  // dispatch(setDivContent(divContentHTML));
-  //
   const handleDeleteConfirm = () => {
     if (selectedItemId !== null) {
       setData(prev =>

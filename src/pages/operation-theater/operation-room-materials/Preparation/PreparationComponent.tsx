@@ -13,6 +13,7 @@ import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Form } from 'rsuite';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 //Table Data
 const sampleData = [
@@ -204,6 +205,7 @@ const Preparation: React.FC = () => {
       <AdvancedSearchFilters searchFilter />
     </>
   );
+
 
   return (
     <div className="Tables-gap-betwen-columns">

@@ -29,12 +29,11 @@ const WaitingList = () => {
     const dispatch = useDispatch();
     const divContent = (
         <div style={{ display: 'flex' }}>
-            <h5>Inpatient Waiting List</h5>
+            <h5><Translate>Inpatient Waiting List</Translate></h5>
         </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Waiting_Patient_Encounters'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
     const [patientAdmissionModal, setPatientAdmissionModal] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });

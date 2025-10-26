@@ -283,6 +283,7 @@ const SupplierSetup: React.FC = () => {
     };
   }, [dispatch, pathname]);
 
+
   return (
     <>
       <Panel className="main-supplier-setup-page-gaps">

@@ -27,6 +27,7 @@ import ProfileHeader from './ProfileHeader';
 import ProfileSidebar from './ProfileSidebar';
 import ProfileTabs from './ProfileTabs';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
+import Translate from '@/components/Translate';
 
 const { getHeight } = DOMHelper;
 
@@ -51,6 +52,19 @@ const PatientProfile = () => {
     useState<boolean>(false);
   const [openBulkRegistrationModal, setOpenBulkRegistrationModal] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
+
+  const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
+  const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
+  // Page header setup
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>
+      <Translate>
+        Patient Registration
+        </Translate>
+        </h5>
+    </div>
+  );
 
   const handleSave = async () => {
     try {
@@ -96,6 +110,19 @@ const PatientProfile = () => {
     dispatch(setEncounter(null));
   };
 
+
+  // Effects
+  useEffect(() => {
+    dispatch(setPageCode('Patient_Registration'));
+    dispatch(setDivContent(divContent));
+    dispatch(setPatient({ ...newApPatient }));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+
   useEffect(() => {
     if (propsData && propsData.patient) {
       setLocalPatient(propsData.patient);
@@ -118,10 +145,9 @@ const PatientProfile = () => {
         <h5>Patient Registration</h5>
       </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Patient_Registration'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
     dispatch(setPatient({ ...newApPatient }));
 
     return () => {

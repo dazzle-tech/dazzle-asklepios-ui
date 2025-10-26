@@ -42,12 +42,15 @@ const EncounterPreObservations = ({}) => {
   // Page header setup
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <h5>Nurse Station</h5>
+      <h5>
+        <Translate>
+        Nurse Station
+        </Translate>
+        </h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const handleCompleteEncounter = async () => {
     try {

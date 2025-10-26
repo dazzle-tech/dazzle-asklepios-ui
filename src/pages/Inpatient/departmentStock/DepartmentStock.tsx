@@ -5,6 +5,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { DepartmentStockHeader, MainStockTable, SidePanels } from './components';
 import './style.less';
+import Translate from '@/components/Translate';
 
 /**
  * DepartmentStock Component
@@ -280,12 +281,11 @@ const DepartmentStock = () => {
     // Header page setUp
     const divContent = (
       <div className="page-title">
-        <h5>Department Stock</h5>
+        <h5><Translate>Department Stock</Translate></h5>
       </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('DepartmentStock'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

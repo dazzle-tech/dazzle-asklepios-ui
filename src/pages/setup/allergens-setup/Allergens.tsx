@@ -48,12 +48,11 @@ const Allergens = () => {
   // Header page setUp
   const divContent = (
     <div className="page-title">
-      <h5>Allergens</h5>
+      <h5><Translate>Allergens</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Allergens'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // class name for selected row
   const isSelected = rowData => {

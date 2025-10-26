@@ -63,12 +63,11 @@ const Vaccine = () => {
   // Header page setUp
   const divContent = (
     <div className='page-title'>
-      <h5>Vaccine</h5>
+      <h5><Translate>Vaccine</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Vaccine'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && vaccine && vaccine.key === rowData.key) {

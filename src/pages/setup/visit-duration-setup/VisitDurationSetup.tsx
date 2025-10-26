@@ -13,6 +13,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import VisitDurationSetupModal from './VisitDurationSetupModal';
 import { useLocation } from 'react-router-dom';
 
+
 // Sample table data
 const sampleData = [
   {

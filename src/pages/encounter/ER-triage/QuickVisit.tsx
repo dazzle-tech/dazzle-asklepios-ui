@@ -43,12 +43,11 @@ const QuickVisit = ({ }) => {
     // Page header setup
     const divContent = (
         <div style={{ display: 'flex' }}>
-            <h5>Quick Visit</h5>
+            <h5><Translate>Quick Visit</Translate></h5>
         </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Quick_Visit'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     const handleCompleteEncounter = async () => {
         try {

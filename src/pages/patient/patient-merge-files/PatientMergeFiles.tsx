@@ -56,7 +56,7 @@ const PatientMergeFiles: React.FC = () => {
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Files_Merge'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

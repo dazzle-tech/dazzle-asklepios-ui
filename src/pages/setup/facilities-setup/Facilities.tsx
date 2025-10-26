@@ -83,12 +83,11 @@ const Facilities = () => {
   // Page header setup
   const divContent = (
     <div className="page-title">
-      <h5>Facilities</h5>
+      <h5><Translate>Facilities</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Facilities'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // Handle click on Add New Button
   const handleNew = () => {

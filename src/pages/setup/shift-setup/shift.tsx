@@ -181,12 +181,11 @@ const Shifts = () => {
     // Header page setUp
     const divContent = (
       <div className="page-title">
-        <h5>Shift Setup</h5>
+        <h5><Translate>Shift Setup</Translate></h5>
       </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Shift Setup'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

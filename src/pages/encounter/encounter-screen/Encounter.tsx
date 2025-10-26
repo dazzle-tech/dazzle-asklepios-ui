@@ -649,13 +649,12 @@ const Encounter = () => {
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <Text className="title-font-style">Patient Visit &gt; {currentHeader}</Text>
+      <Text className="title-font-style"><Translate>Patient Visit &gt; {currentHeader}</Translate></Text>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
   }, [currentHeader, dispatch]);
   useEffect(() => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');

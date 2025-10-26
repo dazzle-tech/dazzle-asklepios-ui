@@ -32,12 +32,11 @@ const Metadata = () => {
   // Page header setup
   const divContent = (
     <div className="page-title">
-      <h5>Metadata</h5>
+      <h5><Translate>Metadata</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Metadata'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // className for selected row
   const isSelected = rowData => {

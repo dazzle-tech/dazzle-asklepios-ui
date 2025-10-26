@@ -83,12 +83,11 @@ const Departments = () => {
   useEffect(() => {
     const divContent = (
       <div className="page-title">
-        <h5>Departments</h5>
+        <h5><Translate>Departments</Translate></h5>
       </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Departments'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

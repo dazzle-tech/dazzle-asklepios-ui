@@ -255,12 +255,11 @@ const ControlledMedications = () => {
     // Header page setUp
     const divContent = (
       <div className="page-title">
-        <h5>Controlled Medications</h5>
+        <h5><Translate>Controlled Medications</Translate></h5>
       </div>
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Controlled Medications'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

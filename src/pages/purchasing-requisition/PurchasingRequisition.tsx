@@ -20,6 +20,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import AddPurchasing from './AddPurchasing';
 import AddItem from './AddItem';
 import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import Translate from '@/components/Translate';
 
 //table data
 const sampleData = [
@@ -349,18 +350,17 @@ const PurchasingRequisition = () => {
   // Header page setUp
   const divContent = (
     <div className="page-title">
-      <h5>Purchasing Requisition</h5>
+      <h5><Translate>Purchasing Requisition</Translate></h5>
     </div>
   );
   // Render the divContent as HTML string
   // This is used to set the page code and content in the Redux store
   // This allows the page to be rendered correctly in the application
   // and to be displayed in the sidebar navigation
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   // Set the page code and content in the Redux store
   dispatch(setPageCode('Purchasing_Requisition'));
   // Set the div content in the Redux store
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // Calculate the page index based on the current page number
   const pageIndex = listRequest.pageNumber - 1;
   // Calculate the number of rows per page and total count

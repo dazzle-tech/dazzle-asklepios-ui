@@ -128,12 +128,11 @@ const ProductDetails = ({
   // Header page setUp
   const divContent = (
     <div className='title'>
-      <h5>Warehouse Products</h5>
+      <h5><Translate>Warehouse Products</Translate></h5>
     </div>
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('ProductList'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // class name for selected row
   const isSelected = rowData => {

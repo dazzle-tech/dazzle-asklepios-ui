@@ -43,12 +43,11 @@ const Checklist = () => {
       // Header page setUp
       const divContent = (
         <div className="page-title">
-          <h5>Checklists</h5>
+          <h5><Translate>Checklists</Translate></h5>
         </div>
       );
-      const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
       dispatch(setPageCode('Checklists'));
-      dispatch(setDivContent(divContentHTML));
+      dispatch(setDivContent(divContent));
   
       return () => {
         dispatch(setPageCode(''));
