@@ -40,6 +40,7 @@
   ::after {
     border-color: hsl(var(--border));
   }
+
   body {
     background: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -62,16 +63,20 @@
   .shadow-card {
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 8px rgba(16, 24, 40, 0.06);
   }
+
   .text-ink-heading {
     color: hsl(var(--foreground));
   }
+
   .text-ink-subtle {
     color: hsl(var(--muted-foreground));
   }
+
   .muted {
     font-size: 14px;
     color: hsl(var(--muted-foreground));
   }
+
   .meta {
     font-size: 12px;
     color: hsl(var(--muted-foreground));
@@ -112,7 +117,8 @@
 /* Keep native right-side icons; add space for left icons */
 .form-strict input[type='date'],
 .form-strict input[type='time'] {
-  padding-left: 2.25rem !important; /* equals pl-9 */
+  padding-left: 2.25rem !important;
+  /* equals pl-9 */
 }
 
 /* Focus state similar to EMG */
@@ -141,7 +147,8 @@
   height: 24px !important;
   width: 44px !important;
   border-radius: 9999px !important;
-  background: #e9eef7 !important; /* OFF */
+  background: #e9eef7 !important;
+  /* OFF */
   border: 1px solid #d7e0ed !important;
   transition: 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
   outline: none !important;
@@ -149,12 +156,13 @@
 }
 
 .settings-v2 [role='switch'][data-state='checked'] {
-  background: #0b66ff !important; /* ON */
+  background: #0b66ff !important;
+  /* ON */
   border-color: #0b66ff !important;
   box-shadow: 0 8px 16px -8px rgba(11, 102, 255, 0.45) !important;
 }
 
-.settings-v2 [role='switch'] > span {
+.settings-v2 [role='switch']>span {
   position: absolute !important;
   top: 50% !important;
   height: 20px !important;
@@ -162,12 +170,13 @@
   background: #ffffff !important;
   border-radius: 9999px !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
-  transform: translate(4px, -50%) !important; /* OFF position */
+  transform: translate(4px, -50%) !important;
+  /* OFF position */
   transition: transform 0.18s ease-in-out !important;
   box-shadow: 0.18s ease-in-out !important;
 }
 
-.settings-v2 [role='switch'][data-state='checked'] > span {
+.settings-v2 [role='switch'][data-state='checked']>span {
   transform: translate(1px, -50%) !important;
 }
 
@@ -194,11 +203,13 @@
   border-color: #0b66ff !important;
   box-shadow: 0 0 0 2px rgba(11, 102, 255, 0.15) !important;
 }
+
 .rs-theme-dark {
   .settings-v2 .shad-separator {
     background: #3f3f3f !important;
   }
 }
+
 .rs-theme-dark {
   .\!border-\[\#E6EBF1\] {
     border-color: #303031 !important;
@@ -218,4 +229,65 @@
 
 .\!border-\[\#E6EBF1\] {
   border-color: #3a3a3a !important;
+}
+
+/* dark mode control  */
+.dark {
+  --background: 220 13% 5%;       
+  --foreground: 0 0% 98%; 
+
+  --card: 220 13% 10%;
+  --card-foreground: 0 0% 98%;
+
+  --popover: 220 13% 12%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 211 100% 60%;
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 220 8% 15%;
+  --secondary-foreground: 0 0% 98%;
+
+  --muted: 220 8% 12%;
+  --muted-foreground: 0 0% 70%;
+
+  --destructive: 0 85% 60%;
+  --warning: 38 92% 60%;
+  --success: 151 61% 40%;
+
+  --border: 220 8% 25%;
+  --input: 220 8% 25%;
+  --ring: 211 100% 60%;
+
+  --radius: 0.75rem;
+}
+
+.dark body {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.dark .card,
+.dark [class*="bg-[hsl(var(--card"],
+.dark [class*="bg-[var(--card"] {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.dark p,
+.dark span,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark [class*="text-[hsl(var(--muted-foreground"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.dark .border,
+.dark [class*="border-"] {
+  border-color: hsl(var(--border)) !important;
+}
+.dark .hover-bg {
+  transition: background-color 0.2s ease;
+}
+.dark .hover-bg:hover {
+  background-color: hsl(var(--popover)) !important;
 }
