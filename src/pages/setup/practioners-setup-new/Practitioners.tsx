@@ -18,7 +18,7 @@ import {
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
-} from "@/services/practitioner/PractitionerService";
+} from "@/services/setup/practitioner/PractitionerService";
 import "./styles.less";
 import { Practitioner } from "@/types/model-types-new";
 import { newPractitioner } from "@/types/model-types-constructor-new";

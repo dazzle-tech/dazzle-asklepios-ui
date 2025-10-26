@@ -38,9 +38,9 @@ import { MedicalsheetsService } from './services/MedicalSheetsService';
 import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
-import { PractitionerService } from './services/practitioner/PractitionerService';
-import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
-
+import { PractitionerService } from './services/setup/practitioner/PractitionerService';
+import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
+import {Icd10Service} from './services/setup/icd10service';
 
 export const store = configureStore({
   reducer: {
@@ -131,6 +131,7 @@ export const store = configureStore({
 
     //service
     [serviceService.reducerPath]: serviceService.reducer,
+    [Icd10Service.reducerPath]: Icd10Service.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -168,6 +169,7 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+      Icd10Service.middleware,
     ])
 });
 
