@@ -268,13 +268,14 @@ const DetailsModal = ({
     if (orderMedication.administrationInstructions != null) {
       setAdminInstructions(prevadminInstructions =>
         prevadminInstructions
-          ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
-            item => item.key === orderMedication.administrationInstructions
-          )?.lovDisplayVale
-          }`
+          ? `${prevadminInstructions}, ${
+              administrationInstructionsLovQueryResponse?.object?.find(
+                item => item.key === orderMedication.administrationInstructions
+              )?.lovDisplayVale
+            }`
           : administrationInstructionsLovQueryResponse?.object?.find(
-            item => item.key === orderMedication.administrationInstructions
-          )?.lovDisplayVale
+              item => item.key === orderMedication.administrationInstructions
+            )?.lovDisplayVale
       );
     }
 
@@ -440,20 +441,22 @@ const DetailsModal = ({
           <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <CheckIcon /> Save & Close
           </span>
-        } size="100vw"
+        }
+        size="100vw"
+        height="92vh"
         isDisabledActionBtn={
           edit
             ? true
             : orderMedication.key
-              ? orderMedication?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'
-              : false
+            ? orderMedication?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'
+            : false
         }
         leftTitle={
           isUnregistered
             ? 'Unregistered Medication'
             : selectedGeneric
-              ? selectedGeneric.genericName
-              : 'Select Generic'
+            ? selectedGeneric.genericName
+            : 'Select Generic'
         }
         rightTitle="Medication Order Details"
         leftContent={
@@ -477,10 +480,7 @@ const DetailsModal = ({
             >
               Order Related Tests
             </MyButton>
-            <MyButton
-              prefixIcon={() => <PlusIcon />}>
-              Add Medication
-            </MyButton>
+            <MyButton prefixIcon={() => <PlusIcon />}>Add Medication</MyButton>
           </div>
         }
         rightContent={
