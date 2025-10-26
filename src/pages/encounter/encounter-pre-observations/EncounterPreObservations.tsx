@@ -41,13 +41,10 @@ const EncounterPreObservations = ({}) => {
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>Nurse Station</h5>
-    </div>
+        "Nurse Station" 
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const handleCompleteEncounter = async () => {
     try {

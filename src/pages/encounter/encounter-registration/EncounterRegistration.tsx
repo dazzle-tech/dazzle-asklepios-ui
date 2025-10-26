@@ -339,13 +339,10 @@ const EncounterRegistration = () => {
 
   useEffect(() => {
     const header = (
-      <div style={{ display: 'flex' }}>
-        <h5>Patient Registration</h5>
-      </div>
+      "Patient Registration"
     );
-    const headerHTML = ReactDOMServer.renderToStaticMarkup(header);
     dispatch(setPageCode('Patient_Registration'));
-    dispatch(setDivContent(headerHTML));
+    dispatch(setDivContent(header));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));

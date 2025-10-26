@@ -48,13 +48,10 @@ const EncounterList = () => {
   const dispatch = useDispatch();
 
   const divContent = (
-    <div className="display-flex">
-      <h5>Patients Visit List</h5>
-    </div>
+        "Patients Visit List"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('P_Encounters'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
 
@@ -661,14 +658,6 @@ const EncounterList = () => {
   //useEffect
   useEffect(() => {
     handleCountForToday();
-    // let count = 0;
-    // if(encounterListForTodayResponse?.object)
-    // for(const visit of encounterListForTodayResponse?.object){
-    //  if(visit?.encounterStatusLvalue?.key === "91109811181900"){
-    //   count++;
-    //  }
-    // }
-    // setCompletedVisits(count);
   }, [encounterListForTodayResponse]);
 
   useEffect(() => {

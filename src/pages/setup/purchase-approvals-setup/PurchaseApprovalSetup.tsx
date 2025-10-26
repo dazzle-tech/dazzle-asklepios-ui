@@ -16,6 +16,7 @@ import { MdModeEdit } from 'react-icons/md';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
+import Translate from '@/components/Translate';
 //Table Data
 const sampleData = [
   {
@@ -169,14 +170,11 @@ const PurchaseApprovalSetup = () => {
 
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Purchase Approval</h5>
-      </div>
+      "Purchase Approval"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Purchase_Approval'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

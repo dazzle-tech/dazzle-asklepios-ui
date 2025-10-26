@@ -599,14 +599,11 @@ const InventoryTransaction = () => {
     }, [dateFilter]);
 
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5> Inventory Transaction</h5>
-        </div>
+            "Inventory Transaction"
     );
     // page header setup
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Inventory_Transaction'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     const tablebuttons = (<div className='bt-right-group'>
                     <div className='btns-group'>

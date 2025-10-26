@@ -12,6 +12,7 @@ import { useDispatch } from 'react-redux';
 import { AiOutlineEye } from 'react-icons/ai';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import ReactDOMServer from 'react-dom/server';
+import Translate from '@/components/Translate';
 
 // Sample data used for initial state
 const sampleData = [
@@ -165,13 +166,10 @@ const ReportResultTemplate = () => {
 
     useEffect(() => {
       const divContent = (
-        <div className="page-title">
-          <h5>Report Result Template</h5>
-        </div>
+        "Report Result Template"
       );
-      const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
       dispatch(setPageCode('Report_Result_Template'));
-      dispatch(setDivContent(divContentHTML));
+      dispatch(setDivContent(divContent));
     }, [dispatch]);
   
 

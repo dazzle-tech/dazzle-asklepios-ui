@@ -70,13 +70,10 @@ const ViewTriage = () => {
 
     // Header setup
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5>ER View Triage</h5>
-        </div>
+            "ER View Triage"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('ER_View_Triage'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
 
     // handle Go Back Button

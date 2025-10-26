@@ -17,6 +17,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import Card from './Card';
 import './style.less';
 import { useLocation } from 'react-router-dom';
+import Translate from '@/components/Translate';
 
 // Table Data
 const sampleData = [
@@ -268,20 +269,18 @@ const SupplierSetup: React.FC = () => {
   // Header page setup: dispatch inside useEffect bound to path
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Supplier Setup</h5>
-      </div>
+      "Supplier Setup"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Supplier_Setup'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
     };
   }, [dispatch, pathname]);
+
 
   return (
     <>

@@ -14,13 +14,10 @@ import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icon
 const Dashboard = () => {
   const dispatch = useAppDispatch();
   const divContent = (
-    <div className="display-flex">
-      <h5>Dashboard</h5>
-    </div>
+        "Dashboard"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Dashboard'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));

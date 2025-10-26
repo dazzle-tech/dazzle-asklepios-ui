@@ -50,13 +50,10 @@ const Modules = () => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = moduleListResponse?.extraNumeric ?? 0;
   const divContent = (
-    <div className="page-title">
-      <h5>Modules</h5>
-    </div>
+    "Modules"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Modules'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // Effects
   useEffect(() => {

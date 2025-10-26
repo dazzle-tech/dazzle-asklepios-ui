@@ -324,7 +324,7 @@ const Recovery = () => {
         setRecord={setDateFilter}
         showLabel={false}
       />
-      <Checkbox>Show Moved to bed</Checkbox>
+      <Checkbox>Show Moved to bedd</Checkbox>
     </Form>
 
           <AdvancedSearchFilters searchFilter={true}/>

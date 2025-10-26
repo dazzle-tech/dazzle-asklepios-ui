@@ -34,6 +34,7 @@ import Report from './Report';
 import Tests from './Tests';
 import MyButton from '@/components/MyButton/MyButton';
 import FilmAndReagentsTableModal from './FilmAndReagentsTableModal';
+import Translate from '@/components/Translate';
 const Rad = () => {
   const dispatch = useAppDispatch();
   const [currentStep, setCurrentStep] = useState('6055029972709625');
@@ -122,13 +123,10 @@ const Rad = () => {
   const [saveReport, saveReportMutation] = useSaveDiagnosticOrderTestRadReportMutation();
 
   const divContent = (
-    <div className="flexs">
-      <h5>Clinical Radiology</h5>
-    </div>
+    "Clinical Radiology"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Rad'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   useEffect(() => {
     setPatient(order.patient);

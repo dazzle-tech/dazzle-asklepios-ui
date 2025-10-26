@@ -52,13 +52,10 @@ const GenericMedications = () => {
   const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5>Brand Medications List</h5>
-    </div>
+      "Brand Medications List"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Brand_Medications'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;

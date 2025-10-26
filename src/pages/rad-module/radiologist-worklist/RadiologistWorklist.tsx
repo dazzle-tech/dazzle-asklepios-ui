@@ -37,12 +37,10 @@ const RadiologyImageList = () => {
 
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Radiology Image List</h5>
-      </div>
+      "Radiology Image List"
     );
     dispatch(setPageCode('Radiology_Image_List'));
-    dispatch(setDivContent(ReactDOMServer.renderToStaticMarkup(divContent)));
+    dispatch(setDivContent(divContent));
   }, [dispatch]);
 
 const FilterModel = (

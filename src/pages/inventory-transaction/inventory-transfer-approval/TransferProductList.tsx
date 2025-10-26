@@ -127,13 +127,10 @@ const TransferProductList = ({
 
   // Header page setUp
   const divContent = (
-    <div className='title'>
-      <h5>Inventory Transfer Products</h5>
-    </div>
+      "Inventory Transfer Products"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('ProductList'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // class name for selected row
   const isSelected = rowData => {

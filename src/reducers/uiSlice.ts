@@ -12,6 +12,7 @@ const initialState = {
 
     pt: { // اللغة البرتغالية
     "First Name" : "primeiro nome",
+    "Patient Registration" : "Cadastro de Paciente",
     "Basic Information": "Informações Básicas",
     "Demographics" : "Demografia",
     "Extra Details" : "Detalhes extras",
@@ -177,7 +178,7 @@ const initialState = {
     "Next" : "Próximo",
     "Add payment" : "Adicionar pagamento"
     }
-    
+
   },
   screenKey: '',
   loading: false,

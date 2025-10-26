@@ -58,13 +58,10 @@ const DentalActions = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5>Dental Actions</h5>
-    </div>
+   "Dental Actions"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Dental_Actions'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   
   // class name for selected row
   const isSelected = rowData => {

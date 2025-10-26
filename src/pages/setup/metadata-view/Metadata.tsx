@@ -31,13 +31,10 @@ const Metadata = () => {
   const totalCount = metadataListResponse?.extraNumeric ?? 0;
   // Page header setup
   const divContent = (
-    <div className="page-title">
-      <h5>Metadata</h5>
-    </div>
+    "Metadata"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Metadata'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // className for selected row
   const isSelected = rowData => {

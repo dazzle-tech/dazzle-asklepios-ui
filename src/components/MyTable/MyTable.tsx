@@ -20,6 +20,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import clsx from 'clsx';
 import './styles.less';
 import { useSelector } from 'react-redux';
+import Translate from '../Translate';
 
 export interface ColumnConfig {
   key: string;
@@ -145,7 +146,7 @@ const MyTable: React.FC<MyTableProps> = ({
                             : 'flex-start'
                         }
                       >
-                        {col.title}
+                       <Translate>{col.title}</Translate>
                         {sortIcon}
                       </Box>
                     </TableCell>
@@ -230,7 +231,7 @@ const MyTable: React.FC<MyTableProps> = ({
                                         align={col.align || 'left'}
                                         sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
                                       >
-                                        {col.title}
+                                       <Translate>{col.title}</Translate>
                                       </TableCell>
                                     ))}
                                   </TableRow>

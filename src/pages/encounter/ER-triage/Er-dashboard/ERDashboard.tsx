@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import ReactDOMServer from 'react-dom/server';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
+import Translate from '@/components/Translate';
 
 import ERDashboardTable from './ERDashboardTable';
 import ERDashboardTableTwo from './ERDashboardTableTwo';
@@ -14,15 +15,12 @@ const ERDashboards: React.FC = () => {
 
   useLayoutEffect(() => {
     const header = (
-      <div className="page-title">
-        <h5>ER Dashboard</h5>
-      </div>
+      "ER Dashboard"
     );
-    const headerHTML = ReactDOMServer.renderToStaticMarkup(header);
 
     const id = requestAnimationFrame(() => {
       dispatch(setPageCode('ER_Dashboard'));
-      dispatch(setDivContent(headerHTML));
+      dispatch(setDivContent(header));
     });
 
     return () => {
@@ -31,6 +29,7 @@ const ERDashboards: React.FC = () => {
       dispatch(setDivContent(''));
     };
   }, [dispatch, pathname]);
+
 
   return (
     <div className="main-tables-container-er-dashboard">
