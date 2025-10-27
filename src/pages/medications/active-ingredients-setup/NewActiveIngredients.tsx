@@ -20,7 +20,6 @@ import DoseAdjustment from './DoseAdjustment';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import BackButton from '@/components/BackButton/BackButton';
-import { Tabs } from 'rsuite';
 import MOAAndPharmacokinetics from './MOAAndPharmacokinetics';
 import DrugDrugAndFoodInteractions from './DrugDrugAndFoodInteractions';
 import PregnancyLactationAndSpecialPopulation from './PregnancyLactationAndSpecialPopulation';
@@ -93,7 +92,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
             title="Indications"
             content={<Indications selectedActiveIngredients={selectedactiveIngredient} />}
           />
-      )
+      ),
     },
     {
       title: 'Contraindications',

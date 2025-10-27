@@ -1,5 +1,4 @@
 import React from 'react';
-import { Tabs } from 'rsuite';
 import Request from './request/Request';
 import { useLocation } from 'react-router-dom';
 import { useAppSelector } from '@/hooks';
@@ -7,18 +6,16 @@ import { useGetRequestedOperationQuery } from '@/services/operationService';
 import AnesthesiaCarePlan from './AnesthesiaCarePlan';
 import PreCheckList from './PreCheckList';
 import './styles.less';
+import MyTab from '@/components/MyTab';
 const OperationRequest = props => {
   const location = useLocation();
 
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? false;
   const authSlice = useAppSelector(state => state.auth);
   const {
     data: requestedOperation,
     refetch,
-    isLoading,
-    error
   } = useGetRequestedOperationQuery(
     {
       encounterKey: encounter?.key,
@@ -29,9 +26,10 @@ const OperationRequest = props => {
     }
   );
 
-  return (
-    <Tabs defaultActiveKey="1" appearance="subtle">
-      <Tabs.Tab eventKey="1" title=" Request">
+  const tabData = [
+    {
+      title: 'Request',
+      content: (
         <div className="remove-over-flow-handle">
           <Request
             patient={patient}
@@ -40,9 +38,11 @@ const OperationRequest = props => {
             refetchrequest={refetch}
           />
         </div>
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="2" title="Anesthesia Care Plan" disabled={!requestedOperation?.object}>
-        {' '}
+      )
+    },
+    {
+      title: 'Anesthesia Care Plan',
+      content: (
         <div className="remove-over-flow-handle">
           <AnesthesiaCarePlan
             operation={requestedOperation}
@@ -51,8 +51,12 @@ const OperationRequest = props => {
             user={authSlice.user}
           />
         </div>
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="3" title=" Pre-Op Checklist" disabled={!requestedOperation?.object}>
+      ),
+      disabled: !requestedOperation?.object
+    },
+    {
+      title: 'Pre-Op Checklist',
+      content: (
         <div className="remove-over-flow-handle">
           <PreCheckList
             operation={requestedOperation}
@@ -61,11 +65,15 @@ const OperationRequest = props => {
             user={authSlice.user}
           />
         </div>
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="4" title="  Devices\ Implants" disabled={!requestedOperation?.object}>
-        4
-      </Tabs.Tab>
-    </Tabs>
+      ),
+      disabled: !requestedOperation?.object
+    },
+    { title: 'Devices Implants', content: <>4</>, disabled: !requestedOperation?.object }
+  ];
+  return (
+    <MyTab 
+     data={tabData}
+    />
   );
 };
 
