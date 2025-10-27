@@ -34,7 +34,7 @@ import { Col, Divider, Form, Radio, RadioGroup, Row, Text } from 'rsuite';
 import PatientOrder from '@/pages/encounter/encounter-component/diagnostics-order';
 import clsx from 'clsx';
 import Section from '@/components/Section';
-const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable }) => {
+const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable, activeTab, setActiveTab }) => {
   const dispatch = useAppDispatch();
   const [intraoperative, setIntraoperative] = useState({ ...newApOperationIntraoperativeEvents });
 
@@ -418,6 +418,7 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable 
                       selectData={severitylovqueryresponse?.object ?? []}
                       selectDataLabel="lovDisplayVale"
                       selectDataValue="key"
+                      searchable={false}
                       fieldName="complicationSeverityLkey"
                       record={intraoperative}
                       setRecord={setIntraoperative}
@@ -592,11 +593,11 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable 
                         data={[]}
                         columns={MedicationsGivenColumns}
                         height={250}
-                        onRowClick={rowData => {}}
+                        onRowClick={rowData => { }}
                       />
                     }
                     rightLink=""
-                    setOpen={() => {}}
+                    setOpen={() => { }}
                     openedContent=""
                   />
                 </Col>
@@ -609,11 +610,11 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable 
                         data={[]}
                         columns={FluidsGivenColumns}
                         height={250}
-                        onRowClick={rowData => {}}
+                        onRowClick={rowData => { }}
                       />
                     }
                     rightLink=""
-                    setOpen={() => {}}
+                    setOpen={() => { }}
                     openedContent=""
                   />
                 </Col>
@@ -625,11 +626,11 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable 
                         data={[]}
                         columns={BloodProductsGivenColumns}
                         height={250}
-                        onRowClick={rowData => {}}
+                        onRowClick={rowData => { }}
                       />
                     }
                     rightLink=""
-                    setOpen={() => {}}
+                    setOpen={() => { }}
                     openedContent=""
                   />
                 </Col>
@@ -641,6 +642,15 @@ const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable 
       <div className="bt-div">
         <div className="bt-right">
           <MyButton onClick={handleSave}>Save</MyButton>
+          <MyButton
+            onClick={() => {
+              const nextTab = (parseInt(activeTab) + 1).toString();
+              setActiveTab(nextTab);
+            }}
+            style={{ marginLeft: '10px' }}
+          >
+            Next
+          </MyButton>
         </div>
       </div>
 

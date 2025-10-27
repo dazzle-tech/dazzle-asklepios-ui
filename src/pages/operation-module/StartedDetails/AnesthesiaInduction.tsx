@@ -12,304 +12,371 @@ import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 import IntraoperativeMonitoring from "./IntraoperativeMonitoring";
 import MyModal from "@/components/MyModal/MyModal";
-import DrugOrder from "@/pages/encounter/encounter-component/drug-order";
+import DetailsModal from "@/pages/encounter/encounter-component/drug-order/DetailsModal";
 import clsx from "clsx";
-const AnesthesiaInduction = ({ operation,patient,encounter ,editable}) => {
+import { newApDrugOrderMedications } from "@/types/model-types-constructor";
+
+
+
+const AnesthesiaInduction = ({ operation, patient, encounter, editable, activeTab, setActiveTab }) => {
     const dispatch = useAppDispatch();
     const [anesthesiaInduction, setAnesthesiaInduction] = useState({ ...newApOperationAnesthesiaInductionMonitoring });
-    const { data: anesthesiaInductionMonitoring } = useGetOperationAnesthesiaInductionMonitoringByOperationQuery(operation?.key , {
+    const { data: anesthesiaInductionMonitoring } = useGetOperationAnesthesiaInductionMonitoringByOperationQuery(operation?.key, {
         skip: !operation?.key
     });
     const [tag, setTag] = useState([]);
-    const[open,setOpen]=useState(false);
+    const [open, setOpen] = useState(false);
     const { data: anesthTypesLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
     const { data: medadvirsedLov } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
     const [save] = useSaveOperationAnesthesiaInductionMonitoringMutation();
+    const [orderMedication, setOrderMedication] = useState({ ...newApDrugOrderMedications });
+    const { data: orderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MEDCATION_ORDER_TYPE');
+
+
 
     useEffect(() => {
         if (anesthesiaInductionMonitoring) {
-            setAnesthesiaInduction({...anesthesiaInductionMonitoring?.object ,inductionStartTime: new Date(anesthesiaInductionMonitoring.object?.inductionStartTime)});
+            setAnesthesiaInduction({ ...anesthesiaInductionMonitoring?.object, inductionStartTime: new Date(anesthesiaInductionMonitoring.object?.inductionStartTime) });
             setTag(anesthesiaInductionMonitoring?.object?.monitorsConnected?.split(',') || []);
         }
     }, [anesthesiaInductionMonitoring]);
 
 
-    const handelSave = async () => {
-        console.log(joinValuesFromArray(tag))
+    const preMedKey = orderTypeLovQueryResponse?.object?.find(
+        item => item.lovDisplayVale?.toLowerCase().includes('pre-med')
+    )?.key;
+
+
+    const handleSave = async () => {
         try {
             await save({
-                ...anesthesiaInduction
-                , operationRequestKey: operation?.key,
+                ...anesthesiaInduction,
+                operationRequestKey: operation?.key,
                 monitorsConnected: joinValuesFromArray(tag),
-                inductionStartTime: new Date(anesthesiaInduction.inductionStartTime).getTime()
+                inductionStartTime: new Date(anesthesiaInduction.inductionStartTime).getTime(),
             }).unwrap();
-            dispatch(notify({ msg: "Saved Successfly", sev: "succss" }))
+
+            dispatch(
+                notify({
+                    msg: (
+                        <span>saved successfully!</span>
+                    ),
+                    sev: 'success',
+                })
+            );
         } catch (error) {
-            dispatch(notify({ msg: "Faild to Saved", sev: "error" }))
+            console.error('❌ Save failed:', error);
+
+            dispatch(
+                notify({
+                    msg: (
+                        <span>Failed to save data. Please try again.</span>
+                    ),
+                    sev: 'error',
+                })
+            );
         }
-    }
+    };
+
+    const handleComplete = () => {
+        dispatch(
+            notify({
+                msg: (
+                    <span>Operation completed successfully</span>
+                ),
+                sev: 'success',
+            })
+        );
+    };
+
+
+
+
+
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean).join(', ');
     };
-    return (<Form fluid  className={clsx('', {
-                                                            'disabled-panel': !editable
-                                                          })}>
-        <Row>
-            <Col md={12}>
-                <Row>
-                    <Col md={24}>
-                        <div className='container-form'>
-                            <div className='title-div'>
-                                <Text>Pre-Induction Checks</Text>
+    return (
 
-                            </div>
-                            <Divider />
-                            <Row>
-                                <Col md={12}>
-                                    <Row>
-                                        <Col md={24}>
-                                            <MyInput
-                                                width="100%"
-                                                fieldType="number"
-                                                rightAddon="hours"
-                                                rightAddonwidth={50}
-                                                fieldName="fastingDuration"
-                                                record={anesthesiaInduction}
-                                                setRecord={setAnesthesiaInduction} />
-                                        </Col>
-                                    </Row>
-                                    <Row>
-                                        <Col md={24}></Col>
-                                    </Row>
-                                </Col>
-                                <Col md={12}>
-                                    <Row>
-                                        <Col md={24}>
-                                            <MyInput
-                                                width="100%"
-                                                unCheckedLabel="Not Established"
-                                                checkedLabel="Established"
-                                                fieldLabel="IV Line Established"
-                                                fieldType="checkbox"
-                                                fieldName="ivLineEstablished"
-                                                record={anesthesiaInduction}
-                                                setRecord={setAnesthesiaInduction}
-                                            />
-                                        </Col>
-                                    </Row>
-                                    <Row>
-                                        <Col md={24}>
-                                            <MyTagInput tags={tag} setTags={setTag} labelText="Monitors Connected" />
-                                        </Col>
-                                    </Row></Col>
-                            </Row>
+        <Form fluid className={clsx('', { 'disabled-panel': !editable })}>
+            <Row gutter={10}>
+                <Col md={12}>
+                    <Row gutter={10}>
+                        <Col md={24}>
+                            <div className='container-form'>
+                                <div className='title-div'>
+                                    <Text>Pre-Induction Checks</Text>
 
-                        </div>
-                    </Col>
-                </Row>
-
-                <GenericAdministeredMedications
-                    title="Pre-Medication"
-                    parentKey={operation?.key}
-                    filterFieldName="operationRequestKey"
-                    medicationService={{
-                        useGetQuery: useGetOperationPreMedicationListQuery,
-                        useSaveMutation: useSaveOperationPreMedicationMutation
-                    }}
-
-                    newMedicationTemplate={newApOperationPreMedication}
-                />
-
-            </Col>
-            <Col md={12}>
-                <Row>
-                    <Col md={24}>
-                        <div className='container-form'>
-                            <div className='title-div'>
-                                <Text> Induction Details</Text>
-
-                            </div>
-                            <Divider />
-                            <Row>
-                                <Col md={12}>
-                                    <Row >
-                                        <Col md={24}>
-                                            <MyInput
-                                                disabled={true}
-                                                fieldType="select"
-                                                selectData={anesthTypesLov?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                width="100%"
-                                                fieldName="plannedAnesthesiaTypeLkey"
-                                                record={operation}
-                                                setRecord={() => ""}
-                                            /></Col>
-                                    </Row>
-                                    <Row >
-                                        <Col md={24}>
-                                            <MyInput
-                                                width="100%"
-                                                fieldName="tubeSize"
-                                                record={anesthesiaInduction}
-                                                setRecord={setAnesthesiaInduction}
-                                            />
-                                        </Col>
-                                    </Row>
-                                    <Row >
-                                        <Col md={24}>
-                                            <MyInput
-                                                width="100%"
-                                                fieldType="checkbox"
-                                                fieldName="intubationDone"
-                                                record={anesthesiaInduction}
-                                                setRecord={setAnesthesiaInduction} /></Col>
-                                    </Row>
-                                    <Row >
-
-                                        {anesthesiaInduction.intubationDone &&
+                                </div>
+                                <Divider />
+                                <Row gutter={10}>
+                                    <Col md={12}>
+                                        <Row gutter={10}>
                                             <Col md={24}>
                                                 <MyInput
                                                     width="100%"
-                                                    fieldType="textarea"
-                                                    fieldName="intubationDoneNote"
+                                                    fieldType="number"
+                                                    rightAddon="hours"
+                                                    rightAddonwidth={50}
+                                                    fieldName="fastingDuration"
+                                                    record={anesthesiaInduction}
+                                                    setRecord={setAnesthesiaInduction} />
+                                            </Col>
+                                        </Row>
+                                        <Row gutter={10}>
+                                            <Col md={24}></Col>
+                                        </Row>
+                                    </Col>
+                                    <Col md={12}>
+                                        <Row gutter={10}>
+                                            <Col md={24}>
+                                                <MyInput
+                                                    width="100%"
+                                                    unCheckedLabel="Not Established"
+                                                    checkedLabel="Established"
+                                                    fieldLabel="IV Line Established"
+                                                    fieldType="checkbox"
+                                                    fieldName="ivLineEstablished"
                                                     record={anesthesiaInduction}
                                                     setRecord={setAnesthesiaInduction}
                                                 />
-                                            </Col>}
-                                    </Row>
-                                </Col>
-                                <Col md={12}>
-                                    <Row >
-                                        <Col md={24}>
+                                            </Col>
+                                        </Row>
+                                        <Row gutter={10}>
+                                            <Col md={24}>
+                                                <MyTagInput tags={tag} setTags={setTag} labelText="Monitors Connected" />
+                                            </Col>
+                                        </Row></Col>
+                                </Row>
 
-                                            <MyInput
+                            </div>
+                        </Col>
+                    </Row>
+
+                    <GenericAdministeredMedications
+                        title="Pre-Medication"
+                        parentKey={operation?.key}
+                        filterFieldName="operationRequestKey"
+                        medicationService={{
+                            useGetQuery: useGetOperationPreMedicationListQuery,
+                            useSaveMutation: useSaveOperationPreMedicationMutation
+                        }}
+
+                        newMedicationTemplate={newApOperationPreMedication}
+                    />
+
+                </Col>
+                <Col md={12}>
+                    <Row gutter={10}>
+                        <Col md={24}>
+                            <div className='container-form'>
+                                <div className='title-div'>
+                                    <Text> Induction Details</Text>
+
+                                </div>
+                                <Divider />
+                                <Row gutter={10}>
+                                    <Col md={12}>
+                                        <Row >
+                                            <Col md={24}>
+                                                <MyInput
+                                                    disabled={true}
+                                                    fieldType="select"
+                                                    selectData={anesthTypesLov?.object ?? []}
+                                                    selectDataLabel="lovDisplayVale"
+                                                    selectDataValue="key"
+                                                    width="100%"
+                                                    fieldName="plannedAnesthesiaTypeLkey"
+                                                    record={operation}
+                                                    setRecord={() => ""}
+                                                /></Col>
+                                        </Row>
+                                        <Row >
+                                            <Col md={24}>
+                                                <MyInput
+                                                    width="100%"
+                                                    fieldName="tubeSize"
+                                                    record={anesthesiaInduction}
+                                                    setRecord={setAnesthesiaInduction}
+                                                />
+                                            </Col>
+                                        </Row>
+                                        <Row >
+                                            <Col md={24}>
+                                                <MyInput
+                                                    width="100%"
+                                                    fieldType="checkbox"
+                                                    fieldName="intubationDone"
+                                                    record={anesthesiaInduction}
+                                                    setRecord={setAnesthesiaInduction} /></Col>
+                                        </Row>
+                                        <Row >
+
+                                            {anesthesiaInduction.intubationDone &&
+                                                <Col md={24}>
+                                                    <MyInput
+                                                        width="100%"
+                                                        fieldType="textarea"
+                                                        fieldName="intubationDoneNote"
+                                                        record={anesthesiaInduction}
+                                                        setRecord={setAnesthesiaInduction}
+                                                    />
+                                                </Col>}
+                                        </Row>
+                                    </Col>
+                                    <Col md={12}>
+                                        <Row >
+                                            <Col md={24}>
+
+                                                <MyInput
+                                                    width="100%"
+                                                    fieldType="time"
+                                                    fieldName="inductionStartTime"
+                                                    record={anesthesiaInduction}
+                                                    setRecord={setAnesthesiaInduction}
+                                                /></Col>
+                                        </Row>
+                                        <Row >
+                                            <Col md={24}> <MyInput
                                                 width="100%"
-                                                fieldType="time"
-                                                fieldName="inductionStartTime"
+                                                fieldName="tubeType"
                                                 record={anesthesiaInduction}
                                                 setRecord={setAnesthesiaInduction}
                                             /></Col>
-                                    </Row>
-                                    <Row >
-                                        <Col md={24}> <MyInput
-                                            width="100%"
-                                            fieldName="tubeType"
-                                            record={anesthesiaInduction}
-                                            setRecord={setAnesthesiaInduction}
-                                        /></Col>
-                                    </Row>
-                                    <Row >
-                                        <Col md={24}> <MyInput
-                                            width="100%"
-                                            fieldName="securedBy"
-                                            record={anesthesiaInduction}
-                                            setRecord={setAnesthesiaInduction}
-                                        /></Col>
-                                    </Row></Col>
-                            </Row>
+                                        </Row>
+                                        <Row >
+                                            <Col md={24}> <MyInput
+                                                width="100%"
+                                                fieldName="securedBy"
+                                                record={anesthesiaInduction}
+                                                setRecord={setAnesthesiaInduction}
+                                            /></Col>
+                                        </Row></Col>
+                                </Row>
 
+
+                            </div>
+                        </Col>
+                    </Row>
+
+
+                    <GenericAdministeredMedications
+                        title="Induction Medications"
+                        parentKey={operation?.key}
+                        filterFieldName="operationRequestKey"
+                        medicationService={{
+                            useGetQuery: useGetOperationInductionListQuery,
+                            useSaveMutation: useSaveOperationInductionMutation
+                        }}
+
+                        newMedicationTemplate={newApOperationInduction}
+                    />
+
+                </Col>
+            </Row>
+            <Row gutter={10}>
+                <Col md={24}>
+                    <div className='container-form'>
+                        <div className='title-div'>
+                            <Text>Intraoperative Monitoring</Text>
 
                         </div>
-                    </Col>
-                </Row>
+                        <Divider />
 
+                        <IntraoperativeMonitoring operation={operation} editable={editable} />
+                    </div>
+                </Col>
+            </Row>
+            <Row gutter={10}>
+                <Col md={24}>
+                    <div className='container-form'>
+                        <div className='title-div'>
+                            <Text>Events & Interventions</Text>
 
-                <GenericAdministeredMedications
-                    title="Induction Medications"
-                    parentKey={operation?.key}
-                    filterFieldName="operationRequestKey"
-                    medicationService={{
-                        useGetQuery: useGetOperationInductionListQuery,
-                        useSaveMutation: useSaveOperationInductionMutation
-                    }}
+                        </div>
+                        <Divider />
+                        <Row gutter={10}>
+                            <Col md={12}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="check"
+                                    fieldName="surgeonNotified"
+                                    record={anesthesiaInduction}
+                                    setRecord={setAnesthesiaInduction}
+                                    showLabel={false}
+                                /></Col>
+                            <Col md={12}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="multyPicker"
+                                    selectData={medadvirsedLov?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName="adverseEventsLkey"
+                                    record={anesthesiaInduction}
+                                    setRecord={setAnesthesiaInduction}
+                                /></Col>
 
-                    newMedicationTemplate={newApOperationInduction}
-                />
+                        </Row>
+                        <Row gutter={10}>
+                            <Col md={12}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="textarea"
+                                    fieldName="actionsTaken"
+                                    record={anesthesiaInduction}
+                                    setRecord={setAnesthesiaInduction}
+                                /></Col>
+                            <Col md={12}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="textarea"
+                                    fieldName="adverseEventsNote"
+                                    record={anesthesiaInduction}
+                                    setRecord={setAnesthesiaInduction}
+                                /></Col>
 
-            </Col>
-        </Row>
-        <Row>
-            <Col md={24}>
-                <div className='container-form'>
-                    <div className='title-div'>
-                        <Text>Intraoperative Monitoring</Text>
+                        </Row>
 
                     </div>
-                    <Divider />
-
-                 <IntraoperativeMonitoring operation={operation} editable={editable}/>
+                </Col>
+            </Row>
+            <div className="bt-div">
+                <div
+                    className="bt-right"
+                >
+                    <MyButton onClick={handleComplete}>Complete</MyButton>
+                    <MyButton onClick={() => setOpen(true)}>Order Medications</MyButton>
+                    <MyButton onClick={handleSave}>Save</MyButton>
+                    <MyButton
+                        onClick={() => {
+                            const nextTab = (parseInt(activeTab) + 1).toString();
+                            setActiveTab(nextTab);
+                        }}
+                        style={{ marginLeft: '10px' }}
+                    >
+                        Next
+                    </MyButton>
                 </div>
-            </Col>
-        </Row>
-        <Row>
-            <Col md={24}>
-                <div className='container-form'>
-                    <div className='title-div'>
-                        <Text>Events & Interventions</Text>
-
-                    </div>
-                    <Divider />
-                    <Row>
-                        <Col md={12}>
-                            <MyInput
-                                width="100%"
-                                fieldType="check"
-                                fieldName="surgeonNotified"
-                                record={anesthesiaInduction}
-                                setRecord={setAnesthesiaInduction}
-                                showLabel={false}
-                            /></Col>
-                        <Col md={12}>
-                            <MyInput
-                                width="100%"
-                                fieldType="select"
-                                selectData={medadvirsedLov?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                fieldName="adverseEventsLkey"
-                                record={anesthesiaInduction}
-                                setRecord={setAnesthesiaInduction}
-                            /></Col>
-
-                    </Row>
-                    <Row>
-                        <Col md={12}>
-                            <MyInput
-                                width="100%"
-                                fieldType="textarea"
-                                fieldName="actionsTaken"
-                                record={anesthesiaInduction}
-                                setRecord={setAnesthesiaInduction}
-                            /></Col>
-                        <Col md={12}>
-                            <MyInput
-                                width="100%"
-                                fieldType="textarea"
-                                fieldName="adverseEventsNote"
-                                record={anesthesiaInduction}
-                                setRecord={setAnesthesiaInduction}
-                            /></Col>
-
-                    </Row>
-
-                </div>
-            </Col>
-        </Row>
-        <div className="bt-div">
-            <div
-                className="bt-right"
-            >
-                <MyButton >Complete</MyButton>
-                <MyButton onClick={()=>setOpen(true)}>Drug Order</MyButton>
-                <MyButton onClick={handelSave}>Save</MyButton>
             </div>
-        </div>
-        <MyModal 
-        open={open}
-        setOpen={setOpen}
-        title={"Drug Order"}
-        content={<DrugOrder patient={patient} encounter={encounter} edit={false} />} />
-    </Form>)
+            <DetailsModal
+                edit={false}
+                open={open}
+                setOpen={setOpen}
+                orderMedication={{
+                    ...orderMedication,
+                    drugOrderTypeLkey: preMedKey || orderMedication?.drugOrderTypeLkey
+                }}
+                setOrderMedication={setOrderMedication}
+                drugKey={null}
+                editing={false}
+                patient={patient}
+                encounter={encounter}
+                medicRefetch={fetch}
+                openToAdd={true}
+                isFavorite={false}
+            />
+
+        </Form>)
 }
 export default AnesthesiaInduction;

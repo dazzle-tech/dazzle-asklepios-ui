@@ -22,6 +22,11 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import CancellationModal from '@/components/CancellationModal';
 import { set } from 'lodash';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import './style.less';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import MyButton from '@/components/MyButton/MyButton';
+
 
 const RequestList = ({
   patient,
@@ -37,7 +42,7 @@ const RequestList = ({
   const dispatch = useAppDispatch();
   const [showCancelled, setShowCancelled] = useState(true);
   const [openCancelModal, setOpenCancelModal] = useState(false);
-
+  const [record, setRecord] = useState({});
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: null
@@ -249,56 +254,64 @@ const RequestList = ({
       title: <Translate>Actions</Translate>,
       render: (rowData: any) => {
         const isDisabled = request?.key !== rowData.key;
+
+        const tooltipStart = <Tooltip>Start</Tooltip>;
+        const tooltipCancel = <Tooltip>Cancel</Tooltip>;
+
         return (
-          <HStack spacing={10}>
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Start</Tooltip>}>
-              <FontAwesomeIcon
-                icon={faPlay}
-                style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-                onClick={
-                  isDisabled
-                    ? undefined
-                    : async () => {
-                        try {
-                          setRequest(rowData);
-                          const Response = await save({
-                            ...request,
-                            operationStatusLkey: '3621681578985655',
-                            startedAt: Date.now()
-                          }).unwrap();
-                          dispatch(notify({ msg: 'Started Successfully', sev: 'success' }));
-                          refetch();
-                          refetchOnGoing();
-                          setActiveTab('2');
-                          setOpen(true);
-                          console.log('Response', Response);
-                        } catch (error) {
-                          dispatch(notify({ msg: 'Faild', sev: 'error' }));
-                        }
-                      }
-                }
-              />
+          <Form layout="inline" fluid className="nurse-doctor-form">
+            {/* Start Button */}
+            <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
+              <div>
+                <MyButton
+                  size="small"
+                  disabled={isDisabled}
+                  onClick={async () => {
+                    if (isDisabled) return;
+                    try {
+                      setRequest(rowData);
+                      const Response = await save({
+                        ...request,
+                        operationStatusLkey: '3621681578985655',
+                        startedAt: Date.now()
+                      }).unwrap();
+                      dispatch(notify({ msg: 'Started Successfully', sev: 'success' }));
+                      refetch();
+                      refetchOnGoing();
+                      setActiveTab('2');
+                      setOpen(true);
+                      console.log('Response', Response);
+                    } catch (error) {
+                      dispatch(notify({ msg: 'Failed', sev: 'error' }));
+                    }
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPlay} />
+                </MyButton>
+              </div>
             </Whisper>
 
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Cancel</Tooltip>}>
-              <FontAwesomeIcon
-                style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-                icon={faSquareXmark}
-                onClick={
-                  isDisabled
-                    ? undefined
-                    : () => {
-                        setRequest(rowData);
-                        setOpenCancelModal(true);
-                      }
-                }
-              />
+            {/* Cancel Button */}
+            <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="lightblue"
+                  disabled={isDisabled}
+                  onClick={() => {
+                    if (isDisabled) return;
+                    setRequest(rowData);
+                    setOpenCancelModal(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faSquareXmark} />
+                </MyButton>
+              </div>
             </Whisper>
-          </HStack>
+          </Form>
         );
       }
     },
-
     {
       key: 'createdAt',
       title: <Translate>Created At/By</Translate>,
@@ -352,37 +365,134 @@ const RequestList = ({
     }
   ];
 
-  const filters = () => (
-    <>
-      <Form layout="inline" fluid className="container-of-filter-fields-department">
-        <MyInput
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-          showLabel={false}
+  const { data: operationLov } = useGetLovValuesByCodeQuery('OPERATION_NAMES');
+  const { data: operationorderLov } = useGetLovValuesByCodeQuery('OPERATION_ORDER_TYPE');
+  const { data: proclevelLov } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
+  const { data: priorityLov } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+  const { data: statusLov } = useGetLovValuesByCodeQuery('PROC_STATUS');
+
+
+
+
+  const filters = () => {
+    return (
+      <>
+        <Form layout="inline" fluid className="container-of-filter-fields-department">
+          <div className='container-of-filter-fields-department-date-filters'>
+            <MyInput
+              fieldType="date"
+              fieldLabel="From Date"
+              fieldName="fromDate"
+              record={dateFilter}
+              setRecord={setDateFilter}
+              showLabel={false}
+              column
+            />
+            <MyInput
+              fieldType="date"
+              fieldLabel="To Date"
+              fieldName="toDate"
+              record={dateFilter}
+              setRecord={setDateFilter}
+              showLabel={false}
+              column
+            />
+          </div>
+          <SearchPatientCriteria
+            record={record}
+            setRecord={setRecord}
+          />
+
+          <MyInput
+            column
+            width={150}
+            fieldType="select"
+            fieldLabel="Operation Name"
+            fieldName="key"
+            selectData={operationLov?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+
+          <MyInput
+            column
+            width={150}
+            fieldType="select"
+            fieldLabel="Status"
+            fieldName="key"
+            selectData={statusLov?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={record}
+            setRecord={setRecord}
+          />
+
+        </Form>
+
+        <AdvancedSearchFilters
+          searchFilter={true}
+          content={
+            <div className="advanced-filters">
+
+              <Form fluid className="dissss">
+                <MyInput
+                  fieldName="accessTypeLkey"
+                  fieldType="select"
+                  selectData={operationorderLov?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  fieldLabel="Operation Type"
+                  selectDataValue="key"
+                  record={record}
+                  setRecord={setRecord}
+                  searchable={false}
+                  width={150}
+                />
+                <MyInput
+                  width={150}
+                  fieldName="priority"
+                  fieldType="select"
+                  record={record}
+                  setRecord={setRecord}
+                  selectData={proclevelLov?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldLabel="Operation Level"
+                  searchable={false}
+                />
+                <MyInput
+                  width={150}
+                  fieldType="date"
+                  fieldLabel="Operation Date"
+                  fieldName="operationDate"
+                  record={record}
+                  setRecord={setRecord}
+                />
+
+                <MyInput
+                  width={150}
+                  fieldName="priority"
+                  fieldType="select"
+                  record={record}
+                  setRecord={setRecord}
+                  selectData={priorityLov?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldLabel="Priority"
+                  searchable={false}
+                />
+
+              </Form>
+
+            </div>
+          }
         />
-        <MyInput
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-          showLabel={false}
-        />
-        <Checkbox
-          checked={!showCancelled}
-          onChange={() => {
-            setShowCancelled(!showCancelled);
-          }}
-        >
-          Show Cancelled
-        </Checkbox>
-      </Form>
-      <AdvancedSearchFilters searchFilter={true} />
-    </>
-  );
+      </>
+    );
+  };
+
+
   return (
     <Row>
       <Col md={24}>

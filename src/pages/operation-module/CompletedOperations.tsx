@@ -12,14 +12,22 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { FaStreetView } from "react-icons/fa";
 import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
 import StartedDetails from "./StartedDetails/StartedDetails";
-const CompletedOperations = ({ patient, setPatient, encounter, setEncounter 
- ,request, setRequest }) => {
-  
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import './style.less';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
+const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
+    , request, setRequest }) => {
+
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
         toDate: null
     });
-    const [open,setOpen]=useState(false);
+
+    const [record, setRecord] = useState({});
+
+
+    const [open, setOpen] = useState(false);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -133,14 +141,14 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
             key: "diagnosisKey",
             title: <Translate>Pre-op Diagnosis</Translate>,
             render: (rowData: any) => {
-               return rowData?.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description;
+                return rowData?.diagnosis?.icdCode + " - " + rowData?.diagnosis?.description;
             }
         },
         {
             key: "oparetionKey",
             title: <Translate>oparation name</Translate>,
             render: (rowData: any) => {
-             return rowData?.operation?.name;
+                return rowData?.operation?.name;
             }
         },
         {
@@ -179,28 +187,28 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
                 return rowData.operationStatusLvalue ? rowData.operationStatusLvalue?.lovDisplayVale : rowData.operationStatusLkey;
             }
         },
-          {
-                    key: "actions",
-                    title: <Translate >Actions</Translate>,
-                    render: (rowData: any) => {
-        
-        
-                        // const isDisabled =request?.key!==rowData.key;
-                        return <HStack spacing={10}>
-                            <Whisper
-                                placement="top"
-                                trigger="hover"
-                                speaker={<Tooltip>{ "View"}</Tooltip>}
-                            >
-                                <FontAwesomeIcon icon={faEye}
-                                    onClick={() => setOpen(true)}
-                                // style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-        
-                                />
-                            </Whisper>
-                        </HStack>;
-                    }
-                },
+        {
+            key: "actions",
+            title: <Translate >Actions</Translate>,
+            render: (rowData: any) => {
+
+
+                // const isDisabled =request?.key!==rowData.key;
+                return <HStack spacing={10}>
+                    <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>{"View"}</Tooltip>}
+                    >
+                        <FontAwesomeIcon icon={faEye}
+                            onClick={() => setOpen(true)}
+                        // style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
+
+                        />
+                    </Whisper>
+                </HStack>;
+            }
+        },
         {
             key: "createdAt",
             title: <Translate>Created At/By</Translate>,
@@ -228,7 +236,7 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
 
         },
 
-      
+
         {
             key: "cancelledAt",
             title: <Translate>Cancelled At/By</Translate>,
@@ -262,47 +270,151 @@ const CompletedOperations = ({ patient, setPatient, encounter, setEncounter
         }
     };
 
-    const filters = () => (<>
-            <Form layout="inline" fluid className="container-of-filter-fields-department">
-                <MyInput
-    
-                    fieldType="date"
-                    fieldLabel="From Date"
-                    fieldName="fromDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                />
-                <MyInput
-    
-                    fieldType="date"
-                    fieldLabel="To Date"
-                    fieldName="toDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                />
-    
-            </Form>
 
-                  <AdvancedSearchFilters searchFilter={true}/>
-        
-        </>);
+    const { data: operationLov } = useGetLovValuesByCodeQuery('OPERATION_NAMES');
+    const { data: operationorderLov } = useGetLovValuesByCodeQuery('OPERATION_ORDER_TYPE');
+    const { data: proclevelLov } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
+    const { data: priorityLov } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+    const { data: statusLov } = useGetLovValuesByCodeQuery('PROC_STATUS');
+
+
+
+
+    const filters = () => {
+        return (
+            <>
+                <Form layout="inline" fluid className="container-of-filter-fields-department">
+                    <div className='container-of-filter-fields-department-date-filters'>
+                        <MyInput
+                            fieldType="date"
+                            fieldLabel="From Date"
+                            fieldName="fromDate"
+                            record={dateFilter}
+                            setRecord={setDateFilter}
+                            showLabel={false}
+                            column
+                        />
+                        <MyInput
+                            fieldType="date"
+                            fieldLabel="To Date"
+                            fieldName="toDate"
+                            record={dateFilter}
+                            setRecord={setDateFilter}
+                            showLabel={false}
+                            column
+                        />
+                    </div>
+
+                    <SearchPatientCriteria
+                        record={record}
+                        setRecord={setRecord}
+                    />
+
+                    <MyInput
+                        column
+                        width={150}
+                        fieldType="select"
+                        fieldLabel="Operation Name"
+                        fieldName="key"
+                        selectData={operationLov?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={record}
+                        setRecord={setRecord}
+                    />
+
+                    <MyInput
+                        column
+                        width={150}
+                        fieldType="select"
+                        fieldLabel="Status"
+                        fieldName="key"
+                        selectData={statusLov?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={record}
+                        setRecord={setRecord}
+                    />
+
+                </Form>
+
+                <AdvancedSearchFilters
+                    searchFilter={true}
+                    content={
+                        <div className="advanced-filters">
+
+                            <Form fluid className="dissss">
+                                <MyInput
+                                    fieldName="accessTypeLkey"
+                                    fieldType="select"
+                                    selectData={operationorderLov?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    fieldLabel="Operation Type"
+                                    selectDataValue="key"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    searchable={false}
+                                    width={150}
+                                />
+                                <MyInput
+                                    width={150}
+                                    fieldName="priority"
+                                    fieldType="select"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    selectData={proclevelLov?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldLabel="Operation Level"
+                                    searchable={false}
+                                />
+                                <MyInput
+                                    width={150}
+                                    fieldType="date"
+                                    fieldLabel="Operation Date"
+                                    fieldName="operationDate"
+                                    record={dateFilter}
+                                    setRecord={setDateFilter}
+                                />
+
+                                <MyInput
+                                    width={150}
+                                    fieldName="priority"
+                                    fieldType="select"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    selectData={priorityLov?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldLabel="Priority"
+                                    searchable={false}
+                                />
+
+                            </Form>
+
+                        </div>
+                    }
+                />
+            </>
+        );
+    };
+
+
     return (<> <MyTable
-            filters={filters()}
-            columns={columns}
-            data={operationrequestList?.object || []}
-            rowClassName={isSelected}
-            loading={isLoading}
-            onRowClick={rowData => {
-                setRequest(rowData)
+        filters={filters()}
+        columns={columns}
+        data={operationrequestList?.object || []}
+        rowClassName={isSelected}
+        loading={isLoading}
+        onRowClick={rowData => {
+            setRequest(rowData)
 
-            }}
-            
-        />
-            <StartedDetails open={open} setOpen={setOpen} 
-              operation={request} setOperation={setRequest} 
-              patient={patient}encounter={encounter} refetch={refetch} editable={false}/>
-        </>)
+        }}
+
+    />
+        <StartedDetails open={open} setOpen={setOpen}
+            operation={request} setOperation={setRequest}
+            patient={patient} encounter={encounter} refetch={refetch} editable={false} />
+    </>)
 }
 export default CompletedOperations;

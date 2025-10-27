@@ -12,28 +12,28 @@ import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 import StaffMember from "@/pages/encounter/encounter-component/procedure/StaffMember";
 import clsx from "clsx";
-const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
+const PatientArrival = ({ operation, patient, encounter, user, editable, activeTab, setActiveTab }) => {
     const dispatch = useAppDispatch();
     const [openCheckLit, setOpenCheckList] = useState(false);
     const [checkList, setCheckList] = useState({ ...newApPreOperationChecklist });
     const [arraivel, setArrival] = useState({ ...newApOperationPatientArrival })
-    const { data: arrivalData } = useGetOperationPatientArrivalByOperationQuery(operation?.key , {
+    const { data: arrivalData } = useGetOperationPatientArrivalByOperationQuery(operation?.key, {
         skip: !operation?.key
     });
     const [saveCheckList] = useSavePreOperationChecklistMutation();
-    const [save,saveMutation]=useSaveOperationPatientArrivalMutation();
+    const [save, saveMutation] = useSaveOperationPatientArrivalMutation();
     // get lists
-    const { data: checklists, refetch } = useGetLatestChecklistByOperationKeyQuery(operation?.key , {
+    const { data: checklists, refetch } = useGetLatestChecklistByOperationKeyQuery(operation?.key, {
         skip: !operation?.key
     });
 
     const { data: ConsentFormLovQueryResponse } = useGetLovValuesByCodeQuery('CONSENT_FORM');
     const { data: practtionerList } = useGetPractitionersQuery({ ...initialListRequest });
-  
+
     const { data: roomsList } = useGetRoomListQuery({ ...initialListRequest });
     const { data: userList } = useGetUsersQuery({
         ...initialListRequest,
-         //to do Nurse code
+        //to do Nurse code
         filters: [
             {
                 fieldName: 'job_role_lkey',
@@ -73,20 +73,20 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
 
     useEffect(() => {
         if (arrivalData?.object) {
-            setArrival({ ...arrivalData?.object, dateTime: new Date(arrivalData?.object?.dateTime) });  
+            setArrival({ ...arrivalData?.object, dateTime: new Date(arrivalData?.object?.dateTime) });
         }
         else {
             setArrival({ ...newApOperationPatientArrival, dateTime: 0 });
         }
     }, [arrivalData]);
 
-    useEffect(()=>{
-  
-    if(saveMutation.isSuccess){
-   
-        setArrival(saveMutation?.data?.object)
-    }
-    },[saveMutation])
+    useEffect(() => {
+
+        if (saveMutation.isSuccess) {
+
+            setArrival(saveMutation?.data?.object)
+        }
+    }, [saveMutation])
 
 
 
@@ -97,7 +97,7 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
 
     const handleConfirm = async () => {
         try {
-          
+
             await saveCheckList({ ...checkList, isConfirm: true, confirmTime: new Date(checkList.confirmTime).getTime() }).unwrap();
             dispatch(notify({ msg: "Confermed ", sev: "success" }));
             refetch();
@@ -107,18 +107,19 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
 
         }
     }
-    const handleSave=async()=>{
-        try{
-           await save({...arraivel,operationRequestKey:operation?.key ,dateTime:new Date(arraivel?.dateTime).getTime()}).unwrap();
-           dispatch(notify({ msg: "Saved Successfly", sev: "success" }));
+    const handleSave = async () => {
+        try {
+            await save({ ...arraivel, operationRequestKey: operation?.key, dateTime: new Date(arraivel?.dateTime).getTime() }).unwrap();
+            dispatch(notify({ msg: "Saved Successfly", sev: "success" }));
         }
-        catch(error){
+        catch (error) {
 
         }
     }
+
     return (<Form fluid className={clsx('', {
-                                                        'disabled-panel': !editable
-                                                      })}>
+        'disabled-panel': !editable
+    })}>
         <Row gutter={15}>
             <Row>
                 <Col md={24} >
@@ -129,8 +130,8 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
                         <Divider />
 
                         <Row gutter={15} className={clsx('', {
-                                                        'disabled-panel': checkList?.key == null 
-                                                      })}>
+                            'disabled-panel': checkList?.key == null
+                        })}>
                             <Col md={3}>
                                 <br />
                                 <MyButton onClick={() => setOpenCheckList(true)}>Pre-Op Checklist</MyButton></Col>
@@ -159,10 +160,10 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
 
                             <Col md={3}>
                                 <br />
-                                {!checkList?.isConfirm ? <MyButton onClick={handleConfirm}>Confirm</MyButton> : <MyButton appearance="ghost"  >Confiermed</MyButton>}
+                                {!checkList?.isConfirm ? <MyButton onClick={handleConfirm}>Confirm</MyButton> : <MyButton appearance="ghost"  >Confirmed</MyButton>}
                             </Col>
                         </Row>
-                     
+
 
                     </div></Col>
 
@@ -221,9 +222,10 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
                                     fieldName="consentLkey"
                                     record={arraivel}
                                     setRecord={setArrival}
+                                    searchable={false}
                                 /></Col>
                             <Col md={4}>
-                                <MyInput                         
+                                <MyInput
                                     width="100%"
                                     fieldType="datetime"
                                     fieldName="dateTime"
@@ -232,27 +234,42 @@ const PatientArrival = ({ operation, patient, encounter, user,editable }) => {
                                 /></Col>
                         </Row>
                     </div>
-                    </Col>
+                </Col>
 
             </Row>
             <Row>
                 <Col md={24}>
                     <div className='container-form'>
-                       
+
                         <StaffMember
-                                    parentKey={operation?.key}
-                                    label="Operation Staff"
-                                    getQuery={useGetOperationStaffListQuery}
-                                    saveMutation={useSaveOperationStaffMutation}
-                                    deleteMutation={useDeleteOperationStaffMutation}
-                                    newStaffObj={newApOperationStaff}
-                                    filterFieldName="operationRequestKey" 
-                                    />   
+                            parentKey={operation?.key}
+                            label="Operation Staff"
+                            getQuery={useGetOperationStaffListQuery}
+                            saveMutation={useSaveOperationStaffMutation}
+                            deleteMutation={useDeleteOperationStaffMutation}
+                            newStaffObj={newApOperationStaff}
+                            filterFieldName="operationRequestKey"
+                        />
                     </div>
-                    </Col>
+                </Col>
 
             </Row>
         </Row>
+
+        <div className='bt-div'>
+            <div className="bt-right">
+                <MyButton
+                    onClick={() => {
+                        const nextTab = (parseInt(activeTab) + 1).toString();
+                        setActiveTab(nextTab);
+                    }}
+                    style={{ marginLeft: '10px' }}
+                >
+                    Next
+                </MyButton>
+            </div>
+        </div>
+
         <MyModal
             open={openCheckLit}
             setOpen={setOpenCheckList}

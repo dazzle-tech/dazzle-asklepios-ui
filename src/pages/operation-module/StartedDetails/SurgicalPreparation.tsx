@@ -10,7 +10,7 @@ import { notify } from "@/utils/uiReducerActions";
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
-const SurgicalPreparation = ({ operation, editable }) => {
+const SurgicalPreparation = ({ operation, editable, activeTab, setActiveTab }) => {
     const dispatch = useAppDispatch();
     const [surgical, setSergical] = useState({ ...newApOperationSurgicalPreparationIncision });
     const { data: surgicalData } = useGetLatestSurgicalPreparationByOperationKeyQuery(operation.key, {
@@ -98,6 +98,7 @@ const SurgicalPreparation = ({ operation, editable }) => {
                                     selectDataLabel="lovDisplayVale"
                                     selectDataValue="key"
                                     fieldName="positionLkey"
+                                    searchable={false}
                                     record={surgical}
                                     setRecord={setSergical}
                                 /></Col>
@@ -273,7 +274,15 @@ const SurgicalPreparation = ({ operation, editable }) => {
         <div className='bt-div'>
             <div className="bt-right">
                 <MyButton onClick={handleSave}>Save</MyButton>
-
+                <MyButton
+                    onClick={() => {
+                        const nextTab = (parseInt(activeTab) + 1).toString();
+                        setActiveTab(nextTab);
+                    }}
+                    style={{ marginLeft: '10px' }}
+                >
+                    Next
+                </MyButton>
             </div></div>
     </Form>);
 }
