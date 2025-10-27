@@ -14,38 +14,37 @@ const dummyTestsList = [
   { key: '7', testName: 'COVID-19 PCR' },
   { key: '8', testName: 'Vitamin D Test' },
   { key: '9', testName: 'Lipid Profile' },
-  { key: '10', testName: 'HbA1c' },
+  { key: '10', testName: 'HbA1c' }
 ];
 
 const TeleScreenSelectTests = ({ open, onClose }) => {
-    const [leftItems, setLeftItems] = useState(dummyTestsList);
-    const [selectedTestsList, setSelectedTestsList] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
+  const [leftItems, setLeftItems] = useState(dummyTestsList);
+  const [selectedTestsList, setSelectedTestsList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
-    const handleSaveTests = () => {
-        console.log("Selected Tests:", selectedTestsList);
-        onClose();
-    };
+  const handleSaveTests = () => {
+    onClose();
+  };
 
-    return (
-        <MyModal
-            open={open}
-            setOpen={onClose}
-            title="Select Tests"
-            actionButtonFunction={handleSaveTests}
-            size='50vw'
-            content={
-                <TransferTestList
-                    leftItems={leftItems}
-                    rightItems={selectedTestsList}
-                    setLeftItems={setLeftItems}
-                    setRightItems={setSelectedTestsList}
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                />
-            }
+  return (
+    <MyModal
+      open={open}
+      setOpen={onClose}
+      title="Select Tests"
+      actionButtonFunction={handleSaveTests}
+      size="50vw"
+      content={
+        <TransferTestList
+          leftItems={leftItems}
+          rightItems={selectedTestsList}
+          setLeftItems={setLeftItems}
+          setRightItems={setSelectedTestsList}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
-    );
+      }
+    />
+  );
 };
 
 export default TeleScreenSelectTests;
