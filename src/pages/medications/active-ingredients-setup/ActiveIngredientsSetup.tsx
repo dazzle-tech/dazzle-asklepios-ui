@@ -49,13 +49,10 @@ const ActiveIngredientsSetup = () => {
 
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5>Active Ingredients</h5>
-    </div>
+      "Active Ingredients"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Active_Ingredients'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // Available fields for filtering
   const filterFields = [

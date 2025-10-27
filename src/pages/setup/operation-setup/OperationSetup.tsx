@@ -210,14 +210,11 @@ const OperationSetup = () => {
   // Header page setup: dispatch inside useEffect bound to path
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Operation Setup</h5>
-      </div>
+      "Operation Setup"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Operation_Setup'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

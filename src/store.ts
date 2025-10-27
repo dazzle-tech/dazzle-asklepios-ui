@@ -41,6 +41,9 @@ import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/setup/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 import {Icd10Service} from './services/setup/icd10service';
+import { patientAttachmentService } from './services/patients/attachmentService';
+import {potintialService} from '@/services/potintialDuplicateService';
+
 
 export const store = configureStore({
   reducer: {
@@ -87,6 +90,7 @@ export const store = configureStore({
 
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
+    [patientAttachmentService.reducerPath]: patientAttachmentService.reducer,
     //lab module
     [labService.reducerPath]: labService.reducer,
     //operation
@@ -112,6 +116,7 @@ export const store = configureStore({
 
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
+    [potintialService.reducerPath] :potintialService.reducer,
     call: callReducer,
 
     [facilityService.reducerPath]: facilityService.reducer,
@@ -150,6 +155,7 @@ export const store = configureStore({
       dentalService.middleware,
       observationService.middleware,
       attachmentService.middleware,
+      patientAttachmentService.middleware,
       labService.middleware,
       radService.middleware,
       procedureService.middleware,
@@ -170,6 +176,7 @@ export const store = configureStore({
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
       Icd10Service.middleware,
+
     ])
 });
 

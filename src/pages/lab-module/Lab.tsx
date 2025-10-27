@@ -39,6 +39,7 @@ import Orders from './Orders';
 import Result from './Result';
 import Tests from './Tests';
 import MyInput from '@/components/MyInput';
+import Translate from '@/components/Translate';
 const Lab = () => {
   const dispatch = useAppDispatch();
   const ResultRef = useRef(null);
@@ -81,13 +82,10 @@ const Lab = () => {
     { skip: test.key == null }
   );
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>Clinical Laboratory</h5>
-    </div>
+      "Clinical Laboratory"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Lab'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(), //new Date(),

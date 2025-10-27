@@ -42,13 +42,10 @@ const Checklist = () => {
   useEffect(() => {
       // Header page setUp
       const divContent = (
-        <div className="page-title">
-          <h5>Checklists</h5>
-        </div>
+        "Checklists"
       );
-      const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
       dispatch(setPageCode('Checklists'));
-      dispatch(setDivContent(divContentHTML));
+      dispatch(setDivContent(divContent));
   
       return () => {
         dispatch(setPageCode(''));

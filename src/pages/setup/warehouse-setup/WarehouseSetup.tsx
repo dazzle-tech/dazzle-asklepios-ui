@@ -72,13 +72,10 @@ const WarehouseSetup = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='title'>
-      <h5>Warehouse</h5>
-    </div>
+    "Warehouse"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Warehouse'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && warehouse && warehouse.key === rowData.key) {

@@ -13,7 +13,6 @@ import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
-import ReactDOMServer from 'react-dom/server';
 import { useLocation } from 'react-router-dom';
 import { Col, DOMHelper, Panel, Row } from 'rsuite';
 import BedsideRegistrationsModal from './BedsideRegistrations';
@@ -51,6 +50,13 @@ const PatientProfile = () => {
     useState<boolean>(false);
   const [openBulkRegistrationModal, setOpenBulkRegistrationModal] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
+
+  const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
+  const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
+  // Page header setup
+  const divContent = (
+        "Patient Registration" 
+  );
 
   const handleSave = async () => {
     try {
@@ -96,6 +102,19 @@ const PatientProfile = () => {
     dispatch(setEncounter(null));
   };
 
+
+  // Effects
+  useEffect(() => {
+    dispatch(setPageCode('Patient_Registration'));
+    dispatch(setDivContent(divContent));
+    dispatch(setPatient({ ...newApPatient }));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+
   useEffect(() => {
     if (propsData && propsData.patient) {
       setLocalPatient(propsData.patient);
@@ -114,14 +133,11 @@ const PatientProfile = () => {
 
   useEffect(() => {
     const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>Patient Registration</h5>
-      </div>
+        "Patient Registration"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
 
     dispatch(setPageCode('Patient_Registration'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
     dispatch(setPatient({ ...newApPatient }));
 
     return () => {

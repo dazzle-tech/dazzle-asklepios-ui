@@ -47,13 +47,10 @@ const InpatientNurseStation = ({}) => {
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>Nurse Anamnesis</h5>
-    </div>
+        "Nurse Anamnesis"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const handleCompleteEncounter = async () => {
     try {

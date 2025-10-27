@@ -111,13 +111,10 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
   useEffect(() => {
     if (!inModal) {
       const divContent = (
-        <div style={{ display: 'flex' }}>
-          <h5>Patients EMR</h5>
-        </div>
+         "Patients EMR"
       );
-      const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
       dispatch(setPageCode('Patients_EMR'));
-      dispatch(setDivContent(divContentHTML));
+      dispatch(setDivContent(divContent));
     }
     return () => {
       if (!inModal) {

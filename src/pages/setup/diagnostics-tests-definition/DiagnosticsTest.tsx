@@ -67,13 +67,10 @@ const DiagnosticsTest = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5>Diagnostics Tests Definition</h5>
-    </div>
+    "Diagnostics Tests Definition"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Diagnostics_Tests'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.key === diagnosticsTest.key) {

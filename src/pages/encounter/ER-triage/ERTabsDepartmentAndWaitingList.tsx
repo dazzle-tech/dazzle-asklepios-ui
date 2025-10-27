@@ -7,6 +7,7 @@ import ReactDOMServer from 'react-dom/server';
 import ERWaitingList from './ERWaitingList';
 import ERList from './ERList';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 const ERTabsDepartmentAndWaitingList = () => {
   const location = useLocation();
@@ -14,15 +15,11 @@ const ERTabsDepartmentAndWaitingList = () => {
 
   // header setup
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>Emergency Department Management</h5>
-    </div>
+      "Emergency Department Management"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-
   useEffect(() => {
     dispatch(setPageCode('ER_Management'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

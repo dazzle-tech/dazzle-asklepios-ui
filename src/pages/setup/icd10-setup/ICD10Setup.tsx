@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import ReactDOMServer from "react-dom/server";
@@ -41,6 +42,7 @@ const ICD10Setup = () => {
     return () => {
       dispatch(setPageCode(""));
       dispatch(setDivContent(""));
+
     };
   }, [dispatch]);
 

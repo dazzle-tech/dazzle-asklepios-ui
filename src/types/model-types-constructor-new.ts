@@ -24,14 +24,9 @@ export const newApUser: modelTypes.ApUser = {
 
 export const newCandidate: modelTypes.Candidate = {
   id: undefined,
-  role: '',
-  dob: false,
-  lastName: false,
-  documentNo: false,
-  mobileNumber: false,
-  gender: false,
+  rule: '',
+  fields: {}, 
   isActive: true,
-
 };
 
 export const newDepartment: modelTypes.Department = {
@@ -63,6 +58,8 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
+  ruleId:undefined,
+
 } 
 
 export const newCreateFacility: modelTypes.CreateFacility = {
@@ -96,6 +93,40 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   isActive: true
 };
 
+
+// Patient Attachment Constructors
+export const newPatientAttachment: modelTypes.PatientAttachment = {
+  id: undefined,
+  patientId: undefined,
+  spaceKey: '',
+  filename: '',
+  mimeType: '',
+  sizeBytes: 0,
+  type: undefined,
+  details: undefined,
+  source: undefined,
+};
+
+export const newUploadResponse: modelTypes.UploadResponse = {
+  id: undefined,
+  filename: '',
+  mimeType: '',
+  sizeBytes: 0,
+  downloadUrl: '',
+};
+
+export const newDownloadTicket: modelTypes.DownloadTicket = {
+  url: '',
+  expiresInSeconds: 0,
+};
+
+export const newUploadAttachmentParams: modelTypes.UploadAttachmentParams = {
+  patientId: undefined,
+  files: [],
+  type: undefined,
+  details: undefined,
+  source: undefined,
+}
 export const newService: modelTypes.Service = {
   id: undefined,
   name: '',
@@ -110,6 +141,7 @@ export const newService: modelTypes.Service = {
   lastModifiedBy: null,
   lastModifiedDate: null,
   facilityId: undefined, 
+
 };
 
 export const newServiceItem: modelTypes.ServiceItem = {

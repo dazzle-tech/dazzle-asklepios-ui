@@ -18,6 +18,9 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
   searchMarginTop = '0.9vw'
 }) => {
 
+
+
+  
   useEffect(() => {
     if (record?.searchByField === undefined) {
       setRecord({ ...record, searchByField: 'fullName' });

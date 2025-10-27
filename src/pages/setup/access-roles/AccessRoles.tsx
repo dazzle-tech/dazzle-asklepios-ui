@@ -54,13 +54,10 @@ const AccessRoles = () => {
   const totalCount = accessRoleListResponse?.extraNumeric ?? 0;
   // Page header setup
   const divContent = (
-    <div title="page-title">
-      <h5>Access Roles</h5>
-    </div>
+    "Access Roles"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Access_Roles'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // Effects
   useEffect(() => {

@@ -116,7 +116,7 @@ import PatientEMR from './pages/patient/patient-emr';
 import PatientList from './pages/patient/patient-list';
 import PatientMergeFiles from './pages/patient/patient-merge-files';
 import PatientProfile from './pages/patient/patient-profile';
-import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
+import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
 import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
 import ControlledMedications from './pages/pharmacy/controlled-medications';
 import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescription';
@@ -151,8 +151,9 @@ import Metadata from './pages/setup/metadata-view';
 import Modules from './pages/setup/modules-setup';
 import OperationSetup from './pages/setup/operation-setup';
 import Checklist from './pages/setup/operations/checklist';
-import PotintialDuplicate from './pages/setup/potential-duplicate';
+
 import Practitioners from './pages/setup/practioners-setup-new';
+import PotintialDuplicate from './pages/setup/potential-duplicate - new';
 import ProcedureSetup from './pages/setup/procedure-setup';
 import ProductSetup from './pages/setup/product-setup';
 import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
@@ -178,6 +179,7 @@ import { useGetMenuQuery } from './services/security/UserRoleService';
 import CallOverlay from './components/Overlay/CallOverlay';
 import LanguagesSetup from './pages/setup/language-setup/Language';
 import Pediatric from './pages/encounter/encounter-component/pediatric';
+import IncidentPortal from './pages/Incident/IncidentPortal';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -368,9 +370,10 @@ const App = () => {
             {/* TODO load them dynamically based on user authorization matrix */}
             <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
+              <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />
               <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
-              <Route path="patient-profile" element={<PatientProfileCopy />} />
+              <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="tele-consultation-screen" element={<TeleconsultationScreen />} />

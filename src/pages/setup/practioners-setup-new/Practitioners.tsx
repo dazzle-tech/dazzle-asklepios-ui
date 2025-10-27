@@ -72,13 +72,10 @@ const Practitioners = () => {
   // ──────────────────────────── EFFECTS ────────────────────────────
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Practitioners</h5>
-      </div>
+      "Practitioners"
     );
-    const html = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode("Practitioners"));
-    dispatch(setDivContent(html));
+    dispatch(setDivContent(divContent));
     return () => {
       dispatch(setPageCode(""));
       dispatch(setDivContent(""));

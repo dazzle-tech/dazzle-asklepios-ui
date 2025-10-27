@@ -53,13 +53,10 @@ const Lov = () => {
     { label: 'Description', value: 'lovDescription' }
   ];
   const divContent = (
-    <div className='page-title'>
-      <h5>LOVs</h5>
-    </div>
+    "LOVs"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Lovs'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   const isSelected = rowData => {
     if (rowData && lov && rowData.key === lov.key) {
       return 'selected-row';
