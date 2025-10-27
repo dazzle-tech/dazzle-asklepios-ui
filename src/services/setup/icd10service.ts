@@ -37,21 +37,41 @@ export const Icd10Service = createApi({
       },
     }),
 
-  importIcd10: builder.mutation({
-  query: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
+    importIcd10: builder.mutation({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return {
+          url: '/api/setup/icd10/import',
+          method: 'POST',
+          body: formData,
+          responseHandler: (response) => response.text(),
+        };
+      },
+      invalidatesTags: ['ICD10'],
+    }),
+
+   searchIcd10: builder.query<PagedResult<any>, { keyword: string } &  PagedParams>({
+  query: ({ keyword, page, size, sort = "id,asc" }) => ({
+    url: `/api/setup/icd10/search/${keyword}`,
+    method: "GET",
+    params: { page, size, sort },
+  }),
+  transformResponse: (response: any[], meta) => {
+    const headers = meta?.response?.headers;
     return {
-      url: '/api/setup/icd10/import',
-      method: 'POST',
-      body: formData,
-      responseHandler: (response) => response.text(), 
+      data: response,
+      totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+      links: parseLinkHeader(headers?.get("Link")),
     };
   },
-  invalidatesTags: ['ICD10'],
+  providesTags: ['ICD10'],
 }),
+
 
   }),
 });
 
-export const { useGetAllIcd10Query, useImportIcd10Mutation } = Icd10Service;
+export const { useGetAllIcd10Query, useImportIcd10Mutation
+  ,useSearchIcd10Query
+ } = Icd10Service;
