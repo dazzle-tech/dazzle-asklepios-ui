@@ -14,7 +14,7 @@ import { notify } from "@/utils/uiReducerActions";
 import MyButton from "@/components/MyButton/MyButton";
 import clsx from "clsx";
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
-const OperativeTimeOut = ({ operation, refetch, editable }) => {
+const OperativeTimeOut = ({ operation, refetch, editable, activeTab, setActiveTab, disabledTabs = [] }) => {
     const dispatch = useAppDispatch();
     const [timeout, setTimeOut] = useState({ ...newApPreOperativeTimeout });
     const { data: timeoutData } = useGetOperativeTimeoutByOperationQuery(operation?.key, {
@@ -28,7 +28,7 @@ const OperativeTimeOut = ({ operation, refetch, editable }) => {
 
     useEffect(() => {
         if (timeoutData) {
-            console.log("tim",timeoutData?.object)
+            console.log("tim", timeoutData?.object)
             setTimeOut({
                 ...timeoutData?.object,
                 timeoutStartTime: timeoutData?.object?.timeoutStartTime ? new Date(timeoutData?.object?.timeoutStartTime) : null
@@ -50,8 +50,9 @@ const OperativeTimeOut = ({ operation, refetch, editable }) => {
 
         if (saveMutation.isSuccess) {
 
-            setTimeOut({...saveMutation?.data?.object,
-                 timeoutStartTime: saveMutation?.data?.object?.timeoutStartTime ? new Date(saveMutation?.data?.object?.timeoutStartTime) : null
+            setTimeOut({
+                ...saveMutation?.data?.object,
+                timeoutStartTime: saveMutation?.data?.object?.timeoutStartTime ? new Date(saveMutation?.data?.object?.timeoutStartTime) : null
 
             });
 
@@ -72,14 +73,16 @@ const OperativeTimeOut = ({ operation, refetch, editable }) => {
 
         }
     }
+
+
     return (
         <> {saveMutation.isLoading ? (
             <div style={{
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                height: "50vh", 
-                width: "90vw" 
+                height: "50vh",
+                width: "90vw"
             }}>
                 <Loader active content="Loading..." size="large" />
             </div>) : (
@@ -350,11 +353,25 @@ const OperativeTimeOut = ({ operation, refetch, editable }) => {
                         </Row>
                     </Col>
                 </Row>
+
                 <div className='bt-div'>
                     <div className="bt-right">
                         <MyButton onClick={handleSave}>Save</MyButton>
+                        <MyButton
+                            onClick={() => {
+                                const nextTab = (parseInt(activeTab) + 1).toString();
+                                if (!disabledTabs.includes(nextTab)) {
+                                    setActiveTab(nextTab);
+                                }
+                            }}
+                            disabled={disabledTabs.includes((parseInt(activeTab) + 1).toString())}
+                            style={{ marginLeft: '10px' }}
+                        >
+                            Next
+                        </MyButton>
+                    </div>
+                </div>
 
-                    </div></div>
             </Form>)}</>
 
     )

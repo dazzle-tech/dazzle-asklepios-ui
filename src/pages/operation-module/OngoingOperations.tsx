@@ -12,6 +12,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
 import StartedDetails from "./StartedDetails/StartedDetails";
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import './style.less';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import MyButton from "@/components/MyButton/MyButton";
+
+
 export type OngoingRef = {
     refetch: () => void;
 };
@@ -50,6 +56,9 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
         fromDate: new Date(),
         toDate: null
     });
+
+    const [record, setRecord] = useState({});
+
     const [save, saveMutation] = useSaveOperationRequestsMutation();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -201,24 +210,30 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
         },
         {
             key: "actions",
-            title: <Translate >Actions</Translate>,
+            title: <Translate>Actions</Translate>,
             render: (rowData: any) => {
+                const isInProgress = rowData?.operationStatusLvalue?.valueCode === "PROC_INPROGRESS";
+                const tooltip = (
+                    <Tooltip>{isInProgress ? "In Progress" : "Start"}</Tooltip>
+                );
 
-
-                // const isDisabled =request?.key!==rowData.key;
-                return <HStack spacing={10}>
-                    <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>{rowData.operationStatusLvalue.valueCode === "PROC_INPROGRESS" ? "In Progress" : "Start"}</Tooltip>}
-                    >
-                        <FontAwesomeIcon icon={rowData.operationStatusLvalue.valueCode === "PROC_INPROGRESS" ? faNotesMedical : faPlay}
-                            onClick={() => setOpen(true)}
-                        // style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-
-                        />
-                    </Whisper>
-                </HStack>;
+                return (
+                    <Form layout="inline" fluid className="nurse-doctor-form">
+                        <Whisper trigger="hover" placement="top" speaker={tooltip}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    backgroundColor={isInProgress ? "orange" : ""}
+                                    onClick={() => setOpen(true)}
+                                >
+                                    <FontAwesomeIcon
+                                        icon={isInProgress ? faNotesMedical : faPlay}
+                                    />
+                                </MyButton>
+                            </div>
+                        </Whisper>
+                    </Form>
+                );
             }
         },
         {
@@ -254,7 +269,6 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
             }
 
         },
-
         {
             key: "deletedAt",
             title: <Translate>Cancelled At/By</Translate>,
@@ -278,32 +292,139 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
             return [...filters, newFilter];
         }
     };
-    const filters = () => (<>
-        <Form layout="inline" fluid className="container-of-filter-fields-department">
-            <MyInput
 
-                fieldType="date"
-                fieldLabel="From Date"
-                fieldName="fromDate"
-                record={dateFilter}
-                setRecord={setDateFilter}
-                showLabel={false}
-            />
-            <MyInput
 
-                fieldType="date"
-                fieldLabel="To Date"
-                fieldName="toDate"
-                record={dateFilter}
-                setRecord={setDateFilter}
-                showLabel={false}
-            />
 
-        </Form>
+    const { data: operationLov } = useGetLovValuesByCodeQuery('OPERATION_NAMES');
+    const { data: operationorderLov } = useGetLovValuesByCodeQuery('OPERATION_ORDER_TYPE');
+    const { data: proclevelLov } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
+    const { data: priorityLov } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+    const { data: statusLov } = useGetLovValuesByCodeQuery('PROC_STATUS');
 
-      <AdvancedSearchFilters searchFilter={true}/>
 
-    </>);
+
+
+    const filters = () => {
+        return (
+            <>
+                <Form layout="inline" fluid className="container-of-filter-fields-department">
+
+                    <div className='container-of-filter-fields-department-date-filters'>
+                        <MyInput
+                            fieldType="date"
+                            fieldLabel="From Date"
+                            fieldName="fromDate"
+                            record={dateFilter}
+                            setRecord={setDateFilter}
+                            showLabel={false}
+                            column
+                        />
+                        <MyInput
+                            fieldType="date"
+                            fieldLabel="To Date"
+                            fieldName="toDate"
+                            record={dateFilter}
+                            setRecord={setDateFilter}
+                            showLabel={false}
+                            column
+                        />
+                    </div>
+                    <SearchPatientCriteria
+                        record={record}
+                        setRecord={setRecord}
+                    />
+
+                    <MyInput
+                        column
+                        width={150}
+                        fieldType="select"
+                        fieldLabel="Operation Name"
+                        fieldName="key"
+                        selectData={operationLov?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={record}
+                        setRecord={setRecord}
+                    />
+
+                    <MyInput
+                        column
+                        width={150}
+                        fieldType="select"
+                        fieldLabel="Status"
+                        fieldName="key"
+                        selectData={statusLov?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={record}
+                        setRecord={setRecord}
+                    />
+
+                </Form>
+
+                <AdvancedSearchFilters
+                    searchFilter={true}
+                    content={
+                        <div className="advanced-filters">
+
+                            <Form fluid className="dissss">
+                                <MyInput
+                                    fieldName="accessTypeLkey"
+                                    fieldType="select"
+                                    selectData={operationorderLov?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    fieldLabel="Operation Type"
+                                    selectDataValue="key"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    searchable={false}
+                                    width={150}
+                                />
+                                <MyInput
+                                    width={150}
+                                    fieldName="priority"
+                                    fieldType="select"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    selectData={proclevelLov?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldLabel="Operation Level"
+                                    searchable={false}
+                                />
+                                <MyInput
+                                    width={150}
+                                    fieldType="date"
+                                    fieldLabel="Operation Date"
+                                    fieldName="operationDate"
+                                    record={dateFilter}
+                                    setRecord={setDateFilter}
+                                />
+
+                                <MyInput
+                                    width={150}
+                                    fieldName="priority"
+                                    fieldType="select"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    selectData={priorityLov?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldLabel="Priority"
+                                    searchable={false}
+                                />
+
+                            </Form>
+
+                        </div>
+                    }
+                />
+            </>
+        );
+    };
+
+
+
     return (<>
         <MyTable
             filters={filters()}
@@ -317,10 +438,10 @@ const OngoingOperations = forwardRef<OngoingRef, OngoingProps>(({
             }}
 
         />
-        <StartedDetails open={open} setOpen={setOpen} 
-        patient={patient} encounter={encounter}
-         operation={request} setOperation={setRequest}
-          refetch={refetch}  editable={true}/>
+        <StartedDetails open={open} setOpen={setOpen}
+            patient={patient} encounter={encounter}
+            operation={request} setOperation={setRequest}
+            refetch={refetch} editable={true} />
     </>);
 });
 export default OngoingOperations;
