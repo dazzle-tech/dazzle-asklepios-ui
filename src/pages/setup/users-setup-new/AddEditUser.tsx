@@ -1,6 +1,6 @@
 import MyModal from '@/components/MyModal/MyModal';
 import React from 'react';
-import {  useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { faCheckDouble, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -12,31 +12,24 @@ import { useGetAllRolesQuery, useGetRolesByFacilityQuery } from '@/services/secu
 import MyButton from '@/components/MyButton/MyButton';
 import AccessRole from './AccessRole';
 import { useGetGenderQuery } from '@/services/enumService';
-const AddEditUser = ({
-  open,
-  setOpen,
-  width,
-  user,
-  setUser,
-  handleSave,
- 
-}) => {
-
+const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
   // Fetch accessRoles list response
- const {data:accessRoles}=useGetAllRolesQuery(null);
+  const { data: accessRoles } = useGetAllRolesQuery(null);
   // Fetch gender lov list response
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   // Fetch jobRole lov list response
   const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
 
-  const genders =[{
-    id:"MALE", 
-    displayValue: "Male",
-  },
-{
-  id:"FEMALE",
-  displayValue:"Female"
-}]
+  const genders = [
+    {
+      id: 'MALE',
+      displayValue: 'Male'
+    },
+    {
+      id: 'FEMALE',
+      displayValue: 'Female'
+    }
+  ];
 
   // Modal content
   const conjureFormContent = stepNumber => {
@@ -72,7 +65,6 @@ const AddEditUser = ({
                 setRecord={setUser}
                 width={250}
               />
-
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
               <MyInput
@@ -80,7 +72,7 @@ const AddEditUser = ({
                 fieldLabel="sex at birth"
                 fieldType="select"
                 fieldName="gender"
-                selectData={genders?? []}
+                selectData={genders ?? []}
                 selectDataLabel="displayValue"
                 selectDataValue="id"
                 record={user}
@@ -127,7 +119,7 @@ const AddEditUser = ({
               record={user}
               setRecord={setUser}
             />
-          
+
             <MyInput
               column
               fieldName="jobDescription"
@@ -137,16 +129,12 @@ const AddEditUser = ({
               setRecord={setUser}
               width={width > 600 ? 520 : 250}
             />
-            
           </Form>
         );
-    
 
       case 1:
-      return (
-       <AccessRole user={user}  />
-      );}
-
+        return <AccessRole user={user} />;
+    }
   };
 
   return (
@@ -159,13 +147,28 @@ const AddEditUser = ({
       actionButtonLabel={user?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size={width > 600 ? '38vw' : '25vw'}
-      steps={[{ title: 'User Info', icon: <FontAwesomeIcon icon={faUser} /> ,disabledNext:!user.id, footer: <>
-                    <MyButton
-                        disabled={false}
-                        onClick={handleSave}
-                        prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}>Save</MyButton> </>},{
-        title: 'Roles', icon: <FontAwesomeIcon icon={faUser} />
-      }]}
+      steps={[
+        {
+          title: 'User Info',
+          icon: <FontAwesomeIcon icon={faUser} />,
+          disabledNext: !user.id,
+          footer: (
+            <>
+              <MyButton
+                disabled={false}
+                onClick={handleSave}
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+              >
+                Save
+              </MyButton>{' '}
+            </>
+          )
+        },
+        {
+          title: 'Roles',
+          icon: <FontAwesomeIcon icon={faUser} />
+        }
+      ]}
     />
   );
 };
