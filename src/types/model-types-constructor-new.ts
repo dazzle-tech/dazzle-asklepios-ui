@@ -194,3 +194,15 @@ export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   verified: undefined,
   translated: undefined,
 }
+export const newAllergen: modelTypes.Allergen = {
+  id: undefined,
+  code: '',
+  name: '',
+  type: null,           
+  description: '',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

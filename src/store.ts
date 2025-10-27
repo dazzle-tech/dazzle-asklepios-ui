@@ -38,6 +38,9 @@ import { MedicalsheetsService } from './services/MedicalSheetsService';
 import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
+import { PractitionerService } from './services/practitioner/PractitionerService';
+import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
+import { allergensService } from './services/setup/allergensService';
 import { PractitionerService } from './services/setup/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 import {Icd10Service} from './services/setup/icd10service';
@@ -134,6 +137,8 @@ export const store = configureStore({
     // Translation slice
     [translationService.reducerPath]: translationService.reducer,
 
+    [allergensService.reducerPath]:allergensService.reducer,
+
     //service
     [serviceService.reducerPath]: serviceService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
@@ -175,8 +180,8 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+      allergensService.middleware,
       Icd10Service.middleware,
-
     ])
 });
 

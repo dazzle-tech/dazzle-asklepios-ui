@@ -211,7 +211,14 @@ export interface UploadResponse {
   sizeBytes: number;
   downloadUrl: string;
 }
-
+export interface Allergen {
+  id?: number;
+  code: string;
+  name: string;
+  type: string ;
+  description?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
 
 
 export interface DownloadTicket {
