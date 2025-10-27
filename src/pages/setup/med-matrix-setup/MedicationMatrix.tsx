@@ -107,13 +107,10 @@ const MedicationMatrix = () => {
 
   // Page header setup
   const divContent = (
-    <div className="page-title">
-      <h5>Medication Matrix SetUp</h5>
-    </div>
+    "Medication Matrix SetUp"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Medication Matrix SetUp'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const handleEdit = type => {
     switch (type) {

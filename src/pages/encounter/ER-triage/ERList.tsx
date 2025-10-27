@@ -49,13 +49,10 @@ const ERList = () => {
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>ER Department</h5>
-    </div>
+      "ER Department"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('ER_Patient_Encounters'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   const [cancelEncounter] = useCancelEncounterMutation();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });

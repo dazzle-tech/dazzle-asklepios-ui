@@ -38,14 +38,11 @@ const SurgicalKitsSetup: React.FC = () => {
   // ---- Header page setup (inside useEffect) ----
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Surgical Kits Setup</h5>
-      </div>
+     "Surgical Kits Setup"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-
+    
     dispatch(setPageCode('Surgical_Kits_Setup'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

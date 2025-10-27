@@ -3,95 +3,56 @@ import React, { useEffect, useState } from 'react';
 import { Checkbox, Form } from 'rsuite';
 import './styles.less';
 import { HiDocumentDuplicate } from 'react-icons/hi2';
-import {
-  useGetFacilitiesQuery,
-  useSaveFacilityMutation
-} from '@/services/setupService';
+
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { useGetAvailableForRoleQuery } from '@/services/potintialDuplicateService';
+import { useUpdateFacilityMutation } from '@/services/security/facilityService';
 
 const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filterLogic: 'or',
-    filters: [
-      {
-        fieldName: 'rool_key',
-        operator: 'isNull',
-        value: true
-      },
-      {
-        fieldName: 'rool_key',
-        operator: 'match',
-        value: Candidate?.key
-      }
-    ]
-  });
+
   // Fetch Facility list response
-   const { data: facilityListResponse, refetch: fetchFaci, isFetching } = useGetFacilitiesQuery(listRequest);
-   // save facility
-   const [saveFacility] = useSaveFacilityMutation();
-  useEffect(() => {
-    setListRequest({
-      ...initialListRequest,
-      filterLogic: 'or',
-      filters: [
-        {
-          fieldName: 'rool_key',
-          operator: 'isNull',
-          value: true
-        },
-        {
-          fieldName: 'rool_key',
-          operator: 'match',
-          value: Candidate?.key
-        }
-      ]
-    });
-  }, [Candidate]);
- 
+  const { data: facilityListResponse, refetch: fetchFaci, isFetching } = useGetAvailableForRoleQuery(Candidate?.id, { skip: !Candidate?.id });
+  console.log("Facilitys", facilityListResponse)
+  // save facility
+
+  const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
   //Table columns
   const tableColumns = [
     {
       key: 'role',
-      title: <Translate>Role</Translate>,
+      title: <Translate>Rule</Translate>,
       render: rowData => (
         <Checkbox
           key={rowData.id}
-          checked={rowData.roolKey !== null ? true : false}
+          checked={rowData.ruleId !== null ? true : false}
           onChange={(value, checked) => {
             if (checked) {
-              saveFacility({ ...rowData, roolKey: Candidate.key })
+              updateFacility({ ...rowData, ruleId: Candidate.id })
                 .unwrap()
-                .then(() => {
-                  fetchFaci();
-                });
+                .then(fetchFaci);
+
             } else {
-              saveFacility({ ...rowData, roolKey: null })
+              updateFacility({ ...rowData, ruleId: null })
                 .unwrap()
-                .then(() => {
-                  fetchFaci();
-                });
+                .then(fetchFaci);
+
             }
           }}
         />
       )
     },
+
     {
-      key: 'id',
-      title: <Translate>ID</Translate>,
-      render: rowData => rowData.facilityId
-    },
-    {
-      key: 'facilityName',
+      key: 'name',
       title: <Translate>Name</Translate>
     },
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      render: rowData => rowData.facilityType
+      render: rowData => rowData.type
     }
   ];
 
@@ -103,7 +64,7 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
           <Form fluid>
             <MyTable
               height={450}
-              data={facilityListResponse?.object ?? []}
+              data={facilityListResponse ?? []}
               loading={isFetching}
               columns={tableColumns}
             />

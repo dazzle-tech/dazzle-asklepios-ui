@@ -32,13 +32,10 @@ const AgeGroup = () => {
   const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5>Age Group</h5>
-    </div>
+    "Age Group"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Age_Group'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;

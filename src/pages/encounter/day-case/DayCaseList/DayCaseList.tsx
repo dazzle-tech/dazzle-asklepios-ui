@@ -44,16 +44,11 @@ const DayCaseList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
-  const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5> DayCase List</h5>
-    </div>
-  );
+  const divContent = 'DayCase List';
 
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('P_DayCaseEncounters'));
   const [cancelEncounter] = useCancelEncounterMutation();
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
@@ -567,14 +562,9 @@ const DayCaseList = () => {
     };
   }, [isLoading, isFetching, dispatch]);
   useEffect(() => {
-    const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5> DayCase List</h5>
-      </div>
-    );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    const divContent = 'DayCase List';
     dispatch(setPageCode('P_DayCaseEncounters'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
   }, [dispatch]);
 
   return (

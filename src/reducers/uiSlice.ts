@@ -12,6 +12,7 @@ const initialState = {
 
     pt: { // اللغة البرتغالية
     "First Name" : "primeiro nome",
+    "Patient Registration" : "Cadastro de Paciente",
     "Basic Information": "Informações Básicas",
     "Demographics" : "Demografia",
     "Extra Details" : "Detalhes extras",
@@ -177,13 +178,13 @@ const initialState = {
     "Next" : "Próximo",
     "Add payment" : "Adicionar pagamento"
     }
-    
+
   },
   screenKey: '',
   loading: false,
   systemLoader: false,
   showChangePassword: false,
-  showEditProfile:false
+  showEditProfile: false
 };
 
 export const uiSlice = createSlice({
@@ -228,12 +229,15 @@ export const uiSlice = createSlice({
       state.showEditProfile = false;
     },
     setMode: (state, action) => {
-    state.mode = action.payload;
+      state.mode = action.payload;
     },
     setLang: (state, action) => {
-    state.lang = action.payload;
-    localStorage.setItem('lang', action.payload); 
-    }
+      state.lang = action.payload;
+      localStorage.setItem('lang', action.payload);
+    },
+    setTranslations: (state, action) => {
+      state.translations = action.payload;
+    },
   },
   extraReducers: builder => {
     /* changeLang */
@@ -246,5 +250,5 @@ export const uiSlice = createSlice({
     );
   }
 });
-export const { setMode, setLang } = uiSlice.actions;
+export const { setMode, setLang, setTranslations } = uiSlice.actions;
 export default uiSlice;

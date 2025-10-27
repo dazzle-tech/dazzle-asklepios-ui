@@ -46,13 +46,10 @@ const PotintialDuplicate = () => {
   const totalCount = CandidateListResponse?.extraNumeric ?? 0;
    // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5>Potintial Duplicate</h5>
-    </div>
+    "Potintial Duplicate"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Potintial_Duplicate'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && candidate && rowData.key === candidate.key) {

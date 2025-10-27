@@ -8,6 +8,7 @@ import RequestList from "./RequestsList";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import { useAppDispatch } from "@/hooks";
 import ReactDOMServer from 'react-dom/server';
+import Translate from "@/components/Translate";
 const Operation = () => {
    const dispatch=useAppDispatch();
    const [patient, setPatient] = useState({ ...newApPatient });
@@ -21,15 +22,12 @@ const Operation = () => {
        reqRef.current?.refetch();
      }
        const divContent = (
-         <div style={{ display: 'flex' }}>
-           <Text className="title-font-style">Operations</Text>
-         </div>
+           "Operations"
        );
-       const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
        useEffect(() => {
 
          dispatch(setPageCode('Operation_Module'));
-         dispatch(setDivContent(divContentHTML));
+         dispatch(setDivContent(divContent));
        }, []);
    return (<div className='container'>
       <div className='left-box' >

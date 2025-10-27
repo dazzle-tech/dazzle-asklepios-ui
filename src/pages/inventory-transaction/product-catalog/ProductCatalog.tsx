@@ -182,14 +182,11 @@ const ProductCatalog = () => {
 
     const dispatch = useDispatch();
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5> Product Catalog</h5>
-        </div>
+           "Product Catalog"
     );
     // page header setup
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('ProductCatalog'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
 
     useEffect(() => {

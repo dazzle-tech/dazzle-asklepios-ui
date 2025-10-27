@@ -42,13 +42,10 @@ const QuickVisit = ({ }) => {
     const [openDischargeModal, setOpenDischargeModal] = useState(false);
     // Page header setup
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5>Quick Visit</h5>
-        </div>
+            "Quick Visit"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Quick_Visit'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     const handleCompleteEncounter = async () => {
         try {

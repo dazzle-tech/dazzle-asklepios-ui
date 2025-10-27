@@ -10,6 +10,7 @@ import { ApPatient, ApPatientInsurance } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetDepartmentsQuery } from '@/services/setupService';
+import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
 
 const dummyRow = {
@@ -132,13 +133,14 @@ const content = (
                 </Form></div>);
 
   const filterss = (<>
-    <Form fluid>
+    <Form layout='inline' fluid>
       <div className="table-filters-handle-positions">
         <MyInput
           fieldLabel="Discharge From"
           fieldType="date"
           fieldName="from"
           record={filters}
+          column
           setRecord={setFilters}
           width="10vw"
         />
@@ -147,45 +149,23 @@ const content = (
           fieldType="date"
           fieldName="to"
           record={filters}
+          column
           setRecord={setFilters}
           width="10vw"
         />
-        <MyInput
-          width="10vw"
-          fieldLabel="Select Filter"
-          fieldName="selectfilter"
-          fieldType="select"
-          selectData={[
-            { key: 'MRN', value: 'MRN' },
-            { key: 'Document Number', value: 'Document Number' },
-            { key: 'Full Name', value: 'Full Name' },
-            { key: 'Archiving Number', value: 'Archiving Number' },
-            { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-            { key: 'Date of Birth', value: 'Date of Birth' }
-          ]}
-          selectDataLabel="value"
-          selectDataValue="key"
-          record={filters}
-          setRecord={setFilters}
-        />
-        <MyInput
-          fieldLabel="Search by"
-          fieldName="searchCriteria"
-          fieldType="text"
-          placeholder="Search"
-          width="10vw"
-          record={filters}
-          setRecord={setFilters}
-        />
+        
         <MyInput
           fieldLabel="Visit ID"
           fieldName="visitId"
           fieldType="text"
-          placeholder="Visit ID"
           width="10vw"
+          column
           record={filters}
           setRecord={setFilters}
         />
+
+<SearchPatientCriteria record={filters} setRecord={setFilters}/>
+
 
       </div>
     </Form>

@@ -41,13 +41,10 @@ const CDTSetup = () => {
 
   // Header page setUp
   const divContent = (
-    <div className="page-title">
-      <h5>CDT Codes</h5>
-    </div>
+    "CDT Codes"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('CDT_Codes'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   // Fetch cdt List Response
   const { data: cdtListResponse, isLoading } = useGetCdtsQuery(listRequest);

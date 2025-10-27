@@ -457,15 +457,11 @@ const TeleconsultationRequests = () => {
   console.log(paginatedData);
 
   const divContent = (
-    <div className="page-title">
-      <h5>Tele Consultation Screen</h5>
-    </div>
+      "Tele Consultation Screen"
   );
 
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-
   dispatch(setPageCode('tele_consultation_screen'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   return (
     <Panel>

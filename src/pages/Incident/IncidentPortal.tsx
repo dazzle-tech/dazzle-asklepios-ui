@@ -18,28 +18,22 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useDispatch } from "react-redux";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import ReactDOMServer from "react-dom/server";
+import Translate from "@/components/Translate";
 
 const queryClient = new QueryClient();
 
 const IncidentPortal: React.FC = () => {
-    const location = useLocation();
-    const dispatch = useDispatch();
-    const { patient, encounter, edit } = location.state || {};
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const { patient, encounter, edit } = location.state || {};
 
     // Page Header
     useEffect(() => {
         const divContent = (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <FontAwesomeIcon icon={faShieldAlt} style={{ color: "#1976d2" }} />
-                <h5 style={{ margin: 0 }}>MedCare Incident Portal</h5>
-            </div>
+                "MedCare Incident Portal"
         );
-
-        const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-
         dispatch(setPageCode("MedCare_Incident_Portal"));
-        dispatch(setDivContent(divContentHTML));
+        dispatch(setDivContent(divContent));
 
         return () => {
             dispatch(setPageCode(""));

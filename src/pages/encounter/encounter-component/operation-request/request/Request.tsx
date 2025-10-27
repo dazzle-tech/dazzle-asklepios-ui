@@ -310,7 +310,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
   ];
   return (
     <>
-      <Row>
+      <Row className='margin-left-right'>
         <MyTable
           columns={columns}
           data={operationrequestList?.object || []}

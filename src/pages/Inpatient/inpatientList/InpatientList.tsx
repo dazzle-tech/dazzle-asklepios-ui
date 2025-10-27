@@ -61,13 +61,10 @@ const InpatientList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>Inpatient Visit List</h5>
-    </div>
+      "Inpatient Visit List"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('In_Patient_Encounters'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   const [open, setOpen] = useState(false);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });

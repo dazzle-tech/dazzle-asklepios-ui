@@ -242,14 +242,11 @@ const inventoryTransfer = () => {
 
     const dispatch = useDispatch();
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5> Transfer Product</h5>
-        </div>
+           "Transfer Product"
     );
     // page header setup
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Inventory_Transfer'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     useEffect(() => {
         return () => {

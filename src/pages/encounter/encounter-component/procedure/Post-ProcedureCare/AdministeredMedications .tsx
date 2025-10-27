@@ -6,13 +6,14 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Col, Divider, Form, Input, Row, SelectPicker, Text } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
 import SectionContainer from '@/components/SectionsoContainer';
-
+import { Tooltip, Whisper } from 'rsuite';
+import './style.less'
 const GenericAdministeredMedications = ({
   parentKey,
   filterFieldName,
@@ -93,62 +94,106 @@ const GenericAdministeredMedications = ({
     {
       key: 'dose',
       title: <Translate>Dose</Translate>,
-      render: rowData =>
-        activeRowKey === rowData.key ? (
-          <Input
-            type="number"
-            style={{ width: 100 }}
-            onChange={value => setMedication({ ...medication, dose: Number(value) })}
-            onPressEnter={async () => {
-              try {
-                await saveMedication({ ...medication, filterFieldName: parentKey }).unwrap();
-                refetch();
-                dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-                setActiveRowKey(null);
-              } catch {
-                dispatch(notify({ msg: 'Failed to save', sev: 'error' }));
-              }
-            }}
-          />
-        ) : (
-          <span>
-            <FontAwesomeIcon
-              icon={faPenToSquare}
-              onClick={() => setActiveRowKey(rowData.key)}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
+      width: 150,
+      render: rowData => (
+        <div className="editable-cell">
+          {activeRowKey === rowData.key ? (
+            <Input
+              type="number"
+              style={{ width: '100%' }}
+              onChange={value => setMedication({ ...medication, dose: Number(value) })}
+              onPressEnter={async () => {
+                try {
+                  await saveMedication({ ...medication, filterFieldName: parentKey }).unwrap();
+                  refetch();
+                  dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+                  setActiveRowKey(null);
+                } catch {
+                  dispatch(notify({ msg: 'Failed to save', sev: 'error' }));
+                }
+              }}
             />
-            {rowData?.dose}
-          </span>
-        )
+          ) : (
+            <span>
+              <FontAwesomeIcon
+                icon={faPenToSquare}
+                onClick={() => setActiveRowKey(rowData.key)}
+                style={{ marginRight: '8px', cursor: 'pointer' }}
+              />
+              {rowData?.dose}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'route',
       title: <Translate>Unit</Translate>,
-      render: rowData =>
-        activeRowKey === rowData.key ? (
-          <SelectPicker
-            data={unitLovQueryResponse?.object ?? []}
-            value={rowData.unitLkey}
-            valueKey="key"
-            labelKey="lovDisplayVale"
-            onChange={async value => {
-              await saveMedication({ ...rowData, unitLkey: value }).unwrap();
-              refetch();
-              dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-              setActiveRowKey(null);
-            }}
-            style={{ width: 100 }}
-          />
-        ) : (
-          <span>
-            <FontAwesomeIcon
-              icon={faPenToSquare}
-              onClick={() => setActiveRowKey(rowData.key)}
-              style={{ marginRight: '8px', cursor: 'pointer' }}
+      width: 200,
+      render: rowData => (
+        <div className="editable-cell">
+          {activeRowKey === rowData.key ? (
+            <SelectPicker
+              data={unitLovQueryResponse?.object ?? []}
+              value={rowData.unitLkey}
+              valueKey="key"
+              labelKey="lovDisplayVale"
+              onChange={async value => {
+                await saveMedication({ ...rowData, unitLkey: value }).unwrap();
+                refetch();
+                dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+                setActiveRowKey(null);
+              }}
+              style={{ width: '100%' }}
             />
-            {rowData?.unitLvalue?.lovDisplayVale}
-          </span>
-        )
+          ) : (
+            <span>
+              <FontAwesomeIcon
+                icon={faPenToSquare}
+                onClick={() => setActiveRowKey(rowData.key)}
+                style={{ marginRight: '8px', cursor: 'pointer' }}
+              />
+              {rowData?.unitLvalue?.lovDisplayVale}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      align: 'center',
+      render: (rowData) => (
+        <Whisper placement="top" trigger="hover" speaker={<Tooltip>Delete</Tooltip>}>
+          <div>
+            <FontAwesomeIcon
+              icon={faTrash}
+              color="red"
+              style={{
+                cursor: 'pointer',
+                transition: 'color 0.2s ease-in-out'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#b71c1c')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'red')}
+              onClick={async () => {
+                try {
+                  await saveMedication({
+                    ...rowData,
+                    isActive: false
+                  }).unwrap();
+                  dispatch(notify({ msg: 'Deleted Successfully', sev: 'success' }));
+                  refetch();
+                } catch (error) {
+                  console.error(error);
+                  dispatch(notify({ msg: 'Failed to delete', sev: 'error' }));
+                }
+              }}
+            />
+          </div>
+        </Whisper>
+
+
+      ),
     }
   ];
 

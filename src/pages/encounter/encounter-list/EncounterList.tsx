@@ -48,13 +48,10 @@ const EncounterList = () => {
   const dispatch = useDispatch();
 
   const divContent = (
-    <div className="display-flex">
-      <h5>Patients Visit List</h5>
-    </div>
+        "Patients Visit List"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('P_Encounters'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
 
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
 
@@ -503,41 +500,38 @@ const EncounterList = () => {
   ];
 
 
-  const handleClearFilters = () => {
-    setRecord({});
-    setEncounterStatus({ key: '' });
-    setDateFilter({
-      fromDate: null,
-      toDate: null
-    });
+const handleClearFilters = () => {
+  const today = new Date();
+  setRecord({});
+  setEncounterStatus({ key: '' });
 
-    // reset listRequest to initial with ONLY default filters
-    setListRequest({
-      ...initialListRequest,
-      pageNumber: 1,
-      pageSize: listRequest.pageSize,
-      ignore: true,
-      filters: [
-        {
-          fieldName: 'resource_type_lkey',
-          operator: 'in',
-          value: ['2039534205961578', '2039620472612029', '2039516279378421']
-            .map(key => `(${key})`)
-            .join(' ')
-        },
-        {
-          fieldName: 'encounter_status_lkey',
-          operator: 'in',
-          value: ['91063195286200', '91084250213000']
-            .map(key => `(${key})`)
-            .join(' ')
-        }
-      ]
-    });
+  setDateFilter({
+    fromDate: today,
+    toDate: today
+  });
 
-    // trigger refresh
-    setManualSearchTriggered(true);
-  };
+  const formattedToday = formatDate(today);
+
+  setListRequest({
+    ...initialListRequest,
+    pageNumber: 1,
+    pageSize: listRequest.pageSize,
+    ignore: true,
+    filters: [
+      {
+        fieldName: 'planned_start_date',
+        operator: 'between',
+        value: `${formattedToday}_${formattedToday}`
+      }
+    ]
+  });
+
+  setManualSearchTriggered(true);
+};
+
+
+
+
 
 
   const filters = () => {
@@ -563,7 +557,11 @@ const EncounterList = () => {
             setRecord={setDateFilter}
           />
 
-          <SearchPatientCriteria record={record} setRecord={setRecord}/>
+          <SearchPatientCriteria
+            key={JSON.stringify(record)}
+            record={record}
+            setRecord={setRecord}
+          />
 
           <MyInput
             column
@@ -586,7 +584,7 @@ const EncounterList = () => {
           content={
             <div className="advanced-filters">
 
-                <Form fluid className="dissss">
+      <Form key={JSON.stringify(record)} fluid className="dissss">
                   {/* Visit Type LOV */}
                   <MyInput
                     fieldName="accessTypeLkey"
@@ -661,14 +659,6 @@ const EncounterList = () => {
   //useEffect
   useEffect(() => {
     handleCountForToday();
-    // let count = 0;
-    // if(encounterListForTodayResponse?.object)
-    // for(const visit of encounterListForTodayResponse?.object){
-    //  if(visit?.encounterStatusLvalue?.key === "91109811181900"){
-    //   count++;
-    //  }
-    // }
-    // setCompletedVisits(count);
   }, [encounterListForTodayResponse]);
 
   useEffect(() => {

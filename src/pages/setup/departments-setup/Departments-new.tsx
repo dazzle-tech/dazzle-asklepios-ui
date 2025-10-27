@@ -82,13 +82,10 @@ const Departments = () => {
   // Header setup
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>Departments</h5>
-      </div>
+      "Departments"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Departments'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

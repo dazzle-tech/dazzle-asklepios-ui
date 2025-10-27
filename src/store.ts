@@ -35,11 +35,19 @@ import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
 import { MedicalsheetsService } from './services/MedicalSheetsService';
+import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
 import { allergensService } from './services/setup/allergensService';
+import { PractitionerService } from './services/setup/practitioner/PractitionerService';
+import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
+import {Icd10Service} from './services/setup/icd10service';
+import { patientAttachmentService } from './services/patients/attachmentService';
+import {potintialService} from '@/services/potintialDuplicateService';
+
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -85,6 +93,7 @@ export const store = configureStore({
 
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
+    [patientAttachmentService.reducerPath]: patientAttachmentService.reducer,
     //lab module
     [labService.reducerPath]: labService.reducer,
     //operation
@@ -110,6 +119,7 @@ export const store = configureStore({
 
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
+    [potintialService.reducerPath] :potintialService.reducer,
     call: callReducer,
 
     [facilityService.reducerPath]: facilityService.reducer,
@@ -129,6 +139,9 @@ export const store = configureStore({
 
     [allergensService.reducerPath]:allergensService.reducer,
 
+    //service
+    [serviceService.reducerPath]: serviceService.reducer,
+    [Icd10Service.reducerPath]: Icd10Service.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -147,6 +160,7 @@ export const store = configureStore({
       dentalService.middleware,
       observationService.middleware,
       attachmentService.middleware,
+      patientAttachmentService.middleware,
       labService.middleware,
       radService.middleware,
       procedureService.middleware,
@@ -161,12 +175,13 @@ export const store = configureStore({
       enumService.middleware,
       userDepartmentService.middleware,
       MedicalsheetsService.middleware,
+      serviceService.middleware,
       languageService.middleware,
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
       allergensService.middleware,
-
+      Icd10Service.middleware,
     ])
 });
 

@@ -19,16 +19,13 @@ export interface ApUser {
   gender?: string | null;
   jobDescription?: string | null;
 }
+  
 
 
 export interface Candidate {
   id?: number;
-  role?: string;
-  dob?: boolean;
-  lastName?: boolean;
-  documentNo?: boolean;
-  mobileNumber?: boolean;
-  gender?: boolean;
+  rule?: string;
+  fields?: Record<string, boolean>; 
   createdBy?: string;
   createdDate?: string;
   lastModifiedBy?: string;
@@ -63,7 +60,9 @@ export interface Facility {
   type: string;
   defaultCurrency: string;
   isActive?: boolean;
-}
+  ruleId?:number;
+} 
+
 
 export interface CreateFacility {
   name?: string;
@@ -93,11 +92,60 @@ export interface UserDepartment {
   facilityId?: string | null;
   departmentId: number;
   isActive?: boolean;
+};
+
+
+export interface Service {
+  id?: number;
+  name: string;
+  abbreviation?: string | null;
+  code: string;
+  category?: string | null;
+  price?: number | null;
+  currency: string | null;
+  isActive?: boolean;
   createdBy?: string;
   createdDate?: Date | null;
-  lastModifiedBy?: string;
+  lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-};
+  facilityId?: number;
+}
+
+
+export interface ServiceItem {
+  id?: number;
+  type: string;       // @Enumerated(EnumType.STRING)
+  sourceId: number;             // FK to the source entity (e.g., Department id)
+  serviceId?: number | null;    // ManyToOne -> Service (nullable on the wire)
+  createdBy: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive: boolean;
+}
+
+/** Create payload (POST /api/setup/service-items) */
+export interface ServiceItemCreate {
+  type: string;
+  sourceId: number;
+  serviceId: number;            // required by backend create
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive?: boolean | null;
+}
+
+/** Update payload (PUT /api/setup/service-items/{id}) */
+export interface ServiceItemUpdate {
+  id: number;
+  type?: string | null;
+  sourceId?: number | null;
+  serviceId: number;            // required by backend update
+  isActive?: boolean | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
 
 export interface Language {
   id: number;
@@ -116,6 +164,7 @@ export interface LanguageTranslation {
   verified: boolean;
   translated: boolean;
 }
+
 
 export interface Practitioner {
   id?: number;
@@ -140,8 +189,28 @@ export interface Practitioner {
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null
-}
+};
 
+//Patient Attachment
+export interface PatientAttachment {
+  id: number;
+  patientId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  type?: string;
+  details?: string;
+  source?: string;
+}
+// Response Types
+export interface UploadResponse {
+  id: number;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  downloadUrl: string;
+}
 export interface Allergen {
   id?: number;
   code: string;
@@ -150,6 +219,32 @@ export interface Allergen {
   description?: string | null;
   isActive?: boolean;
   createdBy?: string;
+
+
+export interface DownloadTicket {
+  url: string;
+  expiresInSeconds: number;
+}
+
+// Request Types
+export interface UploadAttachmentParams {
+  patientId: number;
+  files: File[];
+  type?: string;
+  details?: string;
+  source?: string;
+}
+
+export interface Service {
+  id?: number;
+  name: string;
+  abbreviation?: string | null;
+  code: string;
+  category?: string | null;
+  price?: number | null;
+  currency: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;

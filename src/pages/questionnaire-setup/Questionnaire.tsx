@@ -131,13 +131,10 @@ const Questionnaire = () => {
    useEffect(() => {
       // Header page setUp
       const divContent = (
-        <div className="page-title">
-          <h5>Questionnaire</h5>
-        </div>
+       "Questionnaire"
       );
-      const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
       dispatch(setPageCode('Questionnaire'));
-      dispatch(setDivContent(divContentHTML));
+      dispatch(setDivContent(divContent));
   
       return () => {
         dispatch(setPageCode(''));

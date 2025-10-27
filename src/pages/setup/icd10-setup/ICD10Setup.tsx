@@ -1,191 +1,201 @@
-import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
-import MyTable from '@/components/MyTable';
-import { Form } from 'rsuite';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { useGetIcdListQuery } from '@/services/setupService';
-import MyInput from '@/components/MyInput';
-import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAppDispatch } from '@/hooks';
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
+import { setDivContent, setPageCode } from "@/reducers/divSlice";
+import MyTable from "@/components/MyTable";
+import {
+  useGetAllIcd10Query,
+  useImportIcd10Mutation,
+  useSearchIcd10Query,
+} from "@/services/setup/icd10service";
+import MyButton from "@/components/MyButton/MyButton";
+import { notify } from "@/utils/uiReducerActions";
+import { extractPaginationFromLink } from "@/utils/paginationHelper";
+import { Col, Form, Row } from "rsuite";
+import MyInput from "@/components/MyInput";
 
 const ICD10Setup = () => {
-    const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
 
-    // Initial table request with default filter (excluding deleted records)
-    const [listRequest, setListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-        ],
-        pageSize: 15
-    });
+  const [keyword, setKeyword] = useState(""); // 🔍 البحث
+  const [isSearching, setIsSearching] = useState(false);
 
-    // State to handle the filter form inputs
-    const [record, setRecord] = useState({ filter: '', value: '' });
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: "id,asc",
+    timestamp: Date.now(),
+  });
 
-    // Fetch the ICD list data based on current filters
-    const { data: icdListResponseLoading ,isLoading,isFetching } = useGetIcdListQuery(listRequest);
+  // 🔹 البيانات العادية
+  const { data: icdListResponse, isFetching, refetch } =
+    useGetAllIcd10Query(paginationParams);
 
-    // Header page setUp
-    const divContent = (
-        <div className='page-title'>
-            <h5>ICD-10 Diagnosis List</h5>
-        </div>
+  // 🔹 نتائج البحث
+  const { data: searchResults, isFetching: isSearchingData } =
+    useSearchIcd10Query(
+      { keyword, ...paginationParams },
+      { skip: !isSearching || !keyword } // ⛔ لا يبحث إلا عند وجود keyword
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('ICD10'));
-    dispatch(setDivContent(divContentHTML));
 
-    // Handle changes in filter fields
-    const handleFilterChange = (fieldName, value) => {
-        if (value) {
-            setListRequest(
-                addFilterToListRequest(
-                    fromCamelCaseToDBName(fieldName),
-                    'startsWithIgnoreCase',
-                    value,
-                    listRequest
-                )
-            );
-        } else {
-            setListRequest({
-                ...listRequest,
-                filters: [
-                    {
-                        fieldName: 'deleted_at',
-                        operator: 'isNull',
-                        value: undefined
-                    }
-                ],
-            });
-        }
+  const [importIcd10, { isLoading: isImporting }] = useImportIcd10Mutation();
+
+  const activeData = isSearching ? searchResults : icdListResponse;
+  const totalCount = activeData?.totalCount ?? 0;
+  const links = activeData?.links || {};
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
+
+  useEffect(() => {
+    dispatch(setPageCode("ICD10"));
+    dispatch(setDivContent("ICD-10 Diagnosis List"));
+    return () => {
+      dispatch(setPageCode(""));
+      dispatch(setDivContent(""));
     };
+  }, [dispatch]);
 
-    // Change page event handler
-    const handlePageChange = (_: unknown, newPage: number) => {
-        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-    };
-    // Change number of rows per page
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setListRequest({
-            ...listRequest,
-            pageSize: parseInt(event.target.value, 10),
-            pageNumber: 1
-        });
-    };
+  const handlePageChange = (_: unknown, newPage: number) => {
+    let targetLink: string | null | undefined = null;
 
-    // Table columns definition
-    const columns = [
-        {
-            key: 'icdCode',
-            title: 'Code',
-            render: (rowData) => rowData?.icdCode ?? 'N/A',
-        },
-        {
-            key: 'description',
-            title: 'Short Description',
-            render: (rowData) => rowData?.description ?? 'N/A',
-        },
-        {
-            key: 'fulldescription',
-            title: 'Full Description',
-            render: (rowData) => rowData?.fulldescription ?? 'N/A',
-        }
-    ];
+    if (newPage > paginationParams.page && links.next) targetLink = links.next;
+    else if (newPage < paginationParams.page && links.prev)
+      targetLink = links.prev;
+    else if (newPage === 0 && links.first) targetLink = links.first;
+    else if (newPage > paginationParams.page + 1 && links.last)
+      targetLink = links.last;
 
-    // Available fields for filtering
-    const filterFields = [
-        { label: 'Code', value: 'icdCode' },
-        { label: 'Short Description', value: 'description' },
-        { label: 'Full Description', value: 'fulldescription' }
-    ];
+    if (targetLink) {
+      const { page, size } = extractPaginationFromLink(targetLink);
+      setPaginationParams({
+        ...paginationParams,
+        page,
+        size,
+        timestamp: Date.now(),
+      });
+    }
+  };
 
-    // Filter form rendered above the table
-    const filters = () => (
-        <Form layout="inline" fluid>
-            <MyInput
-                selectDataValue="value"
-                selectDataLabel="label"
-                selectData={filterFields}
-                fieldName="filter"
-                fieldType="select"
-                record={record}
-                setRecord={(updatedRecord) => {
-                    setRecord({
-                        ...record,
-                        filter: updatedRecord.filter,
-                        value: ''
-                    });
-                }}
-                showLabel={false}
-                placeholder="Select Filter"
-                searchable={false}
-            />
+  const handleDownloadTemplate = () => {
+    const csvContent = "code,description,version,is_active";
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "ICD10_Template.csv";
+    link.click();
+  };
 
-            <MyInput
-                fieldName="value"
-                fieldType="text"
-                record={record}
-                setRecord={setRecord}
-                showLabel={false}
-                placeholder="Search"
-            />
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const handleClickUpload = () => fileInputRef.current?.click();
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      await importIcd10(file).unwrap();
+      dispatch(
+        notify({ msg: "ICD-10 file imported successfully", sev: "success" })
+      );
+      refetch();
+    } catch (error) {
+      dispatch(
+        notify({ msg: "Error importing ICD-10 file", sev: "error" })
+      );
+    }
+  };
+
+  // 🔍 تنفيذ البحث
+  const handleSearch = () => {
+    if (!keyword.trim()) {
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+  };
+
+  const columns = [
+    { key: "code", title: "Code", render: (rowData) => rowData?.code ?? "" },
+    {
+      key: "description",
+      title: "Description",
+      render: (rowData) => rowData?.description ?? "",
+    },
+    {
+      key: "version",
+      title: "Version",
+      render: (rowData) => rowData?.version ?? "",
+    },
+    {
+      key: "lastUpdated",
+      title: "Last Updated",
+      render: (rowData) => {
+        if (!rowData?.lastUpdated) return "";
+        const date = new Date(rowData.lastUpdated);
+        return date.toLocaleDateString();
+      },
+    },
+  ];
+
+  return (
+    <div>
+      <Row className="mb-3" style={{ gap: "10px", alignItems: "center" }}>
+        <Col md={3} sm={10}>
+          <MyButton appearance="ghost" onClick={handleDownloadTemplate}>
+            Download Template
+          </MyButton>
+        </Col>
+        <Col md={3} sm={10}>
+          <MyButton onClick={handleClickUpload} loading={isImporting}>
+            Upload ICD-10 CSV
+          </MyButton>
+        </Col>
+        <Col md={3} sm={12}>
+        <Form >
+           <MyInput
+            fieldName="search"
+            placeholder="Search by code or description"
+            fieldType="text"
+            record={{ search: keyword }}
+            setRecord={(r) => setKeyword(r.search)}
+            showLabel={false}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
         </Form>
-    );
+         
+        </Col>
+        <Col md={2} sm={6}>
+          <MyButton color="var(--deep-blue)" onClick={handleSearch}>
+            Search
+          </MyButton>
+        </Col>
+      </Row>
 
-    // Pagination values
-    const pageIndex = listRequest.pageNumber - 1;
-    const rowsPerPage = listRequest.pageSize;
-    const totalCount = icdListResponseLoading?.extraNumeric ?? 0;
+      <input
+        type="file"
+        accept=".csv"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileUpload}
+      />
 
-    // Effects
-    // Trigger filter logic when filter form changes
-    useEffect(() => {
-        if (record['filter']) {
-            handleFilterChange(record['filter'], record['value']);
-        } else {
-            // reset the listRequest if filter is cleared
-            setListRequest({
-                ...initialListRequest,
-                filters: [
-                    {
-                        fieldName: 'deleted_at',
-                        operator: 'isNull',
-                        value: undefined
-                    }
-                ],
-                pageSize: listRequest.pageSize,
-                pageNumber: 1
-            });
-        }
-    }, [record]);
-    
-    // Clear page info on component unmount
-    useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent("  "));
-        };
-    }, [location.pathname, dispatch]);
-
-    return (
-        <MyTable
-            data={icdListResponseLoading?.object ?? []}
-            columns={columns}
-            filters={filters()}
-            loading={isFetching || isLoading}
-            page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-        />
-    );
+      <MyTable
+        data={activeData?.data ?? []}
+        columns={columns}
+        totalCount={totalCount}
+        loading={isFetching || isSearchingData}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={(e) => {
+          setPaginationParams({
+            ...paginationParams,
+            size: Number(e.target.value),
+            page: 0,
+            timestamp: Date.now(),
+          });
+        }}
+      />
+    </div>
+  );
 };
 
 export default ICD10Setup;

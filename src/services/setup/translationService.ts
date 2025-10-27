@@ -1,5 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi'; 
+import { LanguageTranslation } from '@/types/model-types-new';
 
 export const translationService = createApi({
   reducerPath: 'translationApi',
@@ -53,6 +54,30 @@ export const translationService = createApi({
       }),
     }),
 
+    
+    //get Dictonary for all languages
+
+     getDictionary: builder.query({
+      query: langKey => `/api/setup/translations`,
+      transformResponse: (rows: LanguageTranslation[]) => {
+        // const dict: Record<string, string> = {};
+        // for (const r of rows) {
+        //   const value =
+        //      r.translationText?.trim();
+        //   dict[r.translationKey] = value;
+        // }
+        // return dict;
+        const all: Record<string, Record<string, string>> = {};
+        for (const r of rows) {
+          const value = (r.translationText?.trim());
+          if (!all[r.langKey]) all[r.langKey] = {};
+          // If you want only verified, add: if (!r.verified) continue;
+          all[r.langKey][r.translationKey] = value;
+        }
+        return all;
+      },
+    }),
+
     // GET by pair (lang_key + translation_key)
     getTranslationByPair: builder.query({
       query: ({ lang, key }: { lang: string; key: string }) => ({
@@ -71,4 +96,6 @@ export const {
   useGetTranslationsByLangQuery,
   useGetTranslationQuery,
   useGetTranslationByPairQuery,
+  useGetDictionaryQuery,
+  useLazyGetDictionaryQuery
 } = translationService;

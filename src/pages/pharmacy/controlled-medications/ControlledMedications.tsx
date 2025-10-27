@@ -254,13 +254,10 @@ const ControlledMedications = () => {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="page-title">
-        <h5>Controlled Medications</h5>
-      </div>
+    "Controlled Medications"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Controlled Medications'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

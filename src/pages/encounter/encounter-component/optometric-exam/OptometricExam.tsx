@@ -57,13 +57,10 @@ const OptometricExam = () => {
   const [time, setTime] = useState({ time: '' });
   const dispatch = useAppDispatch();
   const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>Optometric Exam</h5>
-      </div>
+      "Optometric Exam"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Clinical_Visit'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
   // Initialize the request state for fetching optometric exams with default filters
   const [optometricExamListRequest, setOptometricExamListRequest] = useState<ListRequest>({

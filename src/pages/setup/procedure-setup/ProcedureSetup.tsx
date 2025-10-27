@@ -56,13 +56,10 @@ const ProcedureSetup = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='page-title '>
-      <h5>Procedure Setup</h5>
-    </div>
+   "Procedure Setup"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Procedure_Setup'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && procedure && rowData.key === procedure.key) {

@@ -50,13 +50,10 @@ const Resources = () => {
   const [deactiveResource] = useDeactiveActiveResourceMutation();
   // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5>Resources</h5>
-    </div>
+        "Resources"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Resources'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
   const { data: resourcesWithAvailabilityResponse } = useGetResourcesWithAvailabilityQuery(listRequest);
   const { data: resourceAvailabilityDetails, error, isLoading } = useGetResourceWithDetailsQuery(selectedResources.key || '', {
     skip: !selectedResources.key

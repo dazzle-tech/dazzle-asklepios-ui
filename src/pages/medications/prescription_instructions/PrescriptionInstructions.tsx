@@ -58,13 +58,10 @@ const PrescriptionInstructions = () => {
   ];
  // Header page setUp
   const divContent = (
-    <div className='page-title'>
-      <h5>Prescription Instructions</h5>
-    </div>
+      "Prescription Instructions"
   );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Prescription_Instructions'));
-  dispatch(setDivContent(divContentHTML));
+  dispatch(setDivContent(divContent));
    // class name for selected row
    const isSelected = rowData => {
     if (rowData && prescriptionInstructions && rowData.key === prescriptionInstructions.key) {

@@ -172,11 +172,11 @@ export const MODULES: Module[] =
     icon: "FaCodepen",
     viewOrder: 1,
     screens: [
-      { name: "Cpt",code:"CPT", description: "", icon: "FaMicroscope", viewOrder: 0, navPath: "cpt-setup" },
-      { name: "Icd 10", code: "ICD_10", description: "list of ICD-10 codes for diagnosis", icon: "FaStethoscope", viewOrder: 0, navPath: "icd10-setup" },
-      { name: "Loinc", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
-      { name: "Cdt Codes", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
-      { name: "Snomed Ct", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "" },
+      { name: "CPT",code:"CPT", description: "", icon: "FaMicroscope", viewOrder: 0, navPath: "cpt-setup" },
+      { name: "ICD 10", code: "ICD_10", description: "list of ICD-10 codes for diagnosis", icon: "FaStethoscope", viewOrder: 0, navPath: "icd10-setup" },
+      { name: "LOINC", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
+      { name: "CDT CODES", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
+      { name: "SNOMED CT", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "" },
     ],
   },
   {name: "Front Desk Office",
@@ -184,7 +184,7 @@ export const MODULES: Module[] =
     icon: "FaRegIdBadge",
     viewOrder: 2,
     screens: [
-      { name: "Quick Appointment",code:"QUICK_APPOINTMENT", description: "", icon: "FaClock", viewOrder: 2, navPath: "encounter-registration" },
+  
       { name: "Patient Registration", code: "PATIENT_REGISTRATION", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "patient-profile" },
       { name: "Information Desk", code: "INFORMATION_DESK", description: "Search and view registered patients in specific facility", icon: "FaPersonRays", viewOrder: 0, navPath: "information-desk" },
       { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },

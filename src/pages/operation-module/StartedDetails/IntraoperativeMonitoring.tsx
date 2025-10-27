@@ -12,11 +12,17 @@ import { initialListRequest } from "@/types/types";
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { Col, Form, Row, Text } from "rsuite";
-const IntraoperativeMonitoring = ({ operation ,editable }) => {
+import { useAppDispatch } from "@/hooks";
+import { notify } from "@/utils/uiReducerActions";
+
+
+
+const IntraoperativeMonitoring = ({ operation, editable }) => {
     const [operationReq, setOperationReq] = useState({ ...newApOperationRequests });
+    const dispatch = useAppDispatch();
     const [open, setOpen] = useState(false);
     const [monitor, setMonitor] = useState({ ...newApOperationIntraoperativeMonitoring });
-     const [isSaved, setIsSaved] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
 
 
     const [listRequest, setListRequest] = useState({
@@ -34,35 +40,52 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
     const { data: monitorings, refetch } = useGetIntraoperativeMonitoringListQuery(listRequest);
 
     const [save] = useSaveIntraoperativeMonitoringMutation();
-    const [saveOperation]=useSaveOperationRequestsMutation();
+    const [saveOperation] = useSaveOperationRequestsMutation();
 
     useEffect(() => {
         setOperationReq(operation);
-        if(operation.monitorSlot>0){
+        if (operation.monitorSlot > 0) {
             setIsSaved(true)
         }
     }, [operation])
+
     const handelSave = async () => {
         try {
-            await save({ ...monitor, period: operationReq.monitorSlot *( monitorings?.object?.length+1), operationRequestKey: operation?.key }).unwrap();
-            refetch();
-            setOpen(false)
-        }
-        catch (error) {
+            await save({
+                ...monitor,
+                period: operationReq.monitorSlot * (monitorings?.object?.length + 1),
+                operationRequestKey: operation?.key
+            }).unwrap();
 
+            refetch();
+            setOpen(false);
+
+            setMonitor({ ...newApOperationIntraoperativeMonitoring });
+            dispatch(notify({ msg: "Intraoperative data saved successfully", sev: "success" }));
+        } catch (error) {
+            console.error(error);
+            dispatch(notify({ msg: "Failed to save intraoperative data", sev: "error" }));
         }
     };
-    const saveOperationSlot=async()=>{
-         try{
-                      await  saveOperation({...operationReq}).unwrap();
-                        console.log("saved");
-                        setIsSaved(true);
-                    }
-                    catch(error){
 
-                    }
 
-    }
+    const handleClear = () => {
+        setMonitor({ ...newApOperationIntraoperativeMonitoring });
+    };
+
+
+    const saveOperationSlot = async () => {
+        try {
+            await saveOperation({ ...operationReq }).unwrap();
+            console.log("saved");
+            setIsSaved(true);
+            dispatch(notify({ msg: "Interval saved successfully", sev: "success" }));
+        } catch (error) {
+            console.error(error);
+            dispatch(notify({ msg: "Failed to save interval", sev: "error" }));
+        }
+    };
+
     const columns = [
         {
             key: 'period',
@@ -121,52 +144,52 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
         }
     ];
 
-    return (<Form fluid  className={clsx('', {
-                                                            'disabled-panel': !editable
-                                                          })}>
+    return (<Form fluid className={clsx('', {
+        'disabled-panel': !editable
+    })}>
         <div className="bt-div">
             <Row>
                 <Col md={10}>
-                 <MyInput
-                 width="100%"
-                disabled={isSaved}
-                fieldType="number"
-                fieldName="monitorSlot"
-                fieldLabel="Increase by"
-                rightAddon={"min"}
-                setRecord={setOperationReq}
-                record={operationReq}
-                
-            /></Col>
+                    <MyInput
+                        width="100%"
+                        disabled={isSaved}
+                        fieldType="number"
+                        fieldName="monitorSlot"
+                        fieldLabel="Increase by"
+                        rightAddon={"min"}
+                        setRecord={setOperationReq}
+                        record={operationReq}
+
+                    /></Col>
                 <Col md={2}>
-                <br/>
-<div className="button-check-intraoperative-monitoring">
-    <MyButton onClick={saveOperationSlot}>
-      <FontAwesomeIcon icon={faCircleCheck} />
-    </MyButton>
-</div>
-                 
+                    <br />
+                    <div className="button-check-intraoperative-monitoring">
+                        <MyButton onClick={saveOperationSlot}>
+                            <FontAwesomeIcon icon={faCircleCheck} />
+                        </MyButton>
+                    </div>
+
                 </Col>
             </Row>
-           
-           
+
+
             <div
                 className="bt-right"
             >
-<MyButton
-  disabled={!operationReq.monitorSlot}
-  onClick={() => setOpen(true)}
->
-  <AddOutlineIcon style={{ marginRight: 8 }} />
-  Add
-</MyButton>
+                <MyButton
+                    disabled={!operationReq.monitorSlot}
+                    onClick={() => setOpen(true)}
+                >
+                    <AddOutlineIcon style={{ marginRight: 8 }} />
+                    Add
+                </MyButton>
 
             </div>
         </div>
-        <MyTable 
-        data={monitorings?.object||[]}
-        columns={columns}
-        
+        <MyTable
+            data={monitorings?.object || []}
+            columns={columns}
+
         />
         <MyModal
             open={open}
@@ -179,7 +202,7 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                         <MyInput
                             width="100%"
                             fieldType="number"
-                               rightAddonwidth={50}
+                            rightAddonwidth={50}
                             rightAddon="bpm"
                             fieldName="heartRate"
                             record={monitor}
@@ -189,14 +212,14 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                     <Col md={8}>
                         <MyInput
                             width="100%"
-                           
+
                             fieldType="number"
                             rightAddon="%"
                             fieldName="spo2"
                             record={monitor}
                             setRecord={setMonitor}
                         /></Col>
-                        <Col md={8}>
+                    <Col md={8}>
                         <MyInput
                             width="100%"
                             rightAddonwidth={50}
@@ -207,7 +230,7 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                             setRecord={setMonitor}
                         /></Col>
                 </Row>
-                
+
                 <Row className="rows-gap">
                     <Col md={8}>
                         <MyInput
@@ -228,7 +251,7 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                             record={monitor}
                             setRecord={setMonitor}
                         /></Col>
-                         <Col md={8}>
+                    <Col md={8}>
                         <MyInput
                             width="100%"
                             fieldType="number"
@@ -241,7 +264,7 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
 
 
                 <Row className="rows-gap">
-                         <Col md={8}>
+                    <Col md={8}>
                         <MyInput
                             width="100%"
                             fieldType="number"
@@ -315,7 +338,7 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
 
                 </Row>
 
-               <Row className="rows-gap">
+                <Row className="rows-gap">
                     <Col md={10}>
                         <MyInput
                             width="100%"
@@ -325,15 +348,15 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                             record={monitor}
                             setRecord={setMonitor}
                         /></Col>
-                       <Col md={2}>
-                        <br/>
+                    <Col md={2}>
+                        <br />
                         <Text></Text>
-                        </Col>
+                    </Col>
 
-                        <Col md={2}>
-                        <br/>
+                    <Col md={2}>
+                        <br />
                         <Text>/</Text>
-                        </Col>
+                    </Col>
                     <Col md={10} >
                         <MyInput
                             width="100%"
@@ -345,6 +368,11 @@ const IntraoperativeMonitoring = ({ operation ,editable }) => {
                         /></Col>
                 </Row>
             </>}
+            footerButtons={
+                <MyButton onClick={handleClear}>
+                    Clear
+                </MyButton>
+            }
         ></MyModal>
 
 

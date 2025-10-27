@@ -486,13 +486,10 @@ const EPrescriptions = () => {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="page-title">
-        <h5>ePrescriptions</h5>
-      </div>
+        "ePrescriptions"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('ePrescriptions'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));

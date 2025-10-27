@@ -23,6 +23,7 @@ import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import ReactDOMServer from 'react-dom/server';
 import { useDispatch } from 'react-redux';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
+import Translate from '@/components/Translate';
 //MainTable Data
 const sampleData = [
   {
@@ -123,13 +124,10 @@ const ListOfRequisition = () => {
   // Header page setUp - moved to useEffect
   useEffect(() => {
     const divContent = (
-      <div className="page-title">
-        <h5>List of Requisition</h5>
-      </div>
+        "List of Requisition"
     );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('List_of_Requisition'));
-    dispatch(setDivContent(divContentHTML));
+    dispatch(setDivContent(divContent));
   }, [dispatch]);
 
   //Accept/UndoAccept Handle
