@@ -317,7 +317,9 @@ const ProductSetup = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
+  const TabData = [
+    {title: "", content: <></>},
+  ];
   const tabContant = () => {
     return (
       <Box>
