@@ -233,6 +233,24 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   lastModifiedDate: null,
   facilityId: undefined,
 };
+
+export const newProcedure: modelTypes.Procedure = {
+  id: undefined,
+  name: '',
+  code: '',
+  categoryType: null,
+  isAppointable: false,
+  indications: null,
+  contraindications: null,
+  preparationInstructions: null,
+  recoveryNotes: null,
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  facilityId: undefined,
+};
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
   code: '',
