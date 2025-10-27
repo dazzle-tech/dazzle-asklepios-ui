@@ -184,7 +184,7 @@ export const MODULES: Module[] =
     icon: "FaRegIdBadge",
     viewOrder: 2,
     screens: [
-      { name: "Quick Appointment",code:"QUICK_APPOINTMENT", description: "", icon: "FaClock", viewOrder: 2, navPath: "encounter-registration" },
+  
       { name: "Patient Registration", code: "PATIENT_REGISTRATION", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "patient-profile" },
       { name: "Information Desk", code: "INFORMATION_DESK", description: "Search and view registered patients in specific facility", icon: "FaPersonRays", viewOrder: 0, navPath: "information-desk" },
       { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },

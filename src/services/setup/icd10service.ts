@@ -37,18 +37,20 @@ export const Icd10Service = createApi({
       },
     }),
 
-    importIcd10: builder.mutation({
-      query: (file) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        return {
-          url: '/api/setup/icd10/import',
-          method: 'POST',
-          body: formData,
-        };
-      },
-      invalidatesTags: ['ICD10'],
-    }),
+  importIcd10: builder.mutation({
+  query: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return {
+      url: '/api/setup/icd10/import',
+      method: 'POST',
+      body: formData,
+      responseHandler: (response) => response.text(), 
+    };
+  },
+  invalidatesTags: ['ICD10'],
+}),
+
   }),
 });
 
