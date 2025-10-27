@@ -32,13 +32,11 @@ const ICD10Setup = () => {
 
   useEffect(() => {
     const divContent = (
-      <div className="page-title flex justify-between items-center">
-        <h5>ICD-10 Diagnosis List</h5>
-      </div>
+      "ICD-10 Diagnosis List"
     );
-    const html = ReactDOMServer.renderToStaticMarkup(divContent);
+   
     dispatch(setPageCode("ICD10"));
-    dispatch(setDivContent(html));
+    dispatch(setDivContent(divContent));
     return () => {
       dispatch(setPageCode(""));
       dispatch(setDivContent(""));
