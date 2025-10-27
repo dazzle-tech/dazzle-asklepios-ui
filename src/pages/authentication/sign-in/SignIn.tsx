@@ -15,19 +15,22 @@ import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.svg';
 import './styles.less';
-import { setLang } from '@/reducers/uiSlice';
+import uiSlice, { setLang, setTranslations } from '@/reducers/uiSlice';
 import { useLoginMutation } from '@/services/authServiceApi';
 import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
-import { setMenu, setTenant, setToken, setUser } from '@/reducers/authSlice';
+import { setDictionary, setMenu, setTenant, setToken, setUser } from '@/reducers/authSlice';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
 import { useAppSelector } from '@/hooks';
 import { useGetMenuQuery, useLazyGetMenuQuery } from '@/services/security/UserRoleService';
-import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
+import { useGetAllLanguagesQuery} from '@/services/setup/languageService';
+import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
+import { setTranslate3d } from 'rsuite/esm/List/helper/utils';
 
 const SignIn = () => {
+  const [getDictionary] = useLazyGetDictionaryQuery();
   const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
   const [newPassword, setNewPassword] = useState<string | undefined>();
@@ -38,14 +41,15 @@ const SignIn = () => {
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
-    orgKey: ''
+    orgKey: '',
+    language: ''
   });
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const uiSlice = useAppSelector(state => state.ui);
-  const [langRecord, setLangRecord] = useState({ lang: uiSlice.lang });
+  // const uiSlice = useAppSelector(state => state.ui);
+  // const [langRecord, setLangRecord] = useState({ lang: uiSlice.lang });
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
@@ -56,13 +60,12 @@ const SignIn = () => {
     isFetching: langsLoading,
     refetch: refetchLangs
   } = useGetAllLanguagesQuery({});
-  console.log('langData');
-  console.log(langData);
+
   const [saveUser] = useSaveUserMutation();
   const [getMenuTrigger] = useLazyGetMenuQuery();
   // Handle login
   const handleLogin = async () => {
-    if (!credentials.username || !credentials.password || !credentials.orgKey) {
+    if (!credentials.username || !credentials.password || !credentials.orgKey || !credentials.language) {
       setErrText('Please fill all required fields.');
       return;
     }
@@ -72,6 +75,7 @@ const SignIn = () => {
         username: credentials.username,
         password: credentials.password,
         facilityId: Number(credentials.orgKey),
+        language: credentials.language,
         rememberMe: true
       }).unwrap();
 
@@ -79,6 +83,8 @@ const SignIn = () => {
 
       const userResp = await getAccount().unwrap();
       dispatch(setUser(userResp));
+
+      dispatch(setLang(credentials.language));
 
       const selectedFacility =
         (facilityListResponse ?? []).find((f: any) => f.id === Number(credentials.orgKey)) || null;
@@ -96,6 +102,18 @@ const SignIn = () => {
         localStorage.setItem('menu', JSON.stringify(menuResponse));
       }
 
+      localStorage.setItem('language', credentials.language); // fixed key + value
+
+      
+
+      const dict = await getDictionary(credentials.language).unwrap(); // { translation_key: value }
+      console.log(dict );
+      // optional local cache:
+      localStorage.setItem('language', credentials.language);
+      dispatch(setLang(credentials.language));
+      localStorage.setItem('dict', JSON.stringify(dict));
+      console.log("dict" + dict)
+      dispatch(setTranslations(dict));
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
 
@@ -148,10 +166,10 @@ const SignIn = () => {
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
 
-  useEffect(() => {
-    dispatch(setLang(langRecord['lang']));
-    console.log('lang: ' + langRecord['lang']);
-  }, [langRecord]);
+  // useEffect(() => {
+  //   dispatch(setLang(langRecord['lang']));
+  //   console.log('lang: ' + langRecord['lang']);
+  // }, [langRecord]);
 
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
@@ -173,14 +191,14 @@ const SignIn = () => {
               <Form fluid onKeyPress={handleKeyPress}>
                 <MyInput
                   width="100%"
-                  fieldName="lang"
+                  fieldName="language"
                   fieldType="select"
                   selectData={langData}
                   selectDataLabel="langName"
                   selectDataValue="langKey"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
-                  record={langRecord}
-                  setRecord={setLangRecord}
+                  record={credentials}
+                  setRecord={setCredentials}
                   placeholder="Select Language"
                   showLabel={false}
                   searchable={false}

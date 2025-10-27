@@ -37,6 +37,7 @@ interface AuthState {
   user: any | null;                 // logged-in user object
   token: string | null;             // JWT token
   tenant: any | null;
+  langauge: any | null;
   menu: any[] | null;
   menuLoading: boolean;     // tenant (organization) info
   sessionExpiredBackdrop: boolean;  // flag for showing session expired modal/backdrop
@@ -47,6 +48,7 @@ const initialState: AuthState = {
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   token: localStorage.getItem('id_token') || null,
   tenant: JSON.parse(localStorage.getItem('tenant') || 'null'),
+  langauge: JSON.parse(localStorage.getItem('langauge') || 'null'),
   menu: JSON.parse(localStorage.getItem('menu') || 'null'),
   menuLoading: false,
   sessionExpiredBackdrop: false
@@ -74,18 +76,29 @@ const authSlice = createSlice({
       }
     },
 
-   setMenu: (state, action: PayloadAction<any[] | null>) => {
-  state.menu = action.payload;
-  if (action.payload) {
-    localStorage.setItem('menu', JSON.stringify(action.payload));
-  } else {
-    localStorage.removeItem('menu');
-  }
-},
+    // Save langauge object to state and localStorage
+    setLanguage: (state, action: PayloadAction<any | null>) => {
+      state.langauge = action.payload;
+      if (action.payload) {
+        localStorage.setItem('langauge', JSON.stringify(action.payload));
+      } else {
+        localStorage.removeItem('langauge');
+      }
+    },
 
-setMenuLoading: (state, action: PayloadAction<boolean>) => {
-  state.menuLoading = action.payload;
-},
+
+    setMenu: (state, action: PayloadAction<any[] | null>) => {
+      state.menu = action.payload;
+      if (action.payload) {
+        localStorage.setItem('menu', JSON.stringify(action.payload));
+      } else {
+        localStorage.removeItem('menu');
+      }
+    },
+
+    setMenuLoading: (state, action: PayloadAction<boolean>) => {
+      state.menuLoading = action.payload;
+    },
 
 
     // Save token to state and localStorage
@@ -116,6 +129,7 @@ setMenuLoading: (state, action: PayloadAction<boolean>) => {
       localStorage.removeItem('id_token');
       localStorage.removeItem('user');
       localStorage.removeItem('tenant');
+      localStorage.removeItem('langauge');
     },
 
     // Check token validity and clear state if expired
@@ -128,6 +142,7 @@ setMenuLoading: (state, action: PayloadAction<boolean>) => {
         localStorage.removeItem('id_token');
         localStorage.removeItem('user');
         localStorage.removeItem('tenant');
+        localStorage.removeItem('langauge');
       }
     }
   }
@@ -139,6 +154,7 @@ export const {
   setUser,
   setToken,
   setTenant,
+  setLanguage,
   logout,
   setMenu,
   checkTokenValidity
