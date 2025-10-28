@@ -1,5 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi'; 
+import { LanguageTranslation } from '@/types/model-types-new';
 
 export const languageService = createApi({
   reducerPath: 'languageApi',

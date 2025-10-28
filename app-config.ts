@@ -1,8 +1,11 @@
 const config = {
   backendBaseURL:'http://asklepiosapi.nereuscloud.de',
-  // backendBaseURL: 'http://localhost:8080',
-  tenantId: '1',
-  tenantSecurityToken: '4994'
-};
+//   backendBaseURL:'http://localhost:8080',
 
-export default config;
+     tenantId: '1',
+     tenantSecurityToken: '4994'
+  };
+  
+  export default config;
+
+

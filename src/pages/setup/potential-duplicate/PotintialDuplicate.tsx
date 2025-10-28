@@ -46,7 +46,7 @@ const PotintialDuplicate = () => {
   const totalCount = CandidateListResponse?.extraNumeric ?? 0;
    // Header page setUp
   const divContent = (
-    "Potintial Duplicate"
+    "Potential Duplicate"
   );
   dispatch(setPageCode('Potintial_Duplicate'));
   dispatch(setDivContent(divContent));

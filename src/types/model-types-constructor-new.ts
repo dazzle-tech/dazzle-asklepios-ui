@@ -24,14 +24,9 @@ export const newApUser: modelTypes.ApUser = {
 
 export const newCandidate: modelTypes.Candidate = {
   id: undefined,
-  role: '',
-  dob: false,
-  lastName: false,
-  documentNo: false,
-  mobileNumber: false,
-  gender: false,
+  rule: '',
+  fields: {}, 
   isActive: true,
-
 };
 
 export const newDepartment: modelTypes.Department = {
@@ -63,6 +58,8 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
+  ruleId:undefined,
+
 } 
 
 export const newCreateFacility: modelTypes.CreateFacility = {
@@ -210,4 +207,16 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   lastModifiedBy: null,
   lastModifiedDate: null,
   facilityId: undefined,
+};
+export const newAllergen: modelTypes.Allergen = {
+  id: undefined,
+  code: '',
+  name: '',
+  type: null,           
+  description: '',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
 };

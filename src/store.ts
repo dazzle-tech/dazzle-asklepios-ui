@@ -38,11 +38,13 @@ import { MedicalsheetsService } from './services/MedicalSheetsService';
 import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
-import { PractitionerService } from './services/practitioner/PractitionerService';
-import { PractitionerDepartmentService } from './services/practitioner/PractitionerDepartmentService';
+import { PractitionerService } from './services/setup/practitioner/PractitionerService';
+import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
+import {Icd10Service} from './services/setup/icd10service';
 import { patientAttachmentService } from './services/patients/attachmentService';
 import { ageGroupService } from './services/setup/ageGroupService';
-
+import {potintialService} from '@/services/potintialDuplicateService';
+import { allergensService } from './services/setup/allergensService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -114,6 +116,7 @@ export const store = configureStore({
 
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
+    [potintialService.reducerPath] :potintialService.reducer,
     call: callReducer,
 
     [facilityService.reducerPath]: facilityService.reducer,
@@ -134,8 +137,14 @@ export const store = configureStore({
     //service
     [serviceService.reducerPath]: serviceService.reducer,
 
+
     //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
+
+    [Icd10Service.reducerPath]: Icd10Service.reducer,
+
+    [allergensService.reducerPath]: allergensService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -175,6 +184,8 @@ export const store = configureStore({
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
       ageGroupService.middleware,
+      Icd10Service.middleware,
+      allergensService.middleware,
     ])
 });
 

@@ -21,9 +21,9 @@ import {
   useCreatePractitionerDepartmentMutation,
   useDeletePractitionerDepartmentMutation,
   useGetDepartmentsByPractitionerQuery,
-} from '@/services/practitioner/PractitionerDepartmentService';
+} from '@/services/setup/practitioner/PractitionerDepartmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
-import { useGetAllPractitionersQuery } from '@/services/practitioner/PractitionerService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 
 const AddEditPractitioner = ({
   open,

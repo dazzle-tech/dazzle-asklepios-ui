@@ -99,7 +99,7 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
             refetch();
             setTimeout(() => {
                 window.location.reload();
-            }, 2000); 
+            }, 2000);
 
 
         }
@@ -346,6 +346,7 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
                                     fieldName="recoveryConditionLkey"
                                     record={operativeNote}
                                     setRecord={setOperativeNote}
+                                    searchable={false}
                                 />
                                 </Col>
                                 <Col md={8}>
@@ -358,6 +359,7 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
                                         fieldName="surgeryStatusLkey"
                                         record={operativeNote}
                                         setRecord={setOperativeNote}
+                                        searchable={false}
                                     />
                                 </Col>
                                 <Col md={8}>
@@ -381,6 +383,7 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
             >
 
                 <MyButton onClick={hanelSave}>Save</MyButton>
+
             </div>
         </div>
     </Form>)

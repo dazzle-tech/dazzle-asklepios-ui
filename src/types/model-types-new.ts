@@ -19,16 +19,13 @@ export interface ApUser {
   gender?: string | null;
   jobDescription?: string | null;
 }
+  
 
 
 export interface Candidate {
   id?: number;
-  role?: string;
-  dob?: boolean;
-  lastName?: boolean;
-  documentNo?: boolean;
-  mobileNumber?: boolean;
-  gender?: boolean;
+  rule?: string;
+  fields?: Record<string, boolean>; 
   createdBy?: string;
   createdDate?: string;
   lastModifiedBy?: string;
@@ -63,7 +60,9 @@ export interface Facility {
   type: string;
   defaultCurrency: string;
   isActive?: boolean;
-}
+  ruleId?:number;
+} 
+
 
 export interface CreateFacility {
   name?: string;
@@ -212,7 +211,14 @@ export interface UploadResponse {
   sizeBytes: number;
   downloadUrl: string;
 }
-
+export interface Allergen {
+  id?: number;
+  code: string;
+  name: string;
+  type: string ;
+  description?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
 
 
 export interface DownloadTicket {

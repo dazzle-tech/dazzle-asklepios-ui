@@ -42,8 +42,8 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                     <div className='started-details-container'>
                         <div className='started-details-left-box'>
                             <Form fluid>
-                                <Row>
-                                    <Col md={5}>
+                                <Row gutter={13}>
+                                    <Col md={4}>
                                         <MyInput
                                             fieldType="select"
                                             selectData={operationList?.object ?? []}
@@ -55,7 +55,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                                             setRecord={setOperation}
                                         />
                                     </Col>
-                                    <Col md={5}>
+                                    <Col md={4}>
                                         <MyInput
                                             disabled={true}
                                             width="100%"
@@ -69,7 +69,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                                             setRecord={setOperation}
                                         />
                                     </Col>
-                                    <Col md={5}>
+                                    <Col md={4}>
                                         <MyInput
                                             disabled={true}
                                             width="100%"
@@ -83,7 +83,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                                             setRecord={setOperation}
                                         />
                                     </Col>
-                                    <Col md={5}>
+                                    <Col md={4}>
                                         <MyInput
                                             disabled={true}
                                             fieldType="select"
@@ -96,7 +96,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                                             setRecord={setOperation}
                                         />
                                     </Col>
-                                    <Col md={4}>
+                                    <Col md={3}>
                                         <br />
                                         <MyButton onClick={() => {
                                             try {
@@ -120,19 +120,41 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                                 className="started-details-tabs"
                             >
                                 <Tabs.Tab eventKey="1" title="Patient Arrival & Registration" >
-                                    <PatientArrival operation={operation} patient={patient} encounter={encounter} user={authSlice.user} editable={editable} />
+                                    <PatientArrival
+                                        operation={operation}
+                                        patient={patient}
+                                        encounter={encounter}
+                                        user={authSlice.user}
+                                        editable={editable}
+                                        activeTab={activeTab}
+                                        setActiveTab={setActiveTab} />
                                 </Tabs.Tab>
 
-                                <Tabs.Tab eventKey="2" title="Pre-Operative Time-out" >
-                                    <OperativeTimeOut operation={operation} refetch={refetch} editable={editable} />
+                                <Tabs.Tab eventKey="2" title="Pre-Operative Time-out">
+                                    <OperativeTimeOut
+                                        operation={operation}
+                                        refetch={refetch}
+                                        editable={editable}
+                                        activeTab={activeTab}
+                                        setActiveTab={setActiveTab}
+                                        disabledTabs={[
+                                            !["PROC_INPROGRESS", "PROC_COMPLETED"].includes(operation?.operationStatusLvalue?.valueCode)
+                                                ? ["3", "4", "5", "6"]
+                                                : []
+                                        ].flat()}
+                                    />
                                 </Tabs.Tab>
+
+
 
                                 <Tabs.Tab
                                     disabled={!["PROC_INPROGRESS", "PROC_COMPLETED"].includes(
                                         operation?.operationStatusLvalue?.valueCode
                                     )}
                                     eventKey="3" title="Anesthesia Induction & Monitoring" >
-                                    <AnesthesiaInduction operation={operation} patient={patient} encounter={encounter} editable={editable} />
+                                    <AnesthesiaInduction operation={operation} patient={patient} encounter={encounter} editable={editable}
+                                        activeTab={activeTab}
+                                        setActiveTab={setActiveTab} />
                                 </Tabs.Tab>
 
                                 <Tabs.Tab
@@ -140,7 +162,9 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                                         operation?.operationStatusLvalue?.valueCode
                                     )}
                                     eventKey="4" title="Surgical Preparation & Incision" >
-                                    <SurgicalPreparation operation={operation} editable={editable} />
+                                    <SurgicalPreparation operation={operation} editable={editable}
+                                        activeTab={activeTab}
+                                        setActiveTab={setActiveTab} />
                                 </Tabs.Tab>
 
                                 <Tabs.Tab
@@ -148,7 +172,9 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                                         operation?.operationStatusLvalue?.valueCode
                                     )}
                                     eventKey="5" title="Intraoperative & Events Tracking" >
-                                    <IntraoperativeEventsTracking operation={operation} patient={patient} encounter={encounter} editable={editable} />
+                                    <IntraoperativeEventsTracking operation={operation} patient={patient} encounter={encounter} editable={editable}
+                                        activeTab={activeTab}
+                                        setActiveTab={setActiveTab} />
                                 </Tabs.Tab>
 
                                 <Tabs.Tab
@@ -159,6 +185,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                                     <PostOperativeNote operation={operation} editable={editable} refetch={refetch} />
                                 </Tabs.Tab>
                             </Tabs>
+
                         </div>
 
                         <div className='started-details-right-box'>
