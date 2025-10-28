@@ -14,7 +14,7 @@ import React, { useEffect, useState } from 'react';
 import { FaPrint, FaSun } from 'react-icons/fa6';
 import { Badge, Checkbox, Col, Form, HStack, Row, Tooltip, Whisper } from 'rsuite';
 import PatientSide from '../encounter/encounter-main-info-section/PatienSide';
-
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetEncounterByIdQuery } from '@/services/encounterService';
@@ -27,6 +27,7 @@ import StartedDetails from '../operation-module/StartedDetails/StartedDetails';
 import RecoveryRoomFunctionalities from './RecoveryRoomFunctionalities';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
 import './styles.less';
+import { useAppDispatch } from '@/hooks';
 
 const Recovery = () => {
   const [openRecoveryRoomFunctionalities, setOpenRecoveryRoomFunctionalities] =
@@ -36,7 +37,17 @@ const Recovery = () => {
   const [encounterStatus, setEncounterStatus] = useState<{ key: string }>({ key: '' });
   const [record, setRecord] = useState<any>({});
   const [manualSearchTriggered, setManualSearchTriggered] = useState<boolean>(false);
+  const dispatch = useAppDispatch();
 
+  useEffect(() => {
+    const divContent = 'Recovery';
+    dispatch(setPageCode('Recovery'));
+    dispatch(setDivContent(divContent));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   const [diagnosisObject, setDiagnosisObject] = useState<any>(null);
 
   const { data: patientData } = useGetPatientByIdQuery(request?.patientKey, {
