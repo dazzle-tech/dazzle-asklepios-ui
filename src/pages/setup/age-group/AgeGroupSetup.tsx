@@ -2,9 +2,7 @@ import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import ReactDOMServer from 'react-dom/server';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -19,7 +17,7 @@ import {
   useGetAgeGroupsQuery,
   useAddAgeGroupMutation,
   useUpdateAgeGroupMutation,
-  useToggleAgeGroupIsActiveMutation,
+  useDeleteAgeGroupMutation, 
   useLazyGetAgeGroupsByLabelQuery,
   useLazyGetAgeGroupsByFromAgeQuery,
   useLazyGetAgeGroupsByToAgeQuery,
@@ -40,7 +38,6 @@ const AgeGroupSetup: React.FC = () => {
   const [ageGroup, setAgeGroup] = useState<AgeGroup>({ ...newAgeGroup, facilityId });
   const [popupOpen, setPopupOpen] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
-  const [actionType, setActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({ filter: '', value: '' });
@@ -51,7 +48,7 @@ const AgeGroupSetup: React.FC = () => {
 
   const [addAgeGroup] = useAddAgeGroupMutation();
   const [updateAgeGroup] = useUpdateAgeGroupMutation();
-  const [toggleAgeGroupIsActive] = useToggleAgeGroupIsActiveMutation();
+  const [deleteAgeGroup] = useDeleteAgeGroupMutation(); 
   const [fetchByLabel] = useLazyGetAgeGroupsByLabelQuery();
   const [fetchByFromAge] = useLazyGetAgeGroupsByFromAgeQuery();
   const [fetchByToAge] = useLazyGetAgeGroupsByToAgeQuery();
@@ -79,20 +76,24 @@ const AgeGroupSetup: React.FC = () => {
     () => (isFiltered ? filteredData : pageData?.data ?? []),
     [isFiltered, filteredData, pageData?.data]
   );
-// Filter fields
+
+  // Filter fields
   const filterFields = [
     { label: 'Age Group', value: 'ageGroup' },
     { label: 'From Age', value: 'fromAge' },
     { label: 'To Age', value: 'toAge' },
   ];
-// Handle add new
+
+  // Handle add new
   const handleNew = () => {
     setAgeGroup({ ...newAgeGroup, facilityId });
     setPopupOpen(true);
   };
-// Helper to convert to number or undefined
+
+  // Helper to convert to number or undefined
   const numberOrUndefined = (v: any) => (v === '' || v === null || typeof v === 'undefined' ? undefined : Number(v));
-// Save & Update handler
+
+  // Save & Update handler
   const handleSave = async () => {
     setPopupOpen(false);
     const isUpdate = !!ageGroup.id;
@@ -169,7 +170,8 @@ const AgeGroupSetup: React.FC = () => {
       dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
     }
   };
-// filter query runner
+
+  // filter query runner
   const runFilterQuery = async (fieldName: string, value: any) => {
     if (!facilityId) return undefined;
     if (!value && value !== 0) return undefined;
@@ -201,7 +203,8 @@ const AgeGroupSetup: React.FC = () => {
     }
     return undefined;
   };
-// Handle filter change
+
+  // Handle filter change
   const handleFilterChange = async (fieldName: string, value: any) => {
     if (!facilityId) return;
     if (!value && value !== 0) {
@@ -230,46 +233,34 @@ const AgeGroupSetup: React.FC = () => {
     }
   };
 
-// Optimistic update for filtered data
-  const optimisticFlipInFiltered = (id: number) => {
+  // Optimistic remove for filtered data
+  const optimisticRemoveFromFiltered = (id: number) => {
     const prev = filteredData;
-    const next = prev.map((row: any) =>
-      row?.id === id ? { ...row, isActive: !Boolean(row.isActive) } : row
-    );
+    const next = prev.filter((row: any) => row?.id !== id);
     setFilteredData(next);
-    return () => setFilteredData(prev);
+    setFilteredTotal(Math.max(0, filteredTotal - 1));
+    return () => {
+      setFilteredData(prev);
+      setFilteredTotal(prev.length);
+    };
   };
-// Deactivate handler
-  const handleDeactivate = async () => {
-    setOpenConfirm(false);
-    if (!ageGroup?.id || !facilityId) return;
-    const rollback = isFiltered ? optimisticFlipInFiltered(ageGroup.id as number) : undefined;
-    try {
-      await toggleAgeGroupIsActive({ id: ageGroup.id, facilityId }).unwrap();
-      dispatch(notify({ msg: 'Age Group deactivated successfully', sev: 'success' }));
-      if (!isFiltered) {
-        refetch();
-      }
-    } catch {
-      if (rollback) rollback();
-      dispatch(notify({ msg: 'Failed to deactivate age group', sev: 'error' }));
-    }
-  };
-// handle reactivate
-  const handleReactivate = async () => {
-    setOpenConfirm(false);
-    if (!ageGroup?.id || !facilityId) return;
 
-    const rollback = isFiltered ? optimisticFlipInFiltered(ageGroup.id as number) : undefined;
+  // Delete handler
+  const handleDelete = async () => {
+    setOpenConfirm(false);
+    if (!ageGroup?.id) return;
+
+    const rollback = isFiltered ? optimisticRemoveFromFiltered(ageGroup.id as number) : undefined;
+
     try {
-      await toggleAgeGroupIsActive({ id: ageGroup.id, facilityId }).unwrap();
-      dispatch(notify({ msg: 'Age Group reactivated successfully', sev: 'success' }));
+      await deleteAgeGroup({ id: ageGroup.id }).unwrap();
+      dispatch(notify({ msg: 'Age Group deleted successfully', sev: 'success' }));
       if (!isFiltered) {
         refetch();
       }
     } catch {
       if (rollback) rollback();
-      dispatch(notify({ msg: 'Failed to reactivate age group', sev: 'error' }));
+      dispatch(notify({ msg: 'Failed to delete age group', sev: 'error' }));
     }
   };
 
@@ -293,7 +284,8 @@ const AgeGroupSetup: React.FC = () => {
       }));
     }
   };
-// Rows per page change
+
+  // Rows per page change
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPaginationParams(prev => ({
       ...prev,
@@ -302,9 +294,11 @@ const AgeGroupSetup: React.FC = () => {
       timestamp: Date.now(),
     }));
   };
-// Selected row style
+
+  // Selected row style
   const isSelected = (row: any) => (row?.id === ageGroup?.id ? 'selected-row' : '');
-// Action icons
+
+  // Action icons (Edit + Delete only)
   const iconsForActions = (row: AgeGroup) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -317,34 +311,20 @@ const AgeGroupSetup: React.FC = () => {
           setPopupOpen(true);
         }}
       />
-      {row?.isActive ? (
-        <MdDelete
-          className="icons-style"
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-          onClick={() => {
-            setAgeGroup(row);
-            setActionType('deactivate');
-            setOpenConfirm(true);
-          }}
-        />
-      ) : (
-        <FaUndo
-          className="icons-style"
-          title="Activate"
-          size={24}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setAgeGroup(row);
-            setActionType('reactivate');
-            setOpenConfirm(true);
-          }}
-        />
-      )}
+      <MdDelete
+        className="icons-style"
+        title="Delete"
+        size={24}
+        fill="var(--primary-pink)"
+        onClick={() => {
+          setAgeGroup(row);
+          setOpenConfirm(true);
+        }}
+      />
     </div>
   );
-// Table columns
+
+  // Table columns
   const tableColumns = [
     {
       key: 'ageGroup',
@@ -382,7 +362,8 @@ const AgeGroupSetup: React.FC = () => {
       render: (row: any) => iconsForActions(row),
     },
   ];
-// filters 
+
+  // filters
   const filters = () => (
     <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
       <MyInput
@@ -435,7 +416,8 @@ const AgeGroupSetup: React.FC = () => {
       </MyButton>
     </Form>
   );
-// Effects
+
+  // Effects
   useEffect(() => {
     if (!recordOfFilter.value && recordOfFilter.value !== 0) {
       setIsFiltered(false);
@@ -448,13 +430,11 @@ const AgeGroupSetup: React.FC = () => {
   }, [recordOfFilter.value, facilityId]);
 
   useEffect(() => {
-    const divContent = (
-      <div className="page-title">
-        <h5>Age Groups</h5>
-      </div>
-    );
-    dispatch(setPageCode('Age_Groups'));
-    dispatch(setDivContent(ReactDOMServer.renderToStaticMarkup(divContent)));
+     const divContent = (
+        "Age Group"
+      );
+      dispatch(setPageCode('Age_Group'));
+      dispatch(setDivContent(divContent));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
@@ -516,8 +496,8 @@ const AgeGroupSetup: React.FC = () => {
         open={openConfirm}
         setOpen={setOpenConfirm}
         itemToDelete="Age Group"
-        actionButtonFunction={actionType === 'deactivate' ? handleDeactivate : handleReactivate}
-        actionType={actionType}
+        actionButtonFunction={handleDelete}
+        actionType="delete"
       />
     </Panel>
   );

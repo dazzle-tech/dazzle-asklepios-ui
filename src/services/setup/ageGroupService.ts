@@ -43,7 +43,7 @@ export const ageGroupService = createApi({
       providesTags: ['AgeGroup'],
     }),
 
-      getAgeGroupsByLabel: builder.query<
+    getAgeGroupsByLabel: builder.query<
       PagedResult<any>,
       WithFacility & { label: string } & PagedParams
     >({
@@ -98,15 +98,14 @@ export const ageGroupService = createApi({
       }),
       invalidatesTags: ['AgeGroup'],
     }),
-
-    toggleAgeGroupIsActive: builder.mutation<any, { id: Id; facilityId: Id }>({
-      query: ({ id, facilityId }) => ({
-        url: `/api/setup/age-group/${id}/toggle-active`,
-        method: 'PATCH',
-        params: { facilityId },
+    deleteAgeGroup: builder.mutation<void, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/setup/age-group/${id}`,
+        method: 'DELETE',
       }),
       invalidatesTags: ['AgeGroup'],
     }),
+
   }),
 });
 
@@ -123,5 +122,5 @@ export const {
   // MUTATIONS
   useAddAgeGroupMutation,
   useUpdateAgeGroupMutation,
-  useToggleAgeGroupIsActiveMutation,
+  useDeleteAgeGroupMutation,
 } = ageGroupService;
