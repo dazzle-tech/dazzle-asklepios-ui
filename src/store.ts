@@ -46,7 +46,6 @@ import { ageGroupService } from './services/setup/ageGroupService';
 import {potintialService} from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
-
 export const store = configureStore({
   reducer: {
     // ui
