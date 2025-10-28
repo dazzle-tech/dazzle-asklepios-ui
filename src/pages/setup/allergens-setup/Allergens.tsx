@@ -23,7 +23,7 @@ import {
   useToggleAllergenIsActiveMutation,
   useLazyGetAllergensByTypeQuery,
   useLazyGetAllergensByCodeQuery,
-  useLazyGetAllergensByNameQuery,
+  useLazyGetAllergensByNameQuery
 } from '@/services/setup/allergensService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Allergen } from '@/types/model-types-new';
@@ -33,12 +33,19 @@ const Allergens: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const [allergens, setAllergens] = useState<Allergen>({ ...newAllergen });
-  const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [width, setWidth] = useState<number>(
+    typeof window !== 'undefined' ? window.innerWidth : 1200
+  );
   const [popupOpen, setPopupOpen] = useState(false);
   const [openConfirmDeleteAllergens, setOpenConfirmDeleteAllergens] = useState<boolean>(false);
-  const [stateOfDeleteAllergens, setStateOfDeleteAllergens] = useState<'delete' | 'deactivate' | 'reactivate'>('delete');
+  const [stateOfDeleteAllergens, setStateOfDeleteAllergens] = useState<
+    'delete' | 'deactivate' | 'reactivate'
+  >('delete');
 
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({ filter: '', value: '' });
+  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
+    filter: '',
+    value: ''
+  });
 
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState<Allergen[]>([]);
@@ -57,13 +64,17 @@ const Allergens: React.FC = () => {
     page: 0,
     size: 15,
     sort: 'id,asc',
-    timestamp: Date.now(),
+    timestamp: Date.now()
   });
   // Fetch allergens page
-  const { data: allergensPage, isFetching, refetch } = useGetAllergensQuery({
+  const {
+    data: allergensPage,
+    isFetching,
+    refetch
+  } = useGetAllergensQuery({
     page: paginationParams.page,
     size: paginationParams.size,
-    sort: paginationParams.sort,
+    sort: paginationParams.sort
   });
   // Compute total count based on filter state
   const totalCount = useMemo(
@@ -74,14 +85,14 @@ const Allergens: React.FC = () => {
   const links = (isFiltered ? filteredLinks : allergensPage?.links) || {};
   // Determine table data based on filter state
   const tableData = useMemo(
-    () => (isFiltered ? filteredData : (allergensPage?.data ?? [])),
+    () => (isFiltered ? filteredData : allergensPage?.data ?? []),
     [isFiltered, filteredData, allergensPage?.data]
   );
   // Define filter fields
   const filterFields = [
     { label: 'Allergens Type', value: 'type' },
     { label: 'Allergens Code', value: 'code' },
-    { label: 'Allergens Name', value: 'name' },
+    { label: 'Allergens Name', value: 'name' }
   ];
 
   // Handle Add New button click
@@ -98,7 +109,7 @@ const Allergens: React.FC = () => {
       code: (allergens.code || '').trim(),
       name: (allergens.name || '').trim(),
       description: allergens.description ?? '',
-      isActive: !!allergens.isActive,
+      isActive: !!allergens.isActive
     };
 
     try {
@@ -116,7 +127,6 @@ const Allergens: React.FC = () => {
       setFilteredLinks(undefined);
       setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
       refetch();
-
     } catch (err: any) {
       const data = err?.data ?? {};
       const traceId = data?.traceId || data?.requestId || data?.correlationId;
@@ -134,7 +144,7 @@ const Allergens: React.FC = () => {
           name: 'Name',
           type: 'Type',
           description: 'Description',
-          isActive: 'Active',
+          isActive: 'Active'
         };
         const normalizeMsg = (msg: string) => {
           const m = (msg || '').toLowerCase();
@@ -170,7 +180,7 @@ const Allergens: React.FC = () => {
         'unique.name': 'Allergen name already exists.',
         'db.constraint': 'Database constraint violation.',
         notfound: 'Allergen not found.',
-        'id.mismatch': 'Path id and body id mismatch.',
+        'id.mismatch': 'Path id and body id mismatch.'
       };
 
       const humanMsg =
@@ -212,7 +222,7 @@ const Allergens: React.FC = () => {
             stateOfDeleteAllergens === 'deactivate'
               ? 'The Allergens was successfully Deactivated'
               : 'The Allergens was successfully Reactivated',
-          sev: 'success',
+          sev: 'success'
         })
       );
     } catch {
@@ -222,7 +232,7 @@ const Allergens: React.FC = () => {
             stateOfDeleteAllergens === 'deactivate'
               ? 'Faild to Deactivate this Allergens'
               : 'Faild to Reactivate this Allergens',
-          sev: 'error',
+          sev: 'error'
         })
       );
     }
@@ -253,11 +263,26 @@ const Allergens: React.FC = () => {
     try {
       let resp: { data: any[]; totalCount: number; links?: any } | undefined;
       if (fieldName === 'type') {
-        resp = await fetchByType({ type: String(value), page: 0, size: paginationParams.size, sort: paginationParams.sort }).unwrap();
+        resp = await fetchByType({
+          type: String(value),
+          page: 0,
+          size: paginationParams.size,
+          sort: paginationParams.sort
+        }).unwrap();
       } else if (fieldName === 'code') {
-        resp = await fetchByCode({ code: value, page: 0, size: paginationParams.size, sort: paginationParams.sort }).unwrap();
+        resp = await fetchByCode({
+          code: value,
+          page: 0,
+          size: paginationParams.size,
+          sort: paginationParams.sort
+        }).unwrap();
       } else if (fieldName === 'name') {
-        resp = await fetchByName({ name: value, page: 0, size: paginationParams.size, sort: paginationParams.sort }).unwrap();
+        resp = await fetchByName({
+          name: value,
+          page: 0,
+          size: paginationParams.size,
+          sort: paginationParams.sort
+        }).unwrap();
       }
 
       setFilteredData(resp?.data ?? []);
@@ -290,7 +315,7 @@ const Allergens: React.FC = () => {
         ...prev,
         page,
         size,
-        timestamp: Date.now(),
+        timestamp: Date.now()
       }));
     }
   };
@@ -300,26 +325,32 @@ const Allergens: React.FC = () => {
       ...prev,
       size: parseInt(event.target.value, 10),
       page: 0,
-      timestamp: Date.now(),
+      timestamp: Date.now()
     }));
   };
 
   // table
   // handle row selection style
-  const isSelected = (rowData: any) => (rowData && allergens && rowData.id === allergens.id ? 'selected-row' : '');
+  const isSelected = (rowData: any) =>
+    rowData && allergens && rowData.id === allergens.id ? 'selected-row' : '';
 
   // Define table columns
   const tableColumns = [
     { key: 'code', title: <Translate>Allergens Code</Translate>, flexGrow: 4 },
     { key: 'name', title: <Translate>Allergens Name</Translate>, flexGrow: 4 },
-    { key: 'type', title: <Translate>Allergens Type</Translate>, flexGrow: 4, render: (rowData: any) => formatEnumString(rowData.type), },
+    {
+      key: 'type',
+      title: <Translate>Allergens Type</Translate>,
+      flexGrow: 4,
+      render: (rowData: any) => formatEnumString(rowData.type)
+    },
     { key: 'description', title: <Translate>Description</Translate>, flexGrow: 4 },
     {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: (rowData: any) => iconsForActions(rowData),
-    },
+      render: (rowData: any) => iconsForActions(rowData)
+    }
   ];
   // Action icons for each row
   const iconsForActions = (rowData: Allergen) => (
@@ -362,7 +393,6 @@ const Allergens: React.FC = () => {
     </div>
   );
 
-
   // Render filter form
   const filters = () => (
     <Form layout="inline" fluid>
@@ -398,15 +428,10 @@ const Allergens: React.FC = () => {
     </Form>
   );
 
-
   // Effects
 
   useEffect(() => {
-    const divContent = (
-      <div className="page-title">
-        <h5>Allergens</h5>
-      </div>
-    );
+    const divContent = 'Allergens';
     dispatch(setPageCode('Allergens'));
     dispatch(setDivContent(ReactDOMServer.renderToStaticMarkup(divContent)));
     return () => {
@@ -471,7 +496,9 @@ const Allergens: React.FC = () => {
         open={openConfirmDeleteAllergens}
         setOpen={setOpenConfirmDeleteAllergens}
         itemToDelete="Allergens"
-        actionButtonFunction={stateOfDeleteAllergens === 'deactivate' ? handleDeactivate : handleReactivate}
+        actionButtonFunction={
+          stateOfDeleteAllergens === 'deactivate' ? handleDeactivate : handleReactivate
+        }
         actionType={stateOfDeleteAllergens}
       />
     </Panel>
