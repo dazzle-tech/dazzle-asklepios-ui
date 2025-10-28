@@ -5,7 +5,7 @@ import { Form } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
 
-import { useEnumOptions  , useEnumByName} from '@/services/enumsApi';
+import { useEnumOptions  , useEnumByName, useEnumCapitalized} from '@/services/enumsApi';
 
 type AddEditServiceProps = {
   open: boolean;
@@ -27,8 +27,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
   actionLoading,
 }) => {
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
-  const currencyOptions = useEnumByName('Currency');
-
+  const currencyOptions = useEnumCapitalized('Currency');
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
@@ -37,7 +36,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
           <Form fluid>
             <div className="container-of-two-fields-service">
               <div className="container-of-field-service">
-                <MyInput width="100%" fieldName="name" record={service} setRecord={setService} />
+                <MyInput required width="100%" fieldName="name" record={service} setRecord={setService} />
               </div>
               <div className="container-of-field-service">
                 <MyInput
@@ -53,11 +52,12 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
 
             <div className="container-of-two-fields-service">
               <div className="container-of-field-service">
-                <MyInput width="100%" fieldName="code" record={service} setRecord={setService} />
+                <MyInput required width="100%" fieldName="code" record={service} setRecord={setService} />
               </div>
               <div className="container-of-field-service">
                 <MyInput
                   width="100%"
+                  required
                   fieldName="category"
                   fieldType="select"
                   selectData={serviceCategoryOptions}
@@ -83,11 +83,12 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
               </div>
               <div className="container-of-field-service">
                 <MyInput
+                 required
                   width="100%"
                   fieldName="currency"
                   fieldType="select"
                   selectData={currencyOptions ?? []}
-                  selectDataLabel="value"
+                  selectDataLabel="label"
                   selectDataValue="value"
                   record={service}
                   setRecord={setService}
@@ -112,9 +113,6 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
       actionButtonFunction={handleSave}
       steps={[{ title: 'Service Info', icon: <FaStar /> }]}
       size={width > 600 ? '36vw' : '70vw'}
-      // If MyModal supports it, pass loading:
-      // actionButtonLoading={actionLoading}
-      // disableCloseOnActionLoading={actionLoading}
     />
   );
 };

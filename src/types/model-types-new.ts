@@ -249,3 +249,17 @@ export interface Service {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+export interface AgeGroup {
+  id?: number;
+  ageGroup: string | null;            
+  fromAge: number | null;      
+  toAge: number | null;         
+  fromAgeUnit: string | null;
+  toAgeUnit: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number;          // FK
+}

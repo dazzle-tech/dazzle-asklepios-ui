@@ -1,2 +1,2 @@
-import AgeGroup from './ageGroup' ;
-export default AgeGroup;
+import AgeGroupSetup from './AgeGroupSetup' ;
+export default AgeGroupSetup;

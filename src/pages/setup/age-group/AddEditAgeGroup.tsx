@@ -1,17 +1,15 @@
 import React from 'react';
-import {
-  useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
 import { FaBabyCarriage } from 'react-icons/fa';
 import MyModal from '@/components/MyModal/MyModal';
+import { useEnumOptions } from '@/services/enumsApi';
+
 const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, width }) => {
-  // Fetch age groups Lov list response
-  const { data: agegroupsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
-  // Fetch age units Lov list response
-  const { data: ageunitsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_UNITS');
+  
+  const ageGroupOptions = useEnumOptions('AgeGroupType');
+  const ageUnitOptions = useEnumOptions('AgeUnit');
 
   // Main modal content
   const conjureFormContent = stepNumber => {
@@ -22,11 +20,11 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
             <MyInput
               width="100%"
               disabled={agegroups.key ? true : false}
-              fieldName="ageGroupLkey"
+              fieldName="ageGroup"
               fieldType="select"
-              selectData={agegroupsLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              selectData={ageGroupOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={agegroups}
               setRecord={setAgeGroups}
             />
@@ -42,11 +40,11 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
                <div className='container-of-field-age-group'>
               <MyInput
                 width="100%"
-                fieldName="fromAgeUnitLkey"
+                fieldName="fromAgeUnit"
                 fieldType="select"
-                selectData={ageunitsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={ageUnitOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={agegroups}
                 setRecord={setAgeGroups}
               />
@@ -60,11 +58,11 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
                <div className='container-of-field-age-group' >
               <MyInput
                  width="100%"
-                fieldName="toAgeUnitLkey"
+                fieldName="toAgeUnit"
                 fieldType="select"
-                selectData={ageunitsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={ageUnitOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={agegroups}
                 setRecord={setAgeGroups}
               />
