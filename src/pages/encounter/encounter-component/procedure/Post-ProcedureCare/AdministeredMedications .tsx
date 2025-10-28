@@ -13,7 +13,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
 import SectionContainer from '@/components/SectionsoContainer';
 import { Tooltip, Whisper } from 'rsuite';
-import './style.less'
+import './style.less';
 const GenericAdministeredMedications = ({
   parentKey,
   filterFieldName,
@@ -124,7 +124,7 @@ const GenericAdministeredMedications = ({
             </span>
           )}
         </div>
-      ),
+      )
     },
     {
       key: 'route',
@@ -157,13 +157,13 @@ const GenericAdministeredMedications = ({
             </span>
           )}
         </div>
-      ),
+      )
     },
     {
       key: 'actions',
       title: <Translate>Actions</Translate>,
       align: 'center',
-      render: (rowData) => (
+      render: rowData => (
         <Whisper placement="top" trigger="hover" speaker={<Tooltip>Delete</Tooltip>}>
           <div>
             <FontAwesomeIcon
@@ -173,8 +173,8 @@ const GenericAdministeredMedications = ({
                 cursor: 'pointer',
                 transition: 'color 0.2s ease-in-out'
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#b71c1c')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'red')}
+              onMouseEnter={e => (e.currentTarget.style.color = '#b71c1c')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'red')}
               onClick={async () => {
                 try {
                   await saveMedication({
@@ -191,17 +191,11 @@ const GenericAdministeredMedications = ({
             />
           </div>
         </Whisper>
-
-
-      ),
+      )
     }
   ];
 
   return (
-    // <div style={{ ...((props?.noBorder) && { borderRadius: 'none',boxShadow: "none" })}} className="container-form">
-    // <div className="title-div">
-    // <Text>{title}</Text>
-    // </div>
     <SectionContainer
       title={<Text>{title}</Text>}
       content={

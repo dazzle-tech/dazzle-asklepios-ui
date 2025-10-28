@@ -8,6 +8,7 @@ type ScoreFieldConfig = {
   fieldName: string;
   lovCode: string;
   label?: string;
+  searchable?: boolean;
 };
 
 type ScoreCalculationProps = {
@@ -18,7 +19,7 @@ type ScoreCalculationProps = {
   disabledAldrete?: boolean;
   totalposition?: 'center' | 'start' | 'end';
   name?: string;
-  fieldsPerRow?: number; 
+  fieldsPerRow?: number;
 };
 
 const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
@@ -29,16 +30,16 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
   disabledAldrete = false,
   totalposition = 'start',
   name = 'Total Score',
-  fieldsPerRow = 2 
+  fieldsPerRow = 2
 }) => {
-  
   const [lovMap, setLovMap] = useState<Record<string, any[]>>({});
 
   const lovHooks = fields.map(field => ({
     code: field.lovCode,
     hook: useGetLovValuesByCodeQuery(field.lovCode)
   }));
-  const colRef = useRef<HTMLDivElement>(null); 
+
+  const colRef = useRef<HTMLDivElement>(null);
   const [colWidthPx, setColWidthPx] = useState<number>(0);
 
   // Update LOV map when hooks change
@@ -50,6 +51,7 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
       }
     });
     setLovMap(map);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lovHooks.map(h => h.hook.data?.object)]); // stable dependencies
 
   // Calculate score
@@ -63,43 +65,44 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
       }
     });
     setRecord(prev => ({ ...prev, [scoreFieldName]: score }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fields.map(f => record?.[f.fieldName]).join('|'), lovMap]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (colRef.current) {
       setColWidthPx(colRef.current.getBoundingClientRect().width);
     }
   }, []);
 
   return (
-    <Form fluid >
-
+    <Form fluid>
       {Array.from({ length: Math.ceil(fields.length / fieldsPerRow) }).map((_, rowIndex) => (
-    <Row gutter={15} key={rowIndex} style={{ marginBottom: 10 }} >
-      {fields
-        .slice(rowIndex * fieldsPerRow, rowIndex * fieldsPerRow + fieldsPerRow)
-        .map((field, idx) => (
-          <Col
-            ref={rowIndex === 0 && idx === 0 ? colRef : undefined}
-            md={Math.floor(24 / fieldsPerRow)}
-            key={field.fieldName}
-          >
-            <MyInput
-              width="100%"
-              fieldType="select"
-              fieldName={field.fieldName}
-              fieldLabel={field.label}
-              selectData={lovMap[field.lovCode] ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={record}
-              setRecord={setRecord}
-            />
-          </Col>
-        ))}
-    </Row>
-  ))}
-    
+        <Row gutter={15} key={rowIndex} style={{ marginBottom: 10 }}>
+          {fields
+            .slice(rowIndex * fieldsPerRow, rowIndex * fieldsPerRow + fieldsPerRow)
+            .map((field, idx) => (
+              <Col
+                ref={rowIndex === 0 && idx === 0 ? colRef : undefined}
+                md={Math.floor(24 / fieldsPerRow)}
+                key={field.fieldName}
+              >
+                <MyInput
+                  width="100%"
+                  fieldType="select"
+                  fieldName={field.fieldName}
+                  fieldLabel={field.label}
+                  selectData={lovMap[field.lovCode] ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={record}
+                  setRecord={setRecord}
+                  searchable={field.searchable ?? true}
+                />
+              </Col>
+            ))}
+        </Row>
+      ))}
+
       <div
         className={
           totalposition === 'center'
@@ -109,19 +112,17 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({
             : 'input-start'
         }
       >
-      <Col md={Math.floor(24 / fieldsPerRow)}>
-      <MyInput
-       
-          width="100%"
-          fieldType="number"
-          fieldName={scoreFieldName}
-          fieldLabel={name}
-          record={record}
-          setRecord={setRecord}
-          disabled={disabledAldrete}
-        />
-      </Col>
-        
+        <Col md={Math.floor(24 / fieldsPerRow)}>
+          <MyInput
+            width="100%"
+            fieldType="number"
+            fieldName={scoreFieldName}
+            fieldLabel={name}
+            record={record}
+            setRecord={setRecord}
+            disabled={disabledAldrete}
+          />
+        </Col>
       </div>
     </Form>
   );
