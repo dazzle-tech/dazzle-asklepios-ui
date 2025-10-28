@@ -31,7 +31,7 @@ import { useAppDispatch } from '@/hooks';
 
 const Recovery = () => {
   const [openRecoveryRoomFunctionalities, setOpenRecoveryRoomFunctionalities] =
-    useState<boolean>(false);
+    useState<boolean>(true);
   const [open, setOpen] = useState(false);
   const [request, setRequest] = useState<any>({ ...newApOperationRequests });
   const [encounterStatus, setEncounterStatus] = useState<{ key: string }>({ key: '' });
