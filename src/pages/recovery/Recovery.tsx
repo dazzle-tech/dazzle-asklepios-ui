@@ -37,7 +37,6 @@ const Recovery = () => {
   const [record, setRecord] = useState<any>({});
   const [manualSearchTriggered, setManualSearchTriggered] = useState<boolean>(false);
 
-  // State للـ ICD-10 diagnosis
   const [diagnosisObject, setDiagnosisObject] = useState<any>(null);
 
   const { data: patientData } = useGetPatientByIdQuery(request?.patientKey, {
@@ -138,36 +137,6 @@ const Recovery = () => {
       filters: updatedFilters
     }));
   }, [dateFilter]);
-
-  const handleClearFilters = () => {
-    const today = new Date();
-    setRecord({});
-    setEncounterStatus({ key: '' });
-    setDiagnosisObject(null); // Clear diagnosis
-
-    setDateFilter({
-      fromDate: today,
-      toDate: today
-    });
-
-    const formattedToday = formatDate(today);
-
-    setListRequest({
-      ...initialListRequest,
-      pageNumber: 1,
-      pageSize: listRequest.pageSize,
-      ignore: true,
-      filters: [
-        {
-          fieldName: 'planned_start_date',
-          operator: 'between',
-          value: `${formattedToday}_${formattedToday}`
-        }
-      ]
-    });
-
-    setManualSearchTriggered(true);
-  };
 
   //table
   const columns = [
@@ -372,7 +341,35 @@ const Recovery = () => {
     }
   };
 
-  // UPDATED: filters()
+  const handleClearFilters = () => {
+    const today = new Date();
+    setRecord({});
+    setEncounterStatus({ key: '' });
+    setDiagnosisObject(null); // Clear diagnosis
+
+    setDateFilter({
+      fromDate: today,
+      toDate: today
+    });
+
+    const formattedToday = formatDate(today);
+
+    setListRequest({
+      ...initialListRequest,
+      pageNumber: 1,
+      pageSize: listRequest.pageSize,
+      ignore: true,
+      filters: [
+        {
+          fieldName: 'planned_start_date',
+          operator: 'between',
+          value: `${formattedToday}_${formattedToday}`
+        }
+      ]
+    });
+
+    setManualSearchTriggered(true);
+  };
   const filters = () => (
     <>
       <Form layout="inline" fluid className="container-of-filter-fields-department">
@@ -394,7 +391,6 @@ const Recovery = () => {
         />
         <Checkbox>Show Moved to bed</Checkbox>
 
-        {/* NEW: Operation Name (defined operations list) */}
         <Form fluid className="container-of-filter-fields-department">
           <MyInput
             width={220}
@@ -410,7 +406,6 @@ const Recovery = () => {
             searchable
           />
 
-          {/* NEW: Status (PROC_STATUS) */}
           <MyInput
             width={180}
             fieldName="recoveryStatusLkey"
@@ -439,7 +434,7 @@ const Recovery = () => {
                 <Col md={24}>
                   <div
                     className="container-ofiicd10-search-discharge-planning"
-                    style={{ marginTop: '5px',width:'300px' }}
+                    style={{ marginTop: '5px', width: '300px' }}
                   >
                     <Icd10Search
                       object={diagnosisObject}
