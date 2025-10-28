@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import { useUpdateAttachmentMutation } from '@/services/patients/attachmentService';
+import { useUpdateAttachmentMutation as useUpdatePatientAttachmentMutation } from '@/services/patients/attachmentService';
+import { useUpdateAttachmentMutation as useUpdateEncounterAttachmentMutation } from '@/services/encounters/attachmentsService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { PatientAttachment } from '@/types/model-types-new';
+import { PatientAttachment, EncounterAttachment } from '@/types/model-types-new';
 import { ApLovValues } from '@/types/model-types';
 
 interface EditModalProps {
     open: boolean;
     onClose: () => void;
-    selectedAttachment: PatientAttachment | null;
-    patientId: number;
+    selectedAttachment: PatientAttachment | EncounterAttachment | null;
+    patientId?: number;
+    encounterId?: number;
     attachmentTypesLov: ApLovValues[];
     onUpdateSuccess: () => void;
 }
@@ -22,11 +24,14 @@ const EditModal: React.FC<EditModalProps> = ({
     onClose,
     selectedAttachment,
     patientId,
+    encounterId,
     attachmentTypesLov,
     onUpdateSuccess
 }) => {
     const dispatch = useAppDispatch();
-    const [updateAttachment, { isLoading: isUpdating }] = useUpdateAttachmentMutation();
+    const [updatePatientAttachment, { isLoading: isUpdatingPatient }] = useUpdatePatientAttachmentMutation();
+    const [updateEncounterAttachment, { isLoading: isUpdatingEncounter }] = useUpdateEncounterAttachmentMutation();
+    const isUpdating = isUpdatingPatient || isUpdatingEncounter;
     const [editFormData, setEditFormData] = useState<{ type: string; details: string }>({ 
         type: '', 
         details: '' 
@@ -47,12 +52,26 @@ const EditModal: React.FC<EditModalProps> = ({
         if (!selectedAttachment?.id) return;
 
         try {
-            await updateAttachment({
-                id: selectedAttachment.id,
-                patientId: patientId,
-                type: editFormData.type || undefined,
-                details: editFormData.details || undefined
-            }).unwrap();
+            if (encounterId) {
+                // Update encounter attachment
+                await updateEncounterAttachment({
+                    id: selectedAttachment.id,
+                    encounterId: encounterId,
+                    type: editFormData.type || undefined,
+                    details: editFormData.details || undefined
+                }).unwrap();
+            } else if (patientId) {
+                // Update patient attachment
+                await updatePatientAttachment({
+                    id: selectedAttachment.id,
+                    patientId: patientId,
+                    type: editFormData.type || undefined,
+                    details: editFormData.details || undefined
+                }).unwrap();
+            } else {
+                dispatch(notify({ msg: 'Patient ID or Encounter ID is required', sev: 'error' }));
+                return;
+            }
 
             dispatch(notify({ msg: 'Attachment Updated Successfully', sev: 'success' }));
             onUpdateSuccess();

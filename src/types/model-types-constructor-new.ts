@@ -120,13 +120,35 @@ export const newDownloadTicket: modelTypes.DownloadTicket = {
   expiresInSeconds: 0,
 };
 
-export const newUploadAttachmentParams: modelTypes.UploadAttachmentParams = {
+export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams = {
   patientId: undefined,
   files: [],
   type: undefined,
   details: undefined,
   source: undefined,
 }
+
+// Encounter Attachment Constructors
+export const newEncounterAttachment: modelTypes.EncounterAttachment = {
+  id: undefined,
+  encounterId: undefined,
+  spaceKey: '',
+  filename: '',
+  mimeType: '',
+  sizeBytes: 0,
+  type: undefined,
+  details: undefined,
+  source: undefined,
+};
+
+export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttachmentParams = {
+  encounterId: undefined,
+  files: [],
+  type: undefined,
+  details: undefined,
+  source: undefined,
+}
+
 export const newService: modelTypes.Service = {
   id: undefined,
   name: '',
