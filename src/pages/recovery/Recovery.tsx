@@ -98,7 +98,8 @@ const Recovery = () => {
   const {
     data: operationrequestList,
     refetch,
-    isLoading
+    isLoading,
+    isFetching
   } = useGetOperationRequestsListQuery(listRequest);
 
   useEffect(() => {
@@ -525,7 +526,7 @@ const Recovery = () => {
           columns={columns}
           data={operationrequestList?.object || []}
           rowClassName={isSelected}
-          loading={isLoading}
+          loading={isLoading || isFetching}
           onRowClick={rowData => {
             setRequest(rowData);
           }}
