@@ -45,7 +45,7 @@ import DietaryRequest from './pages/encounter/encounter-component/dietary-reques
 import DischargePlanning from './pages/encounter/encounter-component/discharged-planning';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
 import ViewRound from './pages/encounter/encounter-component/doctor-round/NewRound/ViewRound';
-import DrugOrder from './pages/encounter/encounter-component/drug-order';
+import DrugOrderNew from './pages/encounter/encounter-component/drug-order-new';
 import JohnsHopkinsTool from './pages/encounter/encounter-component/fall-risk-assessments';
 import GlasgowComaScale from './pages/encounter/encounter-component/glasgow-coma-scale';
 import HendrichFallRisk from './pages/encounter/encounter-component/hendrich-fall-risk';
@@ -67,7 +67,7 @@ import PatientSummary from './pages/encounter/encounter-component/patient-summar
 import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component';
 import PhysiotherapyPlan from './pages/encounter/encounter-component/physiotherapy-plan';
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
-import Prescription from './pages/encounter/encounter-component/prescription';
+import PrescriptionNew from './pages/encounter/encounter-component/prescription-new';
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
 import Procedure from './pages/encounter/encounter-component/procedure';
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
@@ -396,9 +396,9 @@ const App = () => {
                 />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
-                <Route path="medication-order" element={<DrugOrder />} />
+                <Route path="medication-order" element={<DrugOrderNew />} />
                 <Route path="pregnancy-follow-up" element={<PregnancyFollowup />} />
-                <Route path="drug-order" element={<DrugOrder />} />
+                <Route path="drug-order" element={<DrugOrderNew />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
@@ -411,7 +411,7 @@ const App = () => {
                 <Route path="audiometry" element={<AudiometryPuretone />} />
                 <Route path="psychological-exam" element={<PsychologicalExam />} />
                 <Route path="vaccination" element={<VaccinationTab />} />
-                <Route path="prescription" element={<Prescription />} />
+                <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
                 <Route path="procedures" element={<Procedure />} />

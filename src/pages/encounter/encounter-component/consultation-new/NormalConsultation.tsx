@@ -112,6 +112,12 @@ const NormalConsultation = (props: any) => {
     );
   };
 
+  /** Handle open attachment modal */
+  const handleOpenAttachmentModal = () => {
+    console.log('Consultation order for attachment (from table):', consultationOrders);
+    setAttachmentsModalOpen(true);
+  };
+
   /** Clear selection and preview */
   const handleClear = useCallback(() => {
     setConsultationOrder({
@@ -297,9 +303,14 @@ const NormalConsultation = (props: any) => {
           return (
             <MdAttachFile
               size={20}
-              fill="var(--primary-gray)"
-              onClick={() => setAttachmentsModalOpen(true)}
-              style={{ cursor: 'pointer' }}
+              fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+              onClick={() => {
+                if (rowData?.key) {
+                  setConsultationOrder(rowData);
+                  handleOpenAttachmentModal();
+                }
+              }}
+              style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
             />
           );
         }
@@ -455,6 +466,7 @@ const NormalConsultation = (props: any) => {
         encounterId={encounter?.id || encounter?.key}
         refetchData={() => {}}
         source="CONSULTATION_ORDER_ATTACHMENT"
+        sourceId={consultationOrders?.key ? Number(consultationOrders.key) : 0}
       />
     </div>
   );

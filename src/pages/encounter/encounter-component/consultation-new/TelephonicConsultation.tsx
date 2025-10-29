@@ -9,6 +9,8 @@ import { MdModeEdit } from 'react-icons/md';
 import { Checkbox } from 'rsuite';
 import DetailsTele from './DetailsTele';
 import './styles.less';
+import { AttachmentUploadModal } from '@/components/AttachmentModals';
+import { MdAttachFile } from 'react-icons/md';
 
 const TelephonicConsultation = () => {
   // Container that wraps ONLY the table; used to detect inside/outside clicks
@@ -17,6 +19,12 @@ const TelephonicConsultation = () => {
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [consultationOrders, setConsultationOrder] = useState<any>({});
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+
+  const handleOpenAttachmentModal = () => {
+    console.log('Tele-consultation order for attachment (from table):', consultationOrders);
+    setAttachmentsModalOpen(true);
+  };
 
   // Utility: is the event target within form-ish/editable elements?
   const isFormField = (node: EventTarget | null) => {
@@ -160,6 +168,23 @@ const TelephonicConsultation = () => {
       )
     },
     {
+      key: 'attachments',
+      title: 'Attachments',
+      render: (rowData: any) => (
+        <MdAttachFile
+          size={20}
+          fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+          onClick={() => {
+            if (rowData?.key) {
+              setConsultationOrder(rowData);
+              handleOpenAttachmentModal();
+            }
+          }}
+          style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
+        />
+      )
+    },
+    {
       key: 'actions',
       title: 'Actions',
       render: () => (
@@ -229,6 +254,15 @@ const TelephonicConsultation = () => {
         refetchCon={() => console.log('refetch called')}
         editing={false}
         edit={false}
+      />
+
+      <AttachmentUploadModal
+        isOpen={attachmentsModalOpen}
+        setIsOpen={setAttachmentsModalOpen}
+        encounterId={encounter?.key}
+        refetchData={() => {}}
+        source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
+        sourceId={consultationOrders?.key ? Number(consultationOrders.key) : 0}
       />
     </div>
   );

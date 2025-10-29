@@ -28,6 +28,11 @@ const DetailsTele = ({
   const [saveconsultationOrders, saveConsultationOrdersMutation] =
     useSaveConsultationOrdersMutation();
 
+  const handleOpenAttachmentModal = () => {
+    console.log('Tele-consultation order for attachment:', consultationOrders);
+    setShowAttachmentModal(true);
+  };
+
   const handleClear = async () => {
     setConsultationOrder({
       ...newApConsultationOrder,
@@ -129,7 +134,8 @@ const DetailsTele = ({
                 <div className="attachment-button-consultation-position">
                   <MyButton
                     className="my-button-for-attachment-modal"
-                    onClick={() => setShowAttachmentModal(true)}
+                    onClick={handleOpenAttachmentModal}
+                    disabled={!consultationOrders?.key}
                   >
                     <FontAwesomeIcon icon={faPaperclip} />
                     Attachments
@@ -168,6 +174,7 @@ const DetailsTele = ({
         encounterId={encounter?.id || encounter?.key}
         refetchData={() => {}}
         source="TELE_CONSULTATION_ORDER_ATTACHMENT"
+        sourceId={consultationOrders?.key ? Number(consultationOrders.key) : 0}
       />
     </>
   );

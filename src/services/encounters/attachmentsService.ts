@@ -11,22 +11,42 @@ export const encounterAttachmentsService = createApi({
   tagTypes: ['EncounterAttachment'],
   endpoints: builder => ({
     // POST /api/setup/encounters/{encounterId}/attachments
-    uploadAttachments: builder.mutation<UploadResponse[], UploadEncounterAttachmentParams>({
-      query: ({ encounterId, files, type, details, source }) => {
+    uploadAttachment: builder.mutation<UploadResponse, UploadEncounterAttachmentParams>({
+      query: ({ encounterId, file, type, details, source, sourceId }) => {
         const formData = new FormData();
-        files.forEach(file => {
-          formData.append('files', file);
+        
+        formData.append('file', file);
+        const finalSourceId = sourceId !== undefined && sourceId !== null ? sourceId : 0;
+        formData.append('sourceId', String(finalSourceId));
+        
+        if (type && type.trim()) {
+          formData.append('type', type);
+        }
+        if (details && details.trim()) {
+          formData.append('details', details);
+        }
+        if (source && source.trim()) {
+          formData.append('source', source);
+        }
+        
+        // Log FormData contents for debugging
+        console.log('Upload Encounter Attachment Request:', {
+          encounterId,
+          sourceId: finalSourceId,
+          source,
+          type,
+          details,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type
         });
-    
-        // Build params object with optional fields
-        const params: any = { };
-        if (type && type.trim()) params.type = type;
-        if (details && details.trim()) params.details = details;
-        if (source && source.trim()) params.source = source;
+        for (let pair of formData.entries()) {
+          console.log(pair[0], '=', pair[1]);
+        }
+        
         return {
           url: `/api/setup/encounters/${encounterId}/attachments`,
           method: 'POST',
-          params,
           body: formData,
         };
       },
@@ -35,12 +55,24 @@ export const encounterAttachmentsService = createApi({
       ],
     }),
 
-    // GET /api/setup/encounters/attachments/by-encounterIdAndSource/{encounterId}/{source}
-    getEncounterAttachmentsBySource: builder.query<PagedResult<EncounterAttachment>, { encounterId: number; source: string }>({
-      query: ({ encounterId, source }) => ({
-        url: `/api/setup/encounters/attachments/by-encounterIdAndSource/${encounterId}/${source}`,
-        method: 'GET',
-      }),
+    // GET /api/setup/encounters/attachments/by-encounterIdAndSource/{encounterId}/{source}?sourceId={sourceId}
+    getEncounterAttachmentsBySource: builder.query<PagedResult<EncounterAttachment>, { encounterId: number; source: string; sourceId?: number }>({
+      query: ({ encounterId, source, sourceId }) => {
+        const params = new URLSearchParams();
+        if (sourceId !== undefined && sourceId !== null) {
+          params.append('sourceId', String(sourceId));
+        }
+        
+        const queryString = params.toString();
+        const url = `/api/setup/encounters/attachments/by-encounterIdAndSource/${encounterId}/${source}${queryString ? `?${queryString}` : ''}`;
+        
+        console.log('Fetching encounter attachments:', { encounterId, source, sourceId, url });
+        
+        return {
+          url,
+          method: 'GET',
+        };
+      },
       transformResponse: (response: EncounterAttachment[]): PagedResult<EncounterAttachment> => ({
         data: response || [],
         totalCount: response?.length || 0,
@@ -87,7 +119,7 @@ export const encounterAttachmentsService = createApi({
 });
 
 export const {
-  useUploadAttachmentsMutation,
+  useUploadAttachmentMutation,
   useGetEncounterAttachmentsBySourceQuery,
   useLazyGetEncounterAttachmentsBySourceQuery,
   useGetDownloadUrlMutation,

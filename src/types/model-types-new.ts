@@ -218,6 +218,7 @@ export interface EncounterAttachment {
   type?: string;
   details?: string;
   source?: string;
+  sourceId?: number; // Link to specific order/medication within encounter
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
@@ -261,10 +262,11 @@ export interface UploadPatientAttachmentParams {
 
 export interface UploadEncounterAttachmentParams {
   encounterId: number;
-  files: File[];
+  file: File; 
   type?: string;
   details?: string;
   source?: string;
+  sourceId?: number;
 }
 
 export interface Service {

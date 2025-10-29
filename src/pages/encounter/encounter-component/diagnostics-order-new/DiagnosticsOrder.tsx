@@ -123,6 +123,11 @@ const DiagnosticsOrder = props => {
   const [openSampleModal, setOpenSampleModal] = useState(false);
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
+
+  const handleOpenAttachmentModal = () => {
+    console.log('Diagnostic order test for attachment:', orderTest);
+    setAttachmentsModalOpen(true);
+  };
   const [orderMedication, setOrderMedication] = useState<any>({
     ...newApDrugOrderMedications,
     drugOrderKey: drugKey
@@ -717,9 +722,14 @@ const DiagnosticsOrder = props => {
         return (
           <MdAttachFile
             size={20}
-            fill="var(--primary-gray)"
-            onClick={() => setAttachmentsModalOpen(true)}
-            style={{ cursor: 'pointer' }}
+            fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+            onClick={() => {
+              if (rowData?.key) {
+                setOrderTest(rowData);
+                handleOpenAttachmentModal();
+              }
+            }}
+            style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
           />
         );
       }
@@ -1144,8 +1154,9 @@ const DiagnosticsOrder = props => {
         isOpen={attachmentsModalOpen}
         setIsOpen={setAttachmentsModalOpen}
         encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}} // No need to refetch here since we're just uploading
+        refetchData={() => {}}
         source="DIAGNOSTIC_ORDER_ATTACHMENT"
+        sourceId={orderTest?.key ? Number(orderTest.key) : 0}
       />
 
       <MyModal

@@ -1,14 +1,14 @@
 import MyModal from '@/components/MyModal/MyModal';
 import { faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import Attachment from '@/images/Attachment.png';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Form } from 'rsuite';
 import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { useUploadAttachmentsMutation as useUploadPatientAttachmentsMutation } from '@/services/patients/attachmentService';
-import { useUploadAttachmentsMutation as useUploadEncounterAttachmentsMutation } from '@/services/encounters/attachmentsService';
+import { useUploadAttachmentMutation as useUploadEncounterAttachmentMutation } from '@/services/encounters/attachmentsService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 
@@ -18,7 +18,8 @@ interface AttachmentUploadModalProps {
   patientId?: number;
   encounterId?: number;
   refetchData: () => void;
-  source?: string; // Make source dynamic instead of hardcoded
+  source?: string;
+  sourceId?: number; 
 }
 
 const AttachmentUploadModal = ({
@@ -27,16 +28,17 @@ const AttachmentUploadModal = ({
   patientId,
   encounterId,
   refetchData,
-  source = 'PATIENT_PROFILE_ATTACHMENT' // Default value if not provided
+  source = 'PATIENT_PROFILE_ATTACHMENT',
+  sourceId
 }: AttachmentUploadModalProps) => {
   const dispatch = useAppDispatch();
   const attachmentFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  
+
   // Use appropriate mutation based on whether patientId or encounterId is provided
   const [uploadPatientAttachments, { isLoading: isLoadingPatient }] = useUploadPatientAttachmentsMutation();
-  const [uploadEncounterAttachments, { isLoading: isLoadingEncounter }] = useUploadEncounterAttachmentsMutation();
+  const [uploadEncounterAttachment, { isLoading: isLoadingEncounter }] = useUploadEncounterAttachmentMutation();
   
   const isLoading = isLoadingPatient || isLoadingEncounter;
   
@@ -98,16 +100,21 @@ const AttachmentUploadModal = ({
 
     try {
       if (encounterId) {
-        // Upload encounter attachments
-        await uploadEncounterAttachments({
-          encounterId,
-          files: selectedFiles,
-          type: selectedAttachType.typeLkey || undefined,
-          details: attachmentDetails.attachmentDetails || undefined,
-          source: source
-        }).unwrap();
+        // Upload encounter attachments one at a time (backend accepts single file)
+        const uploadPromises = selectedFiles.map(file => 
+          uploadEncounterAttachment({
+            encounterId,
+            file, // Single file
+            type: selectedAttachType.typeLkey || undefined,
+            details: attachmentDetails.attachmentDetails || undefined,
+            source: source,
+            sourceId: sourceId || 0 // Use 0 as default for general attachments, actual ID for order-specific
+          }).unwrap()
+        );
+        
+        await Promise.all(uploadPromises);
       } else if (patientId) {
-        // Upload patient attachments
+        // Upload patient attachments (supports multiple files)
         await uploadPatientAttachments({
           patientId,
           files: selectedFiles,
@@ -125,9 +132,15 @@ const AttachmentUploadModal = ({
       setIsOpen(false);
       refetchData();
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('Upload error details:', {
+        error,
+        errorData: error?.data,
+        errorMessage: error?.data?.message,
+        errorStatus: error?.status,
+        fullError: JSON.stringify(error, null, 2)
+      });
       dispatch(notify({ 
-        msg: error?.data?.message || 'Failed to Upload Attachment', 
+        msg: error?.data?.message || error?.message || 'Failed to Upload Attachment', 
         sev: 'error' 
       }));
     }

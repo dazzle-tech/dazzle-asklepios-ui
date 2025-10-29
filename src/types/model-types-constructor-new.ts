@@ -139,14 +139,16 @@ export const newEncounterAttachment: modelTypes.EncounterAttachment = {
   type: undefined,
   details: undefined,
   source: undefined,
+  sourceId: undefined,
 };
 
 export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttachmentParams = {
   encounterId: undefined,
-  files: [],
+  file: undefined,
   type: undefined,
   details: undefined,
   source: undefined,
+  sourceId: undefined,
 }
 
 export const newService: modelTypes.Service = {

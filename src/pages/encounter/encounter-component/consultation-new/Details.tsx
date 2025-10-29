@@ -39,6 +39,11 @@ const Details = ({
   const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
   const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
 
+  const handleOpenAttachmentModal = () => {
+    console.log('Consultation order for attachment:', consultationOrders);
+    setShowAttachmentModal(true);
+  };
+
   const handleClear = async () => {
     setConsultationOrder({
       ...newApConsultationOrder,
@@ -94,8 +99,9 @@ const Details = ({
               Clear
             </MyButton>
             <MyButton
-              onClick={() => setShowAttachmentModal(true)}
+              onClick={handleOpenAttachmentModal}
               prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
+              disabled={!consultationOrders?.key}
             >
               Attachments
             </MyButton>
@@ -262,6 +268,7 @@ const Details = ({
         encounterId={encounter?.id || encounter?.key}
         refetchData={() => {}}
         source="CONSULTATION_ORDER_ATTACHMENT"
+        sourceId={consultationOrders?.key ? Number(consultationOrders.key) : 0}
       />
     </>
   );

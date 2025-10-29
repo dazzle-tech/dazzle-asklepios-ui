@@ -34,6 +34,11 @@ const Details = ({
 }) => {
   const dispatch = useAppDispatch();
   const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
+  
+  const handleOpenAttachmentModal = () => {
+    console.log('Operation request for attachment:', request);
+    setIsAttachmentModalOpen(true);
+  };
 
   const { data: FacilityList } = useGetFacilitiesQuery({ ...initialListRequest });
   const { data: departmentList } = useGetDepartmentsQuery({
@@ -101,8 +106,9 @@ const Details = ({
         steps={[{ title: 'Request', icon: <FontAwesomeIcon icon={faHeadSideMask} /> }]}
         footerButtons={
           <MyButton
-            onClick={() => setIsAttachmentModalOpen(true)}
+            onClick={handleOpenAttachmentModal}
             prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
+            disabled={!request?.key}
           >
             Add Attachment
           </MyButton>
@@ -349,6 +355,7 @@ const Details = ({
         encounterId={encounter?.id || encounter?.key}
         refetchData={() => {}}
         source="OPERATION_REQUEST_ATTACHMENT"
+        sourceId={request?.key ? Number(request.key) : 0}
       />
     </>
   );
