@@ -22,6 +22,7 @@ import MyTable from '@/components/MyTable';
 import AddEditDVMRule from './AddEditDVMRule';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
+import MyTab from '@/components/MyTab';
 const DVM = () => {
   const dispatch = useAppDispatch();
   const [dvmRule, setDvmRule] = useState({ ...newApDvmRule });
@@ -351,45 +352,8 @@ const DVM = () => {
     </Form>
   );
 
-  return (
-    <Panel>
-      <small className="metadata-selection-title">
-        <Translate>Specify screen metadata to configure validation rules</Translate>
-      </small>
-      <div className="container-of-selects-dvm">
-        <Form>
-          <MyInput
-            fieldName="screenKey"
-            fieldType="select"
-            placeholder="Select Screen"
-            selectData={screenListResponse?.object ?? []}
-            selectDataLabel="name"
-            selectDataValue="key"
-            record={recordOfScreen}
-            setRecord={setRecordOfScreen}
-            showLabel={false}
-            menuMaxHeight={300}
-          />
-        </Form>
-        <Form>
-          <MyInput
-            fieldName="screenMetadataKey"
-            fieldType="select"
-            placeholder="Select Metadata"
-            selectData={screenMetadataListResponse?.object ?? []}
-            selectDataLabel="metadataObjectName"
-            selectDataValue="key"
-            record={recordOfScreenMetaData}
-            setRecord={setRecordOfScreenMetaData}
-            showLabel={false}
-            menuMaxHeight={300}
-          />
-        </Form>
-      </div>
-      <hr />
-      <Tabs defaultActiveKey="1" appearance="subtle" className="tabs">
-        <Tabs.Tab active eventKey="1" title="Validation Rules">
-          <div className="container-of-add-new-button">
+  const Tabdata = [
+    {title: "Validation Rules", content: <><div className="container-of-add-new-button">
             <MyButton
               disabled={!recordOfScreenMetaData['screenMetadataKey']}
               prefixIcon={() => <AddOutlineIcon />}
@@ -442,10 +406,49 @@ const DVM = () => {
               stateOfDeleteDvm == 'deactivate' ? handleDeactivate : handleReactivate
             }
             actionType={stateOfDeleteDvm}
+          /></>},
+        {title: "Rule Combinations", content: <></>}
+  ];
+
+  return (
+    <Panel>
+      <small className="metadata-selection-title">
+        <Translate>Specify screen metadata to configure validation rules</Translate>
+      </small>
+      <div className="container-of-selects-dvm">
+        <Form>
+          <MyInput
+            fieldName="screenKey"
+            fieldType="select"
+            placeholder="Select Screen"
+            selectData={screenListResponse?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            record={recordOfScreen}
+            setRecord={setRecordOfScreen}
+            showLabel={false}
+            menuMaxHeight={300}
           />
-        </Tabs.Tab>
-        <Tabs.Tab eventKey="2" title="Rule Combinations"></Tabs.Tab>
-      </Tabs>
+        </Form>
+        <Form>
+          <MyInput
+            fieldName="screenMetadataKey"
+            fieldType="select"
+            placeholder="Select Metadata"
+            selectData={screenMetadataListResponse?.object ?? []}
+            selectDataLabel="metadataObjectName"
+            selectDataValue="key"
+            record={recordOfScreenMetaData}
+            setRecord={setRecordOfScreenMetaData}
+            showLabel={false}
+            menuMaxHeight={300}
+          />
+        </Form>
+      </div>
+      <hr />
+      <MyTab 
+       data={Tabdata}
+      />
     </Panel>
   );
 };

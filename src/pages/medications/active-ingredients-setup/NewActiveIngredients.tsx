@@ -20,7 +20,6 @@ import DoseAdjustment from './DoseAdjustment';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import BackButton from '@/components/BackButton/BackButton';
-import { Tabs } from 'rsuite';
 import MOAAndPharmacokinetics from './MOAAndPharmacokinetics';
 import DrugDrugAndFoodInteractions from './DrugDrugAndFoodInteractions';
 import PregnancyLactationAndSpecialPopulation from './PregnancyLactationAndSpecialPopulation';
@@ -28,6 +27,7 @@ import Synonyms from './Synonyms';
 import MyButton from '@/components/MyButton/MyButton';
 import Section from '@/components/Section';
 import PreRequestedTests from './Pre-requestedTests';
+import MyTab from '@/components/MyTab';
 const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
   const dispatch = useAppDispatch();
   const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({
@@ -83,6 +83,81 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
       setActiveIngredient(newApActiveIngredient);
     }
   }, [selectedactiveIngredient]);
+
+  const TabData = [
+    {
+      title: 'Indications',
+      content: (
+          <Section
+            title="Indications"
+            content={<Indications selectedActiveIngredients={selectedactiveIngredient} />}
+          />
+      ),
+    },
+    {
+      title: 'Contraindications',
+      content: (
+          <Section
+            title="Contraindications"
+            content={<Contraindications activeIngredients={activeIngredient} />}
+          />
+      )
+    },
+    {
+      title: 'Advers Effects',
+      content: (
+          <AdversEffects activeIngredients={activeIngredient} />
+      )
+    },
+    {
+      title: 'Toxicity',
+      content: (
+          <Section title="Toxicity" content={<Toxicity activeIngredients={activeIngredient} />} />
+      )
+    },
+    {
+      title: 'MOA & Pharmacokinetics',
+      content: (
+          <MOAAndPharmacokinetics activeIngredient={activeIngredient} />
+      )
+    },
+    {
+      title: 'Drug Drug & Food Interactions',
+      content: (
+          <DrugDrugAndFoodInteractions activeIngredient={activeIngredient} />
+      )
+    },
+    {
+      title: 'Pregnancy / Lactation & Special Population',
+      content: (
+          <PregnancyLactationAndSpecialPopulation activeIngredient={activeIngredient} />
+      )
+    },
+    {
+      title: 'Dose Adjustment',
+      content: (
+          <Section
+            title="Dose Adjustment"
+            content={<DoseAdjustment activeIngredients={activeIngredient} />}
+          />
+      )
+    },
+    {
+      title: 'Synonyms',
+      content: (
+          <Section title="Synonyms" content={<Synonyms activeIngredients={activeIngredient} />} />
+      )
+    },
+    {
+      title: 'Pre-requested Tests',
+      content: (
+          <Section
+            title="Pre-requested Tests"
+            content={<PreRequestedTests activeIngredients={activeIngredient} />}
+          />
+      )
+    }
+  ];
 
   return (
     <Panel
@@ -328,50 +403,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
             </Form>
           </Stack.Item>
         </Stack>
-        <Tabs appearance="subtle" className="nurse-tabs">
-          <Tabs.Tab eventKey="1" title="Indications">
-            <Section
-              title="Indications"
-              content={<Indications selectedActiveIngredients={selectedactiveIngredient} />}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="2" title="Contraindications">
-            <Section
-              title="Contraindications"
-              content={<Contraindications activeIngredients={activeIngredient} />}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="3" title="Advers Effects">
-            <AdversEffects activeIngredients={activeIngredient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="4" title="Toxicity">
-            <Section
-              title="Toxicity"
-              content={<Toxicity activeIngredients={activeIngredient} />}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="5" title="MOA & Pharmacokinetics">
-            <MOAAndPharmacokinetics activeIngredient={activeIngredient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="6" title="Drug Drug & Food Interactions">
-            <DrugDrugAndFoodInteractions activeIngredient={activeIngredient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="7" title="Pregnancy / Lactation & Special Population">
-            <PregnancyLactationAndSpecialPopulation activeIngredient={activeIngredient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="8" title="Dose Adjustment">
-            <Section
-              title="Dose Adjustment"
-              content={<DoseAdjustment activeIngredients={activeIngredient} />}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="9" title="Synonyms">
-            <Section title="Synonyms" content={<Synonyms activeIngredients={activeIngredient} />} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="10" title="Pre-requested Tests">
-            <Section title="Pre-requested Tests" content={<PreRequestedTests activeIngredients={activeIngredient} />} />
-          </Tabs.Tab>
-        </Tabs>
+        <MyTab 
+         data={TabData}
+        />
       </Panel>
     </Panel>
   );

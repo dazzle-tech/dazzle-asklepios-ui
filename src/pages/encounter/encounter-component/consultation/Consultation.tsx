@@ -3,18 +3,19 @@ import { Tabs } from 'rsuite';
 import NormalConsultation from './NormalConsultation';
 import TelephonicConsultation from './TelephonicConsultation';
 import './styles.less';
+import MyTab from '@/components/MyTab';
 
 const Consultation = ({}) => {
 
+  const tabData = [
+    {title: "Normal Consultation", content: <NormalConsultation/>},
+    {title: "Telephonic Consultation", content: <TelephonicConsultation/>}
+  ];
   return (
-    <Tabs defaultActiveKey="1" appearance="pills">
-      <Tabs.Tab eventKey="1" title="Normal Consultation">
-        <NormalConsultation/>
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="2" title="Telephonic Consultation">
-        <TelephonicConsultation/>
-      </Tabs.Tab>
-    </Tabs>
+    <MyTab 
+     data={tabData}
+     appearance='pills'
+    />
   );
 };
 

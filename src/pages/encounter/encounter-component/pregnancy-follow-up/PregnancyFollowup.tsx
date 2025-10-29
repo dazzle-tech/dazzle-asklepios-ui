@@ -10,11 +10,18 @@ import './Style.less';
 
 import StartNewPregnancyModal from './StartNewPregnancyModal';
 import EndPregnancyModal from './EndPregnancyModal';
+import MyTab from '@/components/MyTab';
 
 const PregnancyFollowup = () => {
   // State to control modals visibility
   const [openStartModal, setOpenStartModal] = useState(false);
   const [openEndModal, setOpenEndModal] = useState(false);
+
+  const tabData = [
+   {title: "Current Visit", content: <CurrentVisit />},
+   {title: "Previous Followups", content: <PreviousFollowups />},
+   {title: "Protocols", content: <Protocols />},
+  ];
 
   return (
     <>
@@ -30,17 +37,9 @@ const PregnancyFollowup = () => {
       </div>
 
       {/* Tabs section for different views */}
-      <Tabs appearance="subtle" className="doctor-round-tabs" defaultActiveKey="1">
-        <Tabs.Tab eventKey="1" title="CurrentVisit">
-          <CurrentVisit />
-        </Tabs.Tab>
-        <Tabs.Tab eventKey="2" title="PreviousFollowups">
-          <PreviousFollowups />
-        </Tabs.Tab>
-        <Tabs.Tab eventKey="3" title="Protocols">
-          <Protocols />
-        </Tabs.Tab>
-      </Tabs>
+      <MyTab 
+       data={tabData}
+      />
 
       {/* Modal for starting pregnancy */}
       <StartNewPregnancyModal

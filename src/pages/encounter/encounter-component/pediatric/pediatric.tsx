@@ -5,12 +5,12 @@ import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import MyTable from '@/components/MyTable';
-import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import SectionContainer from '@/components/SectionsoContainer';
 import { Line } from 'react-chartjs-2';
 import AddEditAnthropometric from './AddEditAnthropometric';
 import CancellationModal from '@/components/CancellationModal';
-import "./styles.less";
+import './styles.less';
+import MyTab from '@/components/MyTab';
 const Pediatric = () => {
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [selectedMetricLabel, setSelectedMetricLabel] = useState(null);
@@ -384,9 +384,9 @@ const Pediatric = () => {
       <div className="left-group">
         <MyButton
           prefixIcon={() => <CloseOutlineIcon />}
-            onClick={() => {
-              setOpenCancelModal(true);
-            }}
+          onClick={() => {
+            setOpenCancelModal(true);
+          }}
         >
           Cancel
         </MyButton>
@@ -405,6 +405,61 @@ const Pediatric = () => {
     </div>
   );
 
+   const tabData = [
+    {
+      title: 'Growth and Development Tracking',
+      content: (
+        <SectionContainer
+          title="Anthropometric"
+          content={
+            <>
+              <MyTable
+                data={data}
+                columns={tableColumns}
+                tableButtons={tablebuttons}
+                onRowClick={rowData => {
+                  setAanthropometric(rowData);
+                }}
+                rowClassName={isSelected}
+              />
+              {selectedMetric && (
+                <div className="margin-top-100">
+                  <h4 className="font-size-14">{selectedMetricLabel}</h4>
+                  <Line
+                    data={chartData}
+                    options={{
+                      ...chartOptions,
+                      maintainAspectRatio: false
+                    }}
+                    height={'300px'}
+                  />
+                </div>
+              )}
+              <AddEditAnthropometric
+                open={openAddEditAnthropometric}
+                setOpen={setOpenAddEditAnthropometric}
+                width={width}
+                anthropometric={anthropometric}
+                setAnthropometric={setAanthropometric}
+              />
+              <CancellationModal
+                open={openCancelModal}
+                setOpen={setOpenCancelModal}
+                object=""
+                setObject=""
+                handleCancle={() => {}}
+                title="Cancel Anthropometric"
+                fieldLabel="Reason for cancellation"
+                fieldName="cancelReason"
+              />
+            </>
+          }
+        />
+      )
+    },
+    { title: 'Nutritional and Feeding', content: <></> }
+  ];
+
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -413,61 +468,8 @@ const Pediatric = () => {
   }, []);
 
   return (
-    <div className='container-pediatric'>
-      <Tabs>
-        <TabList>
-          <Tab>Growth and Development Tracking</Tab>
-          <Tab>Nutritional and Feeding</Tab>
-        </TabList>
-        <TabPanel>
-          <SectionContainer
-            title="Anthropometric"
-            content={
-              <>
-                <MyTable
-                  data={data}
-                  columns={tableColumns}
-                  tableButtons={tablebuttons}
-                  onRowClick={rowData => {
-                    setAanthropometric(rowData);
-                  }}
-                  rowClassName={isSelected}
-                />
-                {selectedMetric && (
-                  <div className="margin-top-100">
-                    <h4 className="font-size-14">{selectedMetricLabel}</h4>
-                    <Line
-                      data={chartData}
-                      options={{
-                        ...chartOptions,
-                        maintainAspectRatio: false
-                      }}
-                      height={'300px'}
-                    />
-                  </div>
-                )}
-                <AddEditAnthropometric
-                  open={openAddEditAnthropometric}
-                  setOpen={setOpenAddEditAnthropometric}
-                  width={width}
-                  anthropometric={anthropometric}
-                  setAnthropometric={setAanthropometric}
-                />
-                <CancellationModal
-                  open={openCancelModal}
-                  setOpen={setOpenCancelModal}
-                  object=""
-                  setObject=""
-                  handleCancle={() => {}}
-                  title="Cancel Anthropometric"
-                  fieldLabel="Reason for cancellation"
-                  fieldName="cancelReason"
-                />
-              </>
-            }
-          />
-        </TabPanel>
-      </Tabs>
+    <div className="container-pediatric">
+      <MyTab data={tabData} />
     </div>
   );
 };

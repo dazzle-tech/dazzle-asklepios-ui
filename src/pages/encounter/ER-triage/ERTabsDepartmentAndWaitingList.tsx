@@ -8,6 +8,7 @@ import ERWaitingList from './ERWaitingList';
 import ERList from './ERList';
 import './styles.less';
 import Translate from '@/components/Translate';
+import MyTab from '@/components/MyTab';
 
 const ERTabsDepartmentAndWaitingList = () => {
   const location = useLocation();
@@ -27,16 +28,15 @@ const ERTabsDepartmentAndWaitingList = () => {
     };
   }, [location.pathname, dispatch]);
 
+  const tabData = [
+    {title: "ER Department", content: <ERList />},
+    {title: "ER Waiting List", content: <ERWaitingList />}
+  ];
   return (
     <Panel>
-      <Tabs defaultActiveKey="1" appearance="subtle">
-        <Tabs.Tab eventKey="1" title="ER Department">
-          <ERList />
-        </Tabs.Tab>
-        <Tabs.Tab eventKey="2" title="ER Waiting List">
-          <ERWaitingList />
-        </Tabs.Tab>
-      </Tabs>
+      <MyTab 
+       data={tabData}
+      />
     </Panel>
   );
 };
