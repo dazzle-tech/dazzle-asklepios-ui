@@ -19,7 +19,6 @@ import { Tabs } from 'rsuite';
 import React, { ReactElement } from 'react';
 import Translate from '../Translate';
 import "./styles.less";
-import { Tab, TabList, TabPanel } from 'react-tabs';
 
 interface TabDataItem {
   title: string;
@@ -31,22 +30,39 @@ interface MyTabProps {
   data: TabDataItem[];
   defaultActiveKey?: string | number;
   appearance?: "subtle" | "tabs" | "pills";
-  className?: string
+  className?: string;
+  activeTab?: string | number;
+  setActiveTab?: (key: string | number) => void;
 }
 
 const MyTab: React.FC<MyTabProps> = ({
   data,
   defaultActiveKey = '1',
   appearance = 'subtle',
-  className = "nurse-tabs"
+  className = "",
+  activeTab,
+  setActiveTab
 }) => {
+
   if (!Array.isArray(data)) {
     return null;
   }
 
+  const isControlled = activeTab !== undefined && typeof setActiveTab === 'function';
+
   return (
     <Tabs
-      defaultActiveKey={defaultActiveKey}
+      // defaultActiveKey={defaultActiveKey}
+       {...(isControlled
+        ? {
+            activeKey: activeTab,
+            onSelect: key => {
+              if (key && setActiveTab) setActiveTab(key.toString());
+            },
+          }
+        : {
+            defaultActiveKey,
+          })}
       appearance={appearance}
       className={`tabs-style ${className}`}
     >
@@ -56,17 +72,6 @@ const MyTab: React.FC<MyTabProps> = ({
           </Tabs.Tab>
         ))}
     </Tabs>
-    // <Tabs>
-    //   <TabList>
-    //     {data.map((item, index) => (
-    //       <Tab key={index}>{item.title}</Tab>
-    //     ))}
-    //   </TabList>
-
-    //   {data.map((item, index) => (
-    //     <TabPanel key={index}>{item.content}</TabPanel>
-    //   ))}
-    // </Tabs>
   );
 };
 

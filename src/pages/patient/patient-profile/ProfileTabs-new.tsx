@@ -148,58 +148,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           </h5>
         }
       >
-        {/* <Tabs defaultActiveKey="1" appearance="subtle" className="patient-info-tabs">
-          <Tabs.Tab eventKey="1" title={<Translate>Demographics</Translate>}>
-            <DemographicsTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-              genderLovQueryResponse={genderLovQueryResponse}
-              docTypeLovQueryResponse={docTypeLovQueryResponse}
-              countryLovQueryResponse={countryLovQueryResponse}
-              patientClassLovQueryResponse={patientClassLovQueryResponse}
-              bloodGroupLovQueryResponse={bloodGroupLovQueryResponse}
-              ageFormatType={ageFormatType}
-              ageGroupValue={ageGroupValue}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="2" title={<Translate>Extra Details</Translate>}>
-            <ExtraDetailsTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="3" title={<Translate>Insurance</Translate>}>
-            <InsuranceTab localPatient={localPatient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="4" title={<Translate>Privacy & Security</Translate>}>
-            <PrivacySecurityTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="5" title={<Translate>Consent Forms</Translate>}>
-            <ConsentFormTab patient={localPatient} isClick={!localPatient.key} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="6" title={<Translate>Preferred Health Professional</Translate>}>
-            <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.key} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="7" title={<Translate>Family Members</Translate>}>
-            <PatientFamilyMembers localPatient={localPatient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="8" title={<Translate>Secondary ID</Translate>}>
-            <SecondaryIDTab localPatient={localPatient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="9" title={<Translate>Attachments</Translate>}>
-            <PatientAttachment
-              localPatient={localPatient}
-              setRefetchAttachmentList={setRefetchAttachmentList}
-              refetchAttachmentList={refetchAttachmentList}
-            />
-          </Tabs.Tab>
-        </Tabs> */}
         <MyTab 
          data={tabData}
         />

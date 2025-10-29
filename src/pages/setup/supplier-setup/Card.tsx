@@ -1,10 +1,11 @@
 import React from 'react';
-import { Form, Tabs } from 'rsuite';
+import { Form } from 'rsuite';
 import { FaBuilding, FaEnvelope, FaPhone, FaGlobe } from 'react-icons/fa';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import './style.less';
+import MyTab from '@/components/MyTab';
 
 interface CardProps {
   record: any;
@@ -14,6 +15,217 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({ record, setRecord }) => {
   const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
 
+  const tabData = [
+    {
+      title: 'Contacts',
+      content: (
+        <Form fluid>
+          <div className="form-container">
+            <MyInput
+              width={250}
+              fieldType="text"
+              fieldLabel="Email"
+              fieldName={'Email'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="text"
+              fieldLabel="Primary Phone Number"
+              fieldName={'primaryPhoneNumber'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="text"
+              fieldLabel="Second Phone Number"
+              fieldName={'secondPhoneNumber'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="text"
+              fieldLabel="Website"
+              fieldName={'website'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="text"
+              fieldLabel="Emargency Contact Name"
+              fieldName={'emargencyContactName'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="text"
+              fieldLabel="Emargency Contact Phone"
+              fieldName={'emargencyContactPhone'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={512}
+              fieldType="textarea"
+              fieldLabel="Note"
+              fieldName={'note'}
+              record={record}
+              setRecord={setRecord}
+            />
+          </div>
+        </Form>
+      )
+    },
+    {
+      title: 'Sales & Purchase',
+      content: (
+        <Form fluid>
+          <div className="form-container">
+            <MyInput
+              width={250}
+              fieldType="select"
+              fieldLabel="Payment Terms"
+              fieldName={'paymentTerms'}
+              selectData={currencyLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="select"
+              fieldLabel="Currency"
+              fieldName={'currency'}
+              selectData={currencyLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="number"
+              fieldLabel="Lead Time"
+              fieldName={'leadTime'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="select"
+              fieldLabel="Purchase Price list"
+              fieldName={'purchasePriceList'}
+              selectData={[
+                { label: 'Price List A', key: 'A' },
+                { label: 'Price List B', key: 'B' },
+                { label: 'Price List C', key: 'C' }
+              ]}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="number"
+              fieldLabel="Credit Limit"
+              fieldName={'creditLimit'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="select"
+              fieldLabel="Default Warehouse"
+              fieldName={'defaultWarehouse'}
+              record={record}
+              setRecord={setRecord}
+              selectData={[
+                { label: 'Warehouse A', key: 'A' },
+                { label: 'Warehouse B', key: 'B' },
+                { label: 'Warehouse C', key: 'C' }
+              ]}
+              selectDataLabel="label"
+              selectDataValue="key"
+            />
+          </div>
+        </Form>
+      )
+    },
+    {
+      title: 'Invoicing',
+      content: (
+        <Form fluid>
+          <div className="form-container">
+            <MyInput
+              width={250}
+              fieldType="text"
+              fieldLabel="Supplier Account Code"
+              fieldName={'supplierAccountCode'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="text"
+              fieldLabel="Tax ID"
+              fieldName={'taxId'}
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="select"
+              fieldLabel="Invoice Currency"
+              fieldName={'invoiceCurrency'}
+              selectData={currencyLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="number"
+              fieldLabel="Retention Percentage"
+              fieldName="retentionPercentage"
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="multyPicker"
+              fieldLabel="Allowed Payment Methods"
+              fieldName="allowedPaymentMethods"
+              selectData={[
+                { label: 'visa', key: 'A' },
+                { label: 'cash', key: 'B' },
+                { label: 'check', key: 'C' }
+              ]}
+              selectDataLabel="label"
+              selectDataValue="key"
+              record={record}
+              setRecord={setRecord}
+            />
+            <MyInput
+              width={250}
+              fieldType="checkbox"
+              fieldLabel="Invoice Approach Required"
+              fieldName="invoiceApproachRequired"
+              record={record}
+              setRecord={setRecord}
+            />
+          </div>
+        </Form>
+      )
+    }
+  ];
   return (
     <div className="modal-content">
       {/* Vendor Type Selection */}
@@ -91,208 +303,7 @@ const Card: React.FC<CardProps> = ({ record, setRecord }) => {
 
       {/* Tabs */}
       <div className="tabs-section">
-        <Tabs defaultActiveKey="1" appearance="subtle">
-          <Tabs.Tab eventKey="1" title="Contacts">
-            <Form fluid>
-              <div className="form-container">
-                <MyInput
-                  width={250}
-                  fieldType="text"
-                  fieldLabel="Email"
-                  fieldName={'Email'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="text"
-                  fieldLabel="Primary Phone Number"
-                  fieldName={'primaryPhoneNumber'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="text"
-                  fieldLabel="Second Phone Number"
-                  fieldName={'secondPhoneNumber'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="text"
-                  fieldLabel="Website"
-                  fieldName={'website'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="text"
-                  fieldLabel="Emargency Contact Name"
-                  fieldName={'emargencyContactName'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="text"
-                  fieldLabel="Emargency Contact Phone"
-                  fieldName={'emargencyContactPhone'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={512}
-                  fieldType="textarea"
-                  fieldLabel="Note"
-                  fieldName={'note'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-              </div>
-            </Form>
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="2" title="Sales & Purchase">
-            <Form fluid>
-              <div className="form-container">
-                <MyInput
-                  width={250}
-                  fieldType="select"
-                  fieldLabel="Payment Terms"
-                  fieldName={'paymentTerms'}
-                  selectData={currencyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="select"
-                  fieldLabel="Currency"
-                  fieldName={'currency'}
-                  selectData={currencyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="number"
-                  fieldLabel="Lead Time"
-                  fieldName={'leadTime'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="select"
-                  fieldLabel="Purchase Price list"
-                  fieldName={'purchasePriceList'}
-                  selectData={[
-                    { label: 'Price List A', key: 'A' },
-                    { label: 'Price List B', key: 'B' },
-                    { label: 'Price List C', key: 'C' }
-                  ]}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="number"
-                  fieldLabel="Credit Limit"
-                  fieldName={'creditLimit'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="select"
-                  fieldLabel="Default Warehouse"
-                  fieldName={'defaultWarehouse'}
-                  record={record}
-                  setRecord={setRecord}
-                  selectData={[
-                    { label: 'Warehouse A', key: 'A' },
-                    { label: 'Warehouse B', key: 'B' },
-                    { label: 'Warehouse C', key: 'C' }
-                  ]}
-                  selectDataLabel="label"
-                  selectDataValue="key"
-                />
-              </div>
-            </Form>
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="3" title="Invoicing">
-            <Form fluid>
-              <div className="form-container">
-                <MyInput
-                  width={250}
-                  fieldType="text"
-                  fieldLabel="Supplier Account Code"
-                  fieldName={'supplierAccountCode'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="text"
-                  fieldLabel="Tax ID"
-                  fieldName={'taxId'}
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="select"
-                  fieldLabel="Invoice Currency"
-                  fieldName={'invoiceCurrency'}
-                  selectData={currencyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="number"
-                  fieldLabel="Retention Percentage"
-                  fieldName="retentionPercentage"
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="multyPicker"
-                  fieldLabel="Allowed Payment Methods"
-                  fieldName="allowedPaymentMethods"
-                  selectData={[
-                    { label: 'visa', key: 'A' },
-                    { label: 'cash', key: 'B' },
-                    { label: 'check', key: 'C' }
-                  ]}
-                  selectDataLabel="label"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                />
-                <MyInput
-                  width={250}
-                  fieldType="checkbox"
-                  fieldLabel="Invoice Approach Required"
-                  fieldName="invoiceApproachRequired"
-                  record={record}
-                  setRecord={setRecord}
-                />
-              </div>
-            </Form>
-          </Tabs.Tab>
-        </Tabs>
+        <MyTab data={tabData} />
       </div>
     </div>
   );

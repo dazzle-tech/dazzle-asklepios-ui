@@ -2,21 +2,22 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyModal from '@/components/MyModal/MyModal';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
-import { Tabs } from 'rsuite';
-
 import BedManagmentFirstTab from './BedManagmentFirstTab';
 import BedTransactionsSecondTab from './BedTransactionsSecondTab';
+import MyTab from '@/components/MyTab';
 const BedManagementModal = ({ open, setOpen, departmentKey }) => {
+
+  const tabData = [
+    {title: "Bed Management", content: <BedManagmentFirstTab departmentKey={departmentKey} />},
+    {title: "Bed Transactions", content: <BedTransactionsSecondTab departmentKey={departmentKey} />}
+  ];
+
   // modal content
   const modalContent = (
-    <Tabs defaultActiveKey="1" appearance="subtle" className="tab-container">
-      <Tabs.Tab eventKey="1" title="Bed Management">
-        <BedManagmentFirstTab departmentKey={departmentKey} />
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="2" title="Bed Transactions">
-        <BedTransactionsSecondTab departmentKey={departmentKey} />
-      </Tabs.Tab>
-    </Tabs>
+    <MyTab 
+     data={tabData}
+     className="tab-container"
+    />
   );
 
   return (

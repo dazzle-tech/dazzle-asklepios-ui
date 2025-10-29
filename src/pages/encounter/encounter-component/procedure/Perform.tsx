@@ -14,7 +14,6 @@ import React, { useState } from 'react';
 import {
     Divider,
     Form,
-    Tabs
 } from 'rsuite';
 import PatientSide from '../../encounter-main-info-section/PatienSide';
 import ProcedureRegistration from './ProcedureRegistration';
@@ -23,6 +22,7 @@ import PreProcedureAssessment from './Pre-ProcedureAssessment/PreProcedureAssess
 import ProcedurePerforming from './ProcedurePerforming/ProcedurePerforming';
 import PostProcedureCare from './Post-ProcedureCare/PostProcedureCare';
 import EquipmentAndLogistics from './EquipmentAndLogistics/EquipmentAndLogistics';
+import MyTab from '@/components/MyTab';
 const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch }) => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
@@ -31,9 +31,9 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
     const [activeTab, setActiveTab] = useState<string>('1');
-    const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
+    const [saveProcedures] = useSaveProceduresMutation();
 
-    const [listRequestPro, setListRequestPro] = useState<ListRequest>({
+    const [listRequestPro] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
@@ -43,7 +43,7 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
             }
         ]
     });
-    const { data: procedureQueryResponse, refetch: profetch } = useGetProcedureListQuery(
+    const { data: procedureQueryResponse } = useGetProcedureListQuery(
         listRequestPro,
         { skip: procedure.categoryKey == undefined }
     );
@@ -92,6 +92,14 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
             key: "6",
             value: "Completed"
         }
+    ];
+
+    const tabData = [
+     {title: "Procedure Registration", content: <ProcedureRegistration procedure={procedure} user={authSlice.user} setActiveTab={setActiveTab} />},
+     {title: "Pre-Procedure Assessment", content: <PreProcedureAssessment procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user} patient={patient}/>},
+     {title: "Procedure Performing", content: <ProcedurePerforming procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user} />},
+     {title: "Post-Procedure Care and Follow-up", content: <PostProcedureCare procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user}/>},
+     {title: "Equipment and Logistics", content: <EquipmentAndLogistics procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user}/>},
     ];
     return (<div className='container'>
         <div className='left-box'>
@@ -191,32 +199,15 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch 
 
             <MyStepper stepsList={stepsData} activeStep={1} />
             <Divider />
-            <Tabs activeKey={activeTab} onSelect={(key) => {
-                if (key) setActiveTab(key.toString());
-            }} appearance="subtle">
-                <Tabs.Tab eventKey="1" title="Procedure Registration" >
-                    <ProcedureRegistration procedure={procedure} user={authSlice.user} setActiveTab={setActiveTab} />
-                </Tabs.Tab>
-
-                <Tabs.Tab eventKey="2" title="Pre-Procedure Assessment" >
-                    <PreProcedureAssessment procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user} patient={patient}/>
-                </Tabs.Tab>
-
-                <Tabs.Tab eventKey="3" title="Procedure Performing" >
-                    <ProcedurePerforming procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user} />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="4" title="Post-Procedure Care and Follow-up" >
-                    <PostProcedureCare procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user}/>
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="5" title="Equipment and Logistics" >
-                    <EquipmentAndLogistics procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user}/>
-                </Tabs.Tab>
-
-            </Tabs>
+            <MyTab 
+             data={tabData}
+             activeTab={activeTab}
+             setActiveTab={setActiveTab}
+            />
         </div>
         <div className='right-box'>
             <PatientSide patient={patient} encounter={encounter} />
         </div>
-    </div>)
-}
+    </div>);
+};
 export default Perform;
