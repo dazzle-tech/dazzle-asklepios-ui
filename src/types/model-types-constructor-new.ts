@@ -188,8 +188,7 @@ export const newPractitioner: modelTypes.Practitioner = {
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   id: undefined,
   langKey: undefined,          
-  translationKey: undefined,   
-  originalText: undefined,     
+  translationKey: undefined,    
   translationText: undefined,
   verified: undefined,
   translated: undefined,

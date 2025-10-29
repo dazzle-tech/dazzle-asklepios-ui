@@ -151,7 +151,7 @@ export interface Language {
   id: number;
   langKey: string;
   langName: string;
-  direction: 'LTR' | 'RTL';
+  direction: string;
   details?: string | null;
 }
 
@@ -159,7 +159,6 @@ export interface LanguageTranslation {
   id: number;
   langKey: string;
   translationKey: string;
-  originalText: string;
   translationText?: string;
   verified: boolean;
   translated: boolean;
@@ -211,14 +210,7 @@ export interface UploadResponse {
   sizeBytes: number;
   downloadUrl: string;
 }
-export interface Allergen {
-  id?: number;
-  code: string;
-  name: string;
-  type: string ;
-  description?: string | null;
-  isActive?: boolean;
-  createdBy?: string;
+
 
 
 export interface DownloadTicket {
@@ -248,18 +240,4 @@ export interface Service {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-}
-export interface AgeGroup {
-  id?: number;
-  ageGroup: string | null;            
-  fromAge: number | null;      
-  toAge: number | null;         
-  fromAgeUnit: string | null;
-  toAgeUnit: string | null;
-  isActive?: boolean;
-  createdBy?: string | null;
-  createdDate?: Date | null;
-  lastModifiedBy?: string | null;
-  lastModifiedDate?: Date | null;
-  facilityId?: number;          // FK
 }
