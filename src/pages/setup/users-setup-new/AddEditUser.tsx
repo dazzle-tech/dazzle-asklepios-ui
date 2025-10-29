@@ -36,30 +36,18 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
     switch (stepNumber) {
       case 0:
         return (
-          <Form layout="inline" fluid>
+          <Form fluid>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
               <MyInput
-                column
                 fieldName="firstName"
                 required
                 record={user}
                 setRecord={setUser}
-                width={width > 600 ? 160 : 250}
+                width={250}
               />
 
               <MyInput
-                column
                 fieldName="lastName"
-                required
-                record={user}
-                setRecord={setUser}
-                width={width > 600 ? 160 : 250}
-              />
-            </div>
-            <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
-              <MyInput
-                column
-                fieldName="login"
                 required
                 record={user}
                 setRecord={setUser}
@@ -67,9 +55,22 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
+              <MyInput fieldName="login" required record={user} setRecord={setUser} width={250} />
               <MyInput
-                column
-                fieldLabel="sex at birth"
+                width={250}
+                fieldLabel="Job Role"
+                fieldType="select"
+                fieldName="jobRoleLkey"
+                selectData={jobRoleLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={user}
+                setRecord={setUser}
+              />
+            </div>
+            <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
+              <MyInput
+                fieldLabel="Sex at Birth"
                 fieldType="select"
                 fieldName="gender"
                 selectData={genders ?? []}
@@ -78,9 +79,9 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
                 record={user}
                 setRecord={setUser}
                 width={250}
+                searchable={false}
               />
               <MyInput
-                column
                 fieldType="date"
                 fieldLabel="DOB"
                 fieldName="birthDate"
@@ -90,16 +91,8 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
+              <MyInput fieldName="email" required record={user} setRecord={setUser} width={250} />
               <MyInput
-                column
-                fieldName="email"
-                required
-                record={user}
-                setRecord={setUser}
-                width={250}
-              />
-              <MyInput
-                column
                 fieldName="phoneNumber"
                 required
                 record={user}
@@ -108,20 +101,6 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
               />
             </div>
             <MyInput
-              width={width > 600 ? 520 : 250}
-              column
-              fieldLabel="job role"
-              fieldType="select"
-              fieldName="jobRoleLkey"
-              selectData={jobRoleLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={user}
-              setRecord={setUser}
-            />
-
-            <MyInput
-              column
               fieldName="jobDescription"
               fieldType="textarea"
               required
@@ -151,7 +130,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
         {
           title: 'User Info',
           icon: <FontAwesomeIcon icon={faUser} />,
-          disabledNext: !user.id,
+          // disabledNext: !user.id,
           footer: (
             <>
               <MyButton

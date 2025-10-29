@@ -36,6 +36,7 @@ import InventoryAttributes from './InventoryAttributes';
 import RegulSafty from './RegulSafty';
 import FinancCostInfo from './FinancCostInfo';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import MyTab from '@/components/MyTab';
 
 const ProductSetup = () => {
   const dispatch = useAppDispatch();
@@ -47,16 +48,14 @@ const ProductSetup = () => {
   const [stateOfDeleteModal, setStateOfDeleteModal] = useState<string>('delete');
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [UnitListRequest, setUnitListRequest] = useState<ListRequest>({
-    ...initialListRequest,
+    ...initialListRequest
   });
   const { data: UnitListResponse, refetch: unitRefetch } = useGetUomGroupsUnitsQuery(listRequest);
   const [uomListRequest, setUomListRequest] = useState<ListRequest>({ ...initialListRequest });
 
-  const {
-    data: uomGroupsUnitsListResponse,
-    refetch: refetchUomGroupsUnit,
-  } = useGetUomGroupsUnitsQuery(uomListRequest);
-  // Save product 
+  const { data: uomGroupsUnitsListResponse, refetch: refetchUomGroupsUnit } =
+    useGetUomGroupsUnitsQuery(uomListRequest);
+  // Save product
   const [saveProduct, saveProductMutation] = useSaveProductMutation();
 
   // remove Product
@@ -68,9 +67,7 @@ const ProductSetup = () => {
     isFetching
   } = useGetProductQuery(listRequest);
   // Header page setUp
-  const divContent = (
-    "Inventory Products Setup"
-  );
+  const divContent = 'Inventory Products Setup';
   dispatch(setPageCode('Product'));
   dispatch(setDivContent(divContent));
   // Pagination values
@@ -121,7 +118,7 @@ const ProductSetup = () => {
       pageNumber: 1
     });
   };
-  // handle deactivate 
+  // handle deactivate
   const handleDeactivate = async data => {
     setOpenConfirmDeleteProductModal(false);
     try {
@@ -147,7 +144,7 @@ const ProductSetup = () => {
       );
     }
   };
-  //handle Activate 
+  //handle Activate
   const handleActive = () => {
     setOpenConfirmDeleteProductModal(false);
     const updatedProduct = { ...product, deletedAt: null };
@@ -173,7 +170,7 @@ const ProductSetup = () => {
         size={24}
         fill="var(--primary-gray)"
         onClick={() => setProductOpen(true)}
-      // onClick={() => setPopupOpen(true)}
+        // onClick={() => setPopupOpen(true)}
       />
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
@@ -214,15 +211,13 @@ const ProductSetup = () => {
       key: 'code',
       title: <Translate>Item Code</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.code
+      render: (rowData: any) => rowData.code
     },
     {
       key: 'name',
       title: <Translate>Name</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.name
+      render: (rowData: any) => rowData.name
     },
     {
       key: 'baseUomKey',
@@ -247,7 +242,7 @@ const ProductSetup = () => {
 
         const getStatusConfig = status => {
           switch (status) {
-            case '5274928776446580'://Lot
+            case '5274928776446580': //Lot
               return {
                 backgroundColor: 'var(--light-green)',
                 color: 'var(--primary-green)',
@@ -283,7 +278,7 @@ const ProductSetup = () => {
       title: <Translate>Created By</Translate>,
       flexGrow: 4,
       render: (rowData: any) => {
-        return rowData?.createdBy ?? "";
+        return rowData?.createdBy ?? '';
       }
     },
     {
@@ -299,12 +294,12 @@ const ProductSetup = () => {
       title: <Translate>Updated By</Translate>,
       flexGrow: 4,
       render: (rowData: any) => {
-        return rowData?.updatedBy ?? "";
+        return rowData?.updatedBy ?? '';
       }
     },
     {
       key: 'updatedAt',
-      title: <Translate>Updated  At</Translate>,
+      title: <Translate>Updated At</Translate>,
       flexGrow: 4,
       render: (rowData: any) => {
         return rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : '';
@@ -317,47 +312,64 @@ const ProductSetup = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
+  const tabData = [
+    {
+      title: 'Bacis Info',
+      content: <BasicInf product={product} setProduct={setProduct} disabled={true} />
+    },
+    {
+      title: 'Maintenance Information',
+      content: <MaintenanceInformation product={product} setProduct={setProduct} disabled={true} />
+    },
+    {
+      title: 'UOM',
+      content: <UomGroup product={product} setProduct={setProduct} disabled={true} />
+    },
+    {
+      title: 'Inventory Attributes',
+      content: <InventoryAttributes product={product} setProduct={setProduct} disabled={true} />
+    },
+    {
+      title: 'Regulatory & Safety',
+      content: <RegulSafty product={product} setProduct={setProduct} disabled={true} />
+    },
+    {
+      title: 'Financial & Costing Information',
+      content: <FinancCostInfo product={product} setProduct={setProduct} disabled={true} />
+    }
+  ];
   const tabContant = () => {
     return (
       <Box>
-                <Tabs defaultActiveKey="1" appearance="subtle" >
-            <Tabs.Tab eventKey="1" title="Bacis Info">
-                 <BasicInf product={product} setProduct={setProduct} disabled={true}/>
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="2" title="Maintenance Information">
-               <MaintenanceInformation product={product} setProduct={setProduct} disabled={true}/>
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="3" title="UOM">
-                 <UomGroup product={product} setProduct={setProduct} disabled={true}/>
-            </Tabs.Tab>
-             <Tabs.Tab eventKey="4" title="Inventory Attributes">
-                  <InventoryAttributes product={product} setProduct={setProduct} disabled={true}/>
-            </Tabs.Tab>
-              <Tabs.Tab eventKey="5" title="Regulatory & Safety">
-                  <RegulSafty product={product} setProduct={setProduct} disabled={true}/>
-            </Tabs.Tab>
-             <Tabs.Tab eventKey="6" title="Financial & Costing Information">
-                   <FinancCostInfo product={product} setProduct={setProduct} disabled={true} />
-            </Tabs.Tab>
-        </Tabs>
+        <MyTab data={tabData} />
       </Box>
     );
-  }
+  };
 
-  const filters = (<><AdvancedSearchFilters searchFilter={true}/></>);
-  const tablebuttons = (<>          <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={() => {
-                setOpenAddEditPopup(true), setWarehouseProduct({ ...newApWarehouseProduct }), setEdit_new(true);
-              }}
-              width="109px"
-            >
-              Add New
-            </MyButton>
-          </div></>);
+  const filters = (
+    <>
+      <AdvancedSearchFilters searchFilter={true} />
+    </>
+  );
+  const tablebuttons = (
+    <>
+      {' '}
+      <div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={() => {
+            setOpenAddEditPopup(true),
+              setWarehouseProduct({ ...newApWarehouseProduct }),
+              setEdit_new(true);
+          }}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>
+    </>
+  );
   return (
     <Panel>
       <MyTable
@@ -383,15 +395,19 @@ const ProductSetup = () => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
-      <AddEditProduct open={productOpen} setOpen={setProductOpen} product={product} setProduct={setProduct} refetch={refetchProduct} />
+      <AddEditProduct
+        open={productOpen}
+        setOpen={setProductOpen}
+        product={product}
+        setProduct={setProduct}
+        refetch={refetchProduct}
+      />
       <DeletionConfirmationModal
         open={openConfirmDeleteProductModal}
         setOpen={setOpenConfirmDeleteProductModal}
         itemToDelete="Product"
         actionButtonFunction={
-          stateOfDeleteModal == 'deactivate'
-            ? () => handleDeactivate(product)
-            : handleActive
+          stateOfDeleteModal == 'deactivate' ? () => handleDeactivate(product) : handleActive
         }
         actionType={stateOfDeleteModal}
       />

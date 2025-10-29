@@ -33,7 +33,7 @@ const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
   <DatePicker {...props} oneTap format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
 ));
 
-const focusNextField = e => {
+const focusNextField = (e: any) => {
   if (e.key === 'Enter') {
     e.preventDefault();
     const form = e.target.form;
@@ -45,30 +45,94 @@ const focusNextField = e => {
   }
 };
 
+type MyInputProps = {
+  fieldName: string;
+  fieldType?:
+    | 'text'
+    | 'textarea'
+    | 'checkbox'
+    | 'datetime'
+    | 'time'
+    | 'select'
+    | 'selectPagination'
+    | 'multyPicker'
+    | 'checkPicker'
+    | 'date'
+    | 'number'
+    | 'check';
+  record: any;
+  rightAddonwidth?: number | 'auto' | null;
+  rightAddon?: React.ReactNode | null;
+  leftAddon?: React.ReactNode | null;
+  leftAddonwidth?: number | 'auto' | null;
+  setRecord?: (r: any) => void;
+  vr?: any;
+  rows?: number;
+  showLabel?: boolean;
+  className?: string;
+  width?: number | string;
+  height?: number;
+  inputColor?: string;
+  disabled?: boolean;
+  placeholder?: string;
+  // picker controls (allow override)
+  placement?: any;
+  preventOverflow?: boolean;
+  container?: HTMLElement | (() => HTMLElement);
+  // select-related
+  selectData?: any[];
+  selectDataLabel?: string;
+  selectDataValue?: string;
+  renderMenuItem?: any;
+  searchBy?: any;
+  searchable?: boolean;
+  cleanable?: boolean;
+  readOnly?: boolean;
+  loading?: boolean;
+  defaultSelectValue?: any;
+  virtualized?: boolean;
+  menuMaxHeight?: number;
+  // selectPagination
+  hasMore?: boolean;
+  onFetchMore?: () => void;
+  // Tag/Check picker
+  creatable?: boolean;
+  groupBy?: string | null;
+  // number
+  max?: number;
+  defaultChecked?: boolean;
+  checkedLabel?: string;
+  unCheckedLabel?: string;
+  label?: string;
+  required?: boolean;
+  column?: boolean;
+  fieldLabel?: string;
+  enterClick?: () => Promise<boolean | void> | boolean | void;
+};
+
 const MyInput = ({
   fieldName,
   fieldType = 'text',
   record,
   rightAddonwidth = null,
-  rightAddon: rightAddon = null,
-  leftAddon: leftAddon = null,
+  rightAddon = null,
+  leftAddon = null,
   leftAddonwidth = null,
   setRecord = undefined,
   vr = undefined,
   rows = 1,
-  showLabel = true, // form validation result
+  showLabel = true,
   className = '',
   ...props
-}) => {
+}: MyInputProps) => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.ui);
-  const recognitionRef = useRef(null);
+  const recognitionRef = useRef<any>(null);
   const [recording, setRecording] = useState(false);
-  // <<< Added this line here to fix the error
-  //  console.log("RECORE",record)
+
   const inputColor = props.inputColor || record?.inputColor || '';
   const mode = useSelector((state: any) => state.ui.mode);
-  const [validationResult, setValidationResult] = useState(undefined);
+  const [validationResult, setValidationResult] = useState<any[] | undefined>(undefined);
 
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [isDateOpen, setIsDateOpen] = useState(false);
@@ -90,7 +154,7 @@ const MyInput = ({
 
     const handleScroll = (event: Event) => {
       const target = event.target as HTMLElement | null;
-      // Ignore scrolls occurring inside rsuite picker menus to allow internal scrolling
+      // Ignore internal picker menus scrolling
       if (
         target &&
         (target.closest('.rs-picker-menu') ||
@@ -109,16 +173,12 @@ const MyInput = ({
     };
 
     window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
+    return () => window.removeEventListener('scroll', handleScroll, true);
   }, [isSelectOpen, isDateOpen, isDateTimeOpen, isTimeOpen, isMultyPickerOpen, isCheckPickerOpen]);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
     if (vr && vr.details && vr.details[fieldDbName]) {
-            // keep local state updated when props changes
       setValidationResult([...vr.details[fieldDbName]]);
     } else {
       setValidationResult(undefined);
@@ -134,7 +194,7 @@ const MyInput = ({
 
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
-  const handleValueChange = value => {
+  const handleValueChange = (value: any) => {
     if (setRecord && typeof setRecord === 'function') {
       setRecord({ ...record, [fieldName]: value });
     }
@@ -143,8 +203,11 @@ const MyInput = ({
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
+  // Default placement/preventOverflow for ALL pickers (can be overridden via props)
+  const pickerPlacement = props.placement ?? 'bottomStart';
+  const pickerPreventOverflow = props.preventOverflow ?? false;
+
   const getDynamicMenuMaxHeight = (dataList?: any[]) => {
-        // If consumer provided a specific height, honor it
     if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
       return props.menuMaxHeight as number;
     }
@@ -155,7 +218,7 @@ const MyInput = ({
     return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
   };
 
-    // start speech recognition
+  // start speech recognition
   const startListening = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -170,7 +233,7 @@ const MyInput = ({
     recognition.interimResults = true;
     recognition.continuous = true;
 
-    recognition.onresult = event => {
+    recognition.onresult = (event: any) => {
       let transcript = '';
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
@@ -200,6 +263,25 @@ const MyInput = ({
       setRecording(!recording);
     }
   };
+
+  // Resolve a good container for popups (modal-aware), with user override
+  const resolveContainer = () =>
+    props.container ??
+    (() => {
+      const subChildModal = document.querySelector(
+        '.sub-child-right-modal .rs-modal-body'
+      ) as HTMLElement;
+      if (subChildModal) return subChildModal;
+
+      const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
+      if (childModal) return childModal;
+
+      const allModalBodies = document.querySelectorAll('.rs-modal-body');
+      if (allModalBodies.length > 0) {
+        return allModalBodies[allModalBodies.length - 1] as HTMLElement;
+      }
+      return document.body;
+    });
 
   const conjureFormControl = () => {
     switch (fieldType) {
@@ -266,6 +348,9 @@ const MyInput = ({
             open={isDateTimeOpen}
             onOpen={() => setIsDateTimeOpen(true)}
             onClose={() => setIsDateTimeOpen(false)}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
+            container={resolveContainer()}
           />
         );
 
@@ -292,6 +377,9 @@ const MyInput = ({
             open={isTimeOpen}
             onOpen={() => setIsTimeOpen(true)}
             onClose={() => setIsTimeOpen(false)}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
+            container={resolveContainer()}
           />
         );
 
@@ -305,33 +393,9 @@ const MyInput = ({
             accepter={SelectPicker}
             renderMenuItem={props.renderMenuItem}
             searchBy={props.searchBy}
-            container={
-              props.container ??
-              (() => {
-                // Check if inside sub-child modal first
-                const subChildModal = document.querySelector(
-                  '.sub-child-right-modal .rs-modal-body'
-                ) as HTMLElement;
-                if (subChildModal) return subChildModal;
-
-                // Check if inside child modal
-                const childModal = document.querySelector(
-                  '.child-right-modal .rs-modal-body'
-                ) as HTMLElement;
-                if (childModal) return childModal;
-
-                // Check for any modal body - look for the last one (most recent modal)
-                const allModalBodies = document.querySelectorAll('.rs-modal-body');
-                if (allModalBodies.length > 0) {
-                  return allModalBodies[allModalBodies.length - 1] as HTMLElement;
-                }
-
-                // Default to document body
-                return document.body;
-              })
-            }
-            placement={props.placement ?? 'bottomStart'}
-            preventOverflow={props.preventOverflow ?? true}
+            container={resolveContainer()}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
             searchable={props.searchable !== undefined ? props.searchable : true}
             cleanable={props.cleanable !== undefined ? props.cleanable : true}
             readOnly={props.readOnly !== undefined ? props.readOnly : false}
@@ -382,8 +446,8 @@ const MyInput = ({
             value={record?.[fieldName] ?? ''}
             onChange={(value, item, event) => {
               if (item?.isLoadMore) {
-                event?.preventDefault();
-                event?.stopPropagation();
+                event?.preventDefault?.();
+                event?.stopPropagation?.();
                 props.onFetchMore?.();
               } else {
                 handleValueChange(value);
@@ -396,7 +460,6 @@ const MyInput = ({
                     style={{
                       textAlign: 'center',
                       fontWeight: 'bold',
-                      color: '#1675E0',
                       cursor: 'pointer'
                     }}
                     onClick={e => {
@@ -419,6 +482,9 @@ const MyInput = ({
             open={isSelectOpen}
             onOpen={() => setIsSelectOpen(true)}
             onClose={() => setIsSelectOpen(false)}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
+            container={resolveContainer()}
           />
         );
       }
@@ -430,33 +496,9 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={TagPicker}
-            container={
-              props.container ??
-              (() => {
-                // Check if inside sub-child modal first
-                const subChildModal = document.querySelector(
-                  '.sub-child-right-modal .rs-modal-body'
-                ) as HTMLElement;
-                if (subChildModal) return subChildModal;
-
-                // Check if inside child modal
-                const childModal = document.querySelector(
-                  '.child-right-modal .rs-modal-body'
-                ) as HTMLElement;
-                if (childModal) return childModal;
-
-                // Check for any modal body - look for the last one (most recent modal)
-                const allModalBodies = document.querySelectorAll('.rs-modal-body');
-                if (allModalBodies.length > 0) {
-                  return allModalBodies[allModalBodies.length - 1] as HTMLElement;
-                }
-
-                // Default to document body
-                return document.body;
-              })
-            }
-            placement={props.placement ?? 'bottomStart'}
-            preventOverflow={props.preventOverflow ?? true}
+            container={resolveContainer()}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
             name={fieldName}
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
@@ -482,33 +524,9 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={CheckPicker}
-            container={
-              props.container ??
-              (() => {
-                // Check if inside sub-child modal first
-                const subChildModal = document.querySelector(
-                  '.sub-child-right-modal .rs-modal-body'
-                ) as HTMLElement;
-                if (subChildModal) return subChildModal;
-
-                // Check if inside child modal
-                const childModal = document.querySelector(
-                  '.child-right-modal .rs-modal-body'
-                ) as HTMLElement;
-                if (childModal) return childModal;
-
-                // Check for any modal body - look for the last one (most recent modal)
-                const allModalBodies = document.querySelectorAll('.rs-modal-body');
-                if (allModalBodies.length > 0) {
-                  return allModalBodies[allModalBodies.length - 1] as HTMLElement;
-                }
-
-                // Default to document body
-                return document.body;
-              })
-            }
-            placement={props.placement ?? 'bottomStart'}
-            preventOverflow={props.preventOverflow ?? true}
+            container={resolveContainer()}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
             name={fieldName}
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
@@ -546,6 +564,9 @@ const MyInput = ({
             open={isDateOpen}
             onOpen={() => setIsDateOpen(true)}
             onClose={() => setIsDateOpen(false)}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
+            container={resolveContainer()}
           />
         );
 
@@ -553,10 +574,10 @@ const MyInput = ({
         const numInputWidth = props?.width ?? 145;
         const addonWidth = 40;
 
-        const calculateTextWidth = text => {
+        const calculateTextWidth = (text: any) => {
           if (!text) return addonWidth;
           const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
+          const context = canvas.getContext('2d')!;
           context.font =
             '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial';
           const metrics = context.measureText(text.toString());
@@ -724,7 +745,6 @@ const MyInput = ({
 
   const conjureValidationMessages = () => {
     if (!validationResult) return null;
-
     const msgs = [];
     let i = 0;
     for (const vrs of validationResult) {
@@ -744,7 +764,6 @@ const MyInput = ({
         </Form.HelpText>
       );
     }
-
     return msgs;
   };
 

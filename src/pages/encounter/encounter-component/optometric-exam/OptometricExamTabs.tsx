@@ -2,8 +2,8 @@ import React from 'react';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import { MdModeEdit } from 'react-icons/md';
-import { Tabs } from 'rsuite';
 import { formatDateWithoutSeconds } from '@/utils';
+import MyTab from '@/components/MyTab';
 const OptometricExamTabs = ({
   isLoading,
   optometricExamResponse,
@@ -618,9 +618,11 @@ const OptometricExamTabs = ({
       expandable: true
     }
   ];
-  return (
-    <Tabs defaultActiveKey="1" appearance="subtle">
-      <Tabs.Tab eventKey="1" title="Visual Acuity Test">
+
+  const tabData = [
+    {
+      title: 'Visual Acuity Test',
+      content: (
         <MyTable
           data={optometricExamResponse?.object ?? []}
           columns={visualAcuityColumns}
@@ -647,8 +649,11 @@ const OptometricExamTabs = ({
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
         />
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="2" title="Ishihara Color Blindness Test">
+      )
+    },
+    {
+      title: 'Ishihara Color Blindness Test',
+      content: (
         <MyTable
           data={optometricExamResponse?.object ?? []}
           columns={ishiharaColorBlindnessColumns}
@@ -675,8 +680,11 @@ const OptometricExamTabs = ({
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
         />
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="3" title="Refraction Test Results">
+      )
+    },
+    {
+      title: 'Refraction Test Results',
+      content: (
         <MyTable
           data={optometricExamResponse?.object ?? []}
           columns={refractionTestResultsColumns}
@@ -703,8 +711,11 @@ const OptometricExamTabs = ({
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
         />
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="4" title="Intraocular Pressure (IOP)">
+      )
+    },
+    {
+      title: 'Intraocular Pressure (IOP)',
+      content: (
         <MyTable
           data={optometricExamResponse?.object ?? []}
           columns={IOPColumns}
@@ -731,8 +742,11 @@ const OptometricExamTabs = ({
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
         />
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="5" title="Interpretation & Diagnosis">
+      )
+    },
+    {
+      title: 'Interpretation & Diagnosis',
+      content: (
         <MyTable
           data={optometricExamResponse?.object ?? []}
           columns={interpretationDiagnosisColumns}
@@ -759,8 +773,10 @@ const OptometricExamTabs = ({
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
         />
-      </Tabs.Tab>
-    </Tabs>
-  );
+      )
+    }
+  ];
+
+  return <MyTab data={tabData} />;
 };
 export default OptometricExamTabs;

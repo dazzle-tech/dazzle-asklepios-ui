@@ -33,6 +33,7 @@ import Encounter from '../encounter-screen';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 import PhysicianOrderSummary from '../encounter-component/physician-order-summary/physician-order-summary-component';
 import WoundCareDocumentation from '../encounter-component/wound-care-documentation';
+import MyTab from '@/components/MyTab';
 const InpatientNurseStation = ({}) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -46,9 +47,7 @@ const InpatientNurseStation = ({}) => {
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
-  const divContent = (
-        "Nurse Anamnesis"
-  );
+  const divContent = 'Nurse Anamnesis';
   dispatch(setPageCode('Nurse_Station'));
   dispatch(setDivContent(divContent));
 
@@ -86,6 +85,122 @@ const InpatientNurseStation = ({}) => {
   const handleClearObsarvationClick = () => {
     obsRef.current?.handleClear();
   };
+
+  const tabData = [
+    {
+      title: 'Observations',
+      content: (
+        <InpatientObservations
+          editable={propsData.edit}
+          localPatient={propsData.patient}
+          localEncounter={propsData.encounter}
+        />
+      )
+    },
+    {
+      title: 'Allergies',
+      content: (
+        <Allergies
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    {
+      title: 'Medical Warnings',
+      content: (
+        <Warning
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    { title: 'Patient History', content: <PatientHistory /> },
+    {
+      title: 'Attachments',
+      content: (
+        <PatientAttachment
+          localPatient={propsData?.patient}
+          setRefetchAttachmentList={setRefetchAttachmentList}
+          refetchAttachmentList={refetchAttachmentList}
+        />
+      )
+    },
+    {
+      title: 'Chief Complain',
+      content: (
+        <ChiefComplain
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    {
+      title: 'Physical Examination',
+      content: (
+        <ReviewOfSystems
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    {
+      title: 'Pain Assessment',
+      content: (
+        <PainAssessment
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    {
+      title: 'General Assessment',
+      content: (
+        <GeneralAssessment
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    {
+      title: 'Functional Assessment',
+      content: (
+        <FunctionalAssessment
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    {
+      title: 'Repositioning',
+      content: (
+        <Repositioning
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    {
+      title: 'Medication Reconciliation',
+      content: (
+        <MedicationReconciliation
+          edit={propsData.edit}
+          patient={propsData.patient}
+          encounter={propsData.encounter}
+        />
+      )
+    },
+    { title: 'Physician Order Summary', content: <PhysicianOrderSummary /> },
+    { title: 'Wound Care Documentation', content: <WoundCareDocumentation /> }
+  ];
   return (
     <>
       {propsData?.patient && propsData?.encounter && (
@@ -139,95 +254,7 @@ const InpatientNurseStation = ({}) => {
                   )}
                 </div>
               </div>
-              <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
-                <Tabs.Tab eventKey="1" title="Observations">
-                  <InpatientObservations
-                    editable={propsData.edit}
-                    localPatient={propsData.patient}
-                    localEncounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="2" title="Allergies">
-                  <Allergies
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="3" title="Medical Warnings">
-                  <Warning
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="4" title="Patient History">
-                  <PatientHistory />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="5" title="Attachments">
-                  <PatientAttachment
-                    localPatient={propsData?.patient}
-                    setRefetchAttachmentList={setRefetchAttachmentList}
-                    refetchAttachmentList={refetchAttachmentList}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="6" title="Chief Complain">
-                  <ChiefComplain
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="7" title="Physical Examination">
-                  <ReviewOfSystems
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="8" title="Pain Assessment">
-                  <PainAssessment
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="9" title="General Assessment">
-                  <GeneralAssessment
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="10" title="Functional Assessment">
-                  <FunctionalAssessment
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="11" title="Repositioning">
-                  <Repositioning
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="12" title="Medication Reconciliation">
-                  <MedicationReconciliation
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="13" title="Physician Order Summary">
-                  <PhysicianOrderSummary />
-                </Tabs.Tab>
-
-                <Tabs.Tab eventKey="14" title="Wound Care Documentation">
-                  <WoundCareDocumentation />
-                </Tabs.Tab>
-              </Tabs>
+              <MyTab data={tabData} activeTab={activeKey} setActiveTab={setActiveKey} />
             </Panel>
           </div>
           <div className="right-box">
