@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useGetLovValuesByCodeQuery, useGetUomGroupsQuery, useGetUomGroupsUnitsQuery } from '@/services/setupService';
+import {
+  useGetLovValuesByCodeQuery,
+  useGetUomGroupsQuery,
+  useGetUomGroupsUnitsQuery
+} from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
@@ -29,7 +33,11 @@ import {
   newApGenericMedicationActiveIngredient,
   newApUomGroups
 } from '@/types/model-types-constructor';
-import { ApGenericMedication, ApGenericMedicationActiveIngredient, ApUomGroups } from '@/types/model-types';
+import {
+  ApGenericMedication,
+  ApGenericMedicationActiveIngredient,
+  ApUomGroups
+} from '@/types/model-types';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import { isEmpty, set } from 'lodash';
@@ -113,7 +121,6 @@ const AddEditBrandMedication = ({
 
   const [UOMListRequest, setUOMListRequest] = useState<ListRequest>({
     ...initialListRequest
-
   });
   const {
     data: uomGroupsListResponse,
@@ -127,41 +134,34 @@ const AddEditBrandMedication = ({
         fieldName: 'deleted_at',
         operator: 'isNull',
         value: undefined
-      }
-      ,
+      },
       {
         fieldName: 'uom_group_key',
         operator: 'match',
         value: genericMedication?.uomGroupKey
-
       }
     ]
   });
   useEffect(() => {
-    setUnitListRequest(
-      {
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          },
-          {
-            fieldName: 'uom_group_key',
-            operator: 'match',
-            value: genericMedication?.uomGroupKey
-          }
-
-        ],
-      }
-    );
+    setUnitListRequest({
+      ...initialListRequest,
+      filters: [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        },
+        {
+          fieldName: 'uom_group_key',
+          operator: 'match',
+          value: genericMedication?.uomGroupKey
+        }
+      ]
+    });
   }, [genericMedication?.uomGroupKey]);
 
-  const {
-    data: uomGroupsUnitsListResponse,
-    refetch: refetchUomGroupsUnit,
-  } = useGetUomGroupsUnitsQuery(unitListRequest);
+  const { data: uomGroupsUnitsListResponse, refetch: refetchUomGroupsUnit } =
+    useGetUomGroupsUnitsQuery(unitListRequest);
   // Effects
   // to display genericName, dosageForm, manufacturer, roaLvalue, activeIngredients on add substitutes
   useEffect(() => {
@@ -281,19 +281,9 @@ const AddEditBrandMedication = ({
     <div className="container-of-icons">
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
-        <MdDelete
-          className="icons-style"
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-        />
+        <MdDelete className="icons-style" title="Deactivate" size={24} fill="var(--primary-pink)" />
       ) : (
-        <FaUndo
-          className="icons-style"
-          title="Activate"
-          size={20}
-          fill="var(--primary-gray)"
-        />
+        <FaUndo className="icons-style" title="Activate" size={20} fill="var(--primary-gray)" />
       )}
     </div>
   );
@@ -557,9 +547,9 @@ const AddEditBrandMedication = ({
                 />
               </Col>
             </Row>
-              <Row>
+            <Row>
               <Col md={12}>
-                   <MyInput
+                <MyInput
                   width="100%"
                   fieldName="costCategoryLkey"
                   fieldType="select"
@@ -571,8 +561,7 @@ const AddEditBrandMedication = ({
                   menuMaxHeight={250}
                 />
               </Col>
-              <Col md={12}>
-              </Col>
+              <Col md={12}></Col>
             </Row>
           </Form>
         );
@@ -602,18 +591,18 @@ const AddEditBrandMedication = ({
               record={genericMedication}
               setRecord={setGenericMedication}
             />
-              <div className="container-of-add-new-button">
-                    <MyButton
-                      prefixIcon={() => <AddOutlineIcon />}
-                      color="var(--deep-blue)"
-                      onClick={() => {
-                        setUomGroupOpen(true);
-                      }}
-                      width="109px"
-                    >
-                      Add New UOM
-                    </MyButton>
-                  </div>
+            <div className="container-of-add-new-button">
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={() => {
+                  setUomGroupOpen(true);
+                }}
+                width="109px"
+              >
+                Add New UOM
+              </MyButton>
+            </div>
           </Form>
         );
       case 2:
@@ -625,7 +614,7 @@ const AddEditBrandMedication = ({
                 color="var(--deep-blue)"
                 onClick={() => {
                   setOpenAddEditActiveIngredientsPopup(true);
-                   setChildStep(0);
+                  setChildStep(0);
                   setGenericActive({
                     ...newApGenericMedicationActiveIngredient
                   });
@@ -690,7 +679,7 @@ const AddEditBrandMedication = ({
     }
   };
   // child modal content
-  const conjureFormChildContent = (stepNumber) => {
+  const conjureFormChildContent = stepNumber => {
     switch (stepNumber) {
       case 0:
         return (
@@ -729,47 +718,52 @@ const AddEditBrandMedication = ({
             />
           </Form>
         );
-      }
+    }
   };
   return (
     <>
-    <ChildModal
-      open={open}
-      setOpen={setOpen}
-      showChild={openAddEditActiveIngredientsPopup}
-      setShowChild={ setOpenAddEditActiveIngredientsPopup}
-      childTitle={"New/Edit Active Ingredients"}
-      title={genericMedication?.key ? 'Edit Brand Medication' : 'New Brand Medication'}
-      mainContent={conjureFormContent}
-      childContent={conjureFormChildContent}
-      actionButtonLabel={genericMedication?.key ? 'Save' : 'Create'}
-      actionButtonFunction={() => setOpen(false)}
-      actionChildButtonFunction={saveActiveIngredient}
-      mainStep={[
-        {
-          title: 'Information',
-          icon: <MdOutlineMedicationLiquid />,
-          disabledNext: !genericMedication?.key,
-          footer: <MyButton onClick={handleSave}>Save</MyButton>
-        },
-        {
-          title: 'UOM',
-          icon: <FaUnity />
-        },
-        {
-          title: 'Active Ingredient',
-          icon: <GiMedicines />
-        },
-        {
-          title: 'Substitute',
-          icon: <HiOutlineSwitchHorizontal />
-        }
-      ]}
-      mainSize="sm"
-    />
-      <AddEditUom open={uomGroupOpen} setOpen={setUomGroupOpen} uom={uomGroup} setUom={setUomGroup} width={width} />
+      <ChildModal
+        open={open}
+        setOpen={setOpen}
+        showChild={openAddEditActiveIngredientsPopup}
+        setShowChild={setOpenAddEditActiveIngredientsPopup}
+        childTitle={'New/Edit Active Ingredients'}
+        title={genericMedication?.key ? 'Edit Brand Medication' : 'New Brand Medication'}
+        mainContent={conjureFormContent}
+        childContent={conjureFormChildContent}
+        actionButtonLabel={genericMedication?.key ? 'Save' : 'Create'}
+        actionButtonFunction={() => setOpen(false)}
+        actionChildButtonFunction={saveActiveIngredient}
+        mainStep={[
+          {
+            title: 'Information',
+            icon: <MdOutlineMedicationLiquid />,
+            disabledNext: !genericMedication?.key,
+            footer: <MyButton onClick={handleSave}>Save</MyButton>
+          },
+          {
+            title: 'UOM',
+            icon: <FaUnity />
+          },
+          {
+            title: 'Active Ingredient',
+            icon: <GiMedicines />
+          },
+          {
+            title: 'Substitute',
+            icon: <HiOutlineSwitchHorizontal />
+          }
+        ]}
+        mainSize="sm"
+      />
+      <AddEditUom
+        open={uomGroupOpen}
+        setOpen={setUomGroupOpen}
+        uom={uomGroup}
+        setUom={setUomGroup}
+        width={width}
+      />
     </>
-    
   );
 };
 export default AddEditBrandMedication;

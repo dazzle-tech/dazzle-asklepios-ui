@@ -60,7 +60,7 @@ const PotintialDuplicate = () => {
 
   // Header page setUp
   const divContent = (
-    "Potintial Duplicate"
+    "Potential Duplicate"
   );
   dispatch(setPageCode('Potintial_Duplicate'));
   dispatch(setDivContent(divContent));

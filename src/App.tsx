@@ -131,7 +131,7 @@ import ResetPassword from './pages/reset-password/ResetPassword';
 import ReviewResults from './pages/review-results/ReviewResults';
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 import AccessRoles from './pages/setup/access-roles';
-import AgeGroup from './pages/setup/age-group';
+import AgeGroupSetup from './pages/setup/age-group';
 import Allergens from './pages/setup/allergens-setup';
 import Room from './pages/setup/bed-room-setup';
 import Catalog from './pages/setup/catalog-setup';
@@ -500,7 +500,7 @@ const App = () => {
               <Route path="warehouse-setup" element={<WarehouseSetup />} />
               <Route path="warehouse-items-setup" element={<WarehouseItemsSetup />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
-              <Route path="age-group" element={<AgeGroup />} />
+              <Route path="age-group" element={<AgeGroupSetup />} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
               <Route path="brand-medications" element={<GenericMedications />} />
               <Route path="dental-actions" element={<DentalActions />} />

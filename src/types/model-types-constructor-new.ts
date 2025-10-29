@@ -194,3 +194,29 @@ export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   verified: undefined,
   translated: undefined,
 }
+export const newAgeGroup: modelTypes.AgeGroup = {
+  id: undefined,
+  ageGroup: '',
+  fromAge: 0,
+  toAge: 0,
+  fromAgeUnit: 'YEARS',
+  toAgeUnit: 'YEARS',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  facilityId: undefined,
+};
+export const newAllergen: modelTypes.Allergen = {
+  id: undefined,
+  code: '',
+  name: '',
+  type: null,           
+  description: '',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

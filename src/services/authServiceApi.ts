@@ -6,6 +6,7 @@ interface LoginRequest {
   username: string;
   password: string;
   facilityId: number;
+  language: string;
   rememberMe: boolean;
 }
 

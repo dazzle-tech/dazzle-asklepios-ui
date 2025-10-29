@@ -42,9 +42,9 @@ import { PractitionerService } from './services/setup/practitioner/PractitionerS
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 import {Icd10Service} from './services/setup/icd10service';
 import { patientAttachmentService } from './services/patients/attachmentService';
+import { ageGroupService } from './services/setup/ageGroupService';
 import {potintialService} from '@/services/potintialDuplicateService';
-
-
+import { allergensService } from './services/setup/allergensService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -136,7 +136,15 @@ export const store = configureStore({
 
     //service
     [serviceService.reducerPath]: serviceService.reducer,
+
+
+    //age group
+    [ageGroupService.reducerPath]: ageGroupService.reducer,
+
     [Icd10Service.reducerPath]: Icd10Service.reducer,
+
+    [allergensService.reducerPath]: allergensService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -175,8 +183,9 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+      ageGroupService.middleware,
       Icd10Service.middleware,
-
+      allergensService.middleware,
     ])
 });
 

@@ -313,6 +313,7 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
     <Form fluid>
       <div style={{ display: 'grid', gap: 12 }}>
         <MyInput
+          required
           width="100%"
           fieldName="type"
           selectDataValue="value"
@@ -327,6 +328,7 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
           placeholder="Choose type"
         />
         <MyInput
+          required
           key={String(formItem.type) || 'no-type'}
           width="100%"
           fieldName="sourceId"

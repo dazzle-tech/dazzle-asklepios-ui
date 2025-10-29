@@ -47,9 +47,7 @@ const EncounterList = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const divContent = (
-        "Patients Visit List"
-  );
+  const divContent = 'Patients Visit List';
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent(divContent));
 
@@ -115,7 +113,7 @@ const EncounterList = () => {
         value: ['2039534205961578', '2039620472612029', '2039516279378421']
           .map(key => `(${key})`)
           .join(' ')
-      },
+      }
 
       // {
       //  fieldName:'planned_start_date',
@@ -125,7 +123,8 @@ const EncounterList = () => {
     ]
   });
 
-  const { data: encounterListForTodayResponse, refetch: refetchListForToday } = useGetEncountersQuery(listRequestForToday);
+  const { data: encounterListForTodayResponse, refetch: refetchListForToday } =
+    useGetEncountersQuery(listRequestForToday);
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
@@ -499,40 +498,34 @@ const EncounterList = () => {
     }
   ];
 
+  const handleClearFilters = () => {
+    const today = new Date();
+    setRecord({});
+    setEncounterStatus({ key: '' });
 
-const handleClearFilters = () => {
-  const today = new Date();
-  setRecord({});
-  setEncounterStatus({ key: '' });
+    setDateFilter({
+      fromDate: today,
+      toDate: today
+    });
 
-  setDateFilter({
-    fromDate: today,
-    toDate: today
-  });
+    const formattedToday = formatDate(today);
 
-  const formattedToday = formatDate(today);
+    setListRequest({
+      ...initialListRequest,
+      pageNumber: 1,
+      pageSize: listRequest.pageSize,
+      ignore: true,
+      filters: [
+        {
+          fieldName: 'planned_start_date',
+          operator: 'between',
+          value: `${formattedToday}_${formattedToday}`
+        }
+      ]
+    });
 
-  setListRequest({
-    ...initialListRequest,
-    pageNumber: 1,
-    pageSize: listRequest.pageSize,
-    ignore: true,
-    filters: [
-      {
-        fieldName: 'planned_start_date',
-        operator: 'between',
-        value: `${formattedToday}_${formattedToday}`
-      }
-    ]
-  });
-
-  setManualSearchTriggered(true);
-};
-
-
-
-
-
+    setManualSearchTriggered(true);
+  };
 
   const filters = () => {
     return (
@@ -575,7 +568,6 @@ const handleClearFilters = () => {
             record={encounterStatus}
             setRecord={setEncounterStatus}
           />
-
         </Form>
 
         <AdvancedSearchFilters
@@ -583,72 +575,69 @@ const handleClearFilters = () => {
           clearOnClick={handleClearFilters}
           content={
             <div className="advanced-filters">
-
-      <Form key={JSON.stringify(record)} fluid className="dissss">
-                  {/* Visit Type LOV */}
-                  <MyInput
-                    fieldName="accessTypeLkey"
-                    fieldType="select"
-                    selectData={bookVisitLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    fieldLabel="Visit Type"
-                    selectDataValue="key"
-                    record={record}
-                    setRecord={setRecord}
-                    searchable={false}
-                    width={150}
-                  />
-                  {/* Chief Complain Text */}
-                  <MyInput
-                    width={150}
-                    fieldName="chiefComplain"
-                    fieldType="text"
-                    record={record}
-                    setRecord={setRecord}
-                    fieldLabel="Chief Complain"
-                  />
-                  {/* Checkboxes*/}
-                  <MyInput
-                    width={110}
-                    fieldName="withPrescription"
-                    fieldType="checkbox"
-                    record={record}
-                    setRecord={setRecord}
-                    label="With Prescription"
-                  />
-                  <MyInput
-                    width={80}
-                    fieldName="hasOrders"
-                    fieldType="checkbox"
-                    record={record}
-                    setRecord={setRecord}
-                    label="Has Orders"
-                  />
-                  <MyInput
-                    width={80}
-                    fieldName="isObserved"
-                    fieldType="checkbox"
-                    record={record}
-                    setRecord={setRecord}
-                    label="Is Observed"
-                  />
-                  {/* Priority LOV */}
-                  <MyInput
-                    width={150}
-                    fieldName="priority"
-                    fieldType="select"
-                    record={record}
-                    setRecord={setRecord}
-                    selectData={EncPriorityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    placeholder="Select Priority"
-                    fieldLabel="Priority"
-                    searchable={false}
-                  />
-
-                </Form>
-
+              <Form key={JSON.stringify(record)} fluid className="dissss">
+                {/* Visit Type LOV */}
+                <MyInput
+                  fieldName="accessTypeLkey"
+                  fieldType="select"
+                  selectData={bookVisitLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  fieldLabel="Visit Type"
+                  selectDataValue="key"
+                  record={record}
+                  setRecord={setRecord}
+                  searchable={false}
+                  width={150}
+                />
+                {/* Chief Complain Text */}
+                <MyInput
+                  width={150}
+                  fieldName="chiefComplain"
+                  fieldType="text"
+                  record={record}
+                  setRecord={setRecord}
+                  fieldLabel="Chief Complain"
+                />
+                {/* Checkboxes*/}
+                <MyInput
+                  width={110}
+                  fieldName="withPrescription"
+                  fieldType="checkbox"
+                  record={record}
+                  setRecord={setRecord}
+                  label="With Prescription"
+                />
+                <MyInput
+                  width={80}
+                  fieldName="hasOrders"
+                  fieldType="checkbox"
+                  record={record}
+                  setRecord={setRecord}
+                  label="Has Orders"
+                />
+                <MyInput
+                  width={80}
+                  fieldName="isObserved"
+                  fieldType="checkbox"
+                  record={record}
+                  setRecord={setRecord}
+                  label="Is Observed"
+                />
+                {/* Priority LOV */}
+                <MyInput
+                  width={150}
+                  fieldName="priority"
+                  fieldType="select"
+                  record={record}
+                  setRecord={setRecord}
+                  selectData={EncPriorityLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  placeholder="Select Priority"
+                  fieldLabel="Priority"
+                  searchable={false}
+                />
+              </Form>
             </div>
           }
         />
@@ -662,17 +651,17 @@ const handleClearFilters = () => {
   }, [encounterListForTodayResponse]);
 
   useEffect(() => {
-       let CompletedCount = 0;
-       let CancelledCount = 0;
-    if(encounterListForTodayResponse?.object)
-    for(const visit of encounterListForTodayResponse?.object){
-     if(visit?.encounterStatusLvalue?.key === "91109811181900"){
-      CompletedCount++;
-     }
-     if(visit?.encounterStatusLvalue?.key === "91098528988200"){
-      CancelledCount++;
-     }
-    }
+    let CompletedCount = 0;
+    let CancelledCount = 0;
+    if (encounterListForTodayResponse?.object)
+      for (const visit of encounterListForTodayResponse?.object) {
+        if (visit?.encounterStatusLvalue?.key === '91109811181900') {
+          CompletedCount++;
+        }
+        if (visit?.encounterStatusLvalue?.key === '91098528988200') {
+          CancelledCount++;
+        }
+      }
     setCompletedVisits(CompletedCount);
     setCancelledVisits(CancelledCount);
   }, [listRequestForToday, encounterListForTodayResponse]);
@@ -730,7 +719,9 @@ const handleClearFilters = () => {
         />
         <DetailsCard
           title="Active Cases"
-          number={encounterListForTodayResponse?.object?.length - (completesVisits + cancelledVisits)}
+          number={
+            encounterListForTodayResponse?.object?.length - (completesVisits + cancelledVisits)
+          }
           color="--green-600"
           backgroundClassName="sample-collected-section"
           position="center"
