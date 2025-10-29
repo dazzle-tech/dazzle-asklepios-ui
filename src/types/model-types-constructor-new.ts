@@ -220,3 +220,24 @@ export const newAllergen: modelTypes.Allergen = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+
+export const newDiagnosticTest: modelTypes.DiagnosticTest = {
+  id: undefined,
+  type: '',
+  name: '',
+  internalCode: '',           
+  ageSpecific: false,            
+  genderSpecific: false,        
+  gender: '',                 
+  specialPopulation: false,     
+  price: null,                    
+  currency: '',               
+  specialNotes: '',         
+  isActive: true,  
+  isProfile: false,             
+  appointable: false,           
+  createdDate: null,            
+  createdBy: '',               
+  lastModifiedBy: '',          
+  lastModifiedDate: null,  
+}

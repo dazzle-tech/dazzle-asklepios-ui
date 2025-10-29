@@ -218,7 +218,7 @@ export interface Allergen {
   type: string ;
   description?: string | null;
   isActive?: boolean;
-  createdBy?: string;
+  createdBy?: string;}
 
 
 export interface DownloadTicket {
@@ -262,4 +262,24 @@ export interface AgeGroup {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   facilityId?: number;          // FK
+}
+export interface DiagnosticTest {
+  id?: number;
+  type: string;               
+  name: string;                 
+  internalCode: string;             
+  ageSpecific?: boolean;             
+  genderSpecific?: boolean;          
+  gender?: string;                   
+  specialPopulation?: boolean;       
+  price?: number;                    
+  currency?: string;               
+  specialNotes?: string;         
+  isActive?: boolean;
+  isProfile?;boolean;               
+  appointable?: boolean;            
+  createdDate?: string;             
+  createdBy?: string;                
+  lastModifiedBy?: string;           
+  lastModifiedDate?: string;         
 }
