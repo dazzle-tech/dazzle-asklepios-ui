@@ -11,7 +11,7 @@ import { newApConsultationOrder } from '@/types/model-types-constructor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom, faFile, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery, useGetPractitionersQuery } from '@/services/setupService';
-import { AttachmentUploadModal } from '@/components/AttachmentModals';
+import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import { initialListRequest, ListRequest } from '@/types/types';
 import clsx from 'clsx';
 import SectionContainer from '@/components/SectionsoContainer';
@@ -256,12 +256,16 @@ const Details = ({
         leftContent={<Diagnosis patient={patient} encounter={encounter} />}
       ></AdvancedModal>
 
-      <AttachmentUploadModal
+      <AttachmentModal
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
-        encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}}
-        source="CONSULTATION_ORDER_ATTACHMENT"
+        selectedPatientAttacment={null}
+        setSelectedPatientAttacment={() => null}
+        attachmentSource={{
+          key: ''
+        }}
+        attatchmentType={''}
+        patientKey={''}
       />
     </>
   );
