@@ -82,6 +82,24 @@ export const encounterAttachmentsService = createApi({
       ],
     }),
 
+    // GET /api/setup/encounters/attachments/by-encounterId?encounterId=1&encounterId=2
+    getEncounterAttachmentsByEncounterIds: builder.query<EncounterAttachment[], { encounterIds: number[] }>({
+      query: ({ encounterIds }) => {
+        const params = new URLSearchParams();
+        encounterIds.forEach(id => {
+          params.append('encounterId', String(id));
+        });  
+        const url = `/api/setup/encounters/attachments/by-encounterId?${params.toString()}`;        
+        return {
+          url,
+          method: 'GET',
+        };
+      },
+      transformResponse: (response: EncounterAttachment[]): EncounterAttachment[] => response || [],
+      providesTags: (_res, _err, { encounterIds }) => 
+        encounterIds.map(id => ({ type: 'EncounterAttachment' as const, id })),
+    }),
+
     // POST /api/setup/encounters/attachmentDownloadUrl/{id}
     getDownloadUrl: builder.mutation<DownloadTicket, number>({
       query: (id) => ({
@@ -122,6 +140,7 @@ export const {
   useUploadAttachmentMutation,
   useGetEncounterAttachmentsBySourceQuery,
   useLazyGetEncounterAttachmentsBySourceQuery,
+  useGetEncounterAttachmentsByEncounterIdsQuery,
   useGetDownloadUrlMutation,
   useUpdateAttachmentMutation,
   useDeleteAttachmentMutation,
