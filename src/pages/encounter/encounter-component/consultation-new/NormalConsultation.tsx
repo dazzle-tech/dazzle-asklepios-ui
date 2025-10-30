@@ -22,7 +22,8 @@ import { Checkbox, HStack } from 'rsuite';
 import Details from './Details';
 import './styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
-import { AttachmentUploadModal } from '@/components/AttachmentModals';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import MyModal from '@/components/MyModal/MyModal';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -460,13 +461,21 @@ const NormalConsultation = (props: any) => {
         edit={edit}
       />
 
-      <AttachmentUploadModal
-        isOpen={attachmentsModalOpen}
-        setIsOpen={setAttachmentsModalOpen}
-        encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}}
-        source="CONSULTATION_ORDER_ATTACHMENT"
-        sourceId={consultationOrders?.key ? Number(consultationOrders.key) : 0}
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title={`Attachments - ${(consultationOrders as any)?.consultantSpecialtyLvalue?.lovDisplayVale || 'Consultation'}`}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={encounter}
+            source="CONSULTATION_ORDER_ATTACHMENT"
+            sourceId={consultationOrders?.key ? Number(consultationOrders.key) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
+        }
       />
     </div>
   );

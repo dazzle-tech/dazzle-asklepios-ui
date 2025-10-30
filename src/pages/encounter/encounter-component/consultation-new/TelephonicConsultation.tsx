@@ -9,7 +9,8 @@ import { MdModeEdit } from 'react-icons/md';
 import { Checkbox } from 'rsuite';
 import DetailsTele from './DetailsTele';
 import './styles.less';
-import { AttachmentUploadModal } from '@/components/AttachmentModals';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import MyModal from '@/components/MyModal/MyModal';
 import { MdAttachFile } from 'react-icons/md';
 
 const TelephonicConsultation = () => {
@@ -256,13 +257,21 @@ const TelephonicConsultation = () => {
         edit={false}
       />
 
-      <AttachmentUploadModal
-        isOpen={attachmentsModalOpen}
-        setIsOpen={setAttachmentsModalOpen}
-        encounterId={encounter?.key}
-        refetchData={() => {}}
-        source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
-        sourceId={consultationOrders?.key ? Number(consultationOrders.key) : 0}
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title={`Attachments - Tele-Consultation`}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={encounter}
+            source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
+            sourceId={consultationOrders?.key ? Number(consultationOrders.key) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
+        }
       />
     </div>
   );

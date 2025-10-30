@@ -12,6 +12,7 @@ import {
 } from '@/services/encounterService';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
 import { FaPills, FaSyringe } from 'react-icons/fa';
+import { MdModeEdit, MdAttachFile } from 'react-icons/md';
 import { newApDrugOrder, newApDrugOrderMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
@@ -21,7 +22,6 @@ import DrugOrderPreview from './DrugOrderPreview';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useRef, useState } from 'react';
-import { MdModeEdit } from 'react-icons/md';
 import { Checkbox, Divider, Form, SelectPicker } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
@@ -35,6 +35,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNurse/AllergyFloatingButton';
 import UrgencyButton from './UrgencyButton';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 const DrugOrder = props => {
   const location = useLocation();
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
@@ -92,6 +93,8 @@ const DrugOrder = props => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
   const [isFavorite, setIsFavorite] = useState(true);
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] = useState(null);
   const addToFavorites = rowData => {
     const alreadyExists = favoriteMedications.some(
       item => item.genericMedicationsKey === rowData.genericMedicationsKey
@@ -574,6 +577,27 @@ const DrugOrder = props => {
         );
       }
     },
+    {
+      key: 'attachments',
+      title: <Translate>Attachments</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return (
+          <MdAttachFile
+            size={20}
+            fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+            onClick={() => {
+              if (rowData?.key) {
+                setSelectedMedicationForAttachments(rowData);
+                setAttachmentsModalOpen(true);
+              }
+            }}
+            style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
+            title="View Attachments"
+          />
+        );
+      }
+    },
 
     {
       key: 'createdAt',
@@ -946,6 +970,26 @@ const DrugOrder = props => {
                 data={favoriteMedications || []}
               />
             </div>
+          }
+        />
+
+        {/* Attachments Modal */}
+        <MyModal
+          open={attachmentsModalOpen}
+          setOpen={setAttachmentsModalOpen}
+          title={`Attachments - ${selectedMedicationForAttachments ? genericMedicationListResponse?.object?.find(
+            item => item.key === selectedMedicationForAttachments.genericMedicationsKey
+          )?.genericName || 'Medication' : 'Medication'}`}
+          size="lg"
+          hideActionBtn={true}
+          content={
+            <EncounterAttachment
+              localEncounter={encounter}
+              source="MEDICATION_ORDER_ATTACHMENT"
+              sourceId={selectedMedicationForAttachments?.key ? Number(selectedMedicationForAttachments.key) : undefined}
+              refetchAttachmentList={false}
+              setRefetchAttachmentList={() => {}}
+            />
           }
         />
       </div>

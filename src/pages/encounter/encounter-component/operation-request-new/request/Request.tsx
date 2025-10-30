@@ -11,9 +11,11 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
-import { MdModeEdit } from 'react-icons/md';
+import { MdModeEdit, MdAttachFile } from 'react-icons/md';
 import { Checkbox, HStack, Row, Tooltip, Whisper } from 'rsuite';
 import Details from './Details';
+import MyModal from '@/components/MyModal/MyModal';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import CancellationModal from '@/components/CancellationModal';
 import StartedDetails from '@/pages/operation-module/StartedDetails/StartedDetails';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -29,6 +31,8 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
   const [openView, setOpenView] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
   const [previewRequest, setPreviewRequest] = useState<any | null>(null);
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedRequestForAttachments, setSelectedRequestForAttachments] = useState(null);
   const [request, setRequest] = useState<any>({
     ...newApOperationRequests,
     encounterKey: encounter?.key,
@@ -255,6 +259,27 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       }
     },
     {
+      key: 'attachments',
+      title: <Translate>Attachments</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return (
+          <MdAttachFile
+            size={20}
+            fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+            onClick={() => {
+              if (rowData?.key) {
+                setSelectedRequestForAttachments(rowData);
+                setAttachmentsModalOpen(true);
+              }
+            }}
+            style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
+            title="View Attachments"
+          />
+        );
+      }
+    },
+    {
       key: 'createdAt',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
@@ -397,6 +422,24 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         encounter={encounter}
         refetch={refetch}
         editable={false}
+      />
+
+      {/* Attachments Modal */}
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title={`Attachments - ${selectedRequestForAttachments?.operation?.name || 'Operation Request'}`}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={encounter}
+            source="OPERATION_REQUEST_ATTACHMENT"
+            sourceId={selectedRequestForAttachments?.key ? Number(selectedRequestForAttachments.key) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
+        }
       />
     </>
   );

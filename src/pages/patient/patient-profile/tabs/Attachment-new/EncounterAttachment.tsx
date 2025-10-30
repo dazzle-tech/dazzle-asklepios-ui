@@ -16,7 +16,7 @@ import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromL
 import { EncounterAttachment as EncounterAttachmentType } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
-const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT' }) => {
+const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState<EncounterAttachmentType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -43,7 +43,8 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
     const { data: attachmentsResponse, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetEncounterAttachmentsBySourceQuery(
         {
             encounterId: localEncounter?.id || localEncounter?.key,
-            source: source
+            source: source,
+            sourceId: sourceId
         },
         { skip: !localEncounter?.id && !localEncounter?.key }
     );
@@ -271,6 +272,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
                 encounterId={localEncounter?.id || localEncounter?.key}
                 refetchData={attachmentRefetch} 
                 source={source}
+                sourceId={sourceId}
             />
             <MyTable
                 height={200}

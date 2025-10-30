@@ -59,7 +59,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
 import { newApDrugOrderMedications } from '@/types/model-types-constructor';
 import SampleModal from '@/pages/lab-module/SampleModal';
-import { AttachmentUploadModal } from '@/components/AttachmentModals';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 
 const DiagnosticsOrder = props => {
   const location = useLocation();
@@ -1150,13 +1150,21 @@ const DiagnosticsOrder = props => {
         title={'Cancellation'}
       />
 
-      <AttachmentUploadModal
-        isOpen={attachmentsModalOpen}
-        setIsOpen={setAttachmentsModalOpen}
-        encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}}
-        source="DIAGNOSTIC_ORDER_ATTACHMENT"
-        sourceId={orderTest?.key ? Number(orderTest.key) : 0}
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title={`Attachments - ${orderTest?.test?.testName || 'Test'}`}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={encounter}
+            source="DIAGNOSTIC_ORDER_ATTACHMENT"
+            sourceId={orderTest?.key ? Number(orderTest.key) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
+        }
       />
 
       <MyModal

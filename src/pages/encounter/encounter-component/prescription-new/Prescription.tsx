@@ -30,13 +30,14 @@ import PlusIcon from '@rsuite/icons/Plus';
 import clsx from 'clsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaFilePrescription } from 'react-icons/fa6';
-import { MdModeEdit } from 'react-icons/md';
+import { MdModeEdit, MdAttachFile } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 import { Checkbox, Divider, Form } from 'rsuite';
 import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNurse/AllergyFloatingButton';
 import UrgencyButton from '../drug-order/UrgencyButton';
 import DetailsModal from './DetailsModal';
 import PrescriptionPreview from './PrescriptionPreview';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import './styles.less';
 
 const Prescription = props => {
@@ -91,6 +92,8 @@ const Prescription = props => {
   const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null);
   const [favoriteMedications, setFavoriteMedications] = useState([]);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] = useState(null);
 
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
@@ -597,6 +600,27 @@ const Prescription = props => {
       }
     },
     {
+      key: 'attachments',
+      title: <Translate>Attachments</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return (
+          <MdAttachFile
+            size={20}
+            fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+            onClick={() => {
+              if (rowData?.key) {
+                setSelectedMedicationForAttachments(rowData);
+                setAttachmentsModalOpen(true);
+              }
+            }}
+            style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
+            title="View Attachments"
+          />
+        );
+      }
+    },
+    {
       key: '',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
@@ -936,6 +960,27 @@ const Prescription = props => {
           </div>
         }
       />
+
+      {/* Attachments Modal */}
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title={`Attachments - ${selectedMedicationForAttachments ? genericMedicationListResponse?.object?.find(
+          item => item.key === selectedMedicationForAttachments.genericMedicationsKey
+        )?.genericName || 'Medication' : 'Medication'}`}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={encounter}
+            source="PRESCRIPTION_ORDER_ATTACHMENT"
+            sourceId={selectedMedicationForAttachments?.key ? Number(selectedMedicationForAttachments.key) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
+        }
+      />
+      
       <AllergyFloatingButton patientKey={patient.key} />
     </>
   );
