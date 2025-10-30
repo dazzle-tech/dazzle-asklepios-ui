@@ -276,28 +276,7 @@ const Facilities = () => {
     <div>
         <div>
           <Panel >
-            <div className='container-of-header-actions-facility' >
-              <Form layout='inline'>
-                <MyInput
-                  fieldName="facilityName"
-                  fieldType="text"
-                  record={recordOfSearchForFacility}
-                  setRecord={setRecordOfSearchForFacility}
-                  showLabel={false}
-                  placeholder="Search by Facility Name"
-                  width={'220px'}
-                />
-              </Form> 
-                <MyButton
-                  prefixIcon={() => <AddOutlineIcon />}
-                  color="var(--deep-blue)"
-                  width="109px"
-                  height="32px"
-                  onClick={handleNew}
-                >
-                  Add New
-                </MyButton>        
-            </div>
+
             <MyTable
               height={450}
               data={facilityListResponse ?? []}
@@ -319,6 +298,30 @@ const Facilities = () => {
           totalCount={totalCount}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
+          tableButtons={<div className="container-of-add-new-button">
+            <MyButton
+                  prefixIcon={() => <AddOutlineIcon />}
+                  color="var(--deep-blue)"
+                  width="109px"
+                  height="32px"
+                  onClick={handleNew}
+                >
+                  Add New
+                </MyButton></div>}
+            filters={<div className='container-of-header-actions-facility' >
+              <Form layout='inline'>
+                <MyInput
+                  fieldName="facilityName"
+                  fieldType="text"
+                  record={recordOfSearchForFacility}
+                  setRecord={setRecordOfSearchForFacility}
+                  showLabel={false}
+                  placeholder="Search by Facility Name"
+                  width={'220px'}
+                />
+              </Form>        
+            </div>}
+
             />
             <AddEditFacility 
               open={popupOpen}

@@ -262,18 +262,6 @@ const Vaccine = () => {
   ];
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={() => {
-            setOpenAddEditPopup(true), setVaccine({ ...newApVaccine }), setEdit_new(true);
-          }}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         height={450}
         data={vaccineListResponseLoading?.object ?? []}
@@ -294,6 +282,18 @@ const Vaccine = () => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+        tableButtons={      <div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={() => {
+            setOpenAddEditPopup(true), setVaccine({ ...newApVaccine }), setEdit_new(true);
+          }}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <AddEditVaccine
         open={openAddEditPopup}

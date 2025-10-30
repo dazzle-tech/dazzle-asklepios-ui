@@ -264,16 +264,6 @@ const Lov = () => {
       activeIndex={carouselActiveIndex}
     >
       <Panel>
-        <div className="container-of-add-new-button">
-          <MyButton
-            prefixIcon={() => <AddOutlineIcon />}
-            color="var(--deep-blue)"
-            onClick={handleLovNew}
-            width="109px"
-          >
-            Add New
-          </MyButton>
-        </div>
         <MyTable
           height={450}
           data={lovListResponse?.object ?? []}
@@ -294,6 +284,16 @@ const Lov = () => {
           totalCount={totalCount}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
+          tableButtons={<div className="container-of-add-new-button">
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={handleLovNew}
+            width="109px"
+          >
+            Add New
+          </MyButton>
+        </div>}
         />
         <AddEditLov
           open={lovPopupOpen}

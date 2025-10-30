@@ -36,7 +36,7 @@ const AddEditDepartment = ({
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid layout='inline'>
+          <Form fluid layout='inline' className='add-edit-department-main-container'>
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
@@ -131,7 +131,7 @@ const AddEditDepartment = ({
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
       actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
       steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
-      size={width > 600 ? '36vw' : '25vw'}
+      size={width > 650 ? '38vw' : '27vw'}
     />
   );
 };

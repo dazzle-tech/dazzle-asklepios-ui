@@ -367,16 +367,6 @@ const Departments = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         data={departmentListResponse?.object ?? []}
         columns={tableColumns}
@@ -391,6 +381,16 @@ const Departments = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
+        tableButtons={<div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <AddEditDepartment
         open={popupOpen}

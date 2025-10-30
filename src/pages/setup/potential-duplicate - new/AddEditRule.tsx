@@ -34,22 +34,25 @@ const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave
   }, [fieldsState, setCandidate]);
 
   const conjureFormContent = () => (
-    <Form fluid>
-      <div className="container-of-three-fields-potintial">
-        {fieldsEnum?.map((field) => (
-          <div key={field} className="container-of-field-potintial">
-            <MyInput
-              width="100%"
-              fieldName={field}
-              fieldLabel={field.replace(/_/g, ' ')}
-              fieldType="checkbox"
-              record={fieldsState}
-              setRecord={setFieldsState}
-            />
-          </div>
-        ))}
+<Form fluid>
+  <div className="container-of-fields-inline">
+    {fieldsEnum?.map((field) => (
+      <div key={field} className="field-inline-item">
+        <label className="field-label-add-edit-rule">{field.replace(/_/g, ' ')}</label>
+
+        <MyInput
+          width="auto"
+          fieldName={field}
+          fieldType="checkbox"
+          showLabel={false}
+          record={fieldsState}
+          setRecord={setFieldsState}
+        />
       </div>
-    </Form>
+    ))}
+  </div>
+</Form>
+
   );
 
   return (
@@ -64,7 +67,7 @@ const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave
         setCandidate({...candidate ,fields:fieldsState})
         handleSave();}}
       steps={[{ title: 'Rule Info', icon: <HiDocumentDuplicate /> }]}
-      size={width > 600 ? '36vw' : '70vw'}
+      size={width > 600 ? '30vw' : '70vw'}
     />
   );
 };

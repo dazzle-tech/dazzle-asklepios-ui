@@ -329,16 +329,7 @@ const Resources = () => {
  
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
+
       <MyTable
         height={450}
         data={resourcesListResponse?.object ?? []}
@@ -359,6 +350,16 @@ const Resources = () => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+        tableButtons={<div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       {/* <AvailabilityTimeModal
         open={openAvailabilityTimePopup}

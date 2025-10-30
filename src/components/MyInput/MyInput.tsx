@@ -142,39 +142,39 @@ const MyInput = ({
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
   useEffect(() => {
-    const isAnyOpen =
-      isSelectOpen ||
-      isDateOpen ||
-      isDateTimeOpen ||
-      isTimeOpen ||
-      isMultyPickerOpen ||
-      isCheckPickerOpen;
+      const handleScroll = (event: Event) => {
+        const target = event.target as HTMLElement | null;
 
-    if (!isAnyOpen) return;
+        // لو الـ scroll داخل الـ picker menu نفسه، تجاهله
+        if (
+          target &&
+          (target.closest('.rs-picker-menu') ||
+            target.closest('.rs-picker-select-menu') ||
+            target.closest('.rs-virtual-list'))
+        ) {
+          return;
+        }
 
-    const handleScroll = (event: Event) => {
-      const target = event.target as HTMLElement | null;
-      // Ignore internal picker menus scrolling
-      if (
-        target &&
-        (target.closest('.rs-picker-menu') ||
-          target.closest('.rs-picker-select-menu') ||
-          target.closest('.rs-virtual-list'))
-      ) {
-        return;
-      }
+        // لو الـ scroll داخل مودال أو container محدد، تجاهله كمان
+        if (target && target.closest('.rs-modal-body')) {
+          return;
+        }
 
-      setIsSelectOpen(false);
-      setIsDateOpen(false);
-      setIsDateTimeOpen(false);
-      setIsTimeOpen(false);
-      setIsMultyPickerOpen(false);
-      setIsCheckPickerOpen(false);
-    };
+        // غير هيك سكّر كل الـ pickers المفتوحة
+        setIsSelectOpen(false);
+        setIsDateOpen(false);
+        setIsDateTimeOpen(false);
+        setIsTimeOpen(false);
+        setIsMultyPickerOpen(false);
+        setIsCheckPickerOpen(false);
+      };
 
-    window.addEventListener('scroll', handleScroll, true);
-    return () => window.removeEventListener('scroll', handleScroll, true);
-  }, [isSelectOpen, isDateOpen, isDateTimeOpen, isTimeOpen, isMultyPickerOpen, isCheckPickerOpen]);
+      window.addEventListener('scroll', handleScroll, true);
+
+      return () => {
+        window.removeEventListener('scroll', handleScroll, true);
+      };
+  }, []);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);

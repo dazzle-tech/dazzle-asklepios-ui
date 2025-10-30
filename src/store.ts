@@ -186,6 +186,7 @@ export const store = configureStore({
       ageGroupService.middleware,
       Icd10Service.middleware,
       allergensService.middleware,
+      potintialService.middleware,
     ])
 });
 

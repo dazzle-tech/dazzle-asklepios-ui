@@ -354,15 +354,7 @@ const DVM = () => {
 
   const Tabdata = [
     {title: "Validation Rules", content: <><div className="container-of-add-new-button">
-            <MyButton
-              disabled={!recordOfScreenMetaData['screenMetadataKey']}
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={handleNew}
-              width="109px"
-            >
-              Add New
-            </MyButton>
+
           </div>
           <MyTable
             height={450}
@@ -384,6 +376,15 @@ const DVM = () => {
             totalCount={totalCount}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
+            tableButtons={<div className="container-of-add-new-button">
+              <MyButton
+              disabled={!recordOfScreenMetaData['screenMetadataKey']}
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px">
+              Add New
+            </MyButton></div>}
           />
           <AddEditDVMRule
             open={popupOpen}
