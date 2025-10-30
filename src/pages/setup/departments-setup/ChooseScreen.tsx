@@ -12,6 +12,7 @@ import { faSheetPlastic } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { MedicalSheets } from '@/config/modules-config';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const ChooseDepartment = ({ open, setOpen, width, department ,showScreen, setShowScreen}) => {
   const dispatch = useDispatch();
@@ -90,9 +91,10 @@ useEffect(() => {
       ) : (
         <div className="container-of-medical-sheets grid grid-cols-2 gap-4">
           {/* Default Sheets */}
-          <div className="container-of-specific-sheets">
-            <h6>Medical Sheets</h6>
 
+          <SectionContainer title="Medical Sheets"
+          content={
+          <div className="container-of-specific-sheets">
             <MyInput
               fieldType="check"
               fieldLabel="Select All"
@@ -129,12 +131,12 @@ useEffect(() => {
                 />
               ))}
             </div>
-          </div>
+          </div>}/>
 
           {/* Specialty Sheets */}
+          <SectionContainer title="Specialty Sheets"
+          content={
           <div className="container-of-specific-sheets">
-            <h6>Specialty Sheets</h6>
-
             <MyInput
               fieldType="check"
               fieldLabel="Select All"
@@ -173,7 +175,7 @@ useEffect(() => {
                 />
               ))}
             </div>
-          </div>
+          </div>}/>
         </div>
       )}
     </Form>
@@ -189,7 +191,7 @@ useEffect(() => {
       content={conjureFormContent}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
-      size={width > 600 ? '40vw' : '25vw'}
+      size={width > 600 ? '45vw' : '25vw'}
       steps={[
         {
           title: 'Medical Sheets',

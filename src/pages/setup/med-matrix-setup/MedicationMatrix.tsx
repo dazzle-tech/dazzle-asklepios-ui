@@ -348,32 +348,7 @@ const MedicationMatrix = () => {
   return (
     <Row>
       <Col md={8}>
-        <div className="container-of-header-actions-medication-matrix">
-          <Form layout="inline" className="form-medication-matrix">
-            <MyInput
-              fieldName="value"
-              fieldType="text"
-              record={record}
-              setRecord={setRecord}
-              showLabel={false}
-              placeholder="Search by Name"
-              width={'220px'}
-              height={32}
-            />
-          </Form>
-          <MyButton
-            prefixIcon={() => <AddOutlineIcon />}
-            color="var(--deep-blue)"
-            onClick={() => {
-              setOpenAddEditPopupCat(true),
-                setSelectedCategories({ ...newApMedicationCategories }),
-                setEdit_new_cat(true);
-            }}
-            width="109px"
-          >
-            Add New
-          </MyButton>
-        </div>
+
         <MyTable
           columns={categoryColumns}
           data={categoriesList?.object ?? []}
@@ -386,6 +361,33 @@ const MedicationMatrix = () => {
           onSortChange={(sortBy, sortType) => {
             if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
           }}
+          filters={<div className="container-of-header-actions-medication-matrix">
+          <Form layout="inline" className="form-medication-matrix">
+            <MyInput
+              fieldName="value"
+              fieldType="text"
+              record={record}
+              setRecord={setRecord}
+              showLabel={false}
+              placeholder="Search by Name"
+              width={'220px'}
+              height={32}
+            />
+          </Form>
+
+        </div>}
+          tableButtons={<MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={() => {
+              setOpenAddEditPopupCat(true),
+                setSelectedCategories({ ...newApMedicationCategories }),
+                setEdit_new_cat(true);
+            }}
+            width="109px"
+          >
+            Add New
+          </MyButton>}
         />
         <AddEditMedCat
           open={openAddEditPopupCat}
@@ -416,7 +418,15 @@ const MedicationMatrix = () => {
         />
       </Col>
       <Col md={8}>
-        <div className="container-of-add-new-button">
+
+        <MyTable
+          columns={classColumns}
+          data={medClassList?.object ?? []}
+          onRowClick={rowData => {
+            setSelectedClass(rowData);
+          }}
+          rowClassName={isSelectedClass}
+          tableButtons={        <div className="container-of-add-new-button">
           <MyButton
             disabled={!selectedCategories?.key}
             prefixIcon={() => <AddOutlineIcon />}
@@ -430,14 +440,7 @@ const MedicationMatrix = () => {
           >
             Add New
           </MyButton>
-        </div>
-        <MyTable
-          columns={classColumns}
-          data={medClassList?.object ?? []}
-          onRowClick={rowData => {
-            setSelectedClass(rowData);
-          }}
-          rowClassName={isSelectedClass}
+        </div>}
         />
         <AddEditClass
           open={openAddEditPopupClass}
@@ -469,7 +472,8 @@ const MedicationMatrix = () => {
         />
       </Col>
       <Col md={8}>
-        <div className="container-of-add-new-button">
+
+        <MyTable columns={activeIngColumns} data={classAIList?.object ?? []} tableButtons={<div className="container-of-add-new-button">
           <MyButton
             disabled={!selectedClass?.key}
             prefixIcon={() => <AddOutlineIcon />}
@@ -483,8 +487,7 @@ const MedicationMatrix = () => {
           >
             Add New
           </MyButton>
-        </div>
-        <MyTable columns={activeIngColumns} data={classAIList?.object ?? []} />
+        </div>} />
         <AddEditActiveIng
           open={openAddEditPopup}
           setOpen={setOpenAddEditPopup}

@@ -496,17 +496,6 @@ const ServiceSetup: React.FC = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-          disabled={!facilityId}
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         data={tableData}
         totalCount={totalCount}
@@ -519,6 +508,17 @@ const ServiceSetup: React.FC = () => {
         rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+        tableButtons={      <div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+          disabled={!facilityId}
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <AddEditService
         open={popupOpen}

@@ -393,6 +393,7 @@ const AgeGroupSetup: React.FC = () => {
           selectDataValue="value"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
+          searchable={false}
         />
       ) : (
         <MyInput
@@ -460,17 +461,6 @@ const AgeGroupSetup: React.FC = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-          disabled={!facilityId}
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         data={tableData}
         totalCount={totalCount}
@@ -483,6 +473,17 @@ const AgeGroupSetup: React.FC = () => {
         rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+        tableButtons={      <div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+          disabled={!facilityId}
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <AddEditAgeGroup
         open={popupOpen}
