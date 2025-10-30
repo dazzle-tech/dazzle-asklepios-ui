@@ -269,6 +269,7 @@ export interface Allergen {
   lastModifiedDate?: Date | null;
 }
 // Download Attachment Ticke
+
 export interface DownloadTicket {
   url: string;
   expiresInSeconds: number;
@@ -306,3 +307,40 @@ export interface Service {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+export interface AgeGroup {
+  id?: number;
+  ageGroup: string | null;            
+  fromAge: number | null;      
+  toAge: number | null;         
+  fromAgeUnit: string | null;
+  toAgeUnit: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number;          // FK
+}
+export interface DiagnosticTest {
+  id?: number;
+  type: string;
+  name: string;
+  internalCode: string;
+  ageSpecific?: boolean;
+
+  ageGroupList?: string[];
+
+  genderSpecific?: boolean;
+  gender?: string;
+
+  specialPopulation?: boolean;
+  specialPopulationValues?: string[]; 
+
+  price?: number;
+  currency?: string;
+  specialNotes?: string;
+  isActive?: boolean;
+  isProfile?: boolean;
+  appointable?: boolean;
+}
+

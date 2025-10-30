@@ -212,7 +212,7 @@ export const newPractitioner: modelTypes.Practitioner = {
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   id: undefined,
   langKey: undefined,          
-  translationKey: undefined,    
+  translationKey: undefined,   
   translationText: undefined,
   verified: undefined,
   translated: undefined,
@@ -243,3 +243,24 @@ export const newAllergen: modelTypes.Allergen = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+
+export const newDiagnosticTest: modelTypes.DiagnosticTest = {
+  id: undefined,
+  type: null,
+  name: null,
+  internalCode: null,
+  ageSpecific: false,
+  ageGroupList: [],
+  genderSpecific: false,
+  gender: null,
+  specialPopulation: false,
+  specialPopulationValues: [],
+
+  price: null,
+  currency: null,
+  specialNotes: '',
+  isActive: true,
+  isProfile: false,
+  appointable: false,
+};
+

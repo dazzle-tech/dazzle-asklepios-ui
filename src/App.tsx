@@ -139,7 +139,7 @@ import CDTSetup from './pages/setup/cdt-setup';
 import CPTSetup from './pages/setup/cpt-setup';
 import DentalActions from './pages/setup/dental-actions';
 import Departments from './pages/setup/departments-setup';
-import Diagnostics from './pages/setup/diagnostics-tests-definition';
+import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
 import DVM from './pages/setup/dvm-setup';
 import Facilities from './pages/setup/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
