@@ -1,8 +1,8 @@
 import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
-import { Col, Divider, Dropdown, Form, Popover, Row, Text, Tooltip, Whisper } from 'rsuite';
+import { Col, Divider, Form, Row, Text, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisVertical, faRightFromBracket, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faRightFromBracket, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { faPills } from '@fortawesome/free-solid-svg-icons';
 import { faComments, faBarcode, faBatteryEmpty } from '@fortawesome/free-solid-svg-icons';
@@ -10,7 +10,6 @@ import { TbUrgent } from 'react-icons/tb';
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyNestedTable from '@/components/MyNestedTable';
 import './styles.less';
@@ -18,19 +17,17 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import ChatModal from '@/components/ChatModal/ChatModal';
 import MyModal from '@/components/MyModal/MyModal';
-import { Tabs } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import PatientSide from '@/pages/lab-module/PatienSide';
 import { useLocation } from 'react-router-dom';
 import DispenseModal from './DispenseModal';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
 import SearchIcon from '@rsuite/icons/Search';
-import AllergiesTable from './Allergies';
-import WarningiesTable from './Warning';
 import Result from '@/pages/encounter/encounter-component/diagnostics-result/Result';
 import { useAppSelector } from '@/hooks';
 import Allergies from '@/pages/encounter/encounter-pre-observations/AllergiesNurse';
 import Warning from '@/pages/encounter/encounter-pre-observations/warning';
+import MyTab from '@/components/MyTab';
 
 const InternalDrugOrder = () => {
   const dispatch = useAppDispatch();
@@ -44,7 +41,6 @@ const InternalDrugOrder = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [doctorRound, setDoctorRound] = useState({});
   const [recordOfIndicationsDescription, setRecordOfIndicationsDescription] = useState({});
   const [recordOfSearch, setRecordOfSearch] = useState({});
@@ -89,30 +85,6 @@ const InternalDrugOrder = () => {
       prev.map(row => (row.key === rowKey ? { ...row, status: 'Dispensed' } : row))
     );
   };
-
-  const numberPopoverContent = (
-    <Popover full>
-      <Dropdown.Menu>
-        {Array.from({ length: 9 }, (_, index) => {
-          const number = index + 1;
-          return (
-            <React.Fragment key={number}>
-              <Dropdown.Item divider />
-              <Dropdown.Item
-                active={selectedKey === number.toString()}
-                onClick={() => setSelectedKey(number.toString())}
-              >
-                <div className="container-of-icon-and-key1">
-                  <FontAwesomeIcon icon={faEllipsisVertical} className="margin-right-8" />
-                  {number}
-                </div>
-              </Dropdown.Item>
-            </React.Fragment>
-          );
-        })}
-      </Dropdown.Menu>
-    </Popover>
-  );
 
   //
   const handleSendMessage = msg => {
@@ -600,6 +572,59 @@ const InternalDrugOrder = () => {
     }
   ];
 
+  const tabData = [
+    {title: "Diagnosis", content: <div className="assessment-container-wrapper">
+                  <Form className="assessment-container" fluid>
+                    <Row>
+                      <Col md={24}>
+                        <Icd10Search
+                          object={doctorRound}
+                          setOpject={setDoctorRound}
+                          label="Primary Diagnosis"
+                          fieldName="primaryDiagnosis"
+                        />
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col md={24}>
+                        <MyInput
+                          width="100%"
+                          fieldLabel="Secondary Diagnoses"
+                          fieldName="searchKeyword"
+                          record={recordOfSearch}
+                          setRecord={setRecordOfSearch}
+                          rightAddon={<SearchIcon />}
+                        />
+                        <MyInput
+                          disabled={true}
+                          fieldType="textarea"
+                          record={recordOfIndicationsDescription}
+                          setRecord={setRecordOfIndicationsDescription}
+                          showLabel={false}
+                          fieldName="indicationsDescription"
+                          width="100%"
+                        />
+                      </Col>
+                    </Row>
+                  </Form>
+                </div>},
+    {title: "Allergies", content: <Allergies
+                  patient={propsData?.patient}
+                  encounter={propsData?.encounter}
+                  edit={true}
+                  showTableActions={false}
+                  showTableButtons={false}
+                />},
+    {title: "Medical Warnings", content: <Warning
+                  patient={propsData?.patient}
+                  encounter={propsData?.encounter}
+                  edit={true}
+                  showTableActions={false}
+                  showTableButtons={false}
+                />},
+    {title: "Diagnostics Results", content: <Result patient={propsData?.patient || {}} user={authSlice.user.key} />},
+  ];
+
   // Effects
   useEffect(() => {
     // Header page setUp
@@ -661,67 +686,12 @@ const InternalDrugOrder = () => {
         position="center"
         content={
           <div>
-            <Tabs activeKey={activeKey} onSelect={setActiveKey}>
-              <Tabs.Tab eventKey="1" title="Diagnosis">
-                <div className="assessment-container-wrapper">
-                  <Form className="assessment-container" fluid>
-                    <Row>
-                      <Col md={24}>
-                        <Icd10Search
-                          object={doctorRound}
-                          setOpject={setDoctorRound}
-                          label="Primary Diagnosis"
-                          fieldName="primaryDiagnosis"
-                        />
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={24}>
-                        <MyInput
-                          width="100%"
-                          fieldLabel="Secondary Diagnoses"
-                          fieldName="searchKeyword"
-                          record={recordOfSearch}
-                          setRecord={setRecordOfSearch}
-                          rightAddon={<SearchIcon />}
-                        />
-                        <MyInput
-                          disabled={true}
-                          fieldType="textarea"
-                          record={recordOfIndicationsDescription}
-                          setRecord={setRecordOfIndicationsDescription}
-                          showLabel={false}
-                          fieldName="indicationsDescription"
-                          width="100%"
-                        />
-                      </Col>
-                    </Row>
-                  </Form>
-                </div>
-              </Tabs.Tab>
-              <Tabs.Tab eventKey="2" title="Allergies">
-                <Allergies
-                  patient={propsData?.patient}
-                  encounter={propsData?.encounter}
-                  edit={true}
-                  showTableActions={false}
-                  showTableButtons={false}
-                />
-              </Tabs.Tab>
-
-              <Tabs.Tab eventKey="3" title="Medical Warnings">
-                <Warning
-                  patient={propsData?.patient}
-                  encounter={propsData?.encounter}
-                  edit={true}
-                  showTableActions={false}
-                  showTableButtons={false}
-                />
-              </Tabs.Tab>
-              <Tabs.Tab eventKey="4" title="Diagnostics Results">
-                <Result patient={propsData?.patient || {}} user={authSlice.user.key} />
-              </Tabs.Tab>
-            </Tabs>
+            <MyTab 
+             data={tabData}
+             activeTab={activeKey}
+             setActiveTab={setActiveKey}
+             appearance='tabs'
+            />
           </div>
         }
         steps={[{ title: 'Clinical Checks', icon: <FontAwesomeIcon icon={faUserCheck} /> }]}

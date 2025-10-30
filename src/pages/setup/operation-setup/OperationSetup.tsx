@@ -223,16 +223,6 @@ const OperationSetup = () => {
   }, [dispatch, pathname]);
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         data={operationList?.object || []}
         columns={tableColumns}
@@ -241,6 +231,16 @@ const OperationSetup = () => {
         onRowClick={rowData => {
           setOperation(rowData);
         }}
+        tableButtons={      <div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteProcedureModal}

@@ -19,13 +19,13 @@ export interface ApUser {
   gender?: string | null;
   jobDescription?: string | null;
 }
-  
+
 
 
 export interface Candidate {
   id?: number;
   rule?: string;
-  fields?: Record<string, boolean>; 
+  fields?: Record<string, boolean>;
   createdBy?: string;
   createdDate?: string;
   lastModifiedBy?: string;
@@ -60,8 +60,8 @@ export interface Facility {
   type: string;
   defaultCurrency: string;
   isActive?: boolean;
-  ruleId?:number;
-} 
+  ruleId?: number;
+}
 
 
 export interface CreateFacility {
@@ -151,7 +151,7 @@ export interface Language {
   id: number;
   langKey: string;
   langName: string;
-  direction: 'LTR' | 'RTL';
+  direction: string;
   details?: string | null;
 }
 
@@ -159,13 +159,35 @@ export interface LanguageTranslation {
   id: number;
   langKey: string;
   translationKey: string;
-  originalText: string;
   translationText?: string;
   verified: boolean;
   translated: boolean;
 }
 
+export interface AgeGroup {
+  id?: number;
+  ageGroup: string | null;
+  fromAge: number | null;
+  toAge: number | null;
+  fromAgeUnit: string | null;
+  toAgeUnit: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number;          // FK
+}
 
+export interface Allergen {
+  id?: number;
+  code: string;
+  name: string;
+  type: string;
+  description?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
+}
 export interface Practitioner {
   id?: number;
   facilityId: number;
@@ -233,6 +255,7 @@ export interface UploadResponse {
   sizeBytes: number;
   downloadUrl: string;
 }
+
 export interface Allergen {
   id?: number;
   code: string;
@@ -245,7 +268,7 @@ export interface Allergen {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
-// Download Attachment Ticket
+// Download Attachment Ticke
 export interface DownloadTicket {
   url: string;
   expiresInSeconds: number;
@@ -282,18 +305,4 @@ export interface Service {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-}
-export interface AgeGroup {
-  id?: number;
-  ageGroup: string | null;            
-  fromAge: number | null;      
-  toAge: number | null;         
-  fromAgeUnit: string | null;
-  toAgeUnit: string | null;
-  isActive?: boolean;
-  createdBy?: string | null;
-  createdDate?: Date | null;
-  lastModifiedBy?: string | null;
-  lastModifiedDate?: Date | null;
-  facilityId?: number;          // FK
 }

@@ -138,13 +138,13 @@ const MedicationSchedule = () => {
   return (
     <>
       <Panel className="main-supplier-setup-page-gaps">
-        <div className="add-new-supplier-button">
+
+      </Panel>
+      <MyTable data={Data} columns={columns} tableButtons={<div className="add-new-supplier-button">
           <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={() => setOpenModal(true)}>
             Add New
           </MyButton>
-        </div>
-      </Panel>
-      <MyTable data={Data} columns={columns} />
+        </div>}/>
 
       <MyModal
         open={openModal}

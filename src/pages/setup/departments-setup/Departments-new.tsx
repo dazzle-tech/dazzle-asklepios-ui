@@ -508,16 +508,7 @@ const Departments = () => {
   };
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-         <Translate key="ADD_NEW">Add New</Translate>
-        </MyButton>
-      </div>
+
       <MyTable
         data={
           isFiltered
@@ -534,6 +525,16 @@ const Departments = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
+        tableButtons={<div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+         <Translate key="ADD_NEW">Add New</Translate>
+        </MyButton>
+      </div>}
       />
 
       <AddEditDepartment

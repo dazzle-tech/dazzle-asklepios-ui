@@ -8,8 +8,7 @@ import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import { faUser, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useGetFacilityTypesQuery } from '@/services/security/facilityService';
-import { useEnumByName, useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
+import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 
 
 const AddEditFacility = ({
@@ -49,7 +48,7 @@ const AddEditFacility = ({
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid layout="inline">
+          <Form fluid >
             <div className={clsx('', { 'container-of-two-fields-facility': width > 600 })}>
               <MyInput
                 fieldLabel="Facility ID"
@@ -61,7 +60,6 @@ const AddEditFacility = ({
                 width={250}
               />
               <MyInput
-                column
                 required
                 width={250}
                 vr={validationResult}
@@ -71,7 +69,7 @@ const AddEditFacility = ({
                 selectData={facilityTypeOptions ?? []}
                 selectDataLabel="label"
                 selectDataValue="value"
-
+                searchable={false}
                 record={facility}
                 setRecord={setFacility}
               />
@@ -88,7 +86,6 @@ const AddEditFacility = ({
               })}
             >
               <MyInput
-                column
                 fieldName="registrationDate"
                 fieldType="date"
                 record={facility}
@@ -99,7 +96,6 @@ const AddEditFacility = ({
                 required
                 width={250}
                 vr={validationResult}
-                column
                 fieldLabel="Default Currency"
                 fieldType="select"
                 fieldName="defaultCurrency"
@@ -108,10 +104,10 @@ const AddEditFacility = ({
                 selectDataValue="value"
                 record={facility}
                 setRecord={setFacility}
+                searchable={false}
               />
             </div>
             <MyInput
-              column
               fieldName="facilityBriefDesc"
               fieldType="textarea"
               record={facility}
@@ -122,7 +118,7 @@ const AddEditFacility = ({
         );
       case 1:
         return (
-          <Form layout="inline" fluid>
+          <Form fluid>
             <div
               className={clsx('', {
                 'container-of-two-fields-facility': width > 600
@@ -132,7 +128,6 @@ const AddEditFacility = ({
                 required
                 width={250}
                 vr={validationResult}
-                column
                 fieldLabel="Facility Country"
                 fieldType="select"
                 fieldName="countryLkey"
@@ -146,7 +141,6 @@ const AddEditFacility = ({
                 required
                 width={250}
                 vr={validationResult}
-                column
                 fieldLabel="Facility City"
                 fieldType="select"
                 fieldName="cityLkey"
@@ -165,7 +159,6 @@ const AddEditFacility = ({
               <MyInput
                 width={250}
                 vr={validationResult}
-                column
                 fieldLabel="State/Region"
                 fieldType="select"
                 fieldName="stateProvinceRegionLkey"
@@ -176,7 +169,6 @@ const AddEditFacility = ({
                 setRecord={setAddress}
               />
               <MyInput
-                column
                 fieldLabel="Street"
                 fieldName="streetAddressLine1"
                 required
@@ -186,7 +178,6 @@ const AddEditFacility = ({
               />
             </div>
             <MyInput
-              column
               fieldLabel="Facility Postal/ZIP"
               fieldName="postalCode"
               record={address}
@@ -197,14 +188,13 @@ const AddEditFacility = ({
         );
       case 2:
         return (
-          <Form layout="inline" fluid>
+          <Form fluid>
             <div
               className={clsx('', {
                 'container-of-two-fields-facility': width > 600
               })}
             >
               <MyInput
-                column
                 fieldName="phone1"
                 fieldLabel="Primary Phone Number"
                 required
@@ -213,7 +203,6 @@ const AddEditFacility = ({
                 width={250}
               />
               <MyInput
-                column
                 fieldName="phone2"
                 fieldLabel="Secondary Phone Number"
                 record={facility}
@@ -222,14 +211,12 @@ const AddEditFacility = ({
               />
             </div>
             <MyInput
-              column
               fieldName="emailAddress"
               record={facility}
               setRecord={setFacility}
               width={width > 600 ? 520 : 250}
             />
             <MyInput
-              column
               fieldName="fax"
               required
               record={facility}

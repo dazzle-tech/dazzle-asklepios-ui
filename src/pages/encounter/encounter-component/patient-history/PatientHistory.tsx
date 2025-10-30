@@ -4,21 +4,21 @@ import MedicalHistory from './MedicalHistory/MedicalHistory';
 import SurgicalHistory from './SurgicalHistory';
 import SocialHistory from './SocialHistory';
 import { useLocation } from 'react-router-dom';
+import MyTab from '@/components/MyTab';
 const PatientHistory = () => {
   const location = useLocation();
   const { patient, encounter, edit } = location.state || {};
+
+  const tabData = [
+    {title: "Medical History", content: <MedicalHistory patient={patient} encounter={encounter} edit={edit} />},
+    {title: "Surgical History", content: <SurgicalHistory patient={patient} encounter={encounter} edit={edit} />},
+    {title: "Social History", content: <SocialHistory patient={patient} encounter={encounter} edit={edit} />}
+  ];
+
   return (
-    <Tabs defaultActiveKey="1" appearance="subtle" className="tab-container">
-      <Tabs.Tab eventKey="1" title="Medical History">
-        <MedicalHistory patient={patient} encounter={encounter} edit={edit} />
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="2" title="Surgical History">
-        <SurgicalHistory patient={patient} encounter={encounter} edit={edit} />
-      </Tabs.Tab>
-      <Tabs.Tab eventKey="3" title="Social History">
-        <SocialHistory patient={patient} encounter={encounter} edit={edit} />
-      </Tabs.Tab>
-    </Tabs>
+   <MyTab
+    data={tabData}
+   />
   );
 };
 export default PatientHistory;

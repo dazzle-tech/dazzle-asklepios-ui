@@ -26,6 +26,7 @@ import PatientHistory from '../encounter-component/patient-history';
 import { notify } from '@/utils/uiReducerActions';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import MyTab from '@/components/MyTab';
 const EncounterPreObservations = ({}) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -80,6 +81,41 @@ const EncounterPreObservations = ({}) => {
   const handleClearObsarvationClick = () => {
     obsRef.current?.handleClear();
   };
+
+  const tabData = [
+    {title: "Observations", content: <Observations
+                    edit={propsData.edit}
+                    ref={obsRef}
+                    patient={propsData.patient}
+                    encounter={propsData.encounter}
+                  />},
+    {title: "Allergies", content:  <Allergies
+                    edit={propsData.edit}
+                    patient={propsData.patient}
+                    encounter={propsData.encounter}
+                  />},
+    {title: "Medical Warnings", content: <Warning
+                    edit={propsData.edit}
+                    patient={propsData.patient}
+                    encounter={propsData.encounter}
+                  />},
+    {title: "Patient History", content: <PatientHistory />},
+    {title: "Previous Measurements", content: <PreviousMeasurements patient={propsData.patient} />},
+    {title: "Attachments", content: <PatientAttachment
+                    localPatient={propsData?.patient}
+                    setRefetchAttachmentList={setRefetchAttachmentList}
+                    refetchAttachmentList={refetchAttachmentList}
+                  />},
+    {title: "Vaccination", content: <VaccinationTab
+                    edit={propsData.edit}
+                    disabled={isEncounterStatusClosed || readOnly}
+                    patient={propsData.patient}
+                    encounter={propsData.encounter}
+                  />},
+    {title: "Service & Products", content: <ServiceAndProductsTab edit={propsData.edit} />},
+    // {title: "", content: },
+    // {title: "", content: },
+  ];
   return (
     <>
       {propsData?.patient && propsData?.encounter && (
@@ -139,54 +175,11 @@ const EncounterPreObservations = ({}) => {
                   )}
                 </div>
               </div>
-              <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
-                <Tabs.Tab eventKey="1" title="Observations">
-                  <Observations
-                    edit={propsData.edit}
-                    ref={obsRef}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="2" title="Allergies">
-                  <Allergies
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="3" title="Medical Warnings">
-                  <Warning
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="4" title="Patient History">
-                  <PatientHistory />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="5" title="Previous Measurements">
-                  <PreviousMeasurements patient={propsData.patient} />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="6" title="Attachments">
-                  <PatientAttachment
-                    localPatient={propsData?.patient}
-                    setRefetchAttachmentList={setRefetchAttachmentList}
-                    refetchAttachmentList={refetchAttachmentList}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="7" title="Vaccination">
-                  <VaccinationTab
-                    edit={propsData.edit}
-                    disabled={isEncounterStatusClosed || readOnly}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="8" title="Service & Products">
-                  <ServiceAndProductsTab edit={propsData.edit} />
-                </Tabs.Tab>
-              </Tabs>
+              <MyTab 
+               data={tabData}
+               activeTab={activeKey}
+               setActiveTab={setActiveKey}
+              />
             </Panel>
           </div>
           <div className="right-box">

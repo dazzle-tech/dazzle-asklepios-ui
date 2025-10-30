@@ -24,7 +24,8 @@ import {
 } from '@/services/setup/practitioner/PractitionerDepartmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
-
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import SectionContainer from '@/components/SectionsoContainer';
 const AddEditPractitioner = ({
   open,
   setOpen,
@@ -74,23 +75,25 @@ const AddEditPractitioner = ({
   const { data: userListResponse = [], isLoading } = useGetUserQuery();
 
   // Local user search
-  useEffect(() => {
-    if (recordOfSearch.searchKeyword && recordOfSearch.searchKeyword.length >= 2) {
-      const keyword = recordOfSearch.searchKeyword.toLowerCase();
-      const results = userListResponse.filter(
-        (user) =>
-          user.firstName?.toLowerCase().includes(keyword) ||
-          user.lastName?.toLowerCase().includes(keyword) ||
-          user.login?.toLowerCase().includes(keyword) ||
-          user.email?.toLowerCase().includes(keyword)
-      );
-      setFilteredUsers(results);
-      setSearchResultVisible(true);
-    } else {
-      setSearchResultVisible(false);
-      setFilteredUsers([]);
-    }
-  }, [recordOfSearch.searchKeyword, userListResponse]);
+  // useEffect(() => {
+  //   if (recordOfSearch.searchKeyword && recordOfSearch.searchKeyword.length >= 2) {
+  //     const keyword = recordOfSearch.searchKeyword.toLowerCase();
+  //     const results = userListResponse.filter(
+  //       (user) =>
+  //         user.firstName?.toLowerCase().includes(keyword) ||
+  //         user.lastName?.toLowerCase().includes(keyword) ||
+  //         user.login?.toLowerCase().includes(keyword) ||
+  //         user.email?.toLowerCase().includes(keyword)
+  //     );
+  //     setFilteredUsers(results);
+  //     setSearchResultVisible(true);
+  //   } else {
+  //     setSearchResultVisible(false);
+  //     setFilteredUsers([]);
+  //   }
+  // }, [recordOfSearch.searchKeyword, userListResponse]);
+
+
   const [allDepartments, setAllDepartments] = useState([]);
 
   useEffect(() => {
@@ -150,6 +153,27 @@ const AddEditPractitioner = ({
     { key: 'email', title: <Translate>Email</Translate>, flexGrow: 3 },
   ];
 
+
+const handleSearchUsers = () => {
+  const keyword = recordOfSearch.searchKeyword?.trim()?.toLowerCase() ?? '';
+  if (keyword.length < 2) {
+    dispatch(notify({ msg: 'Please type at least 2 characters', sev: 'warn' }));
+    return;
+  }
+
+  const results = userListResponse.filter(
+    (user) =>
+      user.firstName?.toLowerCase().includes(keyword) ||
+      user.lastName?.toLowerCase().includes(keyword) ||
+      user.login?.toLowerCase().includes(keyword) ||
+      user.email?.toLowerCase().includes(keyword)
+  );
+
+  setFilteredUsers(results);
+setSearchResultVisible(true);
+};
+
+
   // Main modal content
   const conjureFormContentOfMainModal = (stepNumber) => {
     switch (stepNumber) {
@@ -157,16 +181,53 @@ const AddEditPractitioner = ({
         return (
           <Form layout="inline" fluid>
             {/* User Search */}
-            <MyInput
-              fieldName="searchKeyword"
-              record={recordOfSearch}
-              setRecord={setRecordOfSearch}
-              showLabel
-              placeholder="Search Users to link"
-              width={width > 600 ? 520 : 250}
-            />
 
-            {/* Basic Info */}
+          <SectionContainer title="Facility"
+          content={<>
+          <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                        <MyInput
+                          width={250}
+                          column
+                          fieldLabel="Facility"
+                          fieldType="select"
+                          fieldName="facilityId"
+                          selectData={allFacilities ?? []}
+                          selectDataLabel="name"
+                          selectDataValue="id"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          required
+                        />
+                        <MyInput
+                          width={250}
+                          column
+                          fieldLabel="Appointable"
+                          fieldType="checkbox"
+                          fieldName="appointable"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                        />
+          </div>
+          </>}/>
+
+          <SectionContainer title="Basic Information"
+            content={<>
+          <MyInput
+            fieldName="searchKeyword"
+            record={recordOfSearch}
+            setRecord={setRecordOfSearch}
+            showLabel
+            placeholder="Search Users to link"
+            column
+            width={245}
+            rightAddon={
+            <FontAwesomeIcon
+              icon={faSearch}
+              style={{ cursor: 'pointer' }}
+              onClick={handleSearchUsers}
+            />
+            }
+          />
             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
@@ -186,7 +247,6 @@ const AddEditPractitioner = ({
               />
             </div>
 
-            {/* Gender & DOB */}
             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 width={250}
@@ -198,6 +258,7 @@ const AddEditPractitioner = ({
                 selectDataValue="value"
                 record={practitioner}
                 setRecord={setPractitioner}
+                searchable={false}
               />
               <MyInput
                 column
@@ -210,7 +271,6 @@ const AddEditPractitioner = ({
               />
             </div>
 
-            {/* Contact Info */}
             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
@@ -227,128 +287,112 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
+          </>}/>
 
-            {/* Job Info */}
-            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-              <MyInput
-                column
-                fieldLabel="Job Role"
-                fieldType="select"
-                fieldName="jobRole"
-                selectData={jobRoleLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={250}
-              />
-              <MyInput
-                column
-                fieldLabel="Educational Level"
-                fieldType="select"
-                fieldName="educationalLevel"
-                selectData={eduLvlLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={250}
-              />
-            </div>
+          <SectionContainer title="Specialty/Job Information"
+          content={<>
+                      {/* Job Info */}
+                      <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                        <MyInput
+                          column
+                          fieldLabel="Job Role"
+                          fieldType="select"
+                          fieldName="jobRole"
+                          selectData={jobRoleLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width={250}
+                        />
+                        <MyInput
+                          column
+                          fieldLabel="Educational Level"
+                          fieldType="select"
+                          fieldName="educationalLevel"
+                          selectData={eduLvlLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width={250}
+                        />
+                      </div>
 
-            {/* Specialty */}
-            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-              <MyInput
-                width={250}
-                fieldLabel="Specialty"
-                fieldType="select"
-                fieldName="specialty"
-                selectData={specility ?? []}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={practitioner}
-                setRecord={setPractitioner}
-                required
-              />
-              <MyInput
-                column
-                fieldLabel="Sub Specialty"
-                fieldType="select"
-                fieldName="subSpecialty"
-                selectData={subSpecialityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={250}
-              />
-            </div>
-             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-            
-                          <MyInput
-                            column
-                            fieldLabel="Default Medical License"
-                            fieldName="defaultMedicalLicense"
-                            record={practitioner}
-                            setRecord={setPractitioner}
-                            width={250}
-                          />
-                          <MyInput
-                            column
-                            fieldType="date"
-                            fieldLabel="Valid Until"
-                            fieldName="defaultLicenseValidUntil"
-                            record={practitioner}
-                            setRecord={setPractitioner}
-                            width={250}
-                          />
-                        </div>
-                        <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-            
-                          <MyInput
-                            column
-                            fieldLabel="Secondary License"
-                            fieldName="secondaryMedicalLicense"
-                            record={practitioner}
-                            setRecord={setPractitioner}
-                            width={250}
-                          />
-                          <MyInput
-                            column
-                            fieldType="date"
-                            fieldLabel="Valid Until"
-                            fieldName="secondaryLicenseValidUntil"
-                            record={practitioner}
-                            setRecord={setPractitioner}
-                            width={250}
-                          />
-                        </div>
+                      {/* Specialty */}
+                      <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                        <MyInput
+                          width={250}
+                          fieldLabel="Specialty"
+                          fieldType="select"
+                          fieldName="specialty"
+                          selectData={specility ?? []}
+                          selectDataLabel="label"
+                          selectDataValue="value"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          required
+                        />
+                        <MyInput
+                          column
+                          fieldLabel="Sub Specialty"
+                          fieldType="select"
+                          fieldName="subSpecialty"
+                          selectData={subSpecialityLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width={250}
+                        />
+                      </div>
+          </>}/>
 
-            {/* Facility */}
-            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-              <MyInput
-                width={250}
-                column
-                fieldLabel="Facility"
-                fieldType="select"
-                fieldName="facilityId"
-                selectData={allFacilities ?? []}
-                selectDataLabel="name"
-                selectDataValue="id"
-                record={practitioner}
-                setRecord={setPractitioner}
-                required
-              />
-              <MyInput
-                width={250}
-                column
-                fieldLabel="Appointable"
-                fieldType="checkbox"
-                fieldName="appointable"
-                record={practitioner}
-                setRecord={setPractitioner}
-              />
-            </div>
+
+          <SectionContainer title="Medical License Information"
+          content={<>             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                      
+                                    <MyInput
+                                      column
+                                      fieldLabel="Default Medical License"
+                                      fieldName="defaultMedicalLicense"
+                                      record={practitioner}
+                                      setRecord={setPractitioner}
+                                      width={250}
+                                    />
+                                    <MyInput
+                                      column
+                                      fieldType="date"
+                                      fieldLabel="Valid Until"
+                                      fieldName="defaultLicenseValidUntil"
+                                      record={practitioner}
+                                      setRecord={setPractitioner}
+                                      width={250}
+                                    />
+                                  </div>
+                                  <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                      
+                                    <MyInput
+                                      column
+                                      fieldLabel="Secondary License"
+                                      fieldName="secondaryMedicalLicense"
+                                      record={practitioner}
+                                      setRecord={setPractitioner}
+                                      width={250}
+                                    />
+                                    <MyInput
+                                      column
+                                      fieldType="date"
+                                      fieldLabel="Valid Until"
+                                      fieldName="secondaryLicenseValidUntil"
+                                      record={practitioner}
+                                      setRecord={setPractitioner}
+                                      width={250}
+                                    />
+            </div></>}/>
+
+
+
           </Form>
         );
 

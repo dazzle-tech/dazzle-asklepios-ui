@@ -1,47 +1,46 @@
 import React, { useState } from 'react';
-import { Tabs } from 'rsuite';
 import NewRound from './NewRound/NewRound';
 import { useLocation } from 'react-router-dom';
 import NurseNotes from './NurseNotes/NurseNotes';
 import PreviousRoundsHistory from './PreviousRoundsHistory';
 import Orders from './Orders';
+import MyTab from '@/components/MyTab';
 
 const DoctorRound = () => {
-    const location = useLocation();
-    const { patient, encounter, edit } = location.state || {};
-    const [isConfirmedRound , setIsConfirmedRound] = useState(false);
-    return (
-        <Tabs appearance="subtle" className="doctor-round-tabs" defaultActiveKey="1">
-            <Tabs.Tab eventKey="1" title="New Round">
-                <NewRound
-                    patient={patient}
-                    encounter={encounter}
-                    edit={edit} 
-                    setIsConfirmedRound={setIsConfirmedRound}/>
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="2" title="Orders">
-                <Orders
-                    patient={patient}
-                    encounter={encounter}
-                    edit={edit} />
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="3" title="Nurse Notes">
-                <NurseNotes
-                    patient={patient}
-                    encounter={encounter}
-                    edit={edit} />
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="4" title="Previous Rounds History">
-             <PreviousRoundsHistory
-                    patient={patient}
-                    encounter={encounter} 
-                    isConfirmedRound={isConfirmedRound}
-                    setIsConfirmedRound={setIsConfirmedRound}/>
-            </Tabs.Tab>
+  const location = useLocation();
+  const { patient, encounter, edit } = location.state || {};
+  const [isConfirmedRound, setIsConfirmedRound] = useState(false);
 
-        </Tabs>
-    );
+  const tabData = [
+    {
+      title: 'New Round',
+      content: (
+        <NewRound
+          patient={patient}
+          encounter={encounter}
+          edit={edit}
+          setIsConfirmedRound={setIsConfirmedRound}
+        />
+      )
+    },
+    { title: 'Orders', content: <Orders patient={patient} encounter={encounter} edit={edit} /> },
+    {
+      title: 'Nurse Notes',
+      content: <NurseNotes patient={patient} encounter={encounter} edit={edit} />
+    },
+    {
+      title: 'Previous Rounds History',
+      content: (
+        <PreviousRoundsHistory
+          patient={patient}
+          encounter={encounter}
+          isConfirmedRound={isConfirmedRound}
+          setIsConfirmedRound={setIsConfirmedRound}
+        />
+      )
+    }
+  ];
+
+  return <MyTab data={tabData} />;
 };
 export default DoctorRound;
-
-

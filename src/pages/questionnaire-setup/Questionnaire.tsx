@@ -150,16 +150,7 @@ const Questionnaire = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={() => setOpenAddEditQuestionnairePopup(true)}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
+
       <MyTable
         height={450}
         data={data}
@@ -168,6 +159,16 @@ const Questionnaire = () => {
         onRowClick={rowData => {
           setQuestionnaire(rowData);
         }}
+        tableButtons={<div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={() => setOpenAddEditQuestionnairePopup(true)}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteQuestionnaireModal}

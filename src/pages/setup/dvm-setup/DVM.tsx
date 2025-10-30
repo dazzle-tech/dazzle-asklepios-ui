@@ -22,6 +22,7 @@ import MyTable from '@/components/MyTable';
 import AddEditDVMRule from './AddEditDVMRule';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
+import MyTab from '@/components/MyTab';
 const DVM = () => {
   const dispatch = useAppDispatch();
   const [dvmRule, setDvmRule] = useState({ ...newApDvmRule });
@@ -351,6 +352,65 @@ const DVM = () => {
     </Form>
   );
 
+  const Tabdata = [
+    {title: "Validation Rules", content: <><div className="container-of-add-new-button">
+
+          </div>
+          <MyTable
+            height={450}
+            data={dvmRulesListResponse?.object ?? []}
+            columns={tableColumns}
+            rowClassName={isSelected}
+            loading={isFetching}
+            filters={filters()}
+            onRowClick={rowData => {
+              setDvmRule(rowData);
+            }}
+            sortColumn={listRequest.sortBy}
+            sortType={listRequest.sortType}
+            onSortChange={(sortBy, sortType) => {
+              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+            }}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            tableButtons={<div className="container-of-add-new-button">
+              <MyButton
+              disabled={!recordOfScreenMetaData['screenMetadataKey']}
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px">
+              Add New
+            </MyButton></div>}
+          />
+          <AddEditDVMRule
+            open={popupOpen}
+            setOpen={setPopupOpen}
+            width={width}
+            dvmRule={dvmRule}
+            setDvmRule={setDvmRule}
+            refetch={refetch}
+            recordOfScreenMetaData={recordOfScreenMetaData}
+            dvmRulesListResponse={dvmRulesListResponse}
+            metaDataFieldsListRequest={metaDataFieldsListRequest}
+            listRequest={listRequest}
+            setListRequest={setListRequest}
+          />
+          <DeletionConfirmationModal
+            open={openConfirmDeleteDvm}
+            setOpen={setOpenConfirmDeleteDvm}
+            itemToDelete="DVM rule"
+            actionButtonFunction={
+              stateOfDeleteDvm == 'deactivate' ? handleDeactivate : handleReactivate
+            }
+            actionType={stateOfDeleteDvm}
+          /></>},
+        {title: "Rule Combinations", content: <></>}
+  ];
+
   return (
     <Panel>
       <small className="metadata-selection-title">
@@ -387,65 +447,9 @@ const DVM = () => {
         </Form>
       </div>
       <hr />
-      <Tabs defaultActiveKey="1" appearance="subtle" className="tabs">
-        <Tabs.Tab active eventKey="1" title="Validation Rules">
-          <div className="container-of-add-new-button">
-            <MyButton
-              disabled={!recordOfScreenMetaData['screenMetadataKey']}
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={handleNew}
-              width="109px"
-            >
-              Add New
-            </MyButton>
-          </div>
-          <MyTable
-            height={450}
-            data={dvmRulesListResponse?.object ?? []}
-            columns={tableColumns}
-            rowClassName={isSelected}
-            loading={isFetching}
-            filters={filters()}
-            onRowClick={rowData => {
-              setDvmRule(rowData);
-            }}
-            sortColumn={listRequest.sortBy}
-            sortType={listRequest.sortType}
-            onSortChange={(sortBy, sortType) => {
-              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-            }}
-            page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-          />
-          <AddEditDVMRule
-            open={popupOpen}
-            setOpen={setPopupOpen}
-            width={width}
-            dvmRule={dvmRule}
-            setDvmRule={setDvmRule}
-            refetch={refetch}
-            recordOfScreenMetaData={recordOfScreenMetaData}
-            dvmRulesListResponse={dvmRulesListResponse}
-            metaDataFieldsListRequest={metaDataFieldsListRequest}
-            listRequest={listRequest}
-            setListRequest={setListRequest}
-          />
-          <DeletionConfirmationModal
-            open={openConfirmDeleteDvm}
-            setOpen={setOpenConfirmDeleteDvm}
-            itemToDelete="DVM rule"
-            actionButtonFunction={
-              stateOfDeleteDvm == 'deactivate' ? handleDeactivate : handleReactivate
-            }
-            actionType={stateOfDeleteDvm}
-          />
-        </Tabs.Tab>
-        <Tabs.Tab eventKey="2" title="Rule Combinations"></Tabs.Tab>
-      </Tabs>
+      <MyTab 
+       data={Tabdata}
+      />
     </Panel>
   );
 };

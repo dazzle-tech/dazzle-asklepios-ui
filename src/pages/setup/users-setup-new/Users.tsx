@@ -425,16 +425,7 @@ const handleSave = async () => {
     <div>
       <div>
         <Panel>
-          <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={handleAddNew}
-              width="109px"
-            >
-              Add New
-            </MyButton>
-          </div>
+
           <MyTable
             data={paginatedData ?? []}
             columns={tableColumns}
@@ -454,6 +445,16 @@ const handleSave = async () => {
             onRowsPerPageChange={handleRowsPerPageChange}
             filters={filters()}
             loading={isLoading}
+            tableButtons={          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleAddNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>}
           />
           <AddEditUser
             open={popupOpen}

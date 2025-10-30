@@ -314,16 +314,7 @@ const ActiveIngredientsSetup = () => {
       activeIndex={carouselActiveIndex}
     >
       <Panel>
-        <div className="container-of-add-new-button">
-          <MyButton
-            prefixIcon={() => <AddOutlineIcon />}
-            color="var(--deep-blue)"
-            onClick={handleNew}
-            width="109px"
-          >
-            Add New
-          </MyButton>
-        </div>
+
         <MyTable
           height={450}
           data={activeIngredientListResponse?.object ?? []}
@@ -344,7 +335,18 @@ const ActiveIngredientsSetup = () => {
           totalCount={totalCount}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
+          tableButtons={<div className="container-of-add-new-button">
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={handleNew}
+            width="109px"
+          >
+            Add New
+          </MyButton>
+        </div>}
         />
+        
         <DeletionConfirmationModal
           open={openConfirmDeleteActiveIngredient}
           setOpen={setOpenConfirmDeleteActiveIngredient}

@@ -136,16 +136,7 @@ const Checklist = () => {
   ];
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleAddNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
+
       <MyTable
         height={450}
         data={data}
@@ -154,6 +145,16 @@ const Checklist = () => {
         onRowClick={rowData => {
           setChecklist(rowData);
         }}
+        tableButtons={<div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleAddNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <AddEditCheckList
         open={openAddEditPopup}

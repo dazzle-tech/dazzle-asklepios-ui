@@ -360,19 +360,7 @@ const Practitioners = () => {
   // ──────────────────────────── RENDER ────────────────────────────
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={() => {
-            setPractitioner({ ...newPractitioner });
-            setOpenAddEditPractitioner(true);
-          }}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
+
 
       <MyTable
         data={isFiltered ? filteredList : practitionerListResponse?.data ?? []}
@@ -385,6 +373,19 @@ const Practitioners = () => {
         page={pageIndex}
         rowsPerPage={rowsPerPage}
         onPageChange={handlePageChange}
+        tableButtons={<div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={() => {
+            setPractitioner({ ...newPractitioner });
+            setOpenAddEditPractitioner(true);
+          }}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
         onRowsPerPageChange={(e) => {
           setPaginationParams({
             ...paginationParams,

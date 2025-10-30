@@ -3,26 +3,23 @@ import TreadmillStress from '../treadm-stress/TreadmillStress';
 import ChiefComplaintSymptoms from '../chief_complaint_symptoms/ChiefComplaintSymptoms';
 import ElectrocardiogramECG from '../electrocardiogram-ecg/ElectrocardiogramECG';
 import EchoDopplerTest from './echo-doppler-test/EchoDopplerTest';
-import { Tabs } from 'rsuite';
 import { useLocation } from 'react-router-dom';
+import MyTab from '@/components/MyTab';
 const Cardiology = () => {
     const location = useLocation();
     const { patient, encounter, edit } = location.state || {};
+ 
+    const tabData = [
+      {title: "Chief Complaint & Symptoms", content: <ChiefComplaintSymptoms patient={patient} encounter={encounter} edit={edit} />},
+      {title: "Treadmill Stress Test (TMST)", content: <TreadmillStress patient={patient} encounter={encounter} edit={edit} />},
+      {title: "Electrocardiography (ECG)", content: <ElectrocardiogramECG patient={patient} encounter={encounter} edit={edit} />},
+      {title: "Echo Doppler Test", content: <EchoDopplerTest patient={patient} encounter={encounter} edit={edit} />},
+    ];
+
     return (
-        <Tabs defaultActiveKey="1" appearance="subtle" >
-            <Tabs.Tab eventKey="1" title="Chief Complaint & Symptoms">
-                <ChiefComplaintSymptoms patient={patient} encounter={encounter} edit={edit} />
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="2" title="Treadmill Stress Test (TMST)">
-                <TreadmillStress patient={patient} encounter={encounter} edit={edit} />
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="3" title="Electrocardiography (ECG)">
-                <ElectrocardiogramECG patient={patient} encounter={encounter} edit={edit} />
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="4" title="Echo Doppler Test">
-                <EchoDopplerTest patient={patient} encounter={encounter} edit={edit} />
-            </Tabs.Tab>
-        </Tabs>
+       <MyTab 
+        data={tabData}
+       />
     );
 };
 export default Cardiology;
