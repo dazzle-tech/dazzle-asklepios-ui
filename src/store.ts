@@ -190,7 +190,6 @@ export const store = configureStore({
       allergensService.middleware,
       potintialService.middleware,
       diagnosticTestService.middleware,
-
     ])
 });
 

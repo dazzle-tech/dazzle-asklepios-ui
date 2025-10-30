@@ -420,16 +420,6 @@ const Users = () => {
     <div>
       <div>
         <Panel>
-          <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={handleAddNew}
-              width="109px"
-            >
-              Add New
-            </MyButton>
-          </div>
           <MyTable
             data={userListResponse?.object ?? []}
             columns={tableColumns}
@@ -449,6 +439,17 @@ const Users = () => {
             onRowsPerPageChange={handleRowsPerPageChange}
             filters={filters()}
             loading={load || isFetching}
+            tableButtons={
+            <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleAddNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>}
           />
           <AddEditUser
             open={popupOpen}

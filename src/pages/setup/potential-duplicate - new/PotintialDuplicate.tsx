@@ -301,16 +301,7 @@ const PotintialDuplicate = () => {
   };
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
+
       <MyTable
         filters={filters()}
         height={450}
@@ -332,6 +323,16 @@ const PotintialDuplicate = () => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+        tableButtons={<div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <AddEditRule
         open={popupOpen}

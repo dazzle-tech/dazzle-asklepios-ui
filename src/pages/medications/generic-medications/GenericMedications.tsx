@@ -336,16 +336,6 @@ const GenericMedications = () => {
   ];
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         height={450}
         data={genericMedicationListResponse?.object ?? []}
@@ -366,6 +356,16 @@ const GenericMedications = () => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+        tableButtons={      <div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <AddEditBrandMedication
         open={openAddEditPopup}

@@ -185,11 +185,7 @@ const PurchaseApprovalSetup = () => {
   return (
     <>
       <Panel className="main-purchase-approval-page-gaps">
-        <div className="add-new-purchase-approval-button">
-          <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={() => setOpenModal(true)}>
-            Add New
-          </MyButton>
-        </div>
+
 
         <MyTable
           data={paginatedData}
@@ -240,6 +236,11 @@ const PurchaseApprovalSetup = () => {
             setRowsPerPage(parseInt(e.target.value, 10));
             setPage(0);
           }}
+          tableButtons={<div className="add-new-purchase-approval-button">
+          <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={() => setOpenModal(true)}>
+            Add New
+          </MyButton>
+        </div>}
         />
         <DeletionConfirmationModal
           open={openConfirmDeleteModal}
