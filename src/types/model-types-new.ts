@@ -224,7 +224,29 @@ export interface PatientAttachment {
   type?: string;
   details?: string;
   source?: string;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
 }
+// Encounter Attachment
+export interface EncounterAttachment {
+  id: number;
+  encounterId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  type?: string;
+  details?: string;
+  source?: string;
+  sourceId?: number; // Link to specific order/medication within encounter
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
 // Response Types
 export interface UploadResponse {
   id: number;
@@ -234,20 +256,40 @@ export interface UploadResponse {
   downloadUrl: string;
 }
 
-
-
+export interface Allergen {
+  id?: number;
+  code: string;
+  name: string;
+  type: string ;
+  description?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+// Download Attachment Ticke
 export interface DownloadTicket {
   url: string;
   expiresInSeconds: number;
 }
 
 // Request Types
-export interface UploadAttachmentParams {
+export interface UploadPatientAttachmentParams {
   patientId: number;
   files: File[];
   type?: string;
   details?: string;
   source?: string;
+}
+
+export interface UploadEncounterAttachmentParams {
+  encounterId: number;
+  file: File; 
+  type?: string;
+  details?: string;
+  source?: string;
+  sourceId?: number;
 }
 
 export interface Service {

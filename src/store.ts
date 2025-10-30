@@ -45,6 +45,7 @@ import { patientAttachmentService } from './services/patients/attachmentService'
 import { ageGroupService } from './services/setup/ageGroupService';
 import {potintialService} from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
+import { encounterAttachmentsService } from './services/encounters/attachmentsService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -91,6 +92,7 @@ export const store = configureStore({
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
     [patientAttachmentService.reducerPath]: patientAttachmentService.reducer,
+    [encounterAttachmentsService.reducerPath]: encounterAttachmentsService.reducer,
     //lab module
     [labService.reducerPath]: labService.reducer,
     //operation
@@ -164,6 +166,7 @@ export const store = configureStore({
       observationService.middleware,
       attachmentService.middleware,
       patientAttachmentService.middleware,
+      encounterAttachmentsService.middleware,
       labService.middleware,
       radService.middleware,
       procedureService.middleware,
