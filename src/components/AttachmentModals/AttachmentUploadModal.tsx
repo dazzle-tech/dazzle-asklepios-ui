@@ -1,36 +1,46 @@
 import MyModal from '@/components/MyModal/MyModal';
 import { faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import Attachment from '@/images/Attachment.png';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Form } from 'rsuite';
 import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { useUploadAttachmentsMutation } from '@/services/patients/attachmentService';
+import { useUploadAttachmentsMutation as useUploadPatientAttachmentsMutation } from '@/services/patients/attachmentService';
+import { useUploadAttachmentMutation as useUploadEncounterAttachmentMutation } from '@/services/encounters/attachmentsService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 
 interface AttachmentUploadModalProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  patientId: number;
+  patientId?: number;
+  encounterId?: number;
   refetchData: () => void;
-  source?: string; // Make source dynamic instead of hardcoded
+  source?: string;
+  sourceId?: number; 
 }
 
 const AttachmentUploadModal = ({
   isOpen,
   setIsOpen,
   patientId,
+  encounterId,
   refetchData,
-  source = 'PATIENT_PROFILE_ATTACHMENT' // Default value if not provided
+  source = 'PATIENT_PROFILE_ATTACHMENT',
+  sourceId
 }: AttachmentUploadModalProps) => {
   const dispatch = useAppDispatch();
   const attachmentFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [uploadAttachments, { isLoading }] = useUploadAttachmentsMutation();
+
+  // Use appropriate mutation based on whether patientId or encounterId is provided
+  const [uploadPatientAttachments, { isLoading: isLoadingPatient }] = useUploadPatientAttachmentsMutation();
+  const [uploadEncounterAttachment, { isLoading: isLoadingEncounter }] = useUploadEncounterAttachmentMutation();
+  
+  const isLoading = isLoadingPatient || isLoadingEncounter;
   
   // Fetch attachment types LOV
   const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
@@ -89,22 +99,48 @@ const AttachmentUploadModal = ({
     }
 
     try {
-      await uploadAttachments({
-        patientId,
-        files: selectedFiles,
-        type: selectedAttachType.typeLkey || undefined,
-        details: attachmentDetails.attachmentDetails || undefined,
-        source: source // Use the dynamic source prop
-      }).unwrap();
+      if (encounterId) {
+        // Upload encounter attachments one at a time (backend accepts single file)
+        const uploadPromises = selectedFiles.map(file => 
+          uploadEncounterAttachment({
+            encounterId,
+            file, // Single file
+            type: selectedAttachType.typeLkey || undefined,
+            details: attachmentDetails.attachmentDetails || undefined,
+            source: source,
+            sourceId: sourceId || 0 // Use 0 as default for general attachments, actual ID for order-specific
+          }).unwrap()
+        );
+        
+        await Promise.all(uploadPromises);
+      } else if (patientId) {
+        // Upload patient attachments (supports multiple files)
+        await uploadPatientAttachments({
+          patientId,
+          files: selectedFiles,
+          type: selectedAttachType.typeLkey || undefined,
+          details: attachmentDetails.attachmentDetails || undefined,
+          source: source
+        }).unwrap();
+      } else {
+        dispatch(notify({ msg: 'Patient ID or Encounter ID is required', sev: 'error' }));
+        return;
+      }
 
       dispatch(notify({ msg: 'Attachment(s) Uploaded Successfully', sev: 'success' }));
       handleReset();
       setIsOpen(false);
       refetchData();
     } catch (error: any) {
-      console.error('Upload error:', error);
+      console.error('Upload error details:', {
+        error,
+        errorData: error?.data,
+        errorMessage: error?.data?.message,
+        errorStatus: error?.status,
+        fullError: JSON.stringify(error, null, 2)
+      });
       dispatch(notify({ 
-        msg: error?.data?.message || 'Failed to Upload Attachment', 
+        msg: error?.data?.message || error?.message || 'Failed to Upload Attachment', 
         sev: 'error' 
       }));
     }
@@ -198,11 +234,13 @@ const AttachmentUploadModal = ({
     </>
   );
 
+  const modalTitle = encounterId ? "Upload Encounter Attachments" : "Upload Patient Attachments";
+
   return (
     <MyModal
       open={isOpen}
       setOpen={handleClose}
-      title="Upload Patient Attachments"
+      title={modalTitle}
       size="sm"
       bodyheight="65vh"
       content={content}

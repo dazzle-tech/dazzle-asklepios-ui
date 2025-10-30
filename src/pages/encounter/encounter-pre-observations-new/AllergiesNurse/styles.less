@@ -1,0 +1,137 @@
+.disabled-panel {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+ .fill-width{
+  width: 100%;
+ }
+ .margin-label{
+  margin-top: 14px;
+ }
+ .expand-table-padding{
+  padding: 5px !important;
+ }
+ .column-div{
+  display:flex;
+   flex-direction:column;
+ }
+  .div-parent{
+    display:flex !important;
+    gap:17px !important;
+  }
+  .flex1{
+    flex:1 !important;
+  }
+  .font-style{
+    font-family: 'Inter Medium';
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  .date-width{
+    width: 200px;
+  }
+  .padding-expand-table{
+    padding: 5;
+  }
+  .bt-div{
+    display: flex;
+     gap: 5px;
+  }
+  .bt-right{
+    margin-left:auto;
+  }
+  .rows-gap{
+    margin-bottom: 15px !important;
+  }
+
+  @media (max-width: 500px) {
+
+    .bt-div{
+      flex-direction: column;
+    }
+    .div-parent{
+      flex-direction: column;
+    }
+  }
+
+
+  //for floating button 
+
+.allergy-floating-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  background-color: #fff;
+  border: 1px solid var(--rs-border-primary);
+  border-radius: 12px;
+  padding: 10px;
+  width: 350px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  cursor: grab;
+}
+
+.allergy-floating-fab:active {
+  cursor: grabbing;
+}
+
+.fab-header {
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 16px;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-icon {
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.close-icon:hover {
+  color: #e74c3c;
+}
+
+.fab-toggle-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  background-color: var(--primary-orange);
+  color: white;
+  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: row;
+  gap: 0.2vw;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  text-align: center;
+  padding: 10px;
+  transition: background-color 0.3s;
+}
+
+.fab-toggle-button:active{cursor: grabbing;}
+
+.fab-toggle-button:hover {
+  background-color: var(--orange-600);
+}
+
+.table-scroll-wrapper {
+  max-height: 230px;
+  overflow-y: auto;
+}
+
+.dark{
+  .allergy-floating-fab{
+    background-color: var(--dark-black);
+  }
+}

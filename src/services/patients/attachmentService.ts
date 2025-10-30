@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
-import { DownloadTicket, PatientAttachment, UploadAttachmentParams, UploadResponse } from '@/types/model-types-new';
+import { DownloadTicket, PatientAttachment, UploadPatientAttachmentParams, UploadResponse } from '@/types/model-types-new';
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type PagedResult<T> = { data: T[]; totalCount: number };
@@ -20,7 +20,7 @@ export const patientAttachmentService = createApi({
   tagTypes: ['PatientAttachment'],
   endpoints: builder => ({
     // POST /api/setup/patients/{patientId}/attachments
-    uploadAttachments: builder.mutation<UploadResponse[], UploadAttachmentParams>({
+    uploadAttachments: builder.mutation<UploadResponse[], UploadPatientAttachmentParams>({
       query: ({ patientId, files, type, details, source }) => {
         const formData = new FormData();
         files.forEach(file => {
@@ -44,11 +44,10 @@ export const patientAttachmentService = createApi({
       ],
     }),
 
-    // GET /api/setup/patients/attachments-list-by-patientId/{patientId}
-    // Returns List<PatientAttachments> directly (not paginated)
+    // GET /api/setup/patients/attachments/by-patientId/{patientId}
     getPatientAttachments: builder.query<PagedResult<PatientAttachment>, { patientId: number }>({
       query: ({ patientId }) => ({
-        url: `/api/setup/patients/attachments-list-by-patientId/${patientId}`,
+        url: `/api/setup/patients/attachments/by-patientId/${patientId}`,
         method: 'GET',
       }),
       transformResponse: (response: PatientAttachment[]): PagedResult<PatientAttachment> => ({

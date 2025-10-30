@@ -36,16 +36,16 @@ import BedsideProceduresRequests from './pages/encounter/encounter-component/bed
 import BloodOrder from './pages/encounter/encounter-component/blood-order';
 import Cardiology from './pages/encounter/encounter-component/cardiology';
 import CarePlanAndGoals from './pages/encounter/encounter-component/care-plan-and-goals';
-import Consultation from './pages/encounter/encounter-component/consultation';
+import ConsultationNew from './pages/encounter/encounter-component/consultation-new';
 import DayCaseContent from './pages/encounter/encounter-component/day-case-content';
-import DiagnosticsOrder from './pages/encounter/encounter-component/diagnostics-order';
+import DiagnosticsOrderNew from './pages/encounter/encounter-component/diagnostics-order-new';
 import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics-result/DiagnosticsResult';
 import DialysisRequest from './pages/encounter/encounter-component/dialysis-request/DialysisRequest';
 import DietaryRequest from './pages/encounter/encounter-component/dietary-request/DietaryRequests';
 import DischargePlanning from './pages/encounter/encounter-component/discharged-planning';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
 import ViewRound from './pages/encounter/encounter-component/doctor-round/NewRound/ViewRound';
-import DrugOrder from './pages/encounter/encounter-component/drug-order';
+import DrugOrderNew from './pages/encounter/encounter-component/drug-order-new';
 import JohnsHopkinsTool from './pages/encounter/encounter-component/fall-risk-assessments';
 import GlasgowComaScale from './pages/encounter/encounter-component/glasgow-coma-scale';
 import HendrichFallRisk from './pages/encounter/encounter-component/hendrich-fall-risk';
@@ -59,7 +59,7 @@ import MorseFallScale from './pages/encounter/encounter-component/morse-fall-sca
 import MultidisciplinaryTeamNotes from './pages/encounter/encounter-component/multidisciplinary-team-notes';
 import NutritionStateAsssessment from './pages/encounter/encounter-component/nutrition-state-asssessment';
 import OccupationalTherapy from './pages/encounter/encounter-component/occupational-therapy';
-import OperationRequest from './pages/encounter/encounter-component/operation-request/OperationRequest';
+import OperationRequestNew from './pages/encounter/encounter-component/operation-request-new/OperationRequest';
 import OptometricExam from './pages/encounter/encounter-component/optometric-exam';
 import SlidingScale from './pages/encounter/encounter-component/order-details';
 import PatientHistory from './pages/encounter/encounter-component/patient-history';
@@ -67,7 +67,7 @@ import PatientSummary from './pages/encounter/encounter-component/patient-summar
 import PhysicianOrderSummary from './pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component';
 import PhysiotherapyPlan from './pages/encounter/encounter-component/physiotherapy-plan';
 import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-follow-up';
-import Prescription from './pages/encounter/encounter-component/prescription';
+import PrescriptionNew from './pages/encounter/encounter-component/prescription-new';
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
 import Procedure from './pages/encounter/encounter-component/procedure';
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
@@ -80,7 +80,7 @@ import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-as
 import EncounterList from './pages/encounter/encounter-list';
 import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
 import Allergies from './pages/encounter/encounter-pre-observations/AllergiesNurse';
-import EncounterPreObservations from './pages/encounter/encounter-pre-observations/EncounterPreObservations';
+import EncounterPreObservationsNew from './pages/encounter/encounter-pre-observations-new/EncounterPreObservations';
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import Observations from './pages/encounter/encounter-pre-observations/observations/Observations';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
@@ -396,9 +396,9 @@ const App = () => {
                 />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
-                <Route path="medication-order" element={<DrugOrder />} />
+                <Route path="medication-order" element={<DrugOrderNew />} />
                 <Route path="pregnancy-follow-up" element={<PregnancyFollowup />} />
-                <Route path="drug-order" element={<DrugOrder />} />
+                <Route path="drug-order" element={<DrugOrderNew />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
@@ -411,16 +411,16 @@ const App = () => {
                 <Route path="audiometry" element={<AudiometryPuretone />} />
                 <Route path="psychological-exam" element={<PsychologicalExam />} />
                 <Route path="vaccination" element={<VaccinationTab />} />
-                <Route path="prescription" element={<Prescription />} />
-                <Route path="diagnostics-order" element={<DiagnosticsOrder />} />
-                <Route path="consultation" element={<Consultation />} />
+                <Route path="prescription" element={<PrescriptionNew />} />
+                <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
+                <Route path="consultation" element={<ConsultationNew />} />
                 <Route path="procedures" element={<Procedure />} />
                 <Route path="patient-history" element={<PatientHistory />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
                 <Route path="dialysis-request" element={<DialysisRequest />} />
-                <Route path="operation-request" element={<OperationRequest />} />
+                <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
                 <Route path="pediatric" element={<Pediatric />} />
@@ -459,7 +459,7 @@ const App = () => {
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
-              <Route path="nurse-station" element={<EncounterPreObservations />} />
+              <Route path="nurse-station" element={<EncounterPreObservationsNew />} />
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
               <Route path="review-results" element={<ReviewResults />} />
               <Route path="facilities" element={<Facilities />} />
@@ -481,7 +481,7 @@ const App = () => {
               <Route path="users-new" element={<UsersNew />} />
               <Route path="uom-group" element={<UOMGroup />} />
               <Route path="med-matrix-setup" element={<MedicationMatrix />} />
-              <Route path="nurse-station" element={<EncounterPreObservations />} />
+              <Route path="nurse-station" element={<EncounterPreObservationsNew />} />
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />

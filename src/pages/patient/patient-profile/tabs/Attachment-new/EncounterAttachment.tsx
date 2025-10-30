@@ -7,21 +7,18 @@ import React, { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { faTrash, faFileArrowDown, faEye, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useGetPatientAttachmentsQuery, useGetDownloadUrlMutation as useGetPatientDownloadUrlMutation, useDeleteAttachmentMutation as useDeletePatientAttachmentMutation } from '@/services/patients/attachmentService';
-import { useGetDownloadUrlMutation as useGetEncounterDownloadUrlMutation, useDeleteAttachmentMutation as useDeleteEncounterAttachmentMutation, useGetEncounterAttachmentsByEncounterIdsQuery } from '@/services/encounters/attachmentsService';
-import { useGetEncountersQuery } from '@/services/encounterService';
+import { useGetEncounterAttachmentsBySourceQuery, useGetDownloadUrlMutation, useDeleteAttachmentMutation } from '@/services/encounters/attachmentsService';
 import MyButton from '@/components/MyButton/MyButton';
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
 import { AttachmentUploadModal, PreviewModal, EditModal } from '@/components/AttachmentModals';
 import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromList } from '@/utils';
-import { PatientAttachment as PatientAttachmentType, EncounterAttachment } from '@/types/model-types-new';
+import { EncounterAttachment as EncounterAttachmentType } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { initialListRequest } from '@/types/types';
 
-const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAttachmentList }) => {
+const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetchAttachmentList, source = 'NURSE_STATION_ATTACHMENT', sourceId }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-    const [selectedAttachment, setSelectedAttachment] = useState<PatientAttachmentType | null>(null);
+    const [selectedAttachment, setSelectedAttachment] = useState<EncounterAttachmentType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [previewModalOpen, setPreviewModalOpen] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -35,68 +32,25 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
     const [pageSize, setPageSize] = useState(5);
 
     // API hooks
-    const [deletePatientAttachment] = useDeletePatientAttachmentMutation();
-    const [deleteEncounterAttachment] = useDeleteEncounterAttachmentMutation();
-    const [getPatientDownloadUrl] = useGetPatientDownloadUrlMutation();
-    const [getEncounterDownloadUrl] = useGetEncounterDownloadUrlMutation();
-
+    const [deleteAttachment] = useDeleteAttachmentMutation();
+    const [getDownloadUrl] = useGetDownloadUrlMutation();
+    
     // Fetch attachment types LOV for mapping
     const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
     const attachmentTypesLov = attachmentsLovQueryResponse?.object ?? [];
 
-    // Fetch all encounters for the patient
-    const { data: encountersResponse, isLoading: loadingEncounters } = useGetEncountersQuery(
+    // Fetch encounter attachments
+    const { data: attachmentsResponse, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetEncounterAttachmentsBySourceQuery(
         {
-            ...initialListRequest,
-            pageSize: 1000, // Get all encounters
-            filters: [
-                {
-                    fieldName: 'patient_key',
-                    operator: 'match',
-                    value: localPatient?.key || localPatient?.id
-                }
-            ]
+            encounterId: localEncounter?.id || localEncounter?.key,
+            source: source,
+            sourceId: sourceId
         },
-        { skip: !localPatient?.id && !localPatient?.key }
+        { skip: !localEncounter?.id && !localEncounter?.key }
     );
 
-    const patientEncounters = encountersResponse?.object || [];
-    const encounterIds = patientEncounters.map(enc => enc.id || enc.key).filter(Boolean);
-
-    // Fetch patient attachments
-    const { data: patientAttachmentsResponse, refetch: attachmentRefetch, isLoading: loadPatientAttachment } = useGetPatientAttachmentsQuery(
-        {
-            patientId: localPatient?.id || localPatient?.key
-        },
-        { skip: !localPatient?.id && !localPatient?.key }
-    );
-
-    // Fetch encounter attachments for all patient encounters using the new endpoint
-    const { data: encounterAttachmentsResponse, refetch: encounterAttachmentsRefetch, isLoading: loadingEncounterAttachments } = useGetEncounterAttachmentsByEncounterIdsQuery(
-        {
-            encounterIds: encounterIds
-        },
-        { skip: encounterIds.length === 0 }
-    );
-
-    const encounterAttachments = encounterAttachmentsResponse || [];
-
-    // Combine patient and encounter attachments with encounter info
-    const patientAttachments = patientAttachmentsResponse?.data || [];
-    const combinedAttachments = [
-        ...patientAttachments.map(att => ({ ...att, attachmentType: 'patient' as const, encounterInfo: null })),
-        ...encounterAttachments.map(att => {
-            const encounter = patientEncounters.find(enc => (enc.id || enc.key) === att.encounterId);
-            return {
-                ...att,
-                attachmentType: 'encounter' as const,
-                encounterInfo: encounter
-            };
-        })
-    ];
-
-    const totalCount = combinedAttachments.length;
-    const loadAttachment = loadPatientAttachment || loadingEncounters || loadingEncounterAttachments;
+    const encounterAttachments = attachmentsResponse?.data || [];
+    const totalCount = encounterAttachments.length;
 
     // Function to check if the current row is the selected one
     const isSelected = rowData => {
@@ -108,25 +62,14 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
     // Handle Delete Attachment Modal
     const handleDeleteAttachment = async () => {
         if (!selectedAttachment?.id) return;
-
+        
         try {
-            const attachmentType = (selectedAttachment as any).attachmentType;
-
-            if (attachmentType === 'patient') {
-                await deletePatientAttachment({
-                    id: selectedAttachment.id,
-                    patientId: localPatient?.id || localPatient?.key
-                }).unwrap();
-            } else if (attachmentType === 'encounter') {
-                const encounterAtt = selectedAttachment as any as EncounterAttachment;
-                await deleteEncounterAttachment({
-                    id: encounterAtt.id,
-                    encounterId: encounterAtt.encounterId
-                }).unwrap();
-            }
-
+            await deleteAttachment({
+                id: selectedAttachment.id,
+                encounterId: localEncounter?.id || localEncounter?.key
+            }).unwrap();
+            
             attachmentRefetch();
-            encounterAttachmentsRefetch();
             dispatch(notify({ msg: 'Attachment Deleted Successfully', sev: 'success' }));
             handleClearAttachmentDelete();
         } catch (error) {
@@ -146,12 +89,6 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
         setAttachmentsModalOpen(true);
     };
 
-    // Refetch all attachments (patient + encounter)
-    const refetchAllAttachments = async () => {
-        attachmentRefetch();
-        encounterAttachmentsRefetch();
-    };
-
     // Handle Open Edit Modal
     const handleOpenEditModal = () => {
         if (!selectedAttachment) return;
@@ -163,18 +100,11 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
         setEditModalOpen(false);
     };
 
-    // Handle Preview Selected Attachment (patient or encounter)
-    const handlePreviewSelectedPatientAttachment = async (attachment: any) => {
+    // Handle Preview Selected Encounter Attachment
+    const handlePreviewSelectedEncounterAttachment = async (attachment: EncounterAttachmentType) => {
         try {
-            const attachmentType = attachment.attachmentType;
-            let downloadTicket;
-
-            if (attachmentType === 'patient') {
-                downloadTicket = await getPatientDownloadUrl(attachment.id).unwrap();
-            } else {
-                downloadTicket = await getEncounterDownloadUrl(attachment.id).unwrap();
-            }
-
+            const downloadTicket = await getDownloadUrl(attachment.id).unwrap();
+            
             // Set preview data and open modal
             setPreviewUrl(downloadTicket.url);
             setPreviewFileName(attachment.filename);
@@ -193,18 +123,11 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
         setPreviewFileType('');
     };
 
-    // Handle Download Selected Attachment (patient or encounter)
-    const handleDownloadSelectedPatientAttachment = async (attachment: any) => {
+    // Handle Download Selected Encounter Attachment
+    const handleDownloadSelectedEncounterAttachment = async (attachment: EncounterAttachmentType) => {
         try {
-            const attachmentType = attachment.attachmentType;
-            let downloadTicket;
-
-            if (attachmentType === 'patient') {
-                downloadTicket = await getPatientDownloadUrl(attachment.id).unwrap();
-            } else {
-                downloadTicket = await getEncounterDownloadUrl(attachment.id).unwrap();
-            }
-
+            const downloadTicket = await getDownloadUrl(attachment.id).unwrap();
+            
             // Open the presigned URL in a new tab or trigger download
             const link = document.createElement('a');
             link.href = downloadTicket.url;
@@ -213,7 +136,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
+            
             dispatch(notify({ msg: 'Download started', sev: 'success' }));
         } catch (error) {
             dispatch(notify({ msg: 'Failed to get download URL', sev: 'error' }));
@@ -232,24 +155,6 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
     };
     // Table Columns
     const columns = [
-        {
-            key: 'attachmentType',
-            title: <Translate>Category</Translate>,
-            flexGrow: 2,
-            render: (rowData: any) => (
-                <span style={{
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    backgroundColor: rowData.attachmentType === 'patient' ? '#e3f2fd' : '#fff3e0',
-                    color: rowData.attachmentType === 'patient' ? '#1976d2' : '#f57c00',
-                    fontWeight: 500,
-                    fontSize: '12px'
-                }}>
-                    {rowData.attachmentType === 'patient' ? 'Patient' : 'Encounter'}
-                </span>
-            ),
-            fullText: true,
-        },
         {
             key: 'filename',
             title: <Translate>Attachment Name</Translate>,
@@ -275,45 +180,27 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             key: 'type',
             title: <Translate>Type</Translate>,
             flexGrow: 4,
-            render: (rowData: any) =>
-                rowData.type
+            render: (rowData: EncounterAttachmentType) => 
+                rowData.type 
                     ? conjureValueBasedOnKeyFromList(attachmentTypesLov, rowData.type, 'lovDisplayVale')
-                    : rowData.type,
+                    : rowData.type ,
             fullText: true,
         },
         {
             key: 'source',
             title: <Translate>Source</Translate>,
-            flexGrow: 3,
-            render: (row: any) => formatEnumString(row.source),
-            fullText: true,
-        },
-        {
-            key: 'encounter',
-            title: <Translate>Encounter</Translate>,
-            flexGrow: 3,
-            render: (rowData: any) => {
-                if (rowData.attachmentType === 'encounter' && rowData.encounterId) {
-                    const encounter = patientEncounters.find(enc =>
-                        Number(enc.key) === Number(rowData.encounterId)
-                    );
-                    if (encounter) {
-                        return encounter.visitId;         
-                    }
-                    return rowData.encounterId;
-                }
-                return '-';
-            },
+            flexGrow: 2,
+            render: (row: EncounterAttachmentType) => formatEnumString(row.source),
             fullText: true,
         },
         {
             key: 'preview',
             title: <Translate>Preview</Translate>,
             flexGrow: 2,
-            render: (attachment: PatientAttachmentType) => (
+            render: (attachment: EncounterAttachmentType) => (
                 <MyButton
                     appearance="link"
-                    onClick={() => handlePreviewSelectedPatientAttachment(attachment)}
+                    onClick={() => handlePreviewSelectedEncounterAttachment(attachment)}
                     prefixIcon={() => <FontAwesomeIcon icon={faEye} />}>
                     Preview
                 </MyButton>
@@ -324,10 +211,10 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             key: 'download',
             title: <Translate>Download</Translate>,
             flexGrow: 2,
-            render: (attachment: PatientAttachmentType) => (
+            render: (attachment: EncounterAttachmentType) => (
                 <MyButton
                     appearance="link"
-                    onClick={() => handleDownloadSelectedPatientAttachment(attachment)}
+                    onClick={() => handleDownloadSelectedEncounterAttachment(attachment)}
                     prefixIcon={() => <FontAwesomeIcon icon={faFileArrowDown} />}>
                     Download
                 </MyButton>
@@ -339,57 +226,58 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             title: <Translate>Created By/At</Translate>,
             fullText: true,
             flexGrow: 3,
-            render: (row: PatientAttachmentType) => row?.createdDate ? <>{row?.createdBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdDate)}</span> </> : ' '
+            render: (row: EncounterAttachmentType) => row?.createdDate ? <>{row?.createdBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdDate)}</span> </> : ' '
         },
         {
             key: 'lastModifiedDate',
             title: <Translate>Updated By/At</Translate>,
             fullText: true,
             flexGrow: 3,
-            render: (row: PatientAttachmentType) => row?.lastModifiedDate ? <>{row?.lastModifiedBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.lastModifiedDate)}</span> </> : ' '
+            render: (row: EncounterAttachmentType) => row?.lastModifiedDate ? <>{row?.lastModifiedBy}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.lastModifiedDate)}</span> </> : ' '
         },
     ];
 
     // Effects
     useEffect(() => {
         if (refetchAttachmentList) {
-            refetchAllAttachments();
+            attachmentRefetch();
             setRefetchAttachmentList(false);
         }
-    }, [refetchAttachmentList, setRefetchAttachmentList]);
+    }, [refetchAttachmentList, attachmentRefetch, setRefetchAttachmentList]);
     return (
         <div className="tab-main-container">
             <div className="tab-content-btns">
                 <MyButton
                     onClick={handleAddNewAttachment}
-                    disabled={!localPatient?.id && !localPatient?.key}
+                    disabled={!localEncounter?.id && !localEncounter?.key}
                     prefixIcon={() => <PlusRound />}>
                     New Attachment
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter'}
+                    disabled={!selectedAttachment?.id}
                     onClick={handleOpenEditModal}
                     prefixIcon={() => <FontAwesomeIcon icon={faEdit} />}>
                     Edit
                 </MyButton>
                 <MyButton
-                    disabled={!selectedAttachment?.id || (selectedAttachment as any)?.attachmentType === 'encounter'}
+                    disabled={!selectedAttachment?.id}
                     onClick={() => setDeleteModalOpen(true)}
                     prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}>
                     Delete
                 </MyButton>
             </div>
-            <AttachmentUploadModal
-                isOpen={attachmentsModalOpen}
-                setIsOpen={setAttachmentsModalOpen}
-                patientId={localPatient?.id || localPatient?.key}
-                refetchData={refetchAllAttachments}
-                source='PATIENT_PROFILE_ATTACHMENT'
+            <AttachmentUploadModal 
+                isOpen={attachmentsModalOpen} 
+                setIsOpen={setAttachmentsModalOpen} 
+                encounterId={localEncounter?.id || localEncounter?.key}
+                refetchData={attachmentRefetch} 
+                source={source}
+                sourceId={sourceId}
             />
             <MyTable
                 height={200}
                 loading={loadAttachment}
-                data={combinedAttachments}
+                data={encounterAttachments}
                 columns={columns}
                 onRowClick={rowData => { setSelectedAttachment(rowData); }}
                 rowClassName={isSelected}
@@ -412,9 +300,9 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
                 open={editModalOpen}
                 onClose={handleCloseEditModal}
                 selectedAttachment={selectedAttachment}
-                patientId={localPatient?.id || localPatient?.key}
+                encounterId={localEncounter?.id || localEncounter?.key}
                 attachmentTypesLov={attachmentTypesLov}
-                onUpdateSuccess={refetchAllAttachments}
+                onUpdateSuccess={attachmentRefetch}
             />
 
             {/* Preview Modal */}
@@ -428,4 +316,4 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
         </div>
     );
 };
-export default PatientAttachment;
+export default EncounterAttachment;
