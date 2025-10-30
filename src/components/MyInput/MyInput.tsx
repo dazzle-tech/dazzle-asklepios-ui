@@ -145,7 +145,6 @@ const MyInput = ({
       const handleScroll = (event: Event) => {
         const target = event.target as HTMLElement | null;
 
-        // لو الـ scroll داخل الـ picker menu نفسه، تجاهله
         if (
           target &&
           (target.closest('.rs-picker-menu') ||
@@ -155,12 +154,10 @@ const MyInput = ({
           return;
         }
 
-        // لو الـ scroll داخل مودال أو container محدد، تجاهله كمان
         if (target && target.closest('.rs-modal-body')) {
           return;
         }
 
-        // غير هيك سكّر كل الـ pickers المفتوحة
         setIsSelectOpen(false);
         setIsDateOpen(false);
         setIsDateTimeOpen(false);
