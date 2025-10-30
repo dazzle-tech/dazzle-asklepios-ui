@@ -39,6 +39,23 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
+     getAllActiveDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = "id,asc" }) => ({
+        url: "/api/setup/diagnostic-test/active",
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["DiagnosticTest"],
+    }),
+
     // 🔹 Get diagnostic tests by type
     getDiagnosticTestsByType: builder.query({
       query: ({ type, ...params }) => ({
@@ -46,6 +63,14 @@ export const diagnosticTestService = createApi({
         method: "GET",
         params,
       }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
       providesTags: ["DiagnosticTest"],
     }),
 
@@ -56,6 +81,14 @@ export const diagnosticTestService = createApi({
         method: "GET",
         params,
       }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
       providesTags: ["DiagnosticTest"],
     }),
 
@@ -65,6 +98,14 @@ export const diagnosticTestService = createApi({
         url: `/api/setup/diagnostic-test/${id}`,
         method: "GET",
       }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
       providesTags: (result, error, id) => [{ type: "DiagnosticTest", id }],
     }),
 
@@ -105,6 +146,8 @@ export const diagnosticTestService = createApi({
 export const {
   useGetAllDiagnosticTestsQuery,
   useGetDiagnosticTestsByTypeQuery,
+  useLazyGetDiagnosticTestsByTypeQuery,
+  useLazyGetDiagnosticTestsByNameQuery,
   useGetDiagnosticTestsByNameQuery,
   useGetDiagnosticTestByIdQuery,
   useCreateDiagnosticTestMutation,

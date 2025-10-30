@@ -159,7 +159,6 @@ export interface LanguageTranslation {
   id: number;
   langKey: string;
   translationKey: string;
-  originalText: string;
   translationText?: string;
   verified: boolean;
   translated: boolean;
@@ -265,21 +264,24 @@ export interface AgeGroup {
 }
 export interface DiagnosticTest {
   id?: number;
-  type: string;               
-  name: string;                 
-  internalCode: string;             
-  ageSpecific?: boolean;             
-  genderSpecific?: boolean;          
-  gender?: string;                   
-  specialPopulation?: boolean;       
-  price?: number;                    
-  currency?: string;               
-  specialNotes?: string;         
+  type: string;
+  name: string;
+  internalCode: string;
+  ageSpecific?: boolean;
+
+  ageGroupList?: string[];
+
+  genderSpecific?: boolean;
+  gender?: string;
+
+  specialPopulation?: boolean;
+  specialPopulationValues?: string[]; 
+
+  price?: number;
+  currency?: string;
+  specialNotes?: string;
   isActive?: boolean;
-  isProfile?;boolean;               
-  appointable?: boolean;            
-  createdDate?: string;             
-  createdBy?: string;                
-  lastModifiedBy?: string;           
-  lastModifiedDate?: string;         
+  isProfile?: boolean;
+  appointable?: boolean;
 }
+
