@@ -47,6 +47,8 @@ export interface Department {
   email: string;
   encounterType: string;
   isActive: boolean;
+  hasMedicalSheets:boolean;
+   hasNurseMedicalSheets:boolean
 }
 export interface Facility {
   id?: string;

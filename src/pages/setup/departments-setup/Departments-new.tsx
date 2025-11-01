@@ -26,6 +26,7 @@ import { useEnumByName, useEnumOptions } from '@/services/enumsApi';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import ChooseScreenNurse from './ChooseScreenNurse';
 import { extractPaginationFromLink } from "@/utils/paginationHelper";
+import { has } from 'lodash';
 
 
 const Departments = () => {
@@ -283,6 +284,8 @@ const Departments = () => {
           }}
         />
       )}
+
+      {rowData.hasMedicalSheets &&
       <FontAwesomeIcon
         icon={faSheetPlastic}
         title="Medical Sheets"
@@ -297,7 +300,8 @@ const Departments = () => {
           setOpenScreensPopup(true);
         }}
 
-      />
+      />}
+      {rowData.hasNurseMedicalSheets&&
       <FontAwesomeIcon icon={faUserNurse}
        title="Medical Sheets Nurse"
         size="lg"
@@ -310,7 +314,7 @@ const Departments = () => {
          
           setOpenScreensNursePopup(true);
         }}
-      />
+      />}
     </div>
   );
   const tableColumns = [

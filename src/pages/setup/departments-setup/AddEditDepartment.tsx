@@ -117,6 +117,26 @@ const AddEditDepartment = ({
                 />
               ) : null}
             </div>
+            <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
+              <Form className="container-of-appointable">
+                <MyInput
+                  fieldLabel="Has Medical Sheets"
+                  fieldType="checkbox"
+                  fieldName="hasMedicalSheets"
+                  record={department}
+                  setRecord={setDepartment}
+                />
+              </Form>
+              <Form className="container-of-appointable">
+                <MyInput
+                  fieldLabel="Has Nurse Medical Sheets"
+                  fieldType="checkbox"
+                  fieldName="hasNurseMedicalSheets"
+                  record={department}
+                  setRecord={setDepartment}
+                />
+              </Form>
+            </div>
           </Form>
         );
     }

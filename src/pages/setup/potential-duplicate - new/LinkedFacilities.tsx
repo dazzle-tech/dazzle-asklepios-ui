@@ -30,6 +30,7 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
           checked={rowData.ruleId !== null ? true : false}
           onChange={(value, checked) => {
             if (checked) {
+              
               updateFacility({ ...rowData, ruleId: Candidate.id })
                 .unwrap()
                 .then(fetchFaci);
