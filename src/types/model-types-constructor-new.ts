@@ -44,6 +44,8 @@ export const newDepartment: modelTypes.Department = {
   email: '',
   encounterType: undefined,
   isActive: true,
+  hasMedicalSheets:false,
+ hasNurseMedicalSheets:false
 }
 
 export const newFacility: modelTypes.Facility = {
