@@ -47,6 +47,7 @@ import {potintialService} from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
 import { diagnosticTestService } from '@/services/setup/diagnosticTestService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
+import { loincCodeService } from './services/setup/loincCodeService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -149,6 +150,9 @@ export const store = configureStore({
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
 
+    //loinc code
+    [loincCodeService.reducerPath]: loincCodeService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -193,6 +197,7 @@ export const store = configureStore({
       allergensService.middleware,
       potintialService.middleware,
       diagnosticTestService.middleware,
+      loincCodeService.middleware,
     ])
 });
 
