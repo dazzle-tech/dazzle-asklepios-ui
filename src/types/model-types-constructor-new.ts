@@ -122,7 +122,7 @@ export const newDownloadTicket: modelTypes.DownloadTicket = {
 
 export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams = {
   patientId: undefined,
-  files: [],
+  file: undefined,
   type: undefined,
   details: undefined,
   source: undefined,
