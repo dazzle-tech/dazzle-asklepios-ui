@@ -20,6 +20,7 @@ export const newApUser: modelTypes.ApUser = {
   birthDate: null,
   gender: null,
   jobDescription: null,
+  jobRole: null,
 };
 
 export const newCandidate: modelTypes.Candidate = {

@@ -18,6 +18,7 @@ export interface ApUser {
   birthDate?: Date | null;
   gender?: string | null;
   jobDescription?: string | null;
+  jobRole?: string | null;
 }
 
 

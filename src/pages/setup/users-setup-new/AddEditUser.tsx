@@ -1,33 +1,31 @@
-import MyModal from '@/components/MyModal/MyModal';
-import React from 'react';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import MyModal from '@/components/MyModal/MyModal';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { faCheckDouble, faUser } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
+import React from 'react';
+import { Form } from 'rsuite';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import './styles.less';
-import { useGetAllRolesQuery, useGetRolesByFacilityQuery } from '@/services/security/roleService';
 import MyButton from '@/components/MyButton/MyButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AccessRole from './AccessRole';
-import { useGetGenderQuery } from '@/services/enumService';
+import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
 const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
-  // Fetch accessRoles list response
-  const { data: accessRoles } = useGetAllRolesQuery(null);
-  // Fetch gender lov list response
-  const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  // Fetch jobRole lov list response
-  const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
+
+
+
+  const jobRoles=useEnumOptions("JobRole");
+   console.log("JobRoles",jobRoles)
 
   const genders = [
     {
-      id: 'MALE',
-      displayValue: 'Male'
+      label: 'MALE',
+      value: 'Male'
     },
     {
-      id: 'FEMALE',
-      displayValue: 'Female'
+      label: 'FEMALE',
+      value: 'Female'
     }
   ];
 
@@ -60,10 +58,10 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
                 width={250}
                 fieldLabel="Job Role"
                 fieldType="select"
-                fieldName="jobRoleLkey"
-                selectData={jobRoleLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                fieldName="jobRole"
+                selectData={jobRoles ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={user}
                 setRecord={setUser}
               />
@@ -74,8 +72,8 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
                 fieldType="select"
                 fieldName="gender"
                 selectData={genders ?? []}
-                selectDataLabel="displayValue"
-                selectDataValue="id"
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={user}
                 setRecord={setUser}
                 width={250}

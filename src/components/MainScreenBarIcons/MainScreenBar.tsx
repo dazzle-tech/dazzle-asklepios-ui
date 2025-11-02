@@ -46,6 +46,7 @@ import { setLang, setMode } from '@/reducers/uiSlice';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
+import { formatEnumString } from '@/utils';
 
 const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   const dispatch = useDispatch();
@@ -255,20 +256,16 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
       }
     }, [isLoggingOut, authSlice.user]);
 
-    const handlePasswordChange = newPassword => {
-      console.log('Password changed to:', newPassword);
-    };
-
     return (
       <Popover ref={ref} className={className} style={{ left, top }} full>
         <Dropdown.Menu onSelect={handleSelect}>
-          <Dropdown.Item panel style={{ padding: 10, width: 160 }}>
+          <Dropdown.Item panel style={{ padding: 10, width: 200 }}>
             <p>Signed in as</p>
-            <strong>{authSlice.user?.fullName}</strong>
+            <strong>{authSlice.user?.firstName}-{authSlice.user?.lastName}</strong>
           </Dropdown.Item>
           <Dropdown.Item panel style={{ padding: 10, width: 160 }}>
             <p>Job Role</p>
-            <strong>{authSlice.user?.jobRoleLvalue?.lovDisplayVale}</strong>
+            <strong>{formatEnumString(authSlice.user?.jobRole)}</strong>
           </Dropdown.Item>
           <Dropdown.Item divider />
           <Dropdown.Item onSelect={handleOpenShowEditProfile}>Edit Profile</Dropdown.Item>
