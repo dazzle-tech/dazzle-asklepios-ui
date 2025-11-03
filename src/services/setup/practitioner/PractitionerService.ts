@@ -51,6 +51,14 @@ export const PractitionerService = createApi({
         method: "GET",
         params,
       }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
       providesTags: ["Practitioner"],
     }),
 
@@ -61,6 +69,30 @@ export const PractitionerService = createApi({
         method: "GET",
         params,
       }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["Practitioner"],
+    }),
+    getPractitionerByName: builder.query({
+      query: ({ name, ...params }) => ({
+        url: `/api/setup/practitioner/by-name/${name}`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
       providesTags: ["Practitioner"],
     }),
 
@@ -110,6 +142,9 @@ export const PractitionerService = createApi({
 export const {
   useGetAllPractitionersQuery,
   useGetPractitionersByFacilityQuery,
+  useLazyGetPractitionersByFacilityQuery,
+  useLazyGetPractitionersBySpecialtyQuery,
+  useLazyGetPractitionerByNameQuery,
   useGetPractitionersBySpecialtyQuery,
   useGetPractitionerByIdQuery,
   useCreatePractitionerMutation,

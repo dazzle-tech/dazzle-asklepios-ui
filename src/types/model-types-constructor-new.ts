@@ -61,7 +61,7 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  ruleId:undefined,
+  ruleId:null,
 
 } 
 
