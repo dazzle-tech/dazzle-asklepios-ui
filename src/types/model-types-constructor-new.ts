@@ -67,7 +67,6 @@ export const newFacility: modelTypes.Facility = {
 
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
-
   code: '',
   emailAddress: '',
   phone1: '',
@@ -267,3 +266,30 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   appointable: false,
 };
 
+export const newLaboratory: modelTypes.Laboratory = {
+  id: undefined,
+  testId: undefined,
+  property: undefined,
+  system: undefined,
+  scale: undefined,
+  reagents: undefined,
+  method: undefined,
+  testDurationTime: undefined,
+  timeUnit: undefined,
+  resultUnit: undefined,
+  isProfile: false,
+  sampleContainer: undefined,
+  sampleVolume: undefined,
+  sampleVolumeUnit: undefined,
+  tubeColor: undefined,
+  testDescription: undefined,
+  sampleHandling: undefined,
+  turnaroundTime: undefined,
+  turnaroundTimeUnit: undefined,
+  preparationRequirements: undefined,
+  medicalIndications: undefined,
+  associatedRisks: undefined,
+  testInstructions: undefined,
+  category: undefined,
+  tubeType: undefined,
+};
