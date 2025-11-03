@@ -441,6 +441,21 @@ const MedicationMatrix = () => {
             Add New
           </MyButton>
         </div>}
+          filters={<div className="container-of-header-actions-medication-matrix">
+          <Form layout="inline" className="form-medication-matrix">
+            <MyInput
+              fieldName="value"
+              fieldType="text"
+              record={record}
+              setRecord={setRecord}
+              showLabel={false}
+              placeholder="Search by Name"
+              width={'220px'}
+              height={32}
+            />
+          </Form>
+
+        </div>}
         />
         <AddEditClass
           open={openAddEditPopupClass}
@@ -473,7 +488,8 @@ const MedicationMatrix = () => {
       </Col>
       <Col md={8}>
 
-        <MyTable columns={activeIngColumns} data={classAIList?.object ?? []} tableButtons={<div className="container-of-add-new-button">
+        <MyTable columns={activeIngColumns} data={classAIList?.object ?? []}
+         tableButtons={<div className="container-of-add-new-button">
           <MyButton
             disabled={!selectedClass?.key}
             prefixIcon={() => <AddOutlineIcon />}
@@ -487,6 +503,21 @@ const MedicationMatrix = () => {
           >
             Add New
           </MyButton>
+        </div>}
+          filters={<div className="container-of-header-actions-medication-matrix">
+          <Form layout="inline" className="form-medication-matrix">
+            <MyInput
+              fieldName="value"
+              fieldType="text"
+              record={record}
+              setRecord={setRecord}
+              showLabel={false}
+              placeholder="Search by Name"
+              width={'220px'}
+              height={32}
+            />
+          </Form>
+
         </div>} />
         <AddEditActiveIng
           open={openAddEditPopup}
