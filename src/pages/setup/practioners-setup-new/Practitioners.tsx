@@ -18,12 +18,19 @@ import {
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
+   useLazyGetPractitionersByFacilityQuery,
+  useLazyGetPractitionersBySpecialtyQuery,
+  useLazyGetPractitionerByNameQuery
 } from "@/services/setup/practitioner/PractitionerService";
 import "./styles.less";
 import { Practitioner } from "@/types/model-types-new";
 import { newPractitioner } from "@/types/model-types-constructor-new";
 import { formatEnumString } from "@/utils";
 import { extractPaginationFromLink } from "@/utils/paginationHelper";
+import { get, keyBy } from "lodash";
+import { useEnumOptions } from "@/services/enumsApi";
+import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
+import { el } from "date-fns/locale";
 
 const Practitioners = () => {
   const dispatch = useDispatch();
@@ -48,7 +55,7 @@ const Practitioners = () => {
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredList, setFilteredList] = useState<Practitioner[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
-
+  const [valueSpecility, setValueSpecility] = useState({specility:""});
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 5,
@@ -59,10 +66,14 @@ const Practitioners = () => {
   // ──────────────────────────── DATA ────────────────────────────
   const { data: practitionerListResponse, isFetching } =
     useGetAllPractitionersQuery(paginationParams);
-
+  const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
   const [createPractitioner] = useCreatePractitionerMutation();
   const [updatePractitioner] = useUpdatePractitionerMutation();
   const [togglePractitionerActive] = useTogglePractitionerActiveMutation();
+  const [getPractitionersByFacility]= useLazyGetPractitionersByFacilityQuery();
+  const [getPractitionersBySpecialty]= useLazyGetPractitionersBySpecialtyQuery();
+  const [getPractitionerByName]= useLazyGetPractitionerByNameQuery();
+  const specility = useEnumOptions('Specialty');
 
   const totalCount = practitionerListResponse?.totalCount ?? 0;
   const links = practitionerListResponse?.links || {};
@@ -90,26 +101,81 @@ const Practitioners = () => {
 
   // ──────────────────────────── FILTER LOGIC ────────────────────────────
   const filterFields = [
-    { label: "Practitioner Name", value: "firstName" },
     { label: "Specialty", value: "specialty" },
-    { label: "Job Role", value: "jobRole" },
+    { label: "Facility", value: "facility" },
+    { label: "Name", value: "name" },
   ];
+const handleFilterChange = async (field: string, value: string) => {
+  try {
 
-  const handleFilterChange = async (field: string, value: string) => {
-    if (!value) {
+    if (!field || !value) {
       setIsFiltered(false);
       setFilteredList([]);
       return;
     }
 
-    const data = practitionerListResponse?.data ?? [];
-    const filtered = data.filter((item) =>
-      String(item[field] ?? "").toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredList(filtered);
-    setFilteredTotal(filtered.length);
+    let response;
+
+    if (field === "specialty") {
+      response = await getPractitionersBySpecialty({
+        specialty: value,
+        page: 0,
+        size: paginationParams.size,
+        sort: paginationParams.sort,
+      }).unwrap();
+    } 
+    else if (field === "facility") {
+      response = await getPractitionersByFacility({
+        facilityId: value,
+        page: 0,
+        size: paginationParams.size,
+        sort: paginationParams.sort,
+      }).unwrap();
+    } 
+    else if (field === "name") {
+      response = await getPractitionerByName({
+        name: value,
+        page: 0,
+        size: paginationParams.size,
+        sort: paginationParams.sort,
+      }).unwrap();
+    }
+
+    else {
+      setIsFiltered(false);
+      return;
+    }
+    console.log("Filter response:", response);
+    setFilteredList(response.data ?? []);
+    setFilteredTotal(response.totalCount ?? 0);
     setIsFiltered(true);
-  };
+  } catch (error) {
+    console.error("Error filtering practitioners:", error);
+    dispatch(
+      notify({
+        msg: "Failed to filter practitioners",
+        sev: "error",
+      })
+    );
+    setIsFiltered(false);
+  }
+};
+
+  // const handleFilterChange = async (field: string, value: string) => {
+  //   if (!value) {
+  //     setIsFiltered(false);
+  //     setFilteredList([]);
+  //     return;
+  //   }
+
+  //   const data = practitionerListResponse?.data ?? [];
+  //   const filtered = data.filter((item) =>
+  //     String(item[field] ?? "").toLowerCase().includes(value.toLowerCase())
+  //   );
+  //   setFilteredList(filtered);
+  //   setFilteredTotal(filtered.length);
+  //   setIsFiltered(true);
+  // };
 
   // ──────────────────────────── CRUD HANDLERS ────────────────────────────
   const handleAddNew = async () => {
@@ -269,6 +335,10 @@ const Practitioners = () => {
   );
 
   const tableColumns = [
+    {key:"facilityName", title:<Translate>Facility</Translate>, flexGrow:4,
+      render:(rowData) => <p>{rowData?.facility?.name}</p>
+
+    },
     { key: "firstName", title: <Translate>First Name</Translate>, flexGrow: 3 },
     { key: "lastName", title: <Translate>Last Name</Translate>, flexGrow: 3 },
     {
@@ -277,7 +347,9 @@ const Practitioners = () => {
       flexGrow: 3,
       render: (rowData) => <p>{formatEnumString(rowData?.specialty)}</p>,
     },
-    { key: "jobRole", title: <Translate>Job Role</Translate>, flexGrow: 3 },
+    { key: "jobRole", title: <Translate>Job Role</Translate>, flexGrow: 3,
+        render: (rowData) => <p>{formatEnumString(rowData?.jobRole)}</p>,
+     },
     {
       key: "isActive",
       title: <Translate>Status</Translate>,
@@ -317,45 +389,79 @@ const Practitioners = () => {
   };
 
   // ──────────────────────────── FILTER UI ────────────────────────────
-  const filters = () => (
-    <Form layout="inline" fluid style={{ display: "flex", gap: "10px" }}>
+ const filters = () => (
+  <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
+    <MyInput
+      fieldName="filter"
+      fieldType="select"
+      selectData={filterFields}
+      selectDataLabel="label"
+      selectDataValue="value"
+      record={recordOfFilter}
+      setRecord={(u) => setRecordOfFilter({ filter: u.filter, value: "" })}
+      placeholder="Select Filter"
+      width="180px"
+    />
+
+    {recordOfFilter.filter === "specialty" && (
       <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
+        fieldName="value"
         fieldType="select"
+        selectData={specility ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={recordOfFilter}
-        setRecord={(updatedRecord) => {
-          setRecordOfFilter({
-            filter: updatedRecord.filter,
-            value: "",
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="180px"
+        setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+        placeholder="Select Specialty"
       />
+    )}
+
+    {recordOfFilter.filter === "facility" && (
+      <MyInput
+        fieldName="value"
+        fieldType="select"
+        selectData={allFacilities ?? []}
+        selectDataLabel="name"
+        selectDataValue="id"
+        record={recordOfFilter}
+        setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+        placeholder="Select Facility"
+      />
+    )}
+
+{recordOfFilter.filter === "name" && (
       <MyInput
         fieldName="value"
         fieldType="text"
         record={recordOfFilter}
         setRecord={setRecordOfFilter}
-        showLabel={false}
+        placeholder="Enter Name"
+      />
+    )}
+
+    {recordOfFilter.filter !== "specialty" && recordOfFilter.filter !== "facility" && recordOfFilter.filter !== "name"
+    && (
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
         placeholder="Enter Value"
       />
-      <MyButton
-        color="var(--deep-blue)"
-        width="80px"
-        onClick={() =>
-          handleFilterChange(recordOfFilter.filter, recordOfFilter.value)
-        }
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
+    )}
+
+
+
+    <MyButton
+      color="var(--deep-blue)"
+      width="80px"
+      onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+    >
+      Search
+    </MyButton>
+  </Form>
+);
+
 
   // ──────────────────────────── RENDER ────────────────────────────
   return (
