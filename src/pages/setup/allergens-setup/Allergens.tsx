@@ -336,15 +336,14 @@ const Allergens: React.FC = () => {
 
   // Define table columns
   const tableColumns = [
+    { key: 'code', title: <Translate>Allergens Code</Translate>, flexGrow: 4 },
+    { key: 'name', title: <Translate>Allergens Name</Translate>, flexGrow: 4 },
     {
       key: 'type',
       title: <Translate>Allergens Type</Translate>,
       flexGrow: 4,
       render: (rowData: any) => formatEnumString(rowData.type)
     },
-    { key: 'name', title: <Translate>Allergens Name</Translate>, flexGrow: 4 },
-    { key: 'code', title: <Translate>Allergens Code</Translate>, flexGrow: 4 },
-
     { key: 'description', title: <Translate>Description</Translate>, flexGrow: 4 },
     {
       key: 'icons',

@@ -15,13 +15,17 @@ const AddEditAllergens = ({ open, setOpen, width, allergens, setAllergens, handl
       case 0:
         return (
           <Form fluid>
-            <MyInput
-              required
-              width="100%"
-              fieldName="code"
-              record={allergens}
-              setRecord={setAllergens}
-            />
+              <MyInput
+                required
+                width="100%"
+                fieldName="type"
+                fieldType="select"
+                selectData={allergenTypeOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
+                record={allergens}
+                setRecord={setAllergens}
+              />
             <MyInput
               required
               width="100%"
@@ -29,19 +33,17 @@ const AddEditAllergens = ({ open, setOpen, width, allergens, setAllergens, handl
               record={allergens}
               setRecord={setAllergens}
             />
+
+
             <div className="container-of-two-fields-allergens">
               <div className="container-of-field-allergens">
-                <MyInput
-                  required
-                  width="100%"
-                  fieldName="type"
-                  fieldType="select"
-                  selectData={allergenTypeOptions ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={allergens}
-                  setRecord={setAllergens}
-                />
+            <MyInput
+              required
+              width="100%"
+              fieldName="code"
+              record={allergens}
+              setRecord={setAllergens}
+            />
               </div>
               <div className="container-of-field-allergens">
                 <MyInput
