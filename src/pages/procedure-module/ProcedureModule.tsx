@@ -585,6 +585,7 @@ const ProcedureModule: React.FC = () => {
           selectDataValue="key"
           record={record}
           setRecord={setRecord}
+          showLabel={false}
         />
 
         <MyInput
@@ -595,6 +596,7 @@ const ProcedureModule: React.FC = () => {
           selectDataValue="key"
           record={record}
           setRecord={setRecord}
+          showLabel={false}
         />
 
         <MyInput
@@ -605,6 +607,7 @@ const ProcedureModule: React.FC = () => {
           selectDataValue="key"
           record={record}
           setRecord={setRecord}
+          showLabel={false}
         />
         <div className="indication-procedure-handle-position">
           <Icd10Search
@@ -663,11 +666,7 @@ const ProcedureModule: React.FC = () => {
           placeholder="Search"
           className="margin-21"
         />
-        <Checkbox
-          checked={!showCanceled}
-          onChange={() => setShowCanceled(!showCanceled)}
-          className="margin-21"
-        />
+
 
         <SearchPatientCriteria record={record} setRecord={setRecord} searchMarginTop={0}/>
 
