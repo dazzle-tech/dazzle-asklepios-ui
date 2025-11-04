@@ -63,6 +63,7 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           <div className='container-of-three-fields-diagnostic'>
             <div className='field-in-three-fields-diagnostics'>
         <MyInput
+          required
           width='100%'
           menuMaxHeight={200}
           fieldName="category"
@@ -78,7 +79,7 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
          <MyInput
             width='100%'
           menuMaxHeight={200}
-           
+           required
           fieldName="resultUnit"
           fieldType="select"
           selectData={ValueUnitLovQueryResponse?.object ?? []}
