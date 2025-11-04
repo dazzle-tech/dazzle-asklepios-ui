@@ -12,7 +12,6 @@ import { notify } from "@/utils/uiReducerActions";
 import { extractPaginationFromLink } from "@/utils/paginationHelper";
 import { Col, Form, Row } from "rsuite";
 import MyInput from "@/components/MyInput";
-
 const ICD10Setup = () => {
   const dispatch = useDispatch();
 
@@ -26,15 +25,15 @@ const ICD10Setup = () => {
     timestamp: Date.now(),
   });
 
-  // 🔹 البيانات العادية
+
   const { data: icdListResponse, isFetching, refetch } =
     useGetAllIcd10Query(paginationParams);
 
-  // 🔹 نتائج البحث
+
   const { data: searchResults, isFetching: isSearchingData } =
     useSearchIcd10Query(
       { keyword, ...paginationParams },
-      { skip: !isSearching || !keyword } // ⛔ لا يبحث إلا عند وجود keyword
+      { skip: !isSearching || !keyword } 
     );
 
   const [importIcd10, { isLoading: isImporting }] = useImportIcd10Mutation();
@@ -96,14 +95,28 @@ const ICD10Setup = () => {
         notify({ msg: "ICD-10 file imported successfully", sev: "success" })
       );
       refetch();
-    } catch (error) {
-      dispatch(
-        notify({ msg: "Error importing ICD-10 file", sev: "error" })
-      );
+    } catch (err: any) {
+  console.error("Error importing ICD10 file:", err.data?.message);
+
+  let errorMsg = "Error importing ICD10 file";
+  if (err?.data) {
+    try {
+      const parsed = typeof err.data === "string" ? JSON.parse(err.data) : err.data;
+      if (parsed?.message) {
+        errorMsg = parsed.message; 
+      } else if (parsed?.title) {
+        errorMsg = parsed.title;
+      }
+    } catch {
+      
     }
+  }
+ console.log("Derived error message:", errorMsg);
+  dispatch(notify({msg:errorMsg,sev: "error"}));
+}
   };
 
-  // 🔍 تنفيذ البحث
+  
   const handleSearch = () => {
     if (!keyword.trim()) {
       setIsSearching(false);
