@@ -586,6 +586,7 @@ const ProcedureModule: React.FC = () => {
           record={record}
           setRecord={setRecord}
           showLabel={false}
+          searchable={false}
         />
 
         <MyInput
@@ -597,6 +598,7 @@ const ProcedureModule: React.FC = () => {
           record={record}
           setRecord={setRecord}
           showLabel={false}
+          searchable={false}
         />
 
         <MyInput
@@ -608,6 +610,7 @@ const ProcedureModule: React.FC = () => {
           record={record}
           setRecord={setRecord}
           showLabel={false}
+          searchable={false}
         />
         <div className="indication-procedure-handle-position">
           <Icd10Search
