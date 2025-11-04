@@ -48,6 +48,7 @@ import { allergensService } from './services/setup/allergensService';
 import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
+import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -150,6 +151,7 @@ export const store = configureStore({
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
+    [radiologyService.reducerPath]: radiologyService.reducer,
 
   },
   // @ts-ignore
@@ -196,6 +198,7 @@ export const store = configureStore({
       potintialService.middleware,
       diagnosticTestService.middleware,
       laboratoryService.middleware,
+      radiologyService.middleware,
     ])
 });
 
