@@ -346,9 +346,9 @@ const LOINCSetup: React.FC = () => {
   const conflictColumns = [
     { key: "code", title: "Code", render: (row: Conflict) => row.code },
     { key: "incomingDescription", title: "Incoming Description", render: (row: Conflict) => row.incomingDescription },
-    { key: "incomingCategory", title: "Incoming Category", render: (row: Conflict) => row.incomingCategory },
+    { key: "incomingCategory", title: "Incoming Category", render: (row: Conflict) => row.incomingCategory ? formatEnumString(row.incomingCategory) : "" },
     { key: "existingDescription", title: "Existing Description", render: (row: Conflict) => row.existingDescription },
-    { key: "existingCategory", title: "Existing Category", render: (row: Conflict) => row.existingCategory },
+    { key: "existingCategory", title: "Existing Category", render: (row: Conflict) => row.existingCategory ? formatEnumString(row.existingCategory) : "" },
   ];
 
   const pagedConflicts = conflicts
