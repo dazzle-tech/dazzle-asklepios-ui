@@ -5,9 +5,15 @@ const Translate = props => {
   const lang = useAppSelector(state => state.ui.lang);
   const translations = useAppSelector(state => state.ui.translations);
  const toKey = (s: string) => {
-  return s.normalize('NFD')
+  if (typeof s === 'string') {
+  s = s.normalize('NFD');
+  return s
     .replace(/\s+/g, '_')            // replace all spaces with underscores
     .toUpperCase();
+} else {
+  console.warn('Expected a string, got:', s);
+  return s;
+}
 };
 
   const [text, setText] = useState('');

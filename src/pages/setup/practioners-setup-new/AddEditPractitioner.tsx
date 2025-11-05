@@ -65,34 +65,18 @@ const AddEditPractitioner = ({
   // LOV lists
   const { data: eduLvlLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
   const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
-  const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
+
+
 
   // Enums
   const specility = useEnumOptions('Specialty');
   const genders = useEnumOptions('Gender');
+  const jobRoles = useEnumOptions('JobRole');
 
   // Users
   const { data: userListResponse = [], isLoading } = useGetUserQuery();
 
-  // Local user search
-  // useEffect(() => {
-  //   if (recordOfSearch.searchKeyword && recordOfSearch.searchKeyword.length >= 2) {
-  //     const keyword = recordOfSearch.searchKeyword.toLowerCase();
-  //     const results = userListResponse.filter(
-  //       (user) =>
-  //         user.firstName?.toLowerCase().includes(keyword) ||
-  //         user.lastName?.toLowerCase().includes(keyword) ||
-  //         user.login?.toLowerCase().includes(keyword) ||
-  //         user.email?.toLowerCase().includes(keyword)
-  //     );
-  //     setFilteredUsers(results);
-  //     setSearchResultVisible(true);
-  //   } else {
-  //     setSearchResultVisible(false);
-  //     setFilteredUsers([]);
-  //   }
-  // }, [recordOfSearch.searchKeyword, userListResponse]);
-
+  
 
   const [allDepartments, setAllDepartments] = useState([]);
 
@@ -298,9 +282,9 @@ setSearchResultVisible(true);
                           fieldLabel="Job Role"
                           fieldType="select"
                           fieldName="jobRole"
-                          selectData={jobRoleLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
+                          selectData={jobRoles ?? []}
+                          selectDataLabel="label"
+                          selectDataValue="value"
                           record={practitioner}
                           setRecord={setPractitioner}
                           width={250}

@@ -18,6 +18,7 @@ export interface ApUser {
   birthDate?: Date | null;
   gender?: string | null;
   jobDescription?: string | null;
+  jobRole?: string | null;
 }
 
 
@@ -346,3 +347,31 @@ export interface DiagnosticTest {
   appointable?: boolean;
 }
 
+
+export interface Laboratory {
+  id?: number;
+  testId?: number;
+  property?: string;
+  system?: string;
+  scale?: string;
+  reagents?: string;
+  method?: string;
+  testDurationTime?: number;
+  timeUnit?: string;
+  resultUnit?: string;
+  isProfile?: boolean;
+  sampleContainer?: string;
+  sampleVolume?: number;
+  sampleVolumeUnit?: string;
+  tubeColor?: string;
+  testDescription?: string;
+  sampleHandling?: string;
+  turnaroundTime?: number;
+  turnaroundTimeUnit?: string;
+  preparationRequirements?: string;
+  medicalIndications?: string;
+  associatedRisks?: string;
+  testInstructions?: string;
+  category?: string;
+  tubeType?: string;
+}

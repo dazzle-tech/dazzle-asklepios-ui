@@ -284,9 +284,9 @@ const MyInput = ({
     switch (fieldType) {
       case 'textarea':
         return (
-          <InputGroup>
+          <InputGroup style={{ width: props?.width ?? 200 }}>
             <Form.Control
-              style={{ width: props?.width ?? 200, height: props?.height ?? 70 }}
+              style={{ width: '100%', height: props?.height ?? 70 }}
               disabled={props.disabled}
               name={fieldName}
               placeholder={props.placeholder}

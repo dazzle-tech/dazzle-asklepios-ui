@@ -45,9 +45,11 @@ import { patientAttachmentService } from './services/patients/attachmentService'
 import { ageGroupService } from './services/setup/ageGroupService';
 import {potintialService} from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
-import { diagnosticTestService } from '@/services/setup/diagnosticTestService';
+import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
 import { cptCodeService } from './services/setup/cptCodeService';
+import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -150,6 +152,7 @@ export const store = configureStore({
 
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
+    [laboratoryService.reducerPath]: laboratoryService.reducer,
 
   },
   // @ts-ignore
@@ -196,6 +199,7 @@ export const store = configureStore({
       potintialService.middleware,
       diagnosticTestService.middleware,
       cptCodeService.middleware,
+      laboratoryService.middleware,
     ])
 });
 
