@@ -30,6 +30,8 @@ import Laboratory from './Laboratory';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import './styles.less';
+import { newLaboratory } from '@/types/model-types-constructor-new';
+import { useCreateLaboratoryMutation, useUpdateLaboratoryMutation } from '@/services/setup/diagnosticTest/laboratoryService';
 const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsTest, width, handleSave }) => {
   const dispatch = useAppDispatch();
   const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState<ApDiagnosticTestRadiology>(
@@ -40,7 +42,9 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   );
   const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState([])
   const [ageGroupList, setAgeGroupList] = useState([])
-  const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory });
+  const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState({ ...newLaboratory });
+  const [saveLoading, setSaveLoading] = useState(false);
+  
   // Fetch diagnostics test type Lov response
    
   const testType = useEnumOptions('TestType');
@@ -59,6 +63,8 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
 
   // save Diagnostics Test Laboratory
   const [saveDiagnosticsTestLaboratory] = useSaveDiagnosticsTestLaboratoryMutation();
+  const [addDiagnosticTest]=useCreateLaboratoryMutation();
+  const [updateDiagnosticTest]=useUpdateLaboratoryMutation();
   // save Diagnostics Test Radiology
   const [saveDiagnosticsTestRadiology] = useSaveDiagnosticsRadiologyTestMutation();
   // save Diagnostics Test Pathology
@@ -67,8 +73,8 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
 
   // show details component according to Test type of diagnostic test
   const handleShowComponent = () => {
-    switch (matchingItem.data?.object) {
-      case 'Laboratory':
+    switch (diagnosticsTest.type) {
+      case 'LABORATORY':
         return (
           <Laboratory
             diagnosticsTest={diagnosticsTest}
@@ -76,7 +82,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
             setDiagnosticTestLaboratory={setDiagnosticTestLaboratory}
           />
         );
-      case 'Radiology':
+      case 'RADIOLOGY':
         return (
           <Radiology
             diagnosticsTest={diagnosticsTest}
@@ -84,7 +90,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
             setDiagnosticTestRadiology={setDiagnosticTestRadiology}
           />
         );
-      case 'Pathology':
+      case 'PATHOLOGY':
         return (
           <Pathology
             diagnosticsTest={diagnosticsTest}
@@ -98,16 +104,46 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   };
 
   // handle save laboratory details
-  const handleSaveLab = async () => {
-    setOpen(false);
-    await saveDiagnosticsTestLaboratory({
-      ...diagnosticTestLaboratory,
-      createdBy: 'Administrator',
-      testKey: diagnosticsTest?.key
-    }).unwrap();
-    dispatch(notify('Laboratory Details Saved Successfully'));
-  };
 
+
+const handleSaveLab = async () => {
+  try {
+    setSaveLoading(true);
+    setOpen(false);
+
+    if (diagnosticTestLaboratory.id) {
+      await updateDiagnosticTest({
+        id: diagnosticTestLaboratory.id,
+        body: {
+          ...diagnosticTestLaboratory,
+          testId: diagnosticsTest?.id,
+        },
+      }).unwrap();
+
+      dispatch(notify({msg:'Laboratory Details Updated Successfully',sev:'success'}));
+    } else {
+      await addDiagnosticTest({
+        ...diagnosticTestLaboratory,
+        testId: diagnosticsTest?.id,
+      }).unwrap();
+
+      dispatch(notify({msg:'Laboratory Details Saved Successfully',sev:'success'}));
+    }
+  } catch (error: any) {
+    console.error('Error saving laboratory details:', error);
+    dispatch(
+      notify({
+        msg: 'Failed to save Laboratory Details',
+        sev: 'error',
+      })
+    );
+  } finally {
+    setSaveLoading(false);
+  }
+};
+
+
+  
   // handle save radiology details
   const handleSaveRad = async () => {
     setOpen(false);
@@ -351,13 +387,13 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
     <MyModal
       actionButtonLabel={diagnosticsTest?.id ? 'Save' : 'Create'}
       actionButtonFunction={
-        matchingItem.data?.object == 'Laboratory'
+        diagnosticsTest?.type == 'LABORATORY'
           ? handleSaveLab
-          : matchingItem.data?.object == 'Radiology'
+          : diagnosticsTest?.type == 'RADIOLOGY'
             ? handleSaveRad
-            : matchingItem.data?.object == 'Pathology'
+            :diagnosticsTest?.type == 'PATHOLOGY'
               ? handleSavePath
-              : ''
+              : () => { }
       }
       open={open}
       setOpen={setOpen}

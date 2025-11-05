@@ -1,56 +1,65 @@
+// Components
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import CancellationModal from '@/components/CancellationModal';
+
+// Hooks
 import { useAppDispatch } from '@/hooks';
+
+// Services
 import {
   useGetOperationRequestsListQuery,
   useSaveOperationRequestsMutation
 } from '@/services/operationService';
+
+// Types
 import { newApOperationRequests } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
+
+// Utils
 import { formatDateWithoutSeconds } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import React, { useEffect, useState } from 'react';
-import { MdModeEdit, MdAttachFile } from 'react-icons/md';
-import { Checkbox, HStack, Row, Tooltip, Whisper } from 'rsuite';
-import Details from './Details';
-import MyModal from '@/components/MyModal/MyModal';
-import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
-import CancellationModal from '@/components/CancellationModal';
-import StartedDetails from '@/pages/operation-module/StartedDetails/StartedDetails';
+
+// Icons
+import { faCheck, faEye, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
-import { faPlus, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import BlockIcon from '@rsuite/icons/Block';
+import { MdModeEdit } from 'react-icons/md';
+
+// React & Libraries
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Checkbox, HStack, Row, Tooltip, Whisper } from 'rsuite';
+
+// Local
+import Details from './Details';
 import PreviewRequest from './PreviewRequest';
+import StartedDetails from '@/pages/operation-module/StartedDetails/StartedDetails';
+
+// import './styles.less';
 
 const Request = ({ patient, encounter, user, refetchrequest }) => {
   const dispatch = useAppDispatch();
+
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+
   const [showCanceled, setShowCanceled] = useState(false);
   const [open, setOpen] = useState(false);
   const [openView, setOpenView] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
+
   const [previewRequest, setPreviewRequest] = useState<any | null>(null);
-  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [selectedRequestForAttachments, setSelectedRequestForAttachments] = useState(null);
   const [request, setRequest] = useState<any>({
     ...newApOperationRequests,
     encounterKey: encounter?.key,
     patientKey: patient?.key
   });
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient.key
-      },
-      {
-        fieldName: 'encounter_key',
-        operator: 'match',
-        value: encounter.key
-      },
+      { fieldName: 'patient_key', operator: 'match', value: patient.key },
+      { fieldName: 'encounter_key', operator: 'match', value: encounter.key },
       {
         fieldName: 'status_lkey',
         operator: showCanceled ? 'notMatch' : 'match',
@@ -58,34 +67,79 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
       }
     ]
   });
-  const isSelected = rowData => {
-    if (rowData && request && rowData.key === request.key) {
-      return 'selected-row';
-    } else return '';
-  };
 
-  //operation Api's
+  const isSelected = (rowData: any) =>
+    rowData && request && rowData.key === request.key ? 'selected-row' : '';
+
+  // APIs
   const {
     data: operationrequestList,
     refetch,
     isLoading
   } = useGetOperationRequestsListQuery(listRequest);
-  const [save, saveMutation] = useSaveOperationRequestsMutation();
+  const [save] = useSaveOperationRequestsMutation();
 
-  //use Effect
+  const handleClear = useCallback(() => {
+    setRequest({
+      ...newApOperationRequests,
+      encounterKey: encounter?.key,
+      patientKey: patient?.key,
+      operationTypeLkey: null,
+      operationLevelLkey: null,
+      bodyPartLkey: null,
+      sideOfProcedureLkey: null,
+      plannedAnesthesiaTypeLkey: null
+    });
+    setPreviewRequest(null);
+  }, [encounter?.key, patient?.key]);
+
+  const isFormField = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest(`
+        input, textarea, select, button, [contenteditable="true"],
+        .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-datepicker,
+        .rs-picker-toggle, .rs-calendar, .rs-dropdown, .rs-auto-complete,
+        .rs-input-group, .rs-select, .rs-slider
+      `) !== null
+    );
+  };
+
+  const isInsideModalOrPopup = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest(`
+        .rs-modal, .rs-drawer, .rs-picker-select-menu, .rs-picker-popup,
+        .my-modal, .my-popup
+      `) !== null
+    );
+  };
+
+  const isTableDataRow = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest('.rs-table-row, .MuiTableRow-root, [data-row="true"], [role="row"]') !== null &&
+      node.closest('.rs-table-row-header, .MuiTableHead-root, [data-header="true"]') === null
+    );
+  };
+
+  const isInsideTopToolbar = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return node.closest('.bt-div-2') !== null;
+  };
+
+  // reset on patient/encounter change
   useEffect(() => {
     setRequest({
       ...newApOperationRequests,
       encounterKey: encounter?.key,
       patientKey: patient?.key
     });
-    let updatedFilters = [...listRequest.filters];
-    setListRequest(prev => ({
-      ...prev,
-      filters: updatedFilters
-    }));
+    setListRequest(prev => ({ ...prev, filters: [...prev.filters] }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [encounter, patient]);
 
+  // toggle cancelled filter + refetch
   useEffect(() => {
     setListRequest(prev => ({
       ...prev,
@@ -95,43 +149,61 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
           : filter
       )
     }));
-
     refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCanceled]);
 
-  //handle functions
-  const handleClear = () => {
-    setRequest({
-      ...newApOperationRequests,
-      operationTypeLkey: null,
-      operationLevelLkey: null,
-      bodyPartLkey: null,
-      sideOfProcedureLkey: null,
-      plannedAnesthesiaTypeLkey: null
-    });
-  };
+  // ✅ global listeners (pointerdown + esc)
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as EventTarget | null;
 
+      if (isFormField(target) || isInsideModalOrPopup(target)) return;
+
+      if (isInsideTopToolbar(target)) {
+        handleClear();
+        return;
+      }
+
+      if (!isTableDataRow(target)) {
+        handleClear();
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClear();
+    };
+
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [handleClear]);
+
+  // actions
   const handleCancel = async () => {
     try {
-      const Response = await save({
+      await save({
         ...request,
         statusLkey: '3621690096636149',
         cancelledBy: user?.key,
         cancelledAt: Date.now()
       });
-
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       setOpenCancelModal(false);
       refetch();
       refetchrequest();
-    } catch (error) {
+    } catch {
       dispatch(notify({ msg: 'Cancelled Faild', sev: 'error' }));
     }
   };
 
   const handleSubmit = async () => {
     try {
-      const Response = await save({
+      await save({
         ...request,
         statusLkey: '6134761379970516',
         submitedBy: user?.key,
@@ -139,93 +211,76 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         operationStatusLkey: '3621653475992516'
       });
       dispatch(notify({ msg: 'Submited Successfully', sev: 'success' }));
-
       refetch();
       refetchrequest();
-    } catch (error) {
+    } catch {
       dispatch(notify({ msg: 'Submited Faild', sev: 'error' }));
     }
   };
 
-  //table
-  const columns = [
-    {
-      key: 'facilityKey',
-      title: <Translate>facility</Translate>,
-      render: (rowData: any) => {
-        return rowData?.facility?.facilityName;
-      }
-    },
-    {
-      key: 'departmentKey',
-      title: <Translate>department</Translate>,
-      render: (rowData: any) => {
-        return rowData?.department?.name;
-      }
-    },
-    {
-      key: 'oparetionKey',
-      title: <Translate>oparation name</Translate>,
-      render: (rowData: any) => {
-        return rowData?.operation?.name;
-      }
-    },
-    {
-      key: 'operationTypeLkey',
-      title: <Translate>operation type</Translate>,
-      render: (rowData: any) => {
-        return rowData.operationTypeLvalue
-          ? rowData.operationTypeLvalue.lovDisplayVale
-          : rowData.operationTypeLkey;
-      }
-    },
-    {
-      key: 'operationLevelLkey',
-      title: <Translate>Operation Level</Translate>,
-      render: (rowData: any) => {
-        return rowData.operationLevelLvalue
-          ? rowData.operationLevelLvalue.lovDisplayVale
-          : rowData.operationLevelLkey;
-      }
-    },
-    {
-      key: 'operationDateTime',
-      title: <Translate>Operation Date/Time</Translate>,
-      render: (rowData: any) => {
-        return formatDateWithoutSeconds(rowData?.operationDateTime);
-      }
-    },
-    {
-      key: 'priorityLkey',
-      title: <Translate>Priority</Translate>,
-      render: (rowData: any) => {
-        return rowData.priorityLvalue
-          ? rowData.priorityLvalue?.lovDisplayVale
-          : rowData.priorityLkey;
-      }
-    },
-    {
-      key: 'diagnosisKey',
-      title: <Translate>Pre-op Diagnosis</Translate>,
-      render: (rowData: any) => {
-        return rowData?.diagnosis
-          ? rowData.diagnosis?.icdCode + ' - ' + rowData?.diagnosis?.description
-          : '';
-      }
-    },
-    {
-      key: 'statusLkey',
-      title: <Translate>Request Status</Translate>,
-      render: (rowData: any) => {
-        return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
-      }
-    },
-    {
-      key: 'edit',
-      title: <Translate>Edit</Translate>,
-
-      render: (rowData: any) => {
-        return (
+  // columns
+  const columns = useMemo(
+    () => [
+      {
+        key: 'facilityKey',
+        title: <Translate>facility</Translate>,
+        render: (rowData: any) => rowData?.facility?.facilityName
+      },
+      {
+        key: 'departmentKey',
+        title: <Translate>department</Translate>,
+        render: (rowData: any) => rowData?.department?.name
+      },
+      {
+        key: 'oparetionKey',
+        title: <Translate>oparation name</Translate>,
+        render: (rowData: any) => rowData?.operation?.name
+      },
+      {
+        key: 'operationTypeLkey',
+        title: <Translate>operation type</Translate>,
+        render: (rowData: any) =>
+          rowData.operationTypeLvalue
+            ? rowData.operationTypeLvalue.lovDisplayVale
+            : rowData.operationTypeLkey
+      },
+      {
+        key: 'operationLevelLkey',
+        title: <Translate>Operation Level</Translate>,
+        render: (rowData: any) =>
+          rowData.operationLevelLvalue
+            ? rowData.operationLevelLvalue.lovDisplayVale
+            : rowData.operationLevelLkey
+      },
+      {
+        key: 'operationDateTime',
+        title: <Translate>Operation Date/Time</Translate>,
+        render: (rowData: any) => formatDateWithoutSeconds(rowData?.operationDateTime)
+      },
+      {
+        key: 'priorityLkey',
+        title: <Translate>Priority</Translate>,
+        render: (rowData: any) =>
+          rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
+      },
+      {
+        key: 'diagnosisKey',
+        title: <Translate>Pre-op Diagnosis</Translate>,
+        render: (rowData: any) =>
+          rowData?.diagnosis
+            ? rowData.diagnosis?.icdCode + ' - ' + rowData?.diagnosis?.description
+            : ''
+      },
+      {
+        key: 'statusLkey',
+        title: <Translate>Request Status</Translate>,
+        render: (rowData: any) =>
+          rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey
+      },
+      {
+        key: 'edit',
+        title: <Translate>Edit</Translate>,
+        render: (rowData: any) => (
           <MdModeEdit
             title="Edit"
             size={24}
@@ -235,85 +290,57 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
               setRequest(rowData);
             }}
           />
-        );
-      }
-    },
-    {
-      key: 'actions',
-      title: <Translate>Actions</Translate>,
-      render: (rowData: any) => {
-        const isDisabled =
-          request?.key !== rowData.key ||
-          rowData.operationStatusLvalue?.valueCode !== 'PROC_COMPLETED';
-        return (
-          <HStack spacing={10}>
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip> View</Tooltip>}>
-              <FontAwesomeIcon
-                icon={faEye}
-                onClick={() => setOpenView(true)}
-                style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-              />
-            </Whisper>
-          </HStack>
-        );
-      }
-    },
-    {
-      key: 'attachments',
-      title: <Translate>Attachments</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return (
-          <MdAttachFile
-            size={20}
-            fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
-            onClick={() => {
-              if (rowData?.key) {
-                setSelectedRequestForAttachments(rowData);
-                setAttachmentsModalOpen(true);
-              }
-            }}
-            style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
-            title="View Attachments"
-          />
-        );
-      }
-    },
-    {
-      key: 'createdAt',
-      title: <Translate>Created At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
+        )
+      },
+      {
+        key: 'actions',
+        title: <Translate>Actions</Translate>,
+        render: (rowData: any) => {
+          const isDisabled =
+            request?.key !== rowData.key ||
+            rowData.operationStatusLvalue?.valueCode !== 'PROC_COMPLETED';
+          return (
+            <HStack spacing={10}>
+              <Whisper placement="top" trigger="hover" speaker={<Tooltip> View</Tooltip>}>
+                <FontAwesomeIcon
+                  icon={faEye}
+                  onClick={() => setOpenView(true)}
+                  style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
+                />
+              </Whisper>
+            </HStack>
+          );
+        }
+      },
+      {
+        key: 'createdAt',
+        title: <Translate>Created At/By</Translate>,
+        expandable: true,
+        render: (rowData: any) => (
           <>
             <span>{rowData.createdBy}</span>
             <br />
             <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
           </>
-        );
-      }
-    },
-    {
-      key: 'submitedAt',
-      title: <Translate>Submited At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
+        )
+      },
+      {
+        key: 'submitedAt',
+        title: <Translate>Submited At/By</Translate>,
+        expandable: true,
+        render: (rowData: any) => (
           <>
             <span>{rowData.submitedBy}</span>
             <br />
             <span className="date-table-style">{formatDateWithoutSeconds(rowData.submitedAt)}</span>
           </>
-        );
-      }
-    },
-
-    {
-      key: 'cancelledBy',
-      title: <Translate>Cancelled At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
+        )
+      },
+      {
+        key: 'cancelledBy',
+        title: <Translate>Cancelled At/By</Translate>,
+        expandable: true,
+        render: (rowData: any) => (
           <>
             <span>{rowData.cancelledBy}</span>
             <br />
@@ -321,71 +348,74 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
               {formatDateWithoutSeconds(rowData.cancelledAt)}
             </span>
           </>
-        );
+        )
+      },
+      {
+        key: 'cancellationReason',
+        title: <Translate>Cancelled Reason</Translate>,
+        expandable: true,
+        render: (rowData: any) => rowData.cancellationReason || '-'
       }
-    },
-    {
-      key: 'cancellationReason',
-      title: <Translate>Cancelled Reason</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return rowData.cancellationReason || '-';
-      }
-    }
-  ];
+    ],
+    [request?.key]
+  );
+
   return (
     <>
-      <Row className='margin-left-right'>
-        <MyTable
-          columns={columns}
-          data={operationrequestList?.object || []}
-          rowClassName={isSelected}
-          loading={isLoading}
-          onRowClick={rowData => {
-            setRequest(rowData);
-            setPreviewRequest(rowData);
-          }}
-          tableButtons={
-            <div className="bt-div-2">
-              <div className="bt-left-2">
-                <MyButton
-                  disabled={request?.statusLvalue?.valueCode !== 'PROC_REQ'}
-                  onClick={() => setOpenCancelModal(true)}
-                  prefixIcon={() => <BlockIcon />}
-                >
-                  Cancel
-                </MyButton>
-                <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-                  Show Cancelled
-                </Checkbox>
-              </div>
-              <div className="bt-right-2">
-                <MyButton
-                  onClick={() => {
-                    handleClear();
-                    setOpen(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faPlus} style={{ marginRight: 5 }} />
-                  Add Request
-                </MyButton>
+      <div ref={tableContainerRef}>
+        <Row className="margin-left-right">
+          <MyTable
+            columns={columns}
+            data={operationrequestList?.object || []}
+            rowClassName={isSelected}
+            loading={isLoading}
+            onRowClick={rowData => {
+              setRequest(rowData);
+              setPreviewRequest(rowData);
+            }}
+            tableButtons={
+              <div className="bt-div-2">
+                <div className="bt-left-2">
+                  <MyButton
+                    disabled={request?.statusLvalue?.valueCode !== 'PROC_REQ'}
+                    onClick={() => setOpenCancelModal(true)}
+                    prefixIcon={() => <BlockIcon />}
+                  >
+                    Cancel
+                  </MyButton>
+                  <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+                    Show Cancelled
+                  </Checkbox>
+                </div>
+                <div className="bt-right-2">
+                  <MyButton
+                    onClick={() => {
+                      handleClear();
+                      setOpen(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faPlus} style={{ marginRight: 5 }} />
+                    Add Request
+                  </MyButton>
 
-                <MyButton
-                  disabled={request?.statusLvalue?.valueCode !== 'PROC_REQ'}
-                  onClick={handleSubmit}
-                >
-                  <FontAwesomeIcon icon={faCheck} style={{ marginRight: 5 }} />
-                  Submit
-                </MyButton>
+                  <MyButton
+                    disabled={request?.statusLvalue?.valueCode !== 'PROC_REQ'}
+                    onClick={handleSubmit}
+                  >
+                    <FontAwesomeIcon icon={faCheck} style={{ marginRight: 5 }} />
+                    Submit
+                  </MyButton>
+                </div>
               </div>
-            </div>
-          }
-        />
-      </Row>
+            }
+          />
+        </Row>
+      </div>
+
       {previewRequest && (
         <PreviewRequest
           open={true}
-          setOpen={(val) => { }}
+          setOpen={() => {}}
           request={previewRequest}
           patient={patient}
           encounter={encounter}
@@ -403,6 +433,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         encounter={encounter}
         patient={patient}
       />
+
       <CancellationModal
         open={openCancelModal}
         setOpen={setOpenCancelModal}
@@ -410,9 +441,10 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         setObject={setRequest}
         handleCancle={handleCancel}
         fieldName="cancellationReason"
-        fieldLabel={'Cancelled Reason'}
-        title={'Cancellation'}
-      ></CancellationModal>
+        fieldLabel="Cancelled Reason"
+        title="Cancellation"
+      />
+
       <StartedDetails
         open={openView}
         setOpen={setOpenView}
@@ -423,25 +455,8 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         refetch={refetch}
         editable={false}
       />
-
-      {/* Attachments Modal */}
-      <MyModal
-        open={attachmentsModalOpen}
-        setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${selectedRequestForAttachments?.operation?.name || 'Operation Request'}`}
-        size="lg"
-        hideActionBtn={true}
-        content={
-          <EncounterAttachment
-            localEncounter={encounter}
-            source="OPERATION_REQUEST_ATTACHMENT"
-            sourceId={selectedRequestForAttachments?.key ? Number(selectedRequestForAttachments.key) : undefined}
-            refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
-          />
-        }
-      />
     </>
   );
 };
+
 export default Request;

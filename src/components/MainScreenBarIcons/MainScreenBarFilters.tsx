@@ -18,8 +18,6 @@ const MainScreenBarFilters = ({displaySearch, setDisplaySearch}) => {
   const [isLightMode, setIsLightMode] = useState({ state: mode == 'light' ? true : false });
   const [width, setWidth] = useState<number>(window.innerWidth); // window width
   const divElement = useSelector((state: RootState) => state.div?.divElement);
-  console.log("divElement: ");
-  console.log(typeof divElement);
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);

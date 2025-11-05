@@ -5,10 +5,22 @@ import { HiDocumentDuplicate } from 'react-icons/hi2';
 import { Form } from 'rsuite';
 import './styles.less';
 import { useEnumByName } from '@/services/enumsApi';
+import { formatEnumString } from '@/utils';
 
 const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave }) => {
   const fieldsEnum = useEnumByName("DuplicationField");
   const [fieldsState, setFieldsState] = useState<Record<string, boolean>>({});
+
+  const formatLabel = (text: string) => {
+    return text
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map((word) => {
+        if (word.toLowerCase() === 'dob') return 'DOB';
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(' ');
+  };
 
   useEffect(() => {
     if (fieldsEnum && fieldsEnum.length > 0 && open) {
@@ -17,13 +29,11 @@ const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave
         return acc;
       }, {} as Record<string, boolean>);
 
-    
       const initial = candidate?.fields ? { ...defaults, ...candidate.fields } : defaults;
       setFieldsState(initial);
     }
   }, [fieldsEnum, open]);
 
- 
   useEffect(() => {
     if (Object.keys(fieldsState).length > 0) {
       setCandidate((prev) => ({
@@ -34,25 +44,27 @@ const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave
   }, [fieldsState, setCandidate]);
 
   const conjureFormContent = () => (
-<Form fluid>
-  <div className="container-of-fields-inline">
-    {fieldsEnum?.map((field) => (
-      <div key={field} className="field-inline-item">
-        <label className="field-label-add-edit-rule">{field.replace(/_/g, ' ')}</label>
+    <Form fluid>
+      <div className="container-of-fields-column">
+        {fieldsEnum?.map((field) => (
+          <div key={field} className="field-column-item">
+            <label className="field-label-add-edit-rule">
+              {formatLabel(field)}
+            </label>
 
-        <MyInput
-          width="auto"
-          fieldName={field}
-          fieldType="checkbox"
-          showLabel={false}
-          record={fieldsState}
-          setRecord={setFieldsState}
-        />
+            <MyInput
+              width="auto"
+              fieldName={field}
+              fieldType="checkbox"
+              fieldLabel={formatEnumString(field)}
+              showLabel={false}
+              record={fieldsState}
+              setRecord={setFieldsState}
+            />
+          </div>
+        ))}
       </div>
-    ))}
-  </div>
-</Form>
-
+    </Form>
   );
 
   return (
@@ -63,9 +75,10 @@ const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave
       position="right"
       content={conjureFormContent}
       actionButtonLabel={candidate?.id ? 'Save' : 'Create'}
-      actionButtonFunction={()=>{
-        setCandidate({...candidate ,fields:fieldsState})
-        handleSave();}}
+      actionButtonFunction={() => {
+        setCandidate({ ...candidate, fields: fieldsState });
+        handleSave();
+      }}
       steps={[{ title: 'Rule Info', icon: <HiDocumentDuplicate /> }]}
       size={width > 600 ? '30vw' : '70vw'}
     />

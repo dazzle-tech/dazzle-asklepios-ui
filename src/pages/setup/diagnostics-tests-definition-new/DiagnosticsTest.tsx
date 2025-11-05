@@ -5,7 +5,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useCreateDiagnosticTestMutation, useGetAllDiagnosticTestsQuery, useLazyGetDiagnosticTestsByTypeQuery, useToggleDiagnosticTestActiveMutation, useUpdateDiagnosticTestMutation,useLazyGetDiagnosticTestsByNameQuery } from '@/services/setup/diagnosticTestService';
+import { useCreateDiagnosticTestMutation, useGetAllDiagnosticTestsQuery, useLazyGetDiagnosticTestsByTypeQuery, useToggleDiagnosticTestActiveMutation, useUpdateDiagnosticTestMutation,useLazyGetDiagnosticTestsByNameQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
 import { DiagnosticTest } from '@/types/model-types-new';
@@ -411,7 +411,7 @@ const handleUpdateDiagnosticTest = async () => {
 
         recordOfFilter.filter === 'type' && (
           <MyInput
-            width="100%"
+            width="9vw"
             fieldLabel="Test Type"
             fieldType="select"
             fieldName="type"
@@ -423,6 +423,7 @@ const handleUpdateDiagnosticTest = async () => {
               setValueType({ type: updatedRecord.type });
             }}
             showLabel={false}
+            searchable={false}
           />
 
         )
@@ -491,16 +492,6 @@ const handleUpdateDiagnosticTest = async () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
       <MyTable
         height={450}
         data={isFiltered ? filteredList : diagnodticsTestList?.data ?? []}
@@ -525,6 +516,16 @@ const handleUpdateDiagnosticTest = async () => {
             timestamp: Date.now(),
           });
         }}
+        tableButtons={<div className="container-of-add-new-button">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>}
       />
       <AddEditDiagnosticTest
         open={openAddEditDiagnosticTestPopup}

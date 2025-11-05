@@ -112,6 +112,7 @@ const AnesthesiaCarePlan = ({ operation, patient, encounter, user }) => {
                 fieldName="plannedAnesthesiaTypeLkey"
                 record={operationRe}
                 setRecord={setOperationRe}
+                searchable={false}
               />
               <Row>
                 <Col md={12}>

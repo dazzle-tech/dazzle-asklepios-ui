@@ -45,9 +45,11 @@ import { patientAttachmentService } from './services/patients/attachmentService'
 import { ageGroupService } from './services/setup/ageGroupService';
 import {potintialService} from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
-import { diagnosticTestService } from '@/services/setup/diagnosticTestService';
+import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
 import { loincCodeService } from './services/setup/loincCodeService';
+import { cptCodeService } from './services/setup/cptCodeService';
+import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -107,7 +109,8 @@ export const store = configureStore({
     [userRoleService.reducerPath]: userRoleService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
     [MedicalsheetsService.reducerPath]:MedicalsheetsService.reducer,
-
+    //cpt code
+    [cptCodeService.reducerPath]: cptCodeService.reducer,
     //refetch Encounters
     refetch: refetchReducer,
     //refetch Patient Side Information
@@ -149,6 +152,7 @@ export const store = configureStore({
 
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
+    [laboratoryService.reducerPath]: laboratoryService.reducer,
 
     //loinc code
     [loincCodeService.reducerPath]: loincCodeService.reducer,
@@ -198,6 +202,8 @@ export const store = configureStore({
       potintialService.middleware,
       diagnosticTestService.middleware,
       loincCodeService.middleware,
+      cptCodeService.middleware,
+      laboratoryService.middleware,
     ])
 });
 

@@ -12,8 +12,9 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApOperationAnesthesiaRecovery } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
-import { Col, Radio, RadioGroup, Row, Text } from 'rsuite';
+import { Col, Radio, RadioGroup, Row, Slider, Text } from 'rsuite';
 import GenericAdministeredMedications from '../encounter/encounter-component/procedure/Post-ProcedureCare/AdministeredMedications ';
+import MyLabel from '@/components/MyLabel';
 
 const AnesthesiaRecovery = ({ operation }) => {
   const dispatch = useAppDispatch();
@@ -23,13 +24,18 @@ const AnesthesiaRecovery = ({ operation }) => {
     skip: !operation?.key,
     refetchOnMountOrArgChange: true
   });
-  console.log('anesthesiaData', anesthesiaData);
+  const [planData, setPlanData] = useState({
+    painLevel: 0
+  });
+  const getTrackColor = (value: number): string => {
+    if (value === 0) return 'transparent';
+    if (value >= 1 && value <= 3) return '#28a745';
+    if (value >= 4 && value <= 7) return 'orange';
+    return 'red';
+  };
   const [save] = useSaveAnesthesiaRecoveryMutation();
   // Fetch  consciousness Level Lov response
   const { data: consciousnessLevelLovQueryResponse } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
-  // Fetch  pain Level Lov response
-  const { data: painLevelLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
-
   useEffect(() => {
     setAnethesia({ ...anesthesia, extubationStatus: status });
   }, [status]);
@@ -188,20 +194,37 @@ const AnesthesiaRecovery = ({ operation }) => {
               />
             </Col>
             <Col md={8}>
-              <MyInput
-                width="100%"
-                fieldLabel="Pain Level"
-                fieldType="select"
-                fieldName="painLevelLkey"
-                selectData={painLevelLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={anesthesia}
-                setRecord={setAnethesia}
-              />
+              <div className="pain-level-container">
+                <MyLabel label="Pain Level (1-10)" />
+
+                <div className="slider-class-170">
+                  <Slider
+                    value={planData.painLevel}
+                    onChange={value => setPlanData(prev => ({ ...prev, painLevel: value }))}
+                    min={0}
+                    max={10}
+                    step={1}
+                    progress
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '52%',
+                      left: 0,
+                      height: '7px',
+                      width: `${(planData.painLevel / 10) * 100}%`,
+                      backgroundColor: getTrackColor(planData.painLevel),
+                      transform: 'translateY(-50%)',
+                      zIndex: 1,
+                      transition: 'background-color 0.2s ease',
+                      borderRadius: '4px'
+                    }}
+                  />
+                </div>
+              </div>
             </Col>
           </Row>
-            <br />
+          <br />
           <GenericAdministeredMedications
             parentKey={'operation?.key'}
             filterFieldName="operationRequestKey"

@@ -281,7 +281,7 @@ export interface DownloadTicket {
 // Request Types
 export interface UploadPatientAttachmentParams {
   patientId: number;
-  files: File[];
+  file: File;
   type?: string;
   details?: string;
   source?: string;
@@ -347,3 +347,31 @@ export interface DiagnosticTest {
   appointable?: boolean;
 }
 
+
+export interface Laboratory {
+  id?: number;
+  testId?: number;
+  property?: string;
+  system?: string;
+  scale?: string;
+  reagents?: string;
+  method?: string;
+  testDurationTime?: number;
+  timeUnit?: string;
+  resultUnit?: string;
+  isProfile?: boolean;
+  sampleContainer?: string;
+  sampleVolume?: number;
+  sampleVolumeUnit?: string;
+  tubeColor?: string;
+  testDescription?: string;
+  sampleHandling?: string;
+  turnaroundTime?: number;
+  turnaroundTimeUnit?: string;
+  preparationRequirements?: string;
+  medicalIndications?: string;
+  associatedRisks?: string;
+  testInstructions?: string;
+  category?: string;
+  tubeType?: string;
+}

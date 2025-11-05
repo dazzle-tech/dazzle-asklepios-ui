@@ -1,5 +1,4 @@
 import {
-  faBookmark,
   faBullhorn,
   faCalendarDays,
   faChartColumn,
@@ -44,7 +43,6 @@ import { useAppSelector } from '@/hooks';
 import { useChangeLangMutation } from '@/services/uiService';
 import { setLang, setMode } from '@/reducers/uiSlice';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 import { formatEnumString } from '@/utils';
 
@@ -57,10 +55,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth); // window width
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
-  const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
-  const { data: langData, isFetching: langsLoading, refetch: refetchLangs } = useGetAllLanguagesQuery({});
-  console.log("langData: ");
-  console.log(langData);
+  const { data: langData} = useGetAllLanguagesQuery({});
   const navigate = useNavigate();
 
   // container to choose action from more menu
@@ -197,7 +192,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
 
     const handleSelect = eventKey => {
       onClose();
-      console.log(eventKey);
     };
 
     return (
@@ -237,7 +231,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
 
     const handleSelect = eventKey => {
       onClose();
-      console.log(eventKey);
     };
 
     const handleLogout = () => {
