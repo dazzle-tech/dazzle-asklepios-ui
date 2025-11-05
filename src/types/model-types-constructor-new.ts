@@ -293,3 +293,11 @@ export const newLaboratory: modelTypes.Laboratory = {
   category: undefined,
   tubeType: undefined,
 };
+
+// default empty object
+export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
+  id: undefined,
+  testId: undefined,
+  name: '',
+  resultUnit: '',
+};

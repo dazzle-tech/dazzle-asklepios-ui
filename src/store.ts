@@ -50,6 +50,7 @@ import { encounterAttachmentsService } from './services/encounters/attachmentsSe
 import { loincCodeService } from './services/setup/loincCodeService';
 import { cptCodeService } from './services/setup/cptCodeService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
+import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -156,6 +157,7 @@ export const store = configureStore({
 
     //loinc code
     [loincCodeService.reducerPath]: loincCodeService.reducer,
+    [diagnosticTestProfileService.reducerPath]: diagnosticTestProfileService.reducer,
 
   },
   // @ts-ignore
@@ -204,6 +206,7 @@ export const store = configureStore({
       loincCodeService.middleware,
       cptCodeService.middleware,
       laboratoryService.middleware,
+      diagnosticTestProfileService.middleware,
     ])
 });
 

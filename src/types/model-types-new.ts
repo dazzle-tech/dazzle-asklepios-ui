@@ -375,3 +375,11 @@ export interface Laboratory {
   category?: string;
   tubeType?: string;
 }
+
+
+export interface DiagnosticTestProfile {
+  id?: number;
+  testId?: number;
+  name?: string;
+  resultUnit?: string;
+}
