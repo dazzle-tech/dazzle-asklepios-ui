@@ -175,7 +175,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       try {
         await uploadAttachments({
           patientId: patientId,
-          files: [selectedFile],
+          file: selectedFile, 
           type: undefined,
           details: 'Profile Picture',
           source: 'PATIENT_PROFILE_PICTURE'

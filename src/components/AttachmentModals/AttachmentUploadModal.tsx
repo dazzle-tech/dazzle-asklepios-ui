@@ -114,14 +114,17 @@ const AttachmentUploadModal = ({
         
         await Promise.all(uploadPromises);
       } else if (patientId) {
-        // Upload patient attachments (supports multiple files)
-        await uploadPatientAttachments({
-          patientId,
-          files: selectedFiles,
-          type: selectedAttachType.typeLkey || undefined,
-          details: attachmentDetails.attachmentDetails || undefined,
-          source: source
-        }).unwrap();
+        const uploadPromises = selectedFiles.map(file => 
+          uploadPatientAttachments({
+            patientId,
+            file, 
+            type: selectedAttachType.typeLkey || undefined,
+            details: attachmentDetails.attachmentDetails || undefined,
+            source: source
+          }).unwrap()
+        );
+        
+        await Promise.all(uploadPromises);
       } else {
         dispatch(notify({ msg: 'Patient ID or Encounter ID is required', sev: 'error' }));
         return;

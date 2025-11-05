@@ -20,12 +20,10 @@ export const patientAttachmentService = createApi({
   tagTypes: ['PatientAttachment'],
   endpoints: builder => ({
     // POST /api/setup/patients/{patientId}/attachments
-    uploadAttachments: builder.mutation<UploadResponse[], UploadPatientAttachmentParams>({
-      query: ({ patientId, files, type, details, source }) => {
+    uploadAttachments: builder.mutation<UploadResponse, UploadPatientAttachmentParams>({
+      query: ({ patientId, file, type, details, source }) => {
         const formData = new FormData();
-        files.forEach(file => {
-          formData.append('files', file);
-        });
+        formData.append('file', file);
     
         // Build params object with optional fields
         const params: any = { };
