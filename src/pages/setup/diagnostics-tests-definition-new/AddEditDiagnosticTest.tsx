@@ -21,6 +21,8 @@ import {
   newApDiagnosticTestPathology,
   newApDiagnosticTestRadiology,
 } from '@/types/model-types-constructor';
+import { useCreatePathologyMutation,
+  useUpdatePathologyMutation } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { GrTestDesktop } from 'react-icons/gr';
@@ -30,20 +32,20 @@ import Laboratory from './Laboratory';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import './styles.less';
-import { newLaboratory } from '@/types/model-types-constructor-new';
+import { newLaboratory, newPathology } from '@/types/model-types-constructor-new';
 import { useCreateLaboratoryMutation, useUpdateLaboratoryMutation } from '@/services/setup/diagnosticTest/laboratoryService';
 const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsTest, width, handleSave }) => {
   const dispatch = useAppDispatch();
   const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState<ApDiagnosticTestRadiology>(
     { ...newApDiagnosticTestRadiology }
   );
-  const [diagnosticTestPathology, setDiagnosticTestPathology] = useState<ApDiagnosticTestPathology>(
-    { ...newApDiagnosticTestPathology }
+  const [diagnosticTestPathology, setDiagnosticTestPathology] = useState(
+    { ...newPathology}
   );
   const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState([])
   const [ageGroupList, setAgeGroupList] = useState([])
   const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState({ ...newLaboratory });
-  const [saveLoading, setSaveLoading] = useState(false);
+
   
   // Fetch diagnostics test type Lov response
    
@@ -69,6 +71,9 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   const [saveDiagnosticsTestRadiology] = useSaveDiagnosticsRadiologyTestMutation();
   // save Diagnostics Test Pathology
   const [saveDiagnosticsTestPathology] = useSaveDiagnosticsTestPathologyMutation();
+  const [addPathology]=useCreatePathologyMutation();
+  const [updatePathology]=useUpdatePathologyMutation();
+  // Fetch Diagnostic Test Type details
   const matchingItem = useGetDiagnosticsTestTypeQuery(diagnosticsTest.testTypeLkey || '');
 
   // show details component according to Test type of diagnostic test
@@ -108,7 +113,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
 
 const handleSaveLab = async () => {
   try {
-    setSaveLoading(true);
+   
     setOpen(false);
 
     if (diagnosticTestLaboratory.id) {
@@ -138,7 +143,7 @@ const handleSaveLab = async () => {
       })
     );
   } finally {
-    setSaveLoading(false);
+    
   }
 };
 
@@ -157,13 +162,36 @@ const handleSaveLab = async () => {
 
   // handle save pathology details
   const handleSavePath = async () => {
-    setOpen(false);
-    await saveDiagnosticsTestPathology({
-      ...diagnosticTestPathology,
-      createdBy: 'Administrator',
-      testKey: diagnosticsTest.key
-    }).unwrap();
-    dispatch(notify('Pathology Details Saved Successfully'));
+    try {
+      setOpen(false);
+      if (diagnosticTestPathology.id) {
+        await updatePathology({
+          id: diagnosticTestPathology.id,
+          body: {
+            ...diagnosticTestPathology,
+            testId: diagnosticsTest?.id,
+          },
+        }).unwrap();
+        dispatch(notify({msg:'Pathology Details Updated Successfully',sev:'success'}));
+      }
+      else {
+        await addPathology({
+          ...diagnosticTestPathology,
+          testId: diagnosticsTest?.id,
+        }).unwrap();
+        dispatch(notify({msg:'Pathology Details Saved Successfully',sev:'success'}));
+      }
+    } catch (error: any) {
+      console.error('Error saving pathology details:', error);
+      dispatch(
+        notify({
+          msg: 'Failed to save Pathology Details',
+          sev: 'error',
+        })
+      );
+    } finally {
+     
+    }
   };
 
   useEffect(() => {

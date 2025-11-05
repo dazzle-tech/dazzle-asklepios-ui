@@ -8,107 +8,51 @@ import {
 import { Form } from 'rsuite';
 import { newApDiagnosticTestPathology } from '@/types/model-types-constructor';
 import { initialListRequest } from '@/types/types';
+import { useGetPathologyByTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 
 const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTestPathology }) => {
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest,
-    timestamp: new Date().getMilliseconds(),
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'test_key',
-        operator: 'match',
-        value: diagnosticsTest.key || undefined
-      }
-    ]
-  });
-
-  const [catalogListRequest] = useState({
-    ...initialListRequest,
-    pageSize: 100,
-    timestamp: new Date().getMilliseconds(),
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'type_lkey',
-        operator: 'match',
-        value: '862842242812880' //TODO Add the LOV 'Pathkey'
-      }
-    ]
-  });
-  // Fetch catalog List response
-  const { data: catalogListResponseData } = useGetDiagnosticsTestCatalogHeaderListQuery(catalogListRequest);
+ 
   // Fetch time Unit Lov response
   const { data: timeUnitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-  // Fetch reagent Lov response
-  const { data: reagentLovQueryResponse } = useGetLovValuesByCodeQuery('PATH_REAGENTS');
   // Fetch specimens Lov response
   const { data: specimensLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SPECIMENS');
   // Fetch category Lov response
-  const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('MED_CATEGORY');
+  const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('PATH_CATEGORY');
    // Fetch procedurw Lov response
-  const { data: procedurwLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  // Fetch pathology Details list response
-  const { data: pathologyDetailsQueryResponse } = useGetDiagnosticsTestPathologyListQuery(listRequest);
-
+  const { data: procedurwLovQueryResponse } = useGetLovValuesByCodeQuery('PATH_ANALYSIS_PROC');
+ 
+const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ skip: !diagnosticsTest?.id });
   // Effects
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'test_key',
-        operator: 'match',
-        value: diagnosticsTest.key || undefined
-      }
-    ];
-    setListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
-  }, [diagnosticsTest.key]);
+ 
 
   useEffect(() => {
     if (diagnosticsTest) {
       setDiagnosticTestPathology(prevState => ({
         ...prevState,
-        testKey: diagnosticsTest.key
+        testId: diagnosticsTest.id
       }));
     }
   }, [diagnosticsTest]);
-
   useEffect(() => {
-    if (pathologyDetailsQueryResponse?.object?.length > 0) {
-      setDiagnosticTestPathology(pathologyDetailsQueryResponse?.object[0]);
-    } else {
-      setDiagnosticTestPathology({ ...newApDiagnosticTestPathology });
+    if (pathologyData) {
+      setDiagnosticTestPathology(pathologyData);
     }
-  }, [pathologyDetailsQueryResponse]);
+    else {
+      setDiagnosticTestPathology({ ...newApDiagnosticTestPathology, testId: diagnosticsTest?.id });
+    }
+  }, [pathologyData]);
+
 
   return (
     <Form fluid>
       <div className="container-of-two-fields-diagnostic">
         <div className="container-of-field-diagnostic">
           <MyInput
+            required
             width="100%"
             menuMaxHeight={200}
             fieldLabel="Category"
-            fieldName="pathologyCategoryLkey"
+            fieldName="category"
             selectData={categoryLovQueryResponse?.object ?? []}
             fieldType="select"
             selectDataLabel="lovDisplayVale"
@@ -118,39 +62,10 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
           />
         </div>
         <div className="container-of-field-diagnostic">
-          <MyInput
+           <MyInput
             width="100%"
             menuMaxHeight={200}
-            fieldName="pathCatalogKey"
-            fieldType="select"
-            selectData={catalogListResponseData?.object ?? []}
-            selectDataLabel="description"
-            selectDataValue="key"
-            record={diagnosticTestPathology}
-            setRecord={setDiagnosticTestPathology}
-          />
-        </div>
-      </div>
-      <br />
-      <div className="container-of-two-fields-diagnostic">
-        <div className="container-of-field-diagnostic">
-          <MyInput
-            width="100%"
-            menuMaxHeight={200}
-            fieldName="reagents"
-            fieldType="select"
-            selectData={reagentLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestPathology}
-            setRecord={setDiagnosticTestPathology}
-          />
-        </div>
-        <div className="container-of-field-diagnostic">
-          <MyInput
-            width="100%"
-            menuMaxHeight={200}
-            fieldName="specimenTypeLkey"
+            fieldName="specimenType"
             fieldType="select"
             selectData={specimensLovQueryResponse?.object ?? []}
             selectDataLabel="lovDisplayVale"
@@ -161,12 +76,13 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
         </div>
       </div>
       <br />
+    
       <div className="container-of-two-fields-diagnostic">
         <div className="container-of-field-diagnostic">
           <MyInput
             width="100%"
             menuMaxHeight={200}
-            fieldName="analysisProcedureLkey"
+            fieldName="analysisProcedure"
             fieldType="select"
             selectData={procedurwLovQueryResponse?.object ?? []}
             selectDataLabel="lovDisplayVale"
@@ -178,6 +94,7 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
         <div className="container-of-field-diagnostic">
           <MyInput
             width="100%"
+            fieldType='number'
             fieldName="turnaroundTime"
             record={diagnosticTestPathology}
             setRecord={setDiagnosticTestPathology}
@@ -188,7 +105,7 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
       <MyInput
         width="100%"
         menuMaxHeight={200}
-        fieldName="timeUnitLkey"
+        fieldName="timeUnit"
         selectData={timeUnitLovQueryResponse?.object ?? []}
         fieldType="select"
         selectDataLabel="lovDisplayVale"
