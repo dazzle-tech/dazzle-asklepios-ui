@@ -281,7 +281,7 @@ export interface DownloadTicket {
 // Request Types
 export interface UploadPatientAttachmentParams {
   patientId: number;
-  files: File[];
+  file: File;
   type?: string;
   details?: string;
   source?: string;

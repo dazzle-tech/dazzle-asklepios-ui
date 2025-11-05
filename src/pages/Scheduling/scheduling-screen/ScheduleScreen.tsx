@@ -3,9 +3,7 @@ import { Calendar as BigCalendar, Views, momentLocalizer } from 'react-big-calen
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import {
-  ButtonToolbar,
   Panel,
-  InputGroup,
   Input,
   Button,
   Form,
@@ -23,7 +21,6 @@ import SearchIcon from '@rsuite/icons/Search';
 import { newApAppointment } from '@/types/model-types-constructor';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -53,7 +50,7 @@ import ViewAppointmentRequests from './ViewAppointmentRequests';
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
   const mode = useSelector((state: any) => state.ui.mode);
-  const [validationResult, setValidationResult] = useState({});
+  const [validationResult] = useState({});
   const [recordSearchAppointment, setRecordSearchAppointment] = useState({ value: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [ActionsModalOpen, setActionsModalOpen] = useState(false);
@@ -65,12 +62,12 @@ const ScheduleScreen = () => {
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [selectedResources, setSelectedResources] = useState([]);
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [listRequest] = useState<ListRequest>({ ...initialListRequest });
   const [appointmentsData, setAppointmentsData] = useState([]);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [filteredResourcesList, setFilteredResourcesList] = useState([]);
   const [showCanceled, setShowCanceled] = useState<boolean>(false);
-  const [filteredMonth, setFilteredMonth] = useState<Date>();
+  const [filteredMonth] = useState<Date>();
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [finalResourceLit, setFinalResourceLit] = useState();
   const [currentView, setCurrentView] = useState('day');
@@ -95,7 +92,6 @@ const ScheduleScreen = () => {
   const {
     data: appointments,
     refetch: refitchAppointments,
-    error,
     isLoading: isLoadingAppointments,
     isFetching: isFetchingAppointments
   } = useGetAppointmentsQuery({
@@ -150,9 +146,14 @@ const ScheduleScreen = () => {
   }, [appointments, resourcesWithAvailabilityResponse, currentView]);
 
   useEffect(() => {
+    console.log("selectedResourceType");
+    console.log(selectedResourceType);
     if (selectedResourceType) {
+      // const filtered = resourcesWithAvailabilityResponse.object.filter(
+      //   resource => resource.resourceTypeLkey === selectedResourceType?.resourcesType
+      // );
       const filtered = resourcesWithAvailabilityResponse.object.filter(
-        resource => resource.resourceTypeLkey === selectedResourceType?.resourcesType
+        resource => selectedResourceType?.resourcesType.includes(resource.resourceTypeLkey)
       );
       setFilteredResourcesList(filtered);
     }
@@ -177,7 +178,7 @@ const ScheduleScreen = () => {
     setActionsModalOpen(true);
   };
 
-  const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
+  const { data: facilityListResponse } = useGetFacilitiesQuery({
     ...initialListRequest
   });
 
@@ -538,16 +539,6 @@ const ScheduleScreen = () => {
   minTime.setHours(8, 0, 0);
 
   useEffect(() => {
-    console.log(
-      filteredResourcesList.length > 0
-        ? filteredResourcesList
-        : !selectedResourceType?.resourcesType
-        ? resourcesWithAvailabilityResponse?.object
-        : []
-    );
-  }, [filteredResourcesList, selectedResourceType]);
-
-  useEffect(() => {
     const selectedKeys = selectedResources?.resourceKey;
     const selectedTypeKey = selectedResourceType?.key;
 
@@ -771,7 +762,7 @@ content={
                 selectData={
                   filteredResourcesList.length > 0
                     ? filteredResourcesList
-                    : !selectedResourceType?.resourcesType
+                    : (!selectedResourceType?.resourcesType || selectedResourceType?.resourcesType.length == 0)
                     ? resourcesWithAvailabilityResponse?.object
                     : []
                 }

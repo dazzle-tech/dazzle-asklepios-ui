@@ -2,7 +2,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Divider, Form } from 'rsuite';
 import clsx from 'clsx';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -36,7 +36,7 @@ const AddEditDepartment = ({
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid layout='inline' className='add-edit-department-main-container'>
+          <Form fluid className='add-edit-department-main-container'>
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
@@ -65,13 +65,24 @@ const AddEditDepartment = ({
                 menuMaxHeight={200}              
               />
             </div>
+            <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
             <MyInput
-              width={width > 600 ? 520 : 250}
+              width={250}
               fieldName="name"
               record={department}
               setRecord={setDepartment}
               required
             />
+            <MyInput
+              width={250}
+              fieldName="departmentCode"
+              record={recordOfDepartmentCode}
+              setRecord={setRecordOfDepartmentCode}
+              disabled={true}
+            />
+            </div>
+            <br />
+            <Divider />
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
@@ -86,13 +97,8 @@ const AddEditDepartment = ({
                 setRecord={setDepartment}
               />
             </div>
-            <MyInput
-              width={width > 600 ? 520 : 250}
-              fieldName="departmentCode"
-              record={recordOfDepartmentCode}
-              setRecord={setRecordOfDepartmentCode}
-              disabled={true}
-            />
+            <br />
+            <Divider />
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <Form className="container-of-appointable">
                 <MyInput
@@ -117,6 +123,8 @@ const AddEditDepartment = ({
                 />
               ) : null}
             </div>
+            <br />
+            <Divider />
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <Form className="container-of-appointable">
                 <MyInput
