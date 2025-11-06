@@ -414,6 +414,15 @@ export interface Laboratory {
   tubeType?: string;
 }
 
+
+
+export interface DiagnosticTestProfile {
+  id?: number;
+  testId?: number;
+  name?: string;
+  resultUnit?: string;
+}
+
 export interface Pathology {
   id?: number;
   testId?: number;

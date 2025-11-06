@@ -295,6 +295,14 @@ export const newLaboratory: modelTypes.Laboratory = {
 };
 
 
+// default empty object
+export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
+  id: undefined,
+  testId: undefined,
+  name: '',
+  resultUnit: ''}
+
+
 export const newPathology: modelTypes.Pathology = {
   id: undefined,
   testId: undefined,
