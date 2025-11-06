@@ -250,6 +250,34 @@ export interface EncounterAttachment {
   lastModifiedDate?: Date | null;
 }
 
+// Inventory Transfer Attachment
+export interface InventoryTransferAttachment {
+  id: number;
+  transactionId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+// Inventory Transaction Attachment
+export interface InventoryTransactionAttachment {
+  id: number;
+  transactionId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
 // Response Types
 export interface UploadResponse {
   id: number;
@@ -281,7 +309,7 @@ export interface DownloadTicket {
 // Request Types
 export interface UploadPatientAttachmentParams {
   patientId: number;
-  files: File[];
+  file: File;
   type?: string;
   details?: string;
   source?: string;
@@ -294,6 +322,16 @@ export interface UploadEncounterAttachmentParams {
   details?: string;
   source?: string;
   sourceId?: number;
+}
+
+export interface UploadInventoryTransferAttachmentParams {
+  transactionId: number;
+  file: File;
+}
+
+export interface UploadInventoryTransactionAttachmentParams {
+  transactionId: number;
+  file: File;
 }
 
 export interface Service {
@@ -375,6 +413,7 @@ export interface Laboratory {
   category?: string;
   tubeType?: string;
 }
+
 export interface Pathology {
   id?: number;
   testId?: number;
@@ -390,3 +429,16 @@ export interface Pathology {
   preparationRequirements?: string;
   associatedRisks?: string;
 }
+
+export interface Radiology {
+  id?: number;
+  testId: number;
+  category: string;
+  imageDuration?: number | null;
+  testInstructions?: string | null;
+  medicalIndications?: string | null;
+  turnaroundTimeUnit?: string | null;
+  turnaroundTime?: number | null;
+  associatedRisks?: string | null;
+}
+

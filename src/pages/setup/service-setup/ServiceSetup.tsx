@@ -4,7 +4,6 @@ import { Panel, Form } from 'rsuite';
 import { MdModeEdit, MdDelete, MdMedicalServices } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import ReactDOMServer from 'react-dom/server';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';

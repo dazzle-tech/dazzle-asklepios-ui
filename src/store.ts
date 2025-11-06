@@ -47,9 +47,14 @@ import {potintialService} from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
 import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
+import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
+import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
+import { loincCodeService } from './services/setup/loincCodeService';
+import { cptCodeService } from './services/setup/cptCodeService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
-
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
+import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -97,6 +102,8 @@ export const store = configureStore({
     [attachmentService.reducerPath]: attachmentService.reducer,
     [patientAttachmentService.reducerPath]: patientAttachmentService.reducer,
     [encounterAttachmentsService.reducerPath]: encounterAttachmentsService.reducer,
+    [inventoryTransferAttachmentService.reducerPath]: inventoryTransferAttachmentService.reducer,
+    [inventoryTransactionAttachmentService.reducerPath]: inventoryTransactionAttachmentService.reducer,
     //lab module
     [labService.reducerPath]: labService.reducer,
     //operation
@@ -109,7 +116,8 @@ export const store = configureStore({
     [userRoleService.reducerPath]: userRoleService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
     [MedicalsheetsService.reducerPath]:MedicalsheetsService.reducer,
-
+    //cpt code
+    [cptCodeService.reducerPath]: cptCodeService.reducer,
     //refetch Encounters
     refetch: refetchReducer,
     //refetch Patient Side Information
@@ -152,6 +160,10 @@ export const store = configureStore({
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
+    [radiologyService.reducerPath]: radiologyService.reducer,
+
+    //loinc code
+    [loincCodeService.reducerPath]: loincCodeService.reducer,
 
     [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
 
@@ -175,6 +187,8 @@ export const store = configureStore({
       attachmentService.middleware,
       patientAttachmentService.middleware,
       encounterAttachmentsService.middleware,
+      inventoryTransferAttachmentService.middleware,
+      inventoryTransactionAttachmentService.middleware,
       labService.middleware,
       radService.middleware,
       procedureService.middleware,
@@ -199,8 +213,11 @@ export const store = configureStore({
       allergensService.middleware,
       potintialService.middleware,
       diagnosticTestService.middleware,
+      loincCodeService.middleware,
+      cptCodeService.middleware,
       laboratoryService.middleware,
       diagnosticTestPathologyService.middleware,
+      radiologyService.middleware,
     ])
 });
 

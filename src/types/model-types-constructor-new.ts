@@ -124,7 +124,7 @@ export const newDownloadTicket: modelTypes.DownloadTicket = {
 
 export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams = {
   patientId: undefined,
-  files: [],
+  file: undefined,
   type: undefined,
   details: undefined,
   source: undefined,
@@ -267,7 +267,7 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
 };
 
 export const newLaboratory: modelTypes.Laboratory = {
-  id: undefined,
+  id: null,
   testId: undefined,
   property: undefined,
   system: undefined,
@@ -294,6 +294,7 @@ export const newLaboratory: modelTypes.Laboratory = {
   tubeType: undefined,
 };
 
+
 export const newPathology: modelTypes.Pathology = {
   id: undefined,
   testId: undefined,
@@ -307,5 +308,16 @@ export const newPathology: modelTypes.Pathology = {
   medicalIndications: "",
   criticalValues: "",
   preparationRequirements: "",
+};
+
+export const newRadiology: modelTypes.Radiology = {
+  id: undefined,
+  testId: 0,
+  category: "",
+  imageDuration: null,
+  testInstructions: "",
+  medicalIndications: "",
+  turnaroundTimeUnit: "",
+  turnaroundTime: undefined,
   associatedRisks: "",
 };
