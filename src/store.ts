@@ -52,6 +52,7 @@ import { inventoryTransactionAttachmentService } from './services/inventory/inve
 import { loincCodeService } from './services/setup/loincCodeService';
 import { cptCodeService } from './services/setup/cptCodeService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
+import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
 
 export const store = configureStore({
   reducer: {
@@ -158,6 +159,7 @@ export const store = configureStore({
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
+    [radiologyService.reducerPath]: radiologyService.reducer,
 
     //loinc code
     [loincCodeService.reducerPath]: loincCodeService.reducer,
@@ -211,6 +213,7 @@ export const store = configureStore({
       loincCodeService.middleware,
       cptCodeService.middleware,
       laboratoryService.middleware,
+      radiologyService.middleware,
     ])
 });
 

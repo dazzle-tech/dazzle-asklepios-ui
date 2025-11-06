@@ -4,6 +4,7 @@ import { useGetLaboratoryByTestIdQuery } from '@/services/setup/diagnosticTest/l
 import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+import { newLaboratory } from '@/types/model-types-constructor-new';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTestLaboratory }) => {
@@ -44,6 +45,9 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
  useEffect(() => {
     if (getLaboratory) {
       setDiagnosticTestLaboratory(getLaboratory);
+    }
+    else {
+      setDiagnosticTestLaboratory({ ...newLaboratory });
     }
   }, [getLaboratory]);
 

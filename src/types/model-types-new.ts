@@ -413,3 +413,14 @@ export interface Laboratory {
   category?: string;
   tubeType?: string;
 }
+export interface Radiology {
+  id?: number;
+  testId: number;
+  category: string;
+  imageDuration?: number | null;
+  testInstructions?: string | null;
+  medicalIndications?: string | null;
+  turnaroundTimeUnit?: string | null;
+  turnaroundTime?: number | null;
+  associatedRisks?: string | null;
+}

@@ -267,7 +267,7 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
 };
 
 export const newLaboratory: modelTypes.Laboratory = {
-  id: undefined,
+  id: null,
   testId: undefined,
   property: undefined,
   system: undefined,
@@ -292,4 +292,15 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
+};
+export const newRadiology: modelTypes.Radiology = {
+  id: undefined,
+  testId: 0,
+  category: "",
+  imageDuration: null,
+  testInstructions: "",
+  medicalIndications: "",
+  turnaroundTimeUnit: "",
+  turnaroundTime: undefined,
+  associatedRisks: "",
 };
