@@ -267,7 +267,7 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
 };
 
 export const newLaboratory: modelTypes.Laboratory = {
-  id: undefined,
+  id: null,
   testId: undefined,
   property: undefined,
   system: undefined,
@@ -294,10 +294,38 @@ export const newLaboratory: modelTypes.Laboratory = {
   tubeType: undefined,
 };
 
+
 // default empty object
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   id: undefined,
   testId: undefined,
   name: '',
-  resultUnit: '',
+  resultUnit: ''}
+
+
+export const newPathology: modelTypes.Pathology = {
+  id: undefined,
+  testId: undefined,
+  category: "",
+  specimenType: "",
+  analysisProcedure: "",
+  turnaroundTime: undefined,
+  timeUnit: "",
+  testDescription: "",
+  sampleHandling: "",
+  medicalIndications: "",
+  criticalValues: "",
+  preparationRequirements: "",
+};
+
+export const newRadiology: modelTypes.Radiology = {
+  id: undefined,
+  testId: 0,
+  category: "",
+  imageDuration: null,
+  testInstructions: "",
+  medicalIndications: "",
+  turnaroundTimeUnit: "",
+  turnaroundTime: undefined,
+  associatedRisks: "",
 };

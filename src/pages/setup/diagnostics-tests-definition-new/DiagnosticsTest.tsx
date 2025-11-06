@@ -406,6 +406,7 @@ const handleUpdateDiagnosticTest = async () => {
         showLabel={false}
         placeholder="Search"
       />)}
+      
       {
         //if can field filter == 'type', show dropdown of test types
 

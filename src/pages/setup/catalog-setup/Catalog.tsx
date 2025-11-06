@@ -47,11 +47,20 @@ const Catalog = () => {
   });
 
   // Fetch diagnostics test catalog header list Response
-  const {
-    data: diagnosticsTestCatalogHeaderListResponse,
-    refetch,
-    isFetching
-  } = useGetDiagnosticsTestCatalogHeaderListQuery(listRequest);
+  // const {
+  //   data: diagnosticsTestCatalogHeaderListResponse,
+  //   refetch,
+  //   isFetching
+  // } = useGetDiagnosticsTestCatalogHeaderListQuery(listRequest);
+   const [paginationParams, setPaginationParams] = useState({
+      page: 0,
+      size: 5
+      ,
+      sort: "id,asc",
+      timestamp: Date.now(),
+    });
+
+
   // Fetch department list Response
   const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
   // save diagnostics test catalog header
@@ -207,6 +216,7 @@ const Catalog = () => {
   };
   // handle Save catalog
   const handleSave = () => {
+    
     setPopupOpen(false);
     saveDiagnosticsTestCatalogHeader(diagnosticsTestCatalogHeader)
       .unwrap()
@@ -217,7 +227,8 @@ const Catalog = () => {
         dispatch(notify({ msg: 'Failed to save this Catalog', sev: 'error' }));
       });
   };
-  // Handle page change in navigation
+  // Ha
+  // ndle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
@@ -337,8 +348,8 @@ const Catalog = () => {
 
       <MyTable
         height={450}
-        data={diagnosticsTestCatalogHeaderListResponse?.object ?? []}
-        loading={isFetching}
+        data={catalogList.data ?? []}
+        loading={isCatalogFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         filters={filters()}

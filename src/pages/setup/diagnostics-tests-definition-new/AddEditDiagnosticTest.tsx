@@ -4,23 +4,15 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
-  useGetDiagnosticsTestTypeQuery,
-  useGetLovValuesByCodeQuery,
-  useSaveDiagnosticsRadiologyTestMutation,
-  useSaveDiagnosticsTestLaboratoryMutation,
-  useSaveDiagnosticsTestMutation,
-  useSaveDiagnosticsTestPathologyMutation,
+  useCreatePathologyMutation,
+  useUpdatePathologyMutation
+} from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
+import { useCreateLaboratoryMutation, useUpdateLaboratoryMutation } from '@/services/setup/diagnosticTest/laboratoryService';
+import { useCreateRadiologyMutation, useUpdateRadiologyMutation } from '@/services/setup/diagnosticTest/radiologyTestService';
+import {
+  useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import {
-  ApDiagnosticTestLaboratory,
-  ApDiagnosticTestPathology,
-  ApDiagnosticTestRadiology,
-} from '@/types/model-types';
-import {
-  newApDiagnosticTestLaboratory,
-  newApDiagnosticTestPathology,
-  newApDiagnosticTestRadiology,
-} from '@/types/model-types-constructor';
+import { newLaboratory, newPathology, newRadiology } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { GrTestDesktop } from 'react-icons/gr';
@@ -30,20 +22,21 @@ import Laboratory from './Laboratory';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import './styles.less';
-import { newLaboratory } from '@/types/model-types-constructor-new';
-import { useCreateLaboratoryMutation, useUpdateLaboratoryMutation } from '@/services/setup/diagnosticTest/laboratoryService';
 const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsTest, width, handleSave }) => {
   const dispatch = useAppDispatch();
-  const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState<ApDiagnosticTestRadiology>(
-    { ...newApDiagnosticTestRadiology }
+  const [diagnosticTestPathology, setDiagnosticTestPathology] = useState(
+    { ...newPathology}
+
   );
-  const [diagnosticTestPathology, setDiagnosticTestPathology] = useState<ApDiagnosticTestPathology>(
-    { ...newApDiagnosticTestPathology }
-  );
-  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState([])
-  const [ageGroupList, setAgeGroupList] = useState([])
+  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<any>([])
+  const [ageGroupList, setAgeGroupList] = useState<any>([])
   const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState({ ...newLaboratory });
+
+  const [diagnosticTestRadiology, setDiagnosticTestRadiology]= useState(
+    { ...newRadiology }
+  );
   const [saveLoading, setSaveLoading] = useState(false);
+
   
   // Fetch diagnostics test type Lov response
    
@@ -62,14 +55,18 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   const ageGroups = useEnumOptions('AgeGroupType')
 
   // save Diagnostics Test Laboratory
-  const [saveDiagnosticsTestLaboratory] = useSaveDiagnosticsTestLaboratoryMutation();
+ 
   const [addDiagnosticTest]=useCreateLaboratoryMutation();
   const [updateDiagnosticTest]=useUpdateLaboratoryMutation();
   // save Diagnostics Test Radiology
-  const [saveDiagnosticsTestRadiology] = useSaveDiagnosticsRadiologyTestMutation();
+
+  const [addDiagnosticTestRadiology]=useCreateRadiologyMutation();
+  const [updateDiagnosticTestRadiology]=useUpdateRadiologyMutation();
   // save Diagnostics Test Pathology
-  const [saveDiagnosticsTestPathology] = useSaveDiagnosticsTestPathologyMutation();
-  const matchingItem = useGetDiagnosticsTestTypeQuery(diagnosticsTest.testTypeLkey || '');
+  const [addPathology]=useCreatePathologyMutation();
+  const [updatePathology]=useUpdatePathologyMutation();
+  // Fetch Diagnostic Test Type details
+
 
   // show details component according to Test type of diagnostic test
   const handleShowComponent = () => {
@@ -105,13 +102,13 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
 
   // handle save laboratory details
 
-
 const handleSaveLab = async () => {
   try {
-    setSaveLoading(true);
+   
     setOpen(false);
 
     if (diagnosticTestLaboratory.id) {
+     
       await updateDiagnosticTest({
         id: diagnosticTestLaboratory.id,
         body: {
@@ -122,6 +119,7 @@ const handleSaveLab = async () => {
 
       dispatch(notify({msg:'Laboratory Details Updated Successfully',sev:'success'}));
     } else {
+      console.log('Creating new Laboratory for Test ID:', diagnosticsTest?.id);
       await addDiagnosticTest({
         ...diagnosticTestLaboratory,
         testId: diagnosticsTest?.id,
@@ -138,7 +136,7 @@ const handleSaveLab = async () => {
       })
     );
   } finally {
-    setSaveLoading(false);
+    
   }
 };
 
@@ -146,24 +144,72 @@ const handleSaveLab = async () => {
   
   // handle save radiology details
   const handleSaveRad = async () => {
-    setOpen(false);
-    await saveDiagnosticsTestRadiology({
-      ...diagnosticTestRadiology,
-      createdBy: 'Administrator',
-      testKey: diagnosticsTest.key
-    }).unwrap();
-    dispatch(notify('Radiology Details Saved Successfully'));
+    try {
+      setSaveLoading(true);
+      setOpen(false);
+      if (diagnosticTestRadiology.id) {
+        await updateDiagnosticTestRadiology({
+          id: diagnosticTestRadiology.id,
+          body: {
+            ...diagnosticTestRadiology,
+            testId: diagnosticsTest?.id,
+          },
+        }).unwrap();
+
+        dispatch(notify({msg:'Radiology Details Updated Successfully',sev:'success'}));
+      }
+      else {
+        await addDiagnosticTestRadiology({
+          ...diagnosticTestRadiology,
+          testId: diagnosticsTest?.id,
+        }).unwrap();
+        dispatch(notify({msg:'Radiology Details Saved Successfully',sev:'success'}));
+      }
+    } catch (error: any) {
+      console.error('Error saving radiology details:', error);
+      dispatch(
+        notify({
+          msg: 'Failed to save Radiology Details',
+          sev: 'error',
+        })
+      );
+    } finally {
+      setSaveLoading(false);
+    }
   };
 
   // handle save pathology details
   const handleSavePath = async () => {
-    setOpen(false);
-    await saveDiagnosticsTestPathology({
-      ...diagnosticTestPathology,
-      createdBy: 'Administrator',
-      testKey: diagnosticsTest.key
-    }).unwrap();
-    dispatch(notify('Pathology Details Saved Successfully'));
+    try {
+      setOpen(false);
+      if (diagnosticTestPathology.id) {
+        await updatePathology({
+          id: diagnosticTestPathology.id,
+          body: {
+            ...diagnosticTestPathology,
+            testId: diagnosticsTest?.id,
+          },
+        }).unwrap();
+        dispatch(notify({msg:'Pathology Details Updated Successfully',sev:'success'}));
+      }
+      else {
+        await addPathology({
+          ...diagnosticTestPathology,
+          testId: diagnosticsTest?.id,
+        }).unwrap();
+        dispatch(notify({msg:'Pathology Details Saved Successfully',sev:'success'}));
+      }
+    } catch (error: any) {
+      console.error('Error saving pathology details:', error);
+      dispatch(
+        notify({
+          msg: 'Failed to save Pathology Details',
+          sev: 'error',
+        })
+      );
+    } finally {
+     
+    }
   };
 
   useEffect(() => {
@@ -198,6 +244,7 @@ const handleSaveLab = async () => {
               <div className="container-of-field-diagnostic">
 
                 <MyInput
+                required
                   width="%100%"
                   fieldLabel="Test Type"
                   fieldType="select"
@@ -211,6 +258,7 @@ const handleSaveLab = async () => {
               </div>
               <div className="container-of-field-diagnostic">
                 <MyInput
+                required
                   width="100%"
                   fieldName="name"
                   record={diagnosticsTest}
@@ -220,6 +268,7 @@ const handleSaveLab = async () => {
             </div>
             <br />
             <MyInput
+            required
               width="100%"
               fieldName="internalCode"
               record={diagnosticsTest}

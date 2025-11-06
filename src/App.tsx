@@ -99,8 +99,8 @@ import StartTeleConsultation from './pages/encounter/tele-consultation-screen/st
 import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
 import InpatientList from './pages/Inpatient/inpatientList';
 import InpatientWaitingLists from './pages/Inpatient/waitingList/InpatientWaitingLists';
-import InventoryTransaction from './pages/inventory-transaction/inventory-transaction';
-import InventoryTransfer from './pages/inventory-transaction/inventory-transfer';
+import InventoryTransactionNew from './pages/inventory-transaction/inventory-transaction-new';
+import InventoryTransferNew from './pages/inventory-transaction/inventory-transfer-new';
 import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import Lab from './pages/lab-module';
@@ -490,9 +490,9 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
-              <Route path="inventory-transaction" element={<InventoryTransaction />} />
+              <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
-              <Route path="inventory-transfer" element={<InventoryTransfer />} />
+              <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
