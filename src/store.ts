@@ -52,6 +52,7 @@ import { inventoryTransactionAttachmentService } from './services/inventory/inve
 import { loincCodeService } from './services/setup/loincCodeService';
 import { cptCodeService } from './services/setup/cptCodeService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
+import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
 
 export const store = configureStore({
@@ -164,6 +165,8 @@ export const store = configureStore({
     //loinc code
     [loincCodeService.reducerPath]: loincCodeService.reducer,
 
+    [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -213,6 +216,7 @@ export const store = configureStore({
       loincCodeService.middleware,
       cptCodeService.middleware,
       laboratoryService.middleware,
+      diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
     ])
 });

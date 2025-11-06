@@ -293,6 +293,23 @@ export const newLaboratory: modelTypes.Laboratory = {
   category: undefined,
   tubeType: undefined,
 };
+
+
+export const newPathology: modelTypes.Pathology = {
+  id: undefined,
+  testId: undefined,
+  category: "",
+  specimenType: "",
+  analysisProcedure: "",
+  turnaroundTime: undefined,
+  timeUnit: "",
+  testDescription: "",
+  sampleHandling: "",
+  medicalIndications: "",
+  criticalValues: "",
+  preparationRequirements: "",
+};
+
 export const newRadiology: modelTypes.Radiology = {
   id: undefined,
   testId: 0,
