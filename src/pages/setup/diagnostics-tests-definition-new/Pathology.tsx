@@ -6,9 +6,9 @@ import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import { Form } from 'rsuite';
-import { newApDiagnosticTestPathology } from '@/types/model-types-constructor';
 import { initialListRequest } from '@/types/types';
 import { useGetPathologyByTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
+import { newPathology } from '@/types/model-types-constructor-new';
 
 const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTestPathology }) => {
  
@@ -38,7 +38,7 @@ const {data:pathologyData}=useGetPathologyByTestIdQuery(diagnosticsTest?.id,{ sk
       setDiagnosticTestPathology(pathologyData);
     }
     else {
-      setDiagnosticTestPathology({ ...newApDiagnosticTestPathology, testId: diagnosticsTest?.id });
+      setDiagnosticTestPathology({ ...newPathology, testId: diagnosticsTest?.id });
     }
   }, [pathologyData]);
 
