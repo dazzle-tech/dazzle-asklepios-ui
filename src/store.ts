@@ -47,9 +47,12 @@ import {potintialService} from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
 import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
+import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
+import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
 import { loincCodeService } from './services/setup/loincCodeService';
 import { cptCodeService } from './services/setup/cptCodeService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -97,6 +100,8 @@ export const store = configureStore({
     [attachmentService.reducerPath]: attachmentService.reducer,
     [patientAttachmentService.reducerPath]: patientAttachmentService.reducer,
     [encounterAttachmentsService.reducerPath]: encounterAttachmentsService.reducer,
+    [inventoryTransferAttachmentService.reducerPath]: inventoryTransferAttachmentService.reducer,
+    [inventoryTransactionAttachmentService.reducerPath]: inventoryTransactionAttachmentService.reducer,
     //lab module
     [labService.reducerPath]: labService.reducer,
     //operation
@@ -177,6 +182,8 @@ export const store = configureStore({
       attachmentService.middleware,
       patientAttachmentService.middleware,
       encounterAttachmentsService.middleware,
+      inventoryTransferAttachmentService.middleware,
+      inventoryTransactionAttachmentService.middleware,
       labService.middleware,
       radService.middleware,
       procedureService.middleware,
