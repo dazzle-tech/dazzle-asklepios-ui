@@ -285,11 +285,7 @@ const SupplierSetup: React.FC = () => {
   return (
     <>
       <Panel className="main-supplier-setup-page-gaps">
-        <div className="add-new-supplier-button">
-          <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={() => setOpenModal(true)}>
-            Add New
-          </MyButton>
-        </div>
+
 
         <MyTable
           data={paginatedData}
@@ -324,6 +320,11 @@ const SupplierSetup: React.FC = () => {
               />
             </Form>
           }
+          tableButtons={<div className="add-new-supplier-button">
+          <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={() => setOpenModal(true)}>
+            Add New
+          </MyButton>
+        </div>}
           height={470}
           loading={false}
           sortColumn={sortColumn as string}
