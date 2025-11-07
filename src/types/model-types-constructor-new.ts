@@ -67,7 +67,6 @@ export const newFacility: modelTypes.Facility = {
 
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
-
   code: '',
   emailAddress: '',
   phone1: '',
@@ -125,7 +124,7 @@ export const newDownloadTicket: modelTypes.DownloadTicket = {
 
 export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams = {
   patientId: undefined,
-  files: [],
+  file: undefined,
   type: undefined,
   details: undefined,
   source: undefined,
@@ -267,3 +266,66 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   appointable: false,
 };
 
+export const newLaboratory: modelTypes.Laboratory = {
+  id: null,
+  testId: undefined,
+  property: undefined,
+  system: undefined,
+  scale: undefined,
+  reagents: undefined,
+  method: undefined,
+  testDurationTime: undefined,
+  timeUnit: undefined,
+  resultUnit: undefined,
+  isProfile: false,
+  sampleContainer: undefined,
+  sampleVolume: undefined,
+  sampleVolumeUnit: undefined,
+  tubeColor: undefined,
+  testDescription: undefined,
+  sampleHandling: undefined,
+  turnaroundTime: undefined,
+  turnaroundTimeUnit: undefined,
+  preparationRequirements: undefined,
+  medicalIndications: undefined,
+  associatedRisks: undefined,
+  testInstructions: undefined,
+  category: undefined,
+  tubeType: undefined,
+};
+
+
+// default empty object
+export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
+  id: undefined,
+  testId: undefined,
+  name: '',
+  resultUnit: ''}
+
+
+export const newPathology: modelTypes.Pathology = {
+  id: undefined,
+  testId: undefined,
+  category: "",
+  specimenType: "",
+  analysisProcedure: "",
+  turnaroundTime: undefined,
+  timeUnit: "",
+  testDescription: "",
+  sampleHandling: "",
+  medicalIndications: "",
+  criticalValues: "",
+  preparationRequirements: "",
+};
+
+export const newRadiology: modelTypes.Radiology = {
+  id: undefined,
+  testId: 0,
+  category: "",
+  imageDuration: null,
+  testInstructions: "",
+  medicalIndications: "",
+  turnaroundTimeUnit: "",
+  turnaroundTime: undefined,
+  associatedRisks: "",
+};

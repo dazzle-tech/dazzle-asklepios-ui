@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
   useGetDiagnosticsTestNormalRangeListQuery,
-  useGetDiagnosticsTestProfileListQuery,
   useGetLovValuesByCodeQuery,
   useRemoveDiagnosticsTestProfileMutation,
   useSaveDiagnosticsTestNormalRangeMutation,
-  useSaveDiagnosticsTestProfileMutation
+ 
 } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
@@ -23,15 +22,24 @@ import { FaChartLine } from 'react-icons/fa';
 import { ApDiagnosticTestNormalRange, ApDiagnosticTestProfile } from '@/types/model-types';
 import {
   newApDiagnosticTestNormalRange,
-  newApDiagnosticTestProfile
+  
 } from '@/types/model-types-constructor';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddNormalRange from './AddNormalRange';
+import {  useGetAllDiagnosticTestProfilesQuery,
+  useGetDiagnosticTestProfilesByTestIdQuery,
+  useCreateDiagnosticTestProfileMutation,
+  useUpdateDiagnosticTestProfileMutation,
+  useDeleteDiagnosticTestProfileMutation,
+  useDeleteDiagnosticTestProfilesByTestIdMutation } from '@/services/setup/diagnosticTestProfileService';
+import { DiagnosticTestProfile } from '@/types/model-types-new';
+import { newDiagnosticTestProfile } from '@/types/model-types-constructor-new';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
 const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const dispatch = useAppDispatch();
   const [selectedLOVs, setSelectedLOVs] = useState([]);
-  const [diagnosticsTestProfile, setDiagnosticsTestProfile] = useState<ApDiagnosticTestProfile>({
-    ...newApDiagnosticTestProfile
+  const [diagnosticsTestProfile, setDiagnosticsTestProfile] = useState<DiagnosticTestProfile>({
+    ...newDiagnosticTestProfile
   });
   const [openConfirmDeleteProfile, setOpenConfirmDeleteProfile] = useState<boolean>(false);
   const [openChild, setOpenChild] = useState<boolean>(false);
@@ -40,10 +48,10 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
     useState<ApDiagnosticTestNormalRange>({
       ...newApDiagnosticTestNormalRange
     });
-  const [newDiagnosticsTestProfile, setNewDiagnosticsTestProfile] =
-    useState<ApDiagnosticTestProfile>({
-      ...newApDiagnosticTestProfile
-    });
+  // const [newDiagnosticsTestProfile, setNewDiagnosticsTestProfile] =
+  //   useState<ApDiagnosticTestProfile>({
+  //     ...newApDiagnosticTestProfile
+  //   });
   const [listRequestQuery] = useState({
     ...initialListRequest,
     pageSize: 100,
@@ -60,22 +68,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
       }
     ]
   });
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest,
-    pageSize: 100,
-    filters: [
-      {
-        fieldName: 'diagnostic_test_key',
-        operator: 'match',
-        value: diagnosticsTest?.key || undefined || null
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
+ 
   const [normalRangeListRequest, setNormalRangeListRequest] = useState({
     ...initialListRequest,
     pageSize: 100,
@@ -105,11 +98,22 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
   // Fetch units Lov response
   const { data: unitsLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   // Fetch diagnostics test profile List response
-  const {
-    data: diagnosticsTestProfileListResponse,
-    refetch: refetchDiagnosticsTestProfile,
-    isFetching
-  } = useGetDiagnosticsTestProfileListQuery(listRequest);
+
+
+  const [paginationParams, setPaginationParams] = useState({
+  page: 0,
+  size: 5,
+  sort: "id,asc",
+  timestamp: Date.now(),
+});
+
+const { data: allDiagnosticTestProfiles ,refetch:refetchDiagnosticsTestProfile,isFetching} = useGetDiagnosticTestProfilesByTestIdQuery({
+  testId: diagnosticsTest?.id ,
+  page: paginationParams.page,
+  size: paginationParams.size,
+  sort: paginationParams.sort,
+}, { skip: !diagnosticsTest?.id });
+
   // Fetch normal range List response
   const {
     data: normalRangeListResponse,
@@ -117,14 +121,17 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
     isFetching: isFetchingNormalRanges
   } = useGetDiagnosticsTestNormalRangeListQuery(normalRangeListRequest);
   // save diagnostics Test Profile
-  const [saveDiagnosticsTestProfile] = useSaveDiagnosticsTestProfileMutation();
+
+  const [addTestProfile]=useCreateDiagnosticTestProfileMutation();
+  const [updateTestProfile]=useUpdateDiagnosticTestProfileMutation();
+  const [deleteTestProfile]=useDeleteDiagnosticTestProfileMutation();
   // remove diagnostics Test Profile
   const [removeDiagnosticsTestProfile] = useRemoveDiagnosticsTestProfileMutation();
    // save diagnostics test normal range
   const [saveDiagnosticsTestNormalRange] = useSaveDiagnosticsTestNormalRangeMutation();
   // class name for selected row 
   const isSelected = rowData => {
-    if (rowData && diagnosticsTestProfile && rowData.key === diagnosticsTestProfile.key) {
+    if (rowData && diagnosticsTestProfile && rowData.id === diagnosticsTestProfile.id) {
       return 'selected-row';
     } else return '';
   };
@@ -162,18 +169,20 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
   //Table columns
   const tableColumns = [
     {
-      key: 'testName',
+      key: 'name',
       title: <Translate>Test Name</Translate>,
-      render: rowData => <span>{rowData.testName}</span>
+      render: rowData => <span>{rowData.name}</span>
     },
     {
       key: 'LovValues',
       title: <Translate>Result Unit</Translate>,
       render: rowData => (
         <span>
-          {rowData.resultUnitLvalue
-            ? rowData.resultUnitLvalue.lovDisplayVale
-            : rowData.resultUnitLkey}
+         {conjureValueBasedOnKeyFromList(
+                    unitsLovQueryResponse?.object?? [],
+                    rowData.resultUnit,
+                    'lovDisplayVale'
+                  )}
         </span>
       )
     },
@@ -241,32 +250,40 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
 
   // handle save diagnostics test profile
   const handleSave = () => {
-    saveDiagnosticsTestProfile({
-      ...newDiagnosticsTestProfile,
-      diagnosticTestKey: diagnosticsTest.key,
-      createdBy: 'Administrator'
+   if(diagnosticsTestProfile.id){
+    updateTestProfile({
+      id:diagnosticsTestProfile.id,
+      body:{
+      ...diagnosticsTestProfile,
+      testId: diagnosticsTest.id}
+    })
+      .unwrap()
+      .then(() => refetchDiagnosticsTestProfile());
+    dispatch(notify('Updated Successfully '));
+   }
+    else{
+    addTestProfile({
+      ...diagnosticsTestProfile,
+      testId: diagnosticsTest.id
     })
       .unwrap()
       .then(() => refetchDiagnosticsTestProfile());
     dispatch(notify('Added Successfully '));
-
-    setNewDiagnosticsTestProfile({
-      ...newApDiagnosticTestProfile,
-      diagnosticTestKey: diagnosticsTest.key,
-      resultUnitLkey: null
-    });
+   }
   };
 
   // handle remove diagnostics test profile
   const handleRemove = () => {
     setOpenConfirmDeleteProfile(false);
-    removeDiagnosticsTestProfile({
-      ...diagnosticsTestProfile,
-      deletedBy: 'Administrator'
-    })
+    deleteTestProfile(diagnosticsTestProfile.id)
       .unwrap()
-      .then(() => refetchDiagnosticsTestProfile());
-    dispatch(notify('Deleted Successfully '));
+      .then(() => {
+        refetchDiagnosticsTestProfile();
+        setDiagnosticsTestProfile({
+          ...newDiagnosticTestProfile
+        });
+        dispatch(notify('Deleted Successfully '));
+      });
   };
 
   // Main modal content
@@ -281,22 +298,22 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
                   width={150}
                   showLabel={false}
                   placeholder="Test Name"
-                  fieldName="testName"
-                  record={newDiagnosticsTestProfile}
-                  setRecord={setNewDiagnosticsTestProfile}
+                  fieldName="name"
+                  record={diagnosticsTestProfile}
+                  setRecord={setDiagnosticsTestProfile}
                 />
                 <MyInput
                   showLabel={false}
                   placeholder="Select Result Unit"
                   width={160}
                   menuMaxHeight={200}
-                  fieldName="resultUnitLkey"
+                  fieldName="resultUnit"
                   fieldType="select"
                   selectData={unitsLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
-                  record={newDiagnosticsTestProfile}
-                  setRecord={setNewDiagnosticsTestProfile}
+                 record={diagnosticsTestProfile}
+                  setRecord={setDiagnosticsTestProfile}
                 />
               </div>
               <MyButton
@@ -310,7 +327,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
             </div>
             <MyTable
               height={380}
-              data={diagnosticsTestProfileListResponse?.object ?? []}
+              data={allDiagnosticTestProfiles?.data ?? []}
               loading={isFetching}
               columns={tableColumns}
               rowClassName={isSelected}
@@ -375,8 +392,8 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
       await saveDiagnosticsTestNormalRange({
         diagnosticTestNormalRange: {
           ...diagnosticTestNormalRange,
-          testKey: diagnosticsTest.key,
-          profileTestKey: diagnosticsTestProfile.key,
+          testKey: diagnosticsTest.id,
+          profileTestKey: diagnosticsTestProfile.id,
           isProfile: true
         },
         lov: selectedLOVs
@@ -396,25 +413,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
   };
 
    // Effects
-  useEffect(() => {
-    refetchDiagnosticsTestProfile();
-    setListRequest({
-      ...initialListRequest,
-      pageSize: 100,
-      filters: [
-        {
-          fieldName: 'diagnostic_test_key',
-          operator: 'match',
-          value: diagnosticsTest?.key || undefined || null
-        },
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ]
-    });
-  }, [diagnosticsTest]);
+
 
   useEffect(() => {
     setNormalRangeListRequest({
@@ -439,59 +438,14 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
         {
           fieldName: 'profile_test_key',
           operator: 'match',
-          value: diagnosticsTestProfile.key || undefined
+          value: diagnosticsTestProfile.id || undefined
         }
       ]
     });
     refetchNormalRange();
   }, [diagnosticsTestProfile, diagnosticsTest]);
 
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'diagnostic_test_key',
-        operator: 'match',
-        value: diagnosticsTest?.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ];
-    setListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
 
-    const updatedFilters2 = [
-      {
-        fieldName: 'test_key',
-        operator: 'match',
-        value: diagnosticsTest.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'profile_test_key',
-        operator: 'match',
-        value: diagnosticsTestProfile.key || undefined
-      }
-    ];
-
-    setNormalRangeListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters2
-    }));
-
-    setDiagnosticTestNormalRange(prevState => ({
-      ...prevState,
-      testKey: diagnosticsTest.key
-    }));
-  }, [diagnosticsTest.key]);
 
   useEffect(() => {
     if (diagnosticTestNormalRange) {

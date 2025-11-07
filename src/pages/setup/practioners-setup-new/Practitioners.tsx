@@ -400,6 +400,7 @@ const handleFilterChange = async (field: string, value: string) => {
       record={recordOfFilter}
       setRecord={(u) => setRecordOfFilter({ filter: u.filter, value: "" })}
       placeholder="Select Filter"
+      showLabel={false}
       width="180px"
     />
 
@@ -412,6 +413,7 @@ const handleFilterChange = async (field: string, value: string) => {
         selectDataValue="value"
         record={recordOfFilter}
         setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+        showLabel={false}
         placeholder="Select Specialty"
       />
     )}
@@ -424,6 +426,7 @@ const handleFilterChange = async (field: string, value: string) => {
         selectDataLabel="name"
         selectDataValue="id"
         record={recordOfFilter}
+        showLabel={false}
         setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
         placeholder="Select Facility"
       />
@@ -435,6 +438,7 @@ const handleFilterChange = async (field: string, value: string) => {
         fieldType="text"
         record={recordOfFilter}
         setRecord={setRecordOfFilter}
+        showLabel={false}
         placeholder="Enter Name"
       />
     )}
@@ -447,6 +451,7 @@ const handleFilterChange = async (field: string, value: string) => {
         record={recordOfFilter}
         setRecord={setRecordOfFilter}
         placeholder="Enter Value"
+        showLabel={false}
       />
     )}
 
