@@ -116,7 +116,6 @@ const SignIn = () => {
       dispatch(setTranslations(dict));
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
-      console.log("token"+resp.id_token)
       store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
       setErrText(' ');
