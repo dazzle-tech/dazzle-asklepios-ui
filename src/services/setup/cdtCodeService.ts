@@ -6,7 +6,6 @@ type PagedParams = { page: number; size: number; sort?: string; timestamp?: numb
 type LinkMap = { next?: string | null; prev?: string | null; first?: string | null; last?: string | null };
 type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
-// ---- CDT-specific types ----
 export type CdtConflict = {
   code: string;
   incomingDescription: string;
@@ -24,6 +23,22 @@ export type CdtImportResult = {
   conflicts: CdtConflict[];
 };
 
+
+export type CdtSyncResult = {
+  beforeCount: number;
+  added: number;
+  removed: number;
+  afterCount: number;
+};
+
+export type ServiceSetup = {
+  id: number;
+  name?: string;
+  code?: string;
+  description?: string;
+  active?: boolean;
+};
+
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
   return {
@@ -36,10 +51,9 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
 export const cdtCodeService = createApi({
   reducerPath: "cdtApi",
   baseQuery: BaseQuery,
-  tagTypes: ["CDT"],
+  tagTypes: ["CDT", "CDT_LINKS"],
 
   endpoints: (builder) => ({
-    // GET /api/setup/cdt/all
     getAllCdt: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = "id,asc" }) => ({
         url: "/api/setup/cdt/all",
@@ -50,7 +64,6 @@ export const cdtCodeService = createApi({
       providesTags: ["CDT"],
     }),
 
-    // GET /api/setup/cdt/by-class/{cdtClass}
     getCdtByClass: builder.query<PagedResult<any>, { cdtClass: string } & PagedParams>({
       query: ({ cdtClass, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/cdt/by-class/${encodeURIComponent(cdtClass)}`,
@@ -61,7 +74,6 @@ export const cdtCodeService = createApi({
       providesTags: ["CDT"],
     }),
 
-    // GET /api/setup/cdt/by-active/{active}
     getCdtByActive: builder.query<PagedResult<any>, { active: boolean } & PagedParams>({
       query: ({ active, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/cdt/by-active/${encodeURIComponent(String(active))}`,
@@ -72,7 +84,6 @@ export const cdtCodeService = createApi({
       providesTags: ["CDT"],
     }),
 
-    // GET /api/setup/cdt/by-code/{code}
     getCdtByCode: builder.query<PagedResult<any>, { code: string } & PagedParams>({
       query: ({ code, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/cdt/by-code/${encodeURIComponent(code)}`,
@@ -83,7 +94,6 @@ export const cdtCodeService = createApi({
       providesTags: ["CDT"],
     }),
 
-    // GET /api/setup/cdt/by-description/{description}
     getCdtByDescription: builder.query<PagedResult<any>, { description: string } & PagedParams>({
       query: ({ description, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/cdt/by-description/${encodeURIComponent(description)}`,
@@ -94,7 +104,6 @@ export const cdtCodeService = createApi({
       providesTags: ["CDT"],
     }),
 
-    // POST /api/setup/cdt/import
     importCdt: builder.mutation<CdtImportResult, { file: File; overwrite?: boolean }>({
       query: ({ file, overwrite = false }) => {
         const formData = new FormData();
@@ -105,11 +114,38 @@ export const cdtCodeService = createApi({
           body: formData,
           formData: true,
           params: { overwrite },
-          // back end returns 200 OK or 409 CONFLICT (with conflicts list)
           validateStatus: (res) => res.status === 200 || res.status === 409,
         };
       },
       invalidatesTags: ["CDT"],
+    }),
+
+    getLinkedServices: builder.query<number[], number>({
+      query: (cdtId) => ({
+        url: `/api/setup/cdt/${cdtId}/services`,
+        method: "GET",
+      }),
+      providesTags: (_res, _err, cdtId) => [{ type: "CDT_LINKS", id: cdtId }],
+    }),
+
+    getLinkedServiceDetails: builder.query<ServiceSetup[], number>({
+      query: (cdtId) => ({
+        url: `/api/setup/cdt/${cdtId}/services/details`,
+        method: "GET",
+      }),
+      providesTags: (_res, _err, cdtId) => [{ type: "CDT_LINKS", id: cdtId }],
+    }),
+
+    syncLinkedServices: builder.mutation<CdtSyncResult, { cdtId: number; serviceIds: number[] }>({
+      query: ({ cdtId, serviceIds }) => ({
+        url: `/api/setup/cdt/${cdtId}/services`,
+        method: "PUT",
+        body: serviceIds ?? [],
+      }),
+      invalidatesTags: (_res, _err, { cdtId }) => [
+        { type: "CDT_LINKS", id: cdtId },
+        "CDT",
+      ],
     }),
   }),
 });
@@ -125,4 +161,7 @@ export const {
   useGetCdtByDescriptionQuery,
   useLazyGetCdtByDescriptionQuery,
   useImportCdtMutation,
+  useGetLinkedServicesQuery,
+  useGetLinkedServiceDetailsQuery,
+  useSyncLinkedServicesMutation,
 } = cdtCodeService;
