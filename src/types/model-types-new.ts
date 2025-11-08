@@ -451,3 +451,36 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+// src/model-types/diagnosticTestNormalRange.ts
+
+export interface DiagnosticTestNormalRange {
+  id?: number;
+  testId: number;
+
+  gender?: string;
+  ageFrom?: number;
+  ageFromUnit?: string;
+  ageTo?: number;
+  ageToUnit?: string;
+  condition?: string;
+
+  resultType: string;
+  resultText?: string;
+  resultLov?: string;
+  normalRangeType?: string;
+
+  rangeFrom?: number;
+  rangeTo?: number;
+
+  criticalValue?: boolean;
+  criticalValueLessThan?: number;
+  criticalValueMoreThan?: number;
+
+  profileTestId?: number | null;
+  isProfile?: boolean;
+
+
+  lovKeys?: string[];
+}
+
+

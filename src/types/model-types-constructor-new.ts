@@ -329,3 +329,32 @@ export const newRadiology: modelTypes.Radiology = {
   turnaroundTime: undefined,
   associatedRisks: "",
 };
+
+export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
+  id: undefined,
+  testId: 0,
+
+  gender: undefined,
+  ageFrom: undefined,
+  ageFromUnit: undefined,
+  ageTo: undefined,
+  ageToUnit: undefined,
+  condition: undefined,
+
+  resultType: "", 
+  resultText: undefined,
+  resultLov: undefined,
+  normalRangeType: undefined,
+
+  rangeFrom: undefined,
+  rangeTo: undefined,
+
+  criticalValue: false,
+  criticalValueLessThan: undefined,
+  criticalValueMoreThan: undefined,
+
+  profileTestId: undefined,
+  isProfile: false,
+
+  lovKeys: [],
+};
