@@ -2,7 +2,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import {
   useCreatePathologyMutation,
   useUpdatePathologyMutation
@@ -43,7 +43,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   const testType = useEnumOptions('TestType');
   // Fetch Currency Lov response
 
-  const Currency = useEnumOptions('Currency');
+  const Currency = useEnumCapitalized('Currency');
   // Fetch Gender 
   const genders = useEnumOptions('Gender')
   // Fetch Special Population Lov response
