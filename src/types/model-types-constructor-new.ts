@@ -364,9 +364,9 @@ export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
   medicationCategoriesId: undefined
 };
 
-export const newActiveIngredient: modelTypes.ActiveIngredient = {
+
+  export const newActiveIngredient: modelTypes.ActiveIngredient = {
   id: undefined,
-  medicalCategoryId: null,
   name: '',
   drugClassId: null,
   atcCode: null,
@@ -636,3 +636,8 @@ export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdvers
 };
 
 
+export const newActiveIngredientContraindication: modelTypes.ActiveIngredientContraindication = {
+  id: undefined,
+  activeIngredientId: 0,
+  icdCodeId: 0
+};

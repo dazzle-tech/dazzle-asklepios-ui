@@ -756,6 +756,12 @@ export interface ActiveIngredientSpecialPopulation {
   activeIngredientId: number;
   specialPopulation: string;
   considerations?: string | null;
+}
+
+  export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
   createdBy?: string | null;
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
