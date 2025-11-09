@@ -369,9 +369,5 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   doseAdjustmentHepatic: false,
   doseAdjustmentPugA: null,
   doseAdjustmentPugB: null,
-  doseAdjustmentPugC: null,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
+  doseAdjustmentPugC: null
 };
