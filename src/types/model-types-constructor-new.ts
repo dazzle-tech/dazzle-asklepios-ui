@@ -641,3 +641,4 @@ export const newActiveIngredientContraindication: modelTypes.ActiveIngredientCon
   activeIngredientId: 0,
   icdCodeId: 0
 };
+

@@ -470,6 +470,7 @@ export interface MedicationCategoryClass {
   medicationCategoriesId: number
 }
 
+
 /** Active Ingredient */
 export interface ActiveIngredient {
   id?: number;
