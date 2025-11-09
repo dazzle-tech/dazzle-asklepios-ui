@@ -619,3 +619,8 @@ export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
   testIds: []
 };
 
+export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdverseEffect = {
+  id: undefined,
+  activeIngredientId: 0,
+  adverseEffect: ''
+};
