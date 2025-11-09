@@ -1,55 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import InfoCardList from '@/components/InfoCardList';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
-  ApInventoryTransaction,
-  ApInventoryTransactionProduct,
-  ApPatient,
-  ApPatientInsurance
-} from '@/types/model-types';
+  useGetInventoryTransactionsAttachmentQuery,
+  useGetInventoryTransactionsProductQuery,
+  useGetInventoryTransactionsQuery
+} from '@/services/inventoryTransactionService';
 import {
   useGetLovValuesByCodeQuery,
   useGetProductQuery,
   useGetUomGroupsUnitsQuery,
   useGetWarehouseQuery
 } from '@/services/setupService';
-import MyTable from '@/components/MyTable';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { addFilterToListRequest, conjureValueBasedOnKeyFromList } from '@/utils';
-import './styles.less';
+import { ApInventoryTransaction, ApInventoryTransactionProduct } from '@/types/model-types';
 import {
   newApInventoryTransaction,
-  newApInventoryTransactionProduct,
-  newApPatient,
-  newApPatientInsurance
+  newApInventoryTransactionProduct
 } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
 import {
-  faEdit,
-  faFileExport,
-  faMagnifyingGlass,
-  faPlus,
-  faWarehouse
-} from '@fortawesome/free-solid-svg-icons';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
+  addFilterToListRequest,
+  conjureValueBasedOnKeyFromList,
+  formatDateWithoutSeconds
+} from '@/utils';
+import { faEdit, faFileExport, faPlus, faWarehouse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import { faFileCsv } from '@fortawesome/free-solid-svg-icons';
-import ReactDOMServer from 'react-dom/server';
-import MyButton from '@/components/MyButton/MyButton';
-import { formatDateWithoutSeconds } from '@/utils';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
 import AddEditTransaction from './AddEditTransaction';
-import {
-  useGetInventoryTransactionsAttachmentQuery,
-  useGetInventoryTransactionsProductQuery,
-  useGetInventoryTransactionsQuery
-} from '@/services/inventoryTransactionService';
-import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import MyModal from '@/components/MyModal/MyModal';
-import ModalProductCard from '../product-catalog/ModalProductCard';
-import InfoCardList from '@/components/InfoCardList';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import './styles.less';
 
 const InventoryTransaction = () => {
   const dispatch = useAppDispatch();
@@ -60,15 +46,6 @@ const InventoryTransaction = () => {
   const [inventoryTransaction, setInventoryTransaction] = useState<ApInventoryTransaction>({
     ...newApInventoryTransaction
   });
-  const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({
-    ...newApPatientInsurance
-  });
-
-  // Fetch LOV data for various fields
-  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  const { data: documentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
-  const { data: primaryInsuranceProviderLovQueryResponse } =
-    useGetLovValuesByCodeQuery('INS_PROVIDER');
   const [transactionListRequest, setTransactionListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -148,16 +125,6 @@ const InventoryTransaction = () => {
   const pageIndex = transactionProductListRequest.pageNumber - 1;
   const rowsPerPage = transactionProductListRequest.pageSize;
   const totalCount = inventoryTransProductListResponse?.extraNumeric ?? 0;
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Resource Type', value: 'resourceTypeLkey' },
-    { label: 'Resource Name', value: 'resourceName' },
-    { label: 'Status', value: 'isValid' },
-    { label: 'Creation Date', value: 'createdAt' },
-    { label: 'createdBy', value: 'Created By' }
-  ];
 
   // Handle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -177,11 +144,7 @@ const InventoryTransaction = () => {
     fromDate: new Date(),
     toDate: new Date()
   });
-  // Setting the confirm date filter for transfer transactions
-  const [confirmDateFilter, setConfirmDateFilter] = useState({
-    fromDate: new Date(),
-    toDate: new Date()
-  });
+
   // Function to update filters in the list request
   const updateFilter = (fieldName: string, operator: string, value?: string | number) => {
     setListRequest(prev => {
@@ -241,9 +204,6 @@ const InventoryTransaction = () => {
                       inventoryTypeLkey: 'Inventory Type'
                     }}
                   />
-                  {/* <p><b>Code:</b> {selectedItem.code}</p>
-                                    <p><b>Name:</b> {selectedItem.name}</p>
-                                    <p><b>Description:</b> {selectedItem.barcode}</p> */}
                 </div>
               )}
 
@@ -276,11 +236,6 @@ const InventoryTransaction = () => {
     );
   };
   const actionsForItems = rowData => {
-    const handleViewTransactions = () => {
-      console.log('View transactions for:', rowData.name);
-      // TODO: Implement view transactions logic
-    };
-
     return (
       <div className="container-of-actions">
         <FontAwesomeIcon
@@ -487,18 +442,6 @@ const InventoryTransaction = () => {
                 color: 'var(--primary-orange)',
                 contant: 'Submitted'
               };
-            // case 'Out of Stock':
-            //   return {
-            //     backgroundColor: 'var(--light-red)',
-            //     color: 'var(--primary-red)',
-            //     contant: 'Out of Stock'
-            //   };
-            // case 'Reserved':
-            //   return {
-            //     backgroundColor: 'var(--light-purple)',
-            //     color: 'var(--primary-purple)',
-            //     contant: 'Reserved'
-            //   };
             default:
               return {
                 backgroundColor: 'var(--background-gray)',
@@ -575,25 +518,6 @@ const InventoryTransaction = () => {
   useEffect(() => {
     handleManualSearch();
   }, []);
-
-  // useEffect(() => {
-  //     setTransactionProductListRequest(prev => ({
-  //         ...prev,
-  //         filters: [
-  //             {
-  //                 fieldName: 'deleted_at',
-  //                 operator: 'isNull',
-  //                 value: undefined,
-  //             },
-  //             {
-  //                 fieldName: 'productKey',
-  //                 operator: 'match',
-  //                 value: productKey ? productKey : undefined,
-  //             }
-  //         ]
-  //     }));
-
-  // }, [productKey]);
 
   useEffect(() => {
     setListRequest(prevState => ({

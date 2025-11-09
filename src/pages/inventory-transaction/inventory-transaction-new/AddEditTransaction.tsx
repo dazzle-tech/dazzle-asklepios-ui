@@ -613,8 +613,7 @@ const AddEditTransaction = ({
             backgroundColor: mode === 'light' ? 'white' : 'var(--dark-black)',
             padding: 20,
             borderRadius: 6,
-            height: 350,
-            overflowY: 'auto'
+            height: 350
           }}
         >
           <div className="table-buttons-right">
@@ -952,9 +951,7 @@ const AddEditTransaction = ({
               </h4>
             </Stack>
             <Divider style={{ margin: '10px 0' }} />
-            <p>
-              <b>Warehouse Key:</b> {transaction.warehouseKey}
-            </p>
+
             <p>
               <b>Warehouse Name:</b> {selectedWarehouse?.warehouseName}
             </p>
