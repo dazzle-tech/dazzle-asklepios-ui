@@ -329,3 +329,14 @@ export const newRadiology: modelTypes.Radiology = {
   turnaroundTime: undefined,
   associatedRisks: "",
 };
+
+
+
+export const newDentalAction: modelTypes.DentalAction={
+  id: null,               // Primary key (auto-generated)
+  description: '',        // Mandatory field
+  type:null,    // Enum (mandatory)
+  imageName: null,  // Optional image file name
+  isActive: true,  
+
+}
