@@ -632,3 +632,4 @@ export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSp
   specialPopulation: '',
   considerations: ''
 };
+
