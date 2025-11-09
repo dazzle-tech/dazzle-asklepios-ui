@@ -363,7 +363,7 @@ export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
 };
 
 
-  export const newActiveIngredient: modelTypes.ActiveIngredient = {
+export const newActiveIngredient: modelTypes.ActiveIngredient = {
   id: undefined,
   name: '',
   drugClassId: null,
@@ -684,4 +684,9 @@ export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFood
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
+};
+export const newActiveIngredientPreRequestedTest: modelTypes.ActiveIngredientPreRequestedTest = {
+  id: undefined,
+  activeIngredientId: 0,
+  testId: 0
 };

@@ -795,7 +795,12 @@ export interface ActiveIngredientDrugInteraction {
   activeIngredientId: number;
   interactedIngredientId: number;
   severity: string;
-  description?: string | null;
+  description?: string | null;}
+
+export interface ActiveIngredientPreRequestedTest {
+  id?: number;
+  activeIngredientId: number;
+  testId: number;
   createdBy?: string | null;
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
@@ -807,7 +812,8 @@ export interface ActiveIngredientFoodInteraction {
   activeIngredientId: number;
   food: string;
   severity: string;
-  description?: string | null;
+  description?: string | null;}
+
 export interface ActiveIngredientSpecialPopulation {
   id?: number;
   activeIngredientId: number;
