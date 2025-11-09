@@ -375,3 +375,12 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+
+export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndication = {
+  id: undefined,
+  activeIngredientId: 0,
+  icdCodeId: 0,
+  dosage: null,
+  unit: '',
+  isOffLabel: false
+};
