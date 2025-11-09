@@ -347,3 +347,25 @@ export const newRadiology: modelTypes.Radiology = {
   turnaroundTime: undefined,
   associatedRisks: "",
 };
+
+export const newProcedureCoding: modelTypes.ProcedureCoding = {
+  id: undefined,
+  procedureId: undefined,        
+  codeType: 'CPT_CODES',           
+  codeId: '',                      
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
+  id: undefined,
+  procedureId: undefined,      
+  price: 0,                    
+  currency: 'USD',            
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

@@ -1,14 +1,12 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { BaseQuery } from '../../newApi';
+import { BaseQuery } from '../../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
 type Id = number | string;
-type WithFacility = { facilityId: Id };
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type LinkMap = { next?: string | null; prev?: string | null; first?: string | null; last?: string | null };
 type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
-// Reuse same pagination mapper
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
   return {
@@ -24,10 +22,10 @@ export const procedureSetupService = createApi({
   tagTypes: ['Procedure'],
   endpoints: (builder) => ({
     // ===== PROCEDURES (Paginated) =====
-    getProcedures: builder.query<PagedResult<any>, WithFacility & PagedParams>({
-      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+    getProcedures: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/procedure',
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure'],
@@ -35,11 +33,11 @@ export const procedureSetupService = createApi({
 
     getProceduresByCategory: builder.query<
       PagedResult<any>,
-      WithFacility & { categoryType: string } & PagedParams
+      { categoryType: string } & PagedParams
     >({
-      query: ({ facilityId, categoryType, page, size, sort = 'id,asc' }) => ({
+      query: ({ categoryType, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/procedure/by-category/${encodeURIComponent(categoryType)}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure'],
@@ -47,11 +45,11 @@ export const procedureSetupService = createApi({
 
     getProceduresByCode: builder.query<
       PagedResult<any>,
-      WithFacility & { code: string } & PagedParams
+      { code: string } & PagedParams
     >({
-      query: ({ facilityId, code, page, size, sort = 'id,asc' }) => ({
+      query: ({ code, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/procedure/by-code/${encodeURIComponent(code)}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure'],
@@ -59,50 +57,58 @@ export const procedureSetupService = createApi({
 
     getProceduresByName: builder.query<
       PagedResult<any>,
-      WithFacility & { name: string } & PagedParams
+      { name: string } & PagedParams
     >({
-      query: ({ facilityId, name, page, size, sort = 'id,asc' }) => ({
+      query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/procedure/by-name/${encodeURIComponent(name)}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Procedure'],
+    }),
+    addProcedure: builder.mutation<any, { facilityId: Id } & any>({
+      query: ({ facilityId, ...body }) => ({
+        url: '/api/setup/procedure',
+        method: 'POST',
+        params: { facilityId },
+        body, 
+      }),
+      invalidatesTags: ['Procedure'],
+    }),
+
+    updateProcedure: builder.mutation<any, { facilityId: Id; id: Id } & any>({
+      query: ({ facilityId, id, ...body }) => ({
+        url: `/api/setup/procedure/${id}`,
+        method: 'PUT',
+        params: { facilityId },
+        body: { id, ...body }, 
+      }),
+      invalidatesTags: ['Procedure'],
+    }),
+
+    toggleProcedureIsActive: builder.mutation<any, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/setup/procedure/${id}/toggle-active`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Procedure'],
+    }),
+    getProceduresByFacility: builder.query<
+      PagedResult<any>,
+      { facilityId: Id } & PagedParams
+    >({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/procedure/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['Procedure'],
     }),
 
-    // ===== PROCEDURES (Mutations) =====
-    addProcedure: builder.mutation<any, WithFacility & any>({
-      query: ({ facilityId, ...body }) => ({
-        url: '/api/setup/procedure',
-        method: 'POST',
-        params: { facilityId },
-        body: { ...body, facilityId },
-      }),
-      invalidatesTags: ['Procedure'],
-    }),
-
-    updateProcedure: builder.mutation<any, WithFacility & { id: Id } & any>({
-      query: ({ facilityId, id, ...body }) => ({
-        url: `/api/setup/procedure/${id}`,
-        method: 'PUT',
-        params: { facilityId },
-        body: { id, ...body, facilityId },
-      }),
-      invalidatesTags: ['Procedure'],
-    }),
-
-    toggleProcedureIsActive: builder.mutation<any, { id: Id; facilityId: Id }>({
-      query: ({ id, facilityId }) => ({
-        url: `/api/setup/procedure/${id}/toggle-active`,
-        method: 'PATCH',
-        params: { facilityId },
-      }),
-      invalidatesTags: ['Procedure'],
-    }),
   }),
 });
 
 export const {
-  // PROCEDURES
   useGetProceduresQuery,
   useGetProceduresByCategoryQuery,
   useLazyGetProceduresByCategoryQuery,
@@ -113,4 +119,6 @@ export const {
   useAddProcedureMutation,
   useUpdateProcedureMutation,
   useToggleProcedureIsActiveMutation,
+   useGetProceduresByFacilityQuery,      
+  useLazyGetProceduresByFacilityQuery,   
 } = procedureSetupService;

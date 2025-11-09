@@ -55,8 +55,9 @@ import { laboratoryService } from './services/setup/diagnosticTest/laboratorySer
 import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
-import { procedureSetupService } from './services/setup/procedureService';
-
+import { procedureSetupService } from './services/setup/procedure/procedureService';
+import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
+import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -168,8 +169,14 @@ export const store = configureStore({
     [diagnosticTestProfileService.reducerPath]: diagnosticTestProfileService.reducer,
 
     [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
+
+    // procedure
     // procedure setup
     [procedureSetupService.reducerPath]: procedureSetupService.reducer,
+    // procedure coding
+    [procedureCodingService.reducerPath]: procedureCodingService.reducer,
+    // procedure price list
+    [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -224,6 +231,8 @@ export const store = configureStore({
       radiologyService.middleware,
       potintialService.middleware,
       procedureSetupService.middleware,
+      procedureCodingService.middleware,
+      procedurePriceListService.middleware,
     ])
 });
 

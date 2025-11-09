@@ -72,6 +72,4 @@ export const Icd10Service = createApi({
   }),
 });
 
-export const { useGetAllIcd10Query, useImportIcd10Mutation
-  ,useSearchIcd10Query
- } = Icd10Service;
+export const { useGetAllIcd10Query, useImportIcd10Mutation, useSearchIcd10Query, useLazySearchIcd10Query } = Icd10Service;
