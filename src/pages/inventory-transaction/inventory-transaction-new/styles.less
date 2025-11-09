@@ -1,6 +1,30 @@
-.checkboxes-container{
-    display: flex;
-    justify-content: flex-end;
-    align-items: center ;
-    margin-top: 30px;
+.checkboxes-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 30px;
+}
+
+/* styles.less */
+.attachment-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.attachment-name {
+  flex: 1 1 auto;
+  cursor: pointer;
+  color: #2264e5;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.attachment-delete {
+  flex: 0 0 auto; 
+  width: 20px; 
+  height: 20px;
+  font-size: 20px;
 }
