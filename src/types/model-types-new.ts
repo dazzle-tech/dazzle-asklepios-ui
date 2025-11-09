@@ -415,7 +415,6 @@ export interface Laboratory {
 }
 
 
-
 export interface DiagnosticTestProfile {
   id?: number;
   testId?: number;
@@ -451,3 +450,13 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+
+export interface MedicationCategory {
+  id: number;
+  name: string;
+}
+export interface MedicationCategoryClass {
+  id: number;
+  name: string;
+  medicationCategoriesId: number
+}

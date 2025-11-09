@@ -55,7 +55,8 @@ import { laboratoryService } from './services/setup/diagnosticTest/laboratorySer
 import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
-
+import { medicationCategoriesService } from './services/setup/medication-categories/medicationCategoriesService';
+import { medicationCategoriesClassService } from './services/setup/medication-categories/medicationCategoriesClassService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -142,7 +143,10 @@ export const store = configureStore({
     [PractitionerService.reducerPath]:PractitionerService.reducer,
     [PractitionerDepartmentService.reducerPath]:PractitionerDepartmentService.reducer,
 
-    
+    //Categories setup
+    [medicationCategoriesService.reducerPath]: medicationCategoriesService.reducer,
+    [medicationCategoriesClassService.reducerPath]: medicationCategoriesClassService.reducer,
+
      // Language slice
     [languageService.reducerPath]: languageService.reducer,
 
@@ -155,6 +159,8 @@ export const store = configureStore({
 
     //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
+
+
 
     [Icd10Service.reducerPath]: Icd10Service.reducer,
 
@@ -206,6 +212,8 @@ export const store = configureStore({
       userDepartmentService.middleware,
       MedicalsheetsService.middleware,
       serviceService.middleware,
+      medicationCategoriesService.middleware,
+      medicationCategoriesClassService.middleware,
       languageService.middleware,
       translationService.middleware,
       PractitionerService.middleware,

@@ -145,7 +145,7 @@ import Facilities from './pages/setup/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
 import Lov from './pages/setup/lov-setup';
-import MedicationMatrix from './pages/setup/med-matrix-setup';
+import MedicationMatrix from './pages/setup/med-matrix-setup-new';
 import MedicationSchedule from './pages/setup/medication-schedule-setup';
 import Metadata from './pages/setup/metadata-view';
 import Modules from './pages/setup/modules-setup';
