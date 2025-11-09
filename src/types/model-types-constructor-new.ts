@@ -476,3 +476,11 @@ export const newCdtDentalAction: modelTypes.CdtDentalAction = {
   dentalActionId: 0,
   cdtCode: "",
 };
+export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndication = {
+  id: undefined,
+  activeIngredientId: 0,
+  icdCodeId: 0,
+  dosage: null,
+  unit: '',
+  isOffLabel: false
+};
