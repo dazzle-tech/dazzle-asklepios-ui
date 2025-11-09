@@ -381,11 +381,7 @@ export const newActiveIngredientDrugInteraction: modelTypes.ActiveIngredientDrug
   activeIngredientId: 0,
   interactedIngredientId: 0,
   severity: '',
-  description: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
+  description: ''
 };
 
 export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFoodInteraction = {
@@ -393,9 +389,5 @@ export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFood
   activeIngredientId: 0,
   food: '',
   severity: '',
-  description: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
+  description: ''
 };
