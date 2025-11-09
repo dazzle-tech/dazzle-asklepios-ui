@@ -206,8 +206,8 @@ export const newPractitioner: modelTypes.Practitioner = {
   defaultLicenseValidUntil: undefined,
   secondaryLicenseValidUntil: undefined,
   dateOfBirth: undefined,
-  jobRole: '',
-  gender: '',
+  jobRole: null,
+  gender: null,
   isActive: true,
 };
 
