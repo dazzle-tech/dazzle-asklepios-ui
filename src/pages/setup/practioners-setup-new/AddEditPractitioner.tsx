@@ -72,6 +72,7 @@ const AddEditPractitioner = ({
   const specility = useEnumOptions('Specialty');
   const genders = useEnumOptions('Gender');
   const jobRoles = useEnumOptions('JobRole');
+  
 
   // Users
   const { data: userListResponse = [], isLoading } = useGetUserQuery();
