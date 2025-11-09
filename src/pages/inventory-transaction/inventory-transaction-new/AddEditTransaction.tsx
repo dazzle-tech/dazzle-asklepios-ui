@@ -29,7 +29,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Plus } from '@rsuite/icons';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FaCalendarAlt, FaInfoCircle } from 'react-icons/fa';
 import { FaPaperclip, FaUser, FaWarehouse } from 'react-icons/fa6';
 import { MdDelete } from 'react-icons/md';
@@ -597,6 +597,11 @@ const AddEditTransaction = ({
     }
   };
 
+  const selectedWarehouse = useMemo(() => {
+    const list = warehouseListResponse?.object ?? [];
+    return list.find((w: any) => w.key === transaction?.warehouseKey);
+  }, [warehouseListResponse?.object, transaction?.warehouseKey]);
+
   const topContent = () => {
     return (
       <>
@@ -652,6 +657,7 @@ const AddEditTransaction = ({
                   rightAddon={<Plus />}
                   record={transaction}
                   setRecord={setTransaction}
+                  searchable={false}
                 />
               </div>
               <div className="container-of-field">
@@ -950,7 +956,7 @@ const AddEditTransaction = ({
               <b>Warehouse Key:</b> {transaction.warehouseKey}
             </p>
             <p>
-              <b>Warehouse Name:</b> {'N/A'}
+              <b>Warehouse Name:</b> {selectedWarehouse?.warehouseName}
             </p>
           </>
         )}
