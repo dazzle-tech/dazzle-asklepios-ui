@@ -612,3 +612,13 @@ export interface ActiveIngredientIndication {
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;}
+
+  export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
