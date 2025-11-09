@@ -329,3 +329,52 @@ export const newRadiology: modelTypes.Radiology = {
   turnaroundTime: undefined,
   associatedRisks: "",
 };
+
+export const newActiveIngredient: modelTypes.ActiveIngredient = {
+  id: undefined,
+  name: '',
+  drugClassId: null,
+  atcCode: null,
+  otc: false,
+  hasSynonyms: false,
+  antimicrobial: false,
+  highRiskMed: false,
+  abortiveMedication: false,
+  laborInducingMed: false,
+  isControlled: false,
+  controlled: null,
+  hasBlackBoxWarning: false,
+  blackBoxWarning: false,
+  isActive: true,
+  toxicityMaximumDose: null,
+  toxicityMaximumDosePerUnit: null,
+  toxicityDetails: null,
+  mechanismOfAction: null,
+  pharmaAbsorption: null,
+  pharmaRouteOfElimination: null,
+  pharmaVolumeOfDistribution: null,
+  pharmaHalfLife: null,
+  pharmaProteinBinding: null,
+  pharmaClearance: null,
+  pharmaMetabolism: null,
+  pregnancyCategory: null,
+  pregnancyNotes: null,
+  lactationRisk: null,
+  lactationRiskNotes: null,
+  doseAdjustmentRenal: false,
+  doseAdjustmentRenalOne: null,
+  doseAdjustmentRenalTwo: null,
+  doseAdjustmentRenalThree: null,
+  doseAdjustmentRenalFour: null,
+  doseAdjustmentHepatic: false,
+  doseAdjustmentPugA: null,
+  doseAdjustmentPugB: null,
+  doseAdjustmentPugC: null
+};
+
+export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSpecialPopulation = {
+  id: undefined,
+  activeIngredientId: 0,
+  specialPopulation: '',
+  considerations: ''
+};
