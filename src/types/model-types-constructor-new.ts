@@ -626,3 +626,9 @@ export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdvers
   adverseEffect: ''
 };
 
+export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSpecialPopulation = {
+  id: undefined,
+  activeIngredientId: 0,
+  specialPopulation: '',
+  considerations: ''
+};
