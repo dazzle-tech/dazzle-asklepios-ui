@@ -141,37 +141,36 @@ const MyInput = ({
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
+
   useEffect(() => {
-      const handleScroll = (event: Event) => {
-        const target = event.target as HTMLElement | null;
+  const handleScroll = event => {
+    const path = event.composedPath ? event.composedPath() : [];
 
-        if (
-          target &&
-          (target.closest('.rs-picker-menu') ||
-            target.closest('.rs-picker-select-menu') ||
-            target.closest('.rs-virtual-list'))
-        ) {
-          return;
-        }
+    const menuClassList = [
+      'rs-picker-popup',
+      'rs-picker-select-menu',
+      'rs-picker-menu',
+      'rs-virtual-list',
+      'rs-virtual-list-scrollbar',
+      'rs-picker-tag-menu'
+    ];
 
-        if (target && target.closest('.rs-modal-body')) {
-          return;
-        }
+    if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
+      return; 
+    }
 
-        setIsSelectOpen(false);
-        setIsDateOpen(false);
-        setIsDateTimeOpen(false);
-        setIsTimeOpen(false);
-        setIsMultyPickerOpen(false);
-        setIsCheckPickerOpen(false);
-      };
+    setIsSelectOpen(false);
+    setIsDateOpen(false);
+    setIsDateTimeOpen(false);
+    setIsTimeOpen(false);
+    setIsMultyPickerOpen(false);
+    setIsCheckPickerOpen(false);
+  };
 
-      window.addEventListener('scroll', handleScroll, true);
+  window.addEventListener('scroll', handleScroll, true);
+  return () => window.removeEventListener('scroll', handleScroll, true);
+}, []);
 
-      return () => {
-        window.removeEventListener('scroll', handleScroll, true);
-      };
-  }, []);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
