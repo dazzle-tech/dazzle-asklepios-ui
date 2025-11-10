@@ -28,7 +28,6 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { FaSyringe } from 'react-icons/fa';
 import { MdOutlineAccessTime } from 'react-icons/md';
 
-// ------- helper: label آمن يدعم lovDisplayValue و lovDisplayVale ويعطي fallback ------
 const lovLabel = (lov: any, fallback?: any) =>
   lov?.lovDisplayValue ?? lov?.lovDisplayVale ?? lov?.display ?? lov?.label ?? fallback ?? '';
 
@@ -76,7 +75,6 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
     ]
   });
 
-  // Fetch Dose Numbers  list response (بحث ديناميكي بالأرقام حسب الـ display الحالي)
   const { data: fetchDoseNumbersListQueryResponce, isFetching } = useGetDoseNumbersListQuery(
     { key: numDisplayValue },
     { skip: !numDisplayValue }
@@ -110,7 +108,6 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
   const isSelectedDose = (rowData: any) =>
     rowData && vaccineDose && vaccineDose.key === rowData.key ? 'selected-row' : '';
 
-  // --- قوائم للاختيارات (null-safe) ---
   const dosesList =
     (vaccineDosesListResponseLoading?.object ?? []).map((item: any) => ({
       value: item?.key,
@@ -120,7 +117,7 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
   const dosesNameList =
     (fetchDoseNumbersListQueryResponce?.apLovValues ?? []).map((item: any) => ({
       value: item?.key,
-      label: lovLabel(item, item?.key) // item قد يحتوي lovDisplayVale أو lovDisplayValue
+      label: lovLabel(item, item?.key) 
     })) ?? [];
 
   const selectedValue =
@@ -134,7 +131,6 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedValue?.key]);
 
-  // تحديث فلاتر القوائم عند تغير اللقاح
   useEffect(() => {
     setVaccineDosesListRequest(prev => ({
       ...prev,
@@ -205,7 +201,6 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
       });
   };
 
-  // أيقونات Interval
   const iconsForActionsInterval = () => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -228,7 +223,6 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
     </div>
   );
 
-  // أيقونات Doses
   const iconsForDoses = () => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -244,7 +238,6 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
     </div>
   );
 
-  // أعمدة Interval Between Doses (null-safe)
   const tableIntervalBetweenDosesColumns = [
     {
       key: 'intervalBetweenDoses',
@@ -285,7 +278,6 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
     }
   ];
 
-  // أعمدة Doses (null-safe)
   const tableDosesColumns = [
     {
       key: 'doseName',
@@ -331,7 +323,6 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
     }
   ];
 
-  // حفظ Interval
   const handleSaveVaccineDosesInterval = async () => {
     await saveVaccineDosesInterval({ ...vaccineDoseInterval, vaccineKey: vaccine?.key }).unwrap();
     dispatch(notify('Vaccine Doses Interval Added Successfully'));
@@ -346,12 +337,11 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine, setVaccine, ref
     });
   };
 
-  // حفظ Dose
   const handleSaveVaccineDoses = async () => {
     await saveVaccineDose({
       ...vaccineDose,
       vaccineKey: vaccine?.key,
-      isBooster: !!vaccineDose.isBooster // ← صراحةً Boolean
+      isBooster: !!vaccineDose.isBooster 
     }).unwrap();
     saveVaccine({ ...vaccine });
     dispatch(notify('Vaccine Dose Added Successfully'));
