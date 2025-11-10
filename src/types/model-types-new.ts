@@ -348,6 +348,7 @@ export interface Service {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+
 export interface AgeGroup {
   id?: number;
   ageGroup: string | null;            
@@ -355,6 +356,24 @@ export interface AgeGroup {
   toAge: number | null;         
   fromAgeUnit: string | null;
   toAgeUnit: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number;          // FK
+}
+
+export interface Procedure {
+  id?: number;
+  name: string;
+  code: string;
+  categoryType?: string | null; 
+  isAppointable?: boolean;
+  indications?: string | null;
+  contraindications?: string | null;
+  preparationInstructions?: string | null;
+  recoveryNotes?: string | null;
   isActive?: boolean;
   createdBy?: string | null;
   createdDate?: Date | null;
@@ -452,3 +471,29 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+export interface ProcedureCoding {
+  id?: number;
+  procedureId?: number | null;        
+  codeType: string | null ;         
+  codeId: string;                     
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface CodeOption {
+  id: number | string;
+  code: string;
+  description: string;
+}
+export interface ProcedurePriceList {
+  id?: number;
+  procedureId?: number | null;   
+  price: number;                 
+  currency: string;              
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}

@@ -233,6 +233,24 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   lastModifiedDate: null,
   facilityId: undefined,
 };
+
+export const newProcedure: modelTypes.Procedure = {
+  id: undefined,
+  name: '',
+  code: '',
+  categoryType: null,
+  isAppointable: false,
+  indications: null,
+  contraindications: null,
+  preparationInstructions: null,
+  recoveryNotes: null,
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  facilityId: undefined,
+};
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
   code: '',
@@ -329,4 +347,26 @@ export const newRadiology: modelTypes.Radiology = {
   turnaroundTimeUnit: "",
   turnaroundTime: undefined,
   associatedRisks: "",
+};
+
+export const newProcedureCoding: modelTypes.ProcedureCoding = {
+  id: undefined,
+  procedureId: undefined,        
+  codeType: 'CPT_CODES',           
+  codeId: '',                      
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
+  id: undefined,
+  procedureId: undefined,      
+  price: 0,                    
+  currency: 'USD',            
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
 };
