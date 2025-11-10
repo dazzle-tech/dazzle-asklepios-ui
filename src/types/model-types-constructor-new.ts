@@ -318,9 +318,8 @@ export const newLaboratory: modelTypes.Laboratory = {
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   id: undefined,
   testId: undefined,
-  name: '',
-  resultUnit: ''
-}
+  name: null,
+  resultUnit: ''}
 
 
 export const newPathology: modelTypes.Pathology = {
