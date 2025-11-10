@@ -59,7 +59,7 @@ const Icd10Search: React.FC<Props> = ({
   const [triggerSearch, { /* isFetching, isLoading, */ isUninitialized, error }] =
     useLazySearchIcd10Query();
 
-  // حالة تحميل محلية لكل إنستانس لمنع كل الكومبوننتس من إظهار اللودر معًا
+
   const [selfLoading, setSelfLoading] = useState(false);
 
   const keyword = (value || '').trim();
