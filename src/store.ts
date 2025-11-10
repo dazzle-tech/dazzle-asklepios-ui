@@ -56,6 +56,9 @@ import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfil
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import { procedureSetupService } from './services/setup/procedure/procedureService';
+import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
+import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -157,7 +160,6 @@ export const store = configureStore({
     [ageGroupService.reducerPath]: ageGroupService.reducer,
 
     [Icd10Service.reducerPath]: Icd10Service.reducer,
-
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
@@ -172,6 +174,13 @@ export const store = configureStore({
 
 
 
+    // procedure
+    // procedure setup
+    [procedureSetupService.reducerPath]: procedureSetupService.reducer,
+    // procedure coding
+    [procedureCodingService.reducerPath]: procedureCodingService.reducer,
+    // procedure price list
+    [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -225,7 +234,10 @@ export const store = configureStore({
       diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
       diagnosticTestNormalRangeService.middleware,
-
+      potintialService.middleware,
+      procedureSetupService.middleware,
+      procedureCodingService.middleware,
+      procedurePriceListService.middleware,
     ])
 });
 

@@ -180,6 +180,7 @@ import CallOverlay from './components/Overlay/CallOverlay';
 import LanguagesSetup from './pages/setup/language-setup/Language';
 import Pediatric from './pages/encounter/encounter-component/pediatric';
 import IncidentPortal from './pages/Incident/IncidentPortal';
+import Enums from './pages/setup/Enums';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -535,6 +536,7 @@ const App = () => {
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
               <Route path="service-and-products" element={<ServiceAndProducts />} />
+              <Route path='enums' element={<Enums/> }/>
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

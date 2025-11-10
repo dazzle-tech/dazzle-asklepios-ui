@@ -31,6 +31,7 @@ import { get, keyBy } from "lodash";
 import { useEnumOptions } from "@/services/enumsApi";
 import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
 import { el } from "date-fns/locale";
+import { PaginationPerPage } from "@/utils/paginationPerPage";
 
 const Practitioners = () => {
   const dispatch = useDispatch();
@@ -367,26 +368,15 @@ const handleFilterChange = async (field: string, value: string) => {
   ];
 
   // ──────────────────────────── PAGINATION ────────────────────────────
-  const handlePageChange = (_: unknown, newPage: number) => {
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > paginationParams.page && links.next) targetLink = links.next;
-    else if (newPage < paginationParams.page && links.prev)
-      targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > paginationParams.page + 1 && links.last)
-      targetLink = links.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams({
-        ...paginationParams,
-        page,
-        size,
-        timestamp: Date.now(),
-      });
-    }
-  };
+ const handlePageChange = (event: unknown, newPage: number) => {
+  PaginationPerPage.handlePageChange(
+    event,
+    newPage,
+    paginationParams,
+    links,
+    setPaginationParams
+  );
+};
 
   // ──────────────────────────── FILTER UI ────────────────────────────
  const filters = () => (

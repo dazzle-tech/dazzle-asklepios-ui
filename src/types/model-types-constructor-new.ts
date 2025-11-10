@@ -206,8 +206,8 @@ export const newPractitioner: modelTypes.Practitioner = {
   defaultLicenseValidUntil: undefined,
   secondaryLicenseValidUntil: undefined,
   dateOfBirth: undefined,
-  jobRole: '',
-  gender: '',
+  jobRole: null,
+  gender: null,
   isActive: true,
 };
 
@@ -226,6 +226,24 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   toAge: 0,
   fromAgeUnit: 'YEARS',
   toAgeUnit: 'YEARS',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  facilityId: undefined,
+};
+
+export const newProcedure: modelTypes.Procedure = {
+  id: undefined,
+  name: '',
+  code: '',
+  categoryType: null,
+  isAppointable: false,
+  indications: null,
+  contraindications: null,
+  preparationInstructions: null,
+  recoveryNotes: null,
   isActive: true,
   createdBy: '',
   createdDate: null,
@@ -292,6 +310,7 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
+  timing:null,
 };
 
 
@@ -332,6 +351,7 @@ export const newRadiology: modelTypes.Radiology = {
 };
 
 
+
 export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
   id: undefined,
   testId: 0,
@@ -359,4 +379,25 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
   isProfile: false,
 
   lovKeys: [],
+}
+export const newProcedureCoding: modelTypes.ProcedureCoding = {
+  id: undefined,
+  procedureId: undefined,        
+  codeType: 'CPT_CODES',           
+  codeId: '',                      
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
+  id: undefined,
+  procedureId: undefined,      
+  price: 0,                    
+  currency: 'USD',            
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
 };
