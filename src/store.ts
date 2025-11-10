@@ -56,7 +56,6 @@ import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfil
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-
 export const store = configureStore({
   reducer: {
     // ui
@@ -172,6 +171,7 @@ export const store = configureStore({
     [diagnosticTestNormalRangeService.reducerPath]:diagnosticTestNormalRangeService.reducer,
 
 
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -225,6 +225,7 @@ export const store = configureStore({
       diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
       diagnosticTestNormalRangeService.middleware,
+
     ])
 });
 

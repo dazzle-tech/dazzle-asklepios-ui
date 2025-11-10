@@ -93,6 +93,7 @@ export const diagnosticTestNormalRangeService = createApi({
       invalidatesTags: ["DiagnosticTestNormalRange"],
     }),
     // 🔹 Get LOVs by normalRangeId
+
     getLovsByNormalRangeId: builder.query<string[], number>({
       query: (normalRangeId) => ({
         url: `/api/setup/diagnostic-test-normal-ranges/${normalRangeId}/lovs`,

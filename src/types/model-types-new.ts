@@ -451,6 +451,7 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+
 export interface DiagnosticTestNormalRange {
   id?: number;
   testId: number;
@@ -477,6 +478,6 @@ export interface DiagnosticTestNormalRange {
   profileTestId?: number | null;
   isProfile?: boolean;
 
-
   lovKeys?: string[];
 }
+
