@@ -51,6 +51,24 @@ export const diagnosticTestNormalRangeService = createApi({
       },
       providesTags: ["DiagnosticTestNormalRange"],
     }),
+     // 🔹 Get by testId (paginated)
+    getDiagnosticTestNormalRangesByProfileTestId: builder.query<PagedResult<any>, { profileTestId: number; page: number; size: number }>({
+      query: ({ profileTestId, page, size }) => ({
+        url: `/api/setup/diagnostic-test-normal-ranges/by-profile-test/${profileTestId}`,
+        method: "GET",
+        params: { page, size },
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["DiagnosticTestNormalRange"],
+    }),
+
 
     // 🔹 Get by ID
     getDiagnosticTestNormalRangeById: builder.query<any, number>({
@@ -107,6 +125,7 @@ export const diagnosticTestNormalRangeService = createApi({
 export const {
   useGetAllDiagnosticTestNormalRangesQuery,
   useGetDiagnosticTestNormalRangesByTestIdQuery,
+  useGetDiagnosticTestNormalRangesByProfileTestIdQuery,
   useGetDiagnosticTestNormalRangeByIdQuery,
   useCreateDiagnosticTestNormalRangeMutation,
   useUpdateDiagnosticTestNormalRangeMutation,

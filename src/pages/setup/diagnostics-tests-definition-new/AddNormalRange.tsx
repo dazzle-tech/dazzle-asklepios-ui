@@ -28,13 +28,8 @@ const AddNormalRange = ({
   const rangetype = useEnumOptions('NormalRangeType');
 
 
-  // Fetch normal Range Lov response
-  const { data: normalRangeLovQueryResponse } = useGetLovValuesByCodeQuery(
-    'LAB_NORMRANGE_VALUE_TYPE'
-  );
 
-  // Fetch labrotory Details list response
-  // const { data: labrotoryDetailsQueryResponse } =
+  
   //   useGetDiagnosticsTestLaboratoryListQuery();
   // Fetch lov response
   const { data: lovQueryResponse } = useGetLovValuesByCodeQuery(lovCode);
@@ -62,7 +57,7 @@ const AddNormalRange = ({
   }, [diagnosticTestNormalRange]);
 
 
-console.log(diagnosticTestNormalRange.lovKeys);
+
 
   return (
     <Form fluid>
