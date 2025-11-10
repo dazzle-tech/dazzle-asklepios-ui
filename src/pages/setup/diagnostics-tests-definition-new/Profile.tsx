@@ -49,10 +49,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
     useState<DiagnosticTestNormalRange>({
       ...newDiagnosticTestNormalRange
     });
-  // const [newDiagnosticsTestProfile, setNewDiagnosticsTestProfile] =
-  //   useState<ApDiagnosticTestProfile>({
-  //     ...newApDiagnosticTestProfile
-  //   });
+ 
 
     const [createDiagnosticTestNormalRange] = useCreateDiagnosticTestNormalRangeMutation();
     const [updateDiagnosticTestNormalRange] = useUpdateDiagnosticTestNormalRangeMutation();
