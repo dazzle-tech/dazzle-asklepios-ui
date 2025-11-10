@@ -332,6 +332,7 @@ export const newRadiology: modelTypes.Radiology = {
 
 export const newActiveIngredient: modelTypes.ActiveIngredient = {
   id: undefined,
+  medicalCategoryId: null,
   name: '',
   drugClassId: null,
   atcCode: null,
@@ -344,7 +345,7 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   isControlled: false,
   controlled: null,
   hasBlackBoxWarning: false,
-  blackBoxWarning: false,
+  blackBoxWarning: '',
   isActive: true,
   toxicityMaximumDose: null,
   toxicityMaximumDosePerUnit: null,

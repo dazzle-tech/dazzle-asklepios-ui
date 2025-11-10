@@ -455,6 +455,7 @@ export interface Radiology {
 export interface ActiveIngredient {
   id?: number;
   name: string;
+  medicalCategoryId?: number | null;
   drugClassId?: number | null;
   atcCode?: string | null;
   otc?: boolean | null;
@@ -466,7 +467,7 @@ export interface ActiveIngredient {
   isControlled?: boolean | null;
   controlled?: string | null;
   hasBlackBoxWarning?: boolean | null;
-  blackBoxWarning?: boolean | null;
+  blackBoxWarning?: string | null;
   isActive?: boolean | null;
   toxicityMaximumDose?: string | null;
   toxicityMaximumDosePerUnit?: string | null;

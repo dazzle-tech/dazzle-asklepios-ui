@@ -105,7 +105,7 @@ import InventoryTransferApproval from './pages/inventory-transaction/inventory-t
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import Lab from './pages/lab-module';
 import ListOfRequisition from './pages/list-of-requisition';
-import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup/ActiveIngredientsSetup';
+import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
 import GenericMedications from './pages/medications/generic-medications';
 import PrescriptionInstructions from './pages/medications/prescription_instructions';
 import Operation from './pages/operation-module';

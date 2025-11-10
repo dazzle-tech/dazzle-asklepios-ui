@@ -248,3 +248,16 @@ export const formatEnumString = (input: string): string => {
     )
     .join(' ');                         
 };
+
+export const formatControlledEnumLabel = (code?: string | null): string => {
+  if (!code) return '';
+  const trimmed = String(code).trim();
+  if (!trimmed) return '';
+
+  const afterPrefix =
+    trimmed.indexOf('_') >= 0 ? trimmed.substring(trimmed.indexOf('_') + 1) : trimmed;
+
+  const schedulePart = afterPrefix.replace(/_/g, ' ').toUpperCase();
+
+  return `Schedule ${schedulePart} (${trimmed})`;
+};
