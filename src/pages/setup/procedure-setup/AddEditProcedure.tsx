@@ -13,7 +13,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useEnumOptions } from '@/services/enumsApi';
 
 // ICD-10 search component (supports mode="icd10" | "indications")
-import Icd10Search from '@/components/ICD10SearchComponent/Icd10Search';
+import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 // RTK Query hooks for Procedures
 import {
   useAddProcedureMutation,
