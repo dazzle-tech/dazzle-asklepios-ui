@@ -257,6 +257,9 @@ const handleUpdateDiagnosticTest = async () => {
     } else return '';
   };
 
+console.log("Selected Test:", diagnosticsTest);
+
+
   // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
   const iconsForActions = (rowData: any) => (
     <div className="container-of-icons">
@@ -317,6 +320,7 @@ const handleUpdateDiagnosticTest = async () => {
           size={21}
           fill="var(--primary-gray)"
           onClick={() => {
+            setDiagnosticsTest(rowData);
             setNormalRangePopupOpen(true);
           }}
         />
@@ -517,6 +521,7 @@ const handleUpdateDiagnosticTest = async () => {
             timestamp: Date.now(),
           });
         }}
+        
         tableButtons={<div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
