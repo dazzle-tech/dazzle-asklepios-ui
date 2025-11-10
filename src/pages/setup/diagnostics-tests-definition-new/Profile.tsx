@@ -33,7 +33,7 @@ import {  useGetAllDiagnosticTestProfilesQuery,
   useDeleteDiagnosticTestProfileMutation,
   useDeleteDiagnosticTestProfilesByTestIdMutation } from '@/services/setup/diagnosticTestProfileService';
 import { DiagnosticTestProfile } from '@/types/model-types-new';
-import { newDiagnosticTestProfile } from '@/types/model-types-constructor-new';
+import { newDiagnosticTestProfile, newPathology } from '@/types/model-types-constructor-new';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const dispatch = useAppDispatch();
@@ -249,28 +249,59 @@ const { data: allDiagnosticTestProfiles ,refetch:refetchDiagnosticsTestProfile,i
   ];
 
   // handle save diagnostics test profile
-  const handleSave = () => {
-   if(diagnosticsTestProfile.id){
-    updateTestProfile({
-      id:diagnosticsTestProfile.id,
-      body:{
-      ...diagnosticsTestProfile,
-      testId: diagnosticsTest.id}
+const handleSave = async () => {
+  try {
+    if (diagnosticsTestProfile.id) {
+      await updateTestProfile({
+        id: diagnosticsTestProfile.id,
+        body: {
+          ...diagnosticsTestProfile,
+          testId: diagnosticsTest.id,
+        },
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
+      await refetchDiagnosticsTestProfile();
+    } else {
+      await addTestProfile({
+        ...diagnosticsTestProfile,
+        testId: diagnosticsTest.id,
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
+      await refetchDiagnosticsTestProfile();
+      setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
+    }
+  } 
+  catch (error: any) {
+  console.error('Error saving test profile:', error);
+    console.error('Error saving test', error?.data.fieldErrors);
+ 
+  let errorMessage =
+    error?.data?.detail ||
+    error?.data?.message ||
+    error?.error ||
+    error?.statusText ||
+    'Failed to save Test Profile';
+
+
+  if (error?.data?.fieldErrors?.length > 0) {
+    const fieldError = error.data.fieldErrors[0];
+    if (fieldError.field === "name") {
+      errorMessage = "Name cannot be empty";
+    } else {
+      errorMessage = fieldError.message;
+    }
+  dispatch(
+    notify({
+      msg: errorMessage,
+      sev: 'error',
     })
-      .unwrap()
-      .then(() => refetchDiagnosticsTestProfile());
-    dispatch(notify('Updated Successfully '));
-   }
-    else{
-    addTestProfile({
-      ...diagnosticsTestProfile,
-      testId: diagnosticsTest.id
-    })
-      .unwrap()
-      .then(() => refetchDiagnosticsTestProfile());
-    dispatch(notify('Added Successfully '));
-   }
-  };
+  );
+}
+  }
+};
+
 
   // handle remove diagnostics test profile
   const handleRemove = () => {
@@ -295,6 +326,7 @@ const { data: allDiagnosticTestProfiles ,refetch:refetchDiagnosticsTestProfile,i
             <div className='container-of-add-bar-diagnostic'>
               <div className='container-of-two-fields-diagnostic' >
                 <MyInput
+                  required
                   width={150}
                   showLabel={false}
                   placeholder="Test Name"
