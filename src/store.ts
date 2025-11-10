@@ -55,7 +55,8 @@ import { laboratoryService } from './services/setup/diagnosticTest/laboratorySer
 import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
-
+import { vaccineService } from './services/vaccine/vaccineService';
+import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -169,6 +170,10 @@ export const store = configureStore({
 
     [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
 
+    //vaccine
+    [vaccineService.reducerPath]: vaccineService.reducer,
+    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -221,6 +226,8 @@ export const store = configureStore({
       diagnosticTestProfileService.middleware,
       diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
+      vaccineService.middleware,
+      vaccineBrandsService.middleware,
     ])
 });
 

@@ -329,3 +329,40 @@ export const newRadiology: modelTypes.Radiology = {
   turnaroundTime: undefined,
   associatedRisks: "",
 };
+
+/** ======================= Vaccine ======================= */
+export const newVaccine: modelTypes.Vaccine = {
+  id: undefined,
+  name: '',
+  atcCode: '',
+  type: '',                   
+  roa: '',                    
+  siteOfAdministration: '',
+  postOpeningDuration: null,
+  durationUnit: '',            
+  numberOfDoses: '',          
+  indications: '',
+  possibleReactions: '',
+  contraindicationsAndPrecautions: '',
+  storageAndHandling: '',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+export const newVaccineBrand: modelTypes.VaccineBrand = {
+  id: undefined,
+  vaccineId: undefined,       
+  name: '',
+  manufacture: '',
+  volume: 0,
+  unit: '',                   
+  marketingAuthorizationHolder: '',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
