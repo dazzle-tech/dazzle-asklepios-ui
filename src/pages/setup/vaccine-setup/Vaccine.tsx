@@ -25,32 +25,46 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddEditVaccine from './AddEditVaccine';
 import MyButton from '@/components/MyButton/MyButton';
 import DoesSchedule from './DoesSchedule';
+
+// ------- helper: safe LOV label (supports lovDisplayValue / lovDisplayVale) ------
+const lovLabel = (lov: any, fallback?: any) =>
+  lov?.lovDisplayValue ??
+  lov?.lovDisplayVale ??
+  lov?.display ??
+  lov?.label ??
+  (fallback ?? '');
+
 const Vaccine = () => {
   const dispatch = useAppDispatch();
   const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
   const [openConfirmDeleteVaccineModal, setOpenConfirmDeleteVaccineModal] =
     useState<boolean>(false);
-  const [stateOfDeleteVaccineModal, setStateOfDeleteVaccineModal] = useState<string>('delete');
+  const [stateOfDeleteVaccineModal, setStateOfDeleteVaccineModal] =
+    useState<string>('delete');
   const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
   const [dossPopupOpen, setDossPopupOpen] = useState(false);
   const [edit_new, setEdit_new] = useState(false);
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    pageSize: 15
+    pageSize: 15,
   });
+
   // Fetch vaccine list response
   const {
     data: vaccineListResponseLoading,
     refetch,
-    isFetching
+    isFetching,
   } = useGetVaccineListQuery(listRequest);
-   // deactivate/reactivate vaccine
+
+  // deactivate/reactivate vaccine
   const [deactiveVaccine] = useDeactiveActivVaccineMutation();
+
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
   const totalCount = vaccineListResponseLoading?.extraNumeric ?? 0;
+
   // Available fields for filtering
   const filterFields = [
     { label: 'Vaccine Name', value: 'vaccineName' },
@@ -58,16 +72,16 @@ const Vaccine = () => {
     { label: 'Type', value: 'typeLkey' },
     { label: 'ATC Code', value: 'atcCode' },
     { label: 'Doses Number', value: 'numberOfDosesLkey' },
-    { label: 'Status', value: 'isValid' }
+    { label: 'Status', value: 'isValid' },
   ];
+
   // Header page setUp
-  const divContent = (
-    "Vaccine"
-  );
+  const divContent = 'Vaccine';
   dispatch(setPageCode('Vaccine'));
   dispatch(setDivContent(divContent));
+
   // class name for selected row
-  const isSelected = rowData => {
+  const isSelected = (rowData: any) => {
     if (rowData && vaccine && vaccine.key === rowData.key) {
       return 'selected-row';
     } else return '';
@@ -81,9 +95,10 @@ const Vaccine = () => {
       setListRequest({
         ...initialListRequest,
         pageSize: listRequest.pageSize,
-        pageNumber: 1
+        pageNumber: 1,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordOfFilter]);
 
   useEffect(() => {
@@ -93,13 +108,15 @@ const Vaccine = () => {
     };
   }, [location.pathname, dispatch]);
 
-  // handle click om edit vaccine 
-  const handleEdit = () => {
+  // handle click on edit vaccine
+  const handleEdit = (rowData?: ApVaccine) => {
+    if (rowData?.key) setVaccine(rowData);
     setEdit_new(true);
     setOpenAddEditPopup(true);
   };
+
   // handle filter change
-  const handleFilterChange = (fieldName, value) => {
+  const handleFilterChange = (fieldName: string, value: any) => {
     if (value) {
       setListRequest(
         addFilterToListRequest(
@@ -113,8 +130,10 @@ const Vaccine = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-   // handle Deactive Reactivate Vaccine
+
+  // handle Deactive Reactivate Vaccine
   const handleDeactiveReactivateVaccine = () => {
+    if (!vaccine) return;
     deactiveVaccine(vaccine)
       .unwrap()
       .then(() => {
@@ -124,23 +143,26 @@ const Vaccine = () => {
         } else {
           dispatch(notify('Vaccine Activated Successfully'));
         }
-        setVaccine(newApVaccine);
-      });
-    setOpenConfirmDeleteVaccineModal(false);
+        setVaccine({ ...newApVaccine });
+      })
+      .finally(() => setOpenConfirmDeleteVaccineModal(false));
   };
+
   // Handle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
+
   // Handle change rows per page in navigation
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setListRequest({
       ...listRequest,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
+      pageNumber: 1,
     });
   };
-  // Filter table
+
+  // Filter UI
   const filters = () => (
     <Form layout="inline" fluid>
       <MyInput
@@ -150,11 +172,11 @@ const Vaccine = () => {
         fieldName="filter"
         fieldType="select"
         record={recordOfFilter}
-        setRecord={updatedRecord => {
+        setRecord={(updatedRecord: any) => {
           setRecordOfFilter({
             ...recordOfFilter,
             filter: updatedRecord.filter,
-            value: ''
+            value: '',
           });
         }}
         showLabel={false}
@@ -171,7 +193,8 @@ const Vaccine = () => {
       />
     </Form>
   );
-  // Icons column (Edit,Does Schedule, reactive/Deactivate)
+
+  // Icons column (Edit, Does Schedule, Activate/Deactivate)
   const iconsForActions = (rowData: ApVaccine) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -179,7 +202,7 @@ const Vaccine = () => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        onClick={() => handleEdit()}
+        onClick={() => handleEdit(rowData)}
       />
       <FaSyringe
         className="icons-style"
@@ -187,6 +210,12 @@ const Vaccine = () => {
         size={22}
         fill="var(--primary-gray)"
         onClick={() => {
+          // set selected vaccine to the clicked row explicitly, then open dialog
+          setVaccine(rowData);
+          if (!rowData?.key) {
+            dispatch(notify('Please select a vaccine first.'));
+            return;
+          }
           setDossPopupOpen(true);
         }}
       />
@@ -197,6 +226,7 @@ const Vaccine = () => {
           size={24}
           fill="var(--primary-pink)"
           onClick={() => {
+            setVaccine(rowData);
             setStateOfDeleteVaccineModal('deactivate');
             setOpenConfirmDeleteVaccineModal(true);
           }}
@@ -208,6 +238,7 @@ const Vaccine = () => {
           size={24}
           fill="var(--primary-gray)"
           onClick={() => {
+            setVaccine(rowData);
             setStateOfDeleteVaccineModal('reactivate');
             setOpenConfirmDeleteVaccineModal(true);
           }}
@@ -215,51 +246,51 @@ const Vaccine = () => {
       )}
     </div>
   );
-  //Table columns
+
+  // Table columns
   const tableColumns = [
     {
       key: 'vaccineName',
       title: <Translate>Vaccine Name</Translate>,
-      flexGrow: 4
+      flexGrow: 4,
     },
     {
       key: 'vaccineCode',
       title: <Translate>Code</Translate>,
-      flexGrow: 4
+      flexGrow: 4,
     },
     {
       key: 'typeLkey',
       title: <Translate>Type</Translate>,
       flexGrow: 4,
-      render: rowData => (rowData.typeLvalue ? rowData.typeLvalue.lovDisplayVale : rowData.typeLkey)
+      render: (rowData: any) => lovLabel(rowData?.typeLvalue, rowData?.typeLkey),
     },
     {
       key: 'atcCode',
       title: <Translate>ATC Code</Translate>,
-      flexGrow: 4
+      flexGrow: 4,
     },
     {
       key: 'numberOfDosesLkey',
       title: <Translate>Doses Number</Translate>,
       flexGrow: 4,
-      render: rowData =>
-        rowData?.numberOfDosesLvalue
-          ? rowData.numberOfDosesLvalue.lovDisplayVale
-          : rowData.numberOfDosesLkey
+      render: (rowData: any) =>
+        lovLabel(rowData?.numberOfDosesLvalue, rowData?.numberOfDosesLkey),
     },
     {
       key: 'isValid',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
-      render: rowData => (rowData.isValid ? 'Valid' : 'InValid')
+      render: (rowData: any) => (rowData?.isValid ? 'Valid' : 'InValid'),
     },
     {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: rowData => iconsForActions(rowData)
-    }
+      render: (rowData: ApVaccine) => iconsForActions(rowData),
+    },
   ];
+
   return (
     <Panel>
       <MyTable
@@ -269,12 +300,12 @@ const Vaccine = () => {
         columns={tableColumns}
         rowClassName={isSelected}
         filters={filters()}
-        onRowClick={rowData => {
+        onRowClick={(rowData: any) => {
           setVaccine(rowData);
         }}
         sortColumn={listRequest.sortBy}
         sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
+        onSortChange={(sortBy: any, sortType: any) => {
           if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
         }}
         page={pageIndex}
@@ -282,18 +313,22 @@ const Vaccine = () => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-        tableButtons={      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={() => {
-            setOpenAddEditPopup(true), setVaccine({ ...newApVaccine }), setEdit_new(true);
-          }}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={() => {
+                setOpenAddEditPopup(true);
+                setVaccine({ ...newApVaccine });
+                setEdit_new(true);
+              }}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>
+        }
       />
       <AddEditVaccine
         open={openAddEditPopup}
