@@ -310,6 +310,7 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
+  timing:null,
 };
 
 

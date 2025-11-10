@@ -431,6 +431,7 @@ export interface Laboratory {
   testInstructions?: string;
   category?: string;
   tubeType?: string;
+  timing?:String;
 }
 
 
