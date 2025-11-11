@@ -55,6 +55,8 @@ import { laboratoryService } from './services/setup/diagnosticTest/laboratorySer
 import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
+import { vaccineService } from './services/vaccine/vaccineService';
+import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
@@ -172,6 +174,10 @@ export const store = configureStore({
 
     [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
 
+    //vaccine
+    [vaccineService.reducerPath]: vaccineService.reducer,
+    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
+
     // procedure
     // procedure setup
     [procedureSetupService.reducerPath]: procedureSetupService.reducer,
@@ -236,6 +242,8 @@ export const store = configureStore({
       diagnosticTestProfileService.middleware,
       diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
+      vaccineService.middleware,
+      vaccineBrandsService.middleware,
       potintialService.middleware,
       procedureSetupService.middleware,
       procedureCodingService.middleware,

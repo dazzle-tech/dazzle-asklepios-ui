@@ -56,7 +56,7 @@ export const vaccineBrandsService = createApi({
         url: '/api/setup/vaccine-brands',
         method: 'POST',
         params: { vaccineId },
-        body: data, // 👈 استخدم الأوبجكت كما هو
+        body: data,
       }),
       invalidatesTags: (_res, _err, { vaccineId }) => [
         { type: 'VaccineBrand', id: `vaccine-${vaccineId}` },
@@ -73,7 +73,7 @@ export const vaccineBrandsService = createApi({
         url: `/api/setup/vaccine-brands/${id}`,
         method: 'PUT',
         params: { vaccineId },
-        body: data, // 👈 نفس الشي، أوبجكت كامل
+        body: data, 
       }),
       invalidatesTags: (_res, _err, { id, vaccineId }) => [
         { type: 'VaccineBrand', id },

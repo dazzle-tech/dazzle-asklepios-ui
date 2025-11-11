@@ -2,13 +2,22 @@ import { uiService } from '@/services/uiService';
 import { createSlice } from '@reduxjs/toolkit';
 const savedLang = localStorage.getItem('lang') || 'en';
 
+// Be defensive when reading from localStorage in case it’s corrupted
+let savedTranslations: Record<string, string> = {};
+try {
+  const raw = localStorage.getItem('translations');
+  savedTranslations = raw ? JSON.parse(raw) : {};
+} catch {
+  savedTranslations = {};
+}
 const initialState = {
   sev: 'info',
   msg: null,
   msgLife: 2000,
   lang: savedLang,
   mode: 'light',
-  translations: {
+  translations: savedTranslations,
+  // {
 
     // pt: { // اللغة البرتغالية
     // "First Name" : "primeiro nome",
@@ -179,7 +188,7 @@ const initialState = {
     // "Add payment" : "Adicionar pagamento"
     // }
 
-  },
+  // },
   screenKey: '',
   loading: false,
   systemLoader: false,
@@ -231,13 +240,28 @@ export const uiSlice = createSlice({
     setMode: (state, action) => {
       state.mode = action.payload;
     },
+    // setLang: (state, action) => {
+    //   state.lang = action.payload;
+    //   localStorage.setItem('lang', action.payload);
+    // },
+    // setTranslations: (state, action) => {
+    //   state.translations = action.payload;
+    // },
     setLang: (state, action) => {
       state.lang = action.payload;
       localStorage.setItem('lang', action.payload);
     },
+
+    // Persist translations (dictionary)
     setTranslations: (state, action) => {
       state.translations = action.payload;
-    },
+      try {
+        localStorage.setItem('translations', JSON.stringify(action.payload));
+      } catch (e) {
+        // Optional: handle quota errors gracefully
+        console.error('Unable to persist translations:', e);
+      }
+  },
   },
   extraReducers: builder => {
     /* changeLang */

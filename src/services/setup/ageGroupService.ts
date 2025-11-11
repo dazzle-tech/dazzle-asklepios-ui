@@ -34,9 +34,18 @@ export const ageGroupService = createApi({
   tagTypes: ['AgeGroup'],
   endpoints: (builder) => ({
 
-    getAgeGroups: builder.query<PagedResult<any>, WithFacility & PagedParams>({
-      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+    getAgeGroups: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/age-group',
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['AgeGroup'],
+    }),
+
+    getAgeGroupsByFacility: builder.query<PagedResult<any>, WithFacility & PagedParams>({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/age-group/by-facility',
         params: { facilityId, page, size, sort },
       }),
       transformResponse: mapPaged,
@@ -45,11 +54,11 @@ export const ageGroupService = createApi({
 
     getAgeGroupsByLabel: builder.query<
       PagedResult<any>,
-      WithFacility & { label: string } & PagedParams
+      { label: string } & PagedParams
     >({
-      query: ({ facilityId, label, page, size, sort = 'id,asc' }) => ({
+      query: ({ label, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/age-group/by-label/${encodeURIComponent(label)}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['AgeGroup'],
@@ -57,11 +66,11 @@ export const ageGroupService = createApi({
 
     getAgeGroupsByFromAge: builder.query<
       PagedResult<any>,
-      WithFacility & { fromAge: number | string } & PagedParams
+      { fromAge: number | string } & PagedParams
     >({
-      query: ({ facilityId, fromAge, page, size, sort = 'id,asc' }) => ({
+      query: ({ fromAge, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/age-group/by-from-age/${encodeURIComponent(String(fromAge))}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['AgeGroup'],
@@ -69,11 +78,11 @@ export const ageGroupService = createApi({
 
     getAgeGroupsByToAge: builder.query<
       PagedResult<any>,
-      WithFacility & { toAge: number | string } & PagedParams
+      { toAge: number | string } & PagedParams
     >({
-      query: ({ facilityId, toAge, page, size, sort = 'id,asc' }) => ({
+      query: ({ toAge, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/age-group/by-to-age/${encodeURIComponent(String(toAge))}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['AgeGroup'],
@@ -89,6 +98,7 @@ export const ageGroupService = createApi({
       invalidatesTags: ['AgeGroup'],
     }),
 
+    
     updateAgeGroup: builder.mutation<any, WithFacility & { id: Id } & any>({
       query: ({ facilityId, id, ...body }) => ({
         url: `/api/setup/age-group/${id}`,
@@ -98,6 +108,7 @@ export const ageGroupService = createApi({
       }),
       invalidatesTags: ['AgeGroup'],
     }),
+
     deleteAgeGroup: builder.mutation<void, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/age-group/${id}`,
@@ -105,13 +116,14 @@ export const ageGroupService = createApi({
       }),
       invalidatesTags: ['AgeGroup'],
     }),
-
   }),
 });
 
 export const {
   // QUERIES
   useGetAgeGroupsQuery,
+  useGetAgeGroupsByFacilityQuery,
+  useLazyGetAgeGroupsByFacilityQuery,
   useGetAgeGroupsByLabelQuery,
   useLazyGetAgeGroupsByLabelQuery,
   useGetAgeGroupsByFromAgeQuery,
