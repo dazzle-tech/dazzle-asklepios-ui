@@ -32,6 +32,16 @@ import {
   faCapsules,
   faPersonWalking,
   faChild,
+  faRuler,
+  faPaperclip,
+  faBoxOpen,
+  faHeartbeat,
+  faThermometerHalf,
+  faClipboardCheck,
+  faWalking,
+  faRedoAlt,
+  faBandAid,
+  faFileMedical,
 } from '@fortawesome/free-solid-svg-icons';
 import { GiKidneys } from 'react-icons/gi';
 export interface Screen {
@@ -112,7 +122,19 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
   { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
   { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
-  { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric' }
+  { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" },
+  { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
+  { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
+  { name: "Chief Complain", code: "CHIEF_COMPLAIN", icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: "/chief-complain" },
+  { name: "Physical Examination", code: "PHYSICAL_EXAMINATION", icon: <FontAwesomeIcon icon={faHeartbeat} className="icon" />, path: "/physical-examination" },
+  { name: "Pain Assessment", code: "PAIN_ASSESSMENT", icon: <FontAwesomeIcon icon={faThermometerHalf} className="icon" />, path: "/pain-assessment" },
+  { name: "General Assessment", code: "GENERAL_ASSESSMENT", icon: <FontAwesomeIcon icon={faClipboardCheck} className="icon" />, path: "/general-assessment" },
+  { name: "Functional Assessment", code: "FUNCTIONAL_ASSESSMENT", icon: <FontAwesomeIcon icon={faWalking} className="icon" />, path: "/functional-assessment" },
+  { name: "Repositioning", code: "REPOSITIONING", icon: <FontAwesomeIcon icon={faRedoAlt} className="icon" />, path: "/repositioning" },
+  { name: "Medication Reconciliation", code: "MEDICATION_RECONCILIATION", icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: "/medication-reconciliation" },
+  { name: "Wound Care Documentation", code: "WOUND_CARE_DOCUMENTATION", icon: <FontAwesomeIcon icon={faBandAid} className="icon" />, path: "/wound-care-documentation" },
+  { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
+{ name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric' }
 ];
 
 
@@ -165,7 +187,6 @@ export const MODULES: Module[] =
       { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
       { name: "User New", code: "USER_NEW", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
       { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
-      { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-product-setup" },
       
 
     ],
@@ -396,6 +417,8 @@ export const MODULES: Module[] =
         viewOrder: 11,
         navPath: "warehouse-items-setup",
       },
+            { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-product-setup" },
+
       
     ],
   },
