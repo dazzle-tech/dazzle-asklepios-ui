@@ -64,6 +64,10 @@ const Practitioners = () => {
     size: 3,
     sort: "id,asc",
   });
+  const [sortColumn, setSortColumn] = useState("id");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+
 
   // ──────────────────────────── DATA ────────────────────────────
   const { data: practitionerListResponse, isFetching } =
@@ -148,6 +152,25 @@ const Practitioners = () => {
     }
   };
 
+  //_________________________SORT LOGIC______________________
+  const handleSortChange = (sortColumn: string, sortType: "asc" | "desc") => {
+    setSortColumn(sortColumn);
+    setSortType(sortType);
+
+    const sortValue = `${sortColumn},${sortType}`;
+
+    if (isFiltered) {
+      setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+    } else {
+      setPaginationParams({
+        ...paginationParams,
+        sort: sortValue,
+        page: 0,
+        timestamp: Date.now(),
+      });
+    }
+  };
 
 
   // ──────────────────────────── CRUD HANDLERS ────────────────────────────
@@ -455,19 +478,6 @@ const Practitioners = () => {
         page={isFiltered ? filterPagination.page : pageIndex}
         rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
         onPageChange={handlePageChange}
-        tableButtons={<div className="container-of-add-new-button">
-          <MyButton
-            prefixIcon={() => <AddOutlineIcon />}
-            color="var(--deep-blue)"
-            onClick={() => {
-              setPractitioner({ ...newPractitioner });
-              setOpenAddEditPractitioner(true);
-            }}
-            width="109px"
-          >
-            Add New
-          </MyButton>
-        </div>}
         onRowsPerPageChange={(e) => {
           const newSize = Number(e.target.value);
 
@@ -483,8 +493,23 @@ const Practitioners = () => {
             });
           }
         }}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
 
-
+        tableButtons={<div className="container-of-add-new-button">
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={() => {
+              setPractitioner({ ...newPractitioner });
+              setOpenAddEditPractitioner(true);
+            }}
+            width="109px"
+          >
+            Add New
+          </MyButton>
+        </div>}
 
 
       />
