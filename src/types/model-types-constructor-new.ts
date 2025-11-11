@@ -233,6 +233,24 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   lastModifiedDate: null,
   facilityId: undefined,
 };
+
+export const newProcedure: modelTypes.Procedure = {
+  id: undefined,
+  name: '',
+  code: '',
+  categoryType: null,
+  isAppointable: false,
+  indications: null,
+  contraindications: null,
+  preparationInstructions: null,
+  recoveryNotes: null,
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  facilityId: undefined,
+};
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
   code: '',
@@ -292,6 +310,7 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
+  timing:null,
 };
 
 
@@ -299,7 +318,7 @@ export const newLaboratory: modelTypes.Laboratory = {
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   id: undefined,
   testId: undefined,
-  name: '',
+  name: null,
   resultUnit: ''}
 
 
@@ -330,37 +349,22 @@ export const newRadiology: modelTypes.Radiology = {
   associatedRisks: "",
 };
 
-/** ======================= Vaccine ======================= */
-export const newVaccine: modelTypes.Vaccine = {
+export const newProcedureCoding: modelTypes.ProcedureCoding = {
   id: undefined,
-  name: '',
-  atcCode: '',
-  type: '',                   
-  roa: '',                    
-  siteOfAdministration: '',
-  postOpeningDuration: null,
-  durationUnit: '',            
-  numberOfDoses: '',          
-  indications: '',
-  possibleReactions: '',
-  contraindicationsAndPrecautions: '',
-  storageAndHandling: '',
-  isActive: true,
+  procedureId: undefined,        
+  codeType: 'CPT_CODES',           
+  codeId: '',                      
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
 
-export const newVaccineBrand: modelTypes.VaccineBrand = {
+export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   id: undefined,
-  vaccineId: undefined,       
-  name: '',
-  manufacture: '',
-  volume: 0,
-  unit: '',                   
-  marketingAuthorizationHolder: '',
-  isActive: true,
+  procedureId: undefined,      
+  price: 0,                    
+  currency: 'USD',            
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,

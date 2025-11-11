@@ -348,6 +348,7 @@ export interface Service {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+
 export interface AgeGroup {
   id?: number;
   ageGroup: string | null;            
@@ -355,6 +356,24 @@ export interface AgeGroup {
   toAge: number | null;         
   fromAgeUnit: string | null;
   toAgeUnit: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number;          // FK
+}
+
+export interface Procedure {
+  id?: number;
+  name: string;
+  code: string;
+  categoryType?: string | null; 
+  isAppointable?: boolean;
+  indications?: string | null;
+  contraindications?: string | null;
+  preparationInstructions?: string | null;
+  recoveryNotes?: string | null;
   isActive?: boolean;
   createdBy?: string | null;
   createdDate?: Date | null;
@@ -412,6 +431,7 @@ export interface Laboratory {
   testInstructions?: string;
   category?: string;
   tubeType?: string;
+  timing?:String;
 }
 
 
@@ -451,36 +471,27 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
-export interface Vaccine {
+export interface ProcedureCoding {
   id?: number;
-  name: string;
-  atcCode?: string | null;
-  type: string; 
-  roa: string;  
-  siteOfAdministration?: string | null;
-  postOpeningDuration?: number | null;
-  durationUnit?: string | null;
-  numberOfDoses?: string | null; 
-  indications?: string | null;
-  possibleReactions?: string | null;
-  contraindicationsAndPrecautions?: string | null;
-  storageAndHandling?: string | null;
-  isActive?: boolean;
+  procedureId?: number | null;        
+  codeType: string | null ;         
+  codeId: string;                     
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
 
-export interface VaccineBrand {
+export interface CodeOption {
+  id: number | string;
+  code: string;
+  description: string;
+}
+export interface ProcedurePriceList {
   id?: number;
-  vaccineId: number;
-  name: string;
-  manufacture: string;
-  volume: number;
-  unit: string; 
-  marketingAuthorizationHolder?: string | null;
-  isActive?: boolean;
+  procedureId?: number | null;   
+  price: number;                 
+  currency: string;              
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
