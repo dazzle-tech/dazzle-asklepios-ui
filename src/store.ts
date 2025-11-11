@@ -103,6 +103,8 @@ export const store = configureStore({
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSpecialPopulationService.reducerPath]:
       activeIngredientSpecialPopulationService.reducer,
+    [activeIngredientContraindicationService.reducerPath]:
+      activeIngredientContraindicationService.reducer,
 
     [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
 
