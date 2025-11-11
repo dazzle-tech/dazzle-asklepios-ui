@@ -200,7 +200,7 @@ export const MODULES: Module[] =
       { name: "ICD 10", code: "ICD_10", description: "list of ICD-10 codes for diagnosis", icon: "FaStethoscope", viewOrder: 0, navPath: "icd10-setup" },
       { name: "LOINC", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
       { name: "CDT CODES", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
-      { name: "SNOMED_CT", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "enums" },
+      { name: "Enums", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "enums" },
     ],
   },
   {name: "Front Desk Office",
