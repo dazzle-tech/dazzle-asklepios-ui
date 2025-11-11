@@ -1,5 +1,4 @@
 import Translate from '@/components/Translate';
-import { initialListRequestNew, ListRequest } from '@/types/types';
 import React, { useState, useEffect, useMemo } from 'react';
 import { FaUndo } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
@@ -45,23 +44,19 @@ const ActiveIngredientsSetup = () => {
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [stateOfDeleteActiveIngredient, setStateOfDeleteActiveIngredient] =
     useState<string>('delete');
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequestNew });
-
-  const queryParams = useMemo(
-    () => ({
-      page: Math.max(listRequest.pageNumber - 1, 0),
-      size: listRequest.pageSize,
-      sort: listRequest.sortBy ? `${listRequest.sortBy},${listRequest.sortType ?? 'asc'}` : undefined,
-      timestamp: listRequest.timestamp
-    }),
-    [
-      listRequest.pageNumber,
-      listRequest.pageSize,
-      listRequest.sortBy,
-      listRequest.sortType,
-      listRequest.timestamp
-    ]
-  );
+  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    timestamp: Date.now()
+  });
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    timestamp: Date.now()
+  });
+  const [linksState, setLinksState] = useState<Record<string, string | null>>({});
 
   const normalizedFilterValue =
     typeof appliedFilter.value === 'string' ? appliedFilter.value.trim() : '';
@@ -75,6 +70,23 @@ const ActiveIngredientsSetup = () => {
   const isDrugClassFilter = hasFilter && appliedFilter.filter === 'drugClass';
   const isAtcFilter = hasFilter && appliedFilter.filter === 'atcCode';
   const isAllQuery = !hasFilter;
+
+  const isFiltered = hasFilter;
+  const currentPage = isFiltered ? filterPagination.page : paginationParams.page;
+  const currentPageSize = isFiltered ? filterPagination.size : paginationParams.size;
+  const currentTimestamp = isFiltered
+    ? filterPagination.timestamp
+    : paginationParams.timestamp;
+
+  const queryParams = useMemo(
+    () => ({
+      page: currentPage,
+      size: currentPageSize,
+      sort: sortColumn ? `${sortColumn},${sortType ?? 'asc'}` : undefined,
+      timestamp: currentTimestamp
+    }),
+    [currentPage, currentPageSize, sortColumn, sortType, currentTimestamp]
+  );
 
   const { data: medicalCategoryLovResponse } = useGetLovValuesByCodeQuery('MED_CATEGORY');
   const { data: filterClassLovResponse } = useGetLovValuesByCodeAndParentQuery(
@@ -203,6 +215,19 @@ const ActiveIngredientsSetup = () => {
         (isAtcFilter && refetchActiveIngredientsByAtcCode) ||
         refetchActiveIngredientsAll;
 
+  const activeIngredientLinks = useMemo(() => {
+    if (emptyDrugClassResponse) {
+      return {};
+    }
+    return (
+      (activeIngredientListResponse as { links?: Record<string, string | null> })?.links ?? {}
+    );
+  }, [activeIngredientListResponse, emptyDrugClassResponse]);
+
+  useEffect(() => {
+    setLinksState(activeIngredientLinks);
+  }, [activeIngredientLinks]);
+
   const isFetching =
     (isAllQuery && isFetchingAll) ||
     (isNameFilter && isFetchingByName) ||
@@ -224,8 +249,8 @@ const ActiveIngredientsSetup = () => {
   }, [activeIngredientListResponse]);
 
   // Pagination values
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
+  const pageIndex = currentPage;
+  const rowsPerPage = currentPageSize;
   const totalCount = activeIngredientListResponse?.totalCount ?? 0;
 
   // Available fields for filtering
@@ -357,9 +382,14 @@ const ActiveIngredientsSetup = () => {
 
           const resetState = () => {
             setAppliedFilter({ filter: '', value: '' });
-            setListRequest(prev => ({
+            setFilterPagination(prev => ({
               ...prev,
-              pageNumber: 1,
+              page: 0,
+              timestamp: Date.now()
+            }));
+            setPaginationParams(prev => ({
+              ...prev,
+              page: 0,
               timestamp: Date.now()
             }));
           };
@@ -369,10 +399,10 @@ const ActiveIngredientsSetup = () => {
             return;
           }
 
-          const touchListRequest = () => {
-            setListRequest(prev => ({
+          const touchFilterPagination = () => {
+            setFilterPagination(prev => ({
               ...prev,
-              pageNumber: 1,
+              page: 0,
               timestamp: Date.now()
             }));
           };
@@ -380,7 +410,7 @@ const ActiveIngredientsSetup = () => {
           switch (recordOfFilter.filter) {
             case 'medicalCategory':
               setAppliedFilter({ filter: 'medicalCategory', value: String(trimmedValue) });
-              touchListRequest();
+              touchFilterPagination();
               break;
             case 'drugClass': {
               const ids = String(trimmedValue)
@@ -388,16 +418,16 @@ const ActiveIngredientsSetup = () => {
                 .map(value => value.trim())
                 .filter(Boolean);
               setAppliedFilter({ filter: 'drugClass', value: ids.join(',') });
-              touchListRequest();
+              touchFilterPagination();
               break;
             }
             case 'name':
               setAppliedFilter({ filter: 'name', value: String(trimmedValue) });
-              touchListRequest();
+              touchFilterPagination();
               break;
             case 'atcCode':
               setAppliedFilter({ filter: 'atcCode', value: String(trimmedValue) });
-              touchListRequest();
+              touchFilterPagination();
               break;
             default:
               resetState();
@@ -449,34 +479,33 @@ const ActiveIngredientsSetup = () => {
   };
 
   // Handle page change in navigation
-  const handlePageChange = (_: unknown, newPage: number) => {
-    const links = !emptyDrugClassResponse
-      ? (activeIngredientListResponse as { links?: any })?.links
-      : undefined;
-    if (!links) {
-      setListRequest(prev => ({
+  const handlePageChange = (event: unknown, newPage: number) => {
+    const hasPaginationLinks =
+      !emptyDrugClassResponse && Object.values(linksState ?? {}).some(link => Boolean(link));
+
+    const updatePagination = isFiltered ? setFilterPagination : setPaginationParams;
+    const currentPagination = isFiltered ? filterPagination : paginationParams;
+
+    if (!hasPaginationLinks) {
+      updatePagination(prev => ({
         ...prev,
-        pageNumber: newPage + 1,
+        page: newPage,
         timestamp: Date.now()
       }));
       return;
     }
 
     PaginationPerPage.handlePageChange(
-      _,
+      event,
       newPage,
-      {
-        page: listRequest.pageNumber - 1,
-        size: listRequest.pageSize,
-        timestamp: listRequest.timestamp
-      },
-      links,
+      currentPagination,
+      linksState,
       updated => {
         const { page, size, timestamp } = updated ?? {};
-        setListRequest(prev => ({
+        updatePagination(prev => ({
           ...prev,
-          pageNumber: (page ?? 0) + 1,
-          pageSize: size ?? prev.pageSize,
+          page: page ?? prev.page,
+          size: size ?? prev.size,
           timestamp: timestamp ?? Date.now()
         }));
       }
@@ -485,12 +514,25 @@ const ActiveIngredientsSetup = () => {
 
   // Handle change rows per page in navigation
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest(prev => ({
-      ...prev,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1,
-      timestamp: Date.now()
-    }));
+    const newSize = parseInt(event.target.value, 10);
+    if (Number.isNaN(newSize) || newSize <= 0) {
+      return;
+    }
+    if (isFiltered) {
+      setFilterPagination(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+        timestamp: Date.now()
+      }));
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+        timestamp: Date.now()
+      }));
+    }
   };
 
   const handleToggleActiveIngredient = () => {
@@ -511,6 +553,17 @@ const ActiveIngredientsSetup = () => {
       .then(() => {
         if (activeIngredientRefetch) {
         activeIngredientRefetch();
+        }
+        if (isFiltered) {
+          setFilterPagination(prev => ({
+            ...prev,
+            timestamp: Date.now()
+          }));
+        } else {
+          setPaginationParams(prev => ({
+            ...prev,
+            timestamp: Date.now()
+          }));
         }
         dispatch(
           notify({
@@ -547,12 +600,19 @@ const ActiveIngredientsSetup = () => {
 
   useEffect(() => {
     if (toggleActiveIngredientMutation.isSuccess) {
-      setListRequest(prev => ({
-        ...prev,
-        timestamp: Date.now()
-      }));
+      if (isFiltered) {
+        setFilterPagination(prev => ({
+          ...prev,
+          timestamp: Date.now()
+        }));
+      } else {
+        setPaginationParams(prev => ({
+          ...prev,
+          timestamp: Date.now()
+        }));
+      }
     }
-  }, [toggleActiveIngredientMutation.isSuccess]);
+  }, [toggleActiveIngredientMutation.isSuccess, isFiltered]);
 
   // update list when filter is changed
   useEffect(() => {
@@ -579,17 +639,25 @@ const ActiveIngredientsSetup = () => {
           onRowClick={rowData => {
             setActiveIngredient(rowData as ActiveIngredientRow);
           }}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
+          sortColumn={sortColumn}
+          sortType={sortType}
           onSortChange={(sortBy, sortType) => {
             if (sortBy) {
-              setListRequest(prev => ({
-                ...prev,
-                sortBy,
-                sortType,
-                pageNumber: 1,
-                timestamp: Date.now()
-              }));
+              setSortColumn(sortBy);
+              setSortType((sortType ?? 'asc') as 'asc' | 'desc');
+              if (isFiltered) {
+                setFilterPagination(prev => ({
+                  ...prev,
+                  page: 0,
+                  timestamp: Date.now()
+                }));
+              } else {
+                setPaginationParams(prev => ({
+                  ...prev,
+                  page: 0,
+                  timestamp: Date.now()
+                }));
+              }
             }
           }}
           page={pageIndex}

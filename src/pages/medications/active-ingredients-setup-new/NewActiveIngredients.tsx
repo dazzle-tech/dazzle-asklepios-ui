@@ -55,15 +55,9 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
     parentValueKey: activeIngredient.medicalCategoryId
   });
   // Fetch controlled medications categories Lov response
-  const controlledOptions = useEnumOptions('ActiveIngredientsControlled');
-  const controlledSelectOptions = useMemo(
-    () =>
-      (controlledOptions ?? []).map(option => ({
-        ...option,
-        label: formatControlledEnumLabel(option?.value ?? option?.label ?? '')
-      })),
-    [controlledOptions]
-  );
+const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
+  labelFormatter: formatControlledEnumLabel
+});
 
   // handle save
   const handleSave = async () => {
@@ -454,7 +448,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                       width="100%"
                       fieldName="controlled"
                       fieldType="select"
-                      selectData={controlledSelectOptions}
+                      selectData={controlledOptions}
                       selectDataLabel="label"
                       selectDataValue="value"
                       record={activeIngredient}
