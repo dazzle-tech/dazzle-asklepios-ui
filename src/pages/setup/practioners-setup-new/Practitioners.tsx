@@ -1,37 +1,33 @@
-import React, { useState, useEffect } from "react";
-import Translate from "@/components/Translate";
-import { Panel, Form } from "rsuite";
-import AddOutlineIcon from "@rsuite/icons/AddOutline";
-import { MdModeEdit, MdDelete } from "react-icons/md";
-import { FaUndo } from "react-icons/fa";
-import { useDispatch } from "react-redux";
-import ReactDOMServer from "react-dom/server";
-import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import MyButton from "@/components/MyButton/MyButton";
-import MyTable from "@/components/MyTable";
-import MyInput from "@/components/MyInput";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
-import AddEditPractitioner from "./AddEditPractitioner";
-import { notify } from "@/utils/uiReducerActions";
-import {
-  useGetAllPractitionersQuery,
-  useCreatePractitionerMutation,
-  useUpdatePractitionerMutation,
-  useTogglePractitionerActiveMutation,
-   useLazyGetPractitionersByFacilityQuery,
-  useLazyGetPractitionersBySpecialtyQuery,
-  useLazyGetPractitionerByNameQuery
-} from "@/services/setup/practitioner/PractitionerService";
-import "./styles.less";
-import { Practitioner } from "@/types/model-types-new";
-import { newPractitioner } from "@/types/model-types-constructor-new";
-import { formatEnumString } from "@/utils";
-import { extractPaginationFromLink } from "@/utils/paginationHelper";
-import { get, keyBy } from "lodash";
+import MyButton from "@/components/MyButton/MyButton";
+import MyInput from "@/components/MyInput";
+import MyTable from "@/components/MyTable";
+import Translate from "@/components/Translate";
+import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import { useEnumOptions } from "@/services/enumsApi";
 import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
-import { el } from "date-fns/locale";
+import {
+  useCreatePractitionerMutation,
+  useGetAllPractitionersQuery,
+  useLazyGetPractitionerByNameQuery,
+  useLazyGetPractitionersByFacilityQuery,
+  useLazyGetPractitionersBySpecialtyQuery,
+  useTogglePractitionerActiveMutation,
+  useUpdatePractitionerMutation
+} from "@/services/setup/practitioner/PractitionerService";
+import { newPractitioner } from "@/types/model-types-constructor-new";
+import { Practitioner } from "@/types/model-types-new";
+import { formatEnumString } from "@/utils";
 import { PaginationPerPage } from "@/utils/paginationPerPage";
+import { notify } from "@/utils/uiReducerActions";
+import AddOutlineIcon from "@rsuite/icons/AddOutline";
+import React, { useEffect, useState } from "react";
+import { FaUndo } from "react-icons/fa";
+import { MdDelete, MdModeEdit } from "react-icons/md";
+import { useDispatch } from "react-redux";
+import { Form, Panel } from "rsuite";
+import AddEditPractitioner from "./AddEditPractitioner";
+import "./styles.less";
 
 const Practitioners = () => {
   const dispatch = useDispatch();
@@ -56,12 +52,17 @@ const Practitioners = () => {
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredList, setFilteredList] = useState<Practitioner[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [valueSpecility, setValueSpecility] = useState({specility:""});
+  const [valueSpecility, setValueSpecility] = useState({ specility: "" });
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 3,
     sort: "id,asc",
     timestamp: Date.now(),
+  });
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 3,
+    sort: "id,asc",
   });
 
   // ──────────────────────────── DATA ────────────────────────────
@@ -71,11 +72,11 @@ const Practitioners = () => {
   const [createPractitioner] = useCreatePractitionerMutation();
   const [updatePractitioner] = useUpdatePractitionerMutation();
   const [togglePractitionerActive] = useTogglePractitionerActiveMutation();
-  const [getPractitionersByFacility]= useLazyGetPractitionersByFacilityQuery();
-  const [getPractitionersBySpecialty]= useLazyGetPractitionersBySpecialtyQuery();
-  const [getPractitionerByName]= useLazyGetPractitionerByNameQuery();
+  const [getPractitionersByFacility] = useLazyGetPractitionersByFacilityQuery();
+  const [getPractitionersBySpecialty] = useLazyGetPractitionersBySpecialtyQuery();
+  const [getPractitionerByName] = useLazyGetPractitionerByNameQuery();
   const specility = useEnumOptions('Specialty');
-
+  const [link, setLink] = useState({})
   const totalCount = practitionerListResponse?.totalCount ?? 0;
   const links = practitionerListResponse?.links || {};
   const pageIndex = paginationParams.page;
@@ -95,6 +96,10 @@ const Practitioners = () => {
   }, [dispatch]);
 
   useEffect(() => {
+    setLink(practitionerListResponse?.links)
+
+  }, [practitionerListResponse?.links])
+  useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -106,77 +111,44 @@ const Practitioners = () => {
     { label: "Facility", value: "facility" },
     { label: "Name", value: "name" },
   ];
-const handleFilterChange = async (field: string, value: string) => {
-  try {
+  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
+    try {
+      if (!field || !value) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        return;
+      }
 
-    if (!field || !value) {
+      const currentSize = size ?? filterPagination.size;
+
+      let response;
+      const params = {
+        page,
+        size: currentSize,
+        sort: filterPagination.sort,
+      };
+
+      if (field === "specialty") {
+        response = await getPractitionersBySpecialty({ specialty: value, ...params }).unwrap();
+      } else if (field === "facility") {
+        response = await getPractitionersByFacility({ facilityId: value, ...params }).unwrap();
+      } else if (field === "name") {
+        response = await getPractitionerByName({ name: value, ...params }).unwrap();
+      }
+
+      setFilteredList(response.data ?? []);
+      setFilteredTotal(response.totalCount ?? 0);
+      setLink(response.links);
+      setIsFiltered(true);
+      setFilterPagination({ ...filterPagination, page, size: currentSize });
+    } catch (error) {
+      console.error("Error filtering practitioners:", error);
+      dispatch(notify({ msg: "Failed to filter practitioners", sev: "error" }));
       setIsFiltered(false);
-      setFilteredList([]);
-      return;
     }
+  };
 
-    let response;
 
-    if (field === "specialty") {
-      response = await getPractitionersBySpecialty({
-        specialty: value,
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-    } 
-    else if (field === "facility") {
-      response = await getPractitionersByFacility({
-        facilityId: value,
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-    } 
-    else if (field === "name") {
-      response = await getPractitionerByName({
-        name: value,
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-    }
-
-    else {
-      setIsFiltered(false);
-      return;
-    }
-    console.log("Filter response:", response);
-    setFilteredList(response.data ?? []);
-    setFilteredTotal(response.totalCount ?? 0);
-    setIsFiltered(true);
-  } catch (error) {
-    console.error("Error filtering practitioners:", error);
-    dispatch(
-      notify({
-        msg: "Failed to filter practitioners",
-        sev: "error",
-      })
-    );
-    setIsFiltered(false);
-  }
-};
-
-  // const handleFilterChange = async (field: string, value: string) => {
-  //   if (!value) {
-  //     setIsFiltered(false);
-  //     setFilteredList([]);
-  //     return;
-  //   }
-
-  //   const data = practitionerListResponse?.data ?? [];
-  //   const filtered = data.filter((item) =>
-  //     String(item[field] ?? "").toLowerCase().includes(value.toLowerCase())
-  //   );
-  //   setFilteredList(filtered);
-  //   setFilteredTotal(filtered.length);
-  //   setIsFiltered(true);
-  // };
 
   // ──────────────────────────── CRUD HANDLERS ────────────────────────────
   const handleAddNew = async () => {
@@ -202,28 +174,28 @@ const handleFilterChange = async (field: string, value: string) => {
         isActive: practitioner.isActive,
       };
 
-     const Response= await createPractitioner(payload).unwrap();
+      const Response = await createPractitioner(payload).unwrap();
       dispatch(
         notify({ msg: "Practitioner added successfully", sev: "success" })
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
-      setPractitioner({...Response});
+      setPractitioner({ ...Response });
       console.log(Response);
-    }   catch (error) {
-    console.error("Error updating practitioner:", error);
+    } catch (error) {
+      console.error("Error updating practitioner:", error);
 
-    
-    if (error?.data?.fieldErrors?.length) {
-      const messages = error.data.fieldErrors
-        .map((fe) => `${fe.field}: ${fe.message}`)
-        .join("\n");
-      dispatch(notify({ msg: messages, sev: "error" }));
-    } else if (error?.data?.detail) {
-      dispatch(notify({ msg: error.data.detail, sev: "error" }));
-    } else {
-      dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
+
+      if (error?.data?.fieldErrors?.length) {
+        const messages = error.data.fieldErrors
+          .map((fe) => `${fe.field}: ${fe.message}`)
+          .join("\n");
+        dispatch(notify({ msg: messages, sev: "error" }));
+      } else if (error?.data?.detail) {
+        dispatch(notify({ msg: error.data.detail, sev: "error" }));
+      } else {
+        dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
+      }
     }
-  }
   };
 
   const handleUpdate = async () => {
@@ -260,20 +232,20 @@ const handleFilterChange = async (field: string, value: string) => {
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
     } catch (error) {
-    console.error("Error updating practitioner:", error);
+      console.error("Error updating practitioner:", error);
 
-   
-    if (error?.data?.fieldErrors?.length) {
-      const messages = error.data.fieldErrors
-        .map((fe) => `${fe.field}: ${fe.message}`)
-        .join("\n");
-      dispatch(notify({ msg: messages, sev: "error" }));
-    } else if (error?.data?.detail) {
-      dispatch(notify({ msg: error.data.detail, sev: "error" }));
-    } else {
-      dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
+
+      if (error?.data?.fieldErrors?.length) {
+        const messages = error.data.fieldErrors
+          .map((fe) => `${fe.field}: ${fe.message}`)
+          .join("\n");
+        dispatch(notify({ msg: messages, sev: "error" }));
+      } else if (error?.data?.detail) {
+        dispatch(notify({ msg: error.data.detail, sev: "error" }));
+      } else {
+        dispatch(notify({ msg: "Failed to update practitioner", sev: "error" }));
+      }
     }
-  }
   };
 
   const handleToggleActive = async (id: number) => {
@@ -336,8 +308,9 @@ const handleFilterChange = async (field: string, value: string) => {
   );
 
   const tableColumns = [
-    {key:"facilityName", title:<Translate>Facility</Translate>, flexGrow:4,
-      render:(rowData) => <p>{rowData?.facility?.name}</p>
+    {
+      key: "facilityName", title: <Translate>Facility</Translate>, flexGrow: 4,
+      render: (rowData) => <p>{rowData?.facility?.name}</p>
 
     },
     { key: "firstName", title: <Translate>First Name</Translate>, flexGrow: 3 },
@@ -348,9 +321,10 @@ const handleFilterChange = async (field: string, value: string) => {
       flexGrow: 3,
       render: (rowData) => <p>{formatEnumString(rowData?.specialty)}</p>,
     },
-    { key: "jobRole", title: <Translate>Job Role</Translate>, flexGrow: 3,
-        render: (rowData) => <p>{formatEnumString(rowData?.jobRole)}</p>,
-     },
+    {
+      key: "jobRole", title: <Translate>Job Role</Translate>, flexGrow: 3,
+      render: (rowData) => <p>{formatEnumString(rowData?.jobRole)}</p>,
+    },
     {
       key: "isActive",
       title: <Translate>Status</Translate>,
@@ -368,94 +342,101 @@ const handleFilterChange = async (field: string, value: string) => {
   ];
 
   // ──────────────────────────── PAGINATION ────────────────────────────
- const handlePageChange = (event: unknown, newPage: number) => {
-  PaginationPerPage.handlePageChange(
-    event,
-    newPage,
-    paginationParams,
-    links,
-    setPaginationParams
-  );
-};
+  const handlePageChange = (event, newPage) => {
+    if (isFiltered) {
+
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+    } else {
+
+      PaginationPerPage.handlePageChange(
+        event,
+        newPage,
+        paginationParams,
+        link,
+        setPaginationParams
+      );
+    }
+  };
+
 
   // ──────────────────────────── FILTER UI ────────────────────────────
- const filters = () => (
-  <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
-    <MyInput
-      fieldName="filter"
-      fieldType="select"
-      selectData={filterFields}
-      selectDataLabel="label"
-      selectDataValue="value"
-      record={recordOfFilter}
-      setRecord={(u) => setRecordOfFilter({ filter: u.filter, value: "" })}
-      placeholder="Select Filter"
-      showLabel={false}
-      width="180px"
-    />
-
-    {recordOfFilter.filter === "specialty" && (
+  const filters = () => (
+    <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
       <MyInput
-        fieldName="value"
+        fieldName="filter"
         fieldType="select"
-        selectData={specility ?? []}
+        selectData={filterFields}
         selectDataLabel="label"
         selectDataValue="value"
         record={recordOfFilter}
-        setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+        setRecord={(u) => setRecordOfFilter({ filter: u.filter, value: "" })}
+        placeholder="Select Filter"
         showLabel={false}
-        placeholder="Select Specialty"
+        width="180px"
       />
-    )}
 
-    {recordOfFilter.filter === "facility" && (
-      <MyInput
-        fieldName="value"
-        fieldType="select"
-        selectData={allFacilities ?? []}
-        selectDataLabel="name"
-        selectDataValue="id"
-        record={recordOfFilter}
-        showLabel={false}
-        setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-        placeholder="Select Facility"
-      />
-    )}
+      {recordOfFilter.filter === "specialty" && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={specility ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Specialty"
+        />
+      )}
 
-{recordOfFilter.filter === "name" && (
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Enter Name"
-      />
-    )}
+      {recordOfFilter.filter === "facility" && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={allFacilities ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={recordOfFilter}
+          showLabel={false}
+          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          placeholder="Select Facility"
+        />
+      )}
 
-    {recordOfFilter.filter !== "specialty" && recordOfFilter.filter !== "facility" && recordOfFilter.filter !== "name"
-    && (
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        placeholder="Enter Value"
-        showLabel={false}
-      />
-    )}
+      {recordOfFilter.filter === "name" && (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Name"
+        />
+      )}
+
+      {recordOfFilter.filter !== "specialty" && recordOfFilter.filter !== "facility" && recordOfFilter.filter !== "name"
+        && (
+          <MyInput
+            fieldName="value"
+            fieldType="text"
+            record={recordOfFilter}
+            setRecord={setRecordOfFilter}
+            placeholder="Enter Value"
+            showLabel={false}
+          />
+        )}
 
 
 
-    <MyButton
-      color="var(--deep-blue)"
-      width="80px"
-      onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-    >
-      Search
-    </MyButton>
-  </Form>
-);
+      <MyButton
+        color="var(--deep-blue)"
+        width="80px"
+        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+      >
+        Search
+      </MyButton>
+    </Form>
+  );
 
 
   // ──────────────────────────── RENDER ────────────────────────────
@@ -471,30 +452,41 @@ const handleFilterChange = async (field: string, value: string) => {
         onRowClick={(rowData) => setPractitioner(rowData)}
         filters={filters()}
         loading={isFetching}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
+        page={isFiltered ? filterPagination.page : pageIndex}
+        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
         onPageChange={handlePageChange}
         tableButtons={<div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={() => {
-            setPractitioner({ ...newPractitioner });
-            setOpenAddEditPractitioner(true);
-          }}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>}
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={() => {
+              setPractitioner({ ...newPractitioner });
+              setOpenAddEditPractitioner(true);
+            }}
+            width="109px"
+          >
+            Add New
+          </MyButton>
+        </div>}
         onRowsPerPageChange={(e) => {
-          setPaginationParams({
-            ...paginationParams,
-            size: Number(e.target.value),
-            page: 0,
-            timestamp: Date.now(),
-          });
+          const newSize = Number(e.target.value);
+
+          if (isFiltered) {
+            setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
+            handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+          } else {
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now(),
+            });
+          }
         }}
+
+
+
+
       />
 
       <AddEditPractitioner
