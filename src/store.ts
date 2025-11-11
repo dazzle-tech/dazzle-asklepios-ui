@@ -14,6 +14,7 @@ import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
+import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
@@ -106,7 +107,8 @@ export const store = configureStore({
     [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
 
     [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
-
+    [activeIngredientContraindicationService.reducerPath]:
+    activeIngredientContraindicationService.reducer,
     //account
     [accountApi.reducerPath]: accountApi.reducer,
 
@@ -239,6 +241,7 @@ export const store = configureStore({
       activeIngredientAdverseEffectService.middleware,
       activeIngredientIndicationService.middleware,
       activeIngredientSpecialPopulationService.middleware,
+      activeIngredientContraindicationService.middleware,
       appointmentService.middleware,
       dvmService.middleware,
       encounterService.middleware,
