@@ -16,6 +16,7 @@ import { activeIngredientSynonymsService } from '@/services/setup/activeIngredie
 import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
+import { activeIngredientPreRequestedTestService } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
@@ -108,6 +109,8 @@ export const store = configureStore({
       activeIngredientSpecialPopulationService.reducer,
     [activeIngredientContraindicationService.reducerPath]:
       activeIngredientContraindicationService.reducer,
+    [activeIngredientPreRequestedTestService.reducerPath]:
+      activeIngredientPreRequestedTestService.reducer,
 
     [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
 
@@ -251,6 +254,7 @@ export const store = configureStore({
       activeIngredientIndicationService.middleware,
       activeIngredientSpecialPopulationService.middleware,
       activeIngredientContraindicationService.middleware,
+      activeIngredientPreRequestedTestService.middleware,
       appointmentService.middleware,
       dvmService.middleware,
       encounterService.middleware,
