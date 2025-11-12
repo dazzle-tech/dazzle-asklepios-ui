@@ -14,253 +14,248 @@ import AddEditPrescriptionInstructions from './AddEditPrescriptionInstructions';
 import './styles.less';
 import { prescriptionInstructions } from '@/types/model-types-new';
 import { newPrescriptionInstructions } from '@/types/model-types-constructor-new';
-import { useGetAllPrescriptionInstructionsQuery, useLazyGetPrescriptionInstructionsByCategoryQuery, useLazyGetPrescriptionInstructionsByFrequencyQuery, useLazyGetPrescriptionInstructionsByRouteQuery, useLazyGetPrescriptionInstructionsByUnitQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
+import {
+  useGetAllPrescriptionInstructionsQuery,
+  useLazyGetPrescriptionInstructionsByCategoryQuery,
+  useLazyGetPrescriptionInstructionsByFrequencyQuery,
+  useLazyGetPrescriptionInstructionsByRouteQuery,
+  useLazyGetPrescriptionInstructionsByUnitQuery
+} from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
+import { notify } from '@/utils/uiReducerActions';
 const PrescriptionInstructions = () => {
   const dispatch = useAppDispatch();
   const [prescriptionInstructions, setPrescriptionInstructions] =
     useState<prescriptionInstructions>({ ...newPrescriptionInstructions });
-  const [popupOpen, setPopupOpen] = useState(false); 
+  const [popupOpen, setPopupOpen] = useState(false);
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
-  // Fetch  prescription instruction list response
-  
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
-  const categoryEnumList = useEnumOptions("AgeGroupType");
-    const uomEnumList = useEnumOptions("UOM");
-    const routEnumList = useEnumOptions("MedRoa");
-    const frequencyEnumList = useEnumOptions("MedFrequency");
+
   const [fetchByCategory] = useLazyGetPrescriptionInstructionsByCategoryQuery();
   const [fetchByUnit] = useLazyGetPrescriptionInstructionsByUnitQuery();
   const [fetchByRoute] = useLazyGetPrescriptionInstructionsByRouteQuery();
   const [fetchByFrequency] = useLazyGetPrescriptionInstructionsByFrequencyQuery();
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
-    const [paginationParams, setPaginationParams] = useState({
-      page: 0,
-      size: 5,
-      sort: 'id,asc',
-      timestamp: Date.now()
-    });
-     const {data: prescriptionInstructionListResponse, refetch: refetchPrescriotionInstructions, isFetching} = useGetAllPrescriptionInstructionsQuery(paginationParams);
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 5,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 5,
+    sort: 'id,asc'
+  });
+  const [sortColumn, setSortColumn] = useState('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [filteredList, setFilteredList] = useState<prescriptionInstructions[]>([]);
+  // Fetch prescription instruction list response
+  const {
+    data: prescriptionInstructionListResponse,
+    refetch: refetchPrescriotionInstructions,
+    isFetching
+  } = useGetAllPrescriptionInstructionsQuery(paginationParams);
+
+  // Fetch enum lists for filter
+  const categoryEnumList = useEnumOptions('AgeGroupType');
+  const uomEnumList = useEnumOptions('UOM');
+  const routEnumList = useEnumOptions('MedRoa');
+  const frequencyEnumList = useEnumOptions('MedFrequency');
+
   // Pagination values
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
-  const [links, setLinks] = useState({});
-  useEffect(() => {
-      setLinks(prescriptionInstructionListResponse?.links || {});
-  },[prescriptionInstructionListResponse]);
-  useEffect(() => {
-      console.log("links");
-      console.log(links);
-  },[links]);
-  //  const links = prescriptionInstructionListResponse?.links || {};
+
+  const [link, setLink] = useState({});
   const totalCount = prescriptionInstructionListResponse?.totalCount ?? 0;
- 
+
   // Available fields for filtering
   const filterFields = [
     { label: 'Category', value: 'category' },
     { label: 'Unit', value: 'unit' },
     { label: 'Rout', value: 'rout' },
-    { label: 'Frequency', value: 'frequency' },
+    { label: 'Frequency', value: 'frequency' }
   ];
- // Header page setUp
-  const divContent = (
-      "Prescription Instructions"
-  );
+
+  // Header page setUp
+  const divContent = 'Prescription Instructions';
   dispatch(setPageCode('Prescription_Instructions'));
   dispatch(setDivContent(divContent));
-   // class name for selected row
-   const isSelected = rowData => {
+
+  // class name for selected row
+  const isSelected = rowData => {
     if (rowData && prescriptionInstructions && rowData?.id === prescriptionInstructions?.id) {
       return 'selected-row';
     } else return '';
   };
 
-  // filter query runner
-  const runFilterQuery = async (fieldName: string, value: any) => {
-    if (!value && value !== 0) return undefined;
-    if (fieldName === 'rout') {
-      return await fetchByRoute({
-        route: String(value),
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-    } else if (fieldName === 'category') {
-      return await fetchByCategory({
-        category: String(value).trim(),
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-    } else if (fieldName === 'unit') {
-      return await fetchByUnit({
-        unit: String(value),
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-    }
-    else if (fieldName === 'frequency') {
-      return await fetchByFrequency({
-        frequency: String(value),
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-    }
-    return undefined;
-  };
-
-
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setPaginationParams({
-        ...paginationParams,
-        size: parseInt(event.target.value, 10),
-        page: 0,
-        timestamp: Date.now()
-      });
-    };
-
-    // ──────────────────────────── PAGINATION ────────────────────────────
-     const handlePageChange = (event: unknown, newPage: number) => {
+  // ──────────────────────────── PAGINATION ────────────────────────────
+  const handlePageChange = (event, newPage) => {
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+    } else {
       PaginationPerPage.handlePageChange(
         event,
         newPage,
         paginationParams,
-        links,
+        link,
         setPaginationParams
       );
-    };
+    }
+  };
+
+  //_________________________SORT LOGIC______________________
+  const handleSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
+    setSortColumn(sortColumn);
+    setSortType(sortType);
+
+    const sortValue = `${sortColumn},${sortType}`;
+
+    if (isFiltered) {
+      setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+    } else {
+      setPaginationParams({
+        ...paginationParams,
+        sort: sortValue,
+        page: 0,
+        timestamp: Date.now()
+      });
+    }
+  };
 
   // filters
-    const filters = () => (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
-        <MyInput
-          selectDataValue="value"
-          selectDataLabel="label"
-          selectData={filterFields}
-          fieldName="filter"
-          fieldType="select"
-          record={recordOfFilter}
-          setRecord={(updated: any) => {
-            setRecordOfFilter({ filter: updated.filter, value: '' });
-          }}
-          showLabel={false}
-          placeholder="Select Filter"
-          searchable={false}
-          width="170px"
-        />
-        
-        {recordOfFilter['filter'] == 'category' ? (
-          <MyInput
-            fieldName="value"
-            fieldType="select"
-            selectData={categoryEnumList ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-          />
-        ) : recordOfFilter['filter'] == 'rout' ? (
-        <MyInput
-            fieldName="value"
-            fieldType="select"
-            selectData={routEnumList ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-          />
-        ) : recordOfFilter['filter'] == 'unit' ? (
-        <MyInput
-            fieldName="value"
-            fieldType="select"
-            selectData={uomEnumList ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-          />
-        ) : recordOfFilter['filter'] == 'frequency' ? (
-        <MyInput
-            fieldName="value"
-            fieldType="select"
-            selectData={frequencyEnumList ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-          />
-        ) : (
-           <MyInput
-            fieldName="value"
-            fieldType="text"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Enter Value"
-            width={220}
-          />
-        )
-      }
-  
-        <MyButton
-          color="var(--deep-blue)"
-          onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-          width="80px"
-        >
-          Search
-        </MyButton>
-      </Form>
-    );
+  const filters = () => (
+    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={(updated: any) => {
+          setRecordOfFilter({ filter: updated.filter, value: '' });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+        width="170px"
+      />
 
-    // Handle filter change
-  const handleFilterChange = async (fieldName: string, value: any) => {
-    if (!value && value !== 0) {
-      setIsFiltered(false);
-      setFilteredList([]);
-      setFilteredTotal(0);
-      // setFilteredLinks(undefined);
-      // setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      // refetchPrescriotionInstructions();
-      return;
-    }
+      {recordOfFilter['filter'] == 'category' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={categoryEnumList ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Value"
+          width={220}
+        />
+      ) : recordOfFilter['filter'] == 'rout' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={routEnumList ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Value"
+          width={220}
+        />
+      ) : recordOfFilter['filter'] == 'unit' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={uomEnumList ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Value"
+          width={220}
+        />
+      ) : recordOfFilter['filter'] == 'frequency' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={frequencyEnumList ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Value"
+          width={220}
+        />
+      ) : (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Enter Value"
+          width={220}
+        />
+      )}
+
+      <MyButton
+        color="var(--deep-blue)"
+        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+        width="80px"
+      >
+        Search
+      </MyButton>
+    </Form>
+  );
+
+  // Handle filter change
+  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
     try {
-      console.log("in try 1");
-      const resp = await runFilterQuery(fieldName, value);
-      console.log("resp");
-      console.log(resp);
-      setFilteredList(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setLinks(resp?.links ?? {});
-      // setFilteredLinks(resp?.links || {});
+      if (!field || !value) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        return;
+      }
+
+      const currentSize = size ?? filterPagination.size;
+
+      let response;
+      const params = {
+        page,
+        size: currentSize,
+        sort: filterPagination.sort
+      };
+
+      if (field === 'rout') {
+        response = await fetchByRoute({ rout: value, ...params }).unwrap();
+      } else if (field === 'category') {
+        response = await fetchByCategory({ category: value, ...params }).unwrap();
+      } else if (field === 'unit') {
+        response = await fetchByUnit({ unit: value, ...params }).unwrap();
+      } else if (field === 'frequency') {
+        response = await fetchByFrequency({ frequency: value, ...params }).unwrap();
+      }
+
+      setFilteredList(response.data ?? []);
+      setFilteredTotal(response.totalCount ?? 0);
       setIsFiltered(true);
-      console.log("in try 2");
-      // setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-    } catch {
-      console.log("in in catch");
+      setFilterPagination({ ...filterPagination, page, size: currentSize });
+    } catch (error) {
+      console.error('Error filtering Prescription Instructions:', error);
+      dispatch(notify({ msg: 'Failed to filter Prescription Instructions', sev: 'error' }));
       setIsFiltered(false);
-      setFilteredList([]);
-      setFilteredTotal(0);
-      setLinks(prescriptionInstructionListResponse?.links || {});
-      // setFilteredLinks(undefined);
-      // setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetchPrescriotionInstructions();
     }
   };
 
@@ -309,13 +304,19 @@ const PrescriptionInstructions = () => {
       render: () => iconsForActions()
     }
   ];
-  
+
   // handle click on add new button
   const handleNew = () => {
     setPrescriptionInstructions({ ...newPrescriptionInstructions });
     setPopupOpen(true);
   };
-  
+
+  useEffect(() => {
+     if(!popupOpen && isFiltered){
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+     }
+  },[popupOpen]);
+
   // Effects
   // change the width variable when the size of window is changed
   useEffect(() => {
@@ -324,7 +325,6 @@ const PrescriptionInstructions = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -332,15 +332,16 @@ const PrescriptionInstructions = () => {
     };
   }, [location.pathname, dispatch]);
 
+  useEffect(() => {
+    setLink(prescriptionInstructionListResponse?.links);
+  }, [prescriptionInstructionListResponse?.links]);
+
   return (
     <Panel>
-
       <MyTable
         height={450}
-         totalCount={isFiltered ? filteredTotal : totalCount}
-        // data={prescriptionInstructionListResponse ?? []}
-        data={isFiltered ? filteredList : (prescriptionInstructionListResponse?.data ?? [])}
-        //  data={isFiltered ? filteredList : [{dose: 2}]}
+        totalCount={isFiltered ? filteredTotal : totalCount}
+        data={isFiltered ? filteredList : prescriptionInstructionListResponse?.data ?? []}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
@@ -348,30 +349,39 @@ const PrescriptionInstructions = () => {
         onRowClick={rowData => {
           setPrescriptionInstructions(rowData);
         }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
+        page={isFiltered ? filterPagination.page : pageIndex}
+        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
         onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        // sortColumn={listRequest.sortBy}
-        // sortType={listRequest.sortType}
-        // onSortChange={(sortBy, sortType) => {
-        //   if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-        // }}
-        // page={pageIndex}
-        // rowsPerPage={rowsPerPage}
-        // totalCount={totalCount}
-        // onPageChange={handlePageChange}
-        // onRowsPerPageChange={handleRowsPerPageChange}
-        tableButtons={<div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>}
+        onRowsPerPageChange={e => {
+          const newSize = Number(e.target.value);
+
+          if (isFiltered) {
+            setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
+            handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+          } else {
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          }
+        }}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>
+        }
       />
       <AddEditPrescriptionInstructions
         open={popupOpen}
@@ -380,7 +390,6 @@ const PrescriptionInstructions = () => {
         prescriptionInstructions={prescriptionInstructions}
         setPrescriptionInstructions={setPrescriptionInstructions}
         refetchPrescriotionInstructions={refetchPrescriotionInstructions}
-        // handleSave={handleSave}
       />
     </Panel>
   );

@@ -11,7 +11,6 @@ import { useEnumOptions } from '@/services/enumsApi';
 const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionInstructions, setPrescriptionInstructions, refetchPrescriotionInstructions }) => {
 
   const dispatch = useAppDispatch();
-  // Fetch age group Lov response
   
   const categoryEnumList = useEnumOptions("AgeGroupType");
   const uomEnumList = useEnumOptions("UOM");
