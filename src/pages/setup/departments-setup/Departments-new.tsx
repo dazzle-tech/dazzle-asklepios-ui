@@ -492,7 +492,7 @@ const Departments = () => {
           }}
           width="80px"
         >
-         <Translate key="SEARCH">Search</Translate>
+         Search
         </MyButton>
       </Form>
     );

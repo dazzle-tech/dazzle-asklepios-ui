@@ -369,3 +369,12 @@ export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+
+export const newPrescriptionInstructions: modelTypes.prescriptionInstructions = {
+  id: undefined,
+  category: '',
+  dose: 0,
+  unit: "",
+  rout: "",
+  frequency: ""
+};

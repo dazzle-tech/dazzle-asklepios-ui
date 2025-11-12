@@ -460,6 +460,7 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+
 export interface ProcedureCoding {
   id?: number;
   procedureId?: number | null;        
@@ -486,3 +487,13 @@ export interface ProcedurePriceList {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+
+export interface prescriptionInstructions {
+  id?: number;
+  category: string;
+  dose: number;
+  unit: string;
+  rout: string;
+  frequency: string;
+}
+
