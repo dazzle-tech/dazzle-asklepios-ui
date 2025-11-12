@@ -342,29 +342,6 @@ const handleUpdateDiagnosticTest = async () => {
         />
       )}
 
-      {/* Profile or Normal Range */}
-      {rowData?.isProfile ? (
-        <RiFileList2Fill
-          className="icons-style"
-          title="Profile Setup"
-          size={21}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setOpenProfileModal(true);
-          }}
-        />
-      ) : (
-        <FaChartLine
-          className="icons-style"
-          title="Normal Range Setup"
-          size={21}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setNormalRangePopupOpen(true);
-          }}
-        />
-      )}
-
       {/* Code */}
       <FaNewspaper
         className="icons-style"
@@ -375,6 +352,32 @@ const handleUpdateDiagnosticTest = async () => {
           setOpenCodingModal(true);
         }}
       />
+
+      {/* Profile or Normal Range */}
+      {rowData?.type === "LABORATORY" && (
+        rowData?.isProfile ? (
+          <RiFileList2Fill
+            className="icons-style"
+            title="Profile Setup"
+            size={21}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setOpenProfileModal(true);
+            }}
+          />
+        ) : (
+          <FaChartLine
+            className="icons-style"
+            title="Normal Range Setup"
+            size={21}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setNormalRangePopupOpen(true);
+            }}
+          />
+        )
+      )}
+
     </div>);
 
 
