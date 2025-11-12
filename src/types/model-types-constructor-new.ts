@@ -233,9 +233,26 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   lastModifiedDate: null,
   facilityId: undefined,
 };
+
+export const newProcedure: modelTypes.Procedure = {
+  id: undefined,
+  name: '',
+  code: '',
+  categoryType: null,
+  isAppointable: false,
+  indications: null,
+  contraindications: null,
+  preparationInstructions: null,
+  recoveryNotes: null,
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  facilityId: undefined,
+};
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
-  code: '',
   name: '',
   type: null,           
   description: '',
@@ -292,6 +309,7 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
+  timing:null,
 };
 
 
@@ -299,7 +317,7 @@ export const newLaboratory: modelTypes.Laboratory = {
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   id: undefined,
   testId: undefined,
-  name: '',
+  name: null,
   resultUnit: ''}
 
 
@@ -339,3 +357,24 @@ export const newDentalAction: modelTypes.DentalAction={
   imageName: null,  // Optional image file name
   isActive: true,  
 }
+export const newProcedureCoding: modelTypes.ProcedureCoding = {
+  id: undefined,
+  procedureId: undefined,        
+  codeType: 'CPT_CODES',           
+  codeId: '',                      
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
+  id: undefined,
+  procedureId: undefined,      
+  price: 0,                    
+  currency: 'USD',            
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

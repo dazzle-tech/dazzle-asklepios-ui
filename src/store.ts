@@ -57,6 +57,11 @@ import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diag
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
 import { dentalActionService } from '@/services/setup/dentalActionService';
 
+import { vaccineService } from './services/vaccine/vaccineService';
+import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
+import { procedureSetupService } from './services/setup/procedure/procedureService';
+import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
+import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -158,7 +163,6 @@ export const store = configureStore({
     [ageGroupService.reducerPath]: ageGroupService.reducer,
 
     [Icd10Service.reducerPath]: Icd10Service.reducer,
-
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
@@ -171,6 +175,17 @@ export const store = configureStore({
     [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
     [dentalActionService.reducerPath]: dentalActionService.reducer,
 
+    //vaccine
+    [vaccineService.reducerPath]: vaccineService.reducer,
+    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
+
+    // procedure
+    // procedure setup
+    [procedureSetupService.reducerPath]: procedureSetupService.reducer,
+    // procedure coding
+    [procedureCodingService.reducerPath]: procedureCodingService.reducer,
+    // procedure price list
+    [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -224,6 +239,12 @@ export const store = configureStore({
       diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
       dentalActionService.middleware,
+      vaccineService.middleware,
+      vaccineBrandsService.middleware,
+      potintialService.middleware,
+      procedureSetupService.middleware,
+      procedureCodingService.middleware,
+      procedurePriceListService.middleware,
     ])
 });
 
