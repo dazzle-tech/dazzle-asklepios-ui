@@ -104,7 +104,7 @@ export const ageGroupService = createApi({
         url: `/api/setup/age-group/${id}`,
         method: 'PUT',
         params: { facilityId },
-        body: { id, ...body, facilityId },
+        body: { id, ...body },
       }),
       invalidatesTags: ['AgeGroup'],
     }),
