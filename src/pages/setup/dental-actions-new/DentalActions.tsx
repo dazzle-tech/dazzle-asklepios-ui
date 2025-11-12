@@ -73,10 +73,10 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   // Available fields for filtering
   const filterFields = [
-    { label: 'Key', value: 'key' },
-    { label: 'Type', value: 'type' },
-    { label: 'imageName', value: 'imageName' }
+    { label: 'Description', value: 'description' },
+    { label: 'Type', value: 'type' }
   ];
+
 
   // Header page setUp
     useEffect(() => {
