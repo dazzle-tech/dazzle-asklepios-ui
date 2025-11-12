@@ -344,29 +344,6 @@ console.log("Selected Test:", diagnosticsTest);
           }}
         />
       )}
-      {/* Profile or Normal Range */}
-      {rowData?.isProfile ? (
-        <RiFileList2Fill
-          className="icons-style"
-          title="Profile Setup"
-          size={21}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setOpenProfileModal(true);
-          }}
-        />
-      ) : (
-        <FaChartLine
-          className="icons-style"
-          title="Normal Range Setup"
-          size={21}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setDiagnosticsTest(rowData);
-            setNormalRangePopupOpen(true);
-          }}
-        />
-      )}
       {/* Code */}
       <FaNewspaper
         className="icons-style"
