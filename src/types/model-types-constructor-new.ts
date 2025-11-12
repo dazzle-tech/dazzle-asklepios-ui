@@ -253,7 +253,6 @@ export const newProcedure: modelTypes.Procedure = {
 };
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
-  code: '',
   name: '',
   type: null,           
   description: '',
@@ -369,6 +368,7 @@ export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
+
 };
 
 
@@ -396,3 +396,4 @@ export const newSubstitute:modelTypes.Substitute={
   brandId:undefined,
   alternativeBrandId:undefined
 }
+;

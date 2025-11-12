@@ -149,6 +149,20 @@ export const conjureValueBasedOnIDFromList = (
   return displayValue;
 };
 
+export const conjureValueBasedOnKeyFromListOfValues = (
+  list: [],
+  currentKey: string,
+  preferredField: 'lovDisplayVale'
+) => {
+  let displayValue = currentKey;
+  list.map(record => {
+
+    if (record['key'] === currentKey) {
+      displayValue = record[preferredField];
+    }
+  });
+  return displayValue;
+};
 export const calculateAge = birthdate => {
   const birthDate = new Date(birthdate);
   const currentDate = new Date();

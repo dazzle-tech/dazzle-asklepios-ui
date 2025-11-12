@@ -199,24 +199,15 @@ const App = () => {
   // ------------------------------ MENU BUILD HELPERS ---------------------------
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
 
-  const norm = (s?: string | null) =>
-    (s ?? '').toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
-
-  const toTitleCase = (str: string) =>
-    str
-      .toLowerCase()
-      .split(' ')
-      .map(w => (w ? w[0].toUpperCase() + w.slice(1) : w))
-      .join(' ');
 
   const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
     const globalAllowed = new Set<string>();
     const moduleAllowed = new Map<string, Set<string>>();
 
     for (const m of menuItems ?? []) {
-      const nLabel = norm(m.label);
-      const nScreen = norm((m.screen ?? '').replace(/[_]/g, ' '));
-      const nModule = norm(m.module);
+      const nLabel = m.label;
+      const nScreen = (m.screen ?? '');
+      const nModule = m.module;
 
       if (nLabel) globalAllowed.add(nLabel);
       if (nScreen) globalAllowed.add(nScreen);
@@ -231,15 +222,15 @@ const App = () => {
   };
 
   const isScreenAllowed = (
-    screen: { name: string; navPath: string },
+    screen: { name: string; code: string; navPath: string },
     moduleName: string,
     lookups: { globalAllowed: Set<string>; moduleAllowed: Map<string, Set<string>> }
   ) => {
     const { globalAllowed, moduleAllowed } = lookups;
-    const nScreenName = norm(screen.name);
-    const nScreenCode = norm(screen.name.replace(/-/g, ' '));
-    const nNavPath = norm(screen.navPath);
-    const nModule = norm(moduleName);
+    const nScreenName = screen.name;
+    const nScreenCode = screen.code;
+    const nNavPath = screen.navPath;
+    const nModule = moduleName;
     const modSet = moduleAllowed.get(nModule);
 
     if (modSet && (modSet.has(nScreenName) || modSet.has(nScreenCode) || modSet.has(nNavPath)))
@@ -288,7 +279,7 @@ const App = () => {
           childrenNavs.push({
             eventKey: `nav:${module.name}:${screen.navPath}:${sIdx}`,
             icon: <Icon as={IconComp} />,
-            title: toTitleCase(screen.name),
+            title:screen.name,
             to: `/${screen.navPath}`
           });
         }

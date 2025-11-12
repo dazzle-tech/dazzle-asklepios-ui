@@ -33,27 +33,13 @@ const AddEditAllergens = ({ open, setOpen, width, allergens, setAllergens, handl
               record={allergens}
               setRecord={setAllergens}
             />
-
-
-            <div className="container-of-two-fields-allergens">
-              <div className="container-of-field-allergens">
-            <MyInput
-              required
-              width="100%"
-              fieldName="code"
-              record={allergens}
-              setRecord={setAllergens}
-            />
-              </div>
-              <div className="container-of-field-allergens">
                 <MyInput
                   width="100%"
                   fieldName="description"
                   record={allergens}
                   setRecord={setAllergens}
                 />
-              </div>
-            </div>
+        
           </Form>
         );
     }

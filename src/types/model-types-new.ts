@@ -181,16 +181,6 @@ export interface AgeGroup {
   lastModifiedDate?: Date | null;
   facilityId?: number;          // FK
 }
-
-export interface Allergen {
-  id?: number;
-  code: string;
-  name: string;
-  type: string;
-  description?: string | null;
-  isActive?: boolean;
-  createdBy?: string;
-}
 export interface Practitioner {
   id?: number;
   facilityId: number;
@@ -289,7 +279,6 @@ export interface UploadResponse {
 
 export interface Allergen {
   id?: number;
-  code: string;
   name: string;
   type: string ;
   description?: string | null;
