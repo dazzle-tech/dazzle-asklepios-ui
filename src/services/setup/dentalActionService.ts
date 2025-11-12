@@ -110,6 +110,14 @@ export const dentalActionService = createApi({
       }),
       invalidatesTags: ["DentalAction"],
     }),
+
+    toggleDiagnosticTestActive: builder.mutation({
+      query: (id) => ({
+        url: `/api/setup/dental-actions/${id}/toggle-active`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["DentalAction"],
+    }),
   }),
 });
 
@@ -121,4 +129,5 @@ export const {
   useCreateDentalActionMutation,
   useUpdateDentalActionMutation,
   useDeleteDentalActionMutation,
+  useToggleDiagnosticTestActiveMutation
 } = dentalActionService;

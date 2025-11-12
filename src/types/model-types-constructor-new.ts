@@ -338,5 +338,4 @@ export const newDentalAction: modelTypes.DentalAction={
   type:null,    // Enum (mandatory)
   imageName: null,  // Optional image file name
   isActive: true,  
-
 }
