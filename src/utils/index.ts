@@ -109,7 +109,7 @@ export const conjureValueBasedOnKeyFromList = (
   preferredField: any
 ) => {
   let displayValue = currentKey;
-  list.map(record => {
+  list?.map(record => {
 
     if (record['key'] === currentKey) {
       displayValue = record[preferredField];
@@ -117,6 +117,22 @@ export const conjureValueBasedOnKeyFromList = (
   });
   return displayValue;
 };
+export const conjureValuesFromList = (
+  list: any[],
+  keysString: string,
+  preferredField: string
+): string => {
+  if (!keysString) return "";
+
+  const keys = keysString?.split(",").map(k => k.trim());
+  const values = keys?.map(key => {
+    const found = list?.find(record => record.key === key);
+    return found ? found[preferredField] : key; 
+  });
+
+  return values.join(", ");
+};
+
 // new backend
 export const conjureValueBasedOnIDFromList = (
   list: [],

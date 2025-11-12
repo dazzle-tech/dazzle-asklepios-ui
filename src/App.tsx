@@ -106,7 +106,7 @@ import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import Lab from './pages/lab-module';
 import ListOfRequisition from './pages/list-of-requisition';
 import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup/ActiveIngredientsSetup';
-import GenericMedications from './pages/medications/generic-medications';
+import GenericMedications from './pages/medications/generic-medications-new';
 import PrescriptionInstructions from './pages/medications/prescription_instructions';
 import Operation from './pages/operation-module';
 import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
