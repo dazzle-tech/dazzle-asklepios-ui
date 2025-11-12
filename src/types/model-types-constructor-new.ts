@@ -253,7 +253,6 @@ export const newProcedure: modelTypes.Procedure = {
 };
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
-  code: '',
   name: '',
   type: null,
   description: '',

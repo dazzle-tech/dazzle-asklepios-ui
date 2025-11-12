@@ -187,7 +187,6 @@ export const MODULES: Module[] =
       { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
       { name: "User New", code: "USER_NEW", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
       { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
-      { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-product-setup" },
       
 
     ],
@@ -201,7 +200,7 @@ export const MODULES: Module[] =
       { name: "ICD 10", code: "ICD_10", description: "list of ICD-10 codes for diagnosis", icon: "FaStethoscope", viewOrder: 0, navPath: "icd10-setup" },
       { name: "LOINC", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
       { name: "CDT CODES", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
-      { name: "SNOMED_CT", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "enums" },
+      { name: "Enums", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "enums" },
     ],
   },
   {name: "Front Desk Office",
@@ -418,6 +417,8 @@ export const MODULES: Module[] =
         viewOrder: 11,
         navPath: "warehouse-items-setup",
       },
+            { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-product-setup" },
+
       
     ],
   },
