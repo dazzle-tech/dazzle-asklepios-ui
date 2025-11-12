@@ -92,7 +92,8 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   id: undefined,
   userId: undefined,
   departmentId: undefined,
-  isActive: true
+  isActive: true,
+  isDefault: false
 };
 
 

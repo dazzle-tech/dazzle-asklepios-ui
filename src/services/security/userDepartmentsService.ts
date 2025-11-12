@@ -23,6 +23,23 @@ export const userDepartmentService = createApi({
         }),
       }),
   
+      // GET /api/user-departments/user/{userId}/active
+      getActiveUserDepartmentsByUser: builder.query<UserDepartment[], number | string>({
+        query: userId => ({
+          url: `/api/setup/user-departments/user/${userId}/active`
+        }),
+        providesTags: ['UserDepartment']
+      }),
+
+      // GET /api/user-departments/user/{userId}/default
+      getDefaultUserDepartmentByUser: builder.query<UserDepartment | null, number | string>({
+        query: userId => ({
+          url: `/api/setup/user-departments/user/${userId}/default`
+        }),
+        transformResponse: (response: UserDepartment | null) => response ?? null,
+        providesTags: ['UserDepartment']
+      }),
+
       // POST /api/user-departments
       addUserDepartment: builder.mutation<UserDepartment, UserDepartment>({
         query: (ufd) => ({
@@ -48,6 +65,10 @@ export const userDepartmentService = createApi({
     useGetUserDepartmentsByUserQuery,
     useLazyGetUserDepartmentsByUserQuery,
     useExistsUfdQuery,
+    useGetActiveUserDepartmentsByUserQuery,
+    useLazyGetActiveUserDepartmentsByUserQuery,
+  useGetDefaultUserDepartmentByUserQuery,
+  useLazyGetDefaultUserDepartmentByUserQuery,
     useAddUserDepartmentMutation,
-    useDeleteUserDepartmentMutation,
+    useDeleteUserDepartmentMutation
   } = userDepartmentService;

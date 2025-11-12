@@ -26,6 +26,9 @@ export const authService  = createApi({
             }),
             onQueryStarted:onQueryStarted,
             transformResponse: (response:any) => {
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('selectedDepartment');
+                }
                 return response.object
             }
         }),
