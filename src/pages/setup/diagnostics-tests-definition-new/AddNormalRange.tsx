@@ -20,7 +20,7 @@ const AddNormalRange = ({
   const [lovCode, setLovCode] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [listLovRequest, setListLovRequest] = useState({ ...initialListRequest });
-  
+
   const gender = useEnumOptions('Gender');
   const condition = useEnumOptions('Condition');
   const ageunit = useEnumOptions('AgeUnit');
@@ -29,16 +29,16 @@ const AddNormalRange = ({
 
 
 
-  
+
   //   useGetDiagnosticsTestLaboratoryListQuery();
   // Fetch lov response
   const { data: lovQueryResponse } = useGetLovValuesByCodeQuery(lovCode);
   // Fetch Value Unit Lov response
   const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   // Fetch lov List response
-  const { data: lovListResponseData } = useGetLovsQuery(listLovRequest, {
-    skip: !searchKeyword || searchKeyword == ''
-  });
+  const { data: lovListResponseData } = useGetLovsQuery(listLovRequest);
+
+
   // customise item appears on the list
   const modifiedData = (lovListResponseData?.object ?? []).map(item => ({
     ...item,
@@ -55,6 +55,49 @@ const AddNormalRange = ({
   useEffect(() => {
     console.log("🟦 Selected Normal Range:", diagnosticTestNormalRange);
   }, [diagnosticTestNormalRange]);
+
+const resultLovDisplay = (() => {
+  const key = diagnosticTestNormalRange?.resultLov;
+  if (!key) return '';
+
+  if (!lovQueryResponse?.object?.length) return '';
+
+  const found = lovQueryResponse.object.find(
+    x =>
+      x.key == diagnosticTestNormalRange.resultLov ||
+      x.lovCode == lovCode
+  );
+
+  return found ? `${found.lovCode}, ${found.lovName}` : '';
+})();
+
+
+useEffect(() => {
+  if (!diagnosticTestNormalRange?.resultLov) return;
+  if (!lovListResponseData?.object?.length) return;
+
+  const matched = lovListResponseData.object.find(
+    x => x.key == diagnosticTestNormalRange.resultLov
+  );
+
+  if (matched) {
+    setLovCode(matched.lovCode);
+  }
+}, [lovListResponseData]);
+
+useEffect(() => {
+  if (!diagnosticTestNormalRange?.lovKeys) return;
+
+  setDiagnosticTestNormalRange(prev => ({
+    ...prev,
+    lovKeys: Array.isArray(prev.lovKeys)
+      ? prev.lovKeys
+      : String(prev.lovKeys)
+          .split(',')
+          .map(x => x.trim())
+          .filter(Boolean)
+  }));
+}, []);
 
 
 
@@ -148,7 +191,7 @@ const AddNormalRange = ({
             selectDataLabel="lovDisplayVale"
             selectDataValue="key"
             record={laboratory}
-            setRecord={()=>{}}
+            setRecord={() => { }}
           />
         </div>
         <div className="container-of-field-diagnostic">
@@ -181,7 +224,7 @@ const AddNormalRange = ({
         />
       )}
       {diagnosticTestNormalRange?.resultType === 'NUMBER' &&
-        diagnosticTestNormalRange.normalRangeType  === 'RANGE' && (
+        diagnosticTestNormalRange.normalRangeType === 'RANGE' && (
           <>
             <div className='range-from-to-diagnostic'>
               <div className='range-diagnostic'>
@@ -205,8 +248,8 @@ const AddNormalRange = ({
             <br />
           </>
         )}
-      {diagnosticTestNormalRange?.resultType  === 'NUMBER' &&
-        diagnosticTestNormalRange.normalRangeType  === 'LESS_THAN' && (
+      {diagnosticTestNormalRange?.resultType === 'NUMBER' &&
+        diagnosticTestNormalRange.normalRangeType === 'LESS_THAN' && (
           <MyInput
             width="100%"
             fieldLabel="Less Than"
@@ -215,8 +258,8 @@ const AddNormalRange = ({
             setRecord={setDiagnosticTestNormalRange}
           />
         )}
-      {diagnosticTestNormalRange?.resultType  === 'NUMBER' &&
-        diagnosticTestNormalRange.normalRangeType  === 'MORE_THAN' && (
+      {diagnosticTestNormalRange?.resultType === 'NUMBER' &&
+        diagnosticTestNormalRange.normalRangeType === 'MORE_THAN' && (
           <MyInput
             width="100%"
             fieldLabel="More Than"
@@ -225,7 +268,7 @@ const AddNormalRange = ({
             setRecord={setDiagnosticTestNormalRange}
           />
         )}
-      {diagnosticTestNormalRange?.resultType  === 'LOV' && (
+      {diagnosticTestNormalRange?.resultType === 'LOV' && (
         <>
           <div className='container-of-menu-diagnostic'>
             <InputGroup className='search-input-diagnostic' inside >
@@ -244,15 +287,18 @@ const AddNormalRange = ({
                     <Dropdown.Item
                       key={mod.key}
                       eventKey={mod.key}
-                      onClick={() => {
-                        setDiagnosticTestNormalRange({
-                          ...diagnosticTestNormalRange,
-                          resultLov: mod.key
-                        });
+onClick={() => {
+  setDiagnosticTestNormalRange(prev => ({
+    ...prev,
+    resultLov: mod.key,
+    lovKeys: []
+  }));
 
-                        setLovCode(mod.lovCode);
-                        setSearchKeyword('');
-                      }}
+  setLovCode(mod.lovCode);
+  setSearchKeyword('');
+}}
+
+
                     >
                       <span>{mod.lovCode}</span>
                       <span>{mod.lovName}</span>
@@ -265,45 +311,40 @@ const AddNormalRange = ({
           <Input
             className='search-result-diagnostic'
             disabled={true}
-            value={
-              lovListResponseData?.object.find(
-                item => item.key === diagnosticTestNormalRange?.resultLov
-              )
-                ? `${lovListResponseData.object.find(
-                  item => item.key === diagnosticTestNormalRange?.resultLov
-                )?.lovCode
-                }, ${lovListResponseData.object.find(
-                  item => item.key === diagnosticTestNormalRange?.resultLov
-                )?.lovName
-                }`
-                : ''
-            }
+            value={resultLovDisplay}
           />
           <br />
-          <MyInput
-            width="100%"
-            fieldLabel="LOVS"
-            selectData={lovQueryResponse?.object ?? []}
-            fieldType="multyPicker"
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            fieldName="lovKeys"
-            record={diagnosticTestNormalRange}
-            setRecord={setDiagnosticTestNormalRange}
-            menuMaxHeight={120}
-          />
+{diagnosticTestNormalRange.resultType === 'LOV' &&
+ lovQueryResponse?.object && diagnosticTestNormalRange.lovKeys && (
+
+  <MyInput
+    width="100%"
+    fieldLabel="LOVS"
+    selectData={lovQueryResponse.object}
+    fieldType="multyPicker"
+    selectDataLabel="lovDisplayVale"
+    selectDataValue="key"
+    fieldName="lovKeys"
+    record={diagnosticTestNormalRange}
+    setRecord={setDiagnosticTestNormalRange}
+    menuMaxHeight={120}
+  />
+
+)}
+
+
         </>
       )}
 
-      {diagnosticTestNormalRange?.resultType  === 'NUMBER' && (
+      {diagnosticTestNormalRange?.resultType === 'NUMBER' && (
 
-      <MyInput
-        width="100%"
-        fieldName="criticalValue"
-        fieldType="checkbox"
-        record={diagnosticTestNormalRange}
-        setRecord={setDiagnosticTestNormalRange}
-      />)}
+        <MyInput
+          width="100%"
+          fieldName="criticalValue"
+          fieldType="checkbox"
+          record={diagnosticTestNormalRange}
+          setRecord={setDiagnosticTestNormalRange}
+        />)}
 
       {diagnosticTestNormalRange.criticalValue === true && (
         <div className="container-of-two-fields-diagnostic">
