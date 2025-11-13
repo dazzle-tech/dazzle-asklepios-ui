@@ -57,4 +57,4 @@ export const {
   useUpdateMedicationCategoryMutation,
   useGetAllMedicationCategoriesQuery,
   useGetMedicationCategoryQuery,
-} = medicationCategoriesService;
+} = MedicationCategoriesService;

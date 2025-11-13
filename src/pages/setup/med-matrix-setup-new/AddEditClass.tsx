@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { useAddMedicationCategoryClassMutation, useUpdateMedicationCategoryClassMutation } from '@/services/setup/medication-categories/medicationCategoriesClassService';
+import { useAddMedicationCategoryClassMutation, useUpdateMedicationCategoryClassMutation } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { newMedicationCategoryClass } from '@/types/model-types-constructor-new';
 
 const AddEditClass = ({

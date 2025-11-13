@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { useAddMedicationCategoryMutation, useUpdateMedicationCategoryMutation } from '@/services/setup/medication-categories/medicationCategoriesService';
+import { useAddMedicationCategoryMutation, useUpdateMedicationCategoryMutation } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { newMedicationCategory } from '@/types/model-types-constructor-new';
 
 const AddEditMedCat = ({ open, setOpen, medCategory, setMedCategory, edit_new, refetch }) => {
