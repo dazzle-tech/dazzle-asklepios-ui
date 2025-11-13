@@ -46,12 +46,12 @@ const Catalog = () => {
     ...initialListRequest
   });
 
-  // Fetch diagnostics test catalog header list Response
-  // const {
-  //   data: diagnosticsTestCatalogHeaderListResponse,
-  //   refetch,
-  //   isFetching
-  // } = useGetDiagnosticsTestCatalogHeaderListQuery(listRequest);
+  //Fetch diagnostics test catalog header list Response
+  const {
+    data: diagnosticsTestCatalogHeaderListResponse,
+    refetch,
+    isFetching
+  } = useGetDiagnosticsTestCatalogHeaderListQuery(listRequest);
    const [paginationParams, setPaginationParams] = useState({
       page: 0,
       size: 5
@@ -348,8 +348,8 @@ const Catalog = () => {
 
       <MyTable
         height={450}
-        data={catalogList.data ?? []}
-        loading={isCatalogFetching}
+        data={diagnosticsTestCatalogHeaderListResponse?.object ?? []}
+        loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         filters={filters()}

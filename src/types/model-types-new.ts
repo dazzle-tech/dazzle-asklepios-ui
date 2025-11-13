@@ -460,6 +460,14 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+export interface DentalAction {
+  id?: number;                 // Primary key (auto-generated)
+  description: string;         // Mandatory field
+  type: string;      // Enum (mandatory)
+  imageName?: string | null;   // Optional image file name
+  isActive?: boolean;          // Defaults true
+}
+
 
 
 export interface DiagnosticTestNormalRange {

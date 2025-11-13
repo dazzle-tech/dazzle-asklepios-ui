@@ -350,6 +350,12 @@ export const newRadiology: modelTypes.Radiology = {
 
 
 
+export const newDentalAction: modelTypes.DentalAction={
+  id: null,               // Primary key (auto-generated)
+  description: '',        // Mandatory field
+  type:null,    // Enum (mandatory)
+  imageName: null,  // Optional image file name
+  isActive: true,  }
 export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
   id: undefined,
   testId: 0,

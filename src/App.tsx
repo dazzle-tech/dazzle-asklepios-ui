@@ -137,7 +137,7 @@ import Room from './pages/setup/bed-room-setup';
 import Catalog from './pages/setup/catalog-setup';
 import CDTSetup from './pages/setup/cdt-setup';
 import CPTSetup from './pages/setup/cpt-setup';
-import DentalActions from './pages/setup/dental-actions';
+import DentalActions from './pages/setup/dental-actions-new';
 import Departments from './pages/setup/departments-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
 import DVM from './pages/setup/dvm-setup';

@@ -423,7 +423,7 @@ const Departments = () => {
     if (selectedFilter === 'facilityName') {
       dynamicInput = (
         <MyInput
-          width={250}
+          width={170}
           fieldLabel=""
           fieldName="value"
           fieldType="select"
@@ -438,7 +438,7 @@ const Departments = () => {
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (
         <MyInput
-          width={250}
+          width={170}
           fieldName="value"
           fieldLabel=""
           fieldType="select"
@@ -452,7 +452,9 @@ const Departments = () => {
     } else {
       dynamicInput = (
         <MyInput
+          width={170}
           fieldName="value"
+          fieldLabel=''
           fieldType="text"
           record={record}
           setRecord={setRecord}
@@ -480,7 +482,7 @@ const Departments = () => {
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
-          width={getFilterWidth(record.filter)}
+          width={180}
         />
 
         {dynamicInput}
