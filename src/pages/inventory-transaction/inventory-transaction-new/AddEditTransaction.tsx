@@ -551,6 +551,7 @@ const AddEditTransaction = ({
   };
 
   const [activeKey, setActiveKey] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   // Attachments
   const [attachments, setAttachments] = useState<File[]>([]);
   const handleUploadChange = (fileList: File[]) => {
@@ -560,6 +561,7 @@ const AddEditTransaction = ({
   const handleUploadAttachments = async () => {
     if (!transaction?.key || attachments.length === 0) return;
 
+    setIsUploading(true);
     try {
       for (const file of attachments) {
         await uploadAttachment({
@@ -613,8 +615,7 @@ const AddEditTransaction = ({
             backgroundColor: mode === 'light' ? 'white' : 'var(--dark-black)',
             padding: 20,
             borderRadius: 6,
-            height: 350,
-            overflowY: 'auto'
+            height: 350
           }}
         >
           <div className="table-buttons-right">
@@ -921,10 +922,13 @@ const AddEditTransaction = ({
           onChange={handleUploadChange}
           listType="picture-text"
           style={{ marginTop: 10 }}
-          disabled={!transaction?.key}
+          disabled={!transaction?.key || isUploading}
         />
+
         {attachments.length > 0 && transaction?.key && (
           <MyButton
+            loading={isUploading}
+            disabled={isUploading}
             appearance="primary"
             size="sm"
             style={{ marginTop: 10 }}
@@ -952,9 +956,7 @@ const AddEditTransaction = ({
               </h4>
             </Stack>
             <Divider style={{ margin: '10px 0' }} />
-            <p>
-              <b>Warehouse Key:</b> {transaction.warehouseKey}
-            </p>
+
             <p>
               <b>Warehouse Name:</b> {selectedWarehouse?.warehouseName}
             </p>

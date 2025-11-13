@@ -133,6 +133,20 @@ export const conjureValueBasedOnIDFromList = (
   return displayValue;
 };
 
+export const conjureValueBasedOnKeyFromListOfValues = (
+  list: [],
+  currentKey: string,
+  preferredField: 'lovDisplayVale'
+) => {
+  let displayValue = currentKey;
+  list.map(record => {
+
+    if (record['key'] === currentKey) {
+      displayValue = record[preferredField];
+    }
+  });
+  return displayValue;
+};
 export const calculateAge = birthdate => {
   const birthDate = new Date(birthdate);
   const currentDate = new Date();
@@ -247,4 +261,17 @@ export const formatEnumString = (input: string): string => {
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() 
     )
     .join(' ');                         
+};
+
+export const formatControlledEnumLabel = (code?: string | null): string => {
+  if (!code) return '';
+  const trimmed = String(code).trim();
+  if (!trimmed) return '';
+
+  const afterPrefix =
+    trimmed.indexOf('_') >= 0 ? trimmed.substring(trimmed.indexOf('_') + 1) : trimmed;
+
+  const schedulePart = afterPrefix.replace(/_/g, ' ').toUpperCase();
+
+  return `Schedule ${schedulePart} (${trimmed})`;
 };
