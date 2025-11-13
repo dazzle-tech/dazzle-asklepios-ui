@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
 
-export const medicationCategoriesClassService = createApi({
+export const MedicationCategoriesClassService = createApi({
   reducerPath: 'MedicationCategoriesClassApi',
   baseQuery: BaseQuery,
   endpoints: builder => ({
