@@ -181,16 +181,6 @@ export interface AgeGroup {
   lastModifiedDate?: Date | null;
   facilityId?: number;          // FK
 }
-
-export interface Allergen {
-  id?: number;
-  code: string;
-  name: string;
-  type: string;
-  description?: string | null;
-  isActive?: boolean;
-  createdBy?: string;
-}
 export interface Practitioner {
   id?: number;
   facilityId: number;
@@ -289,7 +279,6 @@ export interface UploadResponse {
 
 export interface Allergen {
   id?: number;
-  code: string;
   name: string;
   type: string ;
   description?: string | null;
@@ -517,6 +506,45 @@ export interface ActiveIngredient {
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;
+}
+
+export interface DentalAction {
+  id?: number;                 // Primary key (auto-generated)
+  description: string;         // Mandatory field
+  type: string;      // Enum (mandatory)
+  imageName?: string | null;   // Optional image file name
+  isActive?: boolean;          // Defaults true
+}
+
+
+
+export interface DiagnosticTestNormalRange {
+  id?: number;
+  testId: number;
+
+  gender?: string;
+  ageFrom?: number;
+  ageFromUnit?: string;
+  ageTo?: number;
+  ageToUnit?: string;
+  condition?: string;
+
+  resultType: string;
+  resultText?: string;
+  resultLov?: string;
+  normalRangeType?: string;
+
+  rangeFrom?: number;
+  rangeTo?: number;
+
+  criticalValue?: boolean;
+  criticalValueLessThan?: number;
+  criticalValueMoreThan?: number;
+
+  profileTestId?: number | null;
+  isProfile?: boolean;
+
+  lovKeys?: string[];
 }
 
 

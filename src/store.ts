@@ -56,6 +56,10 @@ import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfil
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
+import { dentalActionService } from '@/services/setup/dentalActionService';
+import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import { vaccineService } from './services/vaccine/vaccineService';
+import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
@@ -171,6 +175,14 @@ export const store = configureStore({
     [diagnosticTestProfileService.reducerPath]: diagnosticTestProfileService.reducer,
 
     [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
+    [dentalActionService.reducerPath]: dentalActionService.reducer,
+    [diagnosticTestNormalRangeService.reducerPath]:diagnosticTestNormalRangeService.reducer,
+
+
+
+    //vaccine
+    [vaccineService.reducerPath]: vaccineService.reducer,
+    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
 
     // procedure
     // procedure setup
@@ -232,6 +244,10 @@ export const store = configureStore({
       diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
       activeIngredientsService.middleware,
+      dentalActionService.middleware,
+      diagnosticTestNormalRangeService.middleware,
+      vaccineService.middleware,
+      vaccineBrandsService.middleware,
       potintialService.middleware,
       procedureSetupService.middleware,
       procedureCodingService.middleware,
