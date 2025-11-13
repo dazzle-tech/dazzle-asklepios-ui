@@ -10,7 +10,6 @@ import { useCreateDiagnosticTestMutation, useGetAllDiagnosticTestsQuery, useLazy
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
 import { DiagnosticTest } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { notify } from '@/utils/uiReducerActions';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
@@ -25,6 +24,7 @@ import NormalRangeSetupModal from './NormalRangeSetUpModal';
 import Profile from './Profile';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
+import { PaginationPerPage } from '@/utils/paginationPerPage';
 const DiagnosticsTest = () => {
   const dispatch = useAppDispatch();
   const [diagnosticsTest, setDiagnosticsTest] = useState<DiagnosticTest>({
@@ -42,11 +42,23 @@ const DiagnosticsTest = () => {
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5
-    ,
-    sort: "id,asc",
-    timestamp: Date.now(),
+    size: 5,
+    sort: 'id,asc',
+    timestamp: Date.now()
   });
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 5,
+    sort: 'id,asc'
+  });
+  const [linksState, setLinksState] = useState<{
+    next?: string | null;
+    prev?: string | null;
+    first?: string | null;
+    last?: string | null;
+  }>({});
+  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const { data: diagnodticsTestList, refetch: refetchDiagnostics, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
   const testType = useEnumOptions('TestType');
   // save Diagnostics Test
@@ -173,76 +185,107 @@ const handleUpdateDiagnosticTest = async () => {
     setOpenConfirmDeleteDiagnosticTest(false);
   };
 
-  // Pagination values
-  const totalCount = diagnodticsTestList?.totalCount ?? 0;
-  const links = diagnodticsTestList?.links || {};
-  const pageIndex = paginationParams.page;
-  const rowsPerPage = paginationParams.size;
-
-
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Type', value: 'type' },
-    { label: 'Name', value: 'name' },
-
-  ];
-
+  useEffect(() => {
+    if (diagnodticsTestList?.links) {
+      setLinksState(diagnodticsTestList.links);
+    } else {
+      setLinksState({});
+    }
+  }, [diagnodticsTestList?.links]);
 
   // Handle filter change
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredList, setFilteredList] = useState<DiagnosticTest[]>([]);
   const [filteredTotal, setFilteredTotal] = useState(0);
   const [valueType, setValueType] = useState({ type: '' });
- const handleFilterChange = async (field: string, value: string) => {
-  try {
-    
+  const handleFilterChange = async (
+    field: string,
+    value: string,
+    page = 0,
+    size = filterPagination.size,
+    sort = filterPagination.sort
+  ) => {
+    try {
+      if (!field) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        setFilteredTotal(0);
+        setFilterPagination(prev => ({ ...prev, page: 0 }));
+        return;
+      }
 
-    
-    if ((!value || value.trim() === "") && valueType.type === "") {
+      const trimmedValue = value?.trim?.() ?? '';
+      if (field === 'type' && !trimmedValue) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        setFilteredTotal(0);
+        setFilterPagination(prev => ({ ...prev, page: 0 }));
+        return;
+      }
+      if (field !== 'type' && !trimmedValue) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        setFilteredTotal(0);
+        setFilterPagination(prev => ({ ...prev, page: 0 }));
+        return;
+      }
+
+      let response;
+
+      if (field === 'type') {
+        response = await diagnosticTestByTypes({
+          type: trimmedValue,
+          page,
+          size,
+          sort
+        }).unwrap();
+      } else if (field === 'name') {
+        response = await diagnosticTestByName({
+          name: trimmedValue,
+          page,
+          size,
+          sort
+        }).unwrap();
+      } else {
+        setIsFiltered(false);
+        setFilteredTotal(0);
+        setFilterPagination(prev => ({ ...prev, page: 0 }));
+        return;
+      }
+
+      setFilteredList(response.data ?? []);
+      setFilteredTotal(response.totalCount ?? 0);
+      setFilterPagination(prev => ({
+        ...prev,
+        page,
+        size,
+        sort
+      }));
+      setIsFiltered(true);
+    } catch (error) {
+      console.error('Error filtering diagnostic tests:', error);
+      dispatch(
+        notify({
+          msg: 'Failed to filter Diagnostic Tests',
+          sev: 'error'
+        })
+      );
       setIsFiltered(false);
-      setFilteredList([]);
-      return;
+      setFilteredTotal(0);
+      setFilterPagination(prev => ({ ...prev, page: 0 }));
     }
+  };
 
-    let response;
+  // Pagination values
+  const totalCount = diagnodticsTestList?.totalCount ?? 0;
+  const pageIndex = isFiltered ? filterPagination.page : paginationParams.page;
+  const rowsPerPage = isFiltered ? filterPagination.size : paginationParams.size;
 
-    if (field === "type") {
-      if (!valueType.type) return;
-      response = await diagnosticTestByTypes({
-        type: valueType.type,
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-  
-    } else if (field === "name") {
-      response = await diagnosticTestByName({
-        name: value,
-        page: 0,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-      }).unwrap();
-
-    } else {
-      
-      setIsFiltered(false);
-      return;
-    }
-
-    setFilteredList(response.data ?? []);
-    setFilteredTotal(response.totalCount ?? 0);
-    setIsFiltered(true);
-  } catch (error) {
-    console.error("Error filtering diagnostic tests:", error);
-    dispatch(
-      notify({
-        msg: "Failed to filter Diagnostic Tests",
-        sev: "error",
-      })
-    );
-    setIsFiltered(false);
-  }
-};
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Type', value: 'type' },
+    { label: 'Name', value: 'name' }
+  ];
 
   // Header page setUp
   const divContent = (
@@ -388,53 +431,63 @@ const handleUpdateDiagnosticTest = async () => {
         fieldType="select"
         record={recordOfFilter}
         setRecord={updatedRecord => {
-          setRecordOfFilter({
-            filter: updatedRecord.filter,
-            value: "",
+          setRecordOfFilter(prev => {
+            if (prev.filter !== updatedRecord.filter) {
+              setIsFiltered(false);
+              setFilteredList([]);
+              setFilteredTotal(0);
+              setFilterPagination(fp => ({ ...fp, page: 0 }));
+            }
+            return {
+              filter: updatedRecord.filter,
+              value: ''
+            };
           });
+          if (updatedRecord.filter !== 'type') {
+            setValueType({ type: '' });
+          }
         }}
         showLabel={false}
         placeholder="Select Filter"
         searchable={false}
       />
 
-      {recordOfFilter.filter !== 'type' && (<MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-      />)}
-      
-      {
-        //if can field filter == 'type', show dropdown of test types
+      {recordOfFilter.filter !== 'type' && (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Search"
+        />
+      )}
 
-        recordOfFilter.filter === 'type' && (
-          <MyInput
-            width="9vw"
-            fieldLabel="Test Type"
-            fieldType="select"
-            fieldName="type"
-            selectData={testType ?? []}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={valueType}
-            setRecord={(updatedRecord) => {
-              setValueType({ type: updatedRecord.type });
-            }}
-            showLabel={false}
-            searchable={false}
-          />
-
-        )
-      }
+      {recordOfFilter.filter === 'type' && (
+        <MyInput
+          width="9vw"
+          fieldLabel="Test Type"
+          fieldType="select"
+          fieldName="type"
+          selectData={testType ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={valueType}
+          setRecord={updatedRecord => {
+            setValueType({ type: updatedRecord.type });
+          }}
+          showLabel={false}
+          searchable={false}
+        />
+      )}
       <MyButton
         color="var(--deep-blue)"
         width="80px"
-        onClick={() =>
-          handleFilterChange(recordOfFilter.filter, recordOfFilter.value)
-        }
+        onClick={() => {
+          const valueForFilter =
+            recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
+          handleFilterChange(recordOfFilter.filter, valueForFilter);
+        }}
       >
         Search
       </MyButton>
@@ -450,25 +503,37 @@ const handleUpdateDiagnosticTest = async () => {
 
 
   // Handle page change in navigation
-  const handlePageChange = (_: unknown, newPage: number) => {
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > paginationParams.page && links.next) targetLink = links.next;
-    else if (newPage < paginationParams.page && links.prev)
-      targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > paginationParams.page + 1 && links.last)
-      targetLink = links.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams({
-        ...paginationParams,
-        page,
-        size,
-        timestamp: Date.now(),
-      });
+  const handlePageChange = (event: unknown, newPage: number) => {
+    if (isFiltered) {
+      const valueForFilter =
+        recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
+      handleFilterChange(recordOfFilter.filter, valueForFilter, newPage, filterPagination.size);
+      return;
     }
+
+    PaginationPerPage.handlePageChange(
+      event,
+      newPage,
+      paginationParams,
+      linksState,
+      updated => {
+        if (!updated) {
+          setPaginationParams(prev => ({
+            ...prev,
+            page: newPage,
+            timestamp: Date.now()
+          }));
+          return;
+        }
+        const { page, size, timestamp } = updated;
+        setPaginationParams(prev => ({
+          ...prev,
+          page: page ?? prev.page,
+          size: size ?? prev.size,
+          timestamp: timestamp ?? Date.now()
+        }));
+      }
+    );
   };
 
 
@@ -504,18 +569,59 @@ const handleUpdateDiagnosticTest = async () => {
         onRowClick={rowData => {
           setDiagnosticsTest(rowData);
         }}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={(column, type) => {
+          if (!column) return;
+          const nextSortType = (type ?? 'asc') as 'asc' | 'desc';
+          const sortValue = `${column},${nextSortType}`;
+          const currentlyFiltered = isFiltered;
+          setSortColumn(column);
+          setSortType(nextSortType);
+          setPaginationParams(prev => ({
+            ...prev,
+            sort: sortValue,
+            page: currentlyFiltered ? prev.page : 0,
+            timestamp: currentlyFiltered ? prev.timestamp : Date.now()
+          }));
+          if (currentlyFiltered) {
+            setFilterPagination(prev => ({
+              ...prev,
+              sort: sortValue,
+              page: 0
+            }));
+            const valueForFilter =
+              recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
+            handleFilterChange(recordOfFilter.filter, valueForFilter, 0, filterPagination.size, sortValue);
+          }
+        }}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
 
         onPageChange={handlePageChange}
 
-        onRowsPerPageChange={(e) => {
-          setPaginationParams({
-            ...paginationParams,
-            size: Number(e.target.value),
-            page: 0,
-            timestamp: Date.now(),
-          });
+        onRowsPerPageChange={event => {
+          const newSize = Number(event.target.value);
+          if (Number.isNaN(newSize) || newSize <= 0) {
+            return;
+          }
+          if (isFiltered) {
+            setFilterPagination(prev => ({
+              ...prev,
+              size: newSize,
+              page: 0
+            }));
+            const valueForFilter =
+              recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
+            handleFilterChange(recordOfFilter.filter, valueForFilter, 0, newSize);
+          } else {
+            setPaginationParams(prev => ({
+              ...prev,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            }));
+          }
         }}
         tableButtons={<div className="container-of-add-new-button">
         <MyButton
