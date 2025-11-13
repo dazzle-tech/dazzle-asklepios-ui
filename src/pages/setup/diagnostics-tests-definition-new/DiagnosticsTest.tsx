@@ -300,6 +300,9 @@ const handleUpdateDiagnosticTest = async () => {
     } else return '';
   };
 
+console.log("Selected Test:", diagnosticsTest);
+
+
   // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
   const iconsForActions = (rowData: any) => (
     <div className="container-of-icons">
@@ -341,30 +344,6 @@ const handleUpdateDiagnosticTest = async () => {
           }}
         />
       )}
-
-      {/* Profile or Normal Range */}
-      {rowData?.isProfile ? (
-        <RiFileList2Fill
-          className="icons-style"
-          title="Profile Setup"
-          size={21}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setOpenProfileModal(true);
-          }}
-        />
-      ) : (
-        <FaChartLine
-          className="icons-style"
-          title="Normal Range Setup"
-          size={21}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setNormalRangePopupOpen(true);
-          }}
-        />
-      )}
-
       {/* Code */}
       <FaNewspaper
         className="icons-style"
@@ -375,6 +354,32 @@ const handleUpdateDiagnosticTest = async () => {
           setOpenCodingModal(true);
         }}
       />
+
+      {/* Profile or Normal Range */}
+      {rowData?.type === "LABORATORY" && (
+        rowData?.isProfile ? (
+          <RiFileList2Fill
+            className="icons-style"
+            title="Profile Setup"
+            size={21}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setOpenProfileModal(true);
+            }}
+          />
+        ) : (
+          <FaChartLine
+            className="icons-style"
+            title="Normal Range Setup"
+            size={21}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setNormalRangePopupOpen(true);
+            }}
+          />
+        )
+      )}
+
     </div>);
 
 
@@ -623,6 +628,7 @@ const handleUpdateDiagnosticTest = async () => {
             }));
           }
         }}
+        
         tableButtons={<div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
