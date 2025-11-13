@@ -26,7 +26,7 @@ export const newApUser: modelTypes.ApUser = {
 export const newCandidate: modelTypes.Candidate = {
   id: undefined,
   rule: '',
-  fields: {}, 
+  fields: {},
   isActive: true,
 };
 
@@ -45,8 +45,8 @@ export const newDepartment: modelTypes.Department = {
   email: '',
   encounterType: undefined,
   isActive: true,
-  hasMedicalSheets:false,
- hasNurseMedicalSheets:false
+  hasMedicalSheets: false,
+  hasNurseMedicalSheets: false
 }
 
 export const newFacility: modelTypes.Facility = {
@@ -61,9 +61,9 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  ruleId:null,
+  ruleId: null,
 
-} 
+}
 
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
@@ -166,15 +166,15 @@ export const newService: modelTypes.Service = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined, 
+  facilityId: undefined,
 
 };
 
 export const newServiceItem: modelTypes.ServiceItem = {
   id: undefined,
-  type: 'DEPARTMENTS',    
-  sourceId: 0,            
-  serviceId: undefined,  
+  type: 'DEPARTMENTS',
+  sourceId: 0,
+  serviceId: undefined,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -213,8 +213,8 @@ export const newPractitioner: modelTypes.Practitioner = {
 
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   id: undefined,
-  langKey: undefined,          
-  translationKey: undefined,   
+  langKey: undefined,
+  translationKey: undefined,
   translationText: undefined,
   verified: undefined,
   translated: undefined,
@@ -254,7 +254,7 @@ export const newProcedure: modelTypes.Procedure = {
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
   name: '',
-  type: null,           
+  type: null,
   description: '',
   isActive: true,
   createdBy: '',
@@ -355,7 +355,34 @@ export const newDentalAction: modelTypes.DentalAction={
   description: '',        // Mandatory field
   type:null,    // Enum (mandatory)
   imageName: null,  // Optional image file name
-  isActive: true,  
+  isActive: true,  }
+export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
+  id: undefined,
+  testId: 0,
+
+  gender: undefined,
+  ageFrom: undefined,
+  ageFromUnit: undefined,
+  ageTo: undefined,
+  ageToUnit: undefined,
+  condition: undefined,
+
+  resultType: "", 
+  resultText: undefined,
+  resultLov: undefined,
+  normalRangeType: undefined,
+
+  rangeFrom: undefined,
+  rangeTo: undefined,
+
+  criticalValue: false,
+  criticalValueLessThan: undefined,
+  criticalValueMoreThan: undefined,
+
+  profileTestId: undefined,
+  isProfile: false,
+
+  lovKeys: [],
 }
 export const newProcedureCoding: modelTypes.ProcedureCoding = {
   id: undefined,

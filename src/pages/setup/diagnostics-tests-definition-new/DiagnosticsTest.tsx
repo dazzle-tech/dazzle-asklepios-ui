@@ -300,6 +300,9 @@ const handleUpdateDiagnosticTest = async () => {
     } else return '';
   };
 
+console.log("Selected Test:", diagnosticsTest);
+
+
   // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
   const iconsForActions = (rowData: any) => (
     <div className="container-of-icons">
@@ -341,7 +344,6 @@ const handleUpdateDiagnosticTest = async () => {
           }}
         />
       )}
-
       {/* Code */}
       <FaNewspaper
         className="icons-style"
@@ -626,6 +628,7 @@ const handleUpdateDiagnosticTest = async () => {
             }));
           }
         }}
+        
         tableButtons={<div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
