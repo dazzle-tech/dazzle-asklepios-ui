@@ -348,7 +348,48 @@ export const newRadiology: modelTypes.Radiology = {
   associatedRisks: "",
 };
 
-
+export const newActiveIngredient: modelTypes.ActiveIngredient = {
+  id: undefined,
+  medicalCategoryId: null,
+  name: '',
+  drugClassId: null,
+  atcCode: null,
+  otc: false,
+  hasSynonyms: false,
+  antimicrobial: false,
+  highRiskMed: false,
+  abortiveMedication: false,
+  laborInducingMed: false,
+  isControlled: false,
+  controlled: null,
+  hasBlackBoxWarning: false,
+  blackBoxWarning: '',
+  isActive: true,
+  toxicityMaximumDose: null,
+  toxicityMaximumDosePerUnit: null,
+  toxicityDetails: null,
+  mechanismOfAction: null,
+  pharmaAbsorption: null,
+  pharmaRouteOfElimination: null,
+  pharmaVolumeOfDistribution: null,
+  pharmaHalfLife: null,
+  pharmaProteinBinding: null,
+  pharmaClearance: null,
+  pharmaMetabolism: null,
+  pregnancyCategory: null,
+  pregnancyNotes: null,
+  lactationRisk: null,
+  lactationRiskNotes: null,
+  doseAdjustmentRenal: false,
+  doseAdjustmentRenalOne: null,
+  doseAdjustmentRenalTwo: null,
+  doseAdjustmentRenalThree: null,
+  doseAdjustmentRenalFour: null,
+  doseAdjustmentHepatic: false,
+  doseAdjustmentPugA: null,
+  doseAdjustmentPugB: null,
+  doseAdjustmentPugC: null
+};
 
 export const newDentalAction: modelTypes.DentalAction={
   id: null,               // Primary key (auto-generated)
@@ -384,6 +425,7 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
 
   lovKeys: [],
 }
+
 export const newProcedureCoding: modelTypes.ProcedureCoding = {
   id: undefined,
   procedureId: undefined,        

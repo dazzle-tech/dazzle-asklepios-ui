@@ -55,6 +55,7 @@ import { laboratoryService } from './services/setup/diagnosticTest/laboratorySer
 import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
+import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
 import { dentalActionService } from '@/services/setup/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
 import { vaccineService } from './services/vaccine/vaccineService';
@@ -167,6 +168,7 @@ export const store = configureStore({
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
     [radiologyService.reducerPath]: radiologyService.reducer,
+    [activeIngredientsService.reducerPath]: activeIngredientsService.reducer,
 
     //loinc code
     [loincCodeService.reducerPath]: loincCodeService.reducer,
@@ -241,6 +243,7 @@ export const store = configureStore({
       diagnosticTestProfileService.middleware,
       diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
+      activeIngredientsService.middleware,
       dentalActionService.middleware,
       diagnosticTestNormalRangeService.middleware,
       vaccineService.middleware,
