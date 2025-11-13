@@ -19,7 +19,7 @@ const AddNormalRange = ({
 }) => {
   const [lovCode, setLovCode] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [listLovRequest, setListLovRequest] = useState({ ...initialListRequest });
+  const [listLovRequest, setListLovRequest] = useState({ ...initialListRequest ,pageSize:1000 });
 
   const gender = useEnumOptions('Gender');
   const condition = useEnumOptions('Condition');
@@ -36,19 +36,25 @@ const AddNormalRange = ({
   // Fetch Value Unit Lov response
   const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   // Fetch lov List response
-  const { data: lovListResponseData } = useGetLovsQuery(listLovRequest);
+const { data: lovListResponseData } = useGetLovsQuery(listLovRequest, {
+  skip: false
+});
 
 
   // customise item appears on the list
-  const modifiedData = (lovListResponseData?.object ?? []).map(item => ({
-    ...item,
-    combinedLabel: `${item.lovCode} - ${item.lovName}`
-  }));
+const filteredData = (lovListResponseData?.object ?? []).filter(item =>
+  `${item.lovCode} ${item.lovName}`
+    .toLowerCase()
+    .includes(searchKeyword.toLowerCase())
+);
+
 
   // handle search about lov
-  const handleSearch = value => {
-    setSearchKeyword(value);
-  };
+const handleSearch = (value) => {
+  setSearchKeyword(value);
+};
+
+
 
   // Effects
 
@@ -282,8 +288,8 @@ useEffect(() => {
                 // className="dropdown-menuresult"
                 className='menu-diagnostic'
               >
-                {modifiedData &&
-                  modifiedData?.map(mod => (
+                {filteredData &&
+                  filteredData.map(mod => (
                     <Dropdown.Item
                       key={mod.key}
                       eventKey={mod.key}
@@ -295,6 +301,7 @@ onClick={() => {
   }));
 
   setLovCode(mod.lovCode);
+  setListLovRequest({ ...initialListRequest });
   setSearchKeyword('');
 }}
 
