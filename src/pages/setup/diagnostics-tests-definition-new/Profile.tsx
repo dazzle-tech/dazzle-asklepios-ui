@@ -455,7 +455,7 @@ setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnost
       mainContent={conjureFormContentOfMainModal}
       mainStep={[{ title: 'Profile', icon: <FaChartLine /> }]}
       childStep={[{ title: 'Normal Range Info', icon: <FaChartLine /> }]} 
-      childTitle="Nothin currently"
+      childTitle="Normal Ranges"
       childContent={conjureFormContentOfChildModal}
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"

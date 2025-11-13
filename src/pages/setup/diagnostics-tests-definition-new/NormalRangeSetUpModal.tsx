@@ -169,11 +169,11 @@ const {
       title: <Translate>Condition</Translate>,
       render: (rowData) => <p>{formatEnumString(rowData?.condition)}</p>,
     },
-    {
-      key: 'isValid',
-      title: <Translate>Status</Translate>,
-      render: rowData => (rowData.deletedAt === null ? 'Active' : 'InActive')
-    },
+    // {
+    //   key: 'isValid',
+    //   title: <Translate>Status</Translate>,
+    //   render: rowData => (rowData.deletedAt === null ? 'Active' : 'InActive')
+    // },
     {
       key: 'icons',
       title: <Translate></Translate>,
@@ -206,53 +206,56 @@ useEffect(() => {
   // handle save diagnostics Test Normal Range
     const handleSave = async () => {
       try {
+        if (!diagnosticTestNormalRange.resultType) {
+          return dispatch(notify({ msg: "Please select Result Type", sev: "error" }));
+        }
 
-          if (!diagnosticTestNormalRange.resultType) {
-            return dispatch(notify({ msg: "Please select Result Type", sev: "error" }));
-          }
+        const payload = {
+          ...(diagnosticTestNormalRange.id && { id: diagnosticTestNormalRange.id }),
+          testId: diagnosticsTest.id,
 
-          const payload = {
-            ...(diagnosticTestNormalRange.id && { id: diagnosticTestNormalRange.id }),
-            testId: diagnosticsTest.id,
+          gender: diagnosticTestNormalRange.gender ?? null,
+          condition: diagnosticTestNormalRange.condition ?? null,
 
-            gender: diagnosticTestNormalRange.gender ?? null,
-            condition: diagnosticTestNormalRange.condition ?? null,
+          ageFrom: diagnosticTestNormalRange.ageFrom,
+          ageFromUnit: diagnosticTestNormalRange.ageFromUnit ?? null,
+          ageTo: diagnosticTestNormalRange.ageTo,
+          ageToUnit: diagnosticTestNormalRange.ageToUnit ?? null,
 
-            ageFrom: diagnosticTestNormalRange.ageFrom,
-            ageFromUnit: diagnosticTestNormalRange.ageFromUnit ?? null,
-            ageTo:diagnosticTestNormalRange.ageTo,
-            ageToUnit: diagnosticTestNormalRange.ageToUnit ?? null,
+          resultType: diagnosticTestNormalRange.resultType ?? null,
+          resultLov: diagnosticTestNormalRange.resultLov ?? null,
 
-            resultType: diagnosticTestNormalRange.resultType ?? null,
-            resultLov: diagnosticTestNormalRange.resultLov ?? null,
+          normalRangeType: diagnosticTestNormalRange.normalRangeType ?? null,
+          rangeFrom: diagnosticTestNormalRange.rangeFrom,
+          rangeTo: diagnosticTestNormalRange.rangeTo,
 
-            normalRangeType: diagnosticTestNormalRange.normalRangeType ?? null,
-            rangeFrom: diagnosticTestNormalRange.rangeFrom,
-            rangeTo: diagnosticTestNormalRange.rangeTo,
+          criticalValue: diagnosticTestNormalRange.criticalValue ?? false,
+          criticalValueLessThan: diagnosticTestNormalRange.criticalValueLessThan,
+          criticalValueMoreThan: diagnosticTestNormalRange.criticalValueMoreThan,
 
-            criticalValue: diagnosticTestNormalRange.criticalValue ?? false,
-            criticalValueLessThan: diagnosticTestNormalRange.criticalValueLessThan,
-            criticalValueMoreThan: diagnosticTestNormalRange.criticalValueMoreThan,
-            lovKeys: diagnosticTestNormalRange.lovKeys ?? [],
-          };
+          lovKeys: diagnosticTestNormalRange.lovKeys ?? [],
+        };
 
-          if (diagnosticTestNormalRange.id) {
-            await updateDiagnosticTestNormalRange({ id: diagnosticTestNormalRange.id, body: payload });
-            dispatch(notify({ msg: "Normal Range Updated", sev: "success" }));
-          } else {
-            await createDiagnosticTestNormalRange(payload);
-            dispatch(notify({ msg: "Normal Range Created", sev: "success" }));
-          }
-
-
+        if (diagnosticTestNormalRange.id) {
+          await updateDiagnosticTestNormalRange({ id: diagnosticTestNormalRange.id, body: payload });
+          dispatch(notify({ msg: "Normal Range Updated", sev: "success" }));
+        } else {
+          await createDiagnosticTestNormalRange(payload);
+          dispatch(notify({ msg: "Normal Range Created", sev: "success" }));
+        }
         refetchNormalRange();
-        setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnosticsTest.id });
+        setDiagnosticTestNormalRange({
+          ...newDiagnosticTestNormalRange,
+          testId: diagnosticsTest.id
+        });
+        setShowChild(false);
 
       } catch (err) {
         console.log("HANDLE SAVE ERROR", err);
         dispatch(notify({ msg: "Failed to Save Normal Range", sev: "error" }));
       }
     };
+
 
    // handle remove normal range
     const handleRemove = () => {
