@@ -2,10 +2,6 @@ import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Panel, Row, Col } from 'rsuite';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetLovValuesByCodeAndParentQuery
-} from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatControlledEnumLabel } from '@/utils';
 import {
@@ -33,6 +29,8 @@ import Section from '@/components/Section';
 import PreRequestedTests from './Pre-requestedTests';
 import MyTab from '@/components/MyTab';
 import { sanitizeActiveIngredient } from './activeIngredientPayload';
+import { useGetAllMedicationCategoriesQuery } from '@/services/setup/medication-categories/MedicationCategoriesService';
+import { useGetAllMedicationCategoryClassesByCategoryQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 
 const createEmptyActiveIngredient = (): ActiveIngredient => ({
   ...newActiveIngredient
@@ -48,12 +46,17 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
     useCreateActiveIngredientMutation();
   const [updateActiveIngredient, updateActiveIngredientMutation] =
     useUpdateActiveIngredientMutation();
-  // Fetch medication categor Lov response
-  const { data: MedicationCategoryLovQueryResponse } = useGetLovValuesByCodeQuery('MED_CATEGORY');
-  const { data: MedicationClassLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
-    code: 'MED_ClASS',
-    parentValueKey: activeIngredient.medicalCategoryId
-  });
+  // Fetch medication category data
+  const { data: medicationCategories } = useGetAllMedicationCategoriesQuery(undefined);
+  // Fetch medication class data once a category is chosen
+  const { data: medicationClasses } = useGetAllMedicationCategoryClassesByCategoryQuery(
+    activeIngredient.medicalCategoryId
+      ? { id: activeIngredient.medicalCategoryId }
+      : undefined,
+    {
+      skip: !activeIngredient.medicalCategoryId
+    }
+  );
   // Fetch controlled medications categories Lov response
 const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
   labelFormatter: formatControlledEnumLabel
@@ -342,9 +345,9 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                     width="100%"
                     fieldName="medicalCategoryId"
                     fieldType="select"
-                    selectData={MedicationCategoryLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
+                    selectData={medicationCategories ?? []}
+                    selectDataLabel="name"
+                    selectDataValue="id"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
                     fieldLabel="Medical Category"
@@ -355,9 +358,9 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                     width="100%"
                     fieldName="drugClassId"
                     fieldType="select"
-                    selectData={MedicationClassLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
+                    selectData={medicationClasses ?? []}
+                    selectDataLabel="name"
+                    selectDataValue="id"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
                     fieldLabel="Medication Class"

@@ -22,10 +22,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyInput from '@/components/MyInput';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetLovValuesByCodeAndParentQuery
-} from '@/services/setupService';
+import { useGetAllMedicationCategoriesQuery } from '@/services/setup/medication-categories/MedicationCategoriesService';
+import { useGetAllMedicationCategoryClassesByCategoryQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 const ActiveIngredientsSetup = () => {
   const dispatch = useAppDispatch();
@@ -88,21 +86,9 @@ const ActiveIngredientsSetup = () => {
     [currentPage, currentPageSize, sortColumn, sortType, currentTimestamp]
   );
 
-  const { data: medicalCategoryLovResponse } = useGetLovValuesByCodeQuery('MED_CATEGORY');
-  const { data: filterClassLovResponse } = useGetLovValuesByCodeAndParentQuery(
-    {
-      code: 'MED_ClASS',
-      parentValueKey: recordOfFilter.value
-    },
-    {
-      skip: recordOfFilter.filter !== 'medicalCategory' || !recordOfFilter.value
-    }
-  );
-  const { data: appliedClassLovResponse } = useGetLovValuesByCodeAndParentQuery(
-    {
-      code: 'MED_ClASS',
-      parentValueKey: isMedicalCategoryFilter ? appliedFilter.value : undefined
-    },
+  const { data: medicationCategories } = useGetAllMedicationCategoriesQuery(undefined);
+  const { data: appliedMedicationClasses } = useGetAllMedicationCategoryClassesByCategoryQuery(
+    isMedicalCategoryFilter && appliedFilter.value ? { id: appliedFilter.value } : undefined,
     {
       skip: !isMedicalCategoryFilter || !appliedFilter.value
     }
@@ -110,9 +96,9 @@ const ActiveIngredientsSetup = () => {
 
   const effectiveDrugClassIds = useMemo(() => {
     if (isMedicalCategoryFilter) {
-      return (appliedClassLovResponse?.object ?? [])
-        .map(item => item.key)
-        .filter(Boolean);
+      return (appliedMedicationClasses ?? [])
+        .map(item => (item?.id !== undefined && item?.id !== null ? String(item.id) : null))
+        .filter((id): id is string => Boolean(id));
     }
     if (isDrugClassFilter) {
       return normalizedFilterValue
@@ -121,17 +107,17 @@ const ActiveIngredientsSetup = () => {
         .filter(Boolean);
     }
     return [];
-  }, [isMedicalCategoryFilter, appliedClassLovResponse, isDrugClassFilter, normalizedFilterValue]);
+  }, [isMedicalCategoryFilter, appliedMedicationClasses, isDrugClassFilter, normalizedFilterValue]);
 
   const noClassAvailable =
     isMedicalCategoryFilter &&
-    appliedClassLovResponse !== undefined &&
+    appliedMedicationClasses !== undefined &&
     effectiveDrugClassIds.length === 0;
 
   const shouldRunDrugClassQuery =
     (isDrugClassFilter && effectiveDrugClassIds.length > 0) ||
     (isMedicalCategoryFilter &&
-      appliedClassLovResponse !== undefined &&
+      appliedMedicationClasses !== undefined &&
       effectiveDrugClassIds.length > 0);
 
   const nameQueryParams = useMemo(
@@ -262,8 +248,8 @@ const ActiveIngredientsSetup = () => {
   ];
 
   const medicalCategoryOptions = useMemo(
-    () => medicalCategoryLovResponse?.object ?? [],
-    [medicalCategoryLovResponse]
+    () => medicationCategories ?? [],
+    [medicationCategories]
   );
 
   // class name for selected row
@@ -350,8 +336,8 @@ const ActiveIngredientsSetup = () => {
           fieldName="value"
           fieldType="select"
           selectData={medicalCategoryOptions}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectDataLabel="name"
+          selectDataValue="id"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
           showLabel={false}
