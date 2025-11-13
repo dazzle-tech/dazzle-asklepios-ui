@@ -23,11 +23,11 @@ import {
 import {
   useDeleteMedicationCategoryClassMutation,
   useGetAllMedicationCategoryClassesByCategoryQuery
-} from '@/services/setup/medication-categories/medicationCategoriesClassService';
+} from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import {
   useDeleteMedicationCategoryMutation,
   useGetAllMedicationCategoriesQuery
-} from '@/services/setup/medication-categories/medicationCategoriesService';
+} from '@/services/setup/medication-categories/MedicationCategoriesService';
 
 const MedicationMatrix = () => {
   const dispatch = useAppDispatch();

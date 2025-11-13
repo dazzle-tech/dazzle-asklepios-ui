@@ -65,4 +65,4 @@ export const {
   useGetAllMedicationCategoriesClassesQuery,
   useGetMedicationCategoryClassQuery,
   useGetAllMedicationCategoryClassesByCategoryQuery
-} = medicationCategoriesClassService;
+} = MedicationCategoriesClassService;
