@@ -19,6 +19,7 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+
 const mapPaged = <T>(response: T[], meta): PagedResult<T> => {
   const headers = meta?.response?.headers;
   return {
