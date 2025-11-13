@@ -54,7 +54,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   selectDataValue="id"
                   record={service}
                   setRecord={setService}
-                  disabled={service?.facilityId}
+                  disabled={service?.facilityId && service?.id}
                 />
               </div>
               <div className="container-of-field-service">
