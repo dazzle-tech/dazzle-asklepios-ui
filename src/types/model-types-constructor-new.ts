@@ -45,9 +45,9 @@ export const newDepartment: modelTypes.Department = {
   email: '',
   encounterType: undefined,
   isActive: true,
-  hasMedicalSheets: false,
-  hasNurseMedicalSheets: false
-}
+  hasMedicalSheets:false,
+ hasNurseMedicalSheets:false
+};
 
 export const newFacility: modelTypes.Facility = {
   id: undefined,
@@ -61,9 +61,9 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  ruleId: null,
+  ruleId:null,
+} ;
 
-}
 
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
@@ -76,18 +76,20 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-}
+};
 
 export const newRole: modelTypes.Role = {
   id: undefined,
   name: '',
   type: '',
   facilityId: null,
-}
+};
+
 export const newUserRole: modelTypes.UserRole = {
   roleId: undefined,
   userId: undefined,
-}
+};
+
 export const newUserDepartment: modelTypes.UserDepartment = {
   id: undefined,
   userId: undefined,
@@ -128,7 +130,7 @@ export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams
   type: undefined,
   details: undefined,
   source: undefined,
-}
+};
 
 // Encounter Attachment Constructors
 export const newEncounterAttachment: modelTypes.EncounterAttachment = {
@@ -151,7 +153,7 @@ export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttac
   details: undefined,
   source: undefined,
   sourceId: undefined,
-}
+};
 
 export const newService: modelTypes.Service = {
   id: undefined,
@@ -187,7 +189,7 @@ export const newLanguage: modelTypes.Language = {
   langName: undefined,
   direction: undefined,
   details: undefined,
-}
+};
 
 export const newPractitioner: modelTypes.Practitioner = {
   id: undefined,
@@ -218,7 +220,8 @@ export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   translationText: undefined,
   verified: undefined,
   translated: undefined,
-}
+};
+
 export const newAgeGroup: modelTypes.AgeGroup = {
   id: undefined,
   ageGroup: '',
@@ -251,6 +254,7 @@ export const newProcedure: modelTypes.Procedure = {
   lastModifiedDate: null,
   facilityId: undefined,
 };
+
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
   name: '',
@@ -274,7 +278,6 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   gender: null,
   specialPopulation: false,
   specialPopulationValues: [],
-
   price: null,
   currency: null,
   specialNotes: '',
@@ -317,8 +320,9 @@ export const newLaboratory: modelTypes.Laboratory = {
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   id: undefined,
   testId: undefined,
-  name: null,
-  resultUnit: ''}
+  name: '',
+  resultUnit: ''};
+
 
 
 export const newPathology: modelTypes.Pathology = {
@@ -346,6 +350,17 @@ export const newRadiology: modelTypes.Radiology = {
   turnaroundTimeUnit: "",
   turnaroundTime: undefined,
   associatedRisks: "",
+};
+
+export const newMedicationCategory: modelTypes.MedicationCategory = {
+  id: undefined,
+  name: ''
+};
+
+export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
+  id: undefined,
+  name: '',
+  medicationCategoriesId: undefined
 };
 
 export const newActiveIngredient: modelTypes.ActiveIngredient = {

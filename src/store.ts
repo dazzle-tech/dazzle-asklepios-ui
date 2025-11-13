@@ -1,3 +1,4 @@
+import { MdAttachFile } from 'react-icons/md';
 import { configureStore } from '@reduxjs/toolkit';
 import uiSlice from './reducers/uiSlice';
 import { uiService } from '@/services/uiService';
@@ -55,6 +56,8 @@ import { laboratoryService } from './services/setup/diagnosticTest/laboratorySer
 import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
+import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
+import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
 import { dentalActionService } from '@/services/setup/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
@@ -63,6 +66,7 @@ import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -149,7 +153,10 @@ export const store = configureStore({
     [PractitionerService.reducerPath]:PractitionerService.reducer,
     [PractitionerDepartmentService.reducerPath]:PractitionerDepartmentService.reducer,
 
-    
+    //Categories setup
+    [MedicationCategoriesService.reducerPath]: MedicationCategoriesService.reducer,
+    [MedicationCategoriesClassService.reducerPath]: MedicationCategoriesClassService.reducer,
+
      // Language slice
     [languageService.reducerPath]: languageService.reducer,
 
@@ -162,6 +169,8 @@ export const store = configureStore({
 
     //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
+
+
 
     [Icd10Service.reducerPath]: Icd10Service.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
@@ -228,6 +237,8 @@ export const store = configureStore({
       userDepartmentService.middleware,
       MedicalsheetsService.middleware,
       serviceService.middleware,
+      MedicationCategoriesService.middleware,
+      MedicationCategoriesClassService.middleware,
       languageService.middleware,
       translationService.middleware,
       PractitionerService.middleware,
