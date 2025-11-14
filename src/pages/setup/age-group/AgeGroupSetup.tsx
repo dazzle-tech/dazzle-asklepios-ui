@@ -9,7 +9,6 @@ import MyButton from '@/components/MyButton/MyButton';
 import AddEditAgeGroup from './AddEditAgeGroup';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import './styles.less';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
@@ -69,7 +68,7 @@ const AgeGroupSetup: React.FC = () => {
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
     size: 15,
-    sort: 'id,desc', 
+    sort: 'id,desc',
   });
 
   // Enums and facilities
@@ -128,6 +127,7 @@ const AgeGroupSetup: React.FC = () => {
   const handleSave = async () => {
     setPopupOpen(false);
     const isUpdate = !!ageGroup.id;
+
     const effectiveFacilityId = ageGroup.facilityId;
 
     if (!effectiveFacilityId) {
@@ -143,28 +143,35 @@ const AgeGroupSetup: React.FC = () => {
     };
 
     try {
+      let saved;
       if (isUpdate) {
-        await updateAgeGroup({ facilityId: effectiveFacilityId, ...payload, id: ageGroup.id! }).unwrap();
+        saved = await updateAgeGroup({
+          id: ageGroup.id!,
+          facilityId: effectiveFacilityId,
+          ...payload,
+        }).unwrap();
+
         dispatch(notify({ msg: 'Age Group updated successfully', sev: 'success' }));
       } else {
-        await addAgeGroup({ facilityId: effectiveFacilityId, ...payload }).unwrap();
+        saved = await addAgeGroup({
+          facilityId: effectiveFacilityId,
+          ...payload,
+        }).unwrap();
+
         dispatch(notify({ msg: 'Age Group added successfully', sev: 'success' }));
       }
-
       if (isFiltered) {
-        // Ensure filtered view uses its own sort (prefer id,desc once to reveal new rows)
         const nextSort =
           !filterPagination.sort || filterPagination.sort.toLowerCase().startsWith('id,asc')
             ? 'id,desc'
             : filterPagination.sort;
+
         setFilterPagination(prev => ({ ...prev, page: 0, sort: nextSort }));
         await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size, nextSort);
       } else {
-        // Unfiltered: go through main API logic (Link headers)
         setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
         refetch();
       }
-
     } catch (err: any) {
       const data = err?.data ?? {};
       const traceId = data?.traceId || data?.requestId || data?.correlationId;
@@ -194,33 +201,39 @@ const AgeGroupSetup: React.FC = () => {
           if (m.includes('must be less')) return 'value is too large';
           return msg || 'invalid value';
         };
+
         const lines = data.fieldErrors.map((fe: any) => {
           const label = fieldLabels[fe.field] ?? fe.field;
           return `• ${label}: ${normalizeMsg(fe.message)}`;
         });
+
         dispatch(notify({ msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix, sev: 'error' }));
         return;
       }
 
       const messageProp: string = data?.message || '';
       const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : undefined;
+
       const keyMap: Record<string, string> = {
         facilityrequired: 'Facility id is required.',
         'payload.required': 'Age Group payload is required.',
-        'unique.facility.ageGroup': 'Age Group label already exists in this facility.',
-        'unique.facility.ageRange': 'This age range already exists in this facility.',
-        'fk.facility.notfound': 'Facility not found.',
+        'unique.facility.ageGroup': 'Age Group label or age range already exists in this facility.',
+        'facility.mismatch': 'Age Group does not belong to the selected facility.',
         'db.constraint': 'Database constraint violation.',
+        notfound: 'Age Group not found.',
       };
+
       const humanMsg =
         (errorKey && keyMap[errorKey]) ||
         data?.detail ||
         data?.title ||
         data?.message ||
         'Unexpected error';
+
       dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
     }
   };
+
 
   /**
    * Run the correct filter query with explicit sort to avoid mixing with unfiltered sort.
@@ -403,17 +416,7 @@ const AgeGroupSetup: React.FC = () => {
       flexGrow: 3,
       render: (row: any) => `${row?.toAge ?? ''} ${row?.toAgeUnit ?? ''}`,
     },
-    {
-      key: 'isActive',
-      title: <Translate>Status</Translate>,
-      width: 100,
-      render: (row: any) => (
-        <MyBadgeStatus
-          contant={row?.isActive ? 'Active' : 'Inactive'}
-          color={row?.isActive ? '#415be7' : '#b1acacff'}
-        />
-      ),
-    },
+
     {
       key: 'icons',
       title: <Translate></Translate>,
