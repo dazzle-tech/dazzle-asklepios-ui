@@ -16,10 +16,16 @@ import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 import {
+  // Main list (no facility)
+  useGetAllServicesQuery,
+  // By facility
   useGetServicesQuery,
+  useLazyGetServicesQuery,
+  // Mutations
   useAddServiceMutation,
   useUpdateServiceMutation,
   useToggleServiceIsActiveMutation,
+  // Filters
   useLazyGetServicesByCategoryQuery,
   useLazyGetServicesByCodeQuery,
   useLazyGetServicesByNameQuery,
@@ -28,33 +34,30 @@ import { newService } from '@/types/model-types-constructor-new';
 import { Service } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
-import { formatEnumString } from '@/utils';
+import { formatEnumString, conjureValueBasedOnIDFromList } from '@/utils';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+
 const ServiceSetup: React.FC = () => {
   const dispatch = useAppDispatch();
-  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
-  const selectedFacility = tenant?.selectedFacility || null;
-  const facilityId: number | undefined = selectedFacility?.id;
 
-  const [service, setService] = useState<Service>({ ...newService, facilityId });
+  // Draft model (facilityId comes from modal)
+  const [service, setService] = useState<Service>({ ...newService });
+
+  // UI state
   const [popupOpen, setPopupOpen] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [openConfirmDeleteService, setOpenConfirmDeleteService] = useState(false);
   const [stateOfDeleteService, setStateOfDeleteService] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
+  // Filter state (AgeGroup-style)
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({ filter: '', value: '' });
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined); 
+  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
 
-  const [addService] = useAddServiceMutation();
-  const [updateService] = useUpdateServiceMutation();
-  const [toggleServiceIsActive] = useToggleServiceIsActiveMutation();
-  const [fetchByCategory] = useLazyGetServicesByCategoryQuery();
-  const [fetchByCode] = useLazyGetServicesByCodeQuery();
-  const [fetchByName] = useLazyGetServicesByNameQuery();
-
+  // Unfiltered pagination (main list via Link headers)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -62,56 +65,145 @@ const ServiceSetup: React.FC = () => {
     timestamp: Date.now(),
   });
 
-  // get enum options for ServiceCategory
+  // Filtered pagination (independent state)
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,desc',
+  });
+
+  // Mutations / Lazy Queries
+  const [addService] = useAddServiceMutation();
+  const [updateService] = useUpdateServiceMutation();
+  const [toggleServiceIsActive] = useToggleServiceIsActiveMutation();
+  const [fetchByCategory] = useLazyGetServicesByCategoryQuery();
+  const [fetchByCode] = useLazyGetServicesByCodeQuery();
+  const [fetchByName] = useLazyGetServicesByNameQuery();
+  const [fetchByFacility] = useLazyGetServicesQuery(); // lazy for /by-facility/{facilityId}
+
+  // Enums + Facilities
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
-  // fetch services
-  const { data: servicesPage, isFetching, refetch } = useGetServicesQuery(
-    {
-      facilityId,
-      page: paginationParams.page,
-      size: paginationParams.size,
-      sort: paginationParams.sort,
-    },
-    { skip: !facilityId }
-  );
+  // Main list: ALL services (no facility filter)
+  const { data: pageData, isFetching, refetch } = useGetAllServicesQuery({
+    page: paginationParams.page,
+    size: paginationParams.size,
+    sort: paginationParams.sort,
+  });
 
-  // total count
+  // ===== Helpers to keep filtered list in sync after add/update/toggle =====
+  /**
+   * Checks if a service matches the currently selected filter.
+   * Used to decide whether to render an upserted/updated service in the filtered view.
+   */
+  const matchesCurrentFilter = (svc: Service, filter: string, value: any) => {
+    if (!filter && value !== 0 && !value) return true;
+    switch (filter) {
+      case 'facilityId':
+        return Number(svc.facilityId) === Number(value);
+      case 'category':
+        return String(svc.category || '').toUpperCase() === String(value).toUpperCase();
+      case 'code':
+        return (svc.code || '').toLowerCase().includes(String(value).toLowerCase());
+      case 'name':
+        return (svc.name || '').toLowerCase().includes(String(value).toLowerCase());
+      default:
+        return true;
+    }
+  };
+
+  /**
+   * Inserts or updates a service inside the filtered array, keeping the current sort order.
+   * Returns the new array and whether this was a brand-new addition.
+   */
+  const upsertIntoFiltered = (
+    item: Service,
+    current: Service[],
+    sort: string,
+    filterKey: string,
+    filterVal: any
+  ): { data: Service[]; added: boolean } => {
+    // If it does not match the current filter, do not add it.
+    if (!matchesCurrentFilter(item, filterKey, filterVal)) return { data: current, added: false };
+
+    const idx = current.findIndex(r => r.id === item.id);
+    let next = [...current];
+
+    if (idx >= 0) {
+      next[idx] = { ...next[idx], ...item };
+      return { data: next, added: false };
+    }
+
+    const sortLower = (sort || '').toLowerCase();
+    if (sortLower.startsWith('id,desc')) {
+      next = [item, ...next];
+    } else if (sortLower.startsWith('id,asc')) {
+      next = [...next, item];
+    } else {
+      // Fallback: prepend if sort is unknown
+      next = [item, ...next];
+    }
+    return { data: next, added: true };
+  };
+
+  /**
+   * Patches a single filtered row by id (e.g., toggling isActive) without refetch.
+   */
+  const patchFilteredRow = (id: number, patch: Partial<Service>, current: Service[]) => {
+    const idx = current.findIndex(r => r.id === id);
+    if (idx < 0) return current;
+    const next = [...current];
+    next[idx] = { ...next[idx], ...patch };
+    return next;
+  };
+
+  // ===== Derived table values =====
   const totalCount = useMemo(
-    () => (isFiltered ? filteredTotal : servicesPage?.totalCount ?? 0),
-    [isFiltered, filteredTotal, servicesPage?.totalCount]
+    () => (isFiltered ? filteredTotal : pageData?.totalCount ?? 0),
+    [isFiltered, filteredTotal, pageData?.totalCount]
   );
-
-  // links 
-  const links = (isFiltered ? filteredLinks : servicesPage?.links) || {};
-
-  // table data
+  const links = (isFiltered ? filteredLinks : pageData?.links) || {};
   const tableData = useMemo(
-    () => (isFiltered ? filteredData : servicesPage?.data ?? []),
-    [isFiltered, filteredData, servicesPage?.data]
+    () => (isFiltered ? filteredData : pageData?.data ?? []),
+    [isFiltered, filteredData, pageData?.data]
   );
 
-  // filter crateria options
+  // Filters available
   const filterFields = [
+    { label: 'Facility', value: 'facilityId' },
     { label: 'Category', value: 'category' },
     { label: 'Name', value: 'name' },
     { label: 'Code', value: 'code' },
   ];
 
-  // new service
+  // New
   const handleNew = () => {
-    setService({ ...newService, facilityId });
+    setService({ ...newService });
     setPopupOpen(true);
   };
 
-  // save service
+  // ===== Save (add/update) — reads facilityId from modal object =====
   const handleSave = async () => {
     setPopupOpen(false);
     const isUpdate = !!service.id;
 
-    const payload: any = {
+    const resolvedFacilityIdRaw =
+      service.facilityId ??
+      (recordOfFilter.filter === 'facilityId' && recordOfFilter.value != null
+        ? recordOfFilter.value
+        : undefined);
+
+    const effectiveFacilityId = Number(resolvedFacilityIdRaw);
+
+    if (!Number.isFinite(effectiveFacilityId)) {
+      dispatch(notify({ msg: 'Please select a facility.', sev: 'error' }));
+      return;
+    }
+
+    const payloadBody: any = {
       ...service,
-      facilityId,
+      facilityId: effectiveFacilityId,
       price:
         typeof (service as any).price === 'string'
           ? Number((service as any).price)
@@ -119,15 +211,39 @@ const ServiceSetup: React.FC = () => {
     };
 
     try {
+      let saved: Service;
       if (isUpdate) {
-        await updateService({ facilityId, ...payload, id: service.id! }).unwrap();
+        saved = await updateService({
+          id: service.id!,
+          facilityId: effectiveFacilityId,
+          ...payloadBody,
+        }).unwrap();
+
         dispatch(notify({ msg: 'Service updated successfully', sev: 'success' }));
       } else {
-        await addService({ facilityId, ...payload }).unwrap();
+        saved = await addService({
+          facilityId: effectiveFacilityId,
+          ...payloadBody,
+        }).unwrap();
+
         dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
       }
-    } catch (err: any) {
 
+      if (isFiltered) {
+        const { data: nextData, added } = upsertIntoFiltered(
+          saved,
+          filteredData,
+          filterPagination.sort || 'id,desc',
+          recordOfFilter.filter,
+          recordOfFilter.value
+        );
+        setFilteredData(nextData);
+        if (added) setFilteredTotal(prev => prev + 1);
+      } else {
+        setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
+        refetch();
+      }
+    } catch (err: any) {
       const data = err?.data ?? {};
       const traceId = data?.traceId || data?.requestId || data?.correlationId;
       const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
@@ -148,24 +264,19 @@ const ServiceSetup: React.FC = () => {
           isActive: 'Active',
           facilityId: 'Facility',
         };
-
         const normalizeMsg = (msg: string) => {
           const m = (msg || '').toLowerCase();
           if (m.includes('must not be null')) return 'is required';
           if (m.includes('must not be blank')) return 'must not be blank';
           if (m.includes('size must be between')) return 'length is out of range';
-          if (m.includes('must be greater than') || m.includes('must be greater than or equal to'))
-            return 'value is too small';
-          if (m.includes('must be less than') || m.includes('must be less than or equal to'))
-            return 'value is too large';
+          if (m.includes('must be greater')) return 'value is too small';
+          if (m.includes('must be less')) return 'value is too large';
           return msg || 'invalid value';
         };
-
         const lines = data.fieldErrors.map((fe: any) => {
           const label = fieldLabels[fe.field] ?? fe.field;
           return `• ${label}: ${normalizeMsg(fe.message)}`;
         });
-
         const humanMsg = `Please fix the following fields:\n${lines.join('\n')}`;
         dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
         return;
@@ -173,7 +284,6 @@ const ServiceSetup: React.FC = () => {
 
       const messageProp: string = data?.message || '';
       const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : undefined;
-
       const keyMap: Record<string, string> = {
         facilityrequired: 'Facility id is required.',
         'payload.required': 'Service payload is required.',
@@ -181,141 +291,189 @@ const ServiceSetup: React.FC = () => {
         'fk.facility.notfound': 'Facility not found.',
         'db.constraint': 'Database constraint violation.',
       };
-
       const humanMsg =
         (errorKey && keyMap[errorKey]) ||
         data?.detail ||
         data?.title ||
         'Unexpected error';
-
       dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
     }
-
   };
 
 
-  // deactivate service
+  // ===== Activate/Deactivate (keeps filtered list updated locally) =====
   const handleDeactivate = () => {
     setOpenConfirmDeleteService(false);
-    if (!service?.id || !facilityId) return;
-    toggleServiceIsActive({ id: service.id, facilityId })
+    if (!service?.id) return;
+    toggleServiceIsActive({ id: service.id })
       .unwrap()
-      .then(() => {
+      .then((toggled: Service | void) => {
         dispatch(notify({ msg: 'Service deactivated successfully', sev: 'success' }));
-        refetch();
+
+        if (isFiltered) {
+          // If API returns the updated entity, upsert it; otherwise patch isActive locally.
+          if (toggled && typeof (toggled as any).id !== 'undefined') {
+            const { data: nextData } = upsertIntoFiltered(
+              toggled as Service,
+              filteredData,
+              filterPagination.sort || 'id,desc',
+              recordOfFilter.filter,
+              recordOfFilter.value
+            );
+            setFilteredData(nextData);
+          } else {
+            setFilteredData(prev => patchFilteredRow(service.id!, { isActive: false }, prev));
+          }
+        } else {
+          refetch();
+        }
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to deactivate service', sev: 'error' }));
       });
   };
-  // reactivate service
+
   const handleReactivate = () => {
     setOpenConfirmDeleteService(false);
-    if (!service?.id || !facilityId) return;
-    toggleServiceIsActive({ id: service.id, facilityId })
+    if (!service?.id) return;
+    toggleServiceIsActive({ id: service.id })
       .unwrap()
-      .then(() => {
+      .then((toggled: Service | void) => {
         dispatch(notify({ msg: 'Service reactivated successfully', sev: 'success' }));
-        refetch();
+
+        if (isFiltered) {
+          if (toggled && typeof (toggled as any).id !== 'undefined') {
+            const { data: nextData } = upsertIntoFiltered(
+              toggled as Service,
+              filteredData,
+              filterPagination.sort || 'id,desc',
+              recordOfFilter.filter,
+              recordOfFilter.value
+            );
+            setFilteredData(nextData);
+          } else {
+            setFilteredData(prev => patchFilteredRow(service.id!, { isActive: true }, prev));
+          }
+        } else {
+          refetch();
+        }
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to reactivate service', sev: 'error' }));
       });
   };
 
-  // filter change 
-  const handleFilterChange = async (fieldName: string, value: any) => {
-    if (!facilityId) return;
-    if (!value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
+  // ===== Filtering (Facility/Category/Name/Code) =====
+  const runFilterQuery = async (
+    fieldName: string,
+    value: any,
+    page = 0,
+    size = paginationParams.size,
+    sort?: string
+  ) => {
+    if (!value && value !== 0) return undefined;
+    const effectiveSort = sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
+
+    if (fieldName === 'facilityId') {
+      // by facility (uses getServices endpoint)
+      return await fetchByFacility({
+        facilityId: Number(value),
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'category') {
+      return await fetchByCategory({
+        category: String(value).toUpperCase(),
+        page,
+        size,
+        sort: effectiveSort,
+      }).unwrap();
+    } else if (fieldName === 'code') {
+      return await fetchByCode({ code: value, page, size, sort: effectiveSort }).unwrap();
+    } else if (fieldName === 'name') {
+      return await fetchByName({ name: value, page, size, sort: effectiveSort }).unwrap();
+    }
+    return undefined;
+  };
+
+  // Reset to main list (Link headers)
+  const resetToUnfiltered = () => {
+    setIsFiltered(false);
+    setFilteredData([]);
+    setFilteredTotal(0);
+    setFilteredLinks(undefined);
+    setFilterPagination(prev => ({ ...prev, page: 0, sort: 'id,desc' }));
+    setPaginationParams(prev => ({ ...prev, page: 0, sort: 'id,asc', timestamp: Date.now() }));
+    refetch();
+  };
+
+  // Apply/Clear filters
+  const handleFilterChange = async (
+    fieldName: string,
+    value: any,
+    page = 0,
+    size = filterPagination.size,
+    sort = filterPagination.sort
+  ) => {
+    if (!value && value !== 0) {
+      resetToUnfiltered();
       return;
     }
     try {
-      let resp:
-        | { data: any[]; totalCount: number; links?: any }
-        | undefined;
-
-      if (fieldName === 'category') {
-        resp = await fetchByCategory({
-          facilityId,
-          category: String(value).toUpperCase(),
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
-        }).unwrap();
-      } else if (fieldName === 'code') {
-        resp = await fetchByCode({
-          facilityId,
-          code: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
-        }).unwrap();
-      } else if (fieldName === 'name') {
-        resp = await fetchByName({
-          facilityId,
-          name: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
-        }).unwrap();
-      }
-
+      const resp = await runFilterQuery(fieldName, value, page, size, sort);
       setFilteredData(resp?.data ?? []);
       setFilteredTotal(resp?.totalCount ?? 0);
       setFilteredLinks(resp?.links || {});
       setIsFiltered(true);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setFilterPagination(prev => ({ ...prev, page, size, sort }));
     } catch {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
+      resetToUnfiltered();
     }
   };
 
-  // ───────── PAGINATION─────────
+  // Pagination
   const handlePageChange = (_: unknown, newPage: number) => {
-    const currentPage = paginationParams.page;
-    let targetLink: string | null | undefined = null;
+    if (isFiltered) {
+      handleFilterChange(
+        recordOfFilter.filter,
+        recordOfFilter.value,
+        newPage,
+        filterPagination.size,
+        filterPagination.sort
+      );
+      return;
+    }
 
-    if (newPage > currentPage && links.next) targetLink = links.next;
-    else if (newPage < currentPage && links.prev) targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
+    const currentPage = paginationParams.page;
+    const linksMap = links || {};
+    let targetLink: string | null | undefined = null;
+    if (newPage > currentPage && linksMap.next) targetLink = linksMap.next;
+    else if (newPage < currentPage && linksMap.prev) targetLink = linksMap.prev;
+    else if (newPage === 0 && linksMap.first) targetLink = linksMap.first;
+    else if (newPage > currentPage + 1 && linksMap.last) targetLink = linksMap.last;
 
     if (targetLink) {
       const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams(prev => ({
-        ...prev,
-        page,
-        size,
-        timestamp: Date.now(),
-      }));
-
+      setPaginationParams(prev => ({ ...prev, page, size, timestamp: Date.now() }));
     }
   };
 
+  // Rows per page
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPaginationParams(prev => ({
-      ...prev,
-      size: parseInt(event.target.value, 10),
-      page: 0,
-      timestamp: Date.now(),
-    }));
+    const newSize = parseInt(event.target.value, 10);
+    if (isFiltered) {
+      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize, filterPagination.sort);
+    } else {
+      setPaginationParams(prev => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
+    }
   };
 
-  // row selection
+  // Selected row class
   const isSelected = (rowData: any) => (rowData?.id === service?.id ? 'selected-row' : '');
 
-  // icons for actions column
+  // Row action icons
   const iconsForActions = (rowData: Service) => (
     <div className="container-of-icons">
       <MdMedicalServices
@@ -366,8 +524,18 @@ const ServiceSetup: React.FC = () => {
     </div>
   );
 
-  // table columns
+  // Table columns (with Facility name)
   const tableColumns = [
+    {
+      key: 'facilityId',
+      title: <Translate>Facility Name</Translate>,
+      flexGrow: 4,
+      render: (row: any) => (
+        <span>
+          {conjureValueBasedOnIDFromList(facilityListResponse ?? [], row?.facilityId, 'name')}
+        </span>
+      ),
+    },
     { key: 'name', title: <Translate>Service Name</Translate>, flexGrow: 4 },
     { key: 'abbreviation', title: <Translate>Abbreviation</Translate>, flexGrow: 3 },
     { key: 'code', title: <Translate>Code</Translate>, flexGrow: 3 },
@@ -375,7 +543,7 @@ const ServiceSetup: React.FC = () => {
       key: 'category',
       title: <Translate>Category</Translate>,
       flexGrow: 3,
-      render: (row: any) =>row?.category ?  formatEnumString(row?.category) : '',
+      render: (row: any) => (row?.category ? formatEnumString(row?.category) : ''),
     },
     { key: 'price', title: <Translate>Price</Translate>, flexGrow: 2 },
     {
@@ -395,7 +563,6 @@ const ServiceSetup: React.FC = () => {
         />
       ),
     },
-
     {
       key: 'icons',
       title: <Translate></Translate>,
@@ -404,25 +571,27 @@ const ServiceSetup: React.FC = () => {
     },
   ];
 
-  // filter component
-  const filters = () => (
-    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updated: any) => {
-          setRecordOfFilter({ filter: updated.filter, value: '' });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-        width="170px"
-      />
-      {recordOfFilter.filter === 'category' ? (
+  // Filters UI
+  const filters = () => {
+    const selectedFilter = recordOfFilter.filter;
+    let dynamicInput: React.ReactNode;
+
+    if (selectedFilter === 'facilityId') {
+      dynamicInput = (
+        <MyInput
+          width={250}
+          fieldLabel=""
+          fieldName="value"
+          fieldType="select"
+          selectData={facilityListResponse ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+        />
+      );
+    } else if (selectedFilter === 'category') {
+      dynamicInput = (
         <MyInput
           width={220}
           fieldName="value"
@@ -433,8 +602,11 @@ const ServiceSetup: React.FC = () => {
           selectDataValue="value"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
+          searchable={false}
         />
-      ) : (
+      );
+    } else {
+      dynamicInput = (
         <MyInput
           fieldName="value"
           fieldType="text"
@@ -444,34 +616,51 @@ const ServiceSetup: React.FC = () => {
           placeholder="Enter Value"
           width={220}
         />
-      )}
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        width="80px"
-        disabled={!facilityId}
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
+      );
+    }
+
+    return (
+      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+        <MyInput
+          selectDataValue="value"
+          selectDataLabel="label"
+          selectData={filterFields}
+          fieldName="filter"
+          fieldType="select"
+          record={recordOfFilter}
+          setRecord={(updated: any) => setRecordOfFilter({ filter: updated.filter, value: '' })}
+          showLabel={false}
+          placeholder="Select Filter"
+          searchable={false}
+          width="170px"
+        />
+        {dynamicInput}
+        <MyButton
+          color="var(--deep-blue)"
+          onClick={() => {
+            if (!recordOfFilter.value && recordOfFilter.value !== 0) {
+              resetToUnfiltered();
+            } else {
+              handleFilterChange(
+                recordOfFilter.filter,
+                recordOfFilter.value,
+                0,
+                filterPagination.size,
+                filterPagination.sort || 'id,desc'
+              );
+            }
+          }}
+          width="80px"
+        >
+          Search
+        </MyButton>
+      </Form>
+    );
+  };
 
   // Effects
   useEffect(() => {
-    if (!recordOfFilter.value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      if (facilityId) refetch();
-    }
-  }, [recordOfFilter.value, facilityId]);
-
-  useEffect(() => {
-    const divContent = (
-      "Services"
-    );
+    const divContent = 'Services';
     dispatch(setPageCode('Services'));
     dispatch(setDivContent(divContent));
     return () => {
@@ -481,17 +670,18 @@ const ServiceSetup: React.FC = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (addService || updateService) {
-      refetch();
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-    }
-  }, [addService, updateService]);
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
-  console.log('tableData==>', tableData);
+  // Auto revert if filter value cleared
+  useEffect(() => {
+    if (!recordOfFilter.value && recordOfFilter.value !== 0 && isFiltered) {
+      resetToUnfiltered();
+    }
+  }, [recordOfFilter.value]);
+
 
   return (
     <Panel>
@@ -503,21 +693,22 @@ const ServiceSetup: React.FC = () => {
         rowClassName={isSelected}
         onRowClick={row => setService(row)}
         filters={filters()}
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
+        page={isFiltered ? filterPagination.page : paginationParams.page}
+        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-        tableButtons={      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-          disabled={!facilityId}
-        >
-          Add New
-        </MyButton>
-      </div>}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>
+        }
       />
       <AddEditService
         open={popupOpen}
@@ -538,7 +729,7 @@ const ServiceSetup: React.FC = () => {
         open={addItemOpen}
         setOpen={setAddItemOpen}
         serviceId={service?.id}
-        facilityId={facilityId}
+        facilityId={service?.facilityId}
       />
     </Panel>
   );

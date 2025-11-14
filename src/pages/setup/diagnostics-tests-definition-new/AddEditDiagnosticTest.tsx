@@ -2,7 +2,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import {
   useCreatePathologyMutation,
   useUpdatePathologyMutation
@@ -25,25 +25,25 @@ import './styles.less';
 const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsTest, width, handleSave }) => {
   const dispatch = useAppDispatch();
   const [diagnosticTestPathology, setDiagnosticTestPathology] = useState(
-    { ...newPathology}
+    { ...newPathology }
 
   );
   const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<any>([])
   const [ageGroupList, setAgeGroupList] = useState<any>([])
   const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState({ ...newLaboratory });
 
-  const [diagnosticTestRadiology, setDiagnosticTestRadiology]= useState(
+  const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState(
     { ...newRadiology }
   );
   const [saveLoading, setSaveLoading] = useState(false);
 
-  
+
   // Fetch diagnostics test type Lov response
-   
+
   const testType = useEnumOptions('TestType');
   // Fetch Currency Lov response
 
-  const Currency = useEnumOptions('Currency');
+  const Currency = useEnumCapitalized('Currency');
   // Fetch Gender 
   const genders = useEnumOptions('Gender')
   // Fetch Special Population Lov response
@@ -55,16 +55,16 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   const ageGroups = useEnumOptions('AgeGroupType')
 
   // save Diagnostics Test Laboratory
- 
-  const [addDiagnosticTest]=useCreateLaboratoryMutation();
-  const [updateDiagnosticTest]=useUpdateLaboratoryMutation();
+
+  const [addDiagnosticTest] = useCreateLaboratoryMutation();
+  const [updateDiagnosticTest] = useUpdateLaboratoryMutation();
   // save Diagnostics Test Radiology
 
-  const [addDiagnosticTestRadiology]=useCreateRadiologyMutation();
-  const [updateDiagnosticTestRadiology]=useUpdateRadiologyMutation();
+  const [addDiagnosticTestRadiology] = useCreateRadiologyMutation();
+  const [updateDiagnosticTestRadiology] = useUpdateRadiologyMutation();
   // save Diagnostics Test Pathology
-  const [addPathology]=useCreatePathologyMutation();
-  const [updatePathology]=useUpdatePathologyMutation();
+  const [addPathology] = useCreatePathologyMutation();
+  const [updatePathology] = useUpdatePathologyMutation();
   // Fetch Diagnostic Test Type details
 
 
@@ -102,46 +102,70 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
 
   // handle save laboratory details
 
-const handleSaveLab = async () => {
-  try {
-   
-    setOpen(false);
+  const handleSaveLab = async () => {
+    try {
 
-    if (diagnosticTestLaboratory.id) {
-     
-      await updateDiagnosticTest({
-        id: diagnosticTestLaboratory.id,
-        body: {
-          ...diagnosticTestLaboratory,
+      setOpen(false);
+
+      if (diagnosticTestLaboratory.id) {
+
+        await updateDiagnosticTest({
+          id: diagnosticTestLaboratory.id,
+          body: {
+            ...diagnosticTestLaboratory,
+            testId: diagnosticsTest?.id,
+          },
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Laboratory Details Updated Successfully', sev: 'success' }));
+      } else {
+        console.log('Creating new Laboratory for Test ID:', diagnosticsTest?.id);
+        await addDiagnosticTest({
           testId: diagnosticsTest?.id,
-        },
-      }).unwrap();
+          property: diagnosticTestLaboratory.property,
+          system: diagnosticTestLaboratory.system,
+          scale: diagnosticTestLaboratory.scale,
+          reagents: diagnosticTestLaboratory.reagents,
+          method: diagnosticTestLaboratory.method,
+          testDurationTime: diagnosticTestLaboratory.testDurationTime,
+          timeUnit: diagnosticTestLaboratory.timeUnit,
+          resultUnit: diagnosticTestLaboratory.resultUnit,
+          isProfile: diagnosticTestLaboratory.isProfile ?? false,
+          sampleContainer: diagnosticTestLaboratory.sampleContainer,
+          sampleVolume: diagnosticTestLaboratory.sampleVolume,
+          sampleVolumeUnit: diagnosticTestLaboratory.sampleVolumeUnit,
+          tubeColor: diagnosticTestLaboratory.tubeColor,
+          testDescription: diagnosticTestLaboratory.testDescription,
+          sampleHandling: diagnosticTestLaboratory.sampleHandling,
+          turnaroundTime: diagnosticTestLaboratory.turnaroundTime,
+          turnaroundTimeUnit: diagnosticTestLaboratory.turnaroundTimeUnit,
+          preparationRequirements: diagnosticTestLaboratory.preparationRequirements,
+          medicalIndications: diagnosticTestLaboratory.medicalIndications,
+          associatedRisks: diagnosticTestLaboratory.associatedRisks,
+          testInstructions: diagnosticTestLaboratory.testInstructions,
+          category: diagnosticTestLaboratory.category,
+          tubeType: diagnosticTestLaboratory.tubeType,
+          timing: diagnosticTestLaboratory.timing,
+        }).unwrap();
 
-      dispatch(notify({msg:'Laboratory Details Updated Successfully',sev:'success'}));
-    } else {
-      console.log('Creating new Laboratory for Test ID:', diagnosticsTest?.id);
-      await addDiagnosticTest({
-        ...diagnosticTestLaboratory,
-        testId: diagnosticsTest?.id,
-      }).unwrap();
 
-      dispatch(notify({msg:'Laboratory Details Saved Successfully',sev:'success'}));
+        dispatch(notify({ msg: 'Laboratory Details Saved Successfully', sev: 'success' }));
+      }
+    } catch (error: any) {
+      console.error('Error saving laboratory details:', error);
+      dispatch(
+        notify({
+          msg: 'Failed to save Laboratory Details',
+          sev: 'error',
+        })
+      );
+    } finally {
+
     }
-  } catch (error: any) {
-    console.error('Error saving laboratory details:', error);
-    dispatch(
-      notify({
-        msg: 'Failed to save Laboratory Details',
-        sev: 'error',
-      })
-    );
-  } finally {
-    
-  }
-};
+  };
 
 
-  
+
   // handle save radiology details
   const handleSaveRad = async () => {
     try {
@@ -156,14 +180,14 @@ const handleSaveLab = async () => {
           },
         }).unwrap();
 
-        dispatch(notify({msg:'Radiology Details Updated Successfully',sev:'success'}));
+        dispatch(notify({ msg: 'Radiology Details Updated Successfully', sev: 'success' }));
       }
       else {
         await addDiagnosticTestRadiology({
           ...diagnosticTestRadiology,
           testId: diagnosticsTest?.id,
         }).unwrap();
-        dispatch(notify({msg:'Radiology Details Saved Successfully',sev:'success'}));
+        dispatch(notify({ msg: 'Radiology Details Saved Successfully', sev: 'success' }));
       }
     } catch (error: any) {
       console.error('Error saving radiology details:', error);
@@ -190,14 +214,14 @@ const handleSaveLab = async () => {
             testId: diagnosticsTest?.id,
           },
         }).unwrap();
-        dispatch(notify({msg:'Pathology Details Updated Successfully',sev:'success'}));
+        dispatch(notify({ msg: 'Pathology Details Updated Successfully', sev: 'success' }));
       }
       else {
         await addPathology({
           ...diagnosticTestPathology,
           testId: diagnosticsTest?.id,
         }).unwrap();
-        dispatch(notify({msg:'Pathology Details Saved Successfully',sev:'success'}));
+        dispatch(notify({ msg: 'Pathology Details Saved Successfully', sev: 'success' }));
       }
     } catch (error: any) {
       console.error('Error saving pathology details:', error);
@@ -208,7 +232,7 @@ const handleSaveLab = async () => {
         })
       );
     } finally {
-     
+
     }
   };
 
@@ -244,7 +268,7 @@ const handleSaveLab = async () => {
               <div className="container-of-field-diagnostic">
 
                 <MyInput
-                required
+                  required
                   width="%100%"
                   fieldLabel="Test Type"
                   fieldType="select"
@@ -258,7 +282,7 @@ const handleSaveLab = async () => {
               </div>
               <div className="container-of-field-diagnostic">
                 <MyInput
-                required
+                  required
                   width="100%"
                   fieldName="name"
                   record={diagnosticsTest}
@@ -268,7 +292,7 @@ const handleSaveLab = async () => {
             </div>
             <br />
             <MyInput
-            required
+              required
               width="100%"
               fieldName="internalCode"
               record={diagnosticsTest}
@@ -409,15 +433,15 @@ const handleSaveLab = async () => {
                 />
               </div>
               <div className="container-of-field-diagnostic">
-                {diagnosticsTest.type== 'LABORATORY' && (
-                <MyInput
-                fieldLabel="Is Laboratory Profile"
-                  width="100%"
-                  fieldName="isProfile"
-                  fieldType="checkbox"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                />)}
+                {diagnosticsTest.type == 'LABORATORY' && (
+                  <MyInput
+                    fieldLabel="Is Laboratory Profile"
+                    width="100%"
+                    fieldName="isProfile"
+                    fieldType="checkbox"
+                    record={diagnosticsTest}
+                    setRecord={setDiagnosticsTest}
+                  />)}
               </div>
             </div>
 
@@ -440,7 +464,7 @@ const handleSaveLab = async () => {
           ? handleSaveLab
           : diagnosticsTest?.type == 'RADIOLOGY'
             ? handleSaveRad
-            :diagnosticsTest?.type == 'PATHOLOGY'
+            : diagnosticsTest?.type == 'PATHOLOGY'
               ? handleSavePath
               : () => { }
       }

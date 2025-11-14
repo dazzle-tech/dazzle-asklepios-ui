@@ -2,21 +2,44 @@ import React from 'react';
 import './styles.less';
 import { Divider, Text } from 'rsuite';
 import { useSelector } from 'react-redux';
-const Section = ({ title, content, setOpen, rightLink, openedContent, ...props }) => {
+const Section = ({
+  title,
+  content,
+  setOpen,
+  rightLink,
+  openedContent,
+  disabled = false,
+  ...props
+}) => {
     const mode = useSelector((state: any) => state.ui.mode);
   return (
-    <div className={`medical-dashboard-main-container ${mode === 'light' ? 'light' : 'dark'} ${props?.isContainOnlyTable ? 'just-table' : ''}`}>
+    <div
+      className={`medical-dashboard-main-container ${mode === 'light' ? 'light' : 'dark'} ${
+        props?.isContainOnlyTable ? 'just-table' : ''
+      } ${disabled ? 'section-disabled' : ''}`}
+    >
       <div className="medical-dashboard-container-div">
         <div className="medical-dashboard-header-div">
           <div className="medical-dashboard-title-div">{title}</div>
           <div className="bt-right">
-            <Text onClick={() => setOpen(true)} className="clickable-link">
+            <Text onClick={() => !disabled && setOpen(true)} className="clickable-link">
               {rightLink}
             </Text>
           </div>
         </div>
         <Divider className="divider-line-section-comp" />
-        <div style={{padding: !props?.isContainOnlyTable ? "5px" : "0px"}} className="medical-dashboard-table-div">{content}</div>
+        <div
+          style={{ padding: !props?.isContainOnlyTable ? '5px' : '0px' }}
+          className="medical-dashboard-table-div"
+        >
+          {disabled ? (
+            <div className="section-disabled-overlay">
+              <Text muted>This section is disabled until the active ingredient is saved.</Text>
+            </div>
+          ) : (
+            content
+          )}
+        </div>
       </div>
       {openedContent}
     </div>

@@ -2,9 +2,11 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { ServiceItemCreate, ServiceItemUpdate } from '@/types/model-types-new';
 import { parseLinkHeader } from '@/utils/paginationHelper';
+
 type Id = number | string;
 type WithFacility = { facilityId: Id };
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -18,7 +20,7 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
-// Helper to unify pagination mapping from headers
+// Map paginated responses using headers
 const mapPaged = (response: any[], meta): PagedResult<any> => {
   const headers = meta?.response?.headers;
   return {
@@ -35,77 +37,93 @@ export const serviceService = createApi({
   endpoints: (builder) => ({
 
     // ===== SERVICES (Paginated) =====
+    // GET /api/setup/service  -> all services (no facility filter)
+    getAllServices: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/service',
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/by-facility/{facilityId}
     getServices: builder.query<PagedResult<any>, WithFacility & PagedParams>({
       query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
-        url: '/api/setup/service',
-        params: { facilityId, page, size, sort },
+        url: `/api/setup/service/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
     }),
 
+    // GET /api/setup/service/by-category/{category}
     getServicesByCategory: builder.query<
       PagedResult<any>,
-      WithFacility & { category: string } & PagedParams
+      { category: string } & PagedParams
     >({
-      query: ({ facilityId, category, page, size, sort = 'id,asc' }) => ({
+      query: ({ category, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/service/by-category/${encodeURIComponent(category)}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
     }),
 
+    // GET /api/setup/service/by-code/{code}
     getServicesByCode: builder.query<
       PagedResult<any>,
-      WithFacility & { code: string } & PagedParams
+      { code: string } & PagedParams
     >({
-      query: ({ facilityId, code, page, size, sort = 'id,asc' }) => ({
+      query: ({ code, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/service/by-code/${encodeURIComponent(code)}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
     }),
 
+    // GET /api/setup/service/by-name/{name}
     getServicesByName: builder.query<
       PagedResult<any>,
-      WithFacility & { name: string } & PagedParams
+      { name: string } & PagedParams
     >({
-      query: ({ facilityId, name, page, size, sort = 'id,asc' }) => ({
+      query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/service/by-name/${encodeURIComponent(name)}`,
-        params: { facilityId, page, size, sort },
+        params: { page, size, sort },
       }),
       transformResponse: mapPaged,
       providesTags: ['Service'],
     }),
 
-    // ===== SERVICES (Mutations - unchanged) =====
+    // ===== SERVICES (Mutations) =====
+    // POST /api/setup/service?facilityId=...
     addService: builder.mutation<any, WithFacility & any>({
       query: ({ facilityId, ...body }) => ({
         url: '/api/setup/service',
         method: 'POST',
         params: { facilityId },
-        body: { ...body, facilityId },
+        body, // VM only; facilityId stays in query param
       }),
       invalidatesTags: ['Service'],
     }),
 
+    // PUT /api/setup/service/{id}?facilityId=...
     updateService: builder.mutation<any, WithFacility & { id: Id } & any>({
       query: ({ facilityId, id, ...body }) => ({
         url: `/api/setup/service/${id}`,
         method: 'PUT',
         params: { facilityId },
-        body: { id, ...body, facilityId },
+        body: { id, ...body }, 
       }),
       invalidatesTags: ['Service'],
     }),
 
-    toggleServiceIsActive: builder.mutation<any, { id: Id; facilityId: Id }>({
-      query: ({ id, facilityId }) => ({
+    // PATCH /api/setup/service/{id}/toggle-active
+    toggleServiceIsActive: builder.mutation<any, { id: Id }>({
+      query: ({ id }) => ({
         url: `/api/setup/service/${id}/toggle-active`,
         method: 'PATCH',
-        params: { facilityId },
       }),
       invalidatesTags: ['Service'],
     }),
@@ -126,6 +144,7 @@ export const serviceService = createApi({
           : [{ type: 'ServiceItems', id: 'LIST' }],
     }),
 
+    // GET /api/setup/service-items/by-service/{serviceId}
     getServiceItemsByService: builder.query<PagedResult<any>, { serviceId: Id } & PagedParams>({
       query: ({ serviceId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/service-items/by-service/${serviceId}`,
@@ -196,6 +215,7 @@ export const serviceService = createApi({
       ],
     }),
 
+    // Helpers
     getServiceItemSourcesByFacility: builder.query<any[], { type: string; facilityId: Id }>({
       query: ({ type, facilityId }) => ({
         url: '/api/setup/service-items/sources/by-facility',
@@ -210,7 +230,9 @@ export const serviceService = createApi({
 
 export const {
   // SERVICES
+  useGetAllServicesQuery,
   useGetServicesQuery,
+  useLazyGetServicesQuery, 
   useGetServicesByCategoryQuery,
   useLazyGetServicesByCategoryQuery,
   useGetServicesByCodeQuery,
@@ -232,3 +254,4 @@ export const {
   useGetServiceItemSourcesByFacilityQuery,
   useLazyGetServiceItemSourcesByFacilityQuery,
 } = serviceService;
+
