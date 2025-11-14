@@ -48,6 +48,7 @@ import {potintialService} from '@/services/potintialDuplicateService';
 import { allergensService } from './services/setup/allergensService';
 import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
+import { cdtCodeService } from './services/setup/cdtCodeService';
 import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
 import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
 import { loincCodeService } from './services/setup/loincCodeService';
@@ -187,7 +188,8 @@ export const store = configureStore({
     [dentalActionService.reducerPath]: dentalActionService.reducer,
     [diagnosticTestNormalRangeService.reducerPath]:diagnosticTestNormalRangeService.reducer,
 
-
+    //cdt code
+    [cdtCodeService.reducerPath]: cdtCodeService.reducer,
 
     //vaccine
     [vaccineService.reducerPath]: vaccineService.reducer,
@@ -248,6 +250,7 @@ export const store = configureStore({
       allergensService.middleware,
       potintialService.middleware,
       diagnosticTestService.middleware,
+      cdtCodeService.middleware,
       loincCodeService.middleware,
       cptCodeService.middleware,
       laboratoryService.middleware,
