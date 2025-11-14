@@ -105,7 +105,7 @@ import InventoryTransferApproval from './pages/inventory-transaction/inventory-t
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import Lab from './pages/lab-module';
 import ListOfRequisition from './pages/list-of-requisition';
-import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup/ActiveIngredientsSetup';
+import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
 import GenericMedications from './pages/medications/generic-medications';
 import PrescriptionInstructions from './pages/medications/prescription_instructions';
 import Operation from './pages/operation-module';
@@ -145,7 +145,7 @@ import Facilities from './pages/setup/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
 import Lov from './pages/setup/lov-setup';
-import MedicationMatrix from './pages/setup/med-matrix-setup';
+import MedicationMatrix from './pages/setup/med-matrix-setup-new';
 import MedicationSchedule from './pages/setup/medication-schedule-setup';
 import Metadata from './pages/setup/metadata-view';
 import Modules from './pages/setup/modules-setup';
