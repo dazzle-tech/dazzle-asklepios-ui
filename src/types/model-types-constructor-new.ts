@@ -462,3 +462,13 @@ export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+export const newVisitDuration: modelTypes.VisitDuration = {
+  id: undefined,
+  visitType: null,
+  durationInMinutes: 0,
+  resourceSpecific: false,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

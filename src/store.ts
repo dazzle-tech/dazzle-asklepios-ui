@@ -67,7 +67,7 @@ import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
-
+import { visitDurationService } from './services/setup/visitDurationService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -202,6 +202,9 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
+
+    // visit duration
+    [visitDurationService.reducerPath]: visitDurationService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -266,6 +269,7 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      visitDurationService.middleware,
     ])
 });
 
