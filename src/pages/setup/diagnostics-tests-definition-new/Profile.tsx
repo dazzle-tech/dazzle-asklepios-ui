@@ -38,7 +38,6 @@ import { newDiagnosticTestNormalRange, newDiagnosticTestProfile, newLaboratory, 
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const dispatch = useAppDispatch();
-  const [selectedLOVs, setSelectedLOVs] = useState([]);
   const [diagnosticsTestProfile, setDiagnosticsTestProfile] = useState<DiagnosticTestProfile>({
     ...newDiagnosticTestProfile
   });
@@ -53,7 +52,6 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
 
     const [createDiagnosticTestNormalRange] = useCreateDiagnosticTestNormalRangeMutation();
     const [updateDiagnosticTestNormalRange] = useUpdateDiagnosticTestNormalRangeMutation();
-    const [deleteDiagnosticTestNormalRange] = useDeleteDiagnosticTestNormalRangeMutation();
     
     const [laboratory,setLaboratory]=useState({...newLaboratory});
 
@@ -96,10 +94,7 @@ const {
   const [addTestProfile]=useCreateDiagnosticTestProfileMutation();
   const [updateTestProfile]=useUpdateDiagnosticTestProfileMutation();
   const [deleteTestProfile]=useDeleteDiagnosticTestProfileMutation();
-  // remove diagnostics Test Profile
-  const [removeDiagnosticsTestProfile] = useRemoveDiagnosticsTestProfileMutation();
-   // save diagnostics test normal range
-  const [saveDiagnosticsTestNormalRange] = useSaveDiagnosticsTestNormalRangeMutation();
+
   // class name for selected row 
   const isSelected = rowData => {
     if (rowData && diagnosticsTestProfile && rowData.id === diagnosticsTestProfile.id) {
@@ -144,7 +139,7 @@ const {
   const tableColumns = [
     {
       key: 'name',
-      title: <Translate>Test Name</Translate>,
+      title: <Translate>Name</Translate>,
       render: rowData => <span>{rowData.name}</span>
     },
     {
@@ -230,15 +225,16 @@ const handleSave = async () => {
 
       dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       await refetchDiagnosticsTestProfile();
+     setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
     } else {
       await addTestProfile({
         ...diagnosticsTestProfile,
         testId: diagnosticsTest.id,
       }).unwrap();
-
+ 
       dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
       await refetchDiagnosticsTestProfile();
-      setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
+      setDiagnosticsTestProfile({ ...newDiagnosticTestProfile});
     }
   } 
   catch (error: any) {
