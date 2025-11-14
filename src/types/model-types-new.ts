@@ -350,7 +350,7 @@ export interface AgeGroup {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-  facilityId?: number;          // FK
+  facilityId?: number;       
 }
 
 export interface Procedure {
@@ -368,7 +368,7 @@ export interface Procedure {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-  facilityId?: number;          // FK
+  facilityId?: number;        
 }
 export interface DiagnosticTest {
   id?: number;
