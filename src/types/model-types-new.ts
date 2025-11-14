@@ -522,3 +522,31 @@ export interface VaccineBrand {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+export interface VaccineDose {
+  id?: number;
+  vaccineId: number;           
+  doseNumber: string;      
+  fromAge?: number | null;      
+  toAge?: number | null;
+  fromAgeUnit?: string | null;
+  toAgeUnit?: string | null;
+  isBooster?: boolean;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+export interface VaccineDosesInterval {
+  id?: number;
+  vaccineId: number;
+  fromDoseId: number;
+  toDoseId: number;
+  intervalBetweenDoses: number;
+  unit: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}

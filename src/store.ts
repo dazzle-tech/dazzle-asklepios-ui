@@ -2,7 +2,6 @@ import { configureStore } from '@reduxjs/toolkit';
 import uiSlice from './reducers/uiSlice';
 import { uiService } from '@/services/uiService';
 import { authService } from '@/services/authService';
-import authSlice from '@/reducers/authSlice';
 import { authServiceApi } from '@/services/authServiceApi';
 import { patientService } from '@/services/patientService';
 import patientSlice from '@/reducers/patientSlice';
@@ -55,13 +54,13 @@ import { laboratoryService } from './services/setup/diagnosticTest/laboratorySer
 import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
-import { vaccineService } from './services/vaccine/vaccineService';
-import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
 import { vaccineService } from './services/vaccine/vaccineService';
 import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
+import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
+import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesIntervalService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -174,10 +173,6 @@ export const store = configureStore({
 
     [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
 
-    //vaccine
-    [vaccineService.reducerPath]: vaccineService.reducer,
-    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
-
     // procedure
     // procedure setup
     [procedureSetupService.reducerPath]: procedureSetupService.reducer,
@@ -189,6 +184,8 @@ export const store = configureStore({
     //vaccine
     [vaccineService.reducerPath]: vaccineService.reducer,
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
+    [vaccineDosesService.reducerPath]: vaccineDosesService.reducer,
+    [vaccineDosesIntervalService.reducerPath]: vaccineDosesIntervalService.reducer,
 
   },
   // @ts-ignore
@@ -250,6 +247,8 @@ export const store = configureStore({
       procedurePriceListService.middleware,
       vaccineService.middleware,
       vaccineBrandsService.middleware,
+      vaccineDosesService.middleware,
+      vaccineDosesIntervalService.middleware,
 
     ])
 });
