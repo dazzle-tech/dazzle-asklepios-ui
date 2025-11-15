@@ -25,7 +25,7 @@ import { useGetAllDentalActionsQuery,
          useUpdateDentalActionMutation, 
          useToggleDiagnosticTestActiveMutation,
          useGetDentalActionsByTypeQuery,
-         useGetDentalActionsByDescriptionQuery} from '@/services/setup/dentalActionService';
+         useGetDentalActionsByDescriptionQuery} from '@/services/setup/dental-action/dentalActionService';
 import { formatEnumString } from '@/utils';
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useEnumOptions } from '@/services/enumsApi';
@@ -134,10 +134,7 @@ const handlePageChange = (event, newPage) => {
 
         const basePayload: any = {
           description: dentalAction.description?.trim(),
-          type:
-            typeof dentalAction.type === 'object'
-              ? dentalAction.type.value
-              : dentalAction.type,
+          type: dentalAction?.type,
           imageName: dentalAction.imageName || null,
           isActive: dentalAction.isActive ?? true,
         };
@@ -209,11 +206,11 @@ const handlePageChange = (event, newPage) => {
         size={24}
         fill="var(--primary-gray)"
         style={{
-          cursor: !rowData.id || rowData.type !== 'treatment' ? 'not-allowed' : 'pointer',
+          cursor: !rowData.id || rowData.type !== 'TREATMENT' ? 'not-allowed' : 'pointer',
           color: 'var(--primary-gray)'
         }}
         onClick={() => {
-          if (!(!rowData.id || rowData.type !== 'treatment')) setProceduresOpen(true);
+          if (!(!rowData.id || rowData.type !== 'TREATMENT')) setProceduresOpen(true);
         }}
       />
       <MdModeEdit
