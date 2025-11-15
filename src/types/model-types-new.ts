@@ -685,11 +685,9 @@ export interface prescriptionInstructions {
   frequency: string;
 }
 
-
 export interface CdtDentalAction {
   id?: number;
   dentalActionId: number;
-
   cdtId: number;
 };
 
@@ -705,7 +703,6 @@ export interface ActiveIngredientIndication {
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;}
-
 
   export interface BrandMedicationActiveIngredient{
     id:number;
@@ -747,3 +744,24 @@ export type CatalogAddTestsVM = {
   testIds: number[] ;
 };
 
+export interface uomGroup {
+  id?: number;
+  description: string;              
+  name: string;
+  code: string;
+}
+
+export interface UOMGroupUnit {
+  id?: number;
+  uom: string;              
+  uomOrder: number;
+  // uom_group_id: number;
+}
+
+export interface UOMGroupRelation {
+  id?: number;            
+  relation: number;
+  // uom_group_id: number;  
+  uom_unit_from_id: number;
+  uom_unit_to_id: number;
+}

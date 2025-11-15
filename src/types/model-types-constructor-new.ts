@@ -64,7 +64,6 @@ export const newFacility: modelTypes.Facility = {
   ruleId:null,
 } ;
 
-
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
   code: '',
@@ -169,8 +168,7 @@ export const newService: modelTypes.Service = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined,
-
+  facilityId: undefined, 
 };
 
 export const newServiceItem: modelTypes.ServiceItem = {
@@ -184,6 +182,7 @@ export const newServiceItem: modelTypes.ServiceItem = {
   lastModifiedDate: null,
   isActive: true,
 };
+
 export const newLanguage: modelTypes.Language = {
   id: undefined,
   langKey: undefined,
@@ -323,7 +322,6 @@ export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   testId: undefined,
   name: '',
   resultUnit: ''};
-
 
 
 export const newPathology: modelTypes.Pathology = {
@@ -511,6 +509,7 @@ export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndicatio
   unit: '',
   isOffLabel: false
 };
+
 export const newVaccine: modelTypes.Vaccine = {
   id: undefined,
   name: '',
@@ -619,3 +618,24 @@ export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
   testIds: []
 };
 
+export const newUOMGroup : modelTypes.UOMGroup = {
+  id: undefined,
+  description: '',         
+  name: '',
+  code: ''
+};
+
+export const newUOMGroupUnit: modelTypes.UOMGroupUnit = {
+  id: undefined,
+  uom: '',             
+  uomOrder: 0,
+  // uom_group_id: undefined
+};
+
+export const newUOMGroupRelation: modelTypes.UOMGroupRelation = {
+  id: undefined,          
+  relation: 0,
+  // uom_group_id: undefined,
+  uom_unit_from_id: undefined,
+  uom_unit_to_id: undefined
+};
