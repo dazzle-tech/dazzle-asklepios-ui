@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import MyTable from "@/components/MyTable";
@@ -19,6 +19,7 @@ import { Form } from "rsuite";
 import MyInput from "@/components/MyInput";
 import { useEnumOptions } from "@/services/enumsApi";
 import { formatEnumString } from "@/utils";
+import CodesExcelCsvImportModal from "@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal";
 
 const CPTSetup: React.FC = () => {
   const dispatch = useDispatch();
@@ -56,7 +57,7 @@ const CPTSetup: React.FC = () => {
   const [fetchByCode] = useLazyGetCptByCodeQuery();
   const [fetchByDescription] = useLazyGetCptByDescriptionQuery();
 
-  // Import modal
+  // Import modal (conflicts)
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null);
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
@@ -207,23 +208,9 @@ const CPTSetup: React.FC = () => {
     }
   };
 
-  // Template download
-  const handleDownloadTemplate = () => {
-    const link = document.createElement("a");
-    link.href = "/templates/CPT_Code.xlsx";
-    link.download = "CPT_Code.xlsx";
-    link.click();
-  };
-
-  // Import
   const [importCpt, { isLoading: isImporting }] = useImportCptMutation();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const handleClickUpload = () => fileInputRef.current?.click();
 
-  // Upload + reflect in filtered
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImportFile = async (file: File) => {
     try {
       const res: ImportResult = await importCpt({ file }).unwrap();
 
@@ -232,7 +219,12 @@ const CPTSetup: React.FC = () => {
         setConflicts(res.conflicts);
         setConflictsPage(0);
         setConflictModalOpen(true);
-        dispatch(notify({ msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`, sev: "warning" }));
+        dispatch(
+          notify({
+            msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
+            sev: "warning",
+          })
+        );
       } else {
         dispatch(
           notify({
@@ -248,7 +240,7 @@ const CPTSetup: React.FC = () => {
         if (isFiltered) {
           const sort = nextFilteredSort(filterPagination.sort);
           setFilterPagination((prev) => ({ ...prev, page: 0, sort }));
-          setFilterTs(Date.now()); // cache-buster
+          setFilterTs(Date.now());
           await handleFilterChange(
             recordOfFilter.filter,
             recordOfFilter.value,
@@ -263,9 +255,12 @@ const CPTSetup: React.FC = () => {
         }
       }
     } catch (error: any) {
-      dispatch(notify({ msg: error?.data?.detail || "Error importing CPT file", sev: "error" }));
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      dispatch(
+        notify({
+          msg: error?.data?.detail || "Error importing CPT file",
+          sev: "error",
+        })
+      );
     }
   };
 
@@ -292,7 +287,7 @@ const CPTSetup: React.FC = () => {
       if (isFiltered) {
         const sort = nextFilteredSort(filterPagination.sort);
         setFilterPagination((prev) => ({ ...prev, page: 0, sort }));
-        setFilterTs(Date.now()); // cache-buster
+        setFilterTs(Date.now());
         await handleFilterChange(
           recordOfFilter.filter,
           recordOfFilter.value,
@@ -306,11 +301,14 @@ const CPTSetup: React.FC = () => {
         refetch();
       }
     } catch (error: any) {
-      dispatch(notify({ msg: error?.data?.detail || "Overwrite failed", sev: "error" }));
+      dispatch(
+        notify({
+          msg: error?.data?.detail || "Overwrite failed",
+          sev: "error",
+        })
+      );
     }
   };
-
-  const handleCloseModal = () => setConflictModalOpen(false);
 
   // Filter fields
   const filterFields = [
@@ -329,7 +327,7 @@ const CPTSetup: React.FC = () => {
     ts?: number
   ) => {
     if (!value) return undefined;
-    const common = { page, size, sort, ts: ts ?? filterTs }; // ts is only for cache-busting
+    const common = { page, size, sort, ts: ts ?? filterTs };
     if (fieldName === "category") {
       return await fetchByCategory({
         category: String(value).toUpperCase(),
@@ -381,7 +379,7 @@ const CPTSetup: React.FC = () => {
     if (!recordOfFilter.value && isFiltered) {
       resetToUnfiltered();
     }
-  }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [recordOfFilter.value, isFiltered]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filters UI
   const filters = () => (
@@ -438,7 +436,7 @@ const CPTSetup: React.FC = () => {
           if (!recordOfFilter.value) {
             resetToUnfiltered();
           } else {
-            setFilterTs(Date.now()); // cache-buster on click
+            setFilterTs(Date.now());
             handleFilterChange(
               recordOfFilter.filter,
               recordOfFilter.value,
@@ -458,7 +456,11 @@ const CPTSetup: React.FC = () => {
   // Table columns
   const columns = [
     { key: "code", title: "Code", render: (row: any) => row?.code ?? "" },
-    { key: "category", title: "Category", render: (row: any) => (row?.category ? formatEnumString(row?.category) : "") },
+    {
+      key: "category",
+      title: "Category",
+      render: (row: any) => (row?.category ? formatEnumString(row?.category) : ""),
+    },
     { key: "description", title: "Description", render: (row: any) => row?.description ?? "" },
     {
       key: "lastUpdated",
@@ -474,27 +476,41 @@ const CPTSetup: React.FC = () => {
   // Conflict columns
   const conflictColumns = [
     { key: "code", title: "Code", render: (row: Conflict) => row.code },
-    { key: "incomingDescription", title: "Incoming Description", render: (row: Conflict) => row.incomingDescription },
-    { key: "incomingCategory", title: "Incoming Category", render: (row: Conflict) => (row.incomingCategory ? formatEnumString(row.incomingCategory) : "") },
-    { key: "existingDescription", title: "Existing Description", render: (row: Conflict) => row.existingDescription },
-    { key: "existingCategory", title: "Existing Category", render: (row: Conflict) => (row.existingCategory ? formatEnumString(row.existingCategory) : "") },
+    {
+      key: "incomingDescription",
+      title: "Incoming Description",
+      render: (row: Conflict) => row.incomingDescription,
+    },
+    {
+      key: "incomingCategory",
+      title: "Incoming Category",
+      render: (row: Conflict) =>
+        row.incomingCategory ? formatEnumString(row.incomingCategory) : "",
+    },
+    {
+      key: "existingDescription",
+      title: "Existing Description",
+      render: (row: Conflict) => row.existingDescription,
+    },
+    {
+      key: "existingCategory",
+      title: "Existing Category",
+      render: (row: Conflict) =>
+        row.existingCategory ? formatEnumString(row.existingCategory) : "",
+    },
   ];
 
   // Paged conflicts
-  const pagedConflicts = conflicts
-    ? conflicts.slice(conflictsPage * conflictsPageSize, conflictsPage * conflictsPageSize + conflictsPageSize)
-    : [];
+  const pagedConflicts =
+    conflicts?.slice(
+      conflictsPage * conflictsPageSize,
+      conflictsPage * conflictsPageSize + conflictsPageSize
+    ) || [];
+
+  const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
 
   return (
     <>
-      <input
-        type="file"
-        accept=".csv"
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={handleFileUpload}
-      />
-
       <MyTable
         data={tableData}
         columns={columns}
@@ -512,11 +528,8 @@ const CPTSetup: React.FC = () => {
             <div>{filters()}</div>
 
             <div style={{ display: "flex", gap: 10 }}>
-              <MyButton appearance="ghost" onClick={handleDownloadTemplate}>
-                Download Template
-              </MyButton>
-              <MyButton onClick={handleClickUpload} loading={isImporting}>
-                Upload CPT CSV
+              <MyButton onClick={() => setOpenCodesImportModal(true)}>
+                Import CPT (Excel / CSV)
               </MyButton>
             </div>
           </div>
@@ -528,7 +541,14 @@ const CPTSetup: React.FC = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-
+      <CodesExcelCsvImportModal
+        open={openCodesImportModal}
+        setOpen={setOpenCodesImportModal}
+        title="CPT Codes Import"
+        excelTemplateUrl="/templates/CPT_Code.xlsx"
+        excelTemplateFileName="CPT_Code.xlsx"
+        onImport={handleImportFile}
+      />
       <MyModal
         open={conflictModalOpen}
         setOpen={setConflictModalOpen}

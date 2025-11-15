@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import MyTable from "@/components/MyTable";
@@ -23,6 +23,7 @@ import {
   type CdtImportResult,
   type CdtConflict,
 } from "@/services/setup/cdtCodeService";
+import CodesExcelCsvImportModal from "@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal";
 
 const CDTSetup: React.FC = () => {
   const dispatch = useDispatch();
@@ -343,21 +344,9 @@ const CDTSetup: React.FC = () => {
     </Form>
   );
 
-  // ----------------------------------------
-  // Template download + CSV upload/import
-  // ----------------------------------------
-  const handleDownloadTemplate = () => {
-    const link = document.createElement("a");
-    link.href = "/templates/CDT_Codes.xlsx";
-    link.download = "CDT_Codes.xlsx";
-    link.click();
-  };
-
+ 
   const [importCdt, { isLoading: isImporting }] = useImportCdtMutation();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const handleClickUpload = () => fileInputRef.current?.click();
 
-  // Import conflict handling state
   const [conflicts, setConflicts] = useState<CdtConflict[] | null>(null);
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
@@ -367,6 +356,58 @@ const CDTSetup: React.FC = () => {
   const pagedConflicts = conflicts
     ? conflicts.slice(conflictsPage * conflictsPageSize, conflictsPage * conflictsPageSize + conflictsPageSize)
     : [];
+
+  const handleImportFile = async (file: File) => {
+    const res: CdtImportResult = await importCdt({ file }).unwrap();
+
+    if (res.conflicts?.length) {
+      setLastUploadedFile(file);
+      setConflicts(res.conflicts);
+      setConflictsPage(0);
+      setConflictModalOpen(true);
+      dispatch(
+        notify({
+          msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
+          sev: "warning",
+        })
+      );
+    } else {
+      dispatch(
+        notify({
+          msg: `Imported successfully. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
+          sev: "success",
+        })
+      );
+      await refreshAfterMutation();
+    }
+  };
+
+  const handleReplaceAll = async () => {
+    if (!lastUploadedFile) return;
+
+    try {
+      const res: CdtImportResult = await importCdt({ file: lastUploadedFile, overwrite: true }).unwrap();
+      setConflictModalOpen(false);
+      setConflicts(null);
+      setLastUploadedFile(null);
+
+      dispatch(
+        notify({
+          msg: `Re-imported with overwrite. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
+          sev: "success",
+        })
+      );
+      await refreshAfterMutation();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.data?.detail || "Overwrite failed",
+          sev: "error",
+        })
+      );
+    }
+  };
+  const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
 
   // ----------------------------------------
   // Services picker state (link Services to CDT rows)
@@ -492,81 +533,10 @@ const CDTSetup: React.FC = () => {
   ];
 
   // ----------------------------------------
-  // File upload / import CDT
-  // ----------------------------------------
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const res: CdtImportResult = await importCdt({ file }).unwrap();
-
-      if (res.conflicts?.length) {
-        setLastUploadedFile(file);
-        setConflicts(res.conflicts);
-        setConflictsPage(0);
-        setConflictModalOpen(true);
-        dispatch(
-          notify({
-            msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
-            sev: "warning",
-          })
-        );
-      } else {
-        dispatch(
-          notify({
-            msg: `Imported successfully. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
-            sev: "success",
-          })
-        );
-        await refreshAfterMutation();
-      }
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.data?.detail || "Error importing CDT file",
-          sev: "error",
-        })
-      );
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const handleReplaceAll = async () => {
-    if (!lastUploadedFile) return;
-
-    try {
-      const res: CdtImportResult = await importCdt({ file: lastUploadedFile, overwrite: true }).unwrap();
-      setConflictModalOpen(false);
-      setConflicts(null);
-      setLastUploadedFile(null);
-
-      dispatch(
-        notify({
-          msg: `Re-imported with overwrite. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
-          sev: "success",
-        })
-      );
-      await refreshAfterMutation();
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.data?.detail || "Overwrite failed",
-          sev: "error",
-        })
-      );
-    }
-  };
-
-  // ----------------------------------------
   // Render
   // ----------------------------------------
   return (
     <>
-      {/* Hidden file input for CSV uploads */}
-      <input type="file" accept=".csv" ref={fileInputRef} style={{ display: "none" }} onChange={handleFileUpload} />
-
       {/* Main CDT table */}
       <MyTable
         data={tableData}
@@ -584,11 +554,8 @@ const CDTSetup: React.FC = () => {
           >
             <div>{filters()}</div>
             <div style={{ display: "flex", gap: 10 }}>
-              <MyButton appearance="ghost" onClick={handleDownloadTemplate}>
-                Download Template
-              </MyButton>
-              <MyButton onClick={handleClickUpload} loading={isImporting}>
-                Upload CDT CSV
+              <MyButton onClick={() => setOpenCodesImportModal(true)}>
+                Import Codes (Excel / CSV)
               </MyButton>
             </div>
           </div>
@@ -601,6 +568,14 @@ const CDTSetup: React.FC = () => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
+      <CodesExcelCsvImportModal
+        open={openCodesImportModal}
+        setOpen={setOpenCodesImportModal}
+        title="CDT Codes Import"
+        excelTemplateUrl="/templates/CDT_Codes.xlsx"
+        excelTemplateFileName="CDT_Codes.xlsx"
+        onImport={handleImportFile}
+      />
       {/* Import conflicts modal */}
       <MyModal
         open={conflictModalOpen}
