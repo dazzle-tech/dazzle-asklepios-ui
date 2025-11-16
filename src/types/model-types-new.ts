@@ -594,3 +594,10 @@ export interface DiagnosticTestCoding {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+
+
+export interface CdtDentalAction {
+  id?: number;
+  dentalActionId: number;
+  cdtCode: string;
+}

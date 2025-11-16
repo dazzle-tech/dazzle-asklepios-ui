@@ -472,3 +472,7 @@ export const newDiagnosticTestCoding: modelTypes.DiagnosticTestCoding = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+export const newCdtDentalAction: modelTypes.CdtDentalAction = {
+  dentalActionId: 0,
+  cdtCode: "",
+};

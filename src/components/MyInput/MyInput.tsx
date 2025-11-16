@@ -48,24 +48,26 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check';
+  | 'text'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
   leftAddon?: React.ReactNode | null;
   leftAddonwidth?: number | 'auto' | null;
   setRecord?: (r: any) => void;
+  searchKeyWard: any;
+  setSearchKeyWard?: (r: any) => void;
   vr?: any;
   rows?: number;
   showLabel?: boolean;
@@ -143,33 +145,33 @@ const MyInput = ({
 
 
   useEffect(() => {
-  const handleScroll = event => {
-    const path = event.composedPath ? event.composedPath() : [];
+    const handleScroll = event => {
+      const path = event.composedPath ? event.composedPath() : [];
 
-    const menuClassList = [
-      'rs-picker-popup',
-      'rs-picker-select-menu',
-      'rs-picker-menu',
-      'rs-virtual-list',
-      'rs-virtual-list-scrollbar',
-      'rs-picker-tag-menu'
-    ];
+      const menuClassList = [
+        'rs-picker-popup',
+        'rs-picker-select-menu',
+        'rs-picker-menu',
+        'rs-virtual-list',
+        'rs-virtual-list-scrollbar',
+        'rs-picker-tag-menu'
+      ];
 
-    if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
-      return; 
-    }
+      if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
+        return;
+      }
 
-    setIsSelectOpen(false);
-    setIsDateOpen(false);
-    setIsDateTimeOpen(false);
-    setIsTimeOpen(false);
-    setIsMultyPickerOpen(false);
-    setIsCheckPickerOpen(false);
-  };
+      setIsSelectOpen(false);
+      setIsDateOpen(false);
+      setIsDateTimeOpen(false);
+      setIsTimeOpen(false);
+      setIsMultyPickerOpen(false);
+      setIsCheckPickerOpen(false);
+    };
 
-  window.addEventListener('scroll', handleScroll, true);
-  return () => window.removeEventListener('scroll', handleScroll, true);
-}, []);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, []);
 
 
   useEffect(() => {
@@ -425,16 +427,22 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={SelectPicker}
+            searchKeyWard={props?.searchKeyWard}
+            // setSearchKeyWard={props?.setSearchKeyWard}
+            onSearch={(searchText) => {
+              console.log("SEARCH:", searchText);
+              props.setSearchKeyWard?.(searchText);
+            }}
             data={[
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                    {
-                      [valueKey]: '__load_more__',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
+                  {
+                    [valueKey]: '__load_more__',
+                    [labelKey]: 'Load more...',
+                    isLoadMore: true
+                  }
+                ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -752,8 +760,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
+                  ? 'orange'
+                  : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>

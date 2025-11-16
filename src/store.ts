@@ -60,7 +60,7 @@ import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestSer
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
-import { dentalActionService } from '@/services/setup/dentalActionService';
+import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
 import { vaccineService } from './services/vaccine/vaccineService';
 import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
@@ -69,6 +69,7 @@ import { procedureCodingService } from './services/setup/procedure/procedureCodi
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
 
 import {diagnosticTestCodingService} from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
+import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -204,7 +205,8 @@ export const store = configureStore({
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
 
-    [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer
+    [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -269,7 +271,8 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
-      diagnosticTestCodingService.middleware
+      diagnosticTestCodingService.middleware,
+      CdtDentalActionService.middleware
     ])
 });
 
