@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useDispatch } from "react-redux";
-import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import MyTable from "@/components/MyTable";
-import MyModal from "@/components/MyModal/MyModal";
-import MyButton from "@/components/MyButton/MyButton";
-import MyInput from "@/components/MyInput";
-import { notify } from "@/utils/uiReducerActions";
-import { extractPaginationFromLink } from "@/utils/paginationHelper";
-import { formatEnumString } from "@/utils";
-import { Form, IconButton, Tooltip, Whisper } from "rsuite";
-import { useEnumOptions } from "@/services/enumsApi";
-import { MdLink, MdVisibility } from "react-icons/md";
-import LinkServices, { ServiceLite } from "./LinkServices";
-import SelectedServicesPreview from "./SelectedServicesPreview";
-import { useGetServicesQuery } from "@/services/setup/serviceService";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import { notify } from '@/utils/uiReducerActions';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { formatEnumString } from '@/utils';
+import { Form, IconButton, Tooltip, Whisper } from 'rsuite';
+import { useEnumOptions } from '@/services/enumsApi';
+import { MdLink, MdVisibility } from 'react-icons/md';
+import LinkServices, { ServiceLite } from './LinkServices';
+import SelectedServicesPreview from './SelectedServicesPreview';
+import { useGetServicesQuery } from '@/services/setup/serviceService';
 import {
   useGetAllCdtQuery,
   useImportCdtMutation,
@@ -21,15 +21,15 @@ import {
   useLazyGetCdtByCodeQuery,
   useLazyGetCdtByDescriptionQuery,
   type CdtImportResult,
-  type CdtConflict,
-} from "@/services/setup/cdtCodeService";
-import CodesExcelCsvImportModal from "@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal";
+  type CdtConflict
+} from '@/services/setup/cdtCodeService';
+import CodesExcelCsvImportModal from '@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal';
 
 const CDTSetup: React.FC = () => {
   const dispatch = useDispatch();
 
   // Tenant / facility context (from localStorage)
-  const tenant = JSON.parse(localStorage.getItem("tenant") || "null");
+  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
   const facilityId: number | undefined = selectedFacility?.id;
 
@@ -39,8 +39,8 @@ const CDTSetup: React.FC = () => {
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: "id,asc",
-    timestamp: Date.now(),
+    sort: 'id,asc',
+    timestamp: Date.now()
   });
 
   // ----------------------------------------
@@ -49,15 +49,15 @@ const CDTSetup: React.FC = () => {
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
     size: 15,
-    sort: "id,asc",
+    sort: 'id,asc'
   });
 
   // ----------------------------------------
   // Filter/search state
   // ----------------------------------------
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: "",
-    value: "",
+    filter: '',
+    value: ''
   });
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -70,7 +70,7 @@ const CDTSetup: React.FC = () => {
   const [fetchByDescription] = useLazyGetCdtByDescriptionQuery();
 
   // Enum options for CDT Class
-  const cdtClassOptions = useEnumOptions("CdtClass");
+  const cdtClassOptions = useEnumOptions('CdtClass');
 
   // Main list query (unfiltered)
   const { data: cdtListResponse, isFetching, refetch } = useGetAllCdtQuery(paginationParams);
@@ -97,11 +97,11 @@ const CDTSetup: React.FC = () => {
   // Page shell (title)
   // ----------------------------------------
   useEffect(() => {
-    dispatch(setPageCode("CDT"));
-    dispatch(setDivContent("CDT Procedures List"));
+    dispatch(setPageCode('CDT'));
+    dispatch(setDivContent('CDT Procedures List'));
     return () => {
-      dispatch(setPageCode(""));
-      dispatch(setDivContent(""));
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
     };
   }, [dispatch]);
 
@@ -112,14 +112,14 @@ const CDTSetup: React.FC = () => {
     try {
       let resp: { data: any[]; totalCount: number; links?: any } | undefined;
 
-      if (recordOfFilter.filter === "class") {
-        const classValue = String(recordOfFilter.value ?? "").toUpperCase();
+      if (recordOfFilter.filter === 'class') {
+        const classValue = String(recordOfFilter.value ?? '').toUpperCase();
         resp = await fetchByClass({ cdtClass: classValue, page, size, sort }).unwrap();
-      } else if (recordOfFilter.filter === "code") {
-        const codeValue = String(recordOfFilter.value ?? "");
+      } else if (recordOfFilter.filter === 'code') {
+        const codeValue = String(recordOfFilter.value ?? '');
         resp = await fetchByCode({ code: codeValue, page, size, sort }).unwrap();
-      } else if (recordOfFilter.filter === "description") {
-        const descValue = String(recordOfFilter.value ?? "");
+      } else if (recordOfFilter.filter === 'description') {
+        const descValue = String(recordOfFilter.value ?? '');
         resp = await fetchByDescription({ description: descValue, page, size, sort }).unwrap();
       }
 
@@ -132,7 +132,7 @@ const CDTSetup: React.FC = () => {
       setFilteredData([]);
       setFilteredTotal(0);
       setFilteredLinks(undefined);
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       refetch();
     }
   };
@@ -155,11 +155,11 @@ const CDTSetup: React.FC = () => {
 
     if (targetLink) {
       const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams((prev) => ({
+      setPaginationParams(prev => ({
         ...prev,
         page,
         size,
-        timestamp: Date.now(),
+        timestamp: Date.now()
       }));
     }
   };
@@ -168,14 +168,14 @@ const CDTSetup: React.FC = () => {
     const newSize = parseInt(event.target.value, 10);
 
     if (isFiltered) {
-      setFilterPagination((prev) => ({ ...prev, size: newSize, page: 0 }));
+      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
       fetchFilteredPage(0, newSize, filterPagination.sort);
     } else {
-      setPaginationParams((prev) => ({
+      setPaginationParams(prev => ({
         ...prev,
         size: newSize,
         page: 0,
-        timestamp: Date.now(),
+        timestamp: Date.now()
       }));
     }
   };
@@ -184,9 +184,9 @@ const CDTSetup: React.FC = () => {
   // Filters (Class/Code/Description)
   // ----------------------------------------
   const filterFields = [
-    { label: "Class", value: "class" },
-    { label: "Code", value: "code" },
-    { label: "Description", value: "description" },
+    { label: 'Class', value: 'class' },
+    { label: 'Code', value: 'code' },
+    { label: 'Description', value: 'description' }
   ];
 
   const handleFilterChange = async (fieldName: string, value: any, silent = false) => {
@@ -196,7 +196,7 @@ const CDTSetup: React.FC = () => {
       setFilteredData([]);
       setFilteredTotal(0);
       setFilteredLinks(undefined);
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       if (!silent) refetch();
       return;
     }
@@ -204,29 +204,29 @@ const CDTSetup: React.FC = () => {
     try {
       let resp: { data: any[]; totalCount: number; links?: any } | undefined;
 
-      if (fieldName === "class") {
-        const v = typeof value === "object" && value !== null ? value.value ?? value : value;
+      if (fieldName === 'class') {
+        const v = typeof value === 'object' && value !== null ? value.value ?? value : value;
         resp = await fetchByClass({
           cdtClass: String(v).toUpperCase(),
           page: 0,
           size: paginationParams.size,
-          sort: paginationParams.sort,
+          sort: paginationParams.sort
         }).unwrap();
-      } else if (fieldName === "code") {
-        const v = typeof value === "object" ? String(value.value ?? value) : value;
+      } else if (fieldName === 'code') {
+        const v = typeof value === 'object' ? String(value.value ?? value) : value;
         resp = await fetchByCode({
           code: v,
           page: 0,
           size: paginationParams.size,
-          sort: paginationParams.sort,
+          sort: paginationParams.sort
         }).unwrap();
-      } else if (fieldName === "description") {
-        const v = typeof value === "object" ? String(value.value ?? value) : value;
+      } else if (fieldName === 'description') {
+        const v = typeof value === 'object' ? String(value.value ?? value) : value;
         resp = await fetchByDescription({
           description: v,
           page: 0,
           size: paginationParams.size,
-          sort: paginationParams.sort,
+          sort: paginationParams.sort
         }).unwrap();
       }
 
@@ -238,16 +238,16 @@ const CDTSetup: React.FC = () => {
       setFilterPagination({
         page: 0,
         size: paginationParams.size,
-        sort: paginationParams.sort,
+        sort: paginationParams.sort
       });
 
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
     } catch {
       setIsFiltered(false);
       setFilteredData([]);
       setFilteredTotal(0);
       setFilteredLinks(undefined);
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       if (!silent) refetch();
     }
   };
@@ -258,7 +258,7 @@ const CDTSetup: React.FC = () => {
       setFilteredData([]);
       setFilteredTotal(0);
       setFilteredLinks(undefined);
-      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       refetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -285,10 +285,10 @@ const CDTSetup: React.FC = () => {
         fieldType="select"
         record={recordOfFilter}
         setRecord={(updated: any) => {
-          const nextFilter = updated?.filter ?? "";
-          setRecordOfFilter((prev) => {
+          const nextFilter = updated?.filter ?? '';
+          setRecordOfFilter(prev => {
             if (prev.filter === nextFilter) return prev;
-            return { filter: nextFilter, value: "" };
+            return { filter: nextFilter, value: '' };
           });
         }}
         showLabel={false}
@@ -297,7 +297,7 @@ const CDTSetup: React.FC = () => {
         width="170px"
       />
 
-      {recordOfFilter.filter === "class" ? (
+      {recordOfFilter.filter === 'class' ? (
         <MyInput
           width={300}
           fieldName="value"
@@ -309,8 +309,11 @@ const CDTSetup: React.FC = () => {
           record={recordOfFilter}
           setRecord={(updated: any) => {
             const raw = updated?.value;
-            const nextValue = typeof raw === "object" && raw !== null ? raw.value ?? raw : raw ?? "";
-            setRecordOfFilter((prev) => (prev.value === nextValue ? prev : { ...prev, value: nextValue }));
+            const nextValue =
+              typeof raw === 'object' && raw !== null ? raw.value ?? raw : raw ?? '';
+            setRecordOfFilter(prev =>
+              prev.value === nextValue ? prev : { ...prev, value: nextValue }
+            );
           }}
         />
       ) : (
@@ -319,16 +322,16 @@ const CDTSetup: React.FC = () => {
           fieldType="text"
           record={recordOfFilter}
           setRecord={(updated: any) => {
-            const next = updated?.value ?? "";
-            setRecordOfFilter((prev) => (prev.value === next ? prev : { ...prev, value: next }));
+            const next = updated?.value ?? '';
+            setRecordOfFilter(prev => (prev.value === next ? prev : { ...prev, value: next }));
           }}
           showLabel={false}
           placeholder={
-            recordOfFilter.filter === "code"
-              ? "Enter Code"
-              : recordOfFilter.filter === "description"
-                ? "Enter description"
-                : "Enter value"
+            recordOfFilter.filter === 'code'
+              ? 'Enter Code'
+              : recordOfFilter.filter === 'description'
+              ? 'Enter description'
+              : 'Enter value'
           }
           width={300}
         />
@@ -344,7 +347,6 @@ const CDTSetup: React.FC = () => {
     </Form>
   );
 
- 
   const [importCdt, { isLoading: isImporting }] = useImportCdtMutation();
 
   const [conflicts, setConflicts] = useState<CdtConflict[] | null>(null);
@@ -354,7 +356,10 @@ const CDTSetup: React.FC = () => {
   const [conflictsPageSize, setConflictsPageSize] = useState(10);
 
   const pagedConflicts = conflicts
-    ? conflicts.slice(conflictsPage * conflictsPageSize, conflictsPage * conflictsPageSize + conflictsPageSize)
+    ? conflicts.slice(
+        conflictsPage * conflictsPageSize,
+        conflictsPage * conflictsPageSize + conflictsPageSize
+      )
     : [];
 
   const handleImportFile = async (file: File) => {
@@ -368,14 +373,16 @@ const CDTSetup: React.FC = () => {
       dispatch(
         notify({
           msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
-          sev: "warning",
+          sev: 'warning'
         })
       );
     } else {
       dispatch(
         notify({
-          msg: `Imported successfully. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
-          sev: "success",
+          msg: `Imported successfully. Inserted ${res.inserted}${
+            res.updated ? `, Updated ${res.updated}` : ''
+          }.`,
+          sev: 'success'
         })
       );
       await refreshAfterMutation();
@@ -386,23 +393,28 @@ const CDTSetup: React.FC = () => {
     if (!lastUploadedFile) return;
 
     try {
-      const res: CdtImportResult = await importCdt({ file: lastUploadedFile, overwrite: true }).unwrap();
+      const res: CdtImportResult = await importCdt({
+        file: lastUploadedFile,
+        overwrite: true
+      }).unwrap();
       setConflictModalOpen(false);
       setConflicts(null);
       setLastUploadedFile(null);
 
       dispatch(
         notify({
-          msg: `Re-imported with overwrite. Inserted ${res.inserted}${res.updated ? `, Updated ${res.updated}` : ""}.`,
-          sev: "success",
+          msg: `Re-imported with overwrite. Inserted ${res.inserted}${
+            res.updated ? `, Updated ${res.updated}` : ''
+          }.`,
+          sev: 'success'
         })
       );
       await refreshAfterMutation();
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.detail || "Overwrite failed",
-          sev: "error",
+          msg: error?.data?.detail || 'Overwrite failed',
+          sev: 'error'
         })
       );
     }
@@ -412,7 +424,7 @@ const CDTSetup: React.FC = () => {
   // ----------------------------------------
   // Services picker state (link Services to CDT rows)
   // ----------------------------------------
-  const [servicesPager, setServicesPager] = useState({ page: 0, size: 15, sort: "id,asc" });
+  const [servicesPager, setServicesPager] = useState({ page: 0, size: 15, sort: 'id,asc' });
   const { data: servicesPage, isFetching: isFetchingServices } = useGetServicesQuery(
     { facilityId, page: servicesPager.page, size: servicesPager.size, sort: servicesPager.sort },
     { skip: !facilityId }
@@ -429,16 +441,16 @@ const CDTSetup: React.FC = () => {
       isActive: s.isActive ?? true,
       abbreviation: s.abbreviation ?? null,
       price: s.price ?? null,
-      currency: s.currency ?? null,
+      currency: s.currency ?? null
     }));
   }, [servicesTableData]);
 
   const handleServicesPageChange = useCallback((_: unknown, newPage: number) => {
-    setServicesPager((prev) => ({ ...prev, page: newPage }));
+    setServicesPager(prev => ({ ...prev, page: newPage }));
   }, []);
 
   const handleServicesRowsPerPageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setServicesPager((prev) => ({ ...prev, size: parseInt(e.target.value, 10), page: 0 }));
+    setServicesPager(prev => ({ ...prev, size: parseInt(e.target.value, 10), page: 0 }));
   }, []);
 
   const [openServicesPicker, setOpenServicesPicker] = useState(false);
@@ -448,8 +460,8 @@ const CDTSetup: React.FC = () => {
   const handleLinkServicesConfirmed = (ids: number[]) => {
     dispatch(
       notify({
-        msg: `Linked ${ids.length} service(s) to CDT ${selectedCdtRow?.code || ""}`,
-        sev: "success",
+        msg: `Linked ${ids.length} service(s) to CDT ${selectedCdtRow?.code || ''}`,
+        sev: 'success'
       })
     );
   };
@@ -460,32 +472,33 @@ const CDTSetup: React.FC = () => {
   // Main CDT table columns
   // ----------------------------------------
   const columns = [
-    { key: "code", title: "Code", render: (row: any) => row?.code ?? "" },
+    { key: 'code', title: 'Code', render: (row: any) => row?.code ?? '' },
     {
-      key: "cdtClass",
-      title: "Class",
-      render: (row: any) => (row?.cdtClass ? formatEnumString(row?.cdtClass) : ""),
+      key: 'cdtClass',
+      title: 'Class',
+      render: (row: any) => (row?.cdtClass ? formatEnumString(row?.cdtClass) : '')
     },
-    { key: "description", title: "Description", render: (row: any) => row?.description ?? "" },
+    { key: 'description', title: 'Description', render: (row: any) => row?.description ?? '' },
     {
-      key: "lastUpdated",
-      title: "Last Updated",
+      key: 'lastUpdated',
+      title: 'Last Updated',
       render: (row: any) => {
-        if (!row?.lastUpdated) return "";
+        if (!row?.lastUpdated) return '';
         const d = new Date(row.lastUpdated);
         return d.toLocaleDateString();
-      },
+      }
     },
     {
-      key: "actions",
-      title: "Actions",
+      key: 'actions',
+      title: 'Actions',
       render: (row: any) => (
         <>
           <Whisper placement="top" trigger="hover" speaker={<Tooltip>Link Services</Tooltip>}>
             <IconButton
               appearance="subtle"
               icon={<MdLink size={18} />}
-              onClick={(e) => {
+              style={{ color: '#777c87ff' }}
+              onClick={e => {
                 e.stopPropagation();
                 setSelectedCdtRow(row);
                 setSelectedServiceIds([]);
@@ -494,11 +507,17 @@ const CDTSetup: React.FC = () => {
             />
           </Whisper>
 
-          <Whisper placement="top" trigger="hover" speaker={<Tooltip>View linked services</Tooltip>}>
+          {/* View Linked Services */}
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>View linked services</Tooltip>}
+          >
             <IconButton
               appearance="subtle"
               icon={<MdVisibility size={18} />}
-              onClick={(e) => {
+              style={{ color: '#777c87ff' }}
+              onClick={e => {
                 e.stopPropagation();
                 setSelectedCdtRow(row);
                 setOpenSelectedPreview(true);
@@ -507,29 +526,45 @@ const CDTSetup: React.FC = () => {
           </Whisper>
         </>
       ),
-      align: "right" as const,
-    },
+      align: 'right' as const
+    }
   ];
 
   // ----------------------------------------
   // Conflict table columns
   // ----------------------------------------
   const conflictColumns = [
-    { key: "code", title: "Code", render: (row: CdtConflict) => row.code },
-    { key: "incomingDescription", title: "Incoming Description", render: (row: CdtConflict) => row.incomingDescription },
+    { key: 'code', title: 'Code', render: (row: CdtConflict) => row.code },
     {
-      key: "incomingClass",
-      title: "Incoming Class",
-      render: (row: CdtConflict) => (row.incomingClass ? formatEnumString(row.incomingClass) : ""),
+      key: 'incomingDescription',
+      title: 'Incoming Description',
+      render: (row: CdtConflict) => row.incomingDescription
     },
-    { key: "incomingIsActive", title: "Incoming Active", render: (row: CdtConflict) => String(row.incomingIsActive) },
-    { key: "existingDescription", title: "Existing Description", render: (row: CdtConflict) => row.existingDescription },
     {
-      key: "existingClass",
-      title: "Existing Class",
-      render: (row: CdtConflict) => (row.existingClass ? formatEnumString(row.existingClass) : ""),
+      key: 'incomingClass',
+      title: 'Incoming Class',
+      render: (row: CdtConflict) => (row.incomingClass ? formatEnumString(row.incomingClass) : '')
     },
-    { key: "existingIsActive", title: "Existing Active", render: (row: CdtConflict) => String(row.existingIsActive) },
+    {
+      key: 'incomingIsActive',
+      title: 'Incoming Active',
+      render: (row: CdtConflict) => String(row.incomingIsActive)
+    },
+    {
+      key: 'existingDescription',
+      title: 'Existing Description',
+      render: (row: CdtConflict) => row.existingDescription
+    },
+    {
+      key: 'existingClass',
+      title: 'Existing Class',
+      render: (row: CdtConflict) => (row.existingClass ? formatEnumString(row.existingClass) : '')
+    },
+    {
+      key: 'existingIsActive',
+      title: 'Existing Active',
+      render: (row: CdtConflict) => String(row.existingIsActive)
+    }
   ];
 
   // ----------------------------------------
@@ -545,15 +580,15 @@ const CDTSetup: React.FC = () => {
           <div
             className="mb-3"
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 10,
-              justifyContent: "space-between",
-              flexWrap: "wrap",
+              justifyContent: 'space-between',
+              flexWrap: 'wrap'
             }}
           >
             <div>{filters()}</div>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10 }}>
               <MyButton onClick={() => setOpenCodesImportModal(true)}>
                 Import Codes (Excel / CSV)
               </MyButton>
@@ -631,7 +666,11 @@ const CDTSetup: React.FC = () => {
 
       {/* Selected services preview for the chosen CDT row */}
       {selectedCdtRow?.id ? (
-        <SelectedServicesPreview open={openSelectedPreview} setOpen={setOpenSelectedPreview} cdtId={selectedCdtRow.id} />
+        <SelectedServicesPreview
+          open={openSelectedPreview}
+          setOpen={setOpenSelectedPreview}
+          cdtId={selectedCdtRow.id}
+        />
       ) : null}
     </>
   );
