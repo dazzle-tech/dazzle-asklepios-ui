@@ -459,7 +459,6 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
-
 export interface MedicationCategory {
   id: number;
   name: string;
@@ -583,6 +582,15 @@ export interface ProcedurePriceList {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+}
+
+export interface prescriptionInstructions {
+  id?: number;
+  category: string;
+  dose: number;
+  unit: string;
+  rout: string;
+  frequency: string;
 }
 
 

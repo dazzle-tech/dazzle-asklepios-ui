@@ -67,6 +67,7 @@ import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
+import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
 import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
 export const store = configureStore({
   reducer: {
@@ -138,6 +139,9 @@ export const store = configureStore({
 
     //procedure 
     [procedureService.reducerPath]: procedureService.reducer,
+ 
+    //prescription instruction
+    [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
 
     //recovery
 
@@ -267,6 +271,7 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      prescriptionInstructionService.middleware,
       CdtDentalActionService.middleware
     ])
 });
