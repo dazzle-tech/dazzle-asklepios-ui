@@ -573,6 +573,8 @@ export interface CodeOption {
   code: string;
   description: string;
 }
+
+
 export interface ProcedurePriceList {
   id?: number;
   procedureId?: number | null;   
@@ -609,5 +611,4 @@ export interface ActiveIngredientIndication {
   createdBy?: string | null;
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
-  lastModifiedDate?: Date | string | null;
-}
+  lastModifiedDate?: Date | string | null;}
