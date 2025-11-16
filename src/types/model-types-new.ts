@@ -573,6 +573,8 @@ export interface CodeOption {
   code: string;
   description: string;
 }
+
+
 export interface ProcedurePriceList {
   id?: number;
   procedureId?: number | null;   
@@ -599,3 +601,14 @@ export interface CdtDentalAction {
   dentalActionId: number;
   cdtCode: string;
 }
+export interface ActiveIngredientIndication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  dosage?: number | string | null;
+  unit?: string | null;
+  isOffLabel?: boolean | null;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;}

@@ -133,7 +133,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Medication Reconciliation", code: "MEDICATION_RECONCILIATION", icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: "/medication-reconciliation" },
   { name: "Wound Care Documentation", code: "WOUND_CARE_DOCUMENTATION", icon: <FontAwesomeIcon icon={faBandAid} className="icon" />, path: "/wound-care-documentation" },
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
-  { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric' }
+  { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric',type:"Specialty" }
 ];
 
 
