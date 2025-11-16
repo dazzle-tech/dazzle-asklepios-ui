@@ -26,6 +26,7 @@ import {
   useDeleteUOMUnitMutation,
   useGetAllRelationByUOMGroupQuery,
   useGetAllUnitsByGroupIdQuery,
+  useUpdateUOMGroupMutation,
   useUpdateUOMUnitMutation
 } from '@/services/setup/uom-group/uomGroupService';
 import { UOMGroupRelation, UOMGroupUnit } from '@/types/model-types-new';
@@ -75,7 +76,8 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
   // const [filteredResourcesList, setFilteredResourcesList] = useState([]);
   const [openAddEditPopup, setOpenAddEditPopup] = useState<boolean>(false);
   const [openAddEditRelationPopup, setOpenAddEditRelationPopup] = useState<boolean>(false);
-  const [saveUomGroup] = useCreateUOMGroupMutation();
+  const [createUomGroup] = useCreateUOMGroupMutation();
+  const [updateUomGroup] = useUpdateUOMGroupMutation();
   const [createUomGroupUnits] = useCreateUnitMutation();
   const [updateUomGroupUnits] = useUpdateUOMUnitMutation();
   const [createUomGroupRelation] = useCreateRelationMutation();
@@ -161,9 +163,6 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
                 record={uom}
                 setRecord={setUom}
               />
-            </Form>
-            <Form fluid layout="inline">
-              <MyInput column fieldLabel="Code" fieldName="code" record={uom} setRecord={setUom} />
             </Form>
             <Form fluid layout="inline">
               <MyInput
@@ -370,7 +369,8 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
 
   // Handle Save Uom Def
   const handleSave = () => {
-    saveUomGroup(uom)
+    if(!uom?.id)
+    createUomGroup(uom)
       .unwrap()
       .then(result => {
         setUom(result);
@@ -378,6 +378,25 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
         dispatch(
           notify({
             msg: 'The UOM group Added/Edited successfully ',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(e => {
+        if (e.status === 422) {
+        } else {
+          dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
+        }
+      });
+      else
+         updateUomGroup(uom)
+      .unwrap()
+      .then(result => {
+        setUom(result);
+        refetchUomGroups();
+        dispatch(
+          notify({
+            msg: 'The UOM group updated successfully ',
             sev: 'success'
           })
         );

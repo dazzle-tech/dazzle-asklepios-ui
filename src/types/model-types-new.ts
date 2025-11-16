@@ -748,7 +748,6 @@ export interface uomGroup {
   id?: number;
   description: string;              
   name: string;
-  code: string;
 }
 
 export interface UOMGroupUnit {

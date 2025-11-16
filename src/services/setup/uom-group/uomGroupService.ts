@@ -25,7 +25,7 @@ export const uomGroupService = createApi({
   endpoints: builder => ({
 
     // 🔹 Get all practitioners (paginated)
-    getAllUOMGroups: builder.query<PagedResult<any>, PagedParams>({
+    getAllUOMGroups: builder.query({
     //   query: ({ page, size, sort = "id,asc" }) => ({
      query: () => ({
         url: "/api/setup/uom-groups",
@@ -60,6 +60,15 @@ export const uomGroupService = createApi({
       query: uomGroup => ({
         url: "/api/setup/uom-groups",
         method: "POST",
+        body: uomGroup,
+      }),
+      invalidatesTags: ["UOMGroup"],
+    }),
+
+    updateUOMGroup: builder.mutation({
+      query: uomGroup => ({
+        url: `/api/setup/uom-groups/${uomGroup?.id}`,
+        method: "PUT",
         body: uomGroup,
       }),
       invalidatesTags: ["UOMGroup"],
@@ -139,5 +148,6 @@ export const {
     useDeleteUOMUnitMutation,
     useUpdateUOMUnitMutation,
     useCreateRelationMutation,
-    useGetAllRelationByUOMGroupQuery
+    useGetAllRelationByUOMGroupQuery,
+    useUpdateUOMGroupMutation
 } = uomGroupService;

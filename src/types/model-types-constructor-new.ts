@@ -622,7 +622,6 @@ export const newUOMGroup : modelTypes.UOMGroup = {
   id: undefined,
   description: '',         
   name: '',
-  code: ''
 };
 
 export const newUOMGroupUnit: modelTypes.UOMGroupUnit = {

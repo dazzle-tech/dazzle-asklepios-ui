@@ -167,11 +167,6 @@ const UOMGroup = () => {
       flexGrow: 4
     },
     {
-      key: 'code',
-      title: "Group code",
-      flexGrow: 4
-    },
-    {
       key: 'description',
       title: "Description",
       flexGrow: 4
@@ -188,7 +183,7 @@ const UOMGroup = () => {
 
       <MyTable
         height={450}
-        data={uomGroupsListResponse ?? []}
+        data={uomGroupsListResponse?.content ?? []}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
