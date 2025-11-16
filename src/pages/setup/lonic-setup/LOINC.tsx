@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import MyTable from "@/components/MyTable";
@@ -11,7 +11,7 @@ import {
   useLazyGetLoincByDescriptionQuery,
   type ImportResult,
   type Conflict,
-} from "@/services/setup/loincCodeService"; 
+} from "@/services/setup/loincCodeService";
 import MyButton from "@/components/MyButton/MyButton";
 import { notify } from "@/utils/uiReducerActions";
 import { extractPaginationFromLink } from "@/utils/paginationHelper";
@@ -19,11 +19,12 @@ import { Form } from "rsuite";
 import MyInput from "@/components/MyInput";
 import { useEnumOptions } from "@/services/enumsApi";
 import { formatEnumString } from "@/utils";
+import CodesExcelCsvImportModal from "@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal";
 
 const LOINCSetup: React.FC = () => {
   const dispatch = useDispatch();
 
-  // ---------- pagination (main table) ----------
+  // main pagination (unfiltered mode - follows Link headers)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -31,7 +32,14 @@ const LOINCSetup: React.FC = () => {
     timestamp: Date.now(),
   });
 
-  // ---------- filter/search state ----------
+  // filtered pagination (client-driven page/size/sort during filtered mode only)
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: "id,desc",
+  });
+
+  // filtering state (original logic preserved)
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
     filter: "",
     value: "",
@@ -41,25 +49,25 @@ const LOINCSetup: React.FC = () => {
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
 
-  // lazy queries
+  // lazy filter queries
   const [fetchByCategory] = useLazyGetLoincByCategoryQuery();
   const [fetchByCode] = useLazyGetLoincByCodeQuery();
   const [fetchByDescription] = useLazyGetLoincByDescriptionQuery();
 
-  // ---------- import modal state ----------
+  // import modal state (conflicts)
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null);
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
   const [conflictsPage, setConflictsPage] = useState(0);
   const [conflictsPageSize, setConflictsPageSize] = useState(10);
 
-  // enum options for LoincCategory
+  // enum options
   const loincCategoryOptions = useEnumOptions("LoincCategory");
 
-  // main list
+  // main list query (unfiltered)
   const { data: loincListResponse, isFetching, refetch } = useGetAllLoincQuery(paginationParams);
 
-  // totals/links/data (switch between filtered and all)
+  // derived table state (switch between filtered/unfiltered)
   const totalCount = useMemo(
     () => (isFiltered ? filteredTotal : loincListResponse?.totalCount ?? 0),
     [isFiltered, filteredTotal, loincListResponse?.totalCount]
@@ -70,9 +78,11 @@ const LOINCSetup: React.FC = () => {
     [isFiltered, filteredData, loincListResponse?.data]
   );
 
-  const pageIndex = paginationParams.page;
-  const rowsPerPage = paginationParams.size;
+  // current page/rows based on mode
+  const pageIndex = isFiltered ? filterPagination.page : paginationParams.page;
+  const rowsPerPage = isFiltered ? filterPagination.size : paginationParams.size;
 
+  // set page header
   useEffect(() => {
     dispatch(setPageCode("LOINC"));
     dispatch(setDivContent("LOINC List"));
@@ -82,8 +92,41 @@ const LOINCSetup: React.FC = () => {
     };
   }, [dispatch]);
 
-  // ---------- pagination handlers ----------
+  // fetch a filtered page (used only during filtered pagination)
+  const fetchFilteredPage = async (page: number, size: number, sort: string) => {
+    try {
+      let resp: { data: any[]; totalCount: number; links?: any } | undefined;
+
+      if (recordOfFilter.filter === "category") {
+        resp = await fetchByCategory({ category: recordOfFilter.value, page, size, sort }).unwrap();
+      } else if (recordOfFilter.filter === "code") {
+        resp = await fetchByCode({ code: recordOfFilter.value, page, size, sort }).unwrap();
+      } else if (recordOfFilter.filter === "description") {
+        resp = await fetchByDescription({ description: recordOfFilter.value, page, size, sort }).unwrap();
+      }
+
+      setFilteredData(resp?.data ?? []);
+      setFilteredTotal(resp?.totalCount ?? 0);
+      setFilteredLinks(resp?.links || {});
+      setFilterPagination({ page, size, sort });
+    } catch {
+      // fallback to unfiltered mode if filtered page fetch fails
+      setIsFiltered(false);
+      setFilteredData([]);
+      setFilteredTotal(0);
+      setFilteredLinks(undefined);
+      setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+      refetch();
+    }
+  };
+
+  // pagination change (filtered mode re-runs filter; unfiltered follows Link headers)
   const handlePageChange = (_: unknown, newPage: number) => {
+    if (isFiltered) {
+      fetchFilteredPage(newPage, filterPagination.size, filterPagination.sort);
+      return;
+    }
+
     const currentPage = paginationParams.page;
     let targetLink: string | null | undefined = null;
 
@@ -94,41 +137,27 @@ const LOINCSetup: React.FC = () => {
 
     if (targetLink) {
       const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams((prev) => ({
-        ...prev,
-        page,
-        size,
-        timestamp: Date.now(),
-      }));
+      setPaginationParams((prev) => ({ ...prev, page, size, timestamp: Date.now() }));
     }
   };
 
+  // rows-per-page change (filtered mode re-runs filter; unfiltered updates params)
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPaginationParams((prev) => ({
-      ...prev,
-      size: parseInt(event.target.value, 10),
-      page: 0,
-      timestamp: Date.now(),
-    }));
+    const newSize = parseInt(event.target.value, 10);
+    if (isFiltered) {
+      setFilterPagination((prev) => ({ ...prev, size: newSize, page: 0 }));
+      fetchFilteredPage(0, newSize, filterPagination.sort);
+    } else {
+      setPaginationParams((prev) => ({ ...prev, size: newSize, page: 0, timestamp: Date.now() }));
+    }
   };
 
-  // ---------- template download & upload ----------
-  const handleDownloadTemplate = () => {
-    const link = document.createElement("a");
-    link.href = "/templates/LOINC_Code.xlsx";
-    link.download = "LOINC_Code.xlsx";
-    link.click();
-  };
-
+  // import LOINC CSV mutation
   const [importLoinc, { isLoading: isImporting }] = useImportLoincMutation();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const handleClickUpload = () => fileInputRef.current?.click();
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImportFile = async (file: File) => {
     try {
       const res: ImportResult = await importLoinc({ file }).unwrap();
+
       if (res.conflicts?.length) {
         setLastUploadedFile(file);
         setConflicts(res.conflicts);
@@ -147,6 +176,8 @@ const LOINCSetup: React.FC = () => {
             sev: "success",
           })
         );
+
+        // if filtered, re-apply current filter from page 0 (original behavior)
         if (isFiltered) {
           await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, true);
         } else {
@@ -160,12 +191,10 @@ const LOINCSetup: React.FC = () => {
           sev: "error",
         })
       );
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  // overwrite (replace all conflicts)
+  // overwrite all conflicts and refresh accordingly
   const handleReplaceAll = async () => {
     if (!lastUploadedFile) return;
     try {
@@ -179,6 +208,7 @@ const LOINCSetup: React.FC = () => {
           sev: "success",
         })
       );
+
       if (isFiltered) {
         await handleFilterChange(recordOfFilter.filter, recordOfFilter.value, true);
       } else {
@@ -194,14 +224,14 @@ const LOINCSetup: React.FC = () => {
     }
   };
 
-
-  // ---------- filters (NO "All") ----------
+  // filter fields
   const filterFields = [
     { label: "Category", value: "category" },
     { label: "Code", value: "code" },
     { label: "Description", value: "description" },
   ];
 
+  // original filtering logic (unchanged)
   const handleFilterChange = async (fieldName: string, value: any, silent = false) => {
     if (!value) {
       setIsFiltered(false);
@@ -213,12 +243,9 @@ const LOINCSetup: React.FC = () => {
       return;
     }
     try {
-      let resp:
-        | { data: any[]; totalCount: number; links?: any }
-        | undefined;
+      let resp: { data: any[]; totalCount: number; links?: any } | undefined;
 
       if (fieldName === "category") {
-        // enum is uppercase on backend (BOTH/ORDER/OBSERVATION)
         resp = await fetchByCategory({
           category: value,
           page: 0,
@@ -245,6 +272,9 @@ const LOINCSetup: React.FC = () => {
       setFilteredTotal(resp?.totalCount ?? 0);
       setFilteredLinks(resp?.links || {});
       setIsFiltered(true);
+
+      // initialize filtered pagination at page 0 using current table size
+      setFilterPagination((prev) => ({ ...prev, page: 0, size: paginationParams.size }));
       setPaginationParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
     } catch {
       setIsFiltered(false);
@@ -256,7 +286,7 @@ const LOINCSetup: React.FC = () => {
     }
   };
 
-  // auto-reset filter state when cleared
+  // auto-reset to unfiltered when filter value cleared
   useEffect(() => {
     if (!recordOfFilter.value) {
       setIsFiltered(false);
@@ -269,6 +299,7 @@ const LOINCSetup: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordOfFilter.value]);
 
+  // filters UI
   const filters = () => (
     <Form layout="inline" fluid>
       <MyInput
@@ -278,14 +309,13 @@ const LOINCSetup: React.FC = () => {
         fieldName="filter"
         fieldType="select"
         record={recordOfFilter}
-        setRecord={(updated: any) => {
-          setRecordOfFilter({ filter: updated.filter, value: "" });
-        }}
+        setRecord={(updated: any) => setRecordOfFilter({ filter: updated.filter, value: "" })}
         showLabel={false}
         placeholder="Select Filter"
         searchable={false}
         width="170px"
       />
+
       {recordOfFilter.filter === "category" ? (
         <MyInput
           width={300}
@@ -326,10 +356,14 @@ const LOINCSetup: React.FC = () => {
     </Form>
   );
 
-  // ---------- columns ----------
+  // table columns
   const columns = [
     { key: "code", title: "Code", render: (row: any) => row?.code ?? "" },
-    { key: "category", title: "Category", render: (row: any) => (row?.category ? formatEnumString(row?.category) : "") },
+    {
+      key: "category",
+      title: "Category",
+      render: (row: any) => (row?.category ? formatEnumString(row?.category) : ""),
+    },
     { key: "description", title: "Description", render: (row: any) => row?.description ?? "" },
     {
       key: "lastUpdated",
@@ -342,29 +376,31 @@ const LOINCSetup: React.FC = () => {
     },
   ];
 
-  // conflict table columns
+  // conflict modal columns
   const conflictColumns = [
     { key: "code", title: "Code", render: (row: Conflict) => row.code },
     { key: "incomingDescription", title: "Incoming Description", render: (row: Conflict) => row.incomingDescription },
-    { key: "incomingCategory", title: "Incoming Category", render: (row: Conflict) => row.incomingCategory ? formatEnumString(row.incomingCategory) : "" },
+    {
+      key: "incomingCategory",
+      title: "Incoming Category",
+      render: (row: Conflict) => (row.incomingCategory ? formatEnumString(row.incomingCategory) : ""),
+    },
     { key: "existingDescription", title: "Existing Description", render: (row: Conflict) => row.existingDescription },
-    { key: "existingCategory", title: "Existing Category", render: (row: Conflict) => row.existingCategory ? formatEnumString(row.existingCategory) : "" },
+    {
+      key: "existingCategory",
+      title: "Existing Category",
+      render: (row: Conflict) => (row.existingCategory ? formatEnumString(row.existingCategory) : ""),
+    },
   ];
 
-  const pagedConflicts = conflicts
-    ? conflicts.slice(conflictsPage * conflictsPageSize, conflictsPage * conflictsPageSize + conflictsPageSize)
-    : [];
+  const pagedConflicts =
+    conflicts?.slice(conflictsPage * conflictsPageSize, conflictsPage * conflictsPageSize + conflictsPageSize) || [];
+
+  // فتح/إغلاق مودال الاستيراد (CodesExcelCsvImportModal)
+  const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
 
   return (
     <>
-      <input
-        type="file"
-        accept=".csv"
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={handleFileUpload}
-      />
-
       <MyTable
         data={tableData}
         columns={columns}
@@ -382,11 +418,8 @@ const LOINCSetup: React.FC = () => {
             <div>{filters()}</div>
 
             <div style={{ display: "flex", gap: 10 }}>
-              <MyButton appearance="ghost" onClick={handleDownloadTemplate}>
-                Download Template
-              </MyButton>
-              <MyButton onClick={handleClickUpload} loading={isImporting}>
-                Upload LOINC CSV
+              <MyButton onClick={() => setOpenCodesImportModal(true)}>
+                Import LOINC (Excel / CSV)
               </MyButton>
             </div>
           </div>
@@ -399,6 +432,17 @@ const LOINCSetup: React.FC = () => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
+      {/* Import modal (Excel/CSV) */}
+      <CodesExcelCsvImportModal
+        open={openCodesImportModal}
+        setOpen={setOpenCodesImportModal}
+        title="LOINC Codes Import"
+        excelTemplateUrl="/templates/LOINC_Code.xlsx"
+        excelTemplateFileName="LOINC_Code.xlsx"
+        onImport={handleImportFile}
+      />
+
+      {/* Conflicts modal */}
       <MyModal
         open={conflictModalOpen}
         setOpen={setConflictModalOpen}

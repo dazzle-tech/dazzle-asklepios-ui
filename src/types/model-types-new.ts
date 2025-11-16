@@ -181,16 +181,6 @@ export interface AgeGroup {
   lastModifiedDate?: Date | null;
   facilityId?: number;          // FK
 }
-
-export interface Allergen {
-  id?: number;
-  code: string;
-  name: string;
-  type: string;
-  description?: string | null;
-  isActive?: boolean;
-  createdBy?: string;
-}
 export interface Practitioner {
   id?: number;
   facilityId: number;
@@ -289,7 +279,6 @@ export interface UploadResponse {
 
 export interface Allergen {
   id?: number;
-  code: string;
   name: string;
   type: string ;
   description?: string | null;
@@ -348,6 +337,7 @@ export interface Service {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+
 export interface AgeGroup {
   id?: number;
   ageGroup: string | null;            
@@ -360,7 +350,25 @@ export interface AgeGroup {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
-  facilityId?: number;          // FK
+  facilityId?: number;       
+}
+
+export interface Procedure {
+  id?: number;
+  name: string;
+  code: string;
+  categoryType?: string | null; 
+  isAppointable?: boolean;
+  indications?: string | null;
+  contraindications?: string | null;
+  preparationInstructions?: string | null;
+  recoveryNotes?: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number;        
 }
 export interface DiagnosticTest {
   id?: number;
@@ -412,8 +420,8 @@ export interface Laboratory {
   testInstructions?: string;
   category?: string;
   tubeType?: string;
+  timing?:String;
 }
-
 
 
 export interface DiagnosticTestProfile {
@@ -451,10 +459,22 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+
+export interface MedicationCategory {
+  id: number;
+  name: string;
+}
+export interface MedicationCategoryClass {
+  id: number;
+  name: string;
+  medicationCategoriesId: number
+}
+
 /** Active Ingredient */
 export interface ActiveIngredient {
   id?: number;
   name: string;
+  medicalCategoryId?: number | null;
   drugClassId?: number | null;
   atcCode?: string | null;
   otc?: boolean | null;
@@ -466,7 +486,7 @@ export interface ActiveIngredient {
   isControlled?: boolean | null;
   controlled?: string | null;
   hasBlackBoxWarning?: boolean | null;
-  blackBoxWarning?: boolean | null;
+  blackBoxWarning?: string | null;
   isActive?: boolean | null;
   toxicityMaximumDose?: string | null;
   toxicityMaximumDosePerUnit?: string | null;
@@ -498,6 +518,7 @@ export interface ActiveIngredient {
   lastModifiedDate?: Date | string | null;
 }
 
+
 export interface ActiveIngredientContraindication {
   id?: number;
   activeIngredientId: number;
@@ -507,3 +528,99 @@ export interface ActiveIngredientContraindication {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;
 }
+
+export interface DentalAction {
+  id?: number;                 // Primary key (auto-generated)
+  description: string;         // Mandatory field
+  type: string;      // Enum (mandatory)
+  imageName?: string | null;   // Optional image file name
+  isActive?: boolean;          // Defaults true
+}
+
+
+
+export interface DiagnosticTestNormalRange {
+  id?: number;
+  testId: number;
+
+  gender?: string;
+  ageFrom?: number;
+  ageFromUnit?: string;
+  ageTo?: number;
+  ageToUnit?: string;
+  condition?: string;
+
+  resultType: string;
+  resultText?: string;
+  resultLov?: string;
+  normalRangeType?: string;
+
+  rangeFrom?: number;
+  rangeTo?: number;
+
+  criticalValue?: boolean;
+  criticalValueLessThan?: number;
+  criticalValueMoreThan?: number;
+
+  profileTestId?: number | null;
+  isProfile?: boolean;
+
+  lovKeys?: string[];
+}
+
+
+export interface ProcedureCoding {
+  id?: number;
+  procedureId?: number | null;        
+  codeType: string | null ;         
+  codeId: string;                     
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface CodeOption {
+  id: number | string;
+  code: string;
+  description: string;
+}
+
+
+export interface ProcedurePriceList {
+  id?: number;
+  procedureId?: number | null;   
+  price: number;                 
+  currency: string;              
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface prescriptionInstructions {
+  id?: number;
+  category: string;
+  dose: number;
+  unit: string;
+  rout: string;
+  frequency: string;
+}
+
+
+export interface CdtDentalAction {
+  id?: number;
+  dentalActionId: number;
+  cdtCode: string;
+}
+export interface ActiveIngredientIndication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  dosage?: number | string | null;
+  unit?: string | null;
+  isOffLabel?: boolean | null;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;}

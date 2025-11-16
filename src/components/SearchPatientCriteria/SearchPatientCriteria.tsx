@@ -17,18 +17,21 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
   onSearchClick,
   searchMarginTop = '0.9vw'
 }) => {
-
-
-
-  
   useEffect(() => {
     if (record?.searchByField === undefined) {
       setRecord({ ...record, searchByField: 'fullName' });
     }
   }, []);
 
+  const handleSearchEnter = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onSearchClick?.();
+    }
+  };
+
   return (
-    <div className='search-patient-criteria-handle-position-row'>
+    <div className="search-patient-criteria-handle-position-row">
       <div style={{ marginTop: searchMarginTop }}>
         <MyInput
           width="9vw"
@@ -43,14 +46,15 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
             { label: 'Document Number', value: 'documentNo' },
             { label: 'Full Name', value: 'fullName' },
             { label: 'Archiving Number', value: 'archivingNumber' },
-            { label: 'Primary Phone Number', value: 'phoneNumber' },
-            { label: 'Date of Birth', value: 'dob' },
+            { label: 'Primary Phone Number', value: 'mobileNumber' },
+            { label: 'Date of Birth', value: 'dob' }
           ]}
           selectDataLabel="label"
           selectDataValue="value"
         />
       </div>
-      <div style={{ marginTop: searchMarginTop }}>
+
+      <div style={{ marginTop: searchMarginTop }} onKeyDown={handleSearchEnter}>
         <MyInput
           width="100%"
           column
@@ -59,12 +63,7 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
           fieldName="patientName"
           placeholder="Search Patients"
           showLabel={false}
-          rightAddon={
-            <FaSearch
-              className="icons-style-2"
-              onClick={onSearchClick}
-            />
-          }
+          rightAddon={<FaSearch className="icons-style-2" onClick={onSearchClick} />}
           record={record}
           setRecord={setRecord}
         />

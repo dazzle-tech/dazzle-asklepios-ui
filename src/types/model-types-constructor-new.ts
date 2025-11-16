@@ -26,7 +26,7 @@ export const newApUser: modelTypes.ApUser = {
 export const newCandidate: modelTypes.Candidate = {
   id: undefined,
   rule: '',
-  fields: {}, 
+  fields: {},
   isActive: true,
 };
 
@@ -47,7 +47,7 @@ export const newDepartment: modelTypes.Department = {
   isActive: true,
   hasMedicalSheets:false,
  hasNurseMedicalSheets:false
-}
+};
 
 export const newFacility: modelTypes.Facility = {
   id: undefined,
@@ -62,8 +62,8 @@ export const newFacility: modelTypes.Facility = {
   defaultCurrency: '',
   isActive: true,
   ruleId:null,
+} ;
 
-} 
 
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
@@ -76,18 +76,20 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-}
+};
 
 export const newRole: modelTypes.Role = {
   id: undefined,
   name: '',
   type: '',
   facilityId: null,
-}
+};
+
 export const newUserRole: modelTypes.UserRole = {
   roleId: undefined,
   userId: undefined,
-}
+};
+
 export const newUserDepartment: modelTypes.UserDepartment = {
   id: undefined,
   userId: undefined,
@@ -128,7 +130,7 @@ export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams
   type: undefined,
   details: undefined,
   source: undefined,
-}
+};
 
 // Encounter Attachment Constructors
 export const newEncounterAttachment: modelTypes.EncounterAttachment = {
@@ -151,7 +153,7 @@ export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttac
   details: undefined,
   source: undefined,
   sourceId: undefined,
-}
+};
 
 export const newService: modelTypes.Service = {
   id: undefined,
@@ -166,15 +168,15 @@ export const newService: modelTypes.Service = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined, 
+  facilityId: undefined,
 
 };
 
 export const newServiceItem: modelTypes.ServiceItem = {
   id: undefined,
-  type: 'DEPARTMENTS',    
-  sourceId: 0,            
-  serviceId: undefined,  
+  type: 'DEPARTMENTS',
+  sourceId: 0,
+  serviceId: undefined,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -187,7 +189,7 @@ export const newLanguage: modelTypes.Language = {
   langName: undefined,
   direction: undefined,
   details: undefined,
-}
+};
 
 export const newPractitioner: modelTypes.Practitioner = {
   id: undefined,
@@ -213,12 +215,13 @@ export const newPractitioner: modelTypes.Practitioner = {
 
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   id: undefined,
-  langKey: undefined,          
-  translationKey: undefined,   
+  langKey: undefined,
+  translationKey: undefined,
   translationText: undefined,
   verified: undefined,
   translated: undefined,
-}
+};
+
 export const newAgeGroup: modelTypes.AgeGroup = {
   id: undefined,
   ageGroup: '',
@@ -233,11 +236,29 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   lastModifiedDate: null,
   facilityId: undefined,
 };
+
+export const newProcedure: modelTypes.Procedure = {
+  id: undefined,
+  name: '',
+  code: '',
+  categoryType: null,
+  isAppointable: false,
+  indications: null,
+  contraindications: null,
+  preparationInstructions: null,
+  recoveryNotes: null,
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  facilityId: undefined,
+};
+
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
-  code: '',
   name: '',
-  type: null,           
+  type: null,
   description: '',
   isActive: true,
   createdBy: '',
@@ -257,7 +278,6 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   gender: null,
   specialPopulation: false,
   specialPopulationValues: [],
-
   price: null,
   currency: null,
   specialNotes: '',
@@ -292,6 +312,7 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
+  timing:null,
 };
 
 
@@ -300,7 +321,8 @@ export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   id: undefined,
   testId: undefined,
   name: '',
-  resultUnit: ''}
+  resultUnit: ''};
+
 
 
 export const newPathology: modelTypes.Pathology = {
@@ -330,8 +352,21 @@ export const newRadiology: modelTypes.Radiology = {
   associatedRisks: "",
 };
 
+
+export const newMedicationCategory: modelTypes.MedicationCategory = {
+  id: undefined,
+  name: ''
+};
+
+export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
+  id: undefined,
+  name: '',
+  medicationCategoriesId: undefined
+};
+
 export const newActiveIngredient: modelTypes.ActiveIngredient = {
   id: undefined,
+  medicalCategoryId: null,
   name: '',
   drugClassId: null,
   atcCode: null,
@@ -344,7 +379,7 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   isControlled: false,
   controlled: null,
   hasBlackBoxWarning: false,
-  blackBoxWarning: false,
+  blackBoxWarning: '',
   isActive: true,
   toxicityMaximumDose: null,
   toxicityMaximumDosePerUnit: null,
@@ -372,8 +407,90 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   doseAdjustmentPugC: null
 };
 
+
 export const newActiveIngredientContraindication: modelTypes.ActiveIngredientContraindication = {
   id: undefined,
   activeIngredientId: 0,
   icdCodeId: 0
 };
+
+export const newDentalAction: modelTypes.DentalAction={
+  id: null,               // Primary key (auto-generated)
+  description: '',        // Mandatory field
+  type:null,    // Enum (mandatory)
+  imageName: null,  // Optional image file name
+  isActive: true,  }
+export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
+  id: undefined,
+  testId: 0,
+
+  gender: undefined,
+  ageFrom: undefined,
+  ageFromUnit: undefined,
+  ageTo: undefined,
+  ageToUnit: undefined,
+  condition: undefined,
+
+  resultType: "", 
+  resultText: undefined,
+  resultLov: undefined,
+  normalRangeType: undefined,
+
+  rangeFrom: undefined,
+  rangeTo: undefined,
+
+  criticalValue: false,
+  criticalValueLessThan: undefined,
+  criticalValueMoreThan: undefined,
+
+  profileTestId: undefined,
+  isProfile: false,
+
+  lovKeys: [],
+}
+
+export const newProcedureCoding: modelTypes.ProcedureCoding = {
+  id: undefined,
+  procedureId: undefined,        
+  codeType: 'CPT_CODES',           
+  codeId: '',                      
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
+  id: undefined,
+  procedureId: undefined,      
+  price: 0,                    
+  currency: 'USD',            
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+export const newPrescriptionInstructions: modelTypes.prescriptionInstructions = {
+  id: undefined,
+  category: '',
+  dose: 0,
+  unit: "",
+  rout: "",
+  frequency: ""
+};
+
+export const newCdtDentalAction: modelTypes.CdtDentalAction = {
+  dentalActionId: 0,
+  cdtCode: "",
+};
+
+export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndication = {
+  id: undefined,
+  activeIngredientId: 0,
+  icdCodeId: 0,
+  dosage: null,
+  unit: '',
+  isOffLabel: false
+};
+
