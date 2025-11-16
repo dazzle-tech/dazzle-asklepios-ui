@@ -4,7 +4,6 @@ import { Col, Form, Row } from 'rsuite';
 import React, { useEffect, useState } from 'react';
 import { useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
 import { initialListRequest, ListRequest } from '@/types/types';
-import Translate from '@/components/Translate';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -143,11 +142,11 @@ const MedicationMatrix = () => {
     {
       key: 'name',
       align: 'center',
-      title: <Translate>Therapeutic Category Name</Translate>
+      title: 'Therapeutic Category Name'
     },
     {
       key: 'icons',
-      title: <Translate></Translate>,
+      title: '',
       render: rowData => iconsForActions(rowData, 'cat')
     }
   ];
@@ -156,11 +155,11 @@ const MedicationMatrix = () => {
     {
       key: 'name',
       align: 'center',
-      title: <Translate>Medication Class</Translate>
+      title: 'Medication Class'
     },
     {
       key: 'icons',
-      title: <Translate></Translate>,
+      title: '',
       render: rowData => iconsForActions(rowData, 'class')
     }
   ];
@@ -169,7 +168,7 @@ const MedicationMatrix = () => {
     {
       key: 'class',
       align: 'center',
-      title: <Translate>Active Ingredient</Translate>,
+      title: 'Active Ingredient',
       render: () => {
         return rowData => (
           <span>
