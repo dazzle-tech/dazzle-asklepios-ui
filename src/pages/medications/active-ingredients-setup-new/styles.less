@@ -1,0 +1,62 @@
+.container-active {
+  padding: 10px;
+}
+
+.container-of-actions-header-active {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  @media (max-width: 700px) {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+.container-of-fields-active {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  @media (max-width: 700px) {
+    flex-direction: column;
+    gap: 5px;
+    align-items: stretch;
+  }
+}
+.container-of-buttons-active {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+
+.my-input-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--deep-blue);
+}
+.container-of-buttons-pregnancy-lactation {
+  display: flex;
+  gap: 10px;
+  justify-content: end;
+  padding: 5px;
+}
+
+.container-of-fields-active .rs-form-group {
+  margin-bottom: 0 !important;
+}
+.container-active {
+  .rs-row {
+    margin-bottom: 0px !important;
+  }
+}
+.container-of-header-actions-pre-requested-tests {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  @media (max-width: 400px) {
+    flex-direction: column;
+    // gap: 5px;
+    align-items: start;
+    margin-bottom: 10px;
+  }
+}
