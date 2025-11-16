@@ -45,6 +45,7 @@ import './AppoitmentModal.less';
 import SliceBox from './SliceBox';
 import SectionContainer from '@/components/SectionsoContainer';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import { useEnumOptions } from '@/services/enumsApi';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
 const AppointmentModal = ({
@@ -311,7 +312,8 @@ const AppointmentModal = ({
     }
   }, [patientSlice]);
 
-  const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+  // const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+  const ResourceTypeEnum = useEnumOptions("ResourceType");
   const { data: instractionsTypeQueryResponse } = useGetLovValuesByCodeQuery('APP_INSTRUCTIONS');
   const { data: priorityQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: procedureLevelQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
@@ -476,8 +478,8 @@ const AppointmentModal = ({
   }, [appointment?.isReminder]);
 
   useEffect(() => {
-    console.log(resourceTypeQueryResponse);
-  }, [resourceTypeQueryResponse]);
+    console.log(ResourceTypeEnum);
+  }, [ResourceTypeEnum]);
 
   useEffect(() => {
     if (appointmentData) {
@@ -809,9 +811,8 @@ const AppointmentModal = ({
                               <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
                                 {/* {localPatient?.genderLkey} */}
                                 <FontAwesomeIcon icon={faUser} />
-                                {`${localPatient?.genderLvalue?.lovDisplayVale || 'N/A'}${
-                                  patientAge?.patientAge ? `, ${patientAge.patientAge}y old` : ''
-                                }`}
+                                {`${localPatient?.genderLvalue?.lovDisplayVale || 'N/A'}${patientAge?.patientAge ? `, ${patientAge.patientAge}y old` : ''
+                                  }`}
                               </p>
 
                               <p style={{ fontSize: '12px', color: '#A1A9B8' }}>
@@ -910,9 +911,9 @@ const AppointmentModal = ({
                                 fieldLabel="Resource Type"
                                 fieldType="select"
                                 fieldName="resourceTypeLkey"
-                                selectData={resourceTypeQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
+                                selectData={ResourceTypeEnum ?? []}
+                                selectDataLabel="label"
+                                selectDataValue="value"
                                 record={appointment}
                                 setRecord={setAppointment}
                                 searchable={false}
@@ -928,8 +929,8 @@ const AppointmentModal = ({
                                   filteredResourcesList.length > 0
                                     ? filteredResourcesList
                                     : !appointment?.resourceTypeLkey
-                                    ? resourcesListResponse?.object
-                                    : []
+                                      ? resourcesListResponse?.object
+                                      : []
                                 }
                                 fieldType="select"
                                 selectDataLabel="resourceName"
@@ -1412,10 +1413,9 @@ const AppointmentModal = ({
                     </div>
                   }
                   title="No patient found"
-                  contant={`No patient found matching the entered ${
-                    searchCriteriaOptions.find(opt => opt.value === selectedCriterion?.value)
+                  contant={`No patient found matching the entered ${searchCriteriaOptions.find(opt => opt.value === selectedCriterion?.value)
                       ?.label || 'criteria'
-                  }.`}
+                    }.`}
                 />
               )}
             </div>

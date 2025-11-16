@@ -1,239 +1,433 @@
-import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
-import { Panel } from 'rsuite';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { IoSettingsSharp } from 'react-icons/io5';
-import { ApResources } from '@/types/model-types';
-import { newApResources } from '@/types/model-types-constructor';
-import { Form } from 'rsuite';
-import { MdModeEdit } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
-import MyInput from '@/components/MyInput';
-import { MdDelete } from 'react-icons/md';
-import AddEditResources from './AddEditResources';
-import './styles.less';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import React from "react";
+import Translate from "@/components/Translate";
+import { Panel, Form } from "rsuite";
+import AddOutlineIcon from "@rsuite/icons/AddOutline";
+import { MdModeEdit, MdDelete } from "react-icons/md";
+import { FaUndo } from "react-icons/fa";
+import { GrScheduleNew } from "react-icons/gr";
+import { useDispatch } from "react-redux";
+import { setDivContent, setPageCode } from "@/reducers/divSlice";
+import MyButton from "@/components/MyButton/MyButton";
+import MyTable from "@/components/MyTable";
+import MyInput from "@/components/MyInput";
+import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
+import AddEditResources from "./AddEditResources";
+import NewAvailabilityTimeModal from "./NewAvailabilityTimeModal";
+import { notify } from "@/utils/uiReducerActions";
 import {
-  useDeactiveActiveResourceMutation,
-  useGetResourcesQuery,
-  useGetResourcesWithAvailabilityQuery,
-  useGetResourceWithDetailsQuery,
-  useSaveResourcesMutation
-} from '@/services/appointmentService';
-import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAppDispatch } from '@/hooks';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
-import AvailabilityTimeModal from './AvailabilityTimeModal';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { notify } from '@/utils/uiReducerActions';
-import NewAvailabilityTimeModal from './NewAvailabilityTimeModal';
-const Resources = () => {
-  const dispatch = useAppDispatch();
-  const [resources, setResources] = useState<ApResources>({ ...newApResources });
-  const [selectedResources, setSelectedResources] = useState<ApResources>({ ...newApResources });
-  const [width, setWidth] = useState<number>(window.innerWidth);
-  const [popupOpen, setPopupOpen] = useState(false); // to open add/edit resource pop up
-  const [openAvailabilityTimePopup, setOpenAvailabilityTimePopup] = useState<boolean>(false); // to open availability time pop up
-  const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
-  const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>('delete');
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  useGetAllResourcesQuery,
+  useCreateResourceMutation,
+  useUpdateResourceMutation,
+  useToggleResourceActiveMutation,
+  useLazyGetResourcesByTypeQuery,
+} from "@/services/setup/resource/ResourceService";
+import "./styles.less";
+import { formatEnumString } from "@/utils";
+import { PaginationPerPage } from "@/utils/paginationPerPage";
+import { useEnumOptions } from "@/services/enumsApi";
+import { useState, useEffect } from "react";
+import appConfig from "../../../../app-config";
 
- 
-  // save resource
-  const [saveResources, saveResourcesMutation] = useSaveResourcesMutation();
-  // Fetch resources list response
-  const { data: resourcesListResponse, refetch: refetchResources, isFetching } = useGetResourcesQuery(listRequest);
-  // Deactivate resource
-  const [deactiveResource] = useDeactiveActiveResourceMutation();
-  // Header page setUp
-  const divContent = (
-        "Resources"
-  );
-  dispatch(setPageCode('Resources'));
-  dispatch(setDivContent(divContent));
-  const { data: resourcesWithAvailabilityResponse } = useGetResourcesWithAvailabilityQuery(listRequest);
-  const { data: resourceAvailabilityDetails, error, isLoading } = useGetResourceWithDetailsQuery(selectedResources.key || '', {
-    skip: !selectedResources.key
+// Resource type definition
+type Resource = {
+  id?: number;
+  resourceType: string;
+  resourceKey: string;
+  isAllowParallel?: boolean;
+  isActive?: boolean;
+};
+
+const newResource: Resource = {
+  resourceType: "",
+  resourceKey: "",
+  isAllowParallel: true,
+  isActive: true,
+};
+
+const Resources = () => {
+  const dispatch = useDispatch();
+
+  // ──────────────────────────── STATE ────────────────────────────
+  const [resource, setResource] = useState<Resource>({ ...newResource });
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [openAddEditResource, setOpenAddEditResource] = useState<boolean>(false);
+  const [
+    openConfirmDeleteResourceModal,
+    setOpenConfirmDeleteResourceModal,
+  ] = useState<boolean>(false);
+  const [stateOfDeleteModal, setStateOfDeleteModal] =
+    useState<string>("deactivate");
+  const [openAvailabilityTimePopup, setOpenAvailabilityTimePopup] = useState<boolean>(false);
+  const [resourceAvailabilityDetails, setResourceAvailabilityDetails] = useState<any>(null);
+  const [recordOfFilter, setRecordOfFilter] = useState({
+    filter: "",
+    value: "",
+  });
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [filteredList, setFilteredList] = useState<Resource[]>([]);
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 5,
+    sort: "id,asc",
+    timestamp: Date.now(),
   });
 
+  // ──────────────────────────── DATA ────────────────────────────
+  const { data: resourceListResponse, isFetching } =
+    useGetAllResourcesQuery(paginationParams);
+  const [createResource] = useCreateResourceMutation();
+  const [updateResource] = useUpdateResourceMutation();
+  const [toggleResourceActive] = useToggleResourceActiveMutation();
+  const [getResourcesByType] = useLazyGetResourcesByTypeQuery();
+  const resourceTypeEnum = useEnumOptions("ResourceType");
+  const [resourceNamesCache, setResourceNamesCache] = useState<Record<string, string>>({});
 
+  const totalCount = resourceListResponse?.totalCount ?? 0;
+  const links = resourceListResponse?.links || {};
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
+
+  // ──────────────────────────── EFFECTS ────────────────────────────
   useEffect(() => {
-    if (openAvailabilityTimePopup) {
-      console.log("resourceAvailabilityDetails:", resourceAvailabilityDetails);
-    }
-  }, [ openAvailabilityTimePopup]);
+    const divContent = "Resources";
+    dispatch(setPageCode("Resources"));
+    dispatch(setDivContent(divContent));
+    return () => {
+      dispatch(setPageCode(""));
+      dispatch(setDivContent(""));
+    };
+  }, [dispatch]);
 
-  // Pagination values
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = resourcesListResponse?.extraNumeric ?? 0;
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Resource Type', value: 'resourceTypeLkey' },
-    { label: 'Resource Name', value: 'resourceName' },
-    { label: 'Status', value: 'isValid' },
-    { label: 'Creation Date', value: 'createdAt' },
-  ]
-  // Class name of selected row
-  const isSelected = rowData => {
-    if (rowData && resources && rowData.key === resources.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (saveResourcesMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveResourcesMutation.data]);
-  // to handle filter change
-  useEffect(() => {
-    if (recordOfFilter['filter']) {
-      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
-    } else {
-      setListRequest({
-        ...initialListRequest,
-        pageSize: listRequest.pageSize,
-        pageNumber: 1
-      });
-    }
-  }, [recordOfFilter]);
+  // ──────────────────────────── FILTER LOGIC ────────────────────────────
+  const filterFields = [
+    { label: "Resource Type", value: "resourceType" },
+    { label: "Resource Name", value: "resourceName" },
+  ];
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+  const handleFilterChange = async (field: string, value: string) => {
+    try {
+      if (!field || !value) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        return;
+      }
 
-  // Handle page change in navigation
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-  // Handle change rows per page in navigation
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
-  // Handle click on Add New button
-  const handleNew = () => {
-    setResources({ ...newApResources });
-    setPopupOpen(true); // open Add/Edit pop up
-  };
-  // Handle save resource
-  const handleSave = () => {
-    setPopupOpen(false); // close pop up
-    saveResources(resources)
-      .unwrap()
-      .then(() => {
-        // display success message
-        dispatch(notify({ msg: 'The Resource has been saved successfully', sev: 'success' }));
-      })
-      .catch(() => {
-        // display error message
-        dispatch(notify({ msg: 'Failed to save this Resource', sev: 'error' }));
-      });
-  };
+      let response;
 
-  // Handle deactivate Resource
-  const handleDeactiveResource = () => {
-    setOpenConfirmDeleteUserModal(false); // close confirm delete modal
-    deactiveResource(resources)
-      .unwrap()
-      .then(() => {
-        refetchResources();
-        setResources(newApResources);
-        // display success message
+      if (field === "resourceType") {
+        response = await getResourcesByType({
+          resourceType: value,
+          page: 0,
+          size: paginationParams.size,
+          sort: paginationParams.sort,
+        }).unwrap();
+        setFilteredList(response.data ?? []);
+        setFilteredTotal(response.totalCount ?? 0);
+        setIsFiltered(true);
+      } else if (field === "resourceName") {
+        // Filter by resource name - search in the current list
+        const allResources = resourceListResponse?.data ?? [];
+        const searchTerm = value.toLowerCase().trim();
+        
+        const filtered = allResources.filter((r: Resource) => {
+          const resourceName = getResourceName(r.resourceType, r.resourceKey).toLowerCase();
+          return resourceName.includes(searchTerm);
+        });
+        
+        setFilteredList(filtered);
+        setFilteredTotal(filtered.length);
+        setIsFiltered(true);
+      } else {
+        setIsFiltered(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Error filtering resources:", error);
         dispatch(
           notify({
-            msg: 'The Resource was successfully ' + stateOfDeleteUserModal,
-            sev: 'success'
-          })
-        );
-      })
-      .catch(() => {
-        // display error message
-        dispatch(
-          notify({
-            msg: 'Failed to ' + stateOfDeleteUserModal + ' this Resource',
-            sev: 'error'
-          })
-        );
-      });
-  };
-  //handle Reactivate
-  const handleReactiveResource = () => {
-    setOpenConfirmDeleteUserModal(false);
-    const updatedResource = { ...resources, deletedAt: null };
-    saveResources(updatedResource)
-      .unwrap()
-      .then(() => {
-        // display success message
-        dispatch(notify({ msg: 'The Resource has been activated successfully', sev: 'success' }));
-      })
-      .catch(() => {
-        // display error message
-        dispatch(notify({ msg: 'Failed to activated  this Resource', sev: 'error' }));
-      });
-  };
-
-  // handle change filter
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'containsIgnoreCase',
-          value,
-          listRequest
-        )
+          msg: "Failed to filter resources",
+          sev: "error",
+        })
       );
-    } else {
-      setListRequest({ ...listRequest, filters: [] });
+      setIsFiltered(false);
     }
   };
 
-  //Table columns
+  // ──────────────────────────── CRUD HANDLERS ────────────────────────────
+  const handleAddNew = async () => {
+    try {
+      const payload = {
+        resourceType: resource.resourceType,
+        resourceKey: resource.resourceKey,
+        isAllowParallel: resource.isAllowParallel ?? true,
+        isActive: resource.isActive ?? true,
+      };
+
+      const Response = await createResource(payload).unwrap();
+        dispatch(
+        notify({ msg: "Resource added successfully", sev: "success" })
+      );
+      setPaginationParams({ ...paginationParams, timestamp: Date.now() });
+      setResource({ ...Response });
+      setOpenAddEditResource(false);
+    } catch (error) {
+      console.error("Error creating resource:", error);
+
+      if (error?.data?.fieldErrors?.length) {
+        const messages = error.data.fieldErrors
+          .map((fe) => `${fe.field}: ${fe.message}`)
+          .join("\n");
+        dispatch(notify({ msg: messages, sev: "error" }));
+      } else if (error?.data?.detail) {
+        dispatch(notify({ msg: error.data.detail, sev: "error" }));
+      } else {
+        dispatch(notify({ msg: "Failed to create resource", sev: "error" }));
+      }
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const payload = {
+        resourceType: resource.resourceType,
+        resourceKey: resource.resourceKey,
+        isAllowParallel: resource.isAllowParallel ?? true,
+        isActive: resource.isActive ?? true,
+      };
+
+      await updateResource({ id: resource.id!, ...payload }).unwrap();
+
+      dispatch(
+        notify({ msg: "Resource updated successfully", sev: "success" })
+      );
+      setPaginationParams({ ...paginationParams, timestamp: Date.now() });
+      setOpenAddEditResource(false);
+    } catch (error) {
+      console.error("Error updating resource:", error);
+
+      if (error?.data?.fieldErrors?.length) {
+        const messages = error.data.fieldErrors
+          .map((fe) => `${fe.field}: ${fe.message}`)
+          .join("\n");
+        dispatch(notify({ msg: messages, sev: "error" }));
+      } else if (error?.data?.detail) {
+        dispatch(notify({ msg: error.data.detail, sev: "error" }));
+    } else {
+        dispatch(notify({ msg: "Failed to update resource", sev: "error" }));
+      }
+    }
+  };
+
+  const handleToggleActive = async (id: number) => {
+    try {
+      await toggleResourceActive(id).unwrap();
+      dispatch(notify({ msg: "Status updated successfully", sev: "success" }));
+      setPaginationParams({ ...paginationParams, timestamp: Date.now() });
+    } catch {
+      dispatch(notify({ msg: "Failed to update status", sev: "error" }));
+    }
+  };
+
+  const handleDeactiveReactivateResource = () => {
+    handleToggleActive(resource.id!);
+    setOpenConfirmDeleteResourceModal(false);
+  };
+
+  // ──────────────────────────── RESOURCE NAME FETCHING ────────────────────────────
+  // Fetch resource names for all resources in the current page - Static implementation
+  useEffect(() => {
+    const fetchResourceNames = async () => {
+      if (!resourceListResponse?.data) return;
+
+      const resourcesToFetch = resourceListResponse.data.filter(
+        (r: Resource) => {
+          const cacheKey = `${r.resourceType}_${r.resourceKey}`;
+          return r.resourceType && r.resourceKey && !resourceNamesCache[cacheKey];
+        }
+      );
+
+      if (resourcesToFetch.length === 0) return;
+
+      const newNames: Record<string, string> = {};
+      const baseURL = appConfig.backendBaseURL || 'http://localhost:8080';
+      const jwt = localStorage.getItem('id_token') || localStorage.getItem('token');
+
+      await Promise.all(
+        resourcesToFetch.map(async (r: Resource) => {
+          try {
+            let endpoint = '';
+            let name = '';
+
+            // Static switch statement - easy to read and edit
+            switch (r.resourceType) {
+              case 'PRACTITIONER':
+                endpoint = `/api/setup/practitioner/${r.resourceKey}`;
+                break;
+              case 'MEDICAL_TEST':
+                endpoint = `/api/setup/diagnostic-test/${r.resourceKey}`;
+                break;
+              case 'CLINIC':
+                endpoint = `/api/setup/department/${r.resourceKey}`;
+                break;
+              // case 'INPATIENT_ADMISSION':
+              //   endpoint = `/api/setup/inpatient-admission/${r.resourceKey}`;
+              //   break;
+              // case 'DAY_CASE':
+              //   endpoint = `/api/setup/day-case/${r.resourceKey}`;
+              //   break;
+              // case 'EMERGENCY':
+              //   endpoint = `/api/setup/emergency/${r.resourceKey}`;
+              //   break;
+              // case 'OPERATION':
+              //   endpoint = `/api/setup/operation/${r.resourceKey}`;
+              //   break;
+              default:
+                return; // Skip unknown resource types
+            }
+
+            if (!endpoint) return;
+
+            const response = await fetch(`${baseURL}${endpoint}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(jwt && { Authorization: `Bearer ${jwt}` }),
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              
+              if (r.resourceType === 'PRACTITIONER') {
+                name = `${data.firstName || ''} ${data.lastName || ''}`.trim() || `Practitioner ${r.resourceKey}`;
+              } else if (r.resourceType === 'MEDICAL_TEST') {
+                name = data.name || r.resourceKey;
+              } else if (r.resourceType === 'CLINIC') {
+                name = data.name || r.resourceKey;
+              }
+              // else if (r.resourceType === 'INPATIENT_ADMISSION') {
+              //   name = data.name || r.resourceKey;
+              // }
+
+              if (name) {
+                newNames[`${r.resourceType}_${r.resourceKey}`] = name;
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching resource name for ${r.resourceType} ${r.resourceKey}:`, error);
+          }
+        })
+      );
+
+      if (Object.keys(newNames).length > 0) {
+        setResourceNamesCache((prev) => ({ ...prev, ...newNames }));
+      }
+    };
+
+    fetchResourceNames();
+  }, [resourceListResponse?.data]);
+
+  const getResourceName = (resourceType: string, resourceKey: string): string => {
+    const cacheKey = `${resourceType}_${resourceKey}`;
+    return resourceNamesCache[cacheKey] || resourceKey;
+  };
+
+  // ──────────────────────────── TABLE LOGIC ────────────────────────────
+  const isSelected = (rowData: Resource) =>
+    rowData?.id === resource?.id ? "selected-row" : "";
+
+  const iconsForActions = (rowData: Resource) => (
+    <div className="container-of-icons">
+      <GrScheduleNew
+        title="Availability"
+        size={24}
+        fill="var(--primary-gray)"
+        className="icons-style"
+        onClick={() => {
+          setResourceAvailabilityDetails({
+            object: [{
+              key: rowData.resourceKey,
+              resourceType: rowData.resourceType,
+            }]
+          });
+          setOpenAvailabilityTimePopup(true);
+        }}
+      />
+      <MdModeEdit
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        className="icons-style"
+        onClick={() => {
+          setResource(rowData);
+          setOpenAddEditResource(true);
+        }}
+      />
+      {rowData?.isActive ? (
+        <MdDelete
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          className="icons-style"
+          onClick={() => {
+            setResource(rowData);
+            setStateOfDeleteModal("deactivate");
+            setOpenConfirmDeleteResourceModal(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          title="Activate"
+          size={24}
+          fill="var(--primary-gray)"
+          className="icons-style"
+          onClick={() => {
+            setResource(rowData);
+            setStateOfDeleteModal("reactivate");
+            setOpenConfirmDeleteResourceModal(true);
+          }}
+        />
+      )}
+    </div>
+  );
+
   const tableColumns = [
     {
-      key: 'resourceTypeLkey',
+      key: "resourceType",
       title: <Translate>Resource Type</Translate>,
-      flexGrow: 4,
-      render: rowData =>
-        rowData.resourceTypeLvalue
-          ? rowData.resourceTypeLvalue.lovDisplayVale
-          : rowData.resourceTypeLkey
+      flexGrow: 3,
+      render: (rowData) => <p>{formatEnumString(rowData?.resourceType)}</p>,
     },
     {
-      key: 'resourceName',
-      title: <Translate>Resource Name</Translate>,
-      flexGrow: 4
+      key: "resourceKey",
+      title: <Translate>Resource</Translate>,
+      flexGrow: 3,
+      render: (rowData: Resource) => (
+        <p>{getResourceName(rowData.resourceType, rowData.resourceKey)}</p>
+      ),
     },
     {
-      key: 'status',
+      key: "isAllowParallel",
+      title: <Translate>Allow Parallel</Translate>,
+      flexGrow: 2,
+      render: (rowData: Resource) => (
+        <p>{rowData?.isAllowParallel ? "Yes" : "No"}</p>
+      ),
+    },
+    {
+      key: "isActive",
       title: <Translate>Status</Translate>,
-      flexGrow: 4,
-      render: rowData => (!rowData.deletedAt ? 'Active' : 'InActive')
-    },
-    {
-      key: 'createdAt',
-      title: <Translate>Creation Date</Translate>,
-      flexGrow: 4,
-      render: rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')
+      flexGrow: 2,
+      render: (rowData: Resource) => (
+        <p>{rowData?.isActive ? "Active" : "Inactive"}</p>
+      ),
     },
     {
       key: 'createdBy',
@@ -247,144 +441,135 @@ const Resources = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-  // Filter table
+
+  // ──────────────────────────── PAGINATION ────────────────────────────
+  const handlePageChange = (event: unknown, newPage: number) => {
+    PaginationPerPage.handlePageChange(
+      event,
+      newPage,
+      paginationParams,
+      links,
+      setPaginationParams
+    );
+  };
+
+  // ──────────────────────────── FILTER UI ────────────────────────────
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
       <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
         fieldName="filter"
         fieldType="select"
+        selectData={filterFields}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={recordOfFilter}
-        setRecord={updatedRecord => {
-          setRecordOfFilter({
-            ...recordOfFilter,
-            filter: updatedRecord.filter,
-            value: ''
-          });
-        }}
-        showLabel={false}
+        setRecord={(u) => setRecordOfFilter({ filter: u.filter, value: "" })}
         placeholder="Select Filter"
-        searchable={false}
-      />
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
         showLabel={false}
-        placeholder="Search"
+        width="180px"
       />
-    </Form>
-  );
-  // Icons column (Edite, reactive/Deactivate)
-  const iconsForActions = (rowData: ApResources) => (
-    <div className="container-of-icons">
-      {/* display availability time when click on this icon */}
-      <IoSettingsSharp
-        className="icons-style"
-        title="Availability Time"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => {
-          setOpenAvailabilityTimePopup(true);
-          setSelectedResources(rowData);
-        }}
-      />
-      {/* open edit resource when click on this icon */}
-      <MdModeEdit
-        className="icons-style"
-        title="Edit"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => setPopupOpen(true)}
-      />
-      {/* deactivate/activate  when click on one of these icon */}
-      {!rowData?.deletedAt ? (
-        <MdDelete
-          className="icons-style"
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-          onClick={() => {
-            setStateOfDeleteUserModal('deactivate');
-            setOpenConfirmDeleteUserModal(true);
-          }}
-        />
-      ) : (
-        <FaUndo
-          className="icons-style"
-          title="Activate"
-          size={20}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setStateOfDeleteUserModal('reactivate');
-            setOpenConfirmDeleteUserModal(true);
-          }}
+
+      {recordOfFilter.filter === "resourceType" && (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={resourceTypeEnum ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+          placeholder="Select Resource Type"
         />
       )}
-    </div>
+
+      {recordOfFilter.filter === "resourceName" && (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          placeholder="Enter Resource Name"
+          showLabel={false}
+        />
+      )}
+
+      {recordOfFilter.filter !== "resourceType" && recordOfFilter.filter !== "resourceName" && (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          placeholder="Enter Value"
+          showLabel={false}
+        />
+      )}
+
+      <MyButton
+        color="var(--deep-blue)"
+        width="80px"
+        onClick={() =>
+          handleFilterChange(recordOfFilter.filter, recordOfFilter.value)
+        }
+      >
+        Search
+      </MyButton>
+    </Form>
   );
- 
+
+  // ──────────────────────────── RENDER ────────────────────────────
   return (
     <Panel>
-
       <MyTable
-        height={450}
-        data={resourcesListResponse?.object ?? []}
-        loading={isFetching}
+        data={isFiltered ? filteredList : resourceListResponse?.data ?? []}
+        totalCount={isFiltered ? filteredTotal : totalCount}
         columns={tableColumns}
         rowClassName={isSelected}
+        onRowClick={(rowData) => setResource(rowData)}
         filters={filters()}
-        onRowClick={rowData => {
-          setSelectedResources(rowData);
-        }}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-        }}
+        loading={isFetching}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
         onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        tableButtons={<div className="container-of-add-new-button">
+        tableButtons={
+          <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"
-          onClick={handleNew}
+              onClick={() => {
+                setResource({ ...newResource });
+                setOpenAddEditResource(true);
+              }}
           width="109px"
         >
           Add New
         </MyButton>
       </div>}
       />
-      {/* <AvailabilityTimeModal
-        open={openAvailabilityTimePopup}
-        setOpen={setOpenAvailabilityTimePopup}
-        resource={resources}
-      /> */}
-      <NewAvailabilityTimeModal
-        open={openAvailabilityTimePopup}
-        setOpen={setOpenAvailabilityTimePopup}
-        selectedResource={resourceAvailabilityDetails}
-      />
+      {resourceAvailabilityDetails && (
+        <NewAvailabilityTimeModal
+          open={openAvailabilityTimePopup}
+          setOpen={setOpenAvailabilityTimePopup}
+          selectedResource={resourceAvailabilityDetails}
+        />
+      )}
+
       <AddEditResources
-        open={popupOpen}
-        setOpen={setPopupOpen}
+        open={openAddEditResource}
+        setOpen={setOpenAddEditResource}
+        resource={resource}
+        setResource={setResource}
+        handleAddNew={handleAddNew}
+        handleUpdate={handleUpdate}
         width={width}
-        resources={resources}
-        setResources={setResources}
-        handleSave={handleSave}
       />
+
       <DeletionConfirmationModal
-        open={openConfirmDeleteUserModal}
-        setOpen={setOpenConfirmDeleteUserModal}
+        open={openConfirmDeleteResourceModal}
+        setOpen={setOpenConfirmDeleteResourceModal}
         itemToDelete="Resource"
-        actionButtonFunction={stateOfDeleteUserModal == 'deactivate' ? handleDeactiveResource : handleReactiveResource}
-        actionType={stateOfDeleteUserModal}
+        actionButtonFunction={handleDeactiveReactivateResource}
+        actionType={stateOfDeleteModal}
       />
     </Panel>
   );

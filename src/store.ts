@@ -42,6 +42,7 @@ import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/setup/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
+import { ResourceService } from './services/setup/resource/ResourceService';
 import {Icd10Service} from './services/setup/icd10service';
 import { patientAttachmentService } from './services/patients/attachmentService';
 import { ageGroupService } from './services/setup/ageGroupService';
@@ -159,6 +160,7 @@ export const store = configureStore({
     [userDepartmentService.reducerPath]:userDepartmentService.reducer,
     [PractitionerService.reducerPath]:PractitionerService.reducer,
     [PractitionerDepartmentService.reducerPath]:PractitionerDepartmentService.reducer,
+    [ResourceService.reducerPath]:ResourceService.reducer,
 
     //Categories setup
     [MedicationCategoriesService.reducerPath]: MedicationCategoriesService.reducer,
@@ -253,6 +255,7 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+      ResourceService.middleware,
       ageGroupService.middleware,
       Icd10Service.middleware,
       allergensService.middleware,

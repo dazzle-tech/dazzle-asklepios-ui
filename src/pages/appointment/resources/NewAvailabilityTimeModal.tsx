@@ -1,6 +1,6 @@
 import MyInput from '@/components/MyInput';
-import { useGetResourcesQuery, useSaveAvailabilitySlicesMutation } from '@/services/appointmentService';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { useSaveAvailabilitySlicesMutation, useGetResourcesWithAvailabilityQuery } from '@/services/appointmentService';
+import { initialListRequest } from '@/types/types';
 import React, { useEffect, useState } from 'react';
 import {
     Modal,
@@ -41,30 +41,46 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
 
     useEffect(() => { console.log(selectedDays) }, [selectedDays]);
 
-    const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 100 });
+    const resourceKey = selectedResource?.object?.[0]?.key;
 
-    const { data: resourcesListResponse } = useGetResourcesQuery(
-        resourcesListRequest
-    );
     const {
         data: facilityListResponse,
         isLoading: isGettingFacilities,
         isFetching: isFetchingFacilities
     } = useGetFacilitiesQuery({ ...initialListRequest });
 
-    useEffect(() => {
-        console.log('Selected Resource:', selectedResource);
+    // Fetch saved availability data when modal opens
+    const { data: resourcesWithAvailabilityResponse, refetch: refetchAvailability } = useGetResourcesWithAvailabilityQuery(
+        {
+            ...initialListRequest,
+            filters: resourceKey ? [{ fieldName: 'resource_key', operator: 'match', value: resourceKey }] : []
+        },
+        { skip: !resourceKey || !open }
+    );
 
-    }, [selectedResource])
-
+    // Fetch availability data when modal opens
     useEffect(() => {
-        console.log('Selected Resource:', selectedResource);
-        if (selectedResource?.object?.length > 0) {
+        if (open && resourceKey) {
+            refetchAvailability();
+        }
+    }, [open, resourceKey, refetchAvailability]);
+
+    // Load data from API response
+    useEffect(() => {
+        if (resourcesWithAvailabilityResponse?.object?.length > 0) {
             const loadedSlices: Record<string, any[]> = {};
             const loadedDays: DayValue[] = [];
+            let loadedFacility = null;
+            let loadedFromTime = null;
+            let loadedToTime = null;
 
-            selectedResource.object.forEach(objItem => {
-                if (objItem.availabilitySlices?.length > 0) {
+            resourcesWithAvailabilityResponse.object.forEach(objItem => {
+                // Set facility from first item that matches resource key
+                if (!loadedFacility && objItem.facilityKey && objItem.key === resourceKey) {
+                    loadedFacility = { facilityKey: objItem.facilityKey };
+                }
+
+                if (objItem.key === resourceKey && objItem.availabilitySlices?.length > 0) {
                     objItem.availabilitySlices.forEach(slice => {
                         const day = String(slice.dayOfWeek);
                         
@@ -80,6 +96,14 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
                         const fromDate = minutesToDisplayDate(slice.startHour);
                         const toDate = minutesToDisplayDate(slice.endHour);
 
+                        // Set fromTime and toTime from first slice if not set
+                        if (!loadedFromTime && fromDate) {
+                            loadedFromTime = fromDate;
+                        }
+                        if (!loadedToTime && toDate) {
+                            loadedToTime = toDate;
+                        }
+
                         loadedSlices[day].push({
                             from: fromDate,
                             to: toDate,
@@ -89,15 +113,24 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
                 }
             });
 
+            // Set facility if found
+            if (loadedFacility) {
+                setFacility(loadedFacility);
+            }
+
+            // Set time range if found
+            if (loadedFromTime && loadedToTime) {
+                setFromTime(loadedFromTime);
+                setToTime(loadedToTime);
+            }
+
+            // Set slices and days
             if (loadedDays.length > 0) {
                 setTimeSlices(loadedSlices);
                 setSelectedDays(loadedDays);
-                console.log('selectedResource:', selectedResource);
-                console.log('Loaded Days:', loadedDays);
-                console.log('Loaded Slices:', loadedSlices);
             }
         }
-    }, [selectedResource]);
+    }, [resourcesWithAvailabilityResponse, resourceKey]);
 
     const generateSlices = (from, to, duration) => {
         console.log('generateSlices - Raw From:', from);
@@ -179,8 +212,7 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
         return d;
     };
 
-    const handleSave = () => {
-
+    const handleSave = async () => {
         const finalData = selectedDays.map(day => {
             return {
                 day: day,
@@ -193,7 +225,7 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
         });
 
         try {
-            saveResourcesAvailabilitySlices({
+            await saveResourcesAvailabilitySlices({
                 facility: facility?.facilityKey,
                 resource: selectedResource?.object[0].key,
                 availability: finalData
@@ -203,10 +235,13 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
                 resource: selectedResource?.object[0].key,
                 availability: finalData
             });
+            // Refetch data after save
+            if (resourceKey) {
+                await refetchAvailability();
+            }
         } catch (err) {
             console.error('❌ SAVE ERROR:', err);
         }
-        setOpen(false);
     };
 
     const handleToggleBreak = (day, index) => {
@@ -359,6 +394,18 @@ const handleAddSliceRight = (day) => {
         // setOpen(false); 
     };
 
+
+    // Reset form when modal closes
+    useEffect(() => {
+        if (!open) {
+            setFacility(null);
+            setFromTime(null);
+            setToTime(null);
+            setSliceDuration(SLICE_DURATION_MINUTES);
+            setSelectedDays([]);
+            setTimeSlices({});
+        }
+    }, [open]);
 
     return (
         <Modal open={open} onClose={() => setOpen(false)} size="lg">
