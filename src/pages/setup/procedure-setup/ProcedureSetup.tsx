@@ -18,8 +18,6 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
 import {
   useGetProceduresQuery,
-  useAddProcedureMutation,
-  useUpdateProcedureMutation,
   useToggleProcedureIsActiveMutation,
   useLazyGetProceduresByCategoryQuery,
   useLazyGetProceduresByCodeQuery,
@@ -36,12 +34,12 @@ import LinkProcedurePriceList from './LinkProcedurePriceList';
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
 
-  // ===== Facility context (kept identical to Services page) =====
+  // Facility context (used to default new procedure)
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
   const facilityId: number | undefined = selectedFacility?.id;
 
-  // ===== Selected row / dialogs =====
+  // Selected procedure and UI state
   const [procedure, setProcedure] = useState<Procedure>({ ...newProcedure, facilityId });
   const [popupOpen, setPopupOpen] = useState(false);
   const [openConfirmToggleActive, setOpenConfirmToggleActive] = useState(false);
@@ -54,14 +52,24 @@ const ProcedureSetup: React.FC = () => {
   const [linkPriceOpen, setLinkPriceOpen] = useState(false);
   const [linkPriceProcedureId, setLinkPriceProcedureId] = useState<number | null>(null);
 
-  // ===== Filtering state (same as Services) =====
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({ filter: '', value: '' });
+  // Filter state
+  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
+    filter: '',
+    value: '',
+  });
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
 
-  // ===== Pagination params =====
+  // Pagination state when list is filtered
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc',
+  });
+
+  // Pagination state for main (unfiltered) list
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -69,10 +77,10 @@ const ProcedureSetup: React.FC = () => {
     timestamp: Date.now(),
   });
 
-  // Procedure category enum options (for filtering display)
+  // Enum options for category
   const procedureCategoryOptions = useEnumOptions('ProcedureCategoryType');
 
-  // ===== RTK Query: main list, lazy filters, mutations =====
+  // Main list and facilities
   const { data: proceduresPage, isFetching, refetch } = useGetProceduresQuery({
     page: paginationParams.page,
     size: paginationParams.size,
@@ -81,13 +89,14 @@ const ProcedureSetup: React.FC = () => {
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
+  // Mutations and lazy filter queries
   const [toggleProcedureIsActive] = useToggleProcedureIsActiveMutation();
   const [fetchByCategory] = useLazyGetProceduresByCategoryQuery();
   const [fetchByCode] = useLazyGetProceduresByCodeQuery();
   const [fetchByName] = useLazyGetProceduresByNameQuery();
   const [fetchByFacility] = useLazyGetProceduresByFacilityQuery();
 
-  // ===== Derived totals/data/links =====
+  // Derived data
   const totalCount = useMemo(
     () => (isFiltered ? filteredTotal : proceduresPage?.totalCount ?? 0),
     [isFiltered, filteredTotal, proceduresPage?.totalCount]
@@ -100,7 +109,7 @@ const ProcedureSetup: React.FC = () => {
     [isFiltered, filteredData, proceduresPage?.data]
   );
 
-  // ===== Page header =====
+  // Page header
   useEffect(() => {
     const header = 'Procedures';
     dispatch(setPageCode('Procedures'));
@@ -111,7 +120,16 @@ const ProcedureSetup: React.FC = () => {
     };
   }, [dispatch]);
 
-  // ===== Filter fields (mirror Services) =====
+  // Resize listener for modal width
+  useEffect(() => {
+    const handleResize = () => {
+      setWidth(window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Available filters
   const filterFields = [
     { label: 'Facility', value: 'facilityId' },
     { label: 'Category', value: 'categoryType' },
@@ -119,109 +137,191 @@ const ProcedureSetup: React.FC = () => {
     { label: 'Code', value: 'code' },
   ];
 
-  // ===== New Procedure =====
+  // Open modal for new procedure
   const handleNew = () => {
     setProcedure({ ...newProcedure, facilityId });
     setPopupOpen(true);
   };
 
-  // ===== Save success callback =====
-  const handleSaveSuccess = () => {
+  /**
+   * Reset table to unfiltered mode and refetch main list.
+   */
+  const resetToUnfiltered = () => {
+    setIsFiltered(false);
+    setFilteredData([]);
+    setFilteredTotal(0);
+    setFilteredLinks(undefined);
+    setFilterPagination(prev => ({ ...prev, page: 0 }));
+    setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
     refetch();
   };
 
-  // ===== Activate / Deactivate =====
+  /**
+   * Run filter query for given field and value.
+   */
+  const runFilterQuery = async (
+    fieldName: string,
+    value: any,
+    page = 0,
+    size = filterPagination.size
+  ) => {
+    if (value === null || value === undefined || value === '') return undefined;
+
+    const common = { page, size, sort: paginationParams.sort };
+
+    if (fieldName === 'categoryType') {
+      return await fetchByCategory({
+        categoryType: String(value).toUpperCase(),
+        ...common,
+      }).unwrap();
+    } else if (fieldName === 'code') {
+      return await fetchByCode({
+        code: value,
+        ...common,
+      }).unwrap();
+    } else if (fieldName === 'name') {
+      return await fetchByName({
+        name: value,
+        ...common,
+      }).unwrap();
+    } else if (fieldName === 'facilityId') {
+      return await fetchByFacility({
+        facilityId: value,
+        ...common,
+      }).unwrap();
+    }
+
+    return undefined;
+  };
+
+  /**
+   * Apply or clear filter.
+   */
+  const handleFilterChange = async (
+    fieldName: string,
+    value: any,
+    page = 0,
+    size = filterPagination.size
+  ) => {
+    if (value === null || value === undefined || value === '') {
+      resetToUnfiltered();
+      return;
+    }
+
+    try {
+      const resp =
+        (await runFilterQuery(fieldName, value, page, size)) as
+          | { data: any[]; totalCount: number; links?: any }
+          | undefined;
+
+      setFilteredData(resp?.data ?? []);
+      setFilteredTotal(resp?.totalCount ?? 0);
+      setFilteredLinks(resp?.links || {});
+      setIsFiltered(true);
+      setFilterPagination(prev => ({ ...prev, page, size }));
+    } catch {
+      resetToUnfiltered();
+    }
+  };
+
+  /**
+   * Called by AddEditProcedure after a successful save.
+   * Clears filter and goes back to unfiltered mode.
+   */
+  const handleSaveSuccess = () => {
+    setRecordOfFilter({ filter: '', value: '' });
+    resetToUnfiltered();
+  };
+
+  /**
+   * Update a row locally in filteredData to reflect toggle.
+   * Uses String comparison for id to avoid type mismatches.
+   */
+  const applyToggleLocally = (toggledId: number | string, newIsActive: boolean) => {
+    if (!isFiltered) return;
+
+    setFilteredData(prev =>
+      prev.map((row: any) =>
+        String(row.id) === String(toggledId) ? { ...row, isActive: newIsActive } : row
+      )
+    );
+  };
+
+  /**
+   * Deactivate selected procedure.
+   */
   const handleDeactivate = () => {
     setOpenConfirmToggleActive(false);
     if (!procedure?.id) return;
-    toggleProcedureIsActive({ id: procedure.id })
+
+    const id = procedure.id;
+
+    toggleProcedureIsActive({ id })
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Procedure deactivated successfully', sev: 'success' }));
-        refetch();
+
+        // Reflect immediately in state when filtered
+        applyToggleLocally(id, false);
+
+        if (!isFiltered) {
+          refetch();
+        } else {
+          // Also update local selected procedure state
+          setProcedure(prev =>
+            prev && String(prev.id) === String(id) ? { ...prev, isActive: false } : prev
+          );
+        }
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to deactivate procedure', sev: 'error' }));
       });
   };
 
+  /**
+   * Reactivate selected procedure.
+   */
   const handleReactivate = () => {
     setOpenConfirmToggleActive(false);
     if (!procedure?.id) return;
-    toggleProcedureIsActive({ id: procedure.id })
+
+    const id = procedure.id;
+
+    toggleProcedureIsActive({ id })
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Procedure reactivated successfully', sev: 'success' }));
-        refetch();
+
+        // Reflect immediately in state when filtered
+        applyToggleLocally(id, true);
+
+        if (!isFiltered) {
+          refetch();
+        } else {
+          setProcedure(prev =>
+            prev && String(prev.id) === String(id) ? { ...prev, isActive: true } : prev
+          );
+        }
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to reactivate procedure', sev: 'error' }));
       });
   };
 
-  // ===== Filters (lazy queries + Link headers — mirrors Services) =====
-  const handleFilterChange = async (fieldName: string, value: any) => {
-    if (!value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
+  /**
+   * Pagination change handler.
+   */
+  const handlePageChange = (_: unknown, newPage: number) => {
+    if (isFiltered) {
+      handleFilterChange(
+        recordOfFilter.filter,
+        recordOfFilter.value,
+        newPage,
+        filterPagination.size
+      );
       return;
     }
-    try {
-      let resp:
-        | { data: any[]; totalCount: number; links?: any }
-        | undefined;
 
-      if (fieldName === 'categoryType') {
-        resp = await fetchByCategory({
-          categoryType: String(value).toUpperCase(),
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
-        }).unwrap();
-      } else if (fieldName === 'code') {
-        resp = await fetchByCode({
-          code: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
-        }).unwrap();
-      } else if (fieldName === 'name') {
-        resp = await fetchByName({
-          name: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
-        }).unwrap();
-      } else if (fieldName === 'facilityId') {
-        resp = await fetchByFacility({
-          facilityId: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
-        }).unwrap();
-      }
-
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-    } catch {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
-    }
-  };
-
-  // ───────── PAGINATION─────────
-  const handlePageChange = (_: unknown, newPage: number) => {
     const currentPage = paginationParams.page;
     let targetLink: string | null | undefined = null;
 
@@ -241,16 +341,33 @@ const ProcedureSetup: React.FC = () => {
     }
   };
 
+  /**
+   * Rows per page change handler.
+   */
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPaginationParams(prev => ({
-      ...prev,
-      size: parseInt(event.target.value, 10),
-      page: 0,
-      timestamp: Date.now(),
-    }));
+    const newSize = parseInt(event.target.value, 10);
+
+    if (isFiltered) {
+      setFilterPagination(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+      }));
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+        timestamp: Date.now(),
+      }));
+    }
   };
 
+  // Selected row class
   const isSelected = (rowData: any) => (rowData?.id === procedure?.id ? 'selected-row' : '');
+
+  // Table columns
   const tableColumns = [
     {
       key: 'facilityId',
@@ -266,7 +383,6 @@ const ProcedureSetup: React.FC = () => {
         </span>
       ),
     },
-
     { key: 'name', title: <Translate>Procedure Name</Translate>, flexGrow: 4 },
     { key: 'code', title: <Translate>Code</Translate>, flexGrow: 3 },
     {
@@ -312,7 +428,6 @@ const ProcedureSetup: React.FC = () => {
         />
       ),
     },
-
     {
       key: 'priceList',
       title: <Translate>Price List</Translate>,
@@ -332,9 +447,8 @@ const ProcedureSetup: React.FC = () => {
         />
       ),
     },
-
     {
-      key: 'icons',
+      key: 'actions',
       title: <Translate></Translate>,
       flexGrow: 3,
       render: (row: any) => (
@@ -379,18 +493,13 @@ const ProcedureSetup: React.FC = () => {
     },
   ];
 
-  // filter component
+  // Filters UI
   const filters = () => (
     <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
-        selectData={[
-          { label: 'Facility', value: 'facilityId' },
-          { label: 'Category', value: 'categoryType' },
-          { label: 'Name', value: 'name' },
-          { label: 'Code', value: 'code' },
-        ]}
+        selectData={filterFields}
         fieldName="filter"
         fieldType="select"
         record={recordOfFilter}
@@ -439,7 +548,14 @@ const ProcedureSetup: React.FC = () => {
       )}
       <MyButton
         color="var(--deep-blue)"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+        onClick={() =>
+          handleFilterChange(
+            recordOfFilter.filter,
+            recordOfFilter.value,
+            0,
+            filterPagination.size
+          )
+        }
         width="80px"
       >
         Search
@@ -447,17 +563,12 @@ const ProcedureSetup: React.FC = () => {
     </Form>
   );
 
-  // Effects: reset filter when value cleared
+  // Auto reset when filter value is cleared
   useEffect(() => {
-    if (!recordOfFilter.value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
+    if ((recordOfFilter.value === null || recordOfFilter.value === '') && isFiltered) {
+      resetToUnfiltered();
     }
-  }, [recordOfFilter.value, refetch]);
+  }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Panel>
@@ -469,8 +580,8 @@ const ProcedureSetup: React.FC = () => {
         rowClassName={isSelected}
         onRowClick={row => setProcedure(row)}
         filters={filters()}
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
+        page={isFiltered ? filterPagination.page : paginationParams.page}
+        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         tableButtons={
@@ -506,7 +617,6 @@ const ProcedureSetup: React.FC = () => {
         actionType={toggleAction}
       />
 
-     
       <LinkProcedureCoding
         open={linkCodingOpen}
         setOpen={setLinkCodingOpen}
