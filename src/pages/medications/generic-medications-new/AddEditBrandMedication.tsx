@@ -21,6 +21,7 @@ import { FaUnity } from 'react-icons/fa6';
 import { MdOutlineMedicationLiquid } from 'react-icons/md';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
 const AddEditBrandMedication = ({
   open,
   setOpen,
@@ -46,8 +47,8 @@ const AddEditBrandMedication = ({
   // Fetch med Rout Lov  list response
   const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
   // Fetch unit Lov list response
-  const  {data:unitListResponse}=useGetLovValuesByCodeQuery('TIME_UNITS')
 
+  const units=useEnumOptions("Unit")
 
   const [UOMListRequest, setUOMListRequest] = useState<ListRequest>({
     ...initialListRequest
@@ -242,9 +243,9 @@ useEffect(() => {
                   fieldLabel='Unit'
                   fieldName="expiresAfterOpeningUnit"
                   fieldType="select"
-                  selectData={unitListResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  selectData={units ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   record={brandMedication}
                   setRecord={setBrandMedication}
                   menuMaxHeight={250}
