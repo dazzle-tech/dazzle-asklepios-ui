@@ -132,7 +132,7 @@ useEffect(() => {
           <Form fluid>
             <Row>
              
-              <Col md={12}>
+              <Col md={8}>
                 <MyInput
                   required
                   width="100%"
@@ -142,7 +142,17 @@ useEffect(() => {
                   setRecord={setBrandMedication}
                 />
               </Col>
-                 <Col md={12}>
+                 <Col md={8}>
+                <MyInput
+                  required
+                  width="100%"
+                  fieldLabel="Brand Code"
+                  fieldName="code"
+                  record={brandMedication}
+                  setRecord={setBrandMedication}
+                />
+              </Col>
+                 <Col md={8}>
                 <MyInput
                   required
                   width="100%"
