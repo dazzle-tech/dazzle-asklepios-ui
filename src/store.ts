@@ -60,14 +60,14 @@ import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestSer
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
-import { dentalActionService } from '@/services/setup/dentalActionService';
+import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
 import { vaccineService } from './services/vaccine/vaccineService';
 import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
-
+import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -202,6 +202,7 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -266,6 +267,7 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      CdtDentalActionService.middleware
     ])
 });
 

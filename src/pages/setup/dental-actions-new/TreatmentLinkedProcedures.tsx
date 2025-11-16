@@ -5,210 +5,253 @@ import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import { MdDelete } from 'react-icons/md';
 import Translate from '@/components/Translate';
-import { initialListRequest } from '@/types/types';
-import {
-  useGetCdtsQuery,
-  useLinkCdtActionMutation,
-  useUnlinkCdtActionMutation
-} from '@/services/setupService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
-import { PiToothFill } from 'react-icons/pi';
-import { newApCdtDentalAction } from '@/types/model-types-constructor';
-import { Check } from '@rsuite/icons';
 import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { ApCdtDentalAction } from '@/types/model-types';
-import { notify } from '@/utils/uiReducerActions';
-import { useAppDispatch } from '@/hooks';
-const TreatmentLinkedProcedures = ({ open, setOpen, dentalAction, setDentalAction, width}) => {
-     const dispatch = useAppDispatch();
-  const [cdtDentalAction, setCdtDentalAction] = useState<ApCdtDentalAction>({
-    ...newApCdtDentalAction
+import { PiToothFill } from 'react-icons/pi';
+
+import {
+  useGetByDentalActionQuery,
+  useCreateMutation,
+  useDeleteMutation,
+} from '@/services/setup/dental-action/CdtDentalActionService';
+
+import { useGetAllCdtQuery } from '@/services/setup/cdtCodeService';  // ← NEW
+import { useGetCdtByCodeQuery } from '@/services/setup/cdtCodeService';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+
+const TreatmentLinkedProcedures = ({
+  open,
+  setOpen,
+  dentalAction,
+  width,
+}) => {
+  const dispatch = useAppDispatch();
+
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedCdt, setSelectedCdt] = useState({ selectedCdtCode: '' });
+
+  // -----------------------------------------
+  // 1) LOAD LINKED PROCEDURES
+  // -----------------------------------------
+  const { data: linkedProcedures = [], refetch } =
+    useGetByDentalActionQuery(dentalAction?.id, { skip: !dentalAction?.id });
+console.log("den",linkedProcedures)
+  const [createLink] = useCreateMutation();
+  const [deleteLink] = useDeleteMutation();
+
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+
+  // -----------------------------------------
+  // 2) SEARCH + DUAL PAGINATION SYSTEM
+  // -----------------------------------------
+  const [searchCode, setSearchCode] = useState("");
+  const [allPage, setAllPage] = useState(0);
+  const [searchPage, setSearchPage] = useState(0);
+  const [allCdts, setAllCdts] = useState([]);
+
+  // ----------- A) Query for Full List (first load) -----------
+  const { data: allPageResponse } = useGetAllCdtQuery({
+    page: allPage,
+    size: 5,
   });
-  const [load, setLoad] = useState<boolean>(false);
-  const [openConfirmDeleteLinked, setOpenConfirmDeleteLinked] = useState<boolean>(false);
-  const [reccordOfSelectedCdtKey, setReccordOfSelectedCdtKey] = useState({ selectedCdtKey: '' });
-  const [cdtMap, setCdtMap] = useState({});
-  const [linkCdtAction, linkCdtActionMutation] = useLinkCdtActionMutation();
-  const [unlinkCdtAction, unlinkCdtActionMutation] = useUnlinkCdtActionMutation();
-  const { data: cdtListResponse } = useGetCdtsQuery({
-    ...initialListRequest,
-    pageSize: 1000,
-    skipDetails: true
-  });
-  // customise item appears on the selected cdt list
-  const modifiedData = (cdtListResponse?.object ?? []).map(item => ({
-    ...item,
-    combinedLabel: `${item.key} / ${item?.description}`
-  }));
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && cdtDentalAction && rowData.key === cdtDentalAction.key) {
-      return 'selected-row';
-    } else return '';
-  };
-   // handle delete cdt linked procedure from treatment
-   const handleDeleteTreatmentLinkedProcedure = () => {
-    setOpenConfirmDeleteLinked(false);
-    setLoad(true);
-    unlinkCdtAction({
-      ...newApCdtDentalAction,
-      dentalActionKey: cdtDentalAction.dentalActionKey,
-      cdtKey: cdtDentalAction.cdtKey
-    }).unwrap().then(() => {
-         dispatch(notify({ msg: 'The CDT procedure has been successfully removed from the treatment', sev: 'success' }));
-    }).catch(() => {
-          dispatch(notify({ msg: 'Failed to remove the CDT procedure from the treatment', sev: 'error' }));
-    });
-    setLoad(false);
-  };
-  // Icons column (remove)
-  const iconsForActions = () => (
-    <div className="container-of-icons">
-      <MdDelete
-        className="icons-style"
-        title="Deactivate"
-        size={24}
-        fill="var(--primary-pink)"
-        onClick={() => {
-          setOpenConfirmDeleteLinked(true);
-        }}
-      />
-    </div>
+
+  // ----------- B) Query for Search Results ------------------
+  const { data: searchPageResponse } = useGetCdtByCodeQuery(
+    searchCode
+      ? { code: searchCode, page: searchPage, size: 50 }
+      : undefined,
+    { skip: !searchCode }
   );
-  //Table columns
+
+  // ----------- C) Reset Pages When Search Changes ----------
+  useEffect(() => {
+    setAllCdts([]);
+    setAllPage(0);
+    setSearchPage(0);
+  }, [searchCode]);
+
+  // ----------- D) Merge Results Into allCdts ---------------
+  useEffect(() => {
+    const response = searchCode ? searchPageResponse : allPageResponse;
+    if (!response?.data) return;
+
+    const mapped = response.data.map((item) => ({
+      ...item,
+      combinedLabel: `${item.code} / ${item.description}`,
+    }));
+
+    const isFirstPage = searchCode ? searchPage === 0 : allPage === 0;
+
+    setAllCdts((prev) => (isFirstPage ? mapped : [...prev, ...mapped]));
+  }, [allPageResponse, searchPageResponse]);
+
+  // ----------- E) Has More? ----------------
+  const activeResponse = searchCode ? searchPageResponse : allPageResponse;
+  const hasMore = Boolean(activeResponse?.links?.next);
+
+  // -----------------------------------------
+  // 3) ADD LINK
+  // -----------------------------------------
+  const handleAdd = async () => {
+    if (!selectedCdt.selectedCdtCode) {
+      dispatch(notify({ msg: 'Please select a CDT', sev: 'error' }));
+      return;
+    }
+
+    try {
+      await createLink({
+        dentalActionId: dentalAction.id,
+        cdtCode: selectedCdt.selectedCdtCode,
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Linked successfully', sev: 'success' }));
+      refetch();
+      setSelectedCdt({ selectedCdtCode: '' });
+    } catch {
+      dispatch(notify({ msg: 'CDT already linked', sev: 'error' }));
+    }
+  };
+
+  // -----------------------------------------
+  // 4) DELETE LINK
+  // -----------------------------------------
+  const handleDelete = async () => {
+    try {
+      await deleteLink(selectedRow.id).unwrap();
+      dispatch(notify({ msg: 'Removed successfully', sev: 'success' }));
+      refetch();
+      setSelectedRow(null);
+    } catch {
+      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
+    }
+    setOpenDeleteModal(false);
+  };
+
+  // -----------------------------------------
+  // 5) TABLE COLUMNS
+  // -----------------------------------------
   const tableColumns = [
     {
-      key: 'cdtKey',
-      title: <Translate>CDT Key</Translate>,
-      flexGrow: 4
+      key: 'cdtCode',
+      title: <Translate>CDT Code</Translate>,
+      flexGrow: 3,
+       render: (row) => {
+        return row?.cdtCode.code ?? '';
+      },
     },
     {
       key: 'description',
       title: <Translate>Description</Translate>,
       flexGrow: 4,
-      render: rowData => cdtMap[rowData.cdtKey]?.description
+      render: (row) => {
+        return row?.cdtCode.description ?? '';
+      },
     },
     {
       key: 'icons',
       title: <Translate>Remove</Translate>,
-      flexGrow: 3,
-      render: () => iconsForActions()
-    }
+      flexGrow: 1,
+      render: () => (
+        <MdDelete
+          className="icons-style"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => setOpenDeleteModal(true)}
+        />
+      ),
+    },
   ];
-  // Modal content
-  const conjureFormContent = (stepNumber = 0) => {
-    switch (stepNumber) {
-      case 0:
-        return (
-          <Form fluid className='container-of-linked-procedures-dental'>
-            <Col>
-            <Row>
-            <MyInput
-              width={width < 880 ? "100%" : "50%"}
-              showLabel={false}
-              fieldType="select"
-              fieldName="selectedCdtKey"
-              selectData={modifiedData}
-              selectDataLabel="combinedLabel"
-              selectDataValue="key"
-              record={reccordOfSelectedCdtKey}
-              setRecord={setReccordOfSelectedCdtKey}
-              menuMaxHeight={200}
-            />
-            </Row>
-            <Row>
-            <MyButton
-              prefixIcon={() => <Check />}
-              color="var(--deep-blue)"
-              onClick={() => {
-                setLoad(true);
-                linkCdtAction({
-                  ...newApCdtDentalAction,
-                  dentalActionKey: dentalAction.key,
-                  cdtKey: reccordOfSelectedCdtKey['selectedCdtKey']
-                }).unwrap().then(() => {
-                    dispatch(notify({ msg: 'The CDT procedure has been successfully linked to the treatment', sev: 'success' }));
-                }).catch(() => {
-                     dispatch(notify({ msg: 'Procedure CDT already added to treatment', sev: 'error' }));
-                });
-                setLoad(false);
-              }}
-             width={width < 880 ? "100%" : "50%"}
-            >
-              Link CDT Procedure to Treatment
-            </MyButton>
-            </Row>
-            </Col>
-            <MyTable
-              height={350}
-              data={dentalAction['linkedProcedures']}
-                loading={load}
-              columns={tableColumns}
-              rowClassName={isSelected}
-              onRowClick={rowData => {
-                setCdtDentalAction(rowData);
-              }}
-            />
-            <DeletionConfirmationModal
-              open={openConfirmDeleteLinked}
-              setOpen={setOpenConfirmDeleteLinked}
-              itemToDelete="CDT procedure"
-              actionButtonFunction={handleDeleteTreatmentLinkedProcedure}
-              actionType="Delete"
-            />
-          </Form>
-        );
-    }
-  };
 
- // Effects
-  useEffect(() => {
-    // fill cdt procedure objects in a map with key as item key
-    const map = {};
-    for (const cdt of cdtListResponse?.object ?? []) {
-      map[cdt.key] = cdt;
-    }
-    setCdtMap(map);
-  }, [cdtListResponse]);
+  // -----------------------------------------
+  // 6) SELECTED ROW STYLE
+  // -----------------------------------------
+  const isSelected = (row) =>
+    selectedRow && row.id === selectedRow.id ? 'selected-row' : '';
 
-  useEffect(() => {
-    if (linkCdtActionMutation.data) {
-      // add the new linked procedure to selected action procedure list
-      const currentProcedureList = [...dentalAction['linkedProcedures']];
-      currentProcedureList.push(linkCdtActionMutation.data);
-      const clone = { ...dentalAction };
-      clone['linkedProcedures'] = currentProcedureList;
-      setDentalAction({ ...clone });
-    }
-  }, [linkCdtActionMutation.data]);
-  // clear and refetch when the pop up is closed
-  
-  useEffect(() => {
-    if (unlinkCdtActionMutation.data) {
-      // remove the unlinked procedure from selected action procedure list
-      const cdtKeyToRemove = unlinkCdtActionMutation.data.cdtKey;
-      // Filter out the procedure with the matching cdtKey
-      const updatedProcedureList = dentalAction['linkedProcedures'].filter(
-        procedure => procedure.cdtKey !== cdtKeyToRemove
-      );
-      const clone = { ...dentalAction };
-      clone['linkedProcedures'] = updatedProcedureList;
-      setDentalAction({ ...clone });
-    }
-  }, [unlinkCdtActionMutation.data]);
+  // -----------------------------------------
+  // 7) UI
+  // -----------------------------------------
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Treatment Linked Procedures"
       position="right"
-      content={conjureFormContent}
-      actionButtonLabel={dentalAction?.key ? 'Save' : 'Create'}
-        actionButtonFunction={() => setOpen(false)}
+      size={width > 600 ? '36vw' : '70vw'}
       steps={[{ title: 'Treatment Linked Procedures', icon: <PiToothFill /> }]}
-        size={width > 600 ? '36vw' : '70vw'}
+      actionButtonLabel="Close"
+      actionButtonFunction={() => setOpen(false)}
+      content={() => (
+        <Form fluid className="container-of-linked-procedures-dental">
+          <Col>
+
+            {/* CDT SELECT WITH SEARCH + PAGINATION */}
+            <Row>
+              <MyInput
+                fieldType="selectPagination"
+                fieldName="selectedCdtCode"
+                showLabel={false}
+                selectData={allCdts}
+                selectDataLabel="combinedLabel"
+                selectDataValue="code"
+                record={selectedCdt}
+                setRecord={setSelectedCdt}
+                searchable
+                width={width < 880 ? '100%' : 520}
+                hasMore={hasMore}
+                searchKeyWard={searchCode}
+                setSearchKeyWard={setSearchCode}
+                onFetchMore={() => {
+                  if (!hasMore) return;
+
+                  const nextLink = activeResponse.links.next;
+                  const { page } = extractPaginationFromLink(nextLink);
+
+                  if (searchCode) {
+                    setSearchPage(page);
+                  } else {
+                    setAllPage(page);
+                  }
+                }}
+              />
+            </Row>
+
+            {/* ADD BUTTON */}
+            <Row>
+              <MyButton
+                width={width < 880 ? '100%' : '50%'}
+                color="var(--deep-blue)"
+                onClick={handleAdd}
+              >
+                Link CDT Procedure to Treatment
+              </MyButton>
+            </Row>
+          </Col>
+
+          {/* TABLE */}
+          <MyTable
+            height={350}
+            data={linkedProcedures}
+            columns={tableColumns}
+            rowClassName={isSelected}
+            onRowClick={setSelectedRow}
+          />
+
+          {/* DELETE CONFIRM */}
+          <DeletionConfirmationModal
+            open={openDeleteModal}
+            setOpen={setOpenDeleteModal}
+            itemToDelete="Linked CDT"
+            actionButtonFunction={handleDelete}
+            actionType="Delete"
+          />
+        </Form>
+      )}
     />
   );
 };
+
 export default TreatmentLinkedProcedures;
