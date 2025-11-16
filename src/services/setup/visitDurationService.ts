@@ -20,7 +20,7 @@ export const visitDurationService = createApi({
   reducerPath: 'visitDurationApi',
   baseQuery: BaseQuery,
   tagTypes: ['VisitDuration'],
-  endpoints: (builder) => ({
+  endpoints: builder => ({
 
     getVisitDurations: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
@@ -44,7 +44,7 @@ export const visitDurationService = createApi({
     }),
 
     addVisitDuration: builder.mutation<any, any>({
-      query: (body) => ({
+      query: body => ({
         url: '/api/setup/visit-duration',
         method: 'POST',
         body,
