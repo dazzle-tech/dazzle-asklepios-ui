@@ -14,6 +14,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 // ICD-10 search component (supports mode="icd10" | "indications")
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
+
 // RTK Query hooks for Procedures
 import {
   useAddProcedureMutation,
@@ -30,7 +31,7 @@ type AddEditProcedureProps = {
   width: number;
   procedure: any;
   setProcedure: (next: any) => void;
-  onSaveSuccess?: () => void; // Callback بعد نجاح الحفظ
+  onSaveSuccess?: () => void;
   actionLoading?: boolean;
 };
 
@@ -45,39 +46,36 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  // ===== Facility context =====
+  // Facility context from tenant
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
   const facilityId: number | undefined = selectedFacility?.id;
 
-  // ===== RTK Query mutations =====
+  // Mutations
   const [addProcedure, { isLoading: isAdding }] = useAddProcedureMutation();
   const [updateProcedure, { isLoading: isUpdating }] = useUpdateProcedureMutation();
 
-  // Facilities (like Department)
+  // Facilities for select
   const facilityListRequest: ListRequest = { ...initialListRequest };
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
 
-  // Category enum (ProcedureCategoryType)
+  // Category options
   const categoryOptions = useEnumOptions('ProcedureCategoryType');
 
   const isLoading = isAdding || isUpdating || actionLoading;
 
-  // ===== Save Procedure (create or update) =====
   const handleSave = async () => {
     setOpen(false);
     const isUpdate = !!procedure.id;
 
     const payload: any = {
       ...procedure,
-      // ensure numeric fields are numbers if you add any later
     };
 
     try {
       if (!facilityId) {
-        // mutations require facilityId as query param
         dispatch(notify({ msg: 'Please choose a facility before saving.', sev: 'error' }));
-        setOpen(true); // Re-open modal on error
+        setOpen(true);
         return;
       }
 
@@ -88,8 +86,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
         await addProcedure({ facilityId, ...payload }).unwrap();
         dispatch(notify({ msg: 'Procedure added successfully', sev: 'success' }));
       }
-      
-      // Call success callback if provided
+
       if (onSaveSuccess) {
         onSaveSuccess();
       }
@@ -98,7 +95,6 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
       const traceId = data?.traceId || data?.requestId || data?.correlationId;
       const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-      // Check for validation errors (from VM @NotEmpty, @NotNull annotations)
       const isValidation =
         data?.message === 'error.validation' ||
         data?.title === 'Method argument not valid' ||
@@ -135,81 +131,63 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
         const humanMsg = `Please fix the following fields:\n${lines.join('\n')}`;
         dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
-        setOpen(true); // Re-open modal on validation error
+        setOpen(true);
         return;
       }
 
-      // Extract error key from response
-      // BadRequestAlertException/NotFoundAlertException typically provide:
-      // - data.errorKey: the error key directly (e.g., "facility.required", "notfound")
-      // - data.message: full message (e.g., "error.facility.required" or "procedure.facility.required")
-      // - data.entityName: entity name (e.g., "procedure")
       let errorKey: string | undefined;
-      
-      // First, try to get errorKey directly from response
+
       if (data?.errorKey) {
         errorKey = data.errorKey;
       } else {
-        // Otherwise, extract from message
         const messageProp: string = data?.message || '';
         const entityName: string = data?.entityName || 'procedure';
-        
+
         if (messageProp) {
-          // Check if message follows entityName.errorKey pattern (e.g., "procedure.facility.required")
           if (messageProp.startsWith(entityName + '.')) {
             errorKey = messageProp.substring(entityName.length + 1);
-          }
-          // Check if message follows error.errorKey pattern (e.g., "error.facility.required")
-          else if (messageProp.startsWith('error.')) {
+          } else if (messageProp.startsWith('error.')) {
             errorKey = messageProp.substring(6);
-          }
-          // If message contains dots, try to extract the last meaningful part
-          else if (messageProp.includes('.')) {
+          } else if (messageProp.includes('.')) {
             const parts = messageProp.split('.');
-            // Skip "error" prefix if present and take the rest
             if (parts[0] === 'error' && parts.length > 1) {
               errorKey = parts.slice(1).join('.');
             } else {
-              errorKey = parts.slice(-2).join('.'); // Take last two parts (e.g., "facility.required")
+              errorKey = parts.slice(-2).join('.');
             }
           }
         }
       }
 
-      // Map error keys from Service to user-friendly messages
       const keyMap: Record<string, string> = {
-        // BadRequestAlertException keys
         'facility.required': 'Facility id is required.',
         'payload.required': 'Procedure payload is required.',
-        'unique.facility.name_code_category': 'A procedure with the same name, code, and category already exists in this facility.',
+        'unique.facility.name_code_category':
+          'A procedure with the same name, code, and category already exists in this facility.',
         'db.constraint': 'Database constraint violated. Please check unique fields or required values.',
         'facility.mismatch': 'Procedure does not belong to the given facility.',
-        
-        // NotFoundAlertException keys
-        'notfound': 'Procedure not found.',
-        
-        // Legacy keys (for backward compatibility)
-        'facilityrequired': 'Facility id is required.',
+        notfound: 'Procedure not found.',
+        facilityrequired: 'Facility id is required.',
         'unique.facility.name': 'Procedure name already exists in this facility.',
         'fk.facility.notfound': 'Facility not found.',
       };
 
-      // Determine error message
       let humanMsg: string;
       if (errorKey && keyMap[errorKey]) {
         humanMsg = keyMap[errorKey];
       } else if (data?.detail) {
         humanMsg = data.detail;
       } else {
-        humanMsg = isUpdate 
-          ? 'Failed to update procedure. Please try again.' 
+        humanMsg = isUpdate
+          ? 'Failed to update procedure. Please try again.'
           : 'Failed to create procedure. Please try again.';
       }
 
       dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
-      setOpen(true); // Re-open modal on error
+      setOpen(true);
     }
   };
+
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
@@ -276,7 +254,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
             <br />
 
-            {/* Appointable */}
+            {/* Appointable flag */}
             <Form className="container-of-appointable">
               <MyInput
                 fieldLabel="Appointable"
@@ -290,7 +268,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
             <br />
             <Divider />
 
-            {/* Indications — ICD10 (multi-add via textarea) */}
+            {/* Indications (ICD-10 codes) */}
             <Icd10Search
               object={procedure}
               setOpject={setProcedure}
@@ -301,7 +279,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
             <br />
 
-            {/* Contraindications — ICD10 (multi-add) */}
+            {/* Contraindications (ICD-10 codes) */}
             <Icd10Search
               object={procedure}
               setOpject={setProcedure}
@@ -341,7 +319,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
     }
   };
 
-  const isEdit = !!(procedure?.id);
+  const isEdit = !!procedure?.id;
 
   return (
     <MyModal
