@@ -109,8 +109,6 @@ export const store = configureStore({
     [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
 
     [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
-    [activeIngredientContraindicationService.reducerPath]:
-    activeIngredientContraindicationService.reducer,
     //account
     [accountApi.reducerPath]: accountApi.reducer,
 
