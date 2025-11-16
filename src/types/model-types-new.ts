@@ -584,3 +584,13 @@ export interface ProcedurePriceList {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+export interface DiagnosticTestCoding {
+  id?: number;
+  procedureId?: number | null;        
+  codeType: string | null ;         
+  codeId: string;                     
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}

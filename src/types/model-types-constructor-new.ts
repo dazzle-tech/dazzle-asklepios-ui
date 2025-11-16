@@ -462,3 +462,13 @@ export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+export const newDiagnosticTestCoding: modelTypes.DiagnosticTestCoding = {
+  id: undefined,
+  procedureId: undefined,        
+  codeType: null,           
+  codeId: '',                      
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

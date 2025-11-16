@@ -1,61 +1,104 @@
 import React, { useEffect, useState } from 'react';
-import {
-  useGetDiagnosticsCodingListQuery,
-  useGetLovValuesByCodeQuery,
-  useRemoveDiagnosticsCodingMutation,
-  useSaveDiagnosticsCodingMutation
-} from '@/services/setupService';
-import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import './styles.less';
+import { FaNewspaper } from 'react-icons/fa6';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+
+import MyInput from '@/components/MyInput';
 import ChildModal from '@/components/ChildModal';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { FaNewspaper } from 'react-icons/fa6';
-import MyButton from '@/components/MyButton/MyButton';
-import { MdDelete } from 'react-icons/md';
-import { MdModeEdit } from 'react-icons/md';
-import { newApDiagnosticCoding } from '@/types/model-types-constructor';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-const Coding = ({ open, setOpen, diagnosticsTest }) => {
+
+
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
+
+import {
+  useGetDiagnosticTestCodingsByTestQuery,
+  useAddDiagnosticTestCodingMutation,
+  useDeleteDiagnosticTestCodingMutation,
+  useGetDiagnosticCodeOptionsByTypeQuery,
+} from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
+
+import type { DiagnosticTestCoding } from '@/types/model-types-new';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useEnumOptions } from '@/services/enumsApi';
+
+type CodingProps = {
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  diagnosticsTest: { id: number } | null;
+};
+
+const Coding: React.FC<CodingProps> = ({ open, setOpen, diagnosticsTest }) => {
   const dispatch = useAppDispatch();
   const [openChild, setOpenChild] = useState<boolean>(false);
-  const [diagnosticCoding, setDiagnosticCoding] = useState({ ...newApDiagnosticCoding });
   const [openConfirmDeleteCode, setOpenConfirmDeleteCode] = useState<boolean>(false);
-   const [removeDiagnosticCoding] = useRemoveDiagnosticsCodingMutation();
-  const [listCodingRequest, setListCosingRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'diagnostics_key',
-        operator: 'match',
-        value: diagnosticsTest?.key
-      }
-    ]
-  });
-  // Fetch code type Lov response
+
+
+  const [diagnosticCoding, setDiagnosticCoding] = useState<Partial<DiagnosticTestCoding>>({});
+
+
+  const [sortColumn, setSortColumn] = useState<string | undefined>('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc' | undefined>('asc');
+
+
   const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
-  // Fetch Coding list response
+
+
   const {
-    data: CodingList,
+    data: codingPage,
     refetch: fetchCoding,
-    isFetching
-  } = useGetDiagnosticsCodingListQuery({
-    ...listCodingRequest
-  });
-  // save coding
-  const [saveCoding] = useSaveDiagnosticsCodingMutation();
- // class name for selected row
-  const isSelectedcode = rowData => {
-    if (rowData && diagnosticCoding && rowData.key === diagnosticCoding.key) {
+    isFetching,
+  } = useGetDiagnosticTestCodingsByTestQuery(
+    diagnosticsTest?.id != null
+      ? {
+          diagnosticTestId: diagnosticsTest.id,
+          page: 0,
+          size: 100,
+          sort: 'id,asc',
+        }
+      : skipToken
+  );
+
+  const codingList: DiagnosticTestCoding[] = codingPage?.data ?? [];
+
+  
+  const { data: codeOptionsPage } = useGetDiagnosticCodeOptionsByTypeQuery(
+    diagnosticCoding.codeType
+      ? {
+          type: String(diagnosticCoding.codeType),
+          page: 0,
+          size: 50,
+          sort: 'id,asc',
+        }
+      : skipToken
+  );
+
+  const codeOptions =
+    codeOptionsPage?.data?.map((c) => ({
+      ...c,
+      label: `${c.code} - ${c.description}`,
+    })) ?? [];
+
+  const [addDiagnosticTestCoding] = useAddDiagnosticTestCodingMutation();
+  const [deleteDiagnosticTestCoding] = useDeleteDiagnosticTestCodingMutation();
+
+
+  const isSelectedcode = (rowData: DiagnosticTestCoding) => {
+    if (rowData && diagnosticCoding && rowData.id === diagnosticCoding.id) {
       return 'selected-row';
-    } else return '';
+    }
+    return '';
   };
-  // Icons column (Edit, remove)
+
+
   const iconsForActions = () => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -79,55 +122,71 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
     </div>
   );
 
-  //Table columns
+
+ const codingType=useEnumOptions('MedicalCodeType')
   const tableColumns = [
     {
       key: 'codeType',
-      title: <Translate>Code Type</Translate>,
-      render: rowData =>
-        rowData.codeTypeLkey ? rowData.codeTypeLvalue.lovDisplayVale : rowData.codeTypeLkey
+      title:"Code Type"
     },
     {
-      key: 'internationalCode',
-      title: <Translate>international Code</Translate>,
-      render: rowData => rowData.internationalCodeKey
+      key: 'codeId',
+      title: <Translate>Code</Translate>,
+      render: (rowData: DiagnosticTestCoding) => rowData.codeId,
     },
     {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: () => iconsForActions()
-    }
+      render: () => iconsForActions(),
+    },
   ];
- 
-  // handle save code
+
+
   const handleSaveCoding = async () => {
+    if (!diagnosticsTest?.id) return;
+
     try {
-      await saveCoding({ ...diagnosticCoding, diagnosticsKey: diagnosticsTest.key }).unwrap();
-      dispatch(notify('The Code Saved Successfully'));
+      if (!diagnosticCoding.codeType || !diagnosticCoding.codeId) {
+        dispatch(notify('Please select code type and code'));
+        return;
+      }
+
+      await addDiagnosticTestCoding({
+        diagnosticTestId: diagnosticsTest.id,
+        codeType: diagnosticCoding.codeType,
+        codeId: diagnosticCoding.codeId,
+      }).unwrap();
+
+      dispatch(notify({msg:'The Code was saved successfully',sev:"success"}));
       fetchCoding();
-      setDiagnosticCoding({
-        ...newApDiagnosticCoding,
-        codeTypeLkey: null
-      });
-    } catch {}
+      setDiagnosticCoding({});
+      setOpenChild(false);
+    } catch {
+    
+    }
   };
 
-  // handle remove code
-  const handleRemove = () => {
-    setOpenConfirmDeleteCode(false);
-    removeDiagnosticCoding({ ...diagnosticCoding })
-      .unwrap()
-      .then(() => {
-        fetchCoding();
-        dispatch(notify('The Code was deleted succsessfuly'));
-      });
+
+  const handleRemove = async () => {
+    try {
+      setOpenConfirmDeleteCode(false);
+      if (!diagnosticCoding.id) return;
+
+      await deleteDiagnosticTestCoding({ id: diagnosticCoding.id }).unwrap();
+      fetchCoding();
+      dispatch(notify('The Code was deleted successfully'));
+      setDiagnosticCoding({});
+    } catch {
+      // يمكن تحسين الرسائل هنا لو تحب
+    }
   };
 
-  // Main modal content
-  const conjureFormContentOfMainModal = stepNumber => {
+  
+  const conjureFormContentOfMainModal = (stepNumber: number) => {
     switch (stepNumber) {
       case 0:
+      default:
         return (
           <Form layout="inline" fluid>
             <div className="container-of-add-new-button">
@@ -135,6 +194,7 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={() => {
+                  setDiagnosticCoding({});
                   setOpenChild(true);
                 }}
                 width="109px"
@@ -144,17 +204,18 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
             </div>
             <MyTable
               height={400}
-              data={CodingList?.object ?? []}
+              data={codingList}
               loading={isFetching}
               columns={tableColumns}
               rowClassName={isSelectedcode}
-              onRowClick={rowData => {
+              onRowClick={(rowData: DiagnosticTestCoding) => {
                 setDiagnosticCoding(rowData);
               }}
-              sortColumn={listCodingRequest.sortBy}
-              sortType={listCodingRequest.sortType}
-              onSortChange={(sortBy, sortType) => {
-                if (sortBy) setListCosingRequest({ ...listCodingRequest, sortBy, sortType });
+              sortColumn={sortColumn}
+              sortType={sortType}
+              onSortChange={(col, type) => {
+                setSortColumn(col || undefined);
+                setSortType(type || undefined);
               }}
             />
             <DeletionConfirmationModal
@@ -169,7 +230,7 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
     }
   };
 
-  // Child modal content
+  
   const conjureFormContentOfChildModal = () => {
     return (
       <Form fluid>
@@ -177,10 +238,10 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
           width="100%"
           fieldType="select"
           fieldLabel="Code Type"
-          selectData={codeTypeLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          fieldName={'codeTypeLkey'}
+          selectData={codingType ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          fieldName="codeType"
           record={diagnosticCoding}
           setRecord={setDiagnosticCoding}
         />
@@ -188,10 +249,10 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
           width="100%"
           fieldType="select"
           fieldLabel="Code"
-          selectData={[]}
-          selectDataLabel="name"
-          selectDataValue="key"
-          fieldName={'internationalCodeKey'}
+          selectData={codeOptions}
+          selectDataLabel="label"
+          selectDataValue="code"
+          fieldName="codeId"
           record={diagnosticCoding}
           setRecord={setDiagnosticCoding}
         />
@@ -199,20 +260,11 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
     );
   };
 
-  // Effects
   useEffect(() => {
-    fetchCoding();
-    setListCosingRequest({
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'diagnostics_key',
-          operator: 'match',
-          value: diagnosticsTest?.key
-        }
-      ]
-    });
-  }, [diagnosticsTest]);
+    if (diagnosticsTest?.id) {
+      fetchCoding();
+    }
+  }, [diagnosticsTest?.id]);
 
   return (
     <ChildModal
@@ -223,7 +275,7 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
       setShowChild={setOpenChild}
       title="Code"
       mainContent={conjureFormContentOfMainModal}
-      mainStep={[{ title: 'Code', icon: <FaNewspaper /> }]} 
+      mainStep={[{ title: 'Code', icon: <FaNewspaper /> }]}
       childStep={[{ title: 'Code Info', icon: <FaNewspaper /> }]}
       childTitle="Add Code"
       childContent={conjureFormContentOfChildModal}
@@ -231,4 +283,5 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
     />
   );
 };
+
 export default Coding;

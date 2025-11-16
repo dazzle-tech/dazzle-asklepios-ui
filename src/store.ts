@@ -68,6 +68,7 @@ import { procedureSetupService } from './services/setup/procedure/procedureServi
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
 
+import {diagnosticTestCodingService} from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -202,6 +203,8 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
+
+    [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -266,6 +269,7 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      diagnosticTestCodingService.middleware
     ])
 });
 
