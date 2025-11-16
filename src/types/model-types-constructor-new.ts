@@ -352,6 +352,7 @@ export const newRadiology: modelTypes.Radiology = {
   associatedRisks: "",
 };
 
+
 export const newMedicationCategory: modelTypes.MedicationCategory = {
   id: undefined,
   name: ''
@@ -404,6 +405,13 @@ export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
   doseAdjustmentPugA: null,
   doseAdjustmentPugB: null,
   doseAdjustmentPugC: null
+};
+
+
+export const newActiveIngredientContraindication: modelTypes.ActiveIngredientContraindication = {
+  id: undefined,
+  activeIngredientId: 0,
+  icdCodeId: 0
 };
 
 export const newDentalAction: modelTypes.DentalAction={
@@ -484,10 +492,4 @@ export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndicatio
   dosage: null,
   unit: '',
   isOffLabel: false
-};
-
-export const newActiveIngredientContraindication: modelTypes.ActiveIngredientContraindication = {
-  id: undefined,
-  activeIngredientId: 0,
-  icdCodeId: 0
 };
