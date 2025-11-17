@@ -4,7 +4,7 @@ import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
-import PossibleReactions from '@/components/PossibleReactionsComponent/PossibleReactions';
+import AdversEffects from '@/components/AdversEffectsComponent/AdversEffects';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -651,7 +651,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
               label="Indications (ICD-10)"
               mode="multiICD10"
             />
-            <PossibleReactions
+            <AdversEffects
               object={vaccine}
               setOpject={setVaccine}
               fieldName="possibleReactions"
