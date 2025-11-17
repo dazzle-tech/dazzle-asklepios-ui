@@ -1,219 +1,248 @@
-import React, { useEffect, useState } from 'react';
-import { Text, Panel } from 'rsuite';
-import { Plus } from '@rsuite/icons';
-import { MdSave } from 'react-icons/md';
-import { initialListRequest } from '@/types/types';
-import { newApActiveIngredientContraindication } from '@/types/model-types-constructor';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { MdDelete } from 'react-icons/md';
+import React, { useState, useMemo, useEffect } from "react";
+import { Form, Text } from "rsuite";
+import { MdDelete, MdSave } from "react-icons/md";
+import { Plus } from "@rsuite/icons";
+
+import { useAppDispatch } from "@/hooks";
+import { notify } from "@/utils/uiReducerActions";
+import Translate from "@/components/Translate";
+import MyTable from "@/components/MyTable";
+import MyButton from "@/components/MyButton/MyButton";
+import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
+import Icd10Search from "@/components/ICD10SearchComponent/IcdSearchable";
+
 import {
-  useGetActiveIngredientContraindicationQuery,
-  useRemoveActiveIngredientContraindicationMutation,
-  useSaveActiveIngredientContraindicationMutation
-} from '@/services/medicationsSetupService';
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import Icd10Search from '@/pages/medical-component/Icd10Search';
-import MyButton from '@/components/MyButton/MyButton';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import './styles.less';
+  useGetContraindicationsByActiveIngredientIdQuery,
+  useCreateContraindicationMutation,
+  useUpdateContraindicationMutation,
+  useDeleteContraindicationMutation
+} from "@/services/setup/activeIngredients/activeIngredientContraindicationService";
+
+import {
+  newActiveIngredientContraindication
+} from "@/types/model-types-constructor-new";
+
+import { ActiveIngredientContraindication } from "@/types/model-types-new";
+
+import "./styles.less";
+
 const Contraindications = ({ activeIngredients }) => {
   const dispatch = useAppDispatch();
-  const [selectedActiveIngredientContraindication, setSelectedActiveIngredientContraindication] =
-    useState({
-      ...newApActiveIngredientContraindication
-    });
-  const [openConfirmDeleteContraindicationModal, setOpenConfirmDeleteContraindicationModal] =
-    useState<boolean>(false);
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest,
-    pageSize: 100,
-    timestamp: new Date().getMilliseconds(),
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
+
+  // ---------------------------------------------
+  // STATE
+  // ---------------------------------------------
+  const [contraindication, setContraindication] = useState<ActiveIngredientContraindication>({
+    ...newActiveIngredientContraindication
   });
-  // Fetch contraindications list response
-  const { data: ContraindicationsListResponseData, isFetching } =
-    useGetActiveIngredientContraindicationQuery(listRequest);
-  // save contraindication
-  const [saveActiveIngredientContraindication, saveActiveIngredientContraindicationMutation] =
-    useSaveActiveIngredientContraindicationMutation();
-  // remove contraindication
-  const [removeActiveIngredientContraindication, removeActiveIngredientContraindicationMutation] =
-    useRemoveActiveIngredientContraindicationMutation();
 
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && rowData.key === selectedActiveIngredientContraindication.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
-  // Icons column (remove)
-  const iconsForActions = () => (
-    <div className="container-of-icons">
-      <MdDelete
-        className="icons-style"
-        title="Delete"
-        size={24}
-        fill="var(--primary-pink)"
-        onClick={() => setOpenConfirmDeleteContraindicationModal(true)}
-      />
-    </div>
-  );
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 5,
+    sort: "id,asc"
+  });
 
-  //Table columns
+  const [sortColumn, setSortColumn] = useState("id");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+  // ---------------------------------------------
+  // API
+  // ---------------------------------------------
+  const { data: list = [], isFetching, refetch } =
+    useGetContraindicationsByActiveIngredientIdQuery(activeIngredients?.id);
+
+  const [createContra] = useCreateContraindicationMutation();
+  const [updateContra] = useUpdateContraindicationMutation();
+  const [deleteContra] = useDeleteContraindicationMutation();
+
+  const totalCount = list?.length ?? 0;
+
+  // ---------------------------------------------
+  // SELECTED ROW STYLE
+  // ---------------------------------------------
+  const isSelected = (row) =>
+    row?.id === contraindication?.id ? "selected-row" : "";
+
+  // ---------------------------------------------
+  // TABLE COLUMNS
+  // ---------------------------------------------
   const tableColumns = [
     {
-      key: 'contraindications',
-      title: <Translate>Contraindications</Translate>,
-      render: rowData => <Text>{rowData.contraindication}</Text>
-    },
-    {
-      key: 'icdCode',
+      key: "icd10CodeId",
       title: <Translate>ICD Code</Translate>,
-      render: rowData => <Text>{rowData.icdObject}</Text>
+      render: row => <Text>{row.icd10CodeId}</Text>
     },
     {
-      key: 'icons',
-      title: <Translate></Translate>,
-      render: () => iconsForActions()
+      key: "icons",
+      title: "",
+      render: (row) => (
+        <div className="container-of-icons">
+          <MdDelete
+            className="icons-style"
+            size={24}
+            fill="var(--primary-pink)"
+            title="Delete"
+            onClick={() => {
+              setContraindication(row);
+              setOpenDeleteModal(true);
+            }}
+          />
+        </div>
+      )
     }
   ];
 
-  // handle remove
+
+
+
+
+  // ---------------------------------------------
+  // SAVE (ADD + UPDATE)
+  // ---------------------------------------------
+    const save = () => {
+      if (!contraindication.icd10CodeId) {
+        return dispatch(notify({ msg: "Invalid ICD Code", sev: "error" }));
+      }
+
+      const payload = {
+        ...contraindication,
+        activeIngredientId: activeIngredients.id,
+        icd10CodeId: contraindication.icd10CodeId
+      };
+
+      if (contraindication.id) {
+        updateContra(payload)
+          .unwrap()
+          .then(() => {
+            dispatch(notify({ msg: "Updated successfully", sev: "success" }));
+            refetch();
+            setContraindication({ ...newActiveIngredientContraindication });
+          })
+          .catch(() => {
+            dispatch(notify({ msg: "Update failed", sev: "error" }));
+          });
+      } else {
+        createContra(payload)
+          .unwrap()
+          .then(() => {
+            dispatch(notify({ msg: "Added successfully", sev: "success" }));
+            refetch();
+            setContraindication({ ...newActiveIngredientContraindication });
+          })
+          .catch(() => {
+            dispatch(notify({ msg: "Failed to save", sev: "error" }));
+          });
+      }
+          };
+
+
+  // ---------------------------------------------
+  // DELETE
+  // ---------------------------------------------
   const remove = () => {
-    setOpenConfirmDeleteContraindicationModal(false);
-    if (selectedActiveIngredientContraindication.key) {
-      removeActiveIngredientContraindication({
-        ...selectedActiveIngredientContraindication,
-        deletedBy: 'Administrator'
-      })
-        .unwrap()
-        .then(() => {
-          dispatch(notify('Deleted successfully'));
-        });
+    setOpenDeleteModal(false);
+
+    if (!contraindication?.id) {
+      return dispatch(notify({ msg: "Invalid Contraindication", sev: "error" }));
     }
-  };
 
-  // handle new
-  const handleContraindicationsNew = () => {
-    setSelectedActiveIngredientContraindication({
-      ...newApActiveIngredientContraindication
-    });
-  };
-
-  // handle save
-  const save = () => {
-    saveActiveIngredientContraindication({
-      ...selectedActiveIngredientContraindication,
-      activeIngredientKey: activeIngredients.key,
-      createdBy: 'Administrator'
-    })
+    deleteContra(contraindication.id)
       .unwrap()
       .then(() => {
-        dispatch(notify('Saved successfully'));
-      });
-    console.log(selectedActiveIngredientContraindication.icdCodeKey);
+        dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
+        refetch();
+        setContraindication({ ...newActiveIngredientContraindication });
+      })
+      .catch(() =>
+        dispatch(notify({ msg: "Failed to delete", sev: "error" }))
+      );
   };
 
-  // Effects
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'active_ingredient_key',
-        operator: 'match',
-        value: activeIngredients.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ];
-    setListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
-  }, [activeIngredients.key]);
+  // ---------------------------------------------
+  // PAGINATION CALCULATION
+  // ---------------------------------------------
+  const pageIndex = pagination.page;
+  const rowsPerPage = pagination.size;
 
-  useEffect(() => {
-    if (saveActiveIngredientContraindicationMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
+  const paginatedData = useMemo(() => {
+    if (!list) return [];
+    const start = pageIndex * rowsPerPage;
+    return list.slice(start, start + rowsPerPage);
+  }, [list, pageIndex, rowsPerPage]);
 
-      setSelectedActiveIngredientContraindication({ ...newApActiveIngredientContraindication });
-    }
-  }, [saveActiveIngredientContraindicationMutation]);
-
-  useEffect(() => {
-    if (removeActiveIngredientContraindicationMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
-      setSelectedActiveIngredientContraindication({ ...newApActiveIngredientContraindication });
-    }
-  }, [removeActiveIngredientContraindicationMutation]);
+  // ---------------------------------------------
+  // RENDER
+  // ---------------------------------------------
 
   return (
-    <Panel>
+    <Form fluid>
       <div className="container-of-actions-header-active">
         <div className="container-of-fields-active">
           <Icd10Search
-            object={selectedActiveIngredientContraindication}
-            setOpject={setSelectedActiveIngredientContraindication}
-            fieldName="icdCodeKey"
+            object={contraindication}
+            setOpject={setContraindication}
+            fieldName="icd10CodeId"
+            label="Contraindications (ICD-10)"
+            mode="singleICD10"
           />
         </div>
+
         <div className="container-of-buttons-active">
           <MyButton
             prefixIcon={() => <MdSave />}
+            title="Save"
             color="var(--deep-blue)"
             onClick={save}
-            title="Save"
-          ></MyButton>
+          />
           <MyButton
             prefixIcon={() => <Plus />}
-            color="var(--deep-blue)"
-            onClick={handleContraindicationsNew}
             title="New"
-          ></MyButton>
+            color="var(--deep-blue)"
+            onClick={() =>
+              setContraindication({ ...newActiveIngredientContraindication })
+            }
+          />
         </div>
       </div>
+
       <MyTable
-        noBorder
         height={450}
-        data={ContraindicationsListResponseData?.object ?? []}
+        data={paginatedData}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={rowData => {
-          setSelectedActiveIngredientContraindication(rowData);
+        onRowClick={(row) => setContraindication(row)}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={(col, order) => {
+          setSortColumn(col);
+          setSortType(order);
         }}
-        sortColumn={listRequest.sortBy}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={(e, newPage) =>
+          setPagination((prev) => ({ ...prev, page: newPage }))
+        }
+        onRowsPerPageChange={(e) =>
+          setPagination((prev) => ({
+            ...prev,
+            size: Number(e.target.value),
+            page: 0
+          }))
+        }
       />
+
       <DeletionConfirmationModal
-        open={openConfirmDeleteContraindicationModal}
-        setOpen={setOpenConfirmDeleteContraindicationModal}
+        open={openDeleteModal}
+        setOpen={setOpenDeleteModal}
         itemToDelete="Contraindication"
-        actionButtonFunction={remove}
         actionType="Delete"
+        actionButtonFunction={remove}
       />
-    </Panel>
+    </Form>
   );
 };
 

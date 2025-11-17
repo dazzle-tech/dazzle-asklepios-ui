@@ -460,6 +460,7 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+
 export interface MedicationCategory {
   id: number;
   name: string;
@@ -469,6 +470,7 @@ export interface MedicationCategoryClass {
   name: string;
   medicationCategoriesId: number
 }
+
 
 /** Active Ingredient */
 export interface ActiveIngredient {
@@ -512,6 +514,17 @@ export interface ActiveIngredient {
   doseAdjustmentPugA?: string | null;
   doseAdjustmentPugB?: string | null;
   doseAdjustmentPugC?: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+
+export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
   createdBy?: string | null;
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
@@ -756,6 +769,12 @@ export interface ActiveIngredientSpecialPopulation {
   activeIngredientId: number;
   specialPopulation: string;
   considerations?: string | null;
+}
+
+  export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
   createdBy?: string | null;
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
