@@ -705,3 +705,34 @@ export interface ActiveIngredientIndication {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;}
 
+  export type CatalogResponseVM = {
+  id: number;
+  name: string;
+  description?: string | null;
+  type: string;
+  departmentId: number;
+  departmentName?: string | null;
+};
+
+export type CatalogCreateVM = {
+  name: string;
+  description?: string | null;
+  type: string;
+  departmentId: number;
+};
+
+export type CatalogUpdateVM = {
+  name?: string;
+  description?: string | null;
+  type?: string;
+  departmentId?: number;
+};
+
+export type CatalogDiagnosticTest = {
+  id: number;          
+  catalogId: number;
+  diagnosticTestId: number;
+};
+export type CatalogAddTestsVM = { 
+  testIds: number[] ;
+};
