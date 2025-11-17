@@ -295,11 +295,11 @@ useEffect(() => {
             required
               width="100%"
               fieldLabel="UOM Group"
-              fieldName="uomGroupKey"
+              fieldName="uomGroupId"
               fieldType="select"
               selectData={uomGroupsListResponse?.object ?? []}
               selectDataLabel="name"
-              selectDataValue="key"
+              selectDataValue="id"
               record={brandMedication}
               setRecord={setBrandMedication}
               searchable={true}
@@ -308,11 +308,11 @@ useEffect(() => {
             required
               width="100%"
               fieldLabel="Base UOM"
-              fieldName="baseUomKey"
+              fieldName="uomGroupUnitId"
               fieldType="select"
               selectData={uomGroupsUnitsListResponse?.object ?? []}
               selectDataLabel="units"
-              selectDataValue="key"
+              selectDataValue="id"
               record={brandMedication}
               setRecord={setBrandMedication}
             />

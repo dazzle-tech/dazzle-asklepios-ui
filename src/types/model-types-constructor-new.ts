@@ -482,9 +482,8 @@ export const newBrandMedication:modelTypes.BrandMedication= {
   costCategory: '',
   roa: '',
   isActive: true,
-  // 🟡 future fields (currently commented out in backend)
-  // uomGroupId?: null,
-  // uomGroupUnitId?: null
+  uomGroupId: null,
+  uomGroupUnitId: null
 }
 
 export const newSubstitute:modelTypes.Substitute={
