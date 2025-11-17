@@ -145,6 +145,23 @@ export const conjureValueBasedOnKeyFromListOfValues = (
   });
   return displayValue;
 };
+
+export const conjureValuesFromKeys = (
+  list: any[],
+  keys: string[],
+  preferredField: string
+): string => {
+  if (!Array.isArray(keys) || keys.length === 0) return "";
+
+  const values = keys
+    .map(key => {
+      const found = list.find(item => item.key === key);
+      return found ? found[preferredField] : null;
+    })
+    .filter(Boolean); // remove nulls
+
+  return values.join(", ");
+};
 export const calculateAge = birthdate => {
   const birthDate = new Date(birthdate);
   const currentDate = new Date();
