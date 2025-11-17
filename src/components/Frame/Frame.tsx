@@ -1,6 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
-import { Container, Content, DOMHelper, Stack, Divider, Form } from 'rsuite';
+import {
+  Container,
+  Content,
+  DOMHelper,
+  Stack,
+  Divider,
+  Form,
+  Popover,
+  Whisper,
+  WhisperInstance
+} from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { Outlet, useNavigate } from 'react-router-dom';
@@ -34,6 +44,15 @@ import {
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import MyButton from '../MyButton/MyButton';
+import { setSelectedDepartment } from '@/reducers/authSlice';
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import {
+  useGetActiveUserDepartmentsByUserQuery,
+  useGetDefaultUserDepartmentByUserQuery
+} from '@/services/security/userDepartmentsService';
+import { conjureValueBasedOnIDFromList } from '@/utils';
+import { UserDepartment } from '@/types/model-types-new';
 
 const { getHeight, on } = DOMHelper;
 
@@ -70,11 +89,204 @@ const Frame = (props: FrameProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // menu anchor element
   const [activeMenu, setActiveMenu] = useState<string | null>(null); // active menu for popover
   const [expandAllSubmenus, setExpandAllSubmenus] = useState(false);
+  const [departmentPopoverOpen, setDepartmentPopoverOpen] = useState(false);
   const authSlice = useAppSelector(state => state.auth);
   const patientSlice = useAppSelector(state => state.patient);
   const [expandNotes, setExpandNotes] = useState(false); // sticky notes panel
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const departmentTriggerRef = React.useRef<WhisperInstance>(null);
+
+  const { data: departmentsResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
+  const departments = departmentsResponse?.data ?? [];
+  const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
+  const facilities = Array.isArray(facilitiesResponse) ? facilitiesResponse : [];
+  const userId = authSlice.user?.id;
+  type UserDepartmentWithNames = UserDepartment & {
+    departmentName?: string | null;
+    facilityName?: string | null;
+  };
+  const selectedDepartment = authSlice.selectedDepartment;
+  const {
+    data: activeDepartmentsResponse,
+    isLoading: isLoadingDepartments
+  } = useGetActiveUserDepartmentsByUserQuery(userId as number, {
+    skip: !userId
+  });
+  const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
+  const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
+  const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
+  const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
+    userId as number,
+    {
+      skip: !shouldFetchDefault
+    }
+  );
+  const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
+  const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
+
+  const resolveFacilityName = useCallback(
+    (facilityId?: string | number | null) => {
+      if (facilityId != null) {
+        const resolved =
+          conjureValueBasedOnIDFromList(facilities as any[], facilityId, 'name') ??
+          (facilityId ? `Facility #${facilityId}` : undefined);
+        if (resolved) {
+          return resolved;
+        }
+      }
+      const tenantFacility = authSlice?.tenant?.selectedFacility;
+      return tenantFacility?.name ?? tenantFacility?.facilityName ?? undefined;
+    },
+    [facilities, authSlice?.tenant?.selectedFacility]
+  );
+
+  const resolveDepartmentName = useCallback(
+    (departmentId?: string | number | null) => {
+      if (departmentId == null) return undefined;
+      return (
+        conjureValueBasedOnIDFromList(departments as any[], departmentId, 'name') ??
+        (departmentId ? `Department #${departmentId}` : undefined)
+      );
+    },
+    [departments]
+  );
+
+  const departmentHeaderFacilityName = useMemo(
+    () =>
+      selectedDepartment?.facilityName ??
+      authSlice?.tenant?.selectedFacility?.name ??
+      authSlice?.tenant?.selectedFacility?.facilityName,
+    [selectedDepartment?.facilityName, authSlice?.tenant?.selectedFacility]
+  );
+
+  const renderDepartmentsSpeaker = useCallback(
+    ({ onClose, left, top, className }: any, ref) => (
+      <Popover ref={ref} className={className} style={{ left, top, width: 320 }} full>
+        <div
+          style={{
+            padding: '8px 12px',
+            fontWeight: 600,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4
+          }}
+        >
+          <span>My Departments</span>
+          {departmentHeaderFacilityName && (
+            <span style={{ fontSize: '12px', color: '#6c757d' }}>{departmentHeaderFacilityName}</span>
+          )}
+        </div>
+        <Divider style={{ margin: 0 }} />
+        {isLoadingDepartments ? (
+          <div style={{ padding: '12px' }}>Loading departments…</div>
+        ) : activeDepartments.length === 0 ? (
+          <div style={{ padding: '12px' }}>No active departments found.</div>
+        ) : (
+          <div style={{ maxHeight: 240, overflowY: 'auto', margin: '8px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {activeDepartments.map(dept => {
+              const isDefault =
+                defaultDepartmentEntity?.id != null
+                  ? defaultDepartmentEntity.id === dept.id
+                  : defaultDepartmentEntity?.departmentId === dept.departmentId &&
+                    defaultDepartmentEntity?.facilityId === dept.facilityId;
+              const isActive =
+                selectedDepartment?.departmentId === dept.departmentId &&
+                selectedDepartment?.facilityId === dept.facilityId;
+              return (
+                <div
+                  key={dept.id ?? `${dept.userId}-${dept.departmentId}`}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    border: '1px solid var(--border-color-light, #e5e7eb)',
+                    borderRadius: 8,
+                    padding: '8px 12px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      type="button"
+                      style={{
+                        fontWeight: 600,
+                        border: 'none',
+                        background: 'transparent',
+                        padding: 0,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        flex: '1 1 auto'
+                      }}
+                      onClick={() => {
+                        const resolvedDepartmentName = resolveDepartmentName(dept.departmentId);
+                        const resolvedFacilityName = resolveFacilityName(dept.facilityId);
+                        dispatch(
+                          setSelectedDepartment({
+                            departmentId: dept.departmentId,
+                            facilityId: dept.facilityId,
+                            departmentName: resolvedDepartmentName,
+                            facilityName: resolvedFacilityName
+                          })
+                        );
+                        setDepartmentPopoverOpen(false);
+                        onClose?.();
+                        window.location.reload();
+                      }}
+                    >
+                      {resolveDepartmentName(dept.departmentId)}
+                    </button>
+                    {isActive && (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          background: '#facc15',
+                          color: '#1f2937',
+                          padding: '1px 6px',
+                          borderRadius: 999
+                        }}
+                      >
+                        Current
+                      </span>
+                    )}
+                    {isDefault && (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          background: 'var(--deep-blue)',
+                          color: 'var(--white)',
+                          padding: '1px 6px',
+                          borderRadius: 999
+                        }}
+                      >
+                        Default
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Popover>
+    ),
+    [
+      activeDepartments,
+      defaultDepartmentEntity,
+      departmentHeaderFacilityName,
+      dispatch,
+      isLoadingDepartments,
+      resolveDepartmentName,
+      resolveFacilityName,
+      selectedDepartment
+    ]
+  );
+
+  const selectedFacilityName =
+    authSlice?.tenant?.selectedFacility?.name ??
+    authSlice?.tenant?.selectedFacility?.facilityName ??
+    'Facility';
+  const selectedDepartmentName =
+    authSlice?.selectedDepartment?.departmentName ?? 'No Department Selected';
 
   // Effects - window resize listeners
   useEffect(() => {
@@ -205,13 +417,35 @@ const Frame = (props: FrameProps) => {
           >
             {/* Organization info */}
             {expand && (
-              <div className="container-of-organization-info">
-                <FontAwesomeIcon className="organization-img" icon={faHospital} size="lg" />
-                <div>
-                  <div className="name">Health Organization1</div>
-                  <div className="location">845 Euclid Avenue, CA</div>
+              <Whisper
+                ref={departmentTriggerRef}
+                placement="bottomStart"
+                trigger="click"
+                open={departmentPopoverOpen}
+                onOpen={() => setDepartmentPopoverOpen(true)}
+                onClose={() => setDepartmentPopoverOpen(false)}
+                speaker={renderDepartmentsSpeaker}
+              >
+                <div
+                  className="container-of-organization-info"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setDepartmentPopoverOpen(open => !open)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setDepartmentPopoverOpen(open => !open);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <FontAwesomeIcon className="organization-img" icon={faHospital} size="lg" />
+                  <div>
+                    <div className="name">{selectedFacilityName}</div>
+                    <div className="location">{selectedDepartmentName}</div>
+                  </div>
                 </div>
-              </div>
+              </Whisper>
             )}
 
             {/* Search input */}

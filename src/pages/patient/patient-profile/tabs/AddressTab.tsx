@@ -5,7 +5,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import PostalCodeModal from './postal-code-details/PostalCodeModal';
 import MyInput from '@/components/MyInput';
-import { useGetLovValuesByCodeQuery, useGetLovValuesByCodeAndParentQuery } from '@/services/setupService';
+import {
+  useGetLovValuesByCodeQuery,
+  useGetLovValuesByCodeAndParentQuery
+} from '@/services/setupService';
 import { FaClock } from 'react-icons/fa6';
 import MyButton from '@/components/MyButton/MyButton';
 interface AddressTabProps {
@@ -17,7 +20,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
-  
 }) => {
   // Fetch LOV data for various fields
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
@@ -28,16 +30,13 @@ const AddressTab: React.FC<AddressTabProps> = ({
 
   const [showModal, setShowModal] = useState(false);
 
-  
   return (
     <Form layout="inline" fluid>
       <div>
-        <MyButton
-        prefixIcon={() => <FaClock />}
-        disabled={!localPatient.key}
-      >
-        Address Change Log
-      </MyButton></div>
+        <MyButton prefixIcon={() => <FaClock />} disabled={!localPatient.key}>
+          Address Change Log
+        </MyButton>
+      </div>
       <MyInput
         vr={validationResult}
         column
@@ -91,7 +90,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
       />
-  <MyInput
+      <MyInput
         fieldLabel="Postal/ZIP code"
         fieldName="postalCode"
         record={localPatient}
@@ -103,11 +102,11 @@ const AddressTab: React.FC<AddressTabProps> = ({
         }
       />
 
-         <PostalCodeModal
+      <PostalCodeModal
         open={showModal}
         setOpen={setShowModal}
-        onSelect={(selectedPostalCode) => {
-          setLocalPatient((prev) => ({
+        onSelect={selectedPostalCode => {
+          setLocalPatient(prev => ({
             ...prev,
             postalCode: selectedPostalCode
           }));

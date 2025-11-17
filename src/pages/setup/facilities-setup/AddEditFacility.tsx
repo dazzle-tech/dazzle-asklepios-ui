@@ -125,7 +125,6 @@ const AddEditFacility = ({
               })}
             >
               <MyInput
-                required
                 width={250}
                 vr={validationResult}
                 fieldLabel="Facility Country"
@@ -138,7 +137,6 @@ const AddEditFacility = ({
                 setRecord={setAddress}
               />
               <MyInput
-                required
                 width={250}
                 vr={validationResult}
                 fieldLabel="Facility City"
@@ -171,7 +169,6 @@ const AddEditFacility = ({
               <MyInput
                 fieldLabel="Street"
                 fieldName="streetAddressLine1"
-                required
                 record={address}
                 setRecord={setAddress}
                 width={250}
@@ -197,7 +194,6 @@ const AddEditFacility = ({
               <MyInput
                 fieldName="phone1"
                 fieldLabel="Primary Phone Number"
-                required
                 record={facility}
                 setRecord={setFacility}
                 width={250}
@@ -218,7 +214,6 @@ const AddEditFacility = ({
             />
             <MyInput
               fieldName="fax"
-              required
               record={facility}
               setRecord={setFacility}
               width={width > 600 ? 520 : 250}

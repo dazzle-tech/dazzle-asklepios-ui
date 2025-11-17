@@ -2,10 +2,8 @@ import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Form } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import ReactDOMServer from 'react-dom/server';
-import { MdModeEdit } from 'react-icons/md';
+import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
-import { MdDelete } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -22,91 +20,144 @@ import {
   useUpdateAllergenMutation,
   useToggleAllergenIsActiveMutation,
   useLazyGetAllergensByTypeQuery,
-  useLazyGetAllergensByCodeQuery,
   useLazyGetAllergensByNameQuery
 } from '@/services/setup/allergensService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Allergen } from '@/types/model-types-new';
 import { newAllergen } from '@/types/model-types-constructor-new';
+import { useEnumOptions } from '@/services/enumsApi';
 
 const Allergens: React.FC = () => {
   const dispatch = useAppDispatch();
 
+  // Row state
   const [allergens, setAllergens] = useState<Allergen>({ ...newAllergen });
-  const [width, setWidth] = useState<number>(
-    typeof window !== 'undefined' ? window.innerWidth : 1200
-  );
+
+  // UI state
+  const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [popupOpen, setPopupOpen] = useState(false);
   const [openConfirmDeleteAllergens, setOpenConfirmDeleteAllergens] = useState<boolean>(false);
-  const [stateOfDeleteAllergens, setStateOfDeleteAllergens] = useState<
-    'delete' | 'deactivate' | 'reactivate'
-  >('delete');
+  const [stateOfDeleteAllergens, setStateOfDeleteAllergens] = useState<'delete' | 'deactivate' | 'reactivate'>('delete');
 
-  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
-    filter: '',
-    value: ''
-  });
-
+  // Filters state
+  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({ filter: '', value: '' });
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredData, setFilteredData] = useState<Allergen[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
 
-  const [addAllergen] = useAddAllergenMutation();
-  const [updateAllergen] = useUpdateAllergenMutation();
-  const [toggleAllergenIsActive] = useToggleAllergenIsActiveMutation();
-
-  const [fetchByType] = useLazyGetAllergensByTypeQuery();
-  const [fetchByCode] = useLazyGetAllergensByCodeQuery();
-  const [fetchByName] = useLazyGetAllergensByNameQuery();
-
+  // Pagination (unfiltered list via Link headers)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
     sort: 'id,asc',
     timestamp: Date.now()
   });
-  // Fetch allergens page
-  const {
-    data: allergensPage,
-    isFetching,
-    refetch
-  } = useGetAllergensQuery({
+
+  // Pagination for filtered mode (re-run the same filter with page/size)
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,desc' // prefer newest first while filtered
+  });
+
+  // API hooks
+  const { data: allergensPage, isFetching, refetch } = useGetAllergensQuery({
     page: paginationParams.page,
     size: paginationParams.size,
     sort: paginationParams.sort
   });
-  // Compute total count based on filter state
+
+  const [addAllergen] = useAddAllergenMutation();
+  const [updateAllergen] = useUpdateAllergenMutation();
+  const [toggleAllergenIsActive] = useToggleAllergenIsActiveMutation();
+
+  const [fetchByType] = useLazyGetAllergensByTypeQuery();
+  const [fetchByName] = useLazyGetAllergensByNameQuery();
+
+  // Enum options for type filter
+  const allergenTypeOptions = useEnumOptions('AllergenType');
+
+  // Derived data
   const totalCount = useMemo(
     () => (isFiltered ? filteredTotal : allergensPage?.totalCount ?? 0),
     [isFiltered, filteredTotal, allergensPage?.totalCount]
   );
-  // Determine pagination links based on filter state
   const links = (isFiltered ? filteredLinks : allergensPage?.links) || {};
-  // Determine table data based on filter state
   const tableData = useMemo(
     () => (isFiltered ? filteredData : allergensPage?.data ?? []),
     [isFiltered, filteredData, allergensPage?.data]
   );
-  // Define filter fields
+
+  // Filter fields (type is a select, others are text)
   const filterFields = [
     { label: 'Allergens Type', value: 'type' },
-    { label: 'Allergens Code', value: 'code' },
     { label: 'Allergens Name', value: 'name' }
   ];
 
-  // Handle Add New button click
+  // Helpers
+  const resetToUnfiltered = () => {
+    setIsFiltered(false);
+    setFilteredData([]);
+    setFilteredTotal(0);
+    setFilteredLinks(undefined);
+    setFilterPagination(prev => ({ ...prev, page: 0 })); // keep size/sort for next filtered use
+    setPaginationParams(prev => ({ ...prev, page: 0, sort: 'id,asc', timestamp: Date.now() }));
+    refetch();
+  };
+
+  const runFilterQuery = async (
+    fieldName: string,
+    value: any,
+    page = 0,
+    size = filterPagination.size,
+    sort = filterPagination.sort
+  ) => {
+    if (!value && value !== 0) return undefined;
+
+    if (fieldName === 'type') {
+      return await fetchByType({ type: String(value), page, size, sort }).unwrap();
+    } else if (fieldName === 'name') {
+      return await fetchByName({ name: String(value), page, size, sort }).unwrap();
+    }
+    return undefined;
+  };
+
+  const handleFilterChange = async (
+    fieldName: string,
+    value: any,
+    page = 0,
+    size = filterPagination.size,
+    sort = filterPagination.sort
+  ) => {
+    if (!value) {
+      resetToUnfiltered();
+      return;
+    }
+    try {
+      const resp = await runFilterQuery(fieldName, value, page, size, sort);
+      setFilteredData(resp?.data ?? []);
+      setFilteredTotal(resp?.totalCount ?? 0);
+      setFilteredLinks(resp?.links || {});
+      setIsFiltered(true);
+      setFilterPagination(prev => ({ ...prev, page, size, sort }));
+    } catch {
+      resetToUnfiltered();
+    }
+  };
+
+  // CRUD handlers
   const handleNew = () => {
     setAllergens({ ...newAllergen });
     setPopupOpen(true);
   };
-  // Save allergen (add or update)
+
   const handleSave = async () => {
     setPopupOpen(false);
     const isUpdate = !!allergens.id;
+
     const payload: any = {
       ...allergens,
-      code: (allergens.code || '').trim(),
       name: (allergens.name || '').trim(),
       description: allergens.description ?? '',
       isActive: !!allergens.isActive
@@ -114,19 +165,44 @@ const Allergens: React.FC = () => {
 
     try {
       if (isUpdate) {
-        await updateAllergen({ id: allergens.id!, ...payload }).unwrap();
+        const updated = await updateAllergen({ id: allergens.id!, ...payload }).unwrap();
         dispatch(notify({ msg: 'Allergen updated successfully', sev: 'success' }));
+
+        if (isFiltered) {
+          // Update the row in filtered list if it exists
+          setFilteredData(prev =>
+            prev.map(row => (row.id === updated.id ? updated : row))
+          );
+        } else {
+          // Unfiltered: refetch regular paged list
+          setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
+          refetch();
+        }
       } else {
-        await addAllergen(payload).unwrap();
+        // Create
+        const created = await addAllergen(payload).unwrap();
         dispatch(notify({ msg: 'Allergen added successfully', sev: 'success' }));
+
+        if (isFiltered) {
+          // Force page 0 and rerun the same filter so the new item appears
+          const nextSize = filterPagination.size;
+          const nextSort = 'id,desc'; // make sure newest shows first
+          setFilterPagination(prev => ({ ...prev, page: 0, size: nextSize, sort: nextSort }));
+
+          await handleFilterChange(
+            recordOfFilter.filter,
+            recordOfFilter.value,
+            0,           // go to first page
+            nextSize,
+            nextSort
+          );
+        } else {
+          // Unfiltered: back to first page and refetch main list
+          setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
+          refetch();
+        }
       }
 
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-      refetch();
     } catch (err: any) {
       const data = err?.data ?? {};
       const traceId = data?.traceId || data?.requestId || data?.correlationId;
@@ -140,7 +216,6 @@ const Allergens: React.FC = () => {
       if (isValidation && Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
         const fieldLabels: Record<string, string> = {
           id: 'Id',
-          code: 'Code',
           name: 'Name',
           type: 'Type',
           description: 'Description',
@@ -151,10 +226,8 @@ const Allergens: React.FC = () => {
           if (m.includes('must not be null')) return 'is required';
           if (m.includes('must not be blank')) return 'must not be blank';
           if (m.includes('size must be between')) return 'length is out of range';
-          if (m.includes('must be greater than') || m.includes('must be greater than or equal to'))
-            return 'value is too small';
-          if (m.includes('must be less than') || m.includes('must be less than or equal to'))
-            return 'value is too large';
+          if (m.includes('must be greater')) return 'value is too small';
+          if (m.includes('must be less')) return 'value is too large';
           if (m.includes('not a valid enum')) return 'has invalid value';
           return msg || 'invalid value';
         };
@@ -164,8 +237,7 @@ const Allergens: React.FC = () => {
           return `• ${label}: ${normalizeMsg(fe.message)}`;
         });
 
-        const humanMsg = `Please fix the following fields:\n${lines.join('\n')}`;
-        dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+        dispatch(notify({ msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix, sev: 'error' }));
         return;
       }
 
@@ -173,10 +245,8 @@ const Allergens: React.FC = () => {
       const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : undefined;
       const keyMap: Record<string, string> = {
         'payload.required': 'Allergen payload is required.',
-        'code.required': 'Allergen code is required.',
         'name.required': 'Allergen name is required.',
         'type.required': 'Allergen type is required.',
-        'unique.code': 'Allergen code already exists.',
         'unique.name': 'Allergen name already exists.',
         'db.constraint': 'Database constraint violation.',
         notfound: 'Allergen not found.',
@@ -193,7 +263,7 @@ const Allergens: React.FC = () => {
       dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
     }
   };
-  // Toggle Active / Inactive state
+
   const doToggle = async () => {
     try {
       if (!allergens?.id) return;
@@ -204,14 +274,10 @@ const Allergens: React.FC = () => {
           ? (res as any).isActive
           : !allergens.isActive;
 
-      setAllergens(prev =>
-        prev && prev.id === toggledId ? { ...prev, isActive: newIsActive } : prev
-      );
+      setAllergens(prev => (prev && prev.id === toggledId ? { ...prev, isActive: newIsActive } : prev));
 
       if (isFiltered) {
-        setFilteredData(prev =>
-          prev.map(row => (row.id === toggledId ? { ...row, isActive: newIsActive } : row))
-        );
+        setFilteredData(prev => prev.map(row => (row.id === toggledId ? { ...row, isActive: newIsActive } : row)));
       } else {
         refetch();
       }
@@ -237,70 +303,28 @@ const Allergens: React.FC = () => {
       );
     }
   };
-  // Handle Deactivate / Reactivate actions
+
   const handleDeactivate = () => {
     setOpenConfirmDeleteAllergens(false);
     setStateOfDeleteAllergens('deactivate');
     doToggle();
   };
-  // Reactivate allergen
+
   const handleReactivate = () => {
     setOpenConfirmDeleteAllergens(false);
     setStateOfDeleteAllergens('reactivate');
     doToggle();
   };
-  // Handle filter changes
-  const handleFilterChange = async (fieldName: string, value: any) => {
-    if (!value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
+
+  // Pagination handlers
+  const handlePageChange = (_: unknown, newPage: number) => {
+    if (isFiltered) {
+      // Filtered mode: re-run same filter with new page
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage, filterPagination.size, filterPagination.sort);
       return;
     }
-    try {
-      let resp: { data: any[]; totalCount: number; links?: any } | undefined;
-      if (fieldName === 'type') {
-        resp = await fetchByType({
-          type: String(value),
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      } else if (fieldName === 'code') {
-        resp = await fetchByCode({
-          code: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      } else if (fieldName === 'name') {
-        resp = await fetchByName({
-          name: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
-        }).unwrap();
-      }
 
-      setFilteredData(resp?.data ?? []);
-      setFilteredTotal(resp?.totalCount ?? 0);
-      setFilteredLinks(resp?.links || {});
-      setIsFiltered(true);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-    } catch {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
-    }
-  };
-  // Handle page changes
-  const handlePageChange = (_: unknown, newPage: number) => {
+    // Unfiltered mode: use Link headers
     const currentPage = paginationParams.page;
     let targetLink: string | null | undefined = null;
 
@@ -319,24 +343,28 @@ const Allergens: React.FC = () => {
       }));
     }
   };
-  // Handle rows per page changes
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPaginationParams(prev => ({
-      ...prev,
-      size: parseInt(event.target.value, 10),
-      page: 0,
-      timestamp: Date.now()
-    }));
+    const newSize = parseInt(event.target.value, 10);
+
+    if (isFiltered) {
+      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize, filterPagination.sort);
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+        timestamp: Date.now()
+      }));
+    }
   };
 
-  // table
-  // handle row selection style
-  const isSelected = (rowData: any) =>
-    rowData && allergens && rowData.id === allergens.id ? 'selected-row' : '';
+  // Row selection style
+  const isSelected = (rowData: any) => (rowData && allergens && rowData.id === allergens.id ? 'selected-row' : '');
 
-  // Define table columns
+  // Columns
   const tableColumns = [
-    { key: 'code', title: <Translate>Allergens Code</Translate>, flexGrow: 4 },
     { key: 'name', title: <Translate>Allergens Name</Translate>, flexGrow: 4 },
     {
       key: 'type',
@@ -349,91 +377,117 @@ const Allergens: React.FC = () => {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: (rowData: any) => iconsForActions(rowData)
+      render: (rowData: any) => (
+        <div className="container-of-icons">
+          <MdModeEdit
+            className="icons-style"
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setAllergens(rowData);
+              setPopupOpen(true);
+            }}
+          />
+          {rowData?.isActive ? (
+            <MdDelete
+              className="icons-style"
+              title="Deactivate"
+              size={24}
+              fill="var(--primary-pink)"
+              onClick={() => {
+                setAllergens(rowData);
+                setStateOfDeleteAllergens('deactivate');
+                setOpenConfirmDeleteAllergens(true);
+              }}
+            />
+          ) : (
+            <FaUndo
+              className="icons-style"
+              title="Activate"
+              size={20}
+              fill="var(--primary-gray)"
+              onClick={() => {
+                setAllergens(rowData);
+                setStateOfDeleteAllergens('reactivate');
+                setOpenConfirmDeleteAllergens(true);
+              }}
+            />
+          )}
+        </div>
+      )
     }
   ];
-  // Action icons for each row
-  const iconsForActions = (rowData: Allergen) => (
-    <div className="container-of-icons">
-      <MdModeEdit
-        className="icons-style"
-        title="Edit"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => {
-          setAllergens(rowData);
-          setPopupOpen(true);
-        }}
-      />
-      {rowData?.isActive ? (
-        <MdDelete
-          className="icons-style"
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-          onClick={() => {
-            setAllergens(rowData);
-            setStateOfDeleteAllergens('deactivate');
-            setOpenConfirmDeleteAllergens(true);
-          }}
+
+  // Filters UI (type is a select, others are text)
+  const filters = () => {
+    const selected = recordOfFilter.filter;
+
+    const dynamicInput =
+      selected === 'type' ? (
+        <MyInput
+          width={220}
+          fieldName="value"
+          fieldLabel=""
+          fieldType="select"
+          selectData={allergenTypeOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          searchable={false}
         />
       ) : (
-        <FaUndo
-          className="icons-style"
-          title="Activate"
-          size={20}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setAllergens(rowData);
-            setStateOfDeleteAllergens('reactivate');
-            setOpenConfirmDeleteAllergens(true);
-          }}
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Search"
+          width={220}
         />
-      )}
-    </div>
-  );
+      );
 
-  // Render filter form
-  const filters = () => (
-    <Form layout="inline" fluid>
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={(updatedRecord: any) => {
-          setRecordOfFilter({ filter: updatedRecord.filter, value: '' });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-      />
-      <MyButton
-        color="var(--deep-blue)"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-        width="80px"
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
+    return (
+      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+        <MyInput
+          selectDataValue="value"
+          selectDataLabel="label"
+          selectData={filterFields}
+          fieldName="filter"
+          fieldType="select"
+          record={recordOfFilter}
+          setRecord={(updatedRecord: any) => {
+            setRecordOfFilter({ filter: updatedRecord.filter, value: '' });
+          }}
+          showLabel={false}
+          placeholder="Select Filter"
+          searchable={false}
+          width="180px"
+        />
+        {dynamicInput}
+        <MyButton
+          color="var(--deep-blue)"
+          onClick={() => {
+            if (!recordOfFilter.value && recordOfFilter.value !== 0) {
+              resetToUnfiltered();
+            } else {
+              handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size, filterPagination.sort);
+            }
+          }}
+          width="80px"
+        >
+          Search
+        </MyButton>
+      </Form>
+    );
+  };
 
   // Effects
-
   useEffect(() => {
-    const divContent = 'Allergens';
     dispatch(setPageCode('Allergens'));
-    dispatch(setDivContent(ReactDOMServer.renderToStaticMarkup(divContent)));
+    dispatch(setDivContent('Allergens'));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
@@ -448,16 +502,13 @@ const Allergens: React.FC = () => {
     }
   }, []);
 
+  // If user clears value manually, revert to unfiltered list
   useEffect(() => {
-    if (!recordOfFilter.value) {
-      setIsFiltered(false);
-      setFilteredData([]);
-      setFilteredTotal(0);
-      setFilteredLinks(undefined);
-      setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
-      refetch();
+    if (!recordOfFilter.value && isFiltered) {
+      resetToUnfiltered();
     }
-  }, [recordOfFilter.value, refetch]);
+  }, [recordOfFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Panel>
       <MyTable
@@ -468,22 +519,25 @@ const Allergens: React.FC = () => {
         rowClassName={isSelected}
         filters={filters()}
         onRowClick={(rowData: any) => setAllergens(rowData)}
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
+        page={isFiltered ? filterPagination.page : paginationParams.page}
+        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-        tableButtons={<div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>
+        }
       />
+
       <AddEditAllergens
         open={popupOpen}
         setOpen={setPopupOpen}
@@ -492,13 +546,12 @@ const Allergens: React.FC = () => {
         setAllergens={setAllergens as any}
         handleSave={handleSave}
       />
+
       <DeletionConfirmationModal
         open={openConfirmDeleteAllergens}
         setOpen={setOpenConfirmDeleteAllergens}
         itemToDelete="Allergens"
-        actionButtonFunction={
-          stateOfDeleteAllergens === 'deactivate' ? handleDeactivate : handleReactivate
-        }
+        actionButtonFunction={stateOfDeleteAllergens === 'deactivate' ? handleDeactivate : handleReactivate}
         actionType={stateOfDeleteAllergens}
       />
     </Panel>

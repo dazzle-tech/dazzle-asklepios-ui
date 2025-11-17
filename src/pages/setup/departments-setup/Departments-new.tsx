@@ -25,9 +25,13 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useEnumByName, useEnumOptions } from '@/services/enumsApi';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import ChooseScreenNurse from './ChooseScreenNurse';
-import { extractPaginationFromLink } from "@/utils/paginationHelper";
+import { PaginationPerPage } from "@/utils/paginationPerPage";
 import { has } from 'lodash';
 
+
+const generateFiveDigitCode = (): string => {
+  return String(Math.floor(10000 + Math.random() * 90000));
+};
 
 const Departments = () => {
   const dispatch = useDispatch();
@@ -42,7 +46,7 @@ const Departments = () => {
   const [openScreensNursePopup,setOpenScreensNursePopup]=useState(false)
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
-  const [generateCode, setGenerateCode] = useState<string>('');
+  const [nextDepartmentCode, setNextDepartmentCode] = useState<string>(generateFiveDigitCode());
   const [record, setRecord] = useState({ filter: '', value: '' });
   const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
@@ -50,6 +54,17 @@ const Departments = () => {
   const [departmentList, setDepartmentList] = useState<Department[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [linksState, setLinksState] = useState<{
+    next?: string | null;
+    prev?: string | null;
+    first?: string | null;
+    last?: string | null;
+  }>({});
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc'
+  });
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -106,13 +121,18 @@ const Departments = () => {
     console.log("ShowScreen", showScreen)
   }, [showScreen])
   
+  useEffect(() => {
+    if (departmentListResponse?.links) {
+      setLinksState(departmentListResponse.links);
+    }
+  }, [departmentListResponse?.links]);
 
   // Update department code field when department or code changes
   useEffect(() => {
     setRecordOfDepartmentCode({
-      departmentCode: department?.departmentCode ?? generateCode
+      departmentCode: department?.departmentCode ?? ''
     });
-  }, [department?.departmentCode, generateCode]);
+  }, [department?.departmentCode]);
 
   // Refresh table on successful add/update 
   useEffect(() => {
@@ -145,9 +165,8 @@ const Departments = () => {
   const depTypeOptions = useEnumOptions("DepartmentType");
   // Handle new department creation
   const handleNew = () => {
-    const code = generateFiveDigitCode();
-    setGenerateCode(code);
-    setDepartment({ ...newDepartment, departmentCode: code });
+    setDepartment({ ...newDepartment, departmentCode: nextDepartmentCode });
+    setRecordOfDepartmentCode({ departmentCode: nextDepartmentCode });
     setPopupOpen(true);
   };
   // add department
@@ -158,6 +177,8 @@ const Departments = () => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
+        const newCode = generateFiveDigitCode();
+        setNextDepartmentCode(newCode);
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to add department', sev: 'error' }));
@@ -179,11 +200,13 @@ const Departments = () => {
       .finally(() => setLoad(false));
   };
 
-  const handleFilterChange = async (fieldName, value) => {
+  const handleFilterChange = async (fieldName, value, page = 0, size = filterPagination.size) => {
     if (!value) {
       setDepartmentList(departmentListResponse?.data ?? []);
       setIsFiltered(false);
       setFilteredTotal(0);
+      setFilterPagination(prev => ({ ...prev, page: 0 }));
+      setLinksState(links ?? {});
       return;
     }
     try {
@@ -191,28 +214,30 @@ const Departments = () => {
       if (fieldName === "facilityName") {
         response = await getDepartmentsByFacility({
           facilityId: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
+          page,
+          size,
+          sort: filterPagination.sort
         }).unwrap();
       } else if (fieldName === "departmentType") {
         response = await getDepartmentsByType({
           type: value?.toUpperCase().replace(/\s+/g, '_'),
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
+          page,
+          size,
+          sort: filterPagination.sort
         }).unwrap();
       } else if (fieldName === "name") {
         response = await getDepartmentsByName({
           name: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort
+          page,
+          size,
+          sort: filterPagination.sort
         }).unwrap();
       }
       setDepartmentList(response?.data ?? []);
       setIsFiltered(true);
       setFilteredTotal(response?.totalCount ?? 0);
+      setFilterPagination(prev => ({ ...prev, page, size }));
+      setLinksState(response?.links ?? {});
 
     } catch (error) {
       console.error("Error fetching departments:", error);
@@ -220,10 +245,6 @@ const Departments = () => {
       setIsFiltered(false);
     }
   };
-  const generateFiveDigitCode = (): string => {
-    return String(Math.floor(10000 + Math.random() * 90000));
-  };
-
   const isSelected = rowData => (rowData?.id === department?.id ? 'selected-row' : '');
   const [toggleDepartmentIsActive] = useToggleDepartmentIsActiveMutation();
   const handleToggleActive = (id: number) => {
@@ -403,7 +424,7 @@ const Departments = () => {
     if (selectedFilter === 'facilityName') {
       dynamicInput = (
         <MyInput
-          width={250}
+          width={170}
           fieldLabel=""
           fieldName="value"
           fieldType="select"
@@ -418,7 +439,7 @@ const Departments = () => {
     } else if (selectedFilter === 'departmentType') {
       dynamicInput = (
         <MyInput
-          width={250}
+          width={170}
           fieldName="value"
           fieldLabel=""
           fieldType="select"
@@ -432,7 +453,9 @@ const Departments = () => {
     } else {
       dynamicInput = (
         <MyInput
+          width={170}
           fieldName="value"
+          fieldLabel=''
           fieldType="text"
           record={record}
           setRecord={setRecord}
@@ -460,7 +483,7 @@ const Departments = () => {
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
-          width={getFilterWidth(record.filter)}
+          width={180}
         />
 
         {dynamicInput}
@@ -472,39 +495,39 @@ const Departments = () => {
           }}
           width="80px"
         >
-         <Translate key="SEARCH">Search</Translate>
+         Search
         </MyButton>
       </Form>
     );
   };
-  const handlePageChange = (_: unknown, newPage: number) => {
-    let targetLink: string | null | undefined = null;
-
-    if (newPage > paginationParams.page && links.next) targetLink = links.next;
-    else if (newPage < paginationParams.page && links.prev)
-      targetLink = links.prev;
-    else if (newPage === 0 && links.first) targetLink = links.first;
-    else if (newPage > paginationParams.page + 1 && links.last)
-      targetLink = links.last;
-
-    if (targetLink) {
-      const { page, size } = extractPaginationFromLink(targetLink);
-      setPaginationParams({
-        ...paginationParams,
-        page,
-        size,
-        timestamp: Date.now(),
-      });
+  const handlePageChange = (event: unknown, newPage: number) => {
+    if (isFiltered) {
+      handleFilterChange(record.filter, record.value, newPage);
+    } else {
+      PaginationPerPage.handlePageChange(
+        event,
+        newPage,
+        paginationParams,
+        linksState,
+        setPaginationParams
+      );
     }
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPaginationParams({
-      ...paginationParams,
-      size: parseInt(event.target.value, 10),
-      page: 0,
-      timestamp: Date.now()
-    });
+    const newSize = parseInt(event.target.value, 10);
+
+    if (isFiltered) {
+      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+      handleFilterChange(record.filter, record.value, 0, newSize);
+    } else {
+      setPaginationParams({
+        ...paginationParams,
+        size: newSize,
+        page: 0,
+        timestamp: Date.now()
+      });
+    }
   };
   const handleDeactiveReactivateDepartment = () => {
     handleToggleActive(department.id);
@@ -524,8 +547,8 @@ const Departments = () => {
         rowClassName={isSelected}
         onRowClick={rowData => setDepartment(rowData)}
         filters={filters()}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
+        page={isFiltered ? filterPagination.page : pageIndex}
+        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         loading={load || isFetching}
