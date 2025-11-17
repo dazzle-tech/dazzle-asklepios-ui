@@ -491,8 +491,25 @@ export const newSubstitute:modelTypes.Substitute={
   alternativeBrandId:undefined
 }
 ;
+export const newPrescriptionInstructions: modelTypes.prescriptionInstructions = {
+  id: undefined,
+  category: '',
+  dose: 0,
+  unit: "",
+  rout: "",
+  frequency: ""
+};
 
 export const newCdtDentalAction: modelTypes.CdtDentalAction = {
   dentalActionId: 0,
   cdtCode: "",
+};
+
+export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndication = {
+  id: undefined,
+  activeIngredientId: 0,
+  icdCodeId: 0,
+  dosage: null,
+  unit: '',
+  isOffLabel: false
 };
