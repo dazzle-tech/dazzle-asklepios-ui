@@ -34,13 +34,14 @@ function isTokenExpired(token: string): boolean {
 // State definition
 // ==================
 interface AuthState {
-  user: any | null;                 // logged-in user object
-  token: string | null;             // JWT token
+  user: any | null; // logged-in user object
+  token: string | null; // JWT token
   tenant: any | null;
   langauge: any | null;
   menu: any[] | null;
-  menuLoading: boolean;     // tenant (organization) info
-  sessionExpiredBackdrop: boolean;  // flag for showing session expired modal/backdrop
+  menuLoading: boolean; // tenant (organization) info
+  sessionExpiredBackdrop: boolean; // flag for showing session expired modal/backdrop
+  selectedDepartment: any | null;
 }
 
 // Initial state, pulling values from localStorage if available
@@ -51,7 +52,8 @@ const initialState: AuthState = {
   langauge: JSON.parse(localStorage.getItem('langauge') || 'null'),
   menu: JSON.parse(localStorage.getItem('menu') || 'null'),
   menuLoading: false,
-  sessionExpiredBackdrop: false
+  sessionExpiredBackdrop: false,
+  selectedDepartment: JSON.parse(localStorage.getItem('selectedDepartment') || 'null')
 };
 
 // ==================
@@ -100,6 +102,15 @@ const authSlice = createSlice({
       state.menuLoading = action.payload;
     },
 
+    setSelectedDepartment: (state, action: PayloadAction<any | null>) => {
+      state.selectedDepartment = action.payload;
+      if (action.payload) {
+        localStorage.setItem('selectedDepartment', JSON.stringify(action.payload));
+      } else {
+        localStorage.removeItem('selectedDepartment');
+      }
+    },
+
 
     // Save token to state and localStorage
     setToken: (state, action: PayloadAction<string | null>) => {
@@ -126,10 +137,12 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.tenant = null;
+      state.selectedDepartment = null;
       localStorage.removeItem('id_token');
       localStorage.removeItem('user');
       localStorage.removeItem('tenant');
       localStorage.removeItem('langauge');
+      localStorage.removeItem('selectedDepartment');
     },
 
     // Check token validity and clear state if expired
@@ -139,10 +152,12 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.tenant = null;
+        state.selectedDepartment = null;
         localStorage.removeItem('id_token');
         localStorage.removeItem('user');
         localStorage.removeItem('tenant');
         localStorage.removeItem('langauge');
+        localStorage.removeItem('selectedDepartment');
       }
     }
   }
@@ -155,6 +170,7 @@ export const {
   setToken,
   setTenant,
   setLanguage,
+  setSelectedDepartment,
   logout,
   setMenu,
   checkTokenValidity
