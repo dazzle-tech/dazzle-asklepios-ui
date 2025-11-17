@@ -706,7 +706,6 @@ export interface ActiveIngredientIndication {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;}
 
-
   export interface BrandMedicationActiveIngredient{
     id:number;
     brandId:number;

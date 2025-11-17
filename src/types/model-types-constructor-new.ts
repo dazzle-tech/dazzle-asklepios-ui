@@ -511,6 +511,7 @@ export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndicatio
   unit: '',
   isOffLabel: false
 };
+
 export const newVaccine: modelTypes.Vaccine = {
   id: undefined,
   name: '',
@@ -624,3 +625,4 @@ export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdvers
   activeIngredientId: 0,
   adverseEffect: ''
 };
+
