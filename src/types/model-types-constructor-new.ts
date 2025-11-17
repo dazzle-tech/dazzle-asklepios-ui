@@ -353,7 +353,6 @@ export const newRadiology: modelTypes.Radiology = {
   associatedRisks: "",
 };
 
-
 export const newMedicationCategory: modelTypes.MedicationCategory = {
   id: undefined,
   name: ''
@@ -408,12 +407,6 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   doseAdjustmentPugC: null
 };
 
-export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSpecialPopulation = {
-  id: undefined,
-  activeIngredientId: 0,
-  specialPopulation: '',
-  considerations: ''
-};
 export const newDentalAction: modelTypes.DentalAction={
   id: null,               // Primary key (auto-generated)
   description: '',        // Mandatory field

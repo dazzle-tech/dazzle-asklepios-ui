@@ -518,13 +518,6 @@ export interface ActiveIngredient {
   lastModifiedDate?: Date | string | null;
 }
 
-export interface ActiveIngredientSpecialPopulation {
-  id?: number;
-  activeIngredientId: number;
-  specialPopulation: string;
-  considerations?: string | null;
-}
-
 export interface DentalAction {
   id?: number;                 // Primary key (auto-generated)
   description: string;         // Mandatory field
@@ -768,4 +761,3 @@ export interface ActiveIngredientSpecialPopulation {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;
 }
-
