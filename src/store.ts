@@ -12,9 +12,9 @@ import { encounterService } from '@/services/encounterService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
+import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
-import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
@@ -107,6 +107,7 @@ export const store = configureStore({
       activeIngredientContraindicationService.reducer,
 
     [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
+
 
     [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
     //account
