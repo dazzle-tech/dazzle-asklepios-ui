@@ -501,10 +501,6 @@ export const newPrescriptionInstructions: modelTypes.prescriptionInstructions = 
   frequency: ""
 };
 
-export const newCdtDentalAction: modelTypes.CdtDentalAction = {
-  dentalActionId: 0,
-  cdtCode: "",
-};
 
 export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndication = {
   id: undefined,
