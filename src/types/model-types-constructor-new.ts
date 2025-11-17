@@ -577,3 +577,34 @@ export const newCdtDentalAction: modelTypes.CdtDentalAction = {
   dentalActionId: undefined,
   cdtId: undefined,
 };
+
+export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
+  id: 0,
+  name: '',
+  description: null,
+  type: '',
+  departmentId: 0,
+  departmentName: null
+};
+
+export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
+  name: '',
+  description: null,
+  type: '',
+  departmentId: 0,
+};
+
+export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
+  name: '',
+  description: null,
+  type: '',
+  departmentId: 0,
+};
+export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
+  id: 0,
+  catalogId: 0,
+  diagnosticTestId: 0,
+};
+export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
+  testIds: []
+};
