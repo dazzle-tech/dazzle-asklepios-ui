@@ -475,7 +475,7 @@ export const newBrandMedication:modelTypes.BrandMedication= {
   storageRequirements: '',
   expiresAfterOpening: false,
   expiresAfterOpeningValue: null,
-  expiresAfterOpeningUnit: '',
+  expiresAfterOpeningUnit: null,
   useSinglePatient: false,
   highCostMedication: false,
   costCategory: '',
