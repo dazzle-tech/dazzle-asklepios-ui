@@ -750,6 +750,12 @@ export interface ActiveIngredientAdverseEffect {
   id?: number;
   activeIngredientId: number;
   adverseEffect: string;
+}
+export interface ActiveIngredientSpecialPopulation {
+  id?: number;
+  activeIngredientId: number;
+  specialPopulation: string;
+  considerations?: string | null;
   createdBy?: string | null;
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;

@@ -29,7 +29,7 @@ const PregnancyLactationAndSpecialPopulation = ({ activeIngredient }) => {
         <Col md={12}>
           <Section
             title="Special Population"
-            content={<SpecialPopulation activeIngredients={activeIngredient} />}
+            content={<SpecialPopulation selectedActiveIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
             openedContent=""
@@ -50,7 +50,7 @@ const PregnancyLactationAndSpecialPopulation = ({ activeIngredient }) => {
         <br />
         <Section
           title="Special Population"
-          content={<SpecialPopulation activeIngredients={activeIngredient} />}
+          content={<SpecialPopulation selectedActiveIngredients={activeIngredient} />}
           setOpen={() => {}}
           rightLink=""
           openedContent=""
