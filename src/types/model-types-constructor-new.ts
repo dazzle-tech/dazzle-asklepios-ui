@@ -510,6 +510,69 @@ export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndicatio
   unit: '',
   isOffLabel: false
 };
+export const newVaccine: modelTypes.Vaccine = {
+  id: undefined,
+  name: '',
+  atcCode: '',
+  type: '',
+  roa: '',
+  siteOfAdministration: '',
+  postOpeningDuration: null,
+  durationUnit: '',
+  numberOfDoses: '',
+  indications: '',
+  possibleReactions: '',
+  contraindicationsAndPrecautions: '',
+  storageAndHandling: '',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newVaccineBrand: modelTypes.VaccineBrand = {
+  id: undefined,
+  vaccineId: undefined,
+  name: '',
+  manufacture: '',
+  volume: 0,
+  unit: '',
+  marketingAuthorizationHolder: '',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+export const newVaccineDose: modelTypes.VaccineDose = {
+  id: undefined,
+  vaccineId: 0,
+  doseNumber: 'FIRST',
+  fromAge: null,
+  toAge: null,
+  fromAgeUnit: 'YEARS',
+  toAgeUnit: 'YEARS',
+  isBooster: false,
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+export const newVaccineDosesInterval: modelTypes.VaccineDosesInterval = {
+  id: undefined,
+  vaccineId: 0,       
+  fromDoseId: 0,   
+  toDoseId: 0,     
+  intervalBetweenDoses: 0,  
+  unit: 'DAYS',
+  isActive: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+}
 export const newCdtDentalAction: modelTypes.CdtDentalAction = {
   dentalActionId: undefined,
   cdtId: undefined,

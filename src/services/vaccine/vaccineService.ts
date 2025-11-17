@@ -32,8 +32,7 @@ export const vaccineService = createApi({
   reducerPath: 'vaccineApi',
   baseQuery: BaseQuery,
   tagTypes: ['Vaccine'],
-  endpoints: (builder) => ({
-    // ====================== LIST (Paged) ======================
+  endpoints: builder => ({
     getVaccines: builder.query<PagedResult<modelTypes.Vaccine>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/vaccine',
@@ -43,7 +42,6 @@ export const vaccineService = createApi({
       providesTags: ['Vaccine'],
     }),
 
-    // ====================== GET ONE ======================
     getVaccineById: builder.query<modelTypes.Vaccine, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/vaccine/${id}`,
@@ -51,7 +49,6 @@ export const vaccineService = createApi({
       providesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine'],
     }),
 
-    // ====================== FILTERS ======================
     getVaccinesByName: builder.query<PagedResult<modelTypes.Vaccine>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine/by-name/${encodeURIComponent(name)}`,
@@ -79,9 +76,8 @@ export const vaccineService = createApi({
       providesTags: ['Vaccine'],
     }),
 
-    // ====================== CREATE ======================
     addVaccine: builder.mutation<modelTypes.Vaccine, modelTypes.Vaccine>({
-      query: (body) => ({
+      query: body => ({
         url: '/api/setup/vaccine',
         method: 'POST',
         body, 
@@ -89,7 +85,6 @@ export const vaccineService = createApi({
       invalidatesTags: ['Vaccine'],
     }),
 
-    // ====================== UPDATE ======================
     updateVaccine: builder.mutation<modelTypes.Vaccine, { id: Id; data: modelTypes.Vaccine }>({
       query: ({ id, data }) => ({
         url: `/api/setup/vaccine/${id}`,
@@ -99,7 +94,6 @@ export const vaccineService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine'],
     }),
 
-    // ====================== TOGGLE ACTIVE ======================
     toggleVaccineActive: builder.mutation<modelTypes.Vaccine, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/vaccine/${id}/toggle-active`,
@@ -108,7 +102,6 @@ export const vaccineService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine'],
     }),
 
-    // ====================== DELETE ======================
     deleteVaccine: builder.mutation<void, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/vaccine/${id}`,
@@ -120,7 +113,6 @@ export const vaccineService = createApi({
 });
 
 export const {
-  // QUERIES
   useGetVaccinesQuery,
   useLazyGetVaccinesQuery,
   useGetVaccineByIdQuery,
@@ -130,8 +122,6 @@ export const {
   useLazyGetVaccinesByTypeQuery,
   useGetVaccinesByRoaQuery,
   useLazyGetVaccinesByRoaQuery,
-
-  // MUTATIONS
   useAddVaccineMutation,
   useUpdateVaccineMutation,
   useToggleVaccineActiveMutation,

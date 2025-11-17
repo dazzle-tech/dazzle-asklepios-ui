@@ -3,7 +3,6 @@ import { configureStore } from '@reduxjs/toolkit';
 import uiSlice from './reducers/uiSlice';
 import { uiService } from '@/services/uiService';
 import { authService } from '@/services/authService';
-import authSlice from '@/reducers/authSlice';
 import { authServiceApi } from '@/services/authServiceApi';
 import { patientService } from '@/services/patientService';
 import patientSlice from '@/reducers/patientSlice';
@@ -58,6 +57,13 @@ import { laboratoryService } from './services/setup/diagnosticTest/laboratorySer
 import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
+import { procedureSetupService } from './services/setup/procedure/procedureService';
+import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
+import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
+import { vaccineService } from './services/vaccine/vaccineService';
+import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
+import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
+import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesIntervalService';
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
@@ -199,10 +205,6 @@ export const store = configureStore({
     //cdt code
     [cdtCodeService.reducerPath]: cdtCodeService.reducer,
 
-    //vaccine
-    [vaccineService.reducerPath]: vaccineService.reducer,
-    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
-
     // procedure
     // procedure setup
     [procedureSetupService.reducerPath]: procedureSetupService.reducer,
@@ -210,6 +212,11 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
+    //vaccine
+    [vaccineService.reducerPath]: vaccineService.reducer,
+    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
+    [vaccineDosesService.reducerPath]: vaccineDosesService.reducer,
+    [vaccineDosesIntervalService.reducerPath]: vaccineDosesIntervalService.reducer,
     [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer
@@ -278,6 +285,10 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      vaccineService.middleware,
+      vaccineBrandsService.middleware,
+      vaccineDosesService.middleware,
+      vaccineDosesIntervalService.middleware,
       BrandMedicationService.middleware,
       BrandMedicationSubstituteService.middleware,
       prescriptionInstructionService.middleware,
