@@ -161,8 +161,8 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const [stateOfDeleteBrandModal, setStateOfDeleteBrandModal] = useState<string>('delete');
 
   // Pagination & sorting (like Vaccine)
-  const [page, setPage] = useState(5);
-  const [size, setSize] = useState(10);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(5);
   const [sortBy, setSortBy] = useState<'id' | 'name'>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
