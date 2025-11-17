@@ -624,8 +624,11 @@ export interface prescriptionInstructions {
 export interface CdtDentalAction {
   id?: number;
   dentalActionId: number;
-  cdtCode: string;
-}
+
+  cdtId: number;
+};
+
+
 export interface ActiveIngredientIndication {
   id?: number;
   activeIngredientId: number;
@@ -637,3 +640,4 @@ export interface ActiveIngredientIndication {
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;}
+

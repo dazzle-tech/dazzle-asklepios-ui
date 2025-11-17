@@ -514,3 +514,7 @@ export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndicatio
   unit: '',
   isOffLabel: false
 };
+export const newCdtDentalAction: modelTypes.CdtDentalAction = {
+  dentalActionId: undefined,
+  cdtId: undefined,
+};
