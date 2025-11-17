@@ -29,6 +29,10 @@ import { PaginationPerPage } from "@/utils/paginationPerPage";
 import { has } from 'lodash';
 
 
+const generateFiveDigitCode = (): string => {
+  return String(Math.floor(10000 + Math.random() * 90000));
+};
+
 const Departments = () => {
   const dispatch = useDispatch();
   const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] = useState(false);
@@ -42,7 +46,7 @@ const Departments = () => {
   const [openScreensNursePopup,setOpenScreensNursePopup]=useState(false)
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
-  const [generateCode, setGenerateCode] = useState<string>('');
+  const [nextDepartmentCode, setNextDepartmentCode] = useState<string>(generateFiveDigitCode());
   const [record, setRecord] = useState({ filter: '', value: '' });
   const [getDepartmentsByFacility] = useLazyGetDepartmentByFacilityQuery();
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
@@ -126,9 +130,9 @@ const Departments = () => {
   // Update department code field when department or code changes
   useEffect(() => {
     setRecordOfDepartmentCode({
-      departmentCode: department?.departmentCode ?? generateCode
+      departmentCode: department?.departmentCode ?? ''
     });
-  }, [department?.departmentCode, generateCode]);
+  }, [department?.departmentCode]);
 
   // Refresh table on successful add/update 
   useEffect(() => {
@@ -161,9 +165,8 @@ const Departments = () => {
   const depTypeOptions = useEnumOptions("DepartmentType");
   // Handle new department creation
   const handleNew = () => {
-    const code = generateFiveDigitCode();
-    setGenerateCode(code);
-    setDepartment({ ...newDepartment, departmentCode: code });
+    setDepartment({ ...newDepartment, departmentCode: nextDepartmentCode });
+    setRecordOfDepartmentCode({ departmentCode: nextDepartmentCode });
     setPopupOpen(true);
   };
   // add department
@@ -174,6 +177,8 @@ const Departments = () => {
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
+        const newCode = generateFiveDigitCode();
+        setNextDepartmentCode(newCode);
       })
       .catch(() => {
         dispatch(notify({ msg: 'Failed to add department', sev: 'error' }));
@@ -240,10 +245,6 @@ const Departments = () => {
       setIsFiltered(false);
     }
   };
-  const generateFiveDigitCode = (): string => {
-    return String(Math.floor(10000 + Math.random() * 90000));
-  };
-
   const isSelected = rowData => (rowData?.id === department?.id ? 'selected-row' : '');
   const [toggleDepartmentIsActive] = useToggleDepartmentIsActiveMutation();
   const handleToggleActive = (id: number) => {
@@ -494,7 +495,7 @@ const Departments = () => {
           }}
           width="80px"
         >
-         <Translate key="SEARCH">Search</Translate>
+         Search
         </MyButton>
       </Form>
     );

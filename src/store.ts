@@ -13,6 +13,7 @@ import { encounterService } from '@/services/encounterService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
+import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
@@ -67,6 +68,9 @@ import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
+import {BrandMedicationService} from './services/setup/brandmedication/BrandMedicationService ';
+import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
+import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
 import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
 export const store = configureStore({
   reducer: {
@@ -92,6 +96,7 @@ export const store = configureStore({
 
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
+    [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
 
     //account
     [accountApi.reducerPath]: accountApi.reducer,
@@ -138,6 +143,9 @@ export const store = configureStore({
 
     //procedure 
     [procedureService.reducerPath]: procedureService.reducer,
+ 
+    //prescription instruction
+    [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
 
     //recovery
 
@@ -202,6 +210,8 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
+    [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
+    [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer
   },
   // @ts-ignore
@@ -215,6 +225,7 @@ export const store = configureStore({
       inventoryService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
+      activeIngredientIndicationService.middleware,
       appointmentService.middleware,
       dvmService.middleware,
       encounterService.middleware,
@@ -267,6 +278,9 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      BrandMedicationService.middleware,
+      BrandMedicationSubstituteService.middleware,
+      prescriptionInstructionService.middleware,
       CdtDentalActionService.middleware
     ])
 });

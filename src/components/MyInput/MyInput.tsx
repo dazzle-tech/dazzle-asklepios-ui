@@ -66,7 +66,7 @@ type MyInputProps = {
   leftAddon?: React.ReactNode | null;
   leftAddonwidth?: number | 'auto' | null;
   setRecord?: (r: any) => void;
-  searchKeyWard: any;
+  searchKeyWard?: any;
   setSearchKeyWard?: (r: any) => void;
   vr?: any;
   rows?: number;
@@ -430,7 +430,7 @@ const MyInput = ({
             searchKeyWard={props?.searchKeyWard}
             // setSearchKeyWard={props?.setSearchKeyWard}
             onSearch={(searchText) => {
-              console.log("SEARCH:", searchText);
+             
               props.setSearchKeyWard?.(searchText);
             }}
             data={[

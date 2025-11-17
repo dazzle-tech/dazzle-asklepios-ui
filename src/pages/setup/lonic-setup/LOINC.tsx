@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
 import MyTable from "@/components/MyTable";
@@ -19,6 +19,7 @@ import { Form } from "rsuite";
 import MyInput from "@/components/MyInput";
 import { useEnumOptions } from "@/services/enumsApi";
 import { formatEnumString } from "@/utils";
+import CodesExcelCsvImportModal from "@/components/CodesExcelCsvImportModal/CodesExcelCsvImportModal";
 
 const LOINCSetup: React.FC = () => {
   const dispatch = useDispatch();
@@ -53,7 +54,7 @@ const LOINCSetup: React.FC = () => {
   const [fetchByCode] = useLazyGetLoincByCodeQuery();
   const [fetchByDescription] = useLazyGetLoincByDescriptionQuery();
 
-  // import modal state
+  // import modal state (conflicts)
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null);
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
@@ -151,23 +152,9 @@ const LOINCSetup: React.FC = () => {
     }
   };
 
-  // download template (xlsx)
-  const handleDownloadTemplate = () => {
-    const link = document.createElement("a");
-    link.href = "/templates/LOINC_Code.xlsx";
-    link.download = "LOINC_Code.xlsx";
-    link.click();
-  };
-
-  // import LOINC CSV
+  // import LOINC CSV mutation
   const [importLoinc, { isLoading: isImporting }] = useImportLoincMutation();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const handleClickUpload = () => fileInputRef.current?.click();
-
-  // file upload handler (preserves original filter logic)
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImportFile = async (file: File) => {
     try {
       const res: ImportResult = await importLoinc({ file }).unwrap();
 
@@ -176,7 +163,12 @@ const LOINCSetup: React.FC = () => {
         setConflicts(res.conflicts);
         setConflictsPage(0);
         setConflictModalOpen(true);
-        dispatch(notify({ msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`, sev: "warning" }));
+        dispatch(
+          notify({
+            msg: `Found ${res.conflicts.length} conflict(s). You can replace or close.`,
+            sev: "warning",
+          })
+        );
       } else {
         dispatch(
           notify({
@@ -193,9 +185,12 @@ const LOINCSetup: React.FC = () => {
         }
       }
     } catch (error: any) {
-      dispatch(notify({ msg: error?.data?.detail || "Error importing LOINC file", sev: "error" }));
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      dispatch(
+        notify({
+          msg: error?.data?.detail || "Error importing LOINC file",
+          sev: "error",
+        })
+      );
     }
   };
 
@@ -220,7 +215,12 @@ const LOINCSetup: React.FC = () => {
         refetch();
       }
     } catch (error: any) {
-      dispatch(notify({ msg: error?.data?.detail || "Overwrite failed", sev: "error" }));
+      dispatch(
+        notify({
+          msg: error?.data?.detail || "Overwrite failed",
+          sev: "error",
+        })
+      );
     }
   };
 
@@ -359,7 +359,11 @@ const LOINCSetup: React.FC = () => {
   // table columns
   const columns = [
     { key: "code", title: "Code", render: (row: any) => row?.code ?? "" },
-    { key: "category", title: "Category", render: (row: any) => (row?.category ? formatEnumString(row?.category) : "") },
+    {
+      key: "category",
+      title: "Category",
+      render: (row: any) => (row?.category ? formatEnumString(row?.category) : ""),
+    },
     { key: "description", title: "Description", render: (row: any) => row?.description ?? "" },
     {
       key: "lastUpdated",
@@ -376,24 +380,27 @@ const LOINCSetup: React.FC = () => {
   const conflictColumns = [
     { key: "code", title: "Code", render: (row: Conflict) => row.code },
     { key: "incomingDescription", title: "Incoming Description", render: (row: Conflict) => row.incomingDescription },
-    { key: "incomingCategory", title: "Incoming Category", render: (row: Conflict) => (row.incomingCategory ? formatEnumString(row.incomingCategory) : "") },
+    {
+      key: "incomingCategory",
+      title: "Incoming Category",
+      render: (row: Conflict) => (row.incomingCategory ? formatEnumString(row.incomingCategory) : ""),
+    },
     { key: "existingDescription", title: "Existing Description", render: (row: Conflict) => row.existingDescription },
-    { key: "existingCategory", title: "Existing Category", render: (row: Conflict) => (row.existingCategory ? formatEnumString(row.existingCategory) : "") },
+    {
+      key: "existingCategory",
+      title: "Existing Category",
+      render: (row: Conflict) => (row.existingCategory ? formatEnumString(row.existingCategory) : ""),
+    },
   ];
 
   const pagedConflicts =
     conflicts?.slice(conflictsPage * conflictsPageSize, conflictsPage * conflictsPageSize + conflictsPageSize) || [];
 
+  // فتح/إغلاق مودال الاستيراد (CodesExcelCsvImportModal)
+  const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
+
   return (
     <>
-      <input
-        type="file"
-        accept=".csv"
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={handleFileUpload}
-      />
-
       <MyTable
         data={tableData}
         columns={columns}
@@ -411,11 +418,8 @@ const LOINCSetup: React.FC = () => {
             <div>{filters()}</div>
 
             <div style={{ display: "flex", gap: 10 }}>
-              <MyButton appearance="ghost" onClick={handleDownloadTemplate}>
-                Download Template
-              </MyButton>
-              <MyButton onClick={handleClickUpload} loading={isImporting}>
-                Upload LOINC CSV
+              <MyButton onClick={() => setOpenCodesImportModal(true)}>
+                Import LOINC (Excel / CSV)
               </MyButton>
             </div>
           </div>
@@ -428,6 +432,17 @@ const LOINCSetup: React.FC = () => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
+      {/* Import modal (Excel/CSV) */}
+      <CodesExcelCsvImportModal
+        open={openCodesImportModal}
+        setOpen={setOpenCodesImportModal}
+        title="LOINC Codes Import"
+        excelTemplateUrl="/templates/LOINC_Code.xlsx"
+        excelTemplateFileName="LOINC_Code.xlsx"
+        onImport={handleImportFile}
+      />
+
+      {/* Conflicts modal */}
       <MyModal
         open={conflictModalOpen}
         setOpen={setConflictModalOpen}

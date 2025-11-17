@@ -1,81 +1,113 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Text, Form } from 'rsuite';
 import { Plus } from '@rsuite/icons';
 import { initialListRequest } from '@/types/types';
-import {
-  useGetActiveIngredientIndicationQuery,
-  useRemoveActiveIngredientIndicationMutation,
-  useSaveActiveIngredientIndicationMutation
-} from '@/services/medicationsSetupService';
-import { newApActiveIngredientIndication } from '@/types/model-types-constructor';
 import { MdDelete } from 'react-icons/md';
 import { MdSave } from 'react-icons/md';
-import { ApActiveIngredientIndication } from '@/types/model-types';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
-import Icd10Search from '@/pages/medical-component/Icd10Search';
+import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import './styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useCreateIndicationMutation, useDeleteIndicationMutation, useGetIndicationsByActiveIngredientIdQuery, useUpdateIndicationMutation } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
+import { ActiveIngredientIndication } from '@/types/model-types-new';
+import { newActiveIngredientIndication } from '@/types/model-types-constructor-new';
+import { useGetIcdListQuery } from '@/services/setupService';
+import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList } from '@/utils';
+
 const Indications = ({ selectedActiveIngredients }) => {
+
   const dispatch = useAppDispatch();
+
+
   const [activeIngredientIndication, setActiveIngredientIndication] =
-    useState<ApActiveIngredientIndication>({ ...newApActiveIngredientIndication });
+
+    useState<ActiveIngredientIndication>({ ...newActiveIngredientIndication });
+
   const [openConfirmDeleteIndicationModal, setOpenConfirmDeleteIndicationModal] =
     useState<boolean>(false);
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest,
-    pageSize: 100,
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'active_ingredient_key',
-        operator: 'match',
-        value: undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
+
+
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [filteredList, setFilteredList] = useState<ActiveIngredientIndication[]>([]);
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  const [link, setLink] = useState({});
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 5,
+    sort: "id,asc",
   });
-  // Fetch indication list response
+  const [sortColumn, setSortColumn] = useState("id");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+
+
+
+  const { data: icdListResponseData } = useGetIcdListQuery({
+    ...initialListRequest,
+    pageSize: 1000
+  });
+
+
+
+
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 5,
+    sort: "id,asc"
+  });
+
+
+
   const {
     data: indicationListResponseData,
     refetch,
     isFetching
-  } = useGetActiveIngredientIndicationQuery(listRequest);
+  } = useGetIndicationsByActiveIngredientIdQuery(selectedActiveIngredients?.id);
+  console.log("LIST", indicationListResponseData)
+  const totalCount = indicationListResponseData?.length ?? 0;
+
+
+
+
+
+
+
+
+
   // Fetch value unit Lov response
   const { data: valueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   // remove indication
   const [removeActiveIngredientIndication, removeActiveIngredientIndicationMutation] =
-    useRemoveActiveIngredientIndicationMutation();
+    useDeleteIndicationMutation();
   // save indication
   const [saveActiveIngredientIndication, saveActiveIngredientIndicationMutation] =
-    useSaveActiveIngredientIndicationMutation();
+    useCreateIndicationMutation();
 
   // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && rowData.key === activeIngredientIndication.key) {
-      return 'selected-row';
-    } else return '';
-  };
+const isSelected = (rowData) => {
+  return rowData?.id === activeIngredientIndication?.id ? 'selected-row' : '';
+};
+
+
 
   // Icons column (remove)
-  const iconsForActions = () => (
+  const iconsForActions = (rowData) => (
     <div className="container-of-icons">
       <MdDelete
         className="icons-style"
         title="Delete"
         size={24}
         fill="var(--primary-pink)"
-        onClick={() => setOpenConfirmDeleteIndicationModal(true)}
+        onClick={() => {
+          setActiveIngredientIndication(rowData);
+          setOpenConfirmDeleteIndicationModal(true);
+        }}
       />
     </div>
   );
@@ -83,14 +115,9 @@ const Indications = ({ selectedActiveIngredients }) => {
   //Table columns
   const tableColumns = [
     {
-      key: 'indication',
-      title: <Translate>Indication</Translate>,
-      render: rowData => <Text>{rowData.indication}</Text>
-    },
-    {
       key: 'icdCode',
       title: <Translate>ICD Code</Translate>,
-      render: rowData => <Text>{rowData.icdObject}</Text>
+      render: rowData => <Text>{rowData.icd10CodeId}</Text>
     },
     {
       key: 'offLabel',
@@ -107,110 +134,206 @@ const Indications = ({ selectedActiveIngredients }) => {
       title: <Translate>Unit</Translate>,
       render: rowData => (
         <Text>
-          {rowData.variableLvalue ? rowData.variableLvalue.lovDisplayVale : rowData.variableLkey}
+          {conjureValueBasedOnKeyFromList(valueUnitLovQueryResponse?.object ?? [], rowData?.unit, 'lovDisplayVale')}
+
         </Text>
       )
     },
     {
       key: 'icons',
       title: <Translate></Translate>,
-      render: () => iconsForActions()
+      render: (rowData) => iconsForActions(rowData)
     }
   ];
 
+
+const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
+
+
   // handle save
-  const save = () => {
-    saveActiveIngredientIndication({
-      ...activeIngredientIndication,
-      activeIngredientKey: selectedActiveIngredients.key,
-      createdBy: 'Administrator'
-    })
-      .unwrap()
-      .then(() => {
-        dispatch(notify('Added successfully'));
-        refetch();
-      });
-  };
+    const save = () => {
+      const icdId =
+        activeIngredientIndication.icdCodeId ??
+        activeIngredientIndication.icd10CodeId;
+
+      if (!icdId) {
+        dispatch(notify({ msg: "Invalid ICD Code", sev: "error" }));
+        return;
+      }
+
+      const payload: any = {
+        ...activeIngredientIndication,
+        activeIngredientId: selectedActiveIngredients.id,
+        icd10CodeId: icdId,
+      };
+      if (activeIngredientIndication.id) {
+        updateActiveIngredientIndication(payload)
+          .unwrap()
+          .then(() => {
+            dispatch(notify({ msg: "Updated successfully", sev: "success" }));
+            refetch();
+            setActiveIngredientIndication({ ...newActiveIngredientIndication });
+          })
+          .catch(() => {
+            dispatch(notify({ msg: "Update failed", sev: "error" }));
+          });
+      } else {
+        saveActiveIngredientIndication(payload)
+          .unwrap()
+          .then(() => {
+            dispatch(notify({ msg: "Added successfully", sev: "success" }));
+            refetch();
+            setActiveIngredientIndication({ ...newActiveIngredientIndication });
+          })
+          .catch(() => {
+            dispatch(notify({ msg: "Failed to save", sev: "error" }));
+          });
+      }
+      };
 
   // handle new
   const handleIndicationsNew = () => {
-    setActiveIngredientIndication({ ...newApActiveIngredientIndication });
+    setActiveIngredientIndication({ ...newActiveIngredientIndication });
   };
 
   // handle remove
   const remove = () => {
     setOpenConfirmDeleteIndicationModal(false);
-    if (activeIngredientIndication.key) {
-      removeActiveIngredientIndication({
-        ...activeIngredientIndication
+
+    if (!activeIngredientIndication.id) {
+      dispatch(notify({ msg: "Invalid indication", sev: "error" }));
+      return;
+    }
+
+    removeActiveIngredientIndication(activeIngredientIndication.id)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
+        refetch();
+        setActiveIngredientIndication({ ...newActiveIngredientIndication });
       })
-        .unwrap()
-        .then(() => {
-          dispatch(notify('Deleted successfully'));
-          refetch();
-        });
+      .catch((err) => {
+        console.log("Delete Error:", err);
+        dispatch(notify({ msg: "Failed to delete", sev: "error" }));
+      });
+  };
+
+
+
+
+
+  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
+    try {
+      if (!field || !value) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        return;
+      }
+
+      const currentSize = size ?? filterPagination.size;
+      let response;
+      const params = {
+        page,
+        size: currentSize,
+        sort: filterPagination.sort,
+      };
+
+      // if (field === "type") {
+      //   response = await getDentalActionsByTypeQuery({
+      //     type: value?.toUpperCase(),
+      //     ...params,
+      //   }).unwrap();
+      // } else if (field === "description") {
+      //   response = await getDentalActionsByDescriptionQuery({
+      //     description: value,
+      //     ...params,
+      //   }).unwrap();
+      // }
+
+      setFilteredList(response.data ?? []);
+      setFilteredTotal(response.totalCount ?? 0);
+      setLink(response.links);
+      setIsFiltered(true);
+      setFilterPagination({ ...filterPagination, page, size: currentSize });
+    } catch (error) {
+      console.error("Error filtering dental actions:", error);
+      dispatch(notify({ msg: "Failed to filter Dental Actions", sev: "error" }));
+      setIsFiltered(false);
     }
   };
+
+
+  const handleSortChange = (sortColumn: string, sortType: "asc" | "desc") => {
+    setSortColumn(sortColumn);
+    setSortType(sortType);
+
+    const sortValue = `${sortColumn},${sortType}`;
+
+    if (isFiltered) {
+      setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+    } else {
+      setPaginationParams({
+        ...paginationParams,
+        sort: sortValue,
+        page: 0,
+      });
+    }
+  };
+
+
+  const handlePageChange = (event, newPage) => {
+    setPaginationParams(prev => ({
+      ...prev,
+      page: newPage
+    }));
+  };
+
+
+
+
+
+
 
   // Effects
   useEffect(() => {
     if (selectedActiveIngredients) {
       setActiveIngredientIndication(prevState => ({
         ...prevState,
-        activeIngredientKey: selectedActiveIngredients.key
+        activeIngredientId: selectedActiveIngredients.id
       }));
     }
   }, [selectedActiveIngredients]);
 
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'active_ingredient_key',
-        operator: 'match',
-        value: selectedActiveIngredients.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ];
-    setListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
-  }, [selectedActiveIngredients.key]);
 
-  useEffect(() => {
-    if (saveActiveIngredientIndicationMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
+  console.log("Indication Table Data: ", indicationListResponseData);
 
-      setActiveIngredientIndication({ ...newApActiveIngredientIndication });
-    }
-  }, [saveActiveIngredientIndicationMutation]);
 
-  useEffect(() => {
-    if (removeActiveIngredientIndicationMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
 
-      setActiveIngredientIndication({ ...newApActiveIngredientIndication });
-    }
-  }, [removeActiveIngredientIndicationMutation]);
+  const pageIndex = paginationParams.page ?? 0;
+  const rowsPerPage = paginationParams.size ?? 5;
+
+  const paginatedData = useMemo(() => {
+    if (!indicationListResponseData) return [];
+
+    const start = pageIndex * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    return indicationListResponseData.slice(start, end);
+  }, [indicationListResponseData, pageIndex, rowsPerPage]);
+
 
   return (
     <Form fluid>
       <div className="container-of-actions-header-active">
         <div className="container-of-fields-active">
+
           <Icd10Search
             object={activeIngredientIndication}
             setOpject={setActiveIngredientIndication}
-            fieldName="icdCodeKey"
+            fieldName="icdCodeId"
+            label="Indications (ICD-10)"
+            mode="singleICD10"
           />
           <MyInput
             fieldName="dosage"
@@ -220,6 +343,7 @@ const Indications = ({ selectedActiveIngredients }) => {
             width={70}
             setRecord={setActiveIngredientIndication}
           />
+
           <MyInput
             fieldType="select"
             selectData={valueUnitLovQueryResponse?.object ?? []}
@@ -227,11 +351,12 @@ const Indications = ({ selectedActiveIngredients }) => {
             selectDataValue="key"
             height={37}
             width={70}
-            fieldName="variableLkey"
+            fieldName="unit"
             fieldLabel="Unit"
             record={activeIngredientIndication}
             setRecord={setActiveIngredientIndication}
           />
+
           <MyInput
             width={200}
             column
@@ -258,21 +383,34 @@ const Indications = ({ selectedActiveIngredients }) => {
           ></MyButton>
         </div>
       </div>
+
+
       <MyTable
-        noBorder
         height={450}
-        data={indicationListResponseData?.object ?? []}
+        data={paginatedData}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={rowData => {
-          setActiveIngredientIndication(rowData);
-        }}
-        sortColumn={listRequest.sortBy}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        onRowClick={(rowData) => setActiveIngredientIndication(rowData)}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={(e) => {
+          const newSize = Number(e.target.value);
+          setPaginationParams(prev => ({
+            ...prev,
+            size: newSize,
+            page: 0
+          }));
         }}
       />
+
+
+
       <DeletionConfirmationModal
         open={openConfirmDeleteIndicationModal}
         setOpen={setOpenConfirmDeleteIndicationModal}

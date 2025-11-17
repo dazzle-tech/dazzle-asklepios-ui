@@ -41,6 +41,7 @@ const Icd10Search: React.FC<Props> = ({
   ...props
 }) => {
   const [value, setValue] = useState('');
+  console.log("Value",value)
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -66,6 +67,7 @@ const Icd10Search: React.FC<Props> = ({
   const instanceId = `${fieldName}-${mode}`;
 
   const runSearch = async (reset = true) => {
+    console.log("KEyword",keyword)
     if (!keyword) return;
     const nextPage = reset ? 0 : page + 1;
 
