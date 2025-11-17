@@ -69,9 +69,6 @@ import { MedicationCategoriesClassService } from '@/services/setup/medication-ca
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
 import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-import { procedureSetupService } from './services/setup/procedure/procedureService';
-import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
-import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
 import {BrandMedicationService} from './services/setup/brandmedication/BrandMedicationService ';
 import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
