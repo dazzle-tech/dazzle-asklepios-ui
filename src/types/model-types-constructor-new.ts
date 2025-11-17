@@ -463,6 +463,6 @@ export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   lastModifiedDate: null,
 };
 export const newCdtDentalAction: modelTypes.CdtDentalAction = {
-  dentalActionId: 0,
-  cdtCode: "",
+  dentalActionId: undefined,
+  cdtId: undefined,
 };

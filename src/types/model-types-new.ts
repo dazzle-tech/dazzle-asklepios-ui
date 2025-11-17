@@ -589,5 +589,5 @@ export interface ProcedurePriceList {
 export interface CdtDentalAction {
   id?: number;
   dentalActionId: number;
-  cdtCode: string;
+  cdtId: number;
 }
