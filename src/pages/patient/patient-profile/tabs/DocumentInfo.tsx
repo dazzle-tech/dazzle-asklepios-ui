@@ -25,7 +25,7 @@ const DocumentInfo = ({
                       searchable={false}
                     />
                     <MyInput
-                      required
+                      // required
                       vr={validationResult}
                       column
                       fieldLabel="Document Country"
@@ -40,7 +40,7 @@ const DocumentInfo = ({
                       menuMaxHeight={200}
                     />
                     <MyInput
-                      required
+                      // required
                       vr={validationResult}
                       column
                       fieldLabel="Document Number"
