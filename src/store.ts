@@ -73,6 +73,7 @@ import {BrandMedicationService} from './services/setup/brandmedication/BrandMedi
 import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
 import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
+import {BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -214,7 +215,8 @@ export const store = configureStore({
     [vaccineDosesIntervalService.reducerPath]: vaccineDosesIntervalService.reducer,
     [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
-    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
+    [BrandMedicationActiveIngredientService.reducerPath]: BrandMedicationActiveIngredientService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -287,7 +289,8 @@ export const store = configureStore({
       BrandMedicationService.middleware,
       BrandMedicationSubstituteService.middleware,
       prescriptionInstructionService.middleware,
-      CdtDentalActionService.middleware
+      CdtDentalActionService.middleware,
+      BrandMedicationActiveIngredientService.middleware
     ])
 });
 

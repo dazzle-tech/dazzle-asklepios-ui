@@ -482,6 +482,7 @@ export const newBrandMedication:modelTypes.BrandMedication= {
   costCategory: '',
   roa: '',
   isActive: true,
+  hasActiveIngredient:false,
   // 🟡 future fields (currently commented out in backend)
   // uomGroupId?: null,
   // uomGroupUnitId?: null
@@ -578,6 +579,15 @@ export const newCdtDentalAction: modelTypes.CdtDentalAction = {
   cdtId: undefined,
 };
 
+
+export const newBrandMedicationActiveIngredient:modelTypes.BrandMedicationActiveIngredient={
+    id:undefined,
+    brandId:undefined,
+    activeIngredientId:undefined,
+    strength: undefined,
+    unit:'',
+  }
+
 export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   id: 0,
   name: '',
@@ -608,3 +618,4 @@ export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
 export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
   testIds: []
 };
+

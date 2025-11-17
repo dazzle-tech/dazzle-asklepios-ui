@@ -667,6 +667,7 @@ export interface BrandMedication {
   costCategory?: string;
   roa?: string;
   isActive?: boolean;
+  hasActiveIngredient?:boolean;
   // 🟡 future fields (currently commented out in backend)
   // uomGroupId?: number;
   // uomGroupUnitId?: number;
@@ -705,6 +706,15 @@ export interface ActiveIngredientIndication {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;}
 
+
+  export interface BrandMedicationActiveIngredient{
+    id:number;
+    brandId:number;
+    activeIngredientId:number;
+    strength: number;
+    unit:string
+  }
+
   export type CatalogResponseVM = {
   id: number;
   name: string;
@@ -736,3 +746,4 @@ export type CatalogDiagnosticTest = {
 export type CatalogAddTestsVM = { 
   testIds: number[] ;
 };
+
