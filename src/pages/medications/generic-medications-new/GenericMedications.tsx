@@ -3,7 +3,7 @@ import { Panel, Form, Whisper, Tooltip } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
-
+import { MdCheckCircle, MdCancel } from "react-icons/md";
 import { BrandMedication } from "@/types/model-types-new";
 import { newBrandMedication } from "@/types/model-types-constructor-new";
 
@@ -38,6 +38,7 @@ import { HiOutlineSwitchHorizontal } from "react-icons/hi";
 import { conjureValueBasedOnKeyFromList, conjureValuesFromList } from "@/utils";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import AddBrandSubstitute from "./AddBrandSubstitute";
+import { title } from "process";
 
 const GenericMedications = () => {
   const dispatch = useAppDispatch();
@@ -46,7 +47,7 @@ const GenericMedications = () => {
   const [brandMedication, setBrandMedication] = useState<BrandMedication>({
     ...newBrandMedication,
   });
-  
+ 
   const [openActiveIngredientPopup, setOpenActiveIngredientPopup] = useState(false);
   const [openSubstitute, setOpenSubstitute] = useState(false)
   const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
@@ -114,7 +115,9 @@ const GenericMedications = () => {
 
         dispatch(notify({ msg: "Updated successfully", sev: "success" }));
       } else {
-        await addBrandMedication(brandMedication).unwrap();
+         const { hasActiveIngredient, ...payload } = brandMedication;
+
+    await addBrandMedication(payload).unwrap();
         dispatch(notify({ msg: "Added successfully", sev: "success" }));
       }
       setOpenAddEditPopup(false);
@@ -378,7 +381,7 @@ const GenericMedications = () => {
              setOpenActiveIngredientPopup(true)}}
         />
       </Whisper>
-
+  { row.hasActiveIngredient&&
       <Whisper placement="top" speaker={<Tooltip><Translate>Substitute</Translate></Tooltip>}>
         <HiOutlineSwitchHorizontal
           className="icons-style"
@@ -388,7 +391,7 @@ const GenericMedications = () => {
             setBrandMedication(row);
              setOpenSubstitute(true)}}
         />
-      </Whisper>
+      </Whisper>}
     </div>
   );
 
@@ -421,6 +424,18 @@ const GenericMedications = () => {
     },
     { key: "isActive", title: <Translate>Status</Translate>, flexGrow: 2, render: (r: BrandMedication) => (r.isActive ? "Active" : "Inactive") },
     { key: "actions", title: "", flexGrow: 2, render: iconsForActions },
+   
+
+{
+  key: "hasActiveIngredient",
+  title: "Active Ingredient",
+  render: (row) =>
+    row.hasActiveIngredient &&(
+      <MdCheckCircle size={22} color="var(--success)" />
+    ) 
+}
+
+     
   ];
 
   return (
