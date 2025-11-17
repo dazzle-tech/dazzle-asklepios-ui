@@ -1,16 +1,7 @@
-import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Panel } from 'rsuite';
-import {
-  useSaveUomGroupMutation,
-  useRemoveUomGroupMutation
-} from '@/services/setupService';
+import { Form, Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { ApUomGroups } from '@/types/model-types';
-import { newApUomGroups } from '@/types/model-types-constructor';
 import { MdModeEdit } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
@@ -21,27 +12,46 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
 import { newUOMGroup } from '@/types/model-types-constructor-new';
-import { useCreateUOMGroupMutation, useDeleteUOMGroupMutation, useGetAllUOMGroupsQuery } from '@/services/setup/uom-group/uomGroupService';
+import { useDeleteUOMGroupMutation, useGetAllUOMGroupsQuery } from '@/services/setup/uom-group/uomGroupService';
 import { uomGroup } from '@/types/model-types-new';
+import MyInput from '@/components/MyInput';
+import { PaginationPerPage } from '@/utils/paginationPerPage';
 
 const UOMGroup = () => {
   const dispatch = useAppDispatch();
   const [uomGroup, setUomGroup] = useState<uomGroup>({ ...newUOMGroup });
   const [uomGrpupOpen, setUomGroupOpen] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
+  const [searchTerm, setSearchTerm] = useState({ value: '' });
   const [openConfirmDeleteUOMGroupModal, setOpenConfirmDeleteUOMGroupModal] =
     useState<boolean>(false);
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   // Save uom group
-  const [saveUomGroup, saveUomGroupMutation] = useCreateUOMGroupMutation();
   // remove uom group
   const [deleteUomGroup] = useDeleteUOMGroupMutation();
+  const [paginationParams, setPaginationParams] = useState({
+      page: 0,
+      size: 5,
+      sort: 'id,asc',
+      timestamp: Date.now()
+    });
+    // const [filterPagination, setFilterPagination] = useState({
+    //   page: 0,
+    //   size: 5,
+    //   sort: 'id,asc'
+    // });
+    const [sortColumn, setSortColumn] = useState('id');
+    const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+    // Pagination values
+ 
   // Fetch uom groups list response
   const {
     data: uomGroupsListResponse,
     refetch: refetchUomGroups,
     isFetching
-  } = useGetAllUOMGroupsQuery({});
+  } = useGetAllUOMGroupsQuery({name: searchTerm['value'], ...paginationParams});
+
+  const totalCount = uomGroupsListResponse?.totalCount ?? 0;
+
   // Header page setUp
   const divContent = (
     "UOM Groups"
@@ -49,9 +59,6 @@ const UOMGroup = () => {
   dispatch(setPageCode('UOM_Groups'));
   dispatch(setDivContent(divContent));
  // Pagination values
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  // const totalCount = uomGroupsListResponse?.extraNumeric ?? 0;
 
   const isSelected = rowData => {
     if (rowData && uomGroup && rowData.id === uomGroup.id) {
@@ -67,12 +74,6 @@ const UOMGroup = () => {
   }, []);
 
   useEffect(() => {
-    if (saveUomGroupMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveUomGroupMutation.data]);
-
-  useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
@@ -84,18 +85,7 @@ const UOMGroup = () => {
     setUomGroupOpen(true);
     setUomGroup({ ...newUOMGroup });
   };
-  // Handle page change in navigation
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-  // Handle change rows per page in navigation
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
+
   // handle deactivate uom group
   const handleDeleteUomGroup = async () => {
     setOpenConfirmDeleteUOMGroupModal(false);
@@ -121,6 +111,42 @@ const UOMGroup = () => {
     }
   };
  
+ 
+   // ──────────────────────────── PAGINATION ────────────────────────────
+    const handlePageChange = (event, newPage) => {
+      // if (isFiltered) {
+      //   handleFilterChange(rec.filter, recordOfFilter.value, newPage);
+      // } else {
+        // PaginationPerPage.handlePageChange(
+        //   event,
+        //   newPage,
+        //   paginationParams,
+        //   link,
+        //   setPaginationParams
+        // );
+        setPaginationParams({...paginationParams, page: newPage});
+      // }
+    };
+
+    //_________________________SORT LOGIC______________________
+  const handleSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
+    setSortColumn(sortColumn);
+    setSortType(sortType);
+
+    const sortValue = `${sortColumn},${sortType}`;
+
+    // if (isFiltered) {
+    //   setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
+    //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+    // } else {
+      setPaginationParams({
+        ...paginationParams,
+        sort: sortValue,
+        page: 0,
+        timestamp: Date.now()
+      });
+    // }
+  };
   // const handleFilterChange = (fieldName, value) => {
   //   if (value) {
   //     setListRequest(
@@ -178,29 +204,60 @@ const UOMGroup = () => {
       render: () => iconsForActions()
     }
   ];
+
+   // filters
+    const filters = () => (
+      <div className="container-of-header-actions-medication-matrix">
+              <Form layout="inline" className="form-medication-matrix">
+                <MyInput
+                  fieldName="value"
+                  fieldType="text"
+                  record={searchTerm}
+                  setRecord={setSearchTerm}
+                  showLabel={false}
+                  placeholder="Search by Name"
+                  width='220px'
+                  height={32}
+                />
+              </Form>
+            </div>
+    );
+
   return (
     <Panel>
 
       <MyTable
         height={450}
-        data={uomGroupsListResponse?.content ?? []}
+        totalCount={totalCount}
+        data={uomGroupsListResponse?.data ?? []}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
-        // filters={filters()}
+        filters={filters()}
         onRowClick={rowData => {
           setUomGroup(rowData);
         }}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-        }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        // totalCount={totalCount}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
         onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
+        onRowsPerPageChange={e => {
+          const newSize = Number(e.target.value);
+
+          // if (isFiltered) {
+          //   setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
+          //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+          // } else {
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          // }
+        }}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
         tableButtons={<div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}

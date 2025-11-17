@@ -32,6 +32,7 @@ import {
 import { UOMGroupRelation, UOMGroupUnit } from '@/types/model-types-new';
 import { newUOMGroup, newUOMGroupRelation, newUOMGroupUnit } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import { formatEnumString } from '@/utils';
 const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => {
   const dispatch = useAppDispatch();
   const [uomUnit, setUomUnit] = useState<UOMGroupUnit>({
@@ -248,8 +249,9 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
   const tableUnitsColumns = [
     {
       key: 'uom',
-      title: 'Units'
+      title: 'Units',
       // flexGrow: 4,
+      render: (row: any) => (row?.uom ? formatEnumString(row?.uom) : '')
       // render: rowData => <span>{rowData.unit}</span>
     },
     {

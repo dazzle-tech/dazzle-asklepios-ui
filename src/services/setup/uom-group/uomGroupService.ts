@@ -26,23 +26,23 @@ export const uomGroupService = createApi({
 
     // 🔹 Get all practitioners (paginated)
     getAllUOMGroups: builder.query({
-    //   query: ({ page, size, sort = "id,asc" }) => ({
-     query: () => ({
-        url: "/api/setup/uom-groups",
+      query: ({name , ...params }) => ({
+    //  query: () => ({
+        url: `/api/setup/uom-groups?name=${name}`,
         method: "GET",
-        // params: { page, size, sort },
+        params,
       }),
 
-    //   transformResponse: (response: any[], meta) => {
-    //     const headers = meta?.response?.headers;
-    //     return {
-    //       data: response,
-    //       totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-    //       links: parseLinkHeader(headers?.get("Link")),
-    //     };
-    //   },
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
 
-    //   providesTags: ["UOMGroup"],
+      providesTags: ["UOMGroup"],
     }),
 
 
