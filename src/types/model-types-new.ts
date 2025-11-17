@@ -95,6 +95,7 @@ export interface UserDepartment {
   facilityId?: string | null;
   departmentId: number;
   isActive?: boolean;
+  isDefault?: boolean;
 };
 
 
