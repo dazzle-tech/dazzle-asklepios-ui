@@ -4444,7 +4444,7 @@ export const newApVaccineDose:modelTypes.ApVaccineDose = {
 	deletedAt:undefined,
 	vaccineKey:undefined,
 	doseNameLkey:undefined,
-	isBooster:undefined,
+	isBooster:false,
 } 
 
 export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = { 

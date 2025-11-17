@@ -22,7 +22,7 @@ const BasicInfo = ({
         setRecord={setLocalPatient}
       />
       <MyInput
-        required
+        // required
         vr={validationResult}
         column
         fieldName="secondName"
