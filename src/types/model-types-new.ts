@@ -706,7 +706,6 @@ export interface ActiveIngredientIndication {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;}
 
-
   export interface BrandMedicationActiveIngredient{
     id:number;
     brandId:number;
@@ -747,3 +746,12 @@ export type CatalogAddTestsVM = {
   testIds: number[] ;
 };
 
+export interface ActiveIngredientAdverseEffect {
+  id?: number;
+  activeIngredientId: number;
+  adverseEffect: string;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}

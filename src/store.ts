@@ -74,6 +74,7 @@ import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
 import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
 import {BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
+import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -98,6 +99,9 @@ export const store = configureStore({
 
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
+
+    [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
+
     [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
 
     //account
@@ -229,6 +233,7 @@ export const store = configureStore({
       inventoryService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
+      activeIngredientAdverseEffectService.middleware,
       activeIngredientIndicationService.middleware,
       appointmentService.middleware,
       dvmService.middleware,
@@ -278,7 +283,6 @@ export const store = configureStore({
       diagnosticTestNormalRangeService.middleware,
       vaccineService.middleware,
       vaccineBrandsService.middleware,
-      potintialService.middleware,
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,

@@ -511,6 +511,7 @@ export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndicatio
   unit: '',
   isOffLabel: false
 };
+
 export const newVaccine: modelTypes.Vaccine = {
   id: undefined,
   name: '',
@@ -617,5 +618,11 @@ export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
 };
 export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
   testIds: []
+};
+
+export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdverseEffect = {
+  id: undefined,
+  activeIngredientId: 0,
+  adverseEffect: ''
 };
 
