@@ -12,8 +12,12 @@ import { FaBuilding } from 'react-icons/fa';
 import ChildModal from '@/components/ChildModal';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { useAddUserDepartmentMutation,useGetUserDepartmentsByUserQuery, useDeleteUserDepartmentMutation } from '@/services/security/userDepartmentsService';
-import {Department, UserDepartment } from '@/types/model-types-new';
+import {
+  useAddUserDepartmentMutation,
+  useGetUserDepartmentsByUserQuery,
+  useDeleteUserDepartmentMutation
+} from '@/services/security/userDepartmentsService';
+import { Department, UserDepartment } from '@/types/model-types-new';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { newUserDepartment } from '@/types/model-types-constructor-new';
 import { useGetDepartmentsQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
@@ -23,10 +27,17 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
   const dispatch = useAppDispatch();
 
   const { data: departmentListResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
-  const departmentList = React.useMemo(() => departmentListResponse?.data ?? [], [departmentListResponse]);
+  const departmentList = React.useMemo(
+    () => departmentListResponse?.data ?? [],
+    [departmentListResponse]
+  );
   // Fetch user departments list response
-  const { data: userDepartmentsResponse, refetch: refetchUserDepartments } = useGetUserDepartmentsByUserQuery(user?.id);
-  const [userDepartment, setuserDepartment] = useState<UserDepartment>({ ...newUserDepartment });
+  const { data: userDepartmentsResponse, refetch: refetchUserDepartments } =
+    useGetUserDepartmentsByUserQuery(user?.id);
+  const [userDepartment, setuserDepartment] = useState<UserDepartment>({
+    ...newUserDepartment,
+    isDefault: false
+  });
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilityListResponse) ? facilityListResponse : [];
@@ -62,7 +73,8 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
     setuserDepartment(prev => ({
       ...prev,
       facilityId: nextFacilityId,
-      departmentId: undefined, 
+      departmentId: undefined,
+      isDefault: false
     }));
     if (nextFacilityId) {
       await getDepartmentsByFacility({facilityId: nextFacilityId});
@@ -117,6 +129,12 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       )
     },
     {
+      key: 'isDefault',
+      title: <Translate>Default</Translate>,
+      flexGrow: 2,
+      render: rowData => <p>{rowData?.isDefault ? 'Yes' : 'No'}</p>
+    },
+    {
       key: 'isActive',
       title: <Translate key='STATUS'>Status</Translate>,
       flexGrow: 4,
@@ -150,7 +168,14 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           <MyButton
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"
-            onClick={() => { setuserDepartment({ ...newUserDepartment, userId: user?.id }); setOpenChildModal(true); }}
+            onClick={() => {
+              setuserDepartment({
+                ...newUserDepartment,
+                userId: user?.id,
+                isDefault: false
+              });
+              setOpenChildModal(true);
+            }}
             width={width > 600 ? '150px' : '109px'}
           >
             New Department
@@ -206,6 +231,14 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           setRecord={setuserDepartment}
           required
           disabled={!userDepartment?.facilityId || deptLoading}
+        />
+        <MyInput
+          column
+          fieldLabel="Set as Default"
+          fieldType="checkbox"
+          fieldName="isDefault"
+          record={userDepartment}
+          setRecord={setuserDepartment}
         />
       </Form>
     );

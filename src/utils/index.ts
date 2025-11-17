@@ -104,30 +104,28 @@ export const camelCaseToLabel = (input: string): string => {
 };
 
 export const conjureValueBasedOnKeyFromList = (
-  list: [],
-  currentKey: string,
+  list: any[],
+  currentKey: string | number | null | undefined,
   preferredField: any
 ) => {
-  let displayValue = currentKey;
+  let displayValue: any = currentKey;
   list.map(record => {
-
-    if (record['key'] === currentKey) {
-      displayValue = record[preferredField];
+    if (record?.key === currentKey) {
+      displayValue = record?.[preferredField];
     }
   });
   return displayValue;
 };
 // new backend
 export const conjureValueBasedOnIDFromList = (
-  list: [],
-  currentKey: string,
+  list: any[],
+  currentKey: string | number | null | undefined,
   preferredField: any
 ) => {
-  let displayValue = currentKey;
+  let displayValue: any = currentKey;
   list.map(record => {
-
-    if (record['id'] === currentKey) {
-      displayValue = record[preferredField];
+    if (record?.id === currentKey) {
+      displayValue = record?.[preferredField];
     }
   });
   return displayValue;
@@ -146,6 +144,23 @@ export const conjureValueBasedOnKeyFromListOfValues = (
     }
   });
   return displayValue;
+};
+
+export const conjureValuesFromKeys = (
+  list: any[],
+  keys: string[],
+  preferredField: string
+): string => {
+  if (!Array.isArray(keys) || keys.length === 0) return "";
+
+  const values = keys
+    .map(key => {
+      const found = list.find(item => item.key === key);
+      return found ? found[preferredField] : null;
+    })
+    .filter(Boolean); // remove nulls
+
+  return values.join(", ");
 };
 export const calculateAge = birthdate => {
   const birthDate = new Date(birthdate);
