@@ -520,6 +520,11 @@ export interface ActiveIngredient {
   lastModifiedDate?: Date | string | null;
 }
 
+export interface ActiveIngredientSynonym {
+  id?: number;
+  activeIngredientId: number;
+  synonym: string;
+}
 
 export interface ActiveIngredientContraindication {
   id?: number;
@@ -530,6 +535,7 @@ export interface ActiveIngredientContraindication {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;
 }
+
 
 export interface DentalAction {
   id?: number;                 // Primary key (auto-generated)
