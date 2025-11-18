@@ -764,6 +764,25 @@ export interface ActiveIngredientAdverseEffect {
   activeIngredientId: number;
   adverseEffect: string;
 }
+
+export interface ActiveIngredientDrugInteraction {
+  id?: number;
+  activeIngredientId: number;
+  interactedIngredientId: number;
+  severity: string;
+  description?: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface ActiveIngredientFoodInteraction {
+  id?: number;
+  activeIngredientId: number;
+  food: string;
+  severity: string;
+  description?: string | null;
 export interface ActiveIngredientSpecialPopulation {
   id?: number;
   activeIngredientId: number;

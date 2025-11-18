@@ -464,6 +464,7 @@ export const newProcedureCoding: modelTypes.ProcedureCoding = {
   procedureId: undefined,        
   codeType: 'CPT_CODES',           
   codeId: '',                      
+  // doseAdjustmentPugC: null,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -474,7 +475,15 @@ export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   id: undefined,
   procedureId: undefined,      
   price: 0,                    
-  currency: 'USD',            
+  currency: 'USD',
+}
+
+export const newActiveIngredientDrugInteraction: modelTypes.ActiveIngredientDrugInteraction = {
+  id: undefined,
+  activeIngredientId: 0,
+  interactedIngredientId: 0,
+  severity: '',
+  description: '',
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -643,3 +652,15 @@ export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdvers
   adverseEffect: ''
 };
 
+
+export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFoodInteraction = {
+  id: undefined,
+  activeIngredientId: 0,
+  food: '',
+  severity: '',
+  description: '',
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

@@ -17,7 +17,8 @@ import {
   useCreateFoodInteractionMutation,
   useUpdateFoodInteractionMutation,
   useDeleteFoodInteractionMutation
-} from "@/services/setup/activeIngredients/activeIngredientFoodInteractionService";
+} from "@/services/setup/activeIngredients/ActiveIngredientFoodInteraction";
+
 
 import {
   newActiveIngredientFoodInteraction
