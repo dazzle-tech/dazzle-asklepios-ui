@@ -405,6 +405,13 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   doseAdjustmentPugC: null
 };
 
+export const newActiveIngredientPreRequestedTest: modelTypes.ActiveIngredientPreRequestedTest = {
+  id: undefined,
+  activeIngredientId: 0,
+  testId: 0
+};
+
+
 export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
   id: undefined,
   activeIngredientId: 0,
@@ -684,9 +691,4 @@ export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFood
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-};
-export const newActiveIngredientPreRequestedTest: modelTypes.ActiveIngredientPreRequestedTest = {
-  id: undefined,
-  activeIngredientId: 0,
-  testId: 0
 };

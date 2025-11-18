@@ -520,6 +520,7 @@ export interface ActiveIngredient {
   lastModifiedDate?: Date | string | null;
 }
 
+
 export interface ActiveIngredientSynonym {
   id?: number;
   activeIngredientId: number;
