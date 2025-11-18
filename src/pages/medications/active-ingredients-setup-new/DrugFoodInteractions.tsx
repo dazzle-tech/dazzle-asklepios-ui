@@ -19,6 +19,7 @@ import {
   useDeleteFoodInteractionMutation
 } from "@/services/setup/activeIngredients/ActiveIngredientFoodInteraction";
 
+
 import {
   newActiveIngredientFoodInteraction
 } from "@/types/model-types-constructor-new";

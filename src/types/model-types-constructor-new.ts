@@ -353,6 +353,7 @@ export const newRadiology: modelTypes.Radiology = {
   associatedRisks: "",
 };
 
+
 export const newMedicationCategory: modelTypes.MedicationCategory = {
   id: undefined,
   name: ''
@@ -364,9 +365,9 @@ export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
   medicationCategoriesId: undefined
 };
 
-export const newActiveIngredient: modelTypes.ActiveIngredient = {
+
+  export const newActiveIngredient: modelTypes.ActiveIngredient = {
   id: undefined,
-  medicalCategoryId: null,
   name: '',
   drugClassId: null,
   atcCode: null,
@@ -405,6 +406,22 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   doseAdjustmentPugA: null,
   doseAdjustmentPugB: null,
   doseAdjustmentPugC: null
+};
+
+export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSpecialPopulation = {
+  id: undefined,
+  activeIngredientId: 0,
+  specialPopulation: '',
+  considerations: ''
+};
+
+
+
+
+export const newActiveIngredientContraindication: modelTypes.ActiveIngredientContraindication = {
+  id: undefined,
+  activeIngredientId: 0,
+  icdCodeId: 0
 };
 
 export const newDentalAction: modelTypes.DentalAction={
