@@ -362,9 +362,9 @@ export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
   medicationCategoriesId: undefined
 };
 
-export const newActiveIngredient: modelTypes.ActiveIngredient = {
+
+  export const newActiveIngredient: modelTypes.ActiveIngredient = {
   id: undefined,
-  medicalCategoryId: null,
   name: '',
   drugClassId: null,
   atcCode: null,
@@ -403,6 +403,27 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   doseAdjustmentPugA: null,
   doseAdjustmentPugB: null,
   doseAdjustmentPugC: null
+};
+
+export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
+  id: undefined,
+  activeIngredientId: 0,
+  synonym: ''
+};
+export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSpecialPopulation = {
+  id: undefined,
+  activeIngredientId: 0,
+  specialPopulation: '',
+  considerations: ''
+};
+
+
+
+
+export const newActiveIngredientContraindication: modelTypes.ActiveIngredientContraindication = {
+  id: undefined,
+  activeIngredientId: 0,
+  icdCodeId: 0
 };
 
 export const newDentalAction: modelTypes.DentalAction={
@@ -445,6 +466,7 @@ export const newProcedureCoding: modelTypes.ProcedureCoding = {
   procedureId: undefined,        
   codeType: 'CPT_CODES',           
   codeId: '',                      
+  // doseAdjustmentPugC: null,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -455,7 +477,15 @@ export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   id: undefined,
   procedureId: undefined,      
   price: 0,                    
-  currency: 'USD',            
+  currency: 'USD',
+}
+
+export const newActiveIngredientDrugInteraction: modelTypes.ActiveIngredientDrugInteraction = {
+  id: undefined,
+  activeIngredientId: 0,
+  interactedIngredientId: 0,
+  severity: '',
+  description: '',
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -637,4 +667,21 @@ export const newUOMGroupRelation: modelTypes.UOMGroupRelation = {
   // uom_group_id: undefined,
   fromUnitId: undefined,
   toUnitId: undefined
+export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdverseEffect = {
+  id: undefined,
+  activeIngredientId: 0,
+  adverseEffect: ''
+};
+
+
+export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFoodInteraction = {
+  id: undefined,
+  activeIngredientId: 0,
+  food: '',
+  severity: '',
+  description: '',
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
 };

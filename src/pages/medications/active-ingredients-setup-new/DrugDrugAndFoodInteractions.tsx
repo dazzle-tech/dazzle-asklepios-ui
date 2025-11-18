@@ -19,7 +19,7 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
         <Col md={14}>
           <Section
             title="Drug-Drug Interactions"
-            content={<DrugDrugInteractions activeIngredients={activeIngredient} />}
+            content={<DrugDrugInteractions selectedActiveIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
             openedContent=""
@@ -28,7 +28,7 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
         <Col md={10}>
           <Section
             title="Drug-Food Interactions"
-            content={<DrugFoodInteractions activeIngredients={activeIngredient} />}
+            content={<DrugFoodInteractions selectedActiveIngredients={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
             openedContent=""
@@ -41,7 +41,7 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
       <div>
         <Section
           title="Drug-Drug Interactions"
-          content={<DrugDrugInteractions activeIngredients={activeIngredient} />}
+          content={<DrugDrugInteractions selectedActiveIngredients={activeIngredient} />}
           setOpen={() => {}}
           rightLink=""
           openedContent=""

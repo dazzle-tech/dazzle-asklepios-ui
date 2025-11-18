@@ -12,7 +12,10 @@ import { encounterService } from '@/services/encounterService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
+import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
+import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
+import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
@@ -54,7 +57,7 @@ import { inventoryTransactionAttachmentService } from './services/inventory/inve
 import { loincCodeService } from './services/setup/loincCodeService';
 import { cptCodeService } from './services/setup/cptCodeService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
-import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
+import{diagnosticTestProfileService} from './services/setup/diagnosticTest/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
 import { procedureSetupService } from './services/setup/procedure/procedureService';
@@ -75,6 +78,7 @@ import { prescriptionInstructionService } from './services/setup/prescription-in
 import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
 import {BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 import { uomGroupService } from './services/setup/uom-group/uomGroupService';
+import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -99,8 +103,16 @@ export const store = configureStore({
 
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
-    [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
+    [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
+    [activeIngredientSpecialPopulationService.reducerPath]:
+      activeIngredientSpecialPopulationService.reducer,
+    [activeIngredientContraindicationService.reducerPath]:
+      activeIngredientContraindicationService.reducer,
 
+    [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
+
+
+    [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
     //account
     [accountApi.reducerPath]: accountApi.reducer,
 
@@ -234,7 +246,11 @@ export const store = configureStore({
       inventoryService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
+      activeIngredientSynonymsService.middleware,
+      activeIngredientAdverseEffectService.middleware,
       activeIngredientIndicationService.middleware,
+      activeIngredientSpecialPopulationService.middleware,
+      activeIngredientContraindicationService.middleware,
       appointmentService.middleware,
       dvmService.middleware,
       encounterService.middleware,
@@ -283,7 +299,6 @@ export const store = configureStore({
       diagnosticTestNormalRangeService.middleware,
       vaccineService.middleware,
       vaccineBrandsService.middleware,
-      potintialService.middleware,
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,

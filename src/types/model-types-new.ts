@@ -460,6 +460,7 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+
 export interface MedicationCategory {
   id: number;
   name: string;
@@ -469,6 +470,7 @@ export interface MedicationCategoryClass {
   name: string;
   medicationCategoriesId: number
 }
+
 
 /** Active Ingredient */
 export interface ActiveIngredient {
@@ -517,6 +519,23 @@ export interface ActiveIngredient {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;
 }
+
+export interface ActiveIngredientSynonym {
+  id?: number;
+  activeIngredientId: number;
+  synonym: string;
+}
+
+export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
 
 export interface DentalAction {
   id?: number;                 // Primary key (auto-generated)
@@ -764,4 +783,44 @@ export interface UOMGroupRelation {
   // uom_group_id: number;  
   fromUnitId: number;
   toUnitId: number;
+}
+export interface ActiveIngredientAdverseEffect {
+  id?: number;
+  activeIngredientId: number;
+  adverseEffect: string;
+}
+
+export interface ActiveIngredientDrugInteraction {
+  id?: number;
+  activeIngredientId: number;
+  interactedIngredientId: number;
+  severity: string;
+  description?: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface ActiveIngredientFoodInteraction {
+  id?: number;
+  activeIngredientId: number;
+  food: string;
+  severity: string;
+  description?: string | null;
+export interface ActiveIngredientSpecialPopulation {
+  id?: number;
+  activeIngredientId: number;
+  specialPopulation: string;
+  considerations?: string | null;
+}
+
+  export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
 }
