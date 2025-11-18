@@ -363,7 +363,7 @@ export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
 };
 
 
-  export const newActiveIngredient: modelTypes.ActiveIngredient = {
+export const newActiveIngredient: modelTypes.ActiveIngredient = {
   id: undefined,
   name: '',
   drugClassId: null,
@@ -404,6 +404,13 @@ export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
   doseAdjustmentPugB: null,
   doseAdjustmentPugC: null
 };
+
+export const newActiveIngredientPreRequestedTest: modelTypes.ActiveIngredientPreRequestedTest = {
+  id: undefined,
+  activeIngredientId: 0,
+  testId: 0
+};
+
 
 export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
   id: undefined,
@@ -648,7 +655,7 @@ export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
   testIds: []
 };
 
-export const newUOMGroup : modelTypes.UOMGroup = {
+export const newUOMGroup : modelTypes.uomGroup = {
   id: undefined,
   description: '',         
   name: '',
@@ -666,7 +673,8 @@ export const newUOMGroupRelation: modelTypes.UOMGroupRelation = {
   relation: 0,
   // uom_group_id: undefined,
   fromUnitId: undefined,
-  toUnitId: undefined
+  toUnitId: undefined}
+
 export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdverseEffect = {
   id: undefined,
   activeIngredientId: 0,

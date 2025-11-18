@@ -16,6 +16,7 @@ import { activeIngredientSynonymsService } from '@/services/setup/activeIngredie
 import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
 import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
 import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
+import { activeIngredientPreRequestedTestService } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
@@ -79,6 +80,9 @@ import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalAc
 import {BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
+import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
+import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -108,6 +112,8 @@ export const store = configureStore({
       activeIngredientSpecialPopulationService.reducer,
     [activeIngredientContraindicationService.reducerPath]:
       activeIngredientContraindicationService.reducer,
+    [activeIngredientPreRequestedTestService.reducerPath]:
+      activeIngredientPreRequestedTestService.reducer,
 
     [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
 
@@ -233,7 +239,10 @@ export const store = configureStore({
     [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
-    [BrandMedicationActiveIngredientService.reducerPath]: BrandMedicationActiveIngredientService.reducer
+    [BrandMedicationActiveIngredientService.reducerPath]: BrandMedicationActiveIngredientService.reducer,
+    [activeIngredientDrugInteractionService.reducerPath]: activeIngredientDrugInteractionService.reducer,
+    [activeIngredientFoodInteractionService.reducerPath]: activeIngredientFoodInteractionService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -251,6 +260,7 @@ export const store = configureStore({
       activeIngredientIndicationService.middleware,
       activeIngredientSpecialPopulationService.middleware,
       activeIngredientContraindicationService.middleware,
+      activeIngredientPreRequestedTestService.middleware,
       appointmentService.middleware,
       dvmService.middleware,
       encounterService.middleware,
@@ -312,7 +322,9 @@ export const store = configureStore({
       CdtDentalActionService.middleware,
       BrandMedicationActiveIngredientService.middleware,
       CdtDentalActionService.middleware,
-      uomGroupService.middleware
+      uomGroupService.middleware,
+      activeIngredientDrugInteractionService.middleware,
+      activeIngredientFoodInteractionService.middleware
     ])
 });
 

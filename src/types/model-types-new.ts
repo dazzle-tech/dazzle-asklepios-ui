@@ -520,6 +520,7 @@ export interface ActiveIngredient {
   lastModifiedDate?: Date | string | null;
 }
 
+
 export interface ActiveIngredientSynonym {
   id?: number;
   activeIngredientId: number;
@@ -796,6 +797,15 @@ export interface ActiveIngredientDrugInteraction {
   interactedIngredientId: number;
   severity: string;
   description?: string | null;
+  createdBy: string,
+  createdDate: Date,
+  lastModifiedBy: string,
+  lastModifiedDate: Date,}
+
+export interface ActiveIngredientPreRequestedTest {
+  id?: number;
+  activeIngredientId: number;
+  testId: number;
   createdBy?: string | null;
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;
@@ -808,6 +818,12 @@ export interface ActiveIngredientFoodInteraction {
   food: string;
   severity: string;
   description?: string | null;
+  createdBy: string,
+  createdDate: Date,
+  lastModifiedBy: string,
+  lastModifiedDate: Date,
+}
+
 export interface ActiveIngredientSpecialPopulation {
   id?: number;
   activeIngredientId: number;
