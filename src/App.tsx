@@ -162,7 +162,7 @@ import ServiceSetup from './pages/setup/service-setup';
 import Shifts from './pages/setup/shift-setup';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
-import UOMGroup from './pages/setup/uom-group';
+import UOMGroup from './pages/setup/uom-group-new';
 import Users from './pages/setup/users-setup';
 import UsersNew from './pages/setup/users-setup-new';
 import Vaccine from './pages/setup/vaccine-setup';

@@ -704,11 +704,9 @@ export interface prescriptionInstructions {
   frequency: string;
 }
 
-
 export interface CdtDentalAction {
   id?: number;
   dentalActionId: number;
-
   cdtId: number;
 };
 
@@ -765,6 +763,27 @@ export type CatalogAddTestsVM = {
   testIds: number[] ;
 };
 
+export interface uomGroup {
+  id?: number;
+  description: string;              
+  name: string;
+}
+
+
+export interface UOMGroupUnit {
+  id?: number;
+  uom: string;              
+  uomOrder: number;
+  // uom_group_id: number;
+}
+
+export interface UOMGroupRelation {
+  id?: number;            
+  relation: number;
+  // uom_group_id: number;  
+  fromUnitId: number;
+  toUnitId: number;
+}
 export interface ActiveIngredientAdverseEffect {
   id?: number;
   activeIngredientId: number;

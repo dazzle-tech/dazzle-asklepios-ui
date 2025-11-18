@@ -77,6 +77,7 @@ import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
 import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
 import {BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
+import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 export const store = configureStore({
   reducer: {
@@ -182,6 +183,10 @@ export const store = configureStore({
 
      // Language slice
     [languageService.reducerPath]: languageService.reducer,
+
+    // uom
+    [uomGroupService.reducerPath]: uomGroupService.reducer,
+
 
     // Translation slice
     [translationService.reducerPath]: translationService.reducer,
@@ -305,7 +310,9 @@ export const store = configureStore({
       BrandMedicationSubstituteService.middleware,
       prescriptionInstructionService.middleware,
       CdtDentalActionService.middleware,
-      BrandMedicationActiveIngredientService.middleware
+      BrandMedicationActiveIngredientService.middleware,
+      CdtDentalActionService.middleware,
+      uomGroupService.middleware
     ])
 });
 
