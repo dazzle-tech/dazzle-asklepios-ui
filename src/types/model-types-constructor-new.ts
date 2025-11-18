@@ -635,6 +635,6 @@ export const newUOMGroupRelation: modelTypes.UOMGroupRelation = {
   id: undefined,          
   relation: 0,
   // uom_group_id: undefined,
-  uom_unit_from_id: undefined,
-  uom_unit_to_id: undefined
+  fromUnitId: undefined,
+  toUnitId: undefined
 };

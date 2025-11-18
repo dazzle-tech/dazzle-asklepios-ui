@@ -134,6 +134,23 @@ export const uomGroupService = createApi({
       }),
       // invalidatesTags: ["UOMGroup"],
     }),
+    
+    deleteUOMRelation: builder.mutation({
+      query: ({groupId, id}) => ({
+        url: `/api/setup/uom-groups/relations/${groupId}/${id}`,
+        method: "DELETE",
+      }),
+      // invalidatesTags: ["UOMGroup"],
+    }),
+
+    updateUOMRelation: builder.mutation({
+      query: ({groupId, uomRelation}) => ({
+        url: `/api/setup/uom-groups/relations/${groupId}/${uomRelation?.id}`,
+        method: "PUT",
+        body: uomRelation
+      }),
+      // invalidatesTags: ["UOMGroup"],
+    }),
 
   }),
 });
@@ -149,5 +166,7 @@ export const {
     useUpdateUOMUnitMutation,
     useCreateRelationMutation,
     useGetAllRelationByUOMGroupQuery,
-    useUpdateUOMGroupMutation
+    useUpdateUOMGroupMutation,
+    useDeleteUOMRelationMutation,
+    useUpdateUOMRelationMutation
 } = uomGroupService;

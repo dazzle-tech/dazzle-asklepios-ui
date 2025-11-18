@@ -750,6 +750,7 @@ export interface uomGroup {
   name: string;
 }
 
+
 export interface UOMGroupUnit {
   id?: number;
   uom: string;              
@@ -761,6 +762,6 @@ export interface UOMGroupRelation {
   id?: number;            
   relation: number;
   // uom_group_id: number;  
-  uom_unit_from_id: number;
-  uom_unit_to_id: number;
+  fromUnitId: number;
+  toUnitId: number;
 }

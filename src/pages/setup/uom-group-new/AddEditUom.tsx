@@ -7,7 +7,7 @@ import {
   faBoxesPacking,
   faBoxesStacked,
   faBroom,
-  faCheckDouble,
+  faCheckDouble
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyButton from '@/components/MyButton/MyButton';
@@ -23,17 +23,23 @@ import {
   useCreateRelationMutation,
   useCreateUnitMutation,
   useCreateUOMGroupMutation,
+  useDeleteUOMRelationMutation,
   useDeleteUOMUnitMutation,
   useGetAllRelationByUOMGroupQuery,
   useGetAllUnitsByGroupIdQuery,
   useUpdateUOMGroupMutation,
+  useUpdateUOMRelationMutation,
   useUpdateUOMUnitMutation
 } from '@/services/setup/uom-group/uomGroupService';
 import { UOMGroupRelation, UOMGroupUnit } from '@/types/model-types-new';
-import { newUOMGroup, newUOMGroupRelation, newUOMGroupUnit } from '@/types/model-types-constructor-new';
+import {
+  newUOMGroup,
+  newUOMGroupRelation,
+  newUOMGroupUnit
+} from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
 import { formatEnumString } from '@/utils';
-const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => {
+const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
   const dispatch = useAppDispatch();
   const [uomUnit, setUomUnit] = useState<UOMGroupUnit>({
     ...newUOMGroupUnit
@@ -41,25 +47,25 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
   const [uomRelation, setUomRelation] = useState<UOMGroupRelation>({
     ...newUOMGroupRelation
   });
- 
+  const [uomRelationUpdated, setUomRelationUpdated] = useState({});
   const [openConfirmDeleteUnitModal, setOpenConfirmDeleteUnitModal] = useState<boolean>(false);
-
-  
-  
-  // const { data: UOMGroupListResponse, refetch: uomRefetch } = useGetUomGroupsQuery({ ...initialListRequest });
+  const [openConfirmDeleteRelationModal, setOpenConfirmDeleteRelationModal] =
+    useState<boolean>(false);
+  const [childStep, setChildStep] = useState<number>(-1);
+  const [openAddEditPopup, setOpenAddEditPopup] = useState<boolean>(false);
+  const [openAddEditRelationPopup, setOpenAddEditRelationPopup] = useState<boolean>(false);
+  // enum for uoms
+  const uoms = useEnumOptions('UOM');
+  // Fetch units list response
   const { data: UOMGroupUnitListResponse, refetch: uomUnitRefetch } = useGetAllUnitsByGroupIdQuery(
     uom.id,
     { skip: !uom?.id }
   );
+  // Fetch relations list response
   const { data: UOMGroupRelationListResponse, refetch: uomRelationRefetch } =
-    useGetAllRelationByUOMGroupQuery( uom.id,
-    { skip: !uom?.id });
-    useEffect(() => {
-      console.log("UOMGroupRelationListResponse");
-         console.log(UOMGroupRelationListResponse);
-    },[uom]);
-  const [childStep, setChildStep] = useState<number>(-1);
-  const uoms = useEnumOptions('UOM');
+    useGetAllRelationByUOMGroupQuery(uom.id, { skip: !uom?.id });
+
+
   // class name for selected row in uom unit table
   const isSelectedUnit = rowData => {
     if (rowData && rowData.id === uomUnit.id) {
@@ -73,17 +79,16 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
       return 'selected-row';
     } else return '';
   };
-  // Fetch UOM Lov list response
-  // const [filteredResourcesList, setFilteredResourcesList] = useState([]);
-  const [openAddEditPopup, setOpenAddEditPopup] = useState<boolean>(false);
-  const [openAddEditRelationPopup, setOpenAddEditRelationPopup] = useState<boolean>(false);
+  // create, delete and update functions
   const [createUomGroup] = useCreateUOMGroupMutation();
   const [updateUomGroup] = useUpdateUOMGroupMutation();
   const [createUomGroupUnits] = useCreateUnitMutation();
   const [updateUomGroupUnits] = useUpdateUOMUnitMutation();
   const [createUomGroupRelation] = useCreateRelationMutation();
   const [deleteUomGroupUnit] = useDeleteUOMUnitMutation();
-
+  const [deleteUomRelation] = useDeleteUOMRelationMutation();
+  const [updateUomRelation] = useUpdateUOMRelationMutation();
+  // handle delete uom unit
   const handleDeleteUomGroupUnit = async () => {
     setOpenConfirmDeleteUnitModal(false);
     try {
@@ -93,7 +98,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
           uomUnitRefetch();
           dispatch(
             notify({
-              msg: 'The UOM group unit was successfully deleted' ,
+              msg: 'The UOM group unit was successfully deleted',
               sev: 'success'
             })
           );
@@ -107,7 +112,49 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
       );
     }
   };
-  
+
+  // handle delete uom relation
+  const handleDeleteUomGroupRelation = async () => {
+    setOpenConfirmDeleteRelationModal(false);
+    try {
+      await deleteUomRelation({ groupId: uom?.id, id: uomRelation?.id })
+        .unwrap()
+        .then(() => {
+          uomRelationRefetch();
+          dispatch(
+            notify({
+              msg: 'The UOM group relation was successfully deleted',
+              sev: 'success'
+            })
+          );
+        });
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Failed to delete this UOM group Relation',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+  useEffect(() => {
+    console.log("in effect");
+    if (openAddEditRelationPopup && uomRelation?.id)
+      setUomRelationUpdated({
+        id: uomRelation?.id,
+        fromUnitId: uomRelation?.fromUnit?.id,
+        toUnitId: uomRelation?.toUnit?.id,
+        relation: uomRelation?.relation
+      });
+      
+  }, [openAddEditRelationPopup]);
+
+  useEffect(() => {
+    console.log("uomRelationUpdated");
+     console.log(uomRelationUpdated);
+  },[uomRelationUpdated]);
+  // icons column for relation table
   const iconsForActions = () => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -115,22 +162,31 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        onClick={() => setOpenAddEditRelationPopup(true)}
+        onClick={() => {
+          setOpenAddEditRelationPopup(true);
+          setChildStep(1);
+          // setUomRelationUpdated({
+          //   id: uomRelation?.id,
+          //   fromUnitId: uomRelation?.fromUnit?.id,
+          //   toUnitId: uomRelation?.toUnit?.id,
+          //   relation: uomRelation?.relation
+          // });
+        }}
       />
-      {/* deactivate/activate  when click on one of these icon */}
-        <MdDelete
-          title="Delete"
-          size={24}
-          className="icons-style"
-          fill="var(--primary-pink)"
-          // onClick={() => {
-          //   setStateOfDeleteRelationModal('deactivate');
-          //   setOpenConfirmDeleteRelationModal(true);
-          // }}
-        />
-      
+      {/* delete  when click on this icon */}
+      <MdDelete
+        title="Delete"
+        size={24}
+        className="icons-style"
+        fill="var(--primary-pink)"
+        onClick={() => {
+          setOpenConfirmDeleteRelationModal(true);
+        }}
+      />
     </div>
   );
+
+  // icons column for units table
   const iconsForActionsUnit = () => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -151,31 +207,29 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
       />
     </div>
   );
+
+  // Content of parent modal
   const conjureFormContent = stepNumber => {
     switch (stepNumber) {
       case 0:
         return (
-          <>
-            <Form fluid layout="inline">
-              <MyInput
-                column
-                fieldLabel="Group Name"
-                fieldName="name"
-                record={uom}
-                setRecord={setUom}
-              />
-            </Form>
-            <Form fluid layout="inline">
-              <MyInput
-                column
-                fieldLabel="Description"
-                fieldType="textarea"
-                fieldName="description"
-                record={uom}
-                setRecord={setUom}
-              />
-            </Form>
-          </>
+          <Form fluid>
+            <MyInput
+              fieldLabel="Group Name"
+              fieldName="name"
+              record={uom}
+              setRecord={setUom}
+              width="100%"
+            />
+            <MyInput
+              fieldLabel="Description"
+              fieldType="textarea"
+              fieldName="description"
+              record={uom}
+              setRecord={setUom}
+              width="100%"
+            />
+          </Form>
         );
       case 1:
         return (
@@ -190,7 +244,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
                   setOpenAddEditPopup(true);
                   setChildStep(0);
                 }}
-                width="109px"
+                width="120px"
               >
                 Add Units
               </MyButton>
@@ -226,7 +280,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
                   setOpenAddEditRelationPopup(true);
                   setChildStep(1);
                 }}
-                width="109px"
+                width="125px"
               >
                 Add Relation
               </MyButton>
@@ -239,6 +293,13 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
               onRowClick={rowData => {
                 setUomRelation(rowData);
               }}
+            />
+            <DeletionConfirmationModal
+              open={openConfirmDeleteRelationModal}
+              setOpen={setOpenConfirmDeleteRelationModal}
+              itemToDelete="relation"
+              actionButtonFunction={() => handleDeleteUomGroupRelation()}
+              actionType="delete"
             />
           </Form>
         );
@@ -272,20 +333,12 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
       key: 'uomUnitFromKey',
       title: 'Each',
       flexGrow: 4,
-      render: rowData => (
-        <span>
-          {rowData?.fromUnit?.id}
-        </span>
-      )
+      render: rowData => <span>{rowData?.fromUnit?.uom}</span>
     },
     {
       key: 'uomUnitToKey',
       title: 'Contain',
-      render: rowData => (
-        <span>
-           {rowData?.toUnit?.id}
-        </span>
-      )
+      render: rowData => <span>{rowData?.toUnit?.uom}</span>
     },
     {
       key: 'relation',
@@ -297,7 +350,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
       key: 'icons',
       title: '',
       flexGrow: 3,
-      render: rowData => iconsForActions(rowData)
+      render: () => iconsForActions()
     }
   ];
 
@@ -333,9 +386,12 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
           <Form>
             <MyInput
               fieldType="select"
-              fieldName="uom_unit_from_id"
-              record={uomRelation}
-              setRecord={setUomRelation}
+              fieldName="fromUnitId"
+              fieldLabel="from Unit"
+              // record={!uomRelation?.id ? uomRelation : uomRelationUpdated}
+              // setRecord={!uomRelation?.id ? setUomRelation : setUomRelationUpdated}
+              record={uomRelationUpdated}
+              setRecord={setUomRelationUpdated}
               selectDataValue="id"
               selectDataLabel="uom"
               placeholder="Unit"
@@ -343,12 +399,16 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
               menuMaxHeight={200}
               width={350}
               searchable={false}
+              disabled={!!uomRelation?.id}
             />
             <MyInput
               fieldType="select"
-              fieldName="uom_unit_to_id"
-              record={uomRelation}
-              setRecord={setUomRelation}
+              fieldName="toUnitId"
+              fieldLabel="To Unit"
+              // record={!uomRelation?.id ? uomRelation : uomRelationUpdated}
+              // setRecord={!uomRelation?.id ? setUomRelation : setUomRelationUpdated}
+              record={uomRelationUpdated}
+              setRecord={setUomRelationUpdated}
               selectDataValue="id"
               selectDataLabel="uom"
               placeholder="Unit"
@@ -356,12 +416,15 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
               menuMaxHeight={200}
               width={350}
               searchable={false}
+              disabled={!!uomRelation?.id}
             />
             <MyInput
               fieldType="number"
               fieldName="relation"
-              record={uomRelation}
-              setRecord={setUomRelation}
+              // record={!uomRelation?.id ? uomRelation : uomRelationUpdated}
+              // setRecord={!uomRelation?.id ? setUomRelation : setUomRelationUpdated}
+              record={uomRelationUpdated}
+              setRecord={setUomRelationUpdated}
               width={350}
             />
           </Form>
@@ -369,129 +432,161 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups, width }) => 
     }
   };
 
-  // Handle Save Uom Def
+  // Handle Save Uom
   const handleSave = () => {
-    if(!uom?.id)
-    createUomGroup(uom)
-      .unwrap()
-      .then(result => {
-        setUom(result);
-        refetchUomGroups();
-        dispatch(
-          notify({
-            msg: 'The UOM group Added/Edited successfully ',
-            sev: 'success'
-          })
-        );
-      })
-      .catch(e => {
-        if (e.status === 422) {
-        } else {
-          dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-        }
-      });
-      else
-         updateUomGroup(uom)
-      .unwrap()
-      .then(result => {
-        setUom(result);
-        refetchUomGroups();
-        dispatch(
-          notify({
-            msg: 'The UOM group updated successfully ',
-            sev: 'success'
-          })
-        );
-      })
-      .catch(e => {
-        if (e.status === 422) {
-        } else {
-          dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-        }
-      });
+    if (!uom?.id)
+      createUomGroup(uom)
+        .unwrap()
+        .then(result => {
+          setUom(result);
+          refetchUomGroups();
+          dispatch(
+            notify({
+              msg: 'The UOM group Added/Edited successfully ',
+              sev: 'success'
+            })
+          );
+        })
+        .catch(e => {
+          if (e.status === 422) {
+          } else {
+            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
+          }
+        });
+    else {
+      const updatedUom = { id: uom?.id, description: uom?.description, name: uom?.name };
+      updateUomGroup(updatedUom)
+        .unwrap()
+        .then(result => {
+          setUom(result);
+          refetchUomGroups();
+          dispatch(
+            notify({
+              msg: 'The UOM group updated successfully ',
+              sev: 'success'
+            })
+          );
+        })
+        .catch(e => {
+          if (e.status === 422) {
+          } else {
+            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
+          }
+        });
+    }
   };
 
   // Handle Save Uom unit
   const handleSaveUnits = () => {
-    if(!uomUnit?.id){
-    createUomGroupUnits({
-      groupId: uom?.id,
-      UomGroupUnit: uomUnit
-    })
-      .unwrap()
-      .then(() => {
-        uomUnitRefetch();
-        setUomUnit({
-          ...newUOMGroupUnit
-        });
-        dispatch(
-          notify({
-            msg: 'The UOM group unit was created successfully ',
-            sev: 'success'
-          })
-        );
+    if (!uomUnit?.id) {
+      createUomGroupUnits({
+        groupId: uom?.id,
+        UomGroupUnit: uomUnit
       })
-      .catch(e => {
-        if (e.status === 422) {
-        } else {
-          dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-        }
-      });
-    }else{
+        .unwrap()
+        .then(() => {
+          uomUnitRefetch();
+          setUomUnit({
+            ...newUOMGroupUnit
+          });
+          dispatch(
+            notify({
+              msg: 'The UOM group unit was created successfully ',
+              sev: 'success'
+            })
+          );
+        })
+        .catch(e => {
+          if (e.status === 422) {
+          } else {
+            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
+          }
+        });
+    } else {
       updateUomGroupUnits(uomUnit)
-      .unwrap()
-      .then(() => {
-        uomUnitRefetch();
-        setUomUnit({
-          ...newUOMGroupUnit
+        .unwrap()
+        .then(() => {
+          uomUnitRefetch();
+          setUomUnit({
+            ...newUOMGroupUnit
+          });
+          dispatch(
+            notify({
+              msg: 'The UOM group unit was updated successfully',
+              sev: 'success'
+            })
+          );
+        })
+        .catch(e => {
+          if (e.status === 422) {
+          } else {
+            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
+          }
         });
-        dispatch(
-          notify({
-            msg: 'The UOM group unit was updated successfully',
-            sev: 'success'
-          })
-        );
-      })
-      .catch(e => {
-        if (e.status === 422) {
-        } else {
-          dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-        }
-      });
     }
   };
 
   // Handle Save Uom relation
   const handleSaveRelation = () => {
-    console.log("groupId");
-    console.log(uom?.id);
-
-    console.log("uomRelation");
-    console.log(uomRelation);
-    
-    createUomGroupRelation({
-     groupId: uom?.id,
-     UomGroupRelation: uomRelation,
-    })
-      .unwrap()
-      .then(() => {
-        uomRelationRefetch();
-        setUomRelation({
-          ...newUOMGroupRelation
-        });
-        dispatch(
-          notify({
-            msg: 'The UOM group Relation was successfully ',
-            sev: 'success'
-          })
-        );
+    if (!uomRelation?.id) {
+      createUomGroupRelation({
+        groupId: uom?.id,
+        UomGroupRelation: uomRelationUpdated
       })
-      .catch(e => {
-        if (e.status === 422) {
-        } else {
-          dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-        }
-      });
+        .unwrap()
+        .then(() => {
+          uomRelationRefetch();
+          setUomRelation({
+            ...newUOMGroupRelation
+          });
+          setUomRelationUpdated({
+            // id: undefined,
+            // fromUnitId: undefined,
+            // toUnitId: undefined,
+            // relation: 0
+          });
+          dispatch(
+            notify({
+              msg: 'The UOM group Relation was successfully ',
+              sev: 'success'
+            })
+          );
+        })
+        .catch(e => {
+          if (e.status === 422) {
+          } else {
+            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
+          }
+        });
+    } else {
+      const updated = { id: uomRelation?.id, relation: uomRelationUpdated?.relation };
+      updateUomRelation({ groupId: uom?.id, uomRelation: updated })
+        .unwrap()
+        .then(() => {
+          uomRelationRefetch();
+          setUomRelation({
+            ...newUOMGroupRelation
+          });
+          setUomRelationUpdated({
+            // id: undefined,
+            // fromUnitId: undefined,
+            // toUnitId: undefined,
+            // relation: 0
+          });
+          dispatch(
+            notify({
+              msg: 'The UOM group Relation was successfully ',
+              sev: 'success'
+            })
+          );
+        })
+        .catch(e => {
+          if (e.status === 422) {
+          } else {
+            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
+          }
+        });
+    }
   };
   const handleClear = () => {
     setUom({
