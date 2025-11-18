@@ -655,7 +655,7 @@ export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
   testIds: []
 };
 
-export const newUOMGroup : modelTypes.UOMGroup = {
+export const newUOMGroup : modelTypes.uomGroup = {
   id: undefined,
   description: '',         
   name: '',
@@ -673,7 +673,8 @@ export const newUOMGroupRelation: modelTypes.UOMGroupRelation = {
   relation: 0,
   // uom_group_id: undefined,
   fromUnitId: undefined,
-  toUnitId: undefined
+  toUnitId: undefined}
+
 export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdverseEffect = {
   id: undefined,
   activeIngredientId: 0,
