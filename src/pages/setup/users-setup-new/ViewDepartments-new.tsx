@@ -16,6 +16,7 @@ import {
   useAddUserDepartmentMutation,
   useGetUserDepartmentsByUserQuery,
   useDeleteUserDepartmentMutation
+  
 } from '@/services/security/userDepartmentsService';
 import { Department, UserDepartment } from '@/types/model-types-new';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
