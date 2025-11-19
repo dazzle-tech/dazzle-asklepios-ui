@@ -47,7 +47,6 @@ import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/setup/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 import { Icd10Service } from './services/setup/icd10service';
-import { ResourceService } from './services/setup/resource/ResourceService';
 import { patientAttachmentService } from './services/patients/attachmentService';
 import { ageGroupService } from './services/setup/ageGroupService';
 import { potintialService } from '@/services/potintialDuplicateService';
@@ -85,7 +84,6 @@ import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 import { activeIngredientDrugInteractionService } from '@/services/setup/activeIngredients/activeIngredientDrugInteractionService';
 import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
-import { inventoryProductsService } from './services/inventory/inventory-products/inventoryProductsService';
 import { countryService } from './services/setup/country/countryService';
 import { countryDistrictService } from './services/setup/country/countryDistrictService';
 import { districtCommunityService } from './services/setup/country/districtCommunityService';
@@ -94,23 +92,17 @@ import { dischargePService } from './services/setup/dischargeService';
 import { resultReportApi } from './services/setup/resultReportApi';
 import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
-import { catalogService } from './services/setup/catalog/catalogService';
-import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
-import { PriceListService } from './services/billing/PriceListService';
-import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
-import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
-import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
-import { PriceListItemService } from './services/billing/PriceListItemService';
-import { BillingService } from './services/billing/BillingService';
-import { referralRequestService } from "@/services/encounters/referralRequestService";
-import { PayorService } from './services/setup/payer/PayorService';
-import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
-
-import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
+import { newPatientService } from './services/patient/patientService';
+import { addressService } from './services/patients/AddressService';
+import { hipaaService } from './services/patients/hipaaService';
+import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
+import { patientDocumentsService } from './services/patients/patientDocumentsService';
 export const store = configureStore({
   reducer: {
+    //aid parsing and summarization services
     [idParsingService.reducerPath]: idParsingService.reducer,
     [summarizationService.reducerPath]: summarizationService.reducer,
+
     // ui
     [uiSlice.name]: uiSlice.reducer,
     [uiService.reducerPath]: uiService.reducer,
@@ -130,7 +122,7 @@ export const store = configureStore({
 
     //inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
-    [inventoryProductsService.reducerPath]: inventoryProductsService.reducer,
+
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
@@ -192,10 +184,6 @@ export const store = configureStore({
     //procedure
     [procedureService.reducerPath]: procedureService.reducer,
 
-    // catalog
-    [catalogService.reducerPath]: catalogService.reducer,
-    [catalogDiagnosticTestService.reducerPath]: catalogDiagnosticTestService.reducer,
-
     //prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
 
@@ -233,10 +221,7 @@ export const store = configureStore({
     //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
 
-    // user Sticky Notes Service
-    [userStickyNotesService.reducerPath]: userStickyNotesService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
-    [ResourceService.reducerPath]: ResourceService.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
@@ -261,9 +246,6 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
-
-    // billing
-    [BillingService.reducerPath]: BillingService.reducer, 
 
     [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
@@ -295,23 +277,19 @@ export const store = configureStore({
     [resultReportApi.reducerPath]: resultReportApi.reducer,
 
     // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
-   // Visit Duration
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
+    // Visit Duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
-    // Price List
-    [PriceListService.reducerPath]: PriceListService.reducer,
 
-   // Templates
-    [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
-    [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
-    // Price List Item
-    [PriceListItemService.reducerPath]: PriceListItemService.reducer,
-    [referralRequestService.reducerPath]: referralRequestService.reducer,
+    // Patient
+    [newPatientService.reducerPath]: newPatientService.reducer,
+    [addressService.reducerPath]: addressService.reducer,
 
-    [PayorService.reducerPath]: PayorService.reducer,
-    [PayorPlanService.reducerPath]: PayorPlanService.reducer,
+    [hipaaService.reducerPath]: hipaaService.reducer,
 
-    [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
+    [patientPreferredHealthProfessionalService.reducerPath]: patientPreferredHealthProfessionalService.reducer,
+    [patientDocumentsService.reducerPath]: patientDocumentsService.reducer
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -324,7 +302,6 @@ export const store = configureStore({
       accountApi.middleware,
       patientService.middleware,
       inventoryService.middleware,
-      inventoryProductsService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
       activeIngredientSynonymsService.middleware,
@@ -364,7 +341,6 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
-      ResourceService.middleware,
       ageGroupService.middleware,
       Icd10Service.middleware,
       allergensService.middleware,
@@ -385,7 +361,6 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
-      BillingService.middleware,
       diagnosticTestCodingService.middleware,
       CdtDentalActionService.middleware,
       vaccineService.middleware,
@@ -409,18 +384,11 @@ export const store = configureStore({
       resultReportApi.middleware,
       invoiceReportApi.middleware,
       visitDurationService.middleware,
-      catalogService.middleware,
-      catalogDiagnosticTestService.middleware,
-      PriceListService.middleware,
-      ReportTemplateService.middleware,
-      DiagnosticTestTemplateService.middleware,
-      userStickyNotesService.middleware,
-      PriceListItemService.middleware,
-      referralRequestService.middleware,
-      PayorService.middleware,
-      PayorPlanService.middleware,
-      DischargePlanningService.middleware,
-
+      newPatientService.middleware,
+      addressService.middleware,
+      hipaaService.middleware,
+      patientPreferredHealthProfessionalService.middleware,
+      patientDocumentsService.middleware,
     ])
 });
 

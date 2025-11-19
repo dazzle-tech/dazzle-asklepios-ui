@@ -1,12 +1,12 @@
+import MyInput from '@/components/MyInput';
 import React from 'react';
 import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
 
 const BasicInfo = ({
   validationResult,
   localPatient,
   setLocalPatient,
-  genderLovQueryResponse,
+  genderEnum,
   ageFormatType,
   ageGroupValue,
   patientClassLovQueryResponse
@@ -50,10 +50,10 @@ const BasicInfo = ({
         column
         fieldLabel="Gender"
         fieldType="select"
-        fieldName="genderLkey"
-        selectData={genderLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        fieldName="sexAtBirth"
+        selectData={genderEnum ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
@@ -64,7 +64,7 @@ const BasicInfo = ({
         column
         fieldType="date"
         fieldLabel="DOB"
-        fieldName="dob"
+        fieldName="dateOfBirth"
         record={localPatient}
         setRecord={setLocalPatient}
       />
@@ -75,7 +75,7 @@ const BasicInfo = ({
         fieldType="text"
         disabled
         fieldName="ageFormat"
-        record={localPatient?.dob ? ageFormatType : null}
+        record={localPatient?.dateOfBirth ? ageFormatType : null}
       />
       <MyInput
         vr={validationResult}
@@ -84,14 +84,15 @@ const BasicInfo = ({
         fieldType="text"
         fieldName="ageGroup"
         disabled
-        record={localPatient?.dob ? ageGroupValue : null}
+        record={localPatient?.dateOfBirth ? ageGroupValue : null}
+        isEnum
       />
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Patient Class"
         fieldType="select"
-        fieldName="patientClassLkey"
+        fieldName="patientClasses"
         selectData={patientClassLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -105,7 +106,7 @@ const BasicInfo = ({
           column
           fieldLabel="Unknown Patient"
           fieldType="checkbox"
-          fieldName="unknownPatient"
+          fieldName="isUnknown"
           record={localPatient}
           setRecord={setLocalPatient}
           disabled
@@ -116,7 +117,7 @@ const BasicInfo = ({
         column
         fieldLabel="Private Patient"
         fieldType="checkbox"
-        fieldName="privatePatient"
+        fieldName="isPrivatePatient"
         record={localPatient}
         setRecord={setLocalPatient}
       />
@@ -124,7 +125,7 @@ const BasicInfo = ({
         vr={validationResult}
         column
         fieldLabel="First Name (Sec. Lang)"
-        fieldName="firstNameOtherLang"
+        fieldName="firstNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
       />
@@ -132,7 +133,7 @@ const BasicInfo = ({
         vr={validationResult}
         column
         fieldLabel="Second Name (Sec. Lang)"
-        fieldName="secondNameOtherLang"
+        fieldName="secondNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
       />
@@ -140,7 +141,7 @@ const BasicInfo = ({
         vr={validationResult}
         column
         fieldLabel="Third Name (Sec. Lang)"
-        fieldName="thirdNameOtherLang"
+        fieldName="thirdNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
       />
@@ -148,7 +149,7 @@ const BasicInfo = ({
         vr={validationResult}
         column
         fieldLabel="Last Name (Sec. Lang)"
-        fieldName="lastNameOtherLang"
+        fieldName="lastNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
       />
