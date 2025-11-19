@@ -115,7 +115,7 @@ export const store = configureStore({
 
     //inventory 
     [inventoryService.reducerPath]: inventoryService.reducer,
-    [inventoryProductService.reducerPath]: inventoryProductService.reducer,
+    [inventoryProductsService.reducerPath]: inventoryProductsService.reducer,
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
@@ -288,7 +288,7 @@ export const store = configureStore({
       accountApi.middleware,
       patientService.middleware,
       inventoryService.middleware,
-      inventoryProductService.middleware,
+      inventoryProductsService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
       activeIngredientSynonymsService.middleware,
