@@ -82,7 +82,7 @@ import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
 import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
-
+import { inventoryProductService } from './services/setup/inventory/inventoryProductService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -104,7 +104,7 @@ export const store = configureStore({
 
     //inventory 
     [inventoryService.reducerPath]: inventoryService.reducer,
-
+    [inventoryProductService.reducerPath]: inventoryProductService.reducer,
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
@@ -253,6 +253,7 @@ export const store = configureStore({
       accountApi.middleware,
       patientService.middleware,
       inventoryService.middleware,
+      inventoryProductService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
       activeIngredientSynonymsService.middleware,
