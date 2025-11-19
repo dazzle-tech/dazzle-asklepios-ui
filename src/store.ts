@@ -93,7 +93,7 @@ import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
-
+import { inventoryProductsService } from './services/inventory/inventory-products/inventoryProductsService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -115,7 +115,7 @@ export const store = configureStore({
 
     //inventory 
     [inventoryService.reducerPath]: inventoryService.reducer,
-
+    [inventoryProductService.reducerPath]: inventoryProductService.reducer,
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
@@ -288,6 +288,7 @@ export const store = configureStore({
       accountApi.middleware,
       patientService.middleware,
       inventoryService.middleware,
+      inventoryProductService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
       activeIngredientSynonymsService.middleware,
