@@ -1,13 +1,14 @@
+import MyTab from '@/components/MyTab';
 import Translate from '@/components/Translate';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAgeGroupValueQuery } from '@/services/patientService';
+import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
 import React, { useEffect, useState } from 'react';
-import { Panel, Tabs } from 'rsuite';
+import { Panel } from 'rsuite';
 import ConsentFormTab from './ConsentFormTab';
-import PatientAttachment from './tabs/Attachment/PatientAttachment';
+import PatientAttachment from './tabs/Attachment-new/PatientAttachment';
 import DemographicsTab from './tabs/DemographicsTab';
 import SecondaryIDTab from './tabs/ExtraDetails/IDTab';
 import ExtraDetailsTab from './tabs/ExtraDetailsTab';
@@ -39,44 +40,106 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     ageFormat: ''
   });
 
-  // Fetch age group data
-  const { data: patientAgeGroupResponse } = useGetAgeGroupValueQuery(
-    {
-      dob: localPatient?.dateOfBirth ? new Date(localPatient.dateOfBirth).toISOString() : null
-    },
-    { skip: !localPatient?.dateOfBirth }
-  );
+  const [fetchAgeGroupByBirthDate, { data: patientAgeGroupResponse }] =
+    useLazyGetAgeGroupByBirthDateQuery();
 
-  // Fetch LOV data for various fields
   const genderEnum = useEnumOptions('Gender');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-  const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
+  const patientDocumentEnum = useEnumOptions('DocumentType');
+
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
 
-  // Update age format when DOB changes
+  const tabData = [
+    {
+      title: 'Demographics',
+      content: (
+        <DemographicsTab
+          localPatient={localPatient}
+          setLocalPatient={setLocalPatient}
+          validationResult={validationResult}
+          genderEnum={genderEnum}
+          patientDocumentEnum={patientDocumentEnum}
+          countryLovQueryResponse={countryLovQueryResponse}
+          patientClassLovQueryResponse={patientClassLovQueryResponse}
+          ageFormatType={ageFormatType}
+          ageGroupValue={ageGroupValue}
+        />
+      )
+    },
+    {
+      title: 'Extra Details',
+      content: (
+        <ExtraDetailsTab
+          localPatient={localPatient}
+          setLocalPatient={setLocalPatient}
+          validationResult={validationResult}
+        />
+      )
+    },
+    { title: 'Insurance', content: <InsuranceTab localPatient={localPatient} /> },
+    {
+      title: 'Privacy & Security',
+      content: (
+        <PrivacySecurityTab
+          localPatient={localPatient}
+          setLocalPatient={setLocalPatient}
+          validationResult={validationResult}
+        />
+      )
+    },
+    {
+      title: 'Consent Forms',
+      content: <ConsentFormTab patient={localPatient} isClick={!localPatient.id} />
+    },
+    {
+      title: 'Preferred Health Professional',
+      content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
+    },
+    { title: 'Family Members', content: <PatientFamilyMembers localPatient={localPatient} /> },
+    { title: 'ID Documents', content: <SecondaryIDTab localPatient={localPatient} /> },
+    {
+      title: 'Attachments',
+      content: (
+        <PatientAttachment
+          localPatient={localPatient}
+          setRefetchAttachmentList={setRefetchAttachmentList}
+          refetchAttachmentList={refetchAttachmentList}
+        />
+      )
+    }
+  ];
+
   useEffect(() => {
     if (localPatient?.dateOfBirth) {
       const calculatedFormat = calculateAgeFormat(localPatient.dateOfBirth);
-      setAgeFormatType(prevState => ({
-        ...prevState,
+
+      setAgeFormatType(prev => ({
+        ...prev,
         ageFormat: calculatedFormat
       }));
+
+      fetchAgeGroupByBirthDate({
+        birthDate: String(localPatient.dateOfBirth)
+      });
     } else {
-      setAgeFormatType(prevState => ({
-        ...prevState,
+      setAgeFormatType(prev => ({
+        ...prev,
         ageFormat: ''
       }));
     }
   }, [localPatient?.dateOfBirth]);
 
-  // Update age group when response changes
   useEffect(() => {
-    if (patientAgeGroupResponse?.object?.lovDisplayVale) {
+    if (patientAgeGroupResponse?.ageGroup) {
       setAgeGroupValue({
-        ageGroup: patientAgeGroupResponse.object.lovDisplayVale
+        ageGroup: patientAgeGroupResponse.ageGroup
       });
     }
   }, [patientAgeGroupResponse]);
+
+  console.log('ageGroupValue in ProfileTabs-new:', ageGroupValue);
+  console.log('dateOfBirth in ProfileTabs-new:', localPatient?.dateOfBirth);
+  console.log('patientAgeGroupResponse in ProfileTabs-new:', patientAgeGroupResponse);
 
   return (
     <>
@@ -87,57 +150,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           </h5>
         }
       >
-        <Tabs defaultActiveKey="1" appearance="subtle" className="patient-info-tabs">
-          <Tabs.Tab eventKey="1" title={<Translate>Demographics</Translate>}>
-            <DemographicsTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-              genderEnum={genderEnum}
-              docTypeLovQueryResponse={docTypeLovQueryResponse}
-              countryLovQueryResponse={countryLovQueryResponse}
-              patientClassLovQueryResponse={patientClassLovQueryResponse}
-              ageFormatType={ageFormatType}
-              ageGroupValue={ageGroupValue}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="2" title={<Translate>Extra Details</Translate>}>
-            <ExtraDetailsTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="3" title={<Translate>Insurance</Translate>}>
-            <InsuranceTab localPatient={localPatient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="4" title={<Translate>Privacy & Security</Translate>}>
-            <PrivacySecurityTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="5" title={<Translate>Consent Forms</Translate>}>
-            <ConsentFormTab patient={localPatient} isClick={!localPatient.id} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="6" title={<Translate>Preferred Health Professional</Translate>}>
-            <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="7" title={<Translate>Family Members</Translate>}>
-            <PatientFamilyMembers localPatient={localPatient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="8" title={<Translate>Secondary ID</Translate>}>
-            <SecondaryIDTab localPatient={localPatient} />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="9" title={<Translate>Attachments</Translate>}>
-            <PatientAttachment
-              localPatient={localPatient}
-              setRefetchAttachmentList={setRefetchAttachmentList}
-              refetchAttachmentList={refetchAttachmentList}
-            />
-          </Tabs.Tab>
-        </Tabs>
+        <MyTab data={tabData} />
       </Panel>
     </>
   );
