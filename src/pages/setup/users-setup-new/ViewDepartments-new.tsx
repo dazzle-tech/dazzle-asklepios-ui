@@ -14,7 +14,7 @@ import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import {
   useAddUserDepartmentMutation,
-  useGetUserDepartmentsByUserQuery,
+  useLazyGetUserDepartmentsByUserQuery,
   useDeleteUserDepartmentMutation
 } from '@/services/security/userDepartmentsService';
 import { Department, UserDepartment } from '@/types/model-types-new';
@@ -31,9 +31,11 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
     () => departmentListResponse?.data ?? [],
     [departmentListResponse]
   );
-  // Fetch user departments list response
-  const { data: userDepartmentsResponse, refetch: refetchUserDepartments } =
-    useGetUserDepartmentsByUserQuery(user?.id);
+
+  // Lazy fetch user departments list
+  const [getUserDepartmentsByUser, { data: userDepartmentsResponse }] =
+    useLazyGetUserDepartmentsByUserQuery();
+
   const [userDepartment, setuserDepartment] = useState<UserDepartment>({
     ...newUserDepartment,
     isDefault: false
@@ -42,17 +44,34 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilityListResponse) ? facilityListResponse : [];
 
-  const [getDepartmentsByFacility, { data: departmentsResponse, isFetching: deptLoading }] = useLazyGetActiveDepartmentByFacilityListQuery();
+  const [getDepartmentsByFacility, { data: departmentsResponse, isFetching: deptLoading }] =
+    useLazyGetActiveDepartmentByFacilityListQuery();
   console.log('departmentsResponse from lazy query:', departmentsResponse);
-  
+
   // Delete user department
   const [deleteUserDepartment] = useDeleteUserDepartmentMutation();
-  const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] = useState<boolean>(false);
+  const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] =
+    useState<boolean>(false);
   const [openChildModal, setOpenChildModal] = useState<boolean>(false);
-
 
   // Save department
   const [saveDepartment] = useAddUserDepartmentMutation();
+
+  const userId = user?.id;
+
+  // Initial load of user departments when userId is available
+  React.useEffect(() => {
+    if (userId) {
+      getUserDepartmentsByUser(userId);
+    }
+  }, [userId, getUserDepartmentsByUser]);
+
+  // Refetch helper to keep existing calls working
+  const refetchUserDepartments = React.useCallback(() => {
+    if (userId) {
+      getUserDepartmentsByUser(userId);
+    }
+  }, [userId, getUserDepartmentsByUser]);
 
   // Handle delete user department
   const handleDeleteUserDepartment = UFD => {
@@ -60,14 +79,25 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       .unwrap()
       .then(() => {
         setOpenConfirmDeleteDepartmentModal(false);
-        dispatch(notify({ msg: 'The department was successfully deleted for this user', sev: 'success' }));
+        dispatch(
+          notify({
+            msg: 'The department was successfully deleted for this user',
+            sev: 'success'
+          })
+        );
         refetchUserDepartments();
       })
       .catch(() => {
         setOpenConfirmDeleteDepartmentModal(false);
-        dispatch(notify({ msg: 'Failed to delete department for this User', sev: 'error' }));
+        dispatch(
+          notify({
+            msg: 'Failed to delete department for this User',
+            sev: 'error'
+          })
+        );
       });
   };
+
   const onChangeFacility = async (next: string) => {
     const nextFacilityId = next;
     setuserDepartment(prev => ({
@@ -77,34 +107,45 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       isDefault: false
     }));
     if (nextFacilityId) {
-      await getDepartmentsByFacility({facilityId: nextFacilityId});
+      await getDepartmentsByFacility({ facilityId: nextFacilityId });
     }
   };
+
   // Handle Save Facility Department
   const handleFacilityDepartmentSave = () => {
     // Remove facilityId from the object before saving (API expects only userId and departmentId)
     const { facilityId, ...dataToSave } = userDepartment;
-    
+
     saveDepartment(dataToSave)
       .unwrap()
       .then(() => {
         setOpenChildModal(false);
-        dispatch(notify({ msg: 'The Department has been saved successfully', sev: 'success' }));
+        dispatch(
+          notify({
+            msg: 'The Department has been saved successfully',
+            sev: 'success'
+          })
+        );
         refetchUserDepartments();
       })
       .catch(() => {
         setOpenChildModal(false);
-        dispatch(notify({ msg: 'Failed to save this Department', sev: 'error' }));
+        dispatch(
+          notify({
+            msg: 'Failed to save this Department',
+            sev: 'error'
+          })
+        );
       });
   };
 
-  //Table columns
+  // Table columns
   const userDepartmentTableColumns = [
     {
       key: 'facilityId',
       title: <Translate>Facility Name</Translate>,
-      flexGrow: 4 ,
-       render: rowData => (
+      flexGrow: 4,
+      render: rowData => (
         <span>
           {conjureValueBasedOnIDFromList(
             facilityListResponse ?? [],
@@ -136,7 +177,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
     },
     {
       key: 'isActive',
-      title: <Translate key='STATUS'>Status</Translate>,
+      title: <Translate key="STATUS">Status</Translate>,
       flexGrow: 4,
       render: rowData => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
     },
@@ -160,11 +201,12 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       }
     }
   ];
+
   // Main modal content
   const conjureFormContentOfMainModal = () => {
     return (
-   <Form>
-        <div className='container-of-add-new-button' >
+      <Form>
+        <div className="container-of-add-new-button">
           <MyButton
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"
@@ -194,13 +236,13 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           actionType="delete"
         />
       </Form>
-
     );
   };
+
   // Child modal content
   const conjureFormContentOfChildModal = () => {
     return (
-    <Form fluid layout='inline'>
+      <Form fluid layout="inline">
         <MyInput
           column
           width={350}
@@ -223,7 +265,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           fieldLabel="Select Departments"
           fieldType="select"
           fieldName="departmentId"
-          selectData={departmentsResponse??[]}
+          selectData={departmentsResponse ?? []}
           selectDataLabel="name"
           selectDataValue="id"
           width={350}
@@ -242,7 +284,6 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
         />
       </Form>
     );
-
   };
 
   return (
@@ -264,4 +305,5 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
     />
   );
 };
+
 export default ViewDepartments;
