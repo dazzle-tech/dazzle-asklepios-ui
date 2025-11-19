@@ -4603,4 +4603,3 @@ export const newAppUser:modelTypes.AppUser = {
 	birthDate:null,
 	gender:'',
 } 
-

@@ -260,7 +260,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
         content: (
           <Section
             title="Pre-requested Tests"
-            content={<PreRequestedTests />}
+            content={<PreRequestedTests activeIngredient={activeIngredient} />}
             setOpen={() => {}}
             rightLink=""
             openedContent={null}

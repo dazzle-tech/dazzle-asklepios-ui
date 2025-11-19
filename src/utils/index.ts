@@ -60,7 +60,21 @@ export const fromListRequestAllValueToQueryParams = listRequest => {
   if (listRequest.skipDetails) final += `&skipDetails=true`;
   return final;
 }
+export const conjureValuesFromList = (
+  list: any[],
+  keysString: string,
+  preferredField: string
+): string => {
+  if (!keysString) return "";
 
+  const keys = keysString?.split(",").map(k => k.trim());
+  const values = keys?.map(key => {
+    const found = list?.find(record => record.key === key);
+    return found ? found[preferredField] : key; 
+  });
+
+  return values.join(", ");
+};
 export const addFilterToListRequest = (
   fieldName: string,
   operator: string,
@@ -123,7 +137,7 @@ export const conjureValueBasedOnIDFromList = (
   preferredField: any
 ) => {
   let displayValue: any = currentKey;
-  list.map(record => {
+  list?.map(record => {
     if (record?.id === currentKey) {
       displayValue = record?.[preferredField];
     }

@@ -460,6 +460,7 @@ export interface Radiology {
   associatedRisks?: string | null;
 }
 
+
 export interface MedicationCategory {
   id: number;
   name: string;
@@ -469,6 +470,7 @@ export interface MedicationCategoryClass {
   name: string;
   medicationCategoriesId: number
 }
+
 
 /** Active Ingredient */
 export interface ActiveIngredient {
@@ -517,6 +519,24 @@ export interface ActiveIngredient {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;
 }
+
+
+export interface ActiveIngredientSynonym {
+  id?: number;
+  activeIngredientId: number;
+  synonym: string;
+}
+
+export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
 
 export interface DentalAction {
   id?: number;                 // Primary key (auto-generated)
@@ -669,6 +689,8 @@ export interface BrandMedication {
   isActive?: boolean;
   uomGroupId?: number;
   uomGroupUnitId?: number;
+  hasActiveIngredient?:boolean;
+
 }
  export interface Substitute{
   brandId:number;
@@ -683,11 +705,9 @@ export interface prescriptionInstructions {
   frequency: string;
 }
 
-
 export interface CdtDentalAction {
   id?: number;
   dentalActionId: number;
-
   cdtId: number;
 };
 
@@ -704,3 +724,119 @@ export interface ActiveIngredientIndication {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;}
 
+  export interface BrandMedicationActiveIngredient{
+    id:number;
+    brandId:number;
+    activeIngredientId:number;
+    strength: number;
+    unit:string
+  }
+
+  export type CatalogResponseVM = {
+  id: number;
+  name: string;
+  description?: string | null;
+  type: string;
+  departmentId: number;
+  departmentName?: string | null;
+};
+
+export type CatalogCreateVM = {
+  name: string;
+  description?: string | null;
+  type: string;
+  departmentId: number;
+};
+
+export type CatalogUpdateVM = {
+  name?: string;
+  description?: string | null;
+  type?: string;
+  departmentId?: number;
+};
+
+export type CatalogDiagnosticTest = {
+  id: number;          
+  catalogId: number;
+  diagnosticTestId: number;
+};
+export type CatalogAddTestsVM = { 
+  testIds: number[] ;
+};
+
+export interface uomGroup {
+  id?: number;
+  description: string;              
+  name: string;
+}
+
+
+export interface UOMGroupUnit {
+  id?: number;
+  uom: string;              
+  uomOrder: number;
+  // uom_group_id: number;
+}
+
+export interface UOMGroupRelation {
+  id?: number;            
+  relation: number;
+  // uom_group_id: number;  
+  fromUnitId: number;
+  toUnitId: number;
+}
+export interface ActiveIngredientAdverseEffect {
+  id?: number;
+  activeIngredientId: number;
+  adverseEffect: string;
+}
+
+export interface ActiveIngredientDrugInteraction {
+  id?: number;
+  activeIngredientId: number;
+  interactedIngredientId: number;
+  severity: string;
+  description?: string | null;
+  createdBy: string,
+  createdDate: Date,
+  lastModifiedBy: string,
+  lastModifiedDate: Date,}
+
+export interface ActiveIngredientPreRequestedTest {
+  id?: number;
+  activeIngredientId: number;
+  testId: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface ActiveIngredientFoodInteraction {
+  id?: number;
+  activeIngredientId: number;
+  food: string;
+  severity: string;
+  description?: string | null;
+  createdBy: string,
+  createdDate: Date,
+  lastModifiedBy: string,
+  lastModifiedDate: Date,
+}
+
+export interface ActiveIngredientSpecialPopulation {
+  id?: number;
+  activeIngredientId: number;
+  specialPopulation: string;
+  considerations?: string | null;
+}
+
+  export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
