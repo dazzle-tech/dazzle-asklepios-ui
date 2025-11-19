@@ -121,7 +121,8 @@ const GenericMedications = () => {
         dispatch(notify({ msg: "Added successfully", sev: "success" }));
       }
       setOpenAddEditPopup(false);
-    } catch {
+    } catch(error) {
+      console.log(error)
       dispatch(notify({ msg: "Error saving medication", sev: "error" }));
     }
   };
