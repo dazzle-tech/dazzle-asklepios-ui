@@ -2,7 +2,6 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import { InventoryProduct } from '@/types/model-types-new';
-
 type Id = number | string;
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 
