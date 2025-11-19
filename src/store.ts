@@ -1,80 +1,82 @@
-import { MdAttachFile } from 'react-icons/md';
-import { configureStore } from '@reduxjs/toolkit';
-import uiSlice from './reducers/uiSlice';
-import { uiService } from '@/services/uiService';
+import patientSlice from '@/reducers/patientSlice';
+import { attachmentService } from '@/services/attachmentService';
 import { authService } from '@/services/authService';
 import { authServiceApi } from '@/services/authServiceApi';
-import { patientService } from '@/services/patientService';
-import patientSlice from '@/reducers/patientSlice';
-import { setupService } from '@/services/setupService';
+import { dentalService } from '@/services/dentalService';
 import { dvmService } from '@/services/dvmService';
 import { encounterService } from '@/services/encounterService';
-import { dentalService } from '@/services/dentalService';
-import { observationService } from '@/services/observationService';
-import { medicationsSetupService } from './services/medicationsSetupService';
-import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
-import { attachmentService } from '@/services/attachmentService';
-import { appointmentService } from './services/appointmentService';
-import { userService } from '@/services/userService';
-import divSlice from './reducers/divSlice';
-import { labService } from './services/labService';
-import { radService } from '@/services/radService';
-import { procedureService } from './services/procedureService';
-import { operationService } from './services/operationService';
-import { inventoryService } from './services/inventoryTransactionService';
-import refetchReducer from './reducers/refetchEncounterState';
-import { recoveryService } from './services/RecoveryService';
-import refetchPatientSideInfo from './reducers/refetchPatientSide';
-import { accountApi } from './services/accountService';
-import authReducer from './reducers/authSlice';
-import callReducer from './store/callSlice';
 import { enumsApi } from '@/services/enumsApi';
-import { facilityService } from './services/security/facilityService';
-import { departmentService } from './services/security/departmentService';
-import { roleService } from './services/security/roleService';
-import { userRoleService } from './services/security/UserRoleService';
-import { enumService } from './services/enumService';
-import { userDepartmentService } from './services/security/userDepartmentsService';
-import { MedicalsheetsService } from './services/MedicalSheetsService';
-import { serviceService } from './services/setup/serviceService';
-import { languageService } from './services/setup/languageService';
-import { translationService } from './services/setup/translationService';
-import { PractitionerService } from './services/setup/practitioner/PractitionerService';
-import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
-import {Icd10Service} from './services/setup/icd10service';
-import { patientAttachmentService } from './services/patients/attachmentService';
-import { ageGroupService } from './services/setup/ageGroupService';
-import {potintialService} from '@/services/potintialDuplicateService';
-import { allergensService } from './services/setup/allergensService';
+import { observationService } from '@/services/observationService';
+import { patientService } from '@/services/patientService';
+import { potintialService } from '@/services/potintialDuplicateService';
+import { radService } from '@/services/radService';
+import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
+import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
+import { BrandMedicationSubstituteService } from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
+import { CdtDentalActionService } from '@/services/setup/dental-action/CdtDentalActionService';
+import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
+import { diagnosticTestPathologyService } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { radiologyService } from '@/services/setup/diagnosticTest/radiologyTestService';
+import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
+import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
+import { setupService } from '@/services/setupService';
+import { uiService } from '@/services/uiService';
+import { userService } from '@/services/userService';
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './reducers/authSlice';
+import divSlice from './reducers/divSlice';
+import refetchReducer from './reducers/refetchEncounterState';
+import refetchPatientSideInfo from './reducers/refetchPatientSide';
+import uiSlice from './reducers/uiSlice';
+import { accountApi } from './services/accountService';
+import { appointmentService } from './services/appointmentService';
 import { encounterAttachmentsService } from './services/encounters/attachmentsService';
-import { cdtCodeService } from './services/setup/cdtCodeService';
-import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
+import { enumService } from './services/enumService';
 import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
-import { loincCodeService } from './services/setup/loincCodeService';
+import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
+import { inventoryService } from './services/inventoryTransactionService';
+import { labService } from './services/labService';
+import { MedicalsheetsService } from './services/MedicalSheetsService';
+import { medicationsSetupService } from './services/medicationsSetupService';
+import { operationService } from './services/operationService';
+import { newPatientService } from './services/patient/patientService';
+import { addressService } from './services/patients/AddressService';
+import { patientAttachmentService } from './services/patients/attachmentService';
+import { procedureService } from './services/procedureService';
+import { recoveryService } from './services/RecoveryService';
+import { departmentService } from './services/security/departmentService';
+import { facilityService } from './services/security/facilityService';
+import { roleService } from './services/security/roleService';
+import { userDepartmentService } from './services/security/userDepartmentsService';
+import { userRoleService } from './services/security/UserRoleService';
+import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
+import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
+import { ageGroupService } from './services/setup/ageGroupService';
+import { allergensService } from './services/setup/allergensService';
+import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService ';
+import { cdtCodeService } from './services/setup/cdtCodeService';
 import { cptCodeService } from './services/setup/cptCodeService';
+import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import { diagnosticTestProfileService } from './services/setup/diagnosticTest/diagnosticTestProfileService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
-import{diagnosticTestProfileService} from './services/setup/diagnosticTest/diagnosticTestProfileService';
-import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
-import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
-import { procedureSetupService } from './services/setup/procedure/procedureService';
+import { Icd10Service } from './services/setup/icd10service';
+import { languageService } from './services/setup/languageService';
+import { loincCodeService } from './services/setup/loincCodeService';
+import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
+import { PractitionerService } from './services/setup/practitioner/PractitionerService';
+import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
-import { vaccineService } from './services/vaccine/vaccineService';
+import { procedureSetupService } from './services/setup/procedure/procedureService';
+import { serviceService } from './services/setup/serviceService';
+import { translationService } from './services/setup/translationService';
 import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
-import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
 import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesIntervalService';
-import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
-import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
-import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
-import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
-import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-import {BrandMedicationService} from './services/setup/brandmedication/BrandMedicationService ';
-import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
-import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
-import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
-import {BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
-import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
+import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
+import { vaccineService } from './services/vaccine/vaccineService';
+import callReducer from './store/callSlice';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -94,13 +96,14 @@ export const store = configureStore({
     //setup
     [setupService.reducerPath]: setupService.reducer,
 
-    //inventory 
+    //inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
 
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
 
-    [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
+    [activeIngredientAdverseEffectService.reducerPath]:
+      activeIngredientAdverseEffectService.reducer,
 
     [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
 
@@ -127,19 +130,20 @@ export const store = configureStore({
     [patientAttachmentService.reducerPath]: patientAttachmentService.reducer,
     [encounterAttachmentsService.reducerPath]: encounterAttachmentsService.reducer,
     [inventoryTransferAttachmentService.reducerPath]: inventoryTransferAttachmentService.reducer,
-    [inventoryTransactionAttachmentService.reducerPath]: inventoryTransactionAttachmentService.reducer,
+    [inventoryTransactionAttachmentService.reducerPath]:
+      inventoryTransactionAttachmentService.reducer,
     //lab module
     [labService.reducerPath]: labService.reducer,
     //operation
     [operationService.reducerPath]: operationService.reducer,
     [radService.reducerPath]: radService.reducer,
-    // div slice 
+    // div slice
     [divSlice.name]: divSlice.reducer,
     //role
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
-    [MedicalsheetsService.reducerPath]:MedicalsheetsService.reducer,
+    [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
     //cpt code
     [cptCodeService.reducerPath]: cptCodeService.reducer,
     //refetch Encounters
@@ -147,9 +151,9 @@ export const store = configureStore({
     //refetch Patient Side Information
     refetchPatientSide: refetchPatientSideInfo,
 
-    //procedure 
+    //procedure
     [procedureService.reducerPath]: procedureService.reducer,
- 
+
     //prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
 
@@ -157,22 +161,22 @@ export const store = configureStore({
 
     [recoveryService.reducerPath]: recoveryService.reducer,
     [userService.reducerPath]: userService.reducer,
-    [potintialService.reducerPath] :potintialService.reducer,
+    [potintialService.reducerPath]: potintialService.reducer,
     call: callReducer,
 
     [facilityService.reducerPath]: facilityService.reducer,
     [departmentService.reducerPath]: departmentService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
-    [userDepartmentService.reducerPath]:userDepartmentService.reducer,
-    [PractitionerService.reducerPath]:PractitionerService.reducer,
-    [PractitionerDepartmentService.reducerPath]:PractitionerDepartmentService.reducer,
+    [userDepartmentService.reducerPath]: userDepartmentService.reducer,
+    [PractitionerService.reducerPath]: PractitionerService.reducer,
+    [PractitionerDepartmentService.reducerPath]: PractitionerDepartmentService.reducer,
 
     //Categories setup
     [MedicationCategoriesService.reducerPath]: MedicationCategoriesService.reducer,
     [MedicationCategoriesClassService.reducerPath]: MedicationCategoriesClassService.reducer,
 
-     // Language slice
+    // Language slice
     [languageService.reducerPath]: languageService.reducer,
 
     // Translation slice
@@ -181,11 +185,8 @@ export const store = configureStore({
     //service
     [serviceService.reducerPath]: serviceService.reducer,
 
-
     //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
-
-
 
     [Icd10Service.reducerPath]: Icd10Service.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
@@ -198,9 +199,9 @@ export const store = configureStore({
     [loincCodeService.reducerPath]: loincCodeService.reducer,
     [diagnosticTestProfileService.reducerPath]: diagnosticTestProfileService.reducer,
 
-    [diagnosticTestPathologyService.reducerPath]:diagnosticTestPathologyService.reducer,
+    [diagnosticTestPathologyService.reducerPath]: diagnosticTestPathologyService.reducer,
     [dentalActionService.reducerPath]: dentalActionService.reducer,
-    [diagnosticTestNormalRangeService.reducerPath]:diagnosticTestNormalRangeService.reducer,
+    [diagnosticTestNormalRangeService.reducerPath]: diagnosticTestNormalRangeService.reducer,
 
     //cdt code
     [cdtCodeService.reducerPath]: cdtCodeService.reducer,
@@ -220,7 +221,14 @@ export const store = configureStore({
     [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
-    [BrandMedicationActiveIngredientService.reducerPath]: BrandMedicationActiveIngredientService.reducer
+    [BrandMedicationActiveIngredientService.reducerPath]:
+      BrandMedicationActiveIngredientService.reducer,
+
+    // Patient
+    [newPatientService.reducerPath]: newPatientService.reducer,
+
+    //
+    [addressService.reducerPath]: addressService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -294,7 +302,9 @@ export const store = configureStore({
       BrandMedicationSubstituteService.middleware,
       prescriptionInstructionService.middleware,
       CdtDentalActionService.middleware,
-      BrandMedicationActiveIngredientService.middleware
+      BrandMedicationActiveIngredientService.middleware,
+      newPatientService.middleware,
+      addressService.middleware
     ])
 });
 

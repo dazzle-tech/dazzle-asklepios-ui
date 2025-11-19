@@ -1,5 +1,4 @@
-import { tr } from "date-fns/locale";
-import * as modelTypes from "./model-types-new";
+import * as modelTypes from './model-types-new';
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
   login: '',
@@ -20,14 +19,14 @@ export const newApUser: modelTypes.ApUser = {
   birthDate: null,
   gender: null,
   jobDescription: null,
-  jobRole: null,
+  jobRole: null
 };
 
 export const newCandidate: modelTypes.Candidate = {
   id: undefined,
   rule: '',
   fields: {},
-  isActive: true,
+  isActive: true
 };
 
 export const newDepartment: modelTypes.Department = {
@@ -45,8 +44,8 @@ export const newDepartment: modelTypes.Department = {
   email: '',
   encounterType: undefined,
   isActive: true,
-  hasMedicalSheets:false,
- hasNurseMedicalSheets:false
+  hasMedicalSheets: false,
+  hasNurseMedicalSheets: false
 };
 
 export const newFacility: modelTypes.Facility = {
@@ -61,9 +60,8 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  ruleId:null,
-} ;
-
+  ruleId: null
+};
 
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
@@ -75,19 +73,19 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   addressId: '',
   type: '',
   defaultCurrency: '',
-  isActive: true,
+  isActive: true
 };
 
 export const newRole: modelTypes.Role = {
   id: undefined,
   name: '',
   type: '',
-  facilityId: null,
+  facilityId: null
 };
 
 export const newUserRole: modelTypes.UserRole = {
   roleId: undefined,
-  userId: undefined,
+  userId: undefined
 };
 
 export const newUserDepartment: modelTypes.UserDepartment = {
@@ -97,7 +95,6 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   isActive: true,
   isDefault: false
 };
-
 
 // Patient Attachment Constructors
 export const newPatientAttachment: modelTypes.PatientAttachment = {
@@ -109,7 +106,7 @@ export const newPatientAttachment: modelTypes.PatientAttachment = {
   sizeBytes: 0,
   type: undefined,
   details: undefined,
-  source: undefined,
+  source: undefined
 };
 
 export const newUploadResponse: modelTypes.UploadResponse = {
@@ -117,12 +114,12 @@ export const newUploadResponse: modelTypes.UploadResponse = {
   filename: '',
   mimeType: '',
   sizeBytes: 0,
-  downloadUrl: '',
+  downloadUrl: ''
 };
 
 export const newDownloadTicket: modelTypes.DownloadTicket = {
   url: '',
-  expiresInSeconds: 0,
+  expiresInSeconds: 0
 };
 
 export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams = {
@@ -130,7 +127,7 @@ export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams
   file: undefined,
   type: undefined,
   details: undefined,
-  source: undefined,
+  source: undefined
 };
 
 // Encounter Attachment Constructors
@@ -144,7 +141,7 @@ export const newEncounterAttachment: modelTypes.EncounterAttachment = {
   type: undefined,
   details: undefined,
   source: undefined,
-  sourceId: undefined,
+  sourceId: undefined
 };
 
 export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttachmentParams = {
@@ -153,7 +150,7 @@ export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttac
   type: undefined,
   details: undefined,
   source: undefined,
-  sourceId: undefined,
+  sourceId: undefined
 };
 
 export const newService: modelTypes.Service = {
@@ -169,8 +166,7 @@ export const newService: modelTypes.Service = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined,
-
+  facilityId: undefined
 };
 
 export const newServiceItem: modelTypes.ServiceItem = {
@@ -182,14 +178,14 @@ export const newServiceItem: modelTypes.ServiceItem = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  isActive: true,
+  isActive: true
 };
 export const newLanguage: modelTypes.Language = {
   id: undefined,
   langKey: undefined,
   langName: undefined,
   direction: undefined,
-  details: undefined,
+  details: undefined
 };
 
 export const newPractitioner: modelTypes.Practitioner = {
@@ -211,7 +207,7 @@ export const newPractitioner: modelTypes.Practitioner = {
   dateOfBirth: undefined,
   jobRole: null,
   gender: null,
-  isActive: true,
+  isActive: true
 };
 
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
@@ -220,7 +216,7 @@ export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   translationKey: undefined,
   translationText: undefined,
   verified: undefined,
-  translated: undefined,
+  translated: undefined
 };
 
 export const newAgeGroup: modelTypes.AgeGroup = {
@@ -235,7 +231,7 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined,
+  facilityId: undefined
 };
 
 export const newProcedure: modelTypes.Procedure = {
@@ -253,7 +249,7 @@ export const newProcedure: modelTypes.Procedure = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined,
+  facilityId: undefined
 };
 
 export const newAllergen: modelTypes.Allergen = {
@@ -265,7 +261,7 @@ export const newAllergen: modelTypes.Allergen = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 export const newDiagnosticTest: modelTypes.DiagnosticTest = {
@@ -284,7 +280,7 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   specialNotes: '',
   isActive: true,
   isProfile: false,
-  appointable: false,
+  appointable: false
 };
 
 export const newLaboratory: modelTypes.Laboratory = {
@@ -313,44 +309,42 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
-  timing:null,
+  timing: null
 };
-
 
 // default empty object
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   id: undefined,
   testId: undefined,
   name: '',
-  resultUnit: ''};
-
-
+  resultUnit: ''
+};
 
 export const newPathology: modelTypes.Pathology = {
   id: undefined,
   testId: undefined,
-  category: "",
-  specimenType: "",
-  analysisProcedure: "",
+  category: '',
+  specimenType: '',
+  analysisProcedure: '',
   turnaroundTime: undefined,
-  timeUnit: "",
-  testDescription: "",
-  sampleHandling: "",
-  medicalIndications: "",
-  criticalValues: "",
-  preparationRequirements: "",
+  timeUnit: '',
+  testDescription: '',
+  sampleHandling: '',
+  medicalIndications: '',
+  criticalValues: '',
+  preparationRequirements: ''
 };
 
 export const newRadiology: modelTypes.Radiology = {
   id: undefined,
   testId: 0,
-  category: "",
+  category: '',
   imageDuration: null,
-  testInstructions: "",
-  medicalIndications: "",
-  turnaroundTimeUnit: "",
+  testInstructions: '',
+  medicalIndications: '',
+  turnaroundTimeUnit: '',
   turnaroundTime: undefined,
-  associatedRisks: "",
+  associatedRisks: ''
 };
 
 export const newMedicationCategory: modelTypes.MedicationCategory = {
@@ -407,12 +401,13 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   doseAdjustmentPugC: null
 };
 
-export const newDentalAction: modelTypes.DentalAction={
-  id: null,               // Primary key (auto-generated)
-  description: '',        // Mandatory field
-  type:null,    // Enum (mandatory)
-  imageName: null,  // Optional image file name
-  isActive: true,  }
+export const newDentalAction: modelTypes.DentalAction = {
+  id: null, // Primary key (auto-generated)
+  description: '', // Mandatory field
+  type: null, // Enum (mandatory)
+  imageName: null, // Optional image file name
+  isActive: true
+};
 export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
   id: undefined,
   testId: 0,
@@ -424,7 +419,7 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
   ageToUnit: undefined,
   condition: undefined,
 
-  resultType: "", 
+  resultType: '',
   resultText: undefined,
   resultLov: undefined,
   normalRangeType: undefined,
@@ -439,37 +434,35 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
   profileTestId: undefined,
   isProfile: false,
 
-  lovKeys: [],
-}
+  lovKeys: []
+};
 
 export const newProcedureCoding: modelTypes.ProcedureCoding = {
   id: undefined,
-  procedureId: undefined,        
-  codeType: 'CPT_CODES',           
-  codeId: '',                      
+  procedureId: undefined,
+  codeType: 'CPT_CODES',
+  codeId: '',
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   id: undefined,
-  procedureId: undefined,      
-  price: 0,                    
-  currency: 'USD',            
+  procedureId: undefined,
+  price: 0,
+  currency: 'USD',
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
-
+  lastModifiedDate: null
 };
 
-
-export const newBrandMedication:modelTypes.BrandMedication= {
+export const newBrandMedication: modelTypes.BrandMedication = {
   id: undefined, // Optional because it's generated by backend
   name: '',
-  code:'',
+  code: '',
   manufacturer: '',
   dosageForm: '',
   usageInstructions: '',
@@ -482,26 +475,24 @@ export const newBrandMedication:modelTypes.BrandMedication= {
   costCategory: '',
   roa: '',
   isActive: true,
-  hasActiveIngredient:false,
+  hasActiveIngredient: false
   // 🟡 future fields (currently commented out in backend)
   // uomGroupId?: null,
   // uomGroupUnitId?: null
-}
+};
 
-export const newSubstitute:modelTypes.Substitute={
-  brandId:undefined,
-  alternativeBrandId:undefined
-}
-;
+export const newSubstitute: modelTypes.Substitute = {
+  brandId: undefined,
+  alternativeBrandId: undefined
+};
 export const newPrescriptionInstructions: modelTypes.prescriptionInstructions = {
   id: undefined,
   category: '',
   dose: 0,
-  unit: "",
-  rout: "",
-  frequency: ""
+  unit: '',
+  rout: '',
+  frequency: ''
 };
-
 
 export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndication = {
   id: undefined,
@@ -564,30 +555,29 @@ export const newVaccineDose: modelTypes.VaccineDose = {
 };
 export const newVaccineDosesInterval: modelTypes.VaccineDosesInterval = {
   id: undefined,
-  vaccineId: 0,       
-  fromDoseId: 0,   
-  toDoseId: 0,     
-  intervalBetweenDoses: 0,  
+  vaccineId: 0,
+  fromDoseId: 0,
+  toDoseId: 0,
+  intervalBetweenDoses: 0,
   unit: 'DAYS',
   isActive: true,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null
-}
+};
 export const newCdtDentalAction: modelTypes.CdtDentalAction = {
   dentalActionId: undefined,
-  cdtId: undefined,
+  cdtId: undefined
 };
 
-
-export const newBrandMedicationActiveIngredient:modelTypes.BrandMedicationActiveIngredient={
-    id:undefined,
-    brandId:undefined,
-    activeIngredientId:undefined,
-    strength: undefined,
-    unit:'',
-  }
+export const newBrandMedicationActiveIngredient: modelTypes.BrandMedicationActiveIngredient = {
+  id: undefined,
+  brandId: undefined,
+  activeIngredientId: undefined,
+  strength: undefined,
+  unit: ''
+};
 
 export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   id: 0,
@@ -602,19 +592,19 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   name: '',
   description: null,
   type: '',
-  departmentId: 0,
+  departmentId: 0
 };
 
 export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   name: '',
   description: null,
   type: '',
-  departmentId: 0,
+  departmentId: 0
 };
 export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
   id: 0,
   catalogId: 0,
-  diagnosticTestId: 0,
+  diagnosticTestId: 0
 };
 export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
   testIds: []
@@ -626,3 +616,78 @@ export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdvers
   adverseEffect: ''
 };
 
+export const newPatient: modelTypes.Patient = {
+  id: undefined,
+  mrn: '',
+
+  firstName: '',
+  secondName: '',
+  thirdName: '',
+  lastName: '',
+
+  sexAtBirth: null,
+  dateOfBirth: null,
+
+  patientClasses: '',
+  isPrivatePatient: false,
+
+  firstNameSecondaryLang: '',
+  secondNameSecondaryLang: '',
+  thirdNameSecondaryLang: '',
+  lastNameSecondaryLang: '',
+
+  primaryMobileNumber: '',
+  receiveSms: false,
+  secondMobileNumber: '',
+  homePhone: '',
+  workPhone: '',
+  email: '',
+  receiveEmail: false,
+  preferredWayOfContact: null,
+
+  nativeLanguage: '',
+  emergencyContactName: '',
+  emergencyContactRelation: '',
+  emergencyContactPhone: '',
+
+  role: '',
+  maritalStatus: '',
+  nationality: '',
+  religion: '',
+  ethnicity: '',
+  occupation: '',
+  responsibleParty: '',
+  educationalLevel: '',
+
+  previousId: '',
+  archivingNumber: '',
+
+  details: '',
+  isUnknown: false,
+
+  isVerified: false,
+  isCompletedPatient: false,
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newAddress: modelTypes.Address = {
+  id: undefined,
+  patientId: 0,
+  country: '',
+  stateProvince: '',
+  city: '',
+  streetName: '',
+  houseApartmentNumber: '',
+  postalZipCode: '',
+  additionalAddressLine: '',
+  countryId: '',
+  isCurrent: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};

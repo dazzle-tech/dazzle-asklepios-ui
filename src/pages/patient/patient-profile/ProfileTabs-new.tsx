@@ -1,24 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import type { ApPatient } from '@/types/model-types';
-import { Panel, Tabs } from 'rsuite';
-import { useGetAgeGroupValueQuery } from '@/services/patientService';
-import { calculateAgeFormat } from '@/utils';
-import DemographicsTab from './tabs/DemographicsTab';
-import ExtraDetailsTab from './tabs/ExtraDetailsTab';
-import InsuranceTab from './tabs/InsuranceTab';
-import ConsentFormTab from './ConsentFormTab';
-import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
-import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
-import SecondaryIDTab from './tabs/ExtraDetails/SecondaryIDTab';
-import PatientAttachment from './tabs/Attachment-new/PatientAttachment';
-import Translate from '@/components/Translate';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 import MyTab from '@/components/MyTab';
+import Translate from '@/components/Translate';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetAgeGroupValueQuery } from '@/services/patientService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { Patient } from '@/types/model-types-new';
+import { calculateAgeFormat } from '@/utils';
+import React, { useEffect, useState } from 'react';
+import { Panel } from 'rsuite';
+import ConsentFormTab from './ConsentFormTab';
+import PatientAttachment from './tabs/Attachment-new/PatientAttachment';
+import DemographicsTab from './tabs/DemographicsTab';
+import SecondaryIDTab from './tabs/ExtraDetails/SecondaryIDTab';
+import ExtraDetailsTab from './tabs/ExtraDetailsTab';
+import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
+import InsuranceTab from './tabs/InsuranceTab';
+import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
+import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 
 interface ProfileTabsProps {
-  localPatient: ApPatient;
-  setLocalPatient: (patient: ApPatient) => void;
+  localPatient: Patient;
+  setLocalPatient: (patient: Patient) => void;
   validationResult: any;
   setRefetchAttachmentList: (value: boolean) => void;
   refetchAttachmentList: boolean;
@@ -42,17 +43,16 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   // Fetch age group data
   const { data: patientAgeGroupResponse } = useGetAgeGroupValueQuery(
     {
-      dob: localPatient?.dob ? new Date(localPatient.dob).toISOString() : null
+      dob: localPatient?.dateOfBirth ? new Date(localPatient.dateOfBirth).toISOString() : null
     },
-    { skip: !localPatient?.dob }
+    { skip: !localPatient?.dateOfBirth }
   );
 
   // Fetch LOV data for various fields
-  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const genderEnum = useEnumOptions('Gender');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
-  const { data: bloodGroupLovQueryResponse } = useGetLovValuesByCodeQuery('BLOOD_GROUPS');
 
   const tabData = [
     {
@@ -62,11 +62,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           localPatient={localPatient}
           setLocalPatient={setLocalPatient}
           validationResult={validationResult}
-          genderLovQueryResponse={genderLovQueryResponse}
+          genderEnum={genderEnum}
           docTypeLovQueryResponse={docTypeLovQueryResponse}
           countryLovQueryResponse={countryLovQueryResponse}
           patientClassLovQueryResponse={patientClassLovQueryResponse}
-          bloodGroupLovQueryResponse={bloodGroupLovQueryResponse}
           ageFormatType={ageFormatType}
           ageGroupValue={ageGroupValue}
         />
@@ -95,11 +94,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     },
     {
       title: 'Consent Forms',
-      content: <ConsentFormTab patient={localPatient} isClick={!localPatient.key} />
+      content: <ConsentFormTab patient={localPatient} isClick={!localPatient.id} />
     },
     {
       title: 'Preferred Health Professional',
-      content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.key} />
+      content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
     },
     { title: 'Family Members', content: <PatientFamilyMembers localPatient={localPatient} /> },
     { title: 'Secondary ID', content: <SecondaryIDTab localPatient={localPatient} /> },
@@ -116,8 +115,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   ];
   // Update age format when DOB changes
   useEffect(() => {
-    if (localPatient?.dob) {
-      const calculatedFormat = calculateAgeFormat(localPatient.dob);
+    if (localPatient?.dateOfBirth) {
+      const calculatedFormat = calculateAgeFormat(localPatient.dateOfBirth);
       setAgeFormatType(prevState => ({
         ...prevState,
         ageFormat: calculatedFormat
@@ -128,7 +127,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         ageFormat: ''
       }));
     }
-  }, [localPatient?.dob]);
+  }, [localPatient?.dateOfBirth]);
 
   // Update age group when response changes
   useEffect(() => {
@@ -148,9 +147,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           </h5>
         }
       >
-        <MyTab 
-         data={tabData}
-        />
+        <MyTab data={tabData} />
       </Panel>
     </>
   );

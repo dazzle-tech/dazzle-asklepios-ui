@@ -1,33 +1,39 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { useAppSelector } from '@/hooks';
-import type { ApAttachment, ApPatient } from '@/types/model-types';
-import { faBroom, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import MyButton from '@/components/MyButton/MyButton';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import {
+  useGetPatientProfilePictureQuery,
+  useUploadAttachmentsMutation
+} from '@/services/patients/attachmentService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import type { ApAttachment } from '@/types/model-types';
+import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
-import { useGetPatientProfilePictureQuery, useUploadAttachmentsMutation } from '@/services/patients/attachmentService';
-import { AvatarGroup, Avatar, Whisper, Tooltip, Form, Stack, Popover, Dropdown } from 'rsuite';
+import { notify } from '@/utils/uiReducerActions';
+import {
+  faBars,
+  faBroom,
+  faCalendarCheck,
+  faCalendarDay,
+  faCheckDouble,
+  faEllipsisVertical,
+  faHandHoldingDollar,
+  faPersonCircleQuestion,
+  faPrint,
+  faThumbsUp,
+  faTriangleExclamation,
+  faUsersLine
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
+import React, { useCallback, useRef, useState } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
-import MyButton from '@/components/MyButton/MyButton';
+import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
 import AdministrativeWarningsModal from './AdministrativeWarning';
-import { useAppDispatch } from '@/hooks';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { notify } from '@/utils/uiReducerActions';
-import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
-import { faThumbsUp } from '@fortawesome/free-solid-svg-icons';
-import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
-import { faCalendarDay } from '@fortawesome/free-solid-svg-icons';
-import { faHandHoldingDollar } from '@fortawesome/free-solid-svg-icons';
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { faPersonCircleQuestion } from '@fortawesome/free-solid-svg-icons';
-import { faUsersLine } from '@fortawesome/free-solid-svg-icons';
-import { faBars } from '@fortawesome/free-solid-svg-icons';
-import { faPrint } from '@fortawesome/free-solid-svg-icons';
-import Translate from '@/components/Translate';
 
 interface ProfileHeaderProps {
-  localPatient: ApPatient;
+  localPatient: Patient;
   handleSave: () => void;
   handleClear: () => void;
   setVisitHistoryModel: (value: boolean) => void;
@@ -50,7 +56,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenRegistrationWarningsSummary,
   setOpenBulkRegistrationModal
 }) => {
-  const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
@@ -59,11 +64,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  
+
   // Fetch patient profile image using new API (returns DownloadTicket directly)
   // Convert key (string) to number for patientId
-  const patientId = localPatient?.key ? Number(localPatient.key) : undefined;
-  const { data: profilePictureTicket, refetch: refetchProfilePicture, isError } = useGetPatientProfilePictureQuery(
+  const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
+  const {
+    data: profilePictureTicket,
+    refetch: refetchProfilePicture,
+    isError
+  } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
@@ -73,9 +82,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <Popover full>
       <Dropdown.Menu>
         <Dropdown.Item
-          disabled={localPatient.key === undefined}
+          disabled={localPatient.id === undefined}
           onClick={() => {
-            if (!(localPatient.key === undefined)) {
+            if (!(localPatient.id === undefined)) {
               setOpenMoreMenu(false);
               setVisitHistoryModel(true);
             }
@@ -152,10 +161,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <Popover full>
       <Dropdown.Menu>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1"><Translate>Print Information</Translate></div>
+          <div className="container-of-icon-and-key1">
+            <Translate>Print Information</Translate>
+          </div>
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-          <div className="container-of-icon-and-key1"><Translate>Print Patient Label</Translate></div>
+          <div className="container-of-icon-and-key1">
+            <Translate>Print Patient Label</Translate>
+          </div>
         </Dropdown.Item>
       </Dropdown.Menu>
     </Popover>
@@ -163,7 +176,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   // Handle image click for upload
   const handleImageClick = () => {
-    if (localPatient.key) profileImageFileInputRef.current.click();
+    if (localPatient.id) profileImageFileInputRef.current.click();
   };
 
   // Handle file change for profile image using new API
@@ -175,7 +188,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       try {
         await uploadAttachments({
           patientId: patientId,
-          file: selectedFile, 
+          file: selectedFile,
           type: undefined,
           details: 'Profile Picture',
           source: 'PATIENT_PROFILE_PICTURE'
@@ -203,21 +216,21 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   // Effects for patient image - use the download URL from the profile picture ticket or from patient object
   React.useEffect(() => {
     const patientWithUrl = localPatient as any;
-    
+
     // Priority 1: Use profilePictureUrl from PatientCard if available
     if (patientWithUrl?.profilePictureUrl) {
       setPatientImageUrl(patientWithUrl.profilePictureUrl);
       setPatientImage({ url: patientWithUrl.profilePictureUrl } as any);
-      return; // Exit early
+      return;
     }
-    
+
     // Priority 2: Use fetched profile picture from API
     if (profilePictureTicket && profilePictureTicket.url && !isError) {
       setPatientImageUrl(profilePictureTicket.url);
       setPatientImage({ url: profilePictureTicket.url } as any);
-      return; // Exit early
+      return;
     }
-    
+
     // Priority 3: No picture available or error - clear it
     setPatientImageUrl('');
     setPatientImage(undefined);
@@ -244,7 +257,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   ? patientImageUrl
                   : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
               }
-              alt={localPatient?.fullName}
+              alt={localPatient?.firstName}
               className="avatar-image"
             />
             <div className="avatar-container">
@@ -252,51 +265,53 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 {localPatient?.firstName} {localPatient?.lastName}
               </span>
               <div className="patient-info">
-                {localPatient.key != undefined && <FaUser />}
+                {localPatient.id != undefined && <FaUser />}
                 {
-                  genderLovQueryResponse?.object?.find(item => item.key === localPatient.genderLkey)
+                  genderLovQueryResponse?.object?.find(item => item.key === localPatient.sexAtBirth)
                     ?.lovDisplayVale
                 }
-                {localPatient.key !== undefined && calculateAgeFormat(localPatient.dob) && ','}
-                {localPatient.dob && `${calculateAgeFormat(localPatient.dob)} old`}{' '}
+                {localPatient.id !== undefined &&
+                  calculateAgeFormat(localPatient.dateOfBirth) &&
+                  ','}
+                {localPatient.dateOfBirth && `${calculateAgeFormat(localPatient.dateOfBirth)} old`}{' '}
               </div>
               <span className="patient-mrn">
-                {localPatient.key != undefined && `# `}
-                {localPatient?.patientMrn}
+                {localPatient.id != undefined && `# `}
+                {localPatient?.mrn}
               </span>
             </div>
             <div className="status-icons-container">
-              {localPatient.key && (
+              {localPatient.id && (
                 <Whisper
                   placement="top"
                   controlId="control-id-click"
                   trigger="hover"
                   speaker={
                     <Tooltip>
-                      {localPatient.verified ? 'Verified Patient' : 'Unverified Patient'}
+                      {localPatient.isVerified ? 'Verified Patient' : 'Unverified Patient'}
                     </Tooltip>
                   }
                 >
                   <div className="status-icon">
-                    {!localPatient.verified && <Icon color="red" as={VscUnverified} />}
-                    {localPatient.verified && <Icon color="green" as={VscVerified} />}
+                    {!localPatient.isVerified && <Icon color="red" as={VscUnverified} />}
+                    {localPatient.isVerified && <Icon color="green" as={VscVerified} />}
                   </div>
                 </Whisper>
               )}
-              {localPatient.key && (
+              {localPatient.id && (
                 <Whisper
                   placement="bottom"
                   controlId="control-id-click"
                   trigger="hover"
                   speaker={
                     <Tooltip>
-                      {localPatient.incompletePatient ? 'Incomplete Patient' : 'Complete Patient'}
+                      {localPatient.isCompletedPatient ? 'Incomplete Patient' : 'Complete Patient'}
                     </Tooltip>
                   }
                 >
                   <div className="status-icon">
-                    {localPatient.incompletePatient && <Icon color="red" as={VscUnverified} />}
-                    {!localPatient.incompletePatient && <Icon color="green" as={VscVerified} />}
+                    {localPatient.isCompletedPatient && <Icon color="red" as={VscUnverified} />}
+                    {!localPatient.isCompletedPatient && <Icon color="green" as={VscVerified} />}
                   </div>
                 </Whisper>
               )}
@@ -310,12 +325,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
               >
-                Save
+                {localPatient?.id ? 'Edit' : 'Save'}
               </MyButton>
+
               <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
                 Clear
               </MyButton>
-              <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
+              <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
                 Quick Appointment
               </MyButton>
 

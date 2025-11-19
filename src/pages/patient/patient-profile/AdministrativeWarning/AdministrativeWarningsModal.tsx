@@ -1,30 +1,38 @@
-import React, { useState } from 'react';
-import { type ApPatient, type ApPatientAdministrativeWarnings } from '@/types/model-types';
-import { newApPatientAdministrativeWarnings } from '@/types/model-types-constructor';
-import { InputGroup, Badge, Form, Input, Button } from 'rsuite';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import MyInput from '@/components/MyInput';
-import { useGetPatientAdministrativeWarningsQuery, useSavePatientAdministrativeWarningsMutation, useUpdatePatientAdministrativeWarningsMutation, useDeletePatientAdministrativeWarningsMutation } from '@/services/patientService';
-import SearchIcon from '@rsuite/icons/Search';
-import { initialListRequest, type ListRequest } from '@/types/types';
-import { fromCamelCaseToDBName } from '@/utils';
-import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
-import { faCalendarXmark } from '@fortawesome/free-solid-svg-icons';
-import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import { faRotateLeft } from '@fortawesome/free-solid-svg-icons';
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarDay } from '@fortawesome/free-solid-svg-icons';
-import './styles.less'
 import ChildModal from '@/components/ChildModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import {
+  useDeletePatientAdministrativeWarningsMutation,
+  useGetPatientAdministrativeWarningsQuery,
+  useSavePatientAdministrativeWarningsMutation,
+  useUpdatePatientAdministrativeWarningsMutation
+} from '@/services/patientService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { type ApPatientAdministrativeWarnings } from '@/types/model-types';
+import { newApPatientAdministrativeWarnings } from '@/types/model-types-constructor';
+import { Patient } from '@/types/model-types-new';
+import { initialListRequest, type ListRequest } from '@/types/types';
+import { fromCamelCaseToDBName } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import {
+  faCalendarCheck,
+  faCalendarDay,
+  faCalendarXmark,
+  faCircleCheck,
+  faPlus,
+  faRotateLeft,
+  faTrashCan,
+  faTriangleExclamation
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import SearchIcon from '@rsuite/icons/Search';
+import React, { useState } from 'react';
+import { Badge, Button, Form, Input, InputGroup } from 'rsuite';
+import './styles.less';
 interface AdministrativeWarningsModalProps {
-  localPatient: ApPatient;
+  localPatient: Patient;
   validationResult: any;
 }
 const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = ({
@@ -35,10 +43,12 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
   const [open, setOpen] = useState(false);
 
   const [administrativeWarningDetails, setAdministrativeWarningDetails] = useState({ Details: '' });
-  const [patientAdministrativeWarnings, setPatientAdministrativeWarnings] = useState<ApPatientAdministrativeWarnings>({ ...newApPatientAdministrativeWarnings });
+  const [patientAdministrativeWarnings, setPatientAdministrativeWarnings] =
+    useState<ApPatientAdministrativeWarnings>({ ...newApPatientAdministrativeWarnings });
   const [openChildModal, setOpenChildModal] = useState(false);
   // Fetch LOV data for various fields
-  const { data: administrativeWarningsLovQueryResponse, isLoading } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
+  const { data: administrativeWarningsLovQueryResponse, isLoading } =
+    useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
 
   // Mutations
   const [savePatientAdministrativeWarnings] = useSavePatientAdministrativeWarningsMutation();
@@ -129,13 +139,16 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
       ]
     };
   };
-  // Handle new Add Patient warning 
+  // Handle new Add Patient warning
   const AddNewAdministrativeWarning = () => {
-    setPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings, warningTypeLkey: null });
-    setAdministrativeWarningDetails({ Details: '' })
+    setPatientAdministrativeWarnings({
+      ...newApPatientAdministrativeWarnings,
+      warningTypeLkey: null
+    });
+    setAdministrativeWarningDetails({ Details: '' });
     setOpenChildModal(true);
-  }
-  // Handle save Patient warning 
+  };
+  // Handle save Patient warning
   const handleSavePatientAdministrativeWarnings = () => {
     savePatientAdministrativeWarnings({
       ...patientAdministrativeWarnings,
@@ -157,8 +170,8 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
       });
   };
 
-  // Handle resolve Patient warning 
-  const handleUpdateAdministrativeWarningsResolved = (warning) => {
+  // Handle resolve Patient warning
+  const handleUpdateAdministrativeWarningsResolved = warning => {
     updatePatientAdministrativeWarnings({
       ...warning,
       dateResolved: new Date().toISOString(),
@@ -171,9 +184,8 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         dispatch(notify('Resolved Successfully'));
       });
   };
-  console.log("warning-->", warnings);
-  // Handle undo resolve Patient warning 
-  const handleUpdateAdministrativeWarningsUnDoResolved = (warning) => {
+  // Handle undo resolve Patient warning
+  const handleUpdateAdministrativeWarningsUnDoResolved = warning => {
     updatePatientAdministrativeWarnings({
       ...warning,
       resolutionUndoDate: new Date().toISOString(),
@@ -187,8 +199,8 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
       });
   };
 
-  // Handle delete Patient warning 
-  const handleDeletePatientAdministrativeWarnings = (warning) => {
+  // Handle delete Patient warning
+  const handleDeletePatientAdministrativeWarnings = warning => {
     deletePatientAdministrativeWarnings({
       ...warning
     })
@@ -198,19 +210,22 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         dispatch(notify({ msg: 'Deleted Successfully', sev: 'success' }));
       });
   };
-  // Main Modal Content 
+  // Main Modal Content
   const mainContent = (
     <div>
-      <div className='search-in-list-cards'>
-        <InputGroup inside >
-          <Input
-            placeholder="Search"
-          />
+      <div className="search-in-list-cards">
+        <InputGroup inside>
+          <Input placeholder="Search" />
           <InputGroup.Button>
             <SearchIcon />
           </InputGroup.Button>
         </InputGroup>
-        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={AddNewAdministrativeWarning}>Add</MyButton>
+        <MyButton
+          prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+          onClick={AddNewAdministrativeWarning}
+        >
+          Add
+        </MyButton>
       </div>
       {isLoading ? (
         <div className="loader-card-container">
@@ -219,18 +234,20 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
       ) : (
         <div className="patient-warning-list">
           {warnings?.object.map(warning => (
-            <div className='main-card-container' key={warning.id}>
+            <div className="main-card-container" key={warning.id}>
               <div className="left-side-card">
-                <div className='card-content'>
-                  <div className='type-card-content'>
-                    <span className='title-type-card-content'><Translate>Type</Translate></span>
-                    <span className='custom-type-card-content'>
+                <div className="card-content">
+                  <div className="type-card-content">
+                    <span className="title-type-card-content">
+                      <Translate>Type</Translate>
+                    </span>
+                    <span className="custom-type-card-content">
                       {warning.warningTypeLvalue
                         ? warning.warningTypeLvalue.lovDisplayVale
                         : warning.warningTypeLkey}
                     </span>
                   </div>
-                  <div className='status-card-content'>
+                  <div className="status-card-content">
                     {warning?.isValid ? (
                       <Badge content="Active" className="status-active" />
                     ) : (
@@ -238,49 +255,74 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                     )}
                   </div>
                 </div>
-                <div className='card-content'>
-                  <div className='description-card-content'>
-                    <span className='title-type-card-content'><Translate>Description</Translate></span>
-                    <span className='custom-description-card-content'>{warning?.description}</span>
+                <div className="card-content">
+                  <div className="description-card-content">
+                    <span className="title-type-card-content">
+                      <Translate>Description</Translate>
+                    </span>
+                    <span className="custom-description-card-content">{warning?.description}</span>
                   </div>
                 </div>
-                <div className='card-content'>
-                  <div className='card-action-by-at'>
-                    <span className='title-type-card-content'>
-                      <FontAwesomeIcon icon={faCalendarDay} className='title-type-card-content' /><Translate>ADDITION BY/DATE</Translate>
+                <div className="card-content">
+                  <div className="card-action-by-at">
+                    <span className="title-type-card-content">
+                      <FontAwesomeIcon icon={faCalendarDay} className="title-type-card-content" />
+                      <Translate>ADDITION BY/DATE</Translate>
                     </span>
-                    <span className='custom-description-card-content'>
-                      {warning?.createdBy ? warning?.createdBy : "By User"}
+                    <span className="custom-description-card-content">
+                      {warning?.createdBy ? warning?.createdBy : 'By User'}
                     </span>
-                    <span className='custom-date-card-content'>
-                      {warning?.createdAt ? new Date(warning.createdAt).toLocaleDateString('en-CA') : ''}
+                    <span className="custom-date-card-content">
+                      {warning?.createdAt
+                        ? new Date(warning.createdAt).toLocaleDateString('en-CA')
+                        : ''}
                     </span>
                   </div>
-                  <div className='card-action-by-at'>
-                    <span className='title-type-card-content'>
-                      <FontAwesomeIcon icon={faCalendarCheck} className='title-type-card-content' /><Translate>RESOLVED BY/DATE</Translate>
+                  <div className="card-action-by-at">
+                    <span className="title-type-card-content">
+                      <FontAwesomeIcon icon={faCalendarCheck} className="title-type-card-content" />
+                      <Translate>RESOLVED BY/DATE</Translate>
                     </span>
-                    <span className='custom-description-card-content'>{warning?.resolvedBy}</span>
-                    <span className='custom-date-card-content'>{warning?.dateResolved}</span>
+                    <span className="custom-description-card-content">{warning?.resolvedBy}</span>
+                    <span className="custom-date-card-content">{warning?.dateResolved}</span>
                   </div>
-                  <div className='card-action-by-at'>
-                    <span className='title-type-card-content'>
-                      <FontAwesomeIcon icon={faCalendarXmark} className='title-type-card-content' /> <Translate>RESOLUTION UNDO BY/DATE</Translate>
+                  <div className="card-action-by-at">
+                    <span className="title-type-card-content">
+                      <FontAwesomeIcon icon={faCalendarXmark} className="title-type-card-content" />{' '}
+                      <Translate>RESOLUTION UNDO BY/DATE</Translate>
                     </span>
-                    <span className='custom-description-card-content'>{warning?.resolvedUndoBy}</span>
-                    <span className='custom-date-card-content'>{warning?.resolutionUndoDate}</span>
+                    <span className="custom-description-card-content">
+                      {warning?.resolvedUndoBy}
+                    </span>
+                    <span className="custom-date-card-content">{warning?.resolutionUndoDate}</span>
                   </div>
                 </div>
               </div>
               <div className="right-side-card">
-                <Button className='custom-btn-action'
-                  disabled={!warning.isValid} onClick={() => { handleUpdateAdministrativeWarningsResolved(warning) }}>
+                <Button
+                  className="custom-btn-action"
+                  disabled={!warning.isValid}
+                  onClick={() => {
+                    handleUpdateAdministrativeWarningsResolved(warning);
+                  }}
+                >
                   <FontAwesomeIcon icon={faCircleCheck} />
                 </Button>
-                <Button className='custom-btn-action' disabled={warning.isValid == undefined || warning.isValid} onClick={() => { handleUpdateAdministrativeWarningsUnDoResolved(warning) }}>
+                <Button
+                  className="custom-btn-action"
+                  disabled={warning.isValid == undefined || warning.isValid}
+                  onClick={() => {
+                    handleUpdateAdministrativeWarningsUnDoResolved(warning);
+                  }}
+                >
                   <FontAwesomeIcon icon={faRotateLeft} />
                 </Button>
-                <Button className='custom-btn-action' onClick={() => { handleDeletePatientAdministrativeWarnings(warning) }}>
+                <Button
+                  className="custom-btn-action"
+                  onClick={() => {
+                    handleDeletePatientAdministrativeWarnings(warning);
+                  }}
+                >
                   <FontAwesomeIcon icon={faTrashCan} />
                 </Button>
               </div>
@@ -291,7 +333,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     </div>
   );
 
-  // const Child Content 
+  // const Child Content
   const childContent = (
     <Form fluid>
       <MyInput
@@ -321,7 +363,6 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     </Form>
   );
 
-
   // Update filters when patient changes
   React.useEffect(() => {
     const updatedFilters = [
@@ -348,18 +389,25 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         appearance="ghost"
         disabled={!localPatient.key}
         onClick={() => setOpen(true)}
-        color={warnings?.extraNumeric > 0 ? "orange" : "var(--primary-blue)"}
-      >Administrative Warnings</MyButton>
+        color={warnings?.extraNumeric > 0 ? 'orange' : 'var(--primary-blue)'}
+      >
+        Administrative Warnings
+      </MyButton>
       <ChildModal
         open={open}
         setOpen={setOpen}
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
-        title='Administrative Warnings'
+        title="Administrative Warnings"
         mainContent={mainContent}
         childTitle="Add New"
         childContent={childContent}
-        childStep={[{ title: "Administrative Warning", icon: <FontAwesomeIcon icon={faTriangleExclamation} /> }]}
+        childStep={[
+          {
+            title: 'Administrative Warning',
+            icon: <FontAwesomeIcon icon={faTriangleExclamation} />
+          }
+        ]}
         mainSize="sm"
         childSize="xs"
         hideActionBtn={true}
