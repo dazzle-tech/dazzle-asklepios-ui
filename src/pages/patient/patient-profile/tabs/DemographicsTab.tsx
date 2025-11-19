@@ -1,13 +1,11 @@
-import React from 'react';
-import { Col, Row, Stack } from 'rsuite';
 import SectionContainer from '@/components/SectionsoContainer';
-import ContactTab from './ContactTab';
-import AddressTab from './AddressTab';
-import BasicInfo from './BasicInfo';
-import DocumentInfo from './DocumentInfo';
 import Translate from '@/components/Translate';
 import { Patient } from '@/types/model-types-new';
-import MyButton from '@/components/MyButton/MyButton';
+import React from 'react';
+import { Col, Row, Stack } from 'rsuite';
+import AddressTab from './AddressTab';
+import BasicInfo from './BasicInfo';
+import ContactTab from './ContactTab';
 import './styles.less';
 
 interface DemographicsTabProps {
@@ -33,7 +31,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   ageFormatType,
   ageGroupValue
 }) => {
-
   return (
     <Stack>
       <Stack.Item grow={1}></Stack.Item>

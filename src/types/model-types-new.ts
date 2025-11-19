@@ -1,1218 +1,1419 @@
-import * as modelTypes from './model-types-new';
-
-// ------------------- ApUser -------------------
-export const newApUser: modelTypes.ApUser = {
-  id: undefined,
-  login: '',
-  passwordHash: '',
-  firstName: null,
-  lastName: null,
-  email: null,
-  imageUrl: null,
-  activated: false,
-  langKey: null,
-  resetKey: null,
-  createdBy: '',
-  createdDate: null,
-  resetDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
-  phoneNumber: null,
-  birthDate: null,
-  gender: null,
-  jobDescription: null,
-  jobRole: null
-};
-
-// ------------------- Candidate -------------------
-export const newCandidate: modelTypes.Candidate = {
-  id: undefined,
-  rule: '',
-  fields: {},
-  isActive: true
-};
-
-// ------------------- Department -------------------
-export const newDepartment: modelTypes.Department = {
-  id: undefined,
-  facilityId: undefined,
-  name: '',
-  createdBy: '',
-  createdDate: undefined,
-  lastModifiedBy: undefined,
-  lastModifiedDate: undefined,
-  departmentType: undefined,
-  appointable: undefined,
-  departmentCode: '',
-  phoneNumber: '',
-  email: '',
-  encounterType: undefined,
-  isActive: true,
-  hasMedicalSheets: false,
-  hasNurseMedicalSheets: false
-};
-
-// ------------------- Facility -------------------
-export const newFacility: modelTypes.Facility = {
-  id: undefined,
-  name: '',
-  code: '',
-  emailAddress: '',
-  phone1: '',
-  phone2: '',
-  fax: '',
-  addressId: '',
-  type: '',
-  defaultCurrency: '',
-  isActive: true,
-  ruleId: null
-};
-
-// ------------------- Create Facility -------------------
-export const newCreateFacility: modelTypes.CreateFacility = {
-  name: '',
-  code: '',
-  emailAddress: '',
-  phone1: '',
-  phone2: '',
-  fax: '',
-  addressId: '',
-  type: '',
-  defaultCurrency: '',
-  isActive: true
-};
-
-// ------------------- Role -------------------
-export const newRole: modelTypes.Role = {
-  id: undefined,
-  name: '',
-  type: '',
-  facilityId: null
-};
-
-// ------------------- User Role -------------------
-export const newUserRole: modelTypes.UserRole = {
-  roleId: undefined,
-  userId: undefined
-};
-
-// ------------------- User Department -------------------
-export const newUserDepartment: modelTypes.UserDepartment = {
-  id: undefined,
-  userId: undefined,
-  departmentId: undefined,
-  isActive: true,
-  isDefault: false
-};
-
-// ------------------- Patient Attachment -------------------
-export const newPatientAttachment: modelTypes.PatientAttachment = {
-  id: undefined,
-  patientId: undefined,
-  spaceKey: '',
-  filename: '',
-  mimeType: '',
-  sizeBytes: 0,
-  type: undefined,
-  details: undefined,
-  source: undefined
-};
-
-export const newUploadResponse: modelTypes.UploadResponse = {
-  id: undefined,
-  filename: '',
-  mimeType: '',
-  sizeBytes: 0,
-  downloadUrl: ''
-};
-
-export const newDownloadTicket: modelTypes.DownloadTicket = {
-  url: '',
-  expiresInSeconds: 0
-};
-
-export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams = {
-  patientId: undefined,
-  file: undefined,
-  type: undefined,
-  details: undefined,
-  source: undefined
-};
-
-// ------------------- Encounter Attachment -------------------
-export const newEncounterAttachment: modelTypes.EncounterAttachment = {
-  id: undefined,
-  encounterId: undefined,
-  spaceKey: '',
-  filename: '',
-  mimeType: '',
-  sizeBytes: 0,
-  type: undefined,
-  details: undefined,
-  source: undefined,
-  sourceId: undefined
-};
-
-export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttachmentParams = {
-  encounterId: undefined,
-  file: undefined,
-  type: undefined,
-  details: undefined,
-  source: undefined,
-  sourceId: undefined
-};
-
-// ------------------- Service -------------------
-export const newService: modelTypes.Service = {
-  id: undefined,
-  name: '',
-  abbreviation: null,
-  code: '',
-  category: null,
-  price: null,
-  currency: 'USD',
-  isActive: true,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
-  facilityId: undefined
-};
-
-// ------------------- Service Item -------------------
-export const newServiceItem: modelTypes.ServiceItem = {
-  id: undefined,
-  type: 'DEPARTMENTS',
-  sourceId: 0,
-  serviceId: undefined,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
-  isActive: true
-};
-
-// ------------------- Language -------------------
-export const newLanguage: modelTypes.Language = {
-  id: undefined,
-  langKey: undefined,
-  langName: undefined,
-  direction: undefined,
-  details: undefined
-};
-
-// ------------------- Practitioner -------------------
-export const newPractitioner: modelTypes.Practitioner = {
-  id: undefined,
-  facilityId: null,
-  firstName: '',
-  lastName: '',
-  email: '',
-  phoneNumber: '',
-  specialty: '',
-  subSpecialty: '',
-  defaultMedicalLicense: '',
-  secondaryMedicalLicense: '',
-  educationalLevel: '',
-  appointable: false,
-  userId: null,
-  defaultLicenseValidUntil: undefined,
-  secondaryLicenseValidUntil: undefined,
-  dateOfBirth: undefined,
-  jobRole: null,
-  gender: null,
-  isActive: true
-};
-
-// ------------------- Language Translation -------------------
-export const newLanguageTranslation: modelTypes.LanguageTranslation = {
-  id: undefined,
-  langKey: undefined,
-  translationKey: undefined,
-  translationText: undefined,
-  verified: undefined,
-  translated: undefined
-};
-
-// ------------------- Age Group -------------------
-export const newAgeGroup: modelTypes.AgeGroup = {
-  id: undefined,
-  ageGroup: '',
-  fromAge: 0,
-  toAge: 0,
-  fromAgeUnit: 'YEARS',
-  toAgeUnit: 'YEARS',
-  isActive: true,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
-  facilityId: undefined
-};
-
-// ------------------- Procedure -------------------
-export const newProcedure: modelTypes.Procedure = {
-  id: undefined,
-  name: '',
-  code: '',
-  categoryType: null,
-  isAppointable: false,
-  indications: null,
-  contraindications: null,
-  preparationInstructions: null,
-  recoveryNotes: null,
-  isActive: true,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
-  facilityId: undefined
-};
-
-// ------------------- Allergen -------------------
-export const newAllergen: modelTypes.Allergen = {
-  id: undefined,
-  name: '',
-  type: null,
-  description: '',
-  isActive: true,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Diagnostic Test -------------------
-export const newDiagnosticTest: modelTypes.DiagnosticTest = {
-  id: undefined,
-  type: null,
-  name: null,
-  internalCode: null,
-  ageSpecific: false,
-  ageGroupList: [],
-  genderSpecific: false,
-  gender: null,
-  specialPopulation: false,
-  specialPopulationValues: [],
-  price: null,
-  currency: null,
-  specialNotes: '',
-  isActive: true,
-  isProfile: false,
-  appointable: false
-};
-
-// ------------------- Laboratory -------------------
-export const newLaboratory: modelTypes.Laboratory = {
-  id: null,
-  testId: undefined,
-  property: undefined,
-  system: undefined,
-  scale: undefined,
-  reagents: undefined,
-  method: undefined,
-  testDurationTime: undefined,
-  timeUnit: undefined,
-  resultUnit: undefined,
-  isProfile: false,
-  sampleContainer: undefined,
-  sampleVolume: undefined,
-  sampleVolumeUnit: undefined,
-  tubeColor: undefined,
-  testDescription: undefined,
-  sampleHandling: undefined,
-  turnaroundTime: undefined,
-  turnaroundTimeUnit: undefined,
-  preparationRequirements: undefined,
-  medicalIndications: undefined,
-  associatedRisks: undefined,
-  testInstructions: undefined,
-  category: undefined,
-  tubeType: undefined,
-  timing: null
-};
-
-// ------------------- DiagnosticTestProfile -------------------
-export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
-  id: undefined,
-  testId: undefined,
-  name: '',
-  resultUnit: ''
-};
-
-// ------------------- Pathology -------------------
-export const newPathology: modelTypes.Pathology = {
-  id: undefined,
-  testId: undefined,
-  category: '',
-  specimenType: '',
-  analysisProcedure: '',
-  turnaroundTime: undefined,
-  timeUnit: '',
-  testDescription: '',
-  sampleHandling: '',
-  medicalIndications: '',
-  criticalValues: '',
-  preparationRequirements: ''
-};
-
-// ------------------- Radiology -------------------
-export const newRadiology: modelTypes.Radiology = {
-  id: undefined,
-  testId: 0,
-  category: '',
-  imageDuration: null,
-  testInstructions: '',
-  medicalIndications: '',
-  turnaroundTimeUnit: '',
-  turnaroundTime: undefined,
-  associatedRisks: ''
-};
-
-// ------------------- Medication Category -------------------
-export const newMedicationCategory: modelTypes.MedicationCategory = {
-  id: undefined,
-  name: ''
-};
-
-// ------------------- Medication Category Class -------------------
-export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
-  id: undefined,
-  name: '',
-  medicationCategoriesId: undefined
-};
-
-// ------------------- Active Ingredient -------------------
-export const newActiveIngredient: modelTypes.ActiveIngredient = {
-  id: undefined,
-  name: '',
-  drugClassId: null,
-  atcCode: null,
-  otc: false,
-  hasSynonyms: false,
-  antimicrobial: false,
-  highRiskMed: false,
-  abortiveMedication: false,
-  laborInducingMed: false,
-  isControlled: false,
-  controlled: null,
-  hasBlackBoxWarning: false,
-  blackBoxWarning: '',
-  isActive: true,
-  toxicityMaximumDose: null,
-  toxicityMaximumDosePerUnit: null,
-  toxicityDetails: null,
-  mechanismOfAction: null,
-  pharmaAbsorption: null,
-  pharmaRouteOfElimination: null,
-  pharmaVolumeOfDistribution: null,
-  pharmaHalfLife: null,
-  pharmaProteinBinding: null,
-  pharmaClearance: null,
-  pharmaMetabolism: null,
-  pregnancyCategory: null,
-  pregnancyNotes: null,
-  lactationRisk: null,
-  lactationRiskNotes: null,
-  doseAdjustmentRenal: false,
-  doseAdjustmentRenalOne: null,
-  doseAdjustmentRenalTwo: null,
-  doseAdjustmentRenalThree: null,
-  doseAdjustmentRenalFour: null,
-  doseAdjustmentHepatic: false,
-  doseAdjustmentPugA: null,
-  doseAdjustmentPugB: null,
-  doseAdjustmentPugC: null
-};
-
-// ------------------- Ingredient PreRequested Test -------------------
-export const newActiveIngredientPreRequestedTest: modelTypes.ActiveIngredientPreRequestedTest = {
-  id: undefined,
-  activeIngredientId: 0,
-  testId: 0
-};
-
-// ------------------- Ingredient Synonym -------------------
-export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
-  id: undefined,
-  activeIngredientId: 0,
-  synonym: ''
-};
-
-// ------------------- Special Population -------------------
-export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSpecialPopulation = {
-  id: undefined,
-  activeIngredientId: 0,
-  specialPopulation: '',
-  considerations: ''
-};
-
-// ------------------- Contraindication -------------------
-export const newActiveIngredientContraindication: modelTypes.ActiveIngredientContraindication = {
-  id: undefined,
-  activeIngredientId: 0,
-  icdCodeId: 0
-};
-
-// ------------------- Dental Action -------------------
-export const newDentalAction: modelTypes.DentalAction = {
-  id: null,
-  description: '',
-  type: null,
-  imageName: null,
-  isActive: true
-};
-
-// ------------------- Test Normal Range -------------------
-export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
-  id: undefined,
-  testId: 0,
-  gender: undefined,
-  ageFrom: undefined,
-  ageFromUnit: undefined,
-  ageTo: undefined,
-  ageToUnit: undefined,
-  condition: undefined,
-  resultType: '',
-  resultText: undefined,
-  resultLov: undefined,
-  normalRangeType: undefined,
-  rangeFrom: undefined,
-  rangeTo: undefined,
-  criticalValue: false,
-  criticalValueLessThan: undefined,
-  criticalValueMoreThan: undefined,
-  profileTestId: undefined,
-  isProfile: false,
-  lovKeys: []
-};
-
-// ------------------- Procedure Coding -------------------
-export const newProcedureCoding: modelTypes.ProcedureCoding = {
-  id: undefined,
-  procedureId: undefined,
-  codeType: 'CPT_CODES',
-  codeId: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Price List for Procedure -------------------
-export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
-  id: undefined,
-  procedureId: undefined,
-  price: 0,
-  currency: 'USD'
-};
-
-// ------------------- Ingredient Drug Interaction -------------------
-export const newActiveIngredientDrugInteraction: modelTypes.ActiveIngredientDrugInteraction = {
-  id: undefined,
-  activeIngredientId: 0,
-  interactedIngredientId: 0,
-  severity: '',
-  description: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Brand Medication -------------------
-export const newBrandMedication: modelTypes.BrandMedication = {
-  id: undefined,
-  name: '',
-  code: '',
-  manufacturer: '',
-  dosageForm: '',
-  usageInstructions: '',
-  storageRequirements: '',
-  expiresAfterOpening: false,
-  expiresAfterOpeningValue: null,
-  expiresAfterOpeningUnit: null,
-  useSinglePatient: false,
-  highCostMedication: false,
-  costCategory: '',
-  roa: '',
-  isActive: true,
-  uomGroupId: null,
-  uomGroupUnitId: null,
-  hasActiveIngredient: false
-};
-
-// ------------------- Substitute -------------------
-export const newSubstitute: modelTypes.Substitute = {
-  brandId: undefined,
-  alternativeBrandId: undefined
-};
-
-// ------------------- Prescription Instructions -------------------
-export const newPrescriptionInstructions: modelTypes.prescriptionInstructions = {
-  id: undefined,
-  category: '',
-  dose: 0,
-  unit: '',
-  rout: '',
-  frequency: ''
-};
-
-// ------------------- Ingredient Indication -------------------
-export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndication = {
-  id: undefined,
-  activeIngredientId: 0,
-  icdCodeId: 0,
-  dosage: null,
-  unit: '',
-  isOffLabel: false
-};
-
-// ------------------- Vaccine -------------------
-export const newVaccine: modelTypes.Vaccine = {
-  id: undefined,
-  name: '',
-  atcCode: '',
-  type: '',
-  roa: '',
-  siteOfAdministration: '',
-  postOpeningDuration: null,
-  durationUnit: '',
-  numberOfDoses: '',
-  indications: '',
-  possibleReactions: '',
-  contraindicationsAndPrecautions: '',
-  storageAndHandling: '',
-  isActive: true,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Vaccine Brand -------------------
-export const newVaccineBrand: modelTypes.VaccineBrand = {
-  id: undefined,
-  vaccineId: undefined,
-  name: '',
-  manufacture: '',
-  volume: 0,
-  unit: '',
-  marketingAuthorizationHolder: '',
-  isActive: true,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Vaccine Dose -------------------
-export const newVaccineDose: modelTypes.VaccineDose = {
-  id: undefined,
-  vaccineId: 0,
-  doseNumber: 'FIRST',
-  fromAge: null,
-  toAge: null,
-  fromAgeUnit: 'YEARS',
-  toAgeUnit: 'YEARS',
-  isBooster: false,
-  isActive: true,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Vaccine Dose Interval -------------------
-export const newVaccineDosesInterval: modelTypes.VaccineDosesInterval = {
-  id: undefined,
-  vaccineId: 0,
-  fromDoseId: 0,
-  toDoseId: 0,
-  intervalBetweenDoses: 0,
-  unit: 'DAYS',
-  isActive: true,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- CDT Dental Action -------------------
-export const newCdtDentalAction: modelTypes.CdtDentalAction = {
-  dentalActionId: undefined,
-  cdtId: undefined
-};
-
-// ------------------- Brand Medication Active Ingredient -------------------
-export const newBrandMedicationActiveIngredient: modelTypes.BrandMedicationActiveIngredient = {
-  id: undefined,
-  brandId: undefined,
-  activeIngredientId: undefined,
-  strength: undefined,
-  unit: ''
-};
-
-// ------------------- Catalog Response VM -------------------
-export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
-  id: 0,
-  name: '',
-  description: null,
-  type: '',
-  departmentId: 0,
-  departmentName: null,
-  facilityId: 0,
-  facilityName: null
-};
-
-// ------------------- Catalog Create VM -------------------
-export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
-  name: '',
-  description: null,
-  type: '',
-  departmentId: 0,
-  facilityId: 0
-};
-
-// ------------------- Catalog Update VM -------------------
-export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
-  name: '',
-  description: null,
-  type: '',
-  departmentId: 0,
-  facilityId: 0
-};
-
-// ------------------- Catalog Diagnostic Test -------------------
-export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
-  id: 0,
-  catalogId: 0,
-  diagnosticTestId: 0
-};
-
-// ------------------- Catalog Add Tests -------------------
-export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
-  testIds: []
-};
-
-// ------------------- UOM Group -------------------
-export const newUOMGroup: modelTypes.uomGroup = {
-  id: undefined,
-  description: '',
-  name: ''
-};
-
-// ------------------- UOM Group Unit -------------------
-export const newUOMGroupUnit: modelTypes.UOMGroupUnit = {
-  id: undefined,
-  uom: '',
-  uomOrder: 0
-};
-
-// ------------------- UOM Group Relation -------------------
-export const newUOMGroupRelation: modelTypes.UOMGroupRelation = {
-  id: undefined,
-  relation: 0,
-  fromUnitId: undefined,
-  toUnitId: undefined
-};
-
-// ------------------- Adverse Effect -------------------
-export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdverseEffect = {
-  id: undefined,
-  activeIngredientId: 0,
-  adverseEffect: ''
-};
-
-// ------------------- Food Interaction -------------------
-export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFoodInteraction = {
-  id: undefined,
-  activeIngredientId: 0,
-  food: '',
-  severity: '',
-  description: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Inventory Product -------------------
-export const newInventoryProduct: modelTypes.InventoryProduct = {
-  id: undefined,
-  name: '',
-  type: '',
-  code: '',
-  barcode: '',
-  brandId: null,
-  uomGroupId: null,
-  baseUom: null,
-  dispenseUom: null,
-  controlledSubstance: false,
-  hazardousBiohazardousTag: null,
-  allergyRisk: false,
-  itemAverageCost: null,
-  pricePerBaseUom: null,
-  warrantyStartDate: null,
-  warrantyEndDate: null,
-  maintenanceSchedule: null,
-  maintenanceScheduleType: null,
-  criticalEquipment: false,
-  calibrationRequired: false,
-  trainingRequired: false,
-  batchManaged: false,
-  expiryDateMandatory: false,
-  reusable: false,
-  inventoryType: null,
-  shelfLife: null,
-  shelfLifeUnit: null,
-  leadTime: null,
-  leadTimeUnit: null,
-  erpIntegrationId: null,
-  isActive: true
-};
-
-// ------------------- Country -------------------
-export const newCountry: modelTypes.Country = {
-  id: undefined,
-  name: '',
-  code: '',
-  isActive: true
-};
-
-// ------------------- Country District -------------------
-export const newCountryDistrict: modelTypes.CountryDistrict = {
-  id: undefined,
-  countryId: undefined,
-  name: '',
-  code: '',
-  isActive: true
-};
-
-// ------------------- District Community -------------------
-export const newDistrictCommunity: modelTypes.DistrictCommunity = {
-  id: undefined,
-  districtId: undefined,
-  name: '',
-  isActive: true
-};
-
-// ------------------- Community Area -------------------
-export const newCommunityArea: modelTypes.CommunityArea = {
-  id: undefined,
-  communityId: undefined,
-  name: '',
-  isActive: true
-};
-
-// ------------------- Visit Duration -------------------
-export const newVisitDuration: modelTypes.VisitDuration = {
-  id: undefined,
-  visitType: null,
-  durationInMinutes: 0,
-  resourceSpecific: false,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Price List -------------------
-export const newPriceList: modelTypes.PriceList = {
-  id: undefined,
-  facilityId: null,
-  facilityIds: [],
-  name: '',
-  type: '',
-  effectiveFrom: '',
-  effectiveTo: null,
-  description: '',
-  isActive: false
-};
-
-// ------------------- Report Template -------------------
-export const newReportTemplate: modelTypes.ReportTemplate = {
-  id: 0,
-  name: null,
-  templateValue: null,
-  isActive: true
-};
-
-// ------------------- Diagnostic Test Report Template -------------------
-export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTemplate = {
-  id: 0,
-  diagnosticTest: null,
-  name: null,
-  templateValue: null,
-  isActive: true
-};
-
-// ------------------- Sticky Notes -------------------
-export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM = {
-  id: undefined,
-  userId: undefined,
-  note: '',
-  priority: '',
-  priorityOrder: 0,
-  color: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: '',
-  lastModifiedDate: null
-};
-
-export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
-  userId: undefined,
-  note: '',
-  priority: '',
-  priorityOrder: 0,
-  color: '--note-purple'
-};
-
-// ------------------- Price List Item -------------------
-export const newPriceListItem: modelTypes.PriceListItem = {
-  id: undefined,
-  priceListId: 0,
-  itemType: null,
-  productType: null,
-  serviceId: null,
-  productId: null,
-  price: 0,
-  discountAllowed: false,
-  isActive: true
-};
-
-// ------------------- Referral Request -------------------
-export const newReferralRequest: modelTypes.ReferralRequest = {
-  id: null,
-  patientId: null,
-  encounterId: null,
-  referralType: 'INTERNAL',
-  facilityId: null,
-  departmentId: null,
-  referralReason: '',
-  priority: null,
-  isActive: true
-};
-
-// ------------------- Billing Invoice -------------------
-export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
-  facilityId: 0,
-  patientKey: null,
-  encounterKey: null,
-  totalAmount: 0,
-  paidAmount: 0,
-  balanceAmount: 0,
-  currency: null
-};
-
-export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
-  id: 0,
-  facilityId: 0,
-  patientKey: null,
-  encounterKey: null,
-  totalAmount: 0,
-  paidAmount: 0,
-  balanceAmount: 0,
-  currency: null
-};
-
-export const newBillingInvoiceResponse: modelTypes.BillingInvoiceResponseVM = {
-  id: 0,
-  invoiceNumber: '',
-  facilityId: 0,
-  patientKey: null,
-  encounterKey: null,
-  status: '',
-  totalAmount: 0,
-  paidAmount: 0,
-  balanceAmount: 0,
-  currency: null,
-  createdBy: null,
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Payor -------------------
-export const newPayor: modelTypes.Payor = {
-  id: undefined,
-  code: '',
-  name: '',
-  category: null,
-  address: '',
-  phone: '',
-  email: '',
-  contractManagerContact: '',
-  startDate: null,
-  expiryDate: null,
-  renewable: false,
-  allowPartialCoverage: false,
-  acceptCopay: false,
-  acceptDeductibles: false,
-  allowPackagePricing: false,
-  allowDrgBilling: false,
-  forcePreApproval: false,
-  isActive: true
-};
-
-// ------------------- Payor Plan -------------------
-export const newPayorPlan: modelTypes.PayorPlan = {
-  id: undefined,
-  payorId: 0,
-  name: '',
-  planType: null,
-  itemType: null,
-  amount: null,
-  coverageType: null,
-  isActive: true,
-  createdDate: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Invoice Item -------------------
-export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
-  invoiceId: 0,
-  nurseServiceProductKey: null,
-  code: null,
-  quantity: 0,
-  unitPrice: 0,
-  totalPrice: 0,
-  currency: null
-};
-
-export const newBillingInvoiceItemUpdate: modelTypes.BillingInvoiceItemUpdateVM = {
-  id: 0,
-  invoiceId: 0,
-  nurseServiceProductKey: null,
-  code: null,
-  quantity: 0,
-  unitPrice: 0,
-  totalPrice: 0,
-  currency: null
-};
-
-export const newBillingInvoiceItemResponse: modelTypes.BillingInvoiceItemResponseVM = {
-  id: 0,
-  invoiceId: 0,
-  nurseServiceProductKey: null,
-  code: null,
-  quantity: 0,
-  unitPrice: 0,
-  totalPrice: 0,
-  currency: null,
-  createdBy: null,
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Patient Payment -------------------
-export const newPatientPayment: modelTypes.PatientPaymentCreateVM = {
-  patientKey: null,
-  facilityId: 0,
-  paymentType: null,
-  paymentMethod: null,
-  paymentDate: '',
-  amount: 0,
-  currency: null,
-  reference: null,
-  notes: null
-};
-
-export const newPatientPaymentUpdate: modelTypes.PatientPaymentUpdateVM = {
-  id: 0,
-  patientKey: null,
-  facilityId: 0,
-  paymentType: null,
-  paymentMethod: null,
-  paymentDate: '',
-  amount: 0,
-  currency: null,
-  reference: null,
-  notes: null
-};
-
-export const newPatientPaymentResponse: modelTypes.PatientPaymentResponseVM = {
-  id: 0,
-  patientKey: null,
-  facilityId: 0,
-  paymentType: null,
-  paymentMethod: null,
-  paymentDate: '',
-  amount: 0,
-  currency: null,
-  reference: null,
-  notes: null,
-  createdBy: null,
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Payment Allocation -------------------
-export const newPaymentAllocation: modelTypes.PaymentAllocationCreateVM = {
-  paymentId: 0,
-  invoiceId: 0,
-  allocatedAmount: 0,
-  invoiceItemId: null
-};
-
-export const newPaymentAllocationUpdate: modelTypes.PaymentAllocationUpdateVM = {
-  id: 0,
-  paymentId: 0,
-  invoiceId: 0,
-  allocatedAmount: 0,
-  invoiceItemId: null
-};
-
-export const newPaymentAllocationResponse: modelTypes.PaymentAllocationResponseVM = {
-  id: 0,
-  paymentId: 0,
-  invoiceId: 0,
-  allocatedAmount: 0,
-  invoiceItemId: null,
-  createdBy: null,
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Patient Account Summary -------------------
-export const newPatientAccountSummary: modelTypes.PatientAccountSummaryVM = {
-  patientKey: '',
-  freeBalance: 0,
-  outstandingBalance: 0,
-  totalInvoiced: 0,
-  totalPaid: 0
-};
-
-// ------------------- Discharge Planning -------------------
-export const newDischargePlanning: modelTypes.DischargePlanning = {
-  id: undefined,
-  patientId: 0,
-  encounterId: 0,
-  expectedDischargeDate: null,
-  estimatedLos: '',
-  readinessStatus: '',
-  medicalConditionStable: false,
-  vitalsStable: false,
-  pendingInvestigations: false,
-  mobilityAdlStatus: false,
-  diagnosisCode: '',
-  diagnosisName: '',
-  finalMedReconciliationCompleted: false,
-  dischargeSummaryPrepared: false,
-  dischargeOrdersSigned: false,
-  nursingDischargeReportDone: false,
-  patientFamilyInformed: false,
-  transportArranged: false,
-  medicalEquipment: '',
-  homeCareNeeded: false,
-  postDischargeDietaryPlan: '',
-  postDischargeSocialNeeds: '',
-  topicsCovered: '',
-  educationDietaryPlan: '',
-  educationSocialNeeds: '',
-  materialLeaflet: false,
-  materialVerbal: false,
-  materialVideo: false,
-  educationProvided: false,
-  patientUnderstanding: false,
-  isActive: true
-};
-
-// ------------------- Patient Document -------------------
-export const newPatientDocument: modelTypes.PatientDocument = {
-  id: undefined,
-  patientId: undefined,
-  countryId: undefined,
-  type: 'NATIONAL_ID',
-  number: '',
-  isPrimary: false,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-export const newPatient: modelTypes.Patient = {
-  id: undefined,
-  mrn: '',
-
-  firstName: '',
-  secondName: '',
-  thirdName: '',
-  lastName: '',
-
-  sexAtBirth: null,
-  dateOfBirth: null,
-
-  patientClasses: '',
-  isPrivatePatient: false,
-
-  firstNameSecondaryLang: '',
-  secondNameSecondaryLang: '',
-  thirdNameSecondaryLang: '',
-  lastNameSecondaryLang: '',
-
-  primaryMobileNumber: '',
-  receiveSms: false,
-  secondMobileNumber: '',
-  homePhone: '',
-  workPhone: '',
-  email: '',
-  receiveEmail: false,
-  preferredWayOfContact: null,
-
-  nativeLanguage: '',
-  emergencyContactName: '',
-  emergencyContactRelation: '',
-  emergencyContactPhone: '',
-
-  role: '',
-  maritalStatus: '',
-  nationality: '',
-  religion: '',
-  ethnicity: '',
-  occupation: '',
-  responsibleParty: '',
-  educationalLevel: '',
-
-  previousId: '',
-  archivingNumber: '',
-
-  details: '',
-  isUnknown: false,
-
-  isVerified: false,
-  isCompletedPatient: false,
-
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-export const newAddress: modelTypes.Address = {
-  id: undefined,
-  patientId: 0, // يتم تعبئته من الـ route أو من الـ context
-
-  countryId: null,
-
-  countryName: '',
-  districtName: '',
-  communityName: '',
-  areaName: '',
-  streetName: '',
-  houseApartmentNumber: '',
-  postalZipCode: '',
-  additionalAddressLine: '',
-
-  isCurrent: true,
-
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
+/* =========================
+ *  Core User & Auth Models
+ * ========================= */
+
+export interface ApUser {
+  id?: number;
+  login: string;
+  passwordHash: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  imageUrl?: string | null;
+  activated: boolean;
+  langKey?: string | null;
+  resetKey?: string | null;
+  createdBy: string;
+  createdDate?: Date | null;
+  resetDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  phoneNumber?: string | null;
+  birthDate?: Date | null;
+  gender?: string | null;
+  jobDescription?: string | null;
+  jobRole?: string | null;
+}
+
+export interface Candidate {
+  id?: number;
+  rule?: string;
+  fields?: Record<string, boolean>;
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+  isActive?: boolean;
+}
+
+/* =========================
+ *  Organization / Setup
+ * ========================= */
+
+export interface Facility {
+  id?: string;
+  name?: string;
+  code?: string;
+  emailAddress?: string;
+  phone1?: string;
+  phone2?: string;
+  fax?: string;
+  addressId?: string;
+  type: string;
+  defaultCurrency: string;
+  isActive?: boolean;
+  ruleId?: number;
+}
+
+export interface CreateFacility {
+  name?: string;
+  code?: string;
+  emailAddress?: string;
+  phone1?: string;
+  phone2?: string;
+  fax?: string;
+  addressId?: string;
+  type: string;
+  defaultCurrency: string;
+  isActive?: boolean;
+}
+
+export interface Department {
+  id: number;
+  facilityId: string;
+  name: string;
+  createdBy: string;
+  createdDate: number;
+  lastModifiedBy: string;
+  lastModifiedDate: number;
+  departmentType: string;
+  appointable: boolean;
+  departmentCode: string;
+  phoneNumber: string;
+  email: string;
+  encounterType: string;
+  isActive: boolean;
+  hasMedicalSheets: boolean;
+  hasNurseMedicalSheets: boolean;
+}
+
+export interface Role {
+  id?: string;
+  name?: string;
+  type?: string;
+  facilityId?: string;
+}
+
+export interface UserRole {
+  roleId?: string;
+  userId?: string;
+}
+
+export interface UserDepartment {
+  id?: number;
+  userId: number;
+  facilityId?: string | null;
+  departmentId: number;
+  isActive?: boolean;
+  isDefault?: boolean;
+}
+
+/* =========================
+ *  Master Data: Services & Catalog
+ * ========================= */
+
+export interface Service {
+  id?: number;
+  name: string;
+  abbreviation?: string | null;
+  code: string;
+  category?: string | null;
+  price?: number | null;
+  currency: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number;
+}
+
+export interface ServiceItem {
+  id?: number;
+  type: string; // @Enumerated(EnumType.STRING)
+  sourceId: number; // FK to the source entity (e.g., Department id)
+  serviceId?: number | null; // ManyToOne -> Service (nullable on the wire)
+  createdBy: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive: boolean;
+}
+
+/** Create payload (POST /api/setup/service-items) */
+export interface ServiceItemCreate {
+  type: string;
+  sourceId: number;
+  serviceId: number; // required by backend create
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  isActive?: boolean | null;
+}
+
+/** Update payload (PUT /api/setup/service-items/{id}) */
+export interface ServiceItemUpdate {
+  id: number;
+  type?: string | null;
+  sourceId?: number | null;
+  serviceId: number; // required by backend update
+  isActive?: boolean | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export type CatalogResponseVM = {
+  id: number;
+  name: string;
+  description?: string | null;
+  type: string;
+  departmentId: number;
+  departmentName?: string | null;
+  facilityId: number;
+  facilityName: string | null;
+};
+
+export type CatalogCreateVM = {
+  name: string;
+  description?: string | null;
+  type: string;
+  facilityId: number;
+  departmentId: number;
+};
+
+export type CatalogUpdateVM = {
+  name?: string;
+  description?: string | null;
+  type?: string;
+  departmentId?: number;
+  facilityId: number;
+};
+
+export type CatalogDiagnosticTest = {
+  id: number;
+  catalogId: number;
+  diagnosticTestId: number;
+};
+
+export type CatalogAddTestsVM = {
+  testIds: number[];
+};
+
+/* =========================
+ *  Localization
+ * ========================= */
+
+export interface Language {
+  id: number;
+  langKey: string;
+  langName: string;
+  direction: string;
+  details?: string | null;
+}
+
+export interface LanguageTranslation {
+  id: number;
+  langKey: string;
+  translationKey: string;
+  translationText?: string;
+  verified: boolean;
+  translated: boolean;
+}
+
+/* =========================
+ *  Age Group / Visit Duration
+ * ========================= */
+
+export interface AgeGroup {
+  id?: number;
+  ageGroup: string | null;
+  fromAge: number | null;
+  toAge: number | null;
+  fromAgeUnit: string | null;
+  toAgeUnit: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number; // FK
+}
+
+export interface VisitDuration {
+  id?: number;
+  visitType: string | null;
+  durationInMinutes: number | null;
+  resourceSpecific?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* =========================
+ *  Clinical Staff / Practitioner
+ * ========================= */
+
+export interface Practitioner {
+  id?: number;
+  facilityId: number;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phoneNumber?: string | null;
+  specialty: string;
+  subSpecialty?: string | null;
+  defaultMedicalLicense?: string | null;
+  secondaryMedicalLicense?: string | null;
+  educationalLevel?: string | null;
+  appointable?: boolean;
+  userId: number;
+  defaultLicenseValidUntil?: string | null;
+  secondaryLicenseValidUntil?: string | null;
+  dateOfBirth?: string | null;
+  jobRole?: string | null;
+  gender?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* =========================
+ *  Attachments (Patient / Encounter / Inventory)
+ * ========================= */
+
+export interface PatientAttachment {
+  id: number;
+  patientId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  type?: string;
+  details?: string;
+  source?: string;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface EncounterAttachment {
+  id: number;
+  encounterId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  type?: string;
+  details?: string;
+  source?: string;
+  sourceId?: number; // Link to specific order/medication within encounter
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface InventoryTransferAttachment {
+  id: number;
+  transactionId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface InventoryTransactionAttachment {
+  id: number;
+  transactionId: number;
+  spaceKey: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface UploadResponse {
+  id: number;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  downloadUrl: string;
+}
+
+export interface DownloadTicket {
+  url: string;
+  expiresInSeconds: number;
+}
+
+export interface UploadPatientAttachmentParams {
+  patientId: number;
+  file: File;
+  type?: string;
+  details?: string;
+  source?: string;
+}
+
+export interface UploadEncounterAttachmentParams {
+  encounterId: number;
+  file: File;
+  type?: string;
+  details?: string;
+  source?: string;
+  sourceId?: number;
+}
+
+export interface UploadInventoryTransferAttachmentParams {
+  transactionId: number;
+  file: File;
+}
+
+export interface UploadInventoryTransactionAttachmentParams {
+  transactionId: number;
+  file: File;
+}
+
+/* =========================
+ *  Allergies
+ * ========================= */
+
+export interface Allergen {
+  id?: number;
+  name: string;
+  type: string;
+  description?: string | null;
+  isActive?: boolean;
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* =========================
+ *  Procedures / Diagnostics / Lab / Radiology
+ * ========================= */
+
+export interface Procedure {
+  id?: number;
+  name: string;
+  code: string;
+  categoryType?: string | null;
+  isAppointable?: boolean;
+  indications?: string | null;
+  contraindications?: string | null;
+  preparationInstructions?: string | null;
+  recoveryNotes?: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+  facilityId?: number;
+}
+
+export interface DiagnosticTest {
+  id?: number;
+  type: string;
+  name: string;
+  internalCode: string;
+  ageSpecific?: boolean;
+  ageGroupList?: string[];
+  genderSpecific?: boolean;
+  gender?: string;
+  specialPopulation?: boolean;
+  specialPopulationValues?: string[];
+  price?: number;
+  currency?: string;
+  specialNotes?: string;
+  isActive?: boolean;
+  isProfile?: boolean;
+  appointable?: boolean;
+}
+
+export interface Laboratory {
+  id?: number;
+  testId?: number;
+  property?: string;
+  system?: string;
+  scale?: string;
+  reagents?: string;
+  method?: string;
+  testDurationTime?: number;
+  timeUnit?: string;
+  resultUnit?: string;
+  isProfile?: boolean;
+  sampleContainer?: string;
+  sampleVolume?: number;
+  sampleVolumeUnit?: string;
+  tubeColor?: string;
+  testDescription?: string;
+  sampleHandling?: string;
+  turnaroundTime?: number;
+  turnaroundTimeUnit?: string;
+  preparationRequirements?: string;
+  medicalIndications?: string;
+  associatedRisks?: string;
+  testInstructions?: string;
+  category?: string;
+  tubeType?: string;
+  timing?: string;
+}
+
+export interface DiagnosticTestProfile {
+  id?: number;
+  testId?: number;
+  name?: string;
+  resultUnit?: string;
+}
+
+export interface Pathology {
+  id?: number;
+  testId?: number;
+  category?: string;
+  specimenType?: string;
+  analysisProcedure?: string;
+  turnaroundTime?: number;
+  timeUnit?: string;
+  testDescription?: string;
+  sampleHandling?: string;
+  medicalIndications?: string;
+  criticalValues?: string;
+  preparationRequirements?: string;
+  associatedRisks?: string;
+}
+
+export interface Radiology {
+  id?: number;
+  testId: number;
+  category: string;
+  imageDuration?: number | null;
+  testInstructions?: string | null;
+  medicalIndications?: string | null;
+  turnaroundTimeUnit?: string | null;
+  turnaroundTime?: number | null;
+  associatedRisks?: string | null;
+}
+
+export interface DiagnosticTestNormalRange {
+  id?: number;
+  testId: number;
+
+  gender?: string;
+  ageFrom?: number;
+  ageFromUnit?: string;
+  ageTo?: number;
+  ageToUnit?: string;
+  condition?: string;
+
+  resultType: string;
+  resultText?: string;
+  resultLov?: string;
+  normalRangeType?: string;
+
+  rangeFrom?: number;
+  rangeTo?: number;
+
+  criticalValue?: boolean;
+  criticalValueLessThan?: number;
+  criticalValueMoreThan?: number;
+
+  profileTestId?: number | null;
+  isProfile?: boolean;
+
+  lovKeys?: string[];
+}
+
+export interface ProcedureCoding {
+  id?: number;
+  procedureId?: number | null;
+  codeType: string | null;
+  codeId: string;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface CodeOption {
+  id: number | string;
+  code: string;
+  description: string;
+}
+
+export interface ProcedurePriceList {
+  id?: number;
+  procedureId?: number | null;
+  price: number;
+  currency: string;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface DiagnosticTestCoding {
+  id?: number;
+  procedureId?: number | null;
+  codeType: string | null;
+  codeId: string;
+  createdBy: string;
+  createdDate: Date;
+  lastModifiedBy: string;
+  lastModifiedDate: Date;
+}
+
+/* =========================
+ *  Vaccines
+ * ========================= */
+
+export interface Vaccine {
+  id?: number;
+  name: string;
+  atcCode?: string | null;
+  type: string;
+  roa: string;
+  siteOfAdministration?: string | null;
+  postOpeningDuration?: number | null;
+  durationUnit?: string | null;
+  numberOfDoses?: string | null;
+  indications?: string | null;
+  possibleReactions?: string | null;
+  contraindicationsAndPrecautions?: string | null;
+  storageAndHandling?: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface VaccineBrand {
+  id?: number;
+  vaccineId: number;
+  name: string;
+  manufacture: string;
+  volume: number;
+  unit: string;
+  marketingAuthorizationHolder?: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface VaccineDose {
+  id?: number;
+  vaccineId: number;
+  doseNumber: string;
+  fromAge?: number | null;
+  toAge?: number | null;
+  fromAgeUnit?: string | null;
+  toAgeUnit?: string | null;
+  isBooster?: boolean;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface VaccineDosesInterval {
+  id?: number;
+  vaccineId: number;
+  fromDoseId: number;
+  toDoseId: number;
+  intervalBetweenDoses: number;
+  unit: string | null;
+  isActive?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* =========================
+ *  Medication Master Data
+ * ========================= */
+
+export interface MedicationCategory {
+  id: number;
+  name: string;
+}
+
+export interface MedicationCategoryClass {
+  id: number;
+  name: string;
+  medicationCategoriesId: number;
+}
+
+/** Active Ingredient */
+export interface ActiveIngredient {
+  id?: number;
+  name: string;
+  medicalCategoryId?: number | null;
+  drugClassId?: number | null;
+  atcCode?: string | null;
+  otc?: boolean | null;
+  hasSynonyms?: boolean | null;
+  antimicrobial?: boolean | null;
+  highRiskMed?: boolean | null;
+  abortiveMedication?: boolean | null;
+  laborInducingMed?: boolean | null;
+  isControlled?: boolean | null;
+  controlled?: string | null;
+  hasBlackBoxWarning?: boolean | null;
+  blackBoxWarning?: string | null;
+  isActive?: boolean | null;
+  toxicityMaximumDose?: string | null;
+  toxicityMaximumDosePerUnit?: string | null;
+  toxicityDetails?: string | null;
+  mechanismOfAction?: string | null;
+  pharmaAbsorption?: string | null;
+  pharmaRouteOfElimination?: string | null;
+  pharmaVolumeOfDistribution?: string | null;
+  pharmaHalfLife?: string | null;
+  pharmaProteinBinding?: string | null;
+  pharmaClearance?: string | null;
+  pharmaMetabolism?: string | null;
+  pregnancyCategory?: string | null;
+  pregnancyNotes?: string | null;
+  lactationRisk?: string | null;
+  lactationRiskNotes?: string | null;
+  doseAdjustmentRenal?: boolean | null;
+  doseAdjustmentRenalOne?: string | null;
+  doseAdjustmentRenalTwo?: string | null;
+  doseAdjustmentRenalThree?: string | null;
+  doseAdjustmentRenalFour?: string | null;
+  doseAdjustmentHepatic?: boolean | null;
+  doseAdjustmentPugA?: string | null;
+  doseAdjustmentPugB?: string | null;
+  doseAdjustmentPugC?: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface ActiveIngredientSynonym {
+  id?: number;
+  activeIngredientId: number;
+  synonym: string;
+}
+
+export interface ActiveIngredientIndication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  dosage?: number | string | null;
+  unit?: string | null;
+  isOffLabel?: boolean | null;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface ActiveIngredientAdverseEffect {
+  id?: number;
+  activeIngredientId: number;
+  adverseEffect: string;
+}
+
+export interface ActiveIngredientDrugInteraction {
+  id?: number;
+  activeIngredientId: number;
+  interactedIngredientId: number;
+  severity: string;
+  description?: string | null;
+  createdBy: string;
+  createdDate: Date;
+  lastModifiedBy: string;
+  lastModifiedDate: Date;
+}
+
+export interface ActiveIngredientPreRequestedTest {
+  id?: number;
+  activeIngredientId: number;
+  testId: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface ActiveIngredientFoodInteraction {
+  id?: number;
+  activeIngredientId: number;
+  food: string;
+  severity: string;
+  description?: string | null;
+  createdBy: string;
+  createdDate: Date;
+  lastModifiedBy: string;
+  lastModifiedDate: Date;
+}
+
+export interface ActiveIngredientSpecialPopulation {
+  id?: number;
+  activeIngredientId: number;
+  specialPopulation: string;
+  considerations?: string | null;
+}
+
+export interface ActiveIngredientContraindication {
+  id?: number;
+  activeIngredientId: number;
+  icdCodeId: number;
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+/* =========================
+ *  Dental
+ * ========================= */
+
+export interface DentalAction {
+  id?: number; // Primary key (auto-generated)
+  description: string; // Mandatory field
+  type: string; // Enum (mandatory)
+  imageName?: string | null; // Optional image file name
+  isActive?: boolean; // Defaults true
+}
+
+export interface CdtDentalAction {
+  id?: number;
+  dentalActionId: number;
+  cdtId: number;
+}
+
+/* =========================
+ *  Brand Medications / UOM / Inventory
+ * ========================= */
+
+export interface BrandMedication {
+  id?: number; // Optional because it's generated by backend
+  name: string;
+  code?: string;
+  manufacturer?: string;
+  dosageForm: string;
+  usageInstructions?: string;
+  storageRequirements?: string;
+  expiresAfterOpening?: boolean;
+  expiresAfterOpeningValue?: number;
+  expiresAfterOpeningUnit?: string;
+  useSinglePatient?: boolean;
+  highCostMedication?: boolean;
+  costCategory?: string;
+  roa?: string;
+  isActive?: boolean;
+  uomGroupId?: number;
+  uomGroupUnitId?: number;
+  hasActiveIngredient?: boolean;
+}
+
+export interface Substitute {
+  brandId: number;
+  alternativeBrandId: number;
+}
+
+export interface BrandMedicationActiveIngredient {
+  id: number;
+  brandId: number;
+  activeIngredientId: number;
+  strength: number;
+  unit: string;
+}
+
+export interface prescriptionInstructions {
+  id?: number;
+  category: string;
+  dose: number;
+  unit: string;
+  rout: string;
+  frequency: string;
+}
+
+export interface uomGroup {
+  id?: number;
+  description: string;
+  name: string;
+}
+
+export interface UOMGroupUnit {
+  id?: number;
+  uom: string;
+  uomOrder: number;
+}
+
+export interface UOMGroupRelation {
+  id?: number;
+  relation: number;
+  fromUnitId: number;
+  toUnitId: number;
+}
+
+export interface InventoryProduct {
+  id?: number;
+  name: string;
+  type: string;
+  code?: string | null;
+  barcode?: string | null;
+  brandId?: string | null;
+  uomGroupId?: string | null;
+  baseUom?: number | null;
+  dispenseUom?: string | null;
+  controlledSubstance?: boolean | null;
+  hazardousBiohazardousTag?: string | null;
+  allergyRisk?: boolean | null;
+  itemAverageCost?: number | null;
+  pricePerBaseUom?: string | null;
+  warrantyStartDate?: Date | null;
+  warrantyEndDate?: Date | null;
+  maintenanceSchedule?: number | null;
+  maintenanceScheduleType?: string | null;
+  criticalEquipment?: boolean | null;
+  calibrationRequired?: boolean | null;
+  trainingRequired?: boolean | null;
+  batchManaged?: boolean | null;
+  expiryDateMandatory?: boolean | null;
+  reusable?: boolean | null;
+  inventoryType?: string | null;
+  shelfLife?: number | null;
+  shelfLifeUnit?: string | null;
+  leadTime?: number | null;
+  leadTimeUnit?: string | null;
+  erpIntegrationId?: string | null;
+  isActive?: boolean | null;
+}
+
+/* =========================
+ *  Geography
+ * ========================= */
+
+export interface Country {
+  id?: number;
+  name: string;
+  code: string;
+  isActive?: boolean;
+}
+
+export interface CountryDistrict {
+  id?: number;
+  countryId: number;
+  name: string;
+  code: string;
+  isActive?: boolean;
+}
+
+export interface DistrictCommunity {
+  id?: number;
+  districtId: number;
+  name: string;
+  isActive?: boolean;
+}
+
+export interface CommunityArea {
+  id?: number;
+  communityId: number;
+  name: string;
+  isActive?: boolean;
+}
+
+/* =========================
+ *  Patient / Demographics
+ * ========================= */
+
+export interface Patient {
+  id?: number;
+
+  mrn?: string | null;
+
+  firstName: string;
+  secondName?: string | null;
+  thirdName?: string | null;
+  lastName: string;
+
+  sexAtBirth?: string | null;
+  dateOfBirth?: Date | null;
+
+  patientClasses?: string | null;
+  isPrivatePatient?: boolean | null;
+
+  firstNameSecondaryLang?: string | null;
+  secondNameSecondaryLang?: string | null;
+  thirdNameSecondaryLang?: string | null;
+  lastNameSecondaryLang?: string | null;
+
+  primaryMobileNumber?: string | null;
+  receiveSms?: boolean | null;
+  secondMobileNumber?: string | null;
+  homePhone?: string | null;
+  workPhone?: string | null;
+  email?: string | null;
+  receiveEmail?: boolean | null;
+  preferredWayOfContact?: string | null;
+
+  nativeLanguage?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactRelation?: string | null;
+  emergencyContactPhone?: string | null;
+
+  role?: string | null;
+  maritalStatus?: string | null;
+  nationality?: string | null;
+  religion?: string | null;
+  ethnicity?: string | null;
+  occupation?: string | null;
+  responsibleParty?: string | null;
+  educationalLevel?: string | null;
+
+  previousId?: string | null;
+  archivingNumber?: string | null;
+
+  details?: string | null;
+  isUnknown?: boolean | null;
+
+  isVerified?: boolean | null;
+  isCompletedPatient?: boolean | null;
+  securityAccessLevel?: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface Address {
+  id?: number;
+  patientId: number;
+
+  countryId?: number | null;
+
+  countryName?: string | null;
+  districtName?: string | null;
+  communityName?: string | null;
+  areaName?: string | null;
+
+  streetName?: string | null;
+  houseApartmentNumber?: string | null;
+  postalZipCode?: string | null;
+  additionalAddressLine?: string | null;
+
+  isCurrent?: boolean | null;
+
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface PatientDocument {
+  id?: number;
+  patientId: number;
+  countryId: number;
+  type: string;
+  number: string;
+  isPrimary?: boolean | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface PatientHIPAA {
+  patientId?: number;
+  noticeOfPrivacyPractice: boolean;
+  privacyAuthorization: boolean;
+  noticeOfPrivacyPracticeDate: string | null;
+  privacyAuthorizationDate: string | null;
+}
+
+export interface PatientPreferredHealthProfessional {
+  id?: number;
+  patientId: number; // FK -> Patient
+  practitionerId: number; // FK -> Practitioner
+  facilityId: number; // FK -> Facility
+  networkAffiliation?: string | null;
+  relatedWith?: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* =========================
+ *  Price Lists & Billing
+ * ========================= */
+
+export interface PriceList {
+  id?: number;
+  facilityId?: number | null;
+  facilityIds?: number[] | null; // for create/update
+  name: string;
+  type: string; // PriceListTypes enum value
+  currency?: string;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  description?: string | null;
+  isActive?: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface PriceListItem {
+  id?: number;
+  priceListId: number;
+  itemType: string;
+  // only if itemType = PRODUCT (enum ProductTypes on backend)
+  productType?: string | null; // MEDICATION | CONSUMABLE | ... (string enum)
+  // polymorphic target
+  serviceId?: number | null;
+  productId?: number | null;
+  price: number | string; // BigDecimal -> number/string on FE
+  discountAllowed: boolean;
+  isActive: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}
+
+/* Billing Invoices */
+
+export interface BillingInvoiceCreateVM {
+  facilityId: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  totalAmount: number | string;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceUpdateVM {
+  id: number;
+  facilityId?: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  totalAmount?: number | string;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceResponseVM {
+  id: number;
+  invoiceNumber: string;
+  facilityId: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  status: string;
+  totalAmount: number | string;
+  paidAmount: number | string;
+  balanceAmount: number | string;
+  currency?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+/* Billing Items */
+
+export interface BillingInvoiceItemCreateVM {
+  invoiceId: number;
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+  quantity: number | string;
+  unitPrice: number | string;
+  totalPrice: number | string;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceItemUpdateVM {
+  id: number;
+  invoiceId?: number;
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+  quantity?: number | string;
+  unitPrice?: number | string;
+  totalPrice?: number | string;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceItemResponseVM {
+  id: number;
+  invoiceId: number;
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+  quantity: number | string;
+  unitPrice: number | string;
+  totalPrice: number | string;
+  currency?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+/* Payments */
+
+export interface PatientPaymentCreateVM {
+  patientKey?: string | null;
+  facilityId: number;
+  paymentType: string | null;
+  paymentMethod: string | null;
+  paymentDate: string;
+  amount: number | string;
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+export interface PatientPaymentUpdateVM {
+  id: number;
+  patientKey?: string | null;
+  facilityId?: number;
+  paymentType?: string | null;
+  paymentMethod?: string | null;
+  paymentDate?: string;
+  amount?: number | string;
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+export interface PatientPaymentResponseVM {
+  id: number;
+  patientKey?: string | null;
+  facilityId: number;
+  paymentType: string | null;
+  paymentMethod: string | null;
+  paymentDate: string;
+  amount: number | string;
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PaymentAllocationCreateVM {
+  paymentId: number;
+  invoiceId: number;
+  allocatedAmount: number | string;
+  invoiceItemId?: number | null;
+}
+
+export interface PaymentAllocationUpdateVM {
+  id: number;
+  paymentId?: number;
+  invoiceId?: number;
+  allocatedAmount?: number | string;
+  invoiceItemId?: number | null;
+}
+
+export interface PaymentAllocationResponseVM {
+  id: number;
+  paymentId: number;
+  invoiceId: number;
+  allocatedAmount: number | string;
+  invoiceItemId?: number | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PatientAccountSummaryVM {
+  patientKey: string;
+  freeBalance: number | string;
+  outstandingBalance: number | string;
+  totalInvoiced: number | string;
+  totalPaid: number | string;
+}
+
+export interface BillingItem {
+  id: string;
+  nurseServiceProductKey: string;
+  clinic: string;
+  chargeDate: string;
+  type: string;
+  name: string;
+  price: number;
+  totalPrice: number;
+  currency: string;
+  discount: number;
+  priceList: string;
+  patientKey: string;
+  quantity: number;
+}
+
+/* =========================
+ *  Payor / Insurance
+ * ========================= */
+
+export interface Payor {
+  id?: number;
+  code: string;
+  name: string;
+  category: string | null;
+  address?: string;
+  phone?: string;
+  email?: string;
+  contractManagerContact?: string;
+  startDate?: Date | string | null;
+  expiryDate?: Date | string | null;
+  renewable: boolean;
+  allowPartialCoverage: boolean;
+  acceptCopay: boolean;
+  acceptDeductibles: boolean;
+  allowPackagePricing: boolean;
+  allowDrgBilling: boolean;
+  forcePreApproval: boolean;
+  isActive: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface PayorPlan {
+  id?: number;
+  payorId: number;
+  name: string;
+  planType: string;
+  itemType: string;
+  amount?: number | null;
+  coverageType: string;
+  isActive: boolean;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+/* =========================
+ *  Referrals / Discharge
+ * ========================= */
+
+export interface ReferralRequest {
+  id: number | null;
+  patientId: number;
+  encounterId: number | null;
+  referralType: string;
+  facilityId: number | null;
+  departmentId: number;
+  referralReason: string;
+  priority: string;
+  isActive: boolean;
+}
+
+export interface DischargePlanning {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  expectedDischargeDate: string | Date | null; // mandatory
+  estimatedLos?: string | null;
+  readinessStatus: string | null; // mandatory
+
+  medicalConditionStable: boolean;
+  vitalsStable: boolean;
+  pendingInvestigations: boolean;
+  mobilityAdlStatus: boolean;
+
+  diagnosisCode: string; // mandatory
+  diagnosisName?: string | null;
+
+  finalMedReconciliationCompleted: boolean;
+  dischargeSummaryPrepared: boolean;
+  dischargeOrdersSigned: boolean;
+  nursingDischargeReportDone: boolean;
+  patientFamilyInformed: boolean;
+  transportArranged: boolean;
+
+  medicalEquipment?: string | null;
+  homeCareNeeded: boolean;
+  postDischargeDietaryPlan?: string | null;
+  postDischargeSocialNeeds?: string | null;
+
+  topicsCovered?: string | null; // tags -> string
+  educationDietaryPlan?: string | null;
+  educationSocialNeeds?: string | null;
+
+  materialLeaflet: boolean;
+  materialVerbal: boolean;
+  materialVideo: boolean;
+
+  educationProvided: boolean;
+  patientUnderstanding: boolean;
+
+  isActive: boolean;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+/* =========================
+ *  Reporting / Notes
+ * ========================= */
+
+export interface ReportTemplate {
+  id?: number;
+  name: string;
+  templateValue: string;
+  isActive: boolean;
+}
+
+export interface DiagnosticTestReportTemplate {
+  id: number;
+  diagnosticTest: string;
+  name: string;
+  templateValue: string;
+  isActive: boolean;
+}
+
+export interface UserStickyNotesResponseVM {
+  id: number;
+  userId: number;
+  note: string;
+  priority: string;
+  priorityOrder: number;
+  color: string;
+  createdBy: string;
+  createdDate: Date;
+  lastModifiedBy: string;
+  lastModifiedDate: Date;
+}
+
+export interface UserStickyNotesCreateVM {
+  userId: number;
+  note: string;
+  priority: string;
+  priorityOrder: number;
+  color: string;
+}
+
+export interface PatientDocument {
+  id?: number;
+  patientId: number;
+  countryId: number;
+  type: string;
+  number: string;
+  isPrimary?: boolean | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
