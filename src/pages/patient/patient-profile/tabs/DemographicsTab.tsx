@@ -1,21 +1,22 @@
 import React from 'react';
-import type { ApPatient } from '@/types/model-types';
-import { Col, Row, Stack, Text } from 'rsuite';
+import { Col, Row, Stack } from 'rsuite';
 import SectionContainer from '@/components/SectionsoContainer';
 import ContactTab from './ContactTab';
 import AddressTab from './AddressTab';
 import BasicInfo from './BasicInfo';
 import DocumentInfo from './DocumentInfo';
 import Translate from '@/components/Translate';
+import { Patient } from '@/types/model-types-new';
+import MyButton from '@/components/MyButton/MyButton';
+import './styles.less';
 
 interface DemographicsTabProps {
-  localPatient: ApPatient;
-  setLocalPatient: (patient: ApPatient) => void;
+  localPatient: Patient;
+  setLocalPatient: (patient: Patient) => void;
   validationResult: any;
-  genderLovQueryResponse: any;
+  genderEnum: any;
   docTypeLovQueryResponse: any;
   countryLovQueryResponse: any;
-  bloodGroupLovQueryResponse: any;
   patientClassLovQueryResponse: any;
   ageFormatType: { ageFormat: string };
   ageGroupValue: { ageGroup: string };
@@ -25,7 +26,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult,
-  genderLovQueryResponse,
+  genderEnum,
   docTypeLovQueryResponse,
   countryLovQueryResponse,
   patientClassLovQueryResponse,
@@ -46,7 +47,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
                     validationResult={validationResult}
                     localPatient={localPatient}
                     setLocalPatient={setLocalPatient}
-                    genderLovQueryResponse={genderLovQueryResponse}
+                    genderEnum={genderEnum}
                     ageFormatType={ageFormatType}
                     ageGroupValue={ageGroupValue}
                     patientClassLovQueryResponse={patientClassLovQueryResponse}
@@ -83,15 +84,10 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
               />
             </Row>
             <Row>
-              <SectionContainer
-                title={<Translate>Address</Translate>}
-                content={
-                  <AddressTab
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    validationResult={validationResult}
-                  />
-                }
+              <AddressTab
+                localPatient={localPatient}
+                setLocalPatient={setLocalPatient}
+                validationResult={validationResult}
               />
             </Row>
           </Col>

@@ -1,152 +1,175 @@
-import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { type ApPatient } from '@/types/model-types';
+import { useAddPatientMutation, useUpdatePatientMutation } from '@/services/patient/patientService';
+import { newApEncounter } from '@/types/model-types-constructor';
+import { newPatient } from '@/types/model-types-constructor-new';
+import { Patient } from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
+import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import ReactDOMServer from 'react-dom/server';
-import { Col, DOMHelper, Panel, Row, Text } from 'rsuite';
+import { Col, DOMHelper, Panel, Row } from 'rsuite';
+import BedsideRegistrationsModal from './BedsideRegistrations';
+import BulkRegistration from './BulkRegistration';
+import PatientAppointments from './PatientAppointments';
+import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
+import PatientDuplicate from './patientsDuplicate';
+import PatientVisitHistory from './PatientVisitHistory';
+import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 import ProfileHeader from './ProfileHeader-new';
 import ProfileSidebar from './ProfileSidebar-new';
 import ProfileTabs from './ProfileTabs-new';
-import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
-import PatientVisitHistory from './PatientVisitHistory';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import {
-  usePatientListByRoleCandidateMutation,
-  useSavePatientMutation
-} from '@/services/patientService';
-import clsx from 'clsx';
-import { useLazyGetCandidatesByDepartmentKeyQuery } from '@/services/setupService';
-import PatientDuplicate from './patientsDuplicate';
-import SectionContainer from '@/components/SectionsoContainer';
-import PatientVisitHistoryTable from './PatientVisitHistoryTable';
-import PatientAppointments from './PatientAppointments';
-import BedsideRegistrationsModal from './BedsideRegistrations';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
-import BulkRegistration from './BulkRegistration';
-import Translate from '@/components/Translate';
 
 const { getHeight } = DOMHelper;
 
-const PatientProfile = () => {
-  const authSlice = useAppSelector(state => state.auth);
+/* ========================================================= */
+/* =============== Helper Functions ======================== */
+/* ========================================================= */
 
+const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
+  const data = err?.data ?? {};
+  const errorKey = data?.errorKey;
+  const title = data?.title || '';
+  const detail = data?.detail || '';
+  const message = data?.message || '';
+  const fieldErrors = data?.fieldErrors;
+
+  const traceId =
+    data?.traceId || data?.correlationId
+      ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
+      : '';
+
+  /* ========================================================= */
+  /* =============== 1) Bean Validation Errors =============== */
+  /* ========================================================= */
+  if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+    const lines = fieldErrors.map((e: any) => {
+      const label = fieldLabels[e.field] || e.field;
+      return `• ${label}: ${e.message}`;
+    });
+
+    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+  }
+
+  /* ========================================================= */
+  /* =============== 2) Specific Custom Errors ============== */
+  /* ========================================================= */
+
+  if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
+
+  if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
+
+  if (errorKey === 'unique.mrn') return 'A patient with the same MRN already exists.' + traceId;
+
+  if (errorKey === 'db.constraint')
+    return detail || 'Database constraint violated while saving or updating patient.' + traceId;
+
+  /* ========================================================= */
+  /* =============== 3) Generic unknown error ================ */
+  /* ========================================================= */
+
+  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+};
+
+/* ========================================================= */
+/* ======================= Component ======================== */
+/* ========================================================= */
+
+const PatientProfile = () => {
   const dispatch = useAppDispatch();
   const [localVisit] = useState({ ...newApEncounter, discharge: false });
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
-  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
+
+  const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
+
   const [validationResult, setValidationResult] = useState({});
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [visitHistoryModel, setVisitHistoryModel] = useState(false);
+
   const location = useLocation();
   const propsData = location.state;
-  const [savePatient, savePatientMutation] = useSavePatientMutation();
+
+  // Create new patient
+  const [addPatient, addResult] = useAddPatientMutation();
+
+  // Update existing patient
+  const [updatePatient, updateResult] = useUpdatePatientMutation();
+
   const [refetchData, setRefetchData] = useState(false);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
+
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
-  const [openBedsideRegistrations,setOpenBedsideRegistrations] = useState<boolean>(false);
-  const [openRegistrationWarningsSummary,setOpenRegistrationWarningsSummary] = useState<boolean>(false);
-    const [openBulkRegistrationModal,setOpenBulkRegistrationModal] = useState<boolean>(false);
+
+  const [openBedsideRegistrations, setOpenBedsideRegistrations] = useState<boolean>(false);
+
+  const [openRegistrationWarningsSummary, setOpenRegistrationWarningsSummary] =
+    useState<boolean>(false);
+
+  const [openBulkRegistrationModal, setOpenBulkRegistrationModal] = useState<boolean>(false);
+
   const [patientList, setPatientList] = useState([]);
-  const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
-  const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
-  // Page header setup
-  const divContent = (
-    "Patient Registration"
-  );
 
-  // Handle save patient
-  // const handleSave = async () => {
-  //   try {
-  //     const { data: candidateData } = await trigger(authSlice.user.departmentKey);
+  const divContent = 'Patient Registration';
 
-  //     if (localPatient.key == undefined) {
-  //       const Response = await patientListByRoleCandidate({
-  //         patient: localPatient,
-  //         role: candidateData?.object
-  //       }).unwrap();
+  /* ========================================================= */
+  /* ======================= SAVE / UPDATE ==================== */
+  /* ========================================================= */
 
-  //       if (Response.extraNumeric > 0) {
-  //         setPatientList(Response?.object);
-  //         setOpenPatientsDuplicateModal(true);
-  //       } else {
-  //         await savePatient({
-  //           ...localPatient,
-  //           incompletePatient: false,
-  //           unknownPatient: false
-  //         }).unwrap();
-
-  //         setRefetchData(true);
-  //         dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-  //       }
-  //     } else {
-  //       await savePatient({
-  //         ...localPatient,
-  //         incompletePatient: false,
-  //         unknownPatient: false
-  //       }).unwrap();
-
-  //       setRefetchData(true);
-  //       dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
   const handleSave = async () => {
-  try {
-    await savePatient({
-      ...localPatient,
-      incompletePatient: false,
-      unknownPatient: false
-    }).unwrap();
+    try {
+      const saved = localPatient?.id
+        ? await updatePatient({ id: localPatient.id, data: localPatient }).unwrap()
+        : await addPatient(localPatient).unwrap();
 
-    setRefetchData(true);
-    dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-  } catch (error) {
-    console.log(error);
-  }
-};
+      setLocalPatient(saved);
+      dispatch(setPatient(saved));
+      setValidationResult(undefined);
+      setRefetchData(true);
 
-console.log('inside patient profile copy new');
-  // Handle clear patient data
+      dispatch(
+        notify({
+          msg: localPatient?.id ? 'Patient Updated Successfully' : 'Patient Saved Successfully',
+          sev: 'success'
+        })
+      );
+    } catch (err: any) {
+      const msg = toHumanBackendError(err, {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dateOfBirth: 'Date of Birth',
+        primaryMobileNumber: 'Primary Mobile Number',
+        sexAtBirth: 'Sex At Birth',
+        nationality: 'Nationality'
+      });
+
+      dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
+
+  /* ========================================================= */
+  /* ======================= CLEAR ============================ */
+  /* ========================================================= */
+
   const handleClear = () => {
-    setLocalPatient({
-      ...newApPatient,
-      documentCountryLkey: null,
-      documentTypeLkey: null,
-      specialCourtesyLkey: null,
-      genderLkey: null,
-      maritalStatusLkey: null,
-      nationalityLkey: null,
-      primaryLanguageLkey: null,
-      religionLkey: null,
-      ethnicityLkey: null,
-      occupationLkey: null,
-      emergencyContactRelationLkey: null,
-      countryLkey: null,
-      stateProvinceRegionLkey: null,
-      cityLkey: null,
-      patientClassLkey: null,
-      securityAccessLevelLkey: null,
-      responsiblePartyLkey: null,
-      educationalLevelLkey: null,
-      preferredContactLkey: null,
-      roleLkey: null
-    });
+    setLocalPatient({ ...newPatient });
     setValidationResult(undefined);
     dispatch(setPatient(null));
     dispatch(setEncounter(null));
   };
 
-  // Effects
+  /* ========================================================= */
+  /* ======================== EFFECTS ========================= */
+  /* ========================================================= */
+
   useEffect(() => {
     dispatch(setPageCode('Patient_Registration'));
     dispatch(setDivContent(divContent));
-    dispatch(setPatient({ ...newApPatient }));
+    dispatch(setPatient({ ...newPatient }));
 
     return () => {
       dispatch(setPageCode(''));
@@ -161,24 +184,22 @@ console.log('inside patient profile copy new');
   }, [propsData]);
 
   useEffect(() => {
-    if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
-      setLocalPatient(savePatientMutation.data);
-      dispatch(setPatient(savePatientMutation.data));
-      setValidationResult(undefined);
-    } else if (savePatientMutation && savePatientMutation.status === 'rejected') {
-      setValidationResult(savePatientMutation.error.data.validationResult);
+    if (addResult?.status === 'fulfilled') {
+      setLocalPatient(addResult.data);
+      dispatch(setPatient(addResult.data));
     }
-  }, [savePatientMutation]);
-  useEffect(() => {
-    dispatch(setPageCode('Patient_Registration'));
-    dispatch(setDivContent(divContent));
-    dispatch(setPatient({ ...newApPatient }));
+  }, [addResult]);
 
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+  useEffect(() => {
+    if (updateResult?.status === 'fulfilled') {
+      setLocalPatient(updateResult.data);
+      dispatch(setPatient(updateResult.data));
+    }
+  }, [updateResult]);
+
+  /* ========================================================= */
+  /* ========================= RENDER ========================= */
+  /* ========================================================= */
 
   return (
     <>
@@ -200,7 +221,6 @@ console.log('inside patient profile copy new');
             setOpenBedsideRegistrations={setOpenBedsideRegistrations}
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
-            
           />
 
           <div className="container-of-tabs-reg">
@@ -212,8 +232,10 @@ console.log('inside patient profile copy new');
               refetchAttachmentList={refetchAttachmentList}
             />
           </div>
+
           <br />
           <br />
+
           <Row className="btm-sections">
             <Col md={12}>
               <SectionContainer
@@ -227,6 +249,7 @@ console.log('inside patient profile copy new');
                 }
               />
             </Col>
+
             <Col md={12}>
               <SectionContainer
                 title={<Translate>Appointments</Translate>}
@@ -235,6 +258,7 @@ console.log('inside patient profile copy new');
             </Col>
           </Row>
         </Panel>
+
         <ProfileSidebar
           expand={expand}
           setExpand={setExpand}
@@ -244,6 +268,7 @@ console.log('inside patient profile copy new');
           setRefetchData={setRefetchData}
         />
       </div>
+
       {quickAppointmentModel && (
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
@@ -252,6 +277,7 @@ console.log('inside patient profile copy new');
           localVisit={localVisit}
         />
       )}
+
       {visitHistoryModel && (
         <PatientVisitHistory
           visitHistoryModel={visitHistoryModel}
@@ -261,26 +287,31 @@ console.log('inside patient profile copy new');
           setQuickAppointmentModel={setQuickAppointmentModel}
         />
       )}
-      <BedsideRegistrationsModal 
-      open={openBedsideRegistrations}
-      setOpen={setOpenBedsideRegistrations}
-      setLocalPatient={setLocalPatient}
+
+      <BedsideRegistrationsModal
+        open={openBedsideRegistrations}
+        setOpen={setOpenBedsideRegistrations}
+        setLocalPatient={setLocalPatient}
       />
+
       <RegistrationWarningsSummary
-      open={openRegistrationWarningsSummary}
-      setOpen={setOpenRegistrationWarningsSummary}
+        open={openRegistrationWarningsSummary}
+        setOpen={setOpenRegistrationWarningsSummary}
       />
-      <BulkRegistration
-      open={openBulkRegistrationModal}
-      setOpen={setOpenBulkRegistrationModal}
-      />
+
+      <BulkRegistration open={openBulkRegistrationModal} setOpen={setOpenBulkRegistrationModal} />
+
       <PatientDuplicate
         open={openPatientsDuplicateModal}
         setOpen={setOpenPatientsDuplicateModal}
         list={patientList}
         setlocalPatient={setLocalPatient}
         handleSave={() =>
-          savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
+          addPatient({
+            ...localPatient,
+            isCompletedPatient: false,
+            isUnknown: false
+          })
             .unwrap()
             .then(() => {
               setRefetchData(true);

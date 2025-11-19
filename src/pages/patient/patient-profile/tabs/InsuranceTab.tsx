@@ -1,24 +1,26 @@
-import React from 'react';
-import { useState } from 'react';
-import { type ApPatient, type ApPatientInsurance } from '@/types/model-types';
-import { newApPatientInsurance } from '@/types/model-types-constructor';
-import { PlusRound } from '@rsuite/icons';
-import { faUserPen, faLock, faEllipsis } from '@fortawesome/free-solid-svg-icons';
-import { useGetPatientInsuranceQuery, useDeletePatientInsuranceMutation } from '@/services/patientService';
-import InsuranceModal from '../InsuranceModal';
-import SpecificCoverageModa from '../SpecificCoverageModa';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge } from 'rsuite';
-import MyTable from '@/components/MyTable';
-import './styles.less'
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import {
+  useDeletePatientInsuranceMutation,
+  useGetPatientInsuranceQuery
+} from '@/services/patientService';
+import { type ApPatientInsurance } from '@/types/model-types';
+import { newApPatientInsurance } from '@/types/model-types-constructor';
+import { Patient } from '@/types/model-types-new';
+import { notify } from '@/utils/uiReducerActions';
+import { faEllipsis, faLock, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { PlusRound } from '@rsuite/icons';
+import React, { useState } from 'react';
+import { Badge } from 'rsuite';
+import InsuranceModal from '../InsuranceModal';
+import SpecificCoverageModa from '../SpecificCoverageModa';
+import './styles.less';
 interface InsuranceTabProps {
-  localPatient: ApPatient;
+  localPatient: Patient;
 }
 const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const dispatch = useAppDispatch();
@@ -47,31 +49,31 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
           </div>
         ) : (
           <p>{rowData.insuranceProvider}</p>
-        ),
+        )
     },
     {
       key: 'insurancePolicyNumber',
       title: <Translate>Insurance Policy Number</Translate>,
       flexGrow: 4,
-      dataKey: 'insurancePolicyNumber',
+      dataKey: 'insurancePolicyNumber'
     },
     {
       key: 'groupNumber',
       title: <Translate>Group Number</Translate>,
       flexGrow: 4,
-      dataKey: 'groupNumber',
+      dataKey: 'groupNumber'
     },
     {
       key: 'insurancePlanType',
       title: <Translate>Insurance Plan Type</Translate>,
       flexGrow: 4,
-      dataKey: 'insurancePlanType',
+      dataKey: 'insurancePlanType'
     },
     {
       key: 'expirationDate',
       title: <Translate>Expiration Date</Translate>,
       flexGrow: 4,
-      dataKey: 'expirationDate',
+      dataKey: 'expirationDate'
     },
     {
       key: 'details',
@@ -83,17 +85,16 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
             handleShowInsuranceDetails();
           }}
           appearance="subtle"
-
         >
           <FontAwesomeIcon icon={faEllipsis} />
         </MyButton>
-      ),
-    },
+      )
+    }
   ];
 
   // Fetch patient insurance data
   const patientInsuranceResponse = useGetPatientInsuranceQuery({
-    patientKey: localPatient.key
+    patientKey: localPatient.id
   });
 
   // Function to check if the current row is the selected one
@@ -131,7 +132,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
     }).then(
       () => (
         patientInsuranceResponse.refetch(),
-        dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: "success" })),
+        dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: 'success' })),
         setSelectedInsurance(null),
         setOpenDeleteModal(false)
       )
@@ -141,11 +142,10 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   // Pagination values
   const handlePageChange = (_: unknown, newPage: number) => {
     setPageIndex(newPage);
-  }
+  };
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPageIndex(0);
-
   };
   const totalCount = patientInsuranceResponse?.data?.length ?? 0;
   const paginatedData = patientInsuranceResponse?.data?.slice(
@@ -162,34 +162,40 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
             setSelectedInsurance(newApPatientInsurance);
             setHideSaveBtn(false);
           }}
-          disabled={!localPatient.key}
+          disabled={!localPatient.id}
           prefixIcon={() => <PlusRound />}
-        >New Insurance
+        >
+          New Insurance
         </MyButton>
         <MyButton
           onClick={handleEditModal}
           disabled={!selectedInsurance?.key}
           prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
-        >Edit
+        >
+          Edit
         </MyButton>
         <MyButton
           onClick={() => setSpecificCoverageModalOpen(true)}
           disabled={!selectedInsurance?.key}
           prefixIcon={() => <FontAwesomeIcon icon={faLock} />}
-        >Specific Coverage
+        >
+          Specific Coverage
         </MyButton>
         <MyButton
-          onClick={() => { setOpenDeleteModal(true) }}
+          onClick={() => {
+            setOpenDeleteModal(true);
+          }}
           disabled={!selectedInsurance?.key}
           prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}
-        >Delete
+        >
+          Delete
         </MyButton>
       </div>
       <InsuranceModal
         relations={[]}
         editing={selectedInsurance ? selectedInsurance : null}
         refetchInsurance={patientInsuranceResponse.refetch}
-        patientKey={localPatient ?? localPatient.key}
+        patientKey={localPatient ?? localPatient.id}
         open={InsuranceModalOpen}
         setOpen={setInsuranceModalOpen}
         insuranceBrowsing={insuranceBrowsing}
@@ -215,9 +221,9 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
       <DeletionConfirmationModal
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
-        itemToDelete='Insurance'
-        actionButtonFunction={handleDeleteInsurance}>
-      </DeletionConfirmationModal>
+        itemToDelete="Insurance"
+        actionButtonFunction={handleDeleteInsurance}
+      ></DeletionConfirmationModal>
     </div>
   );
 };

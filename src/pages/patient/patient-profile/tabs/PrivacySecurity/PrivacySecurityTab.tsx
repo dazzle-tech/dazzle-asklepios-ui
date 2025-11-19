@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import type { ApPatient } from '@/types/model-types';
-import { Form, Divider } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import { PlusRound } from '@rsuite/icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { Patient } from '@/types/model-types-new';
+import { PlusRound } from '@rsuite/icons';
+import React, { useState } from 'react';
+import { Divider, Form } from 'rsuite';
+import '../styles.less';
+import AddVerification from './AddVerification';
 interface PrivacySecurityTabProps {
-  localPatient: ApPatient;
-  setLocalPatient: (patient: ApPatient) => void;
+  localPatient: Patient;
+  setLocalPatient: (patient: Patient) => void;
   validationResult: any;
 }
-import '../styles.less'
-import AddVerification from './AddVerification';
 const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   localPatient,
   setLocalPatient,
@@ -20,13 +20,19 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
 
   // Fetch LOV data for various fields
-  const { data: securityAccessLevelLovQueryResponse } = useGetLovValuesByCodeQuery('SEC_ACCESS_LEVEL');
+  const { data: securityAccessLevelLovQueryResponse } =
+    useGetLovValuesByCodeQuery('SEC_ACCESS_LEVEL');
 
   return (
     <div className="tab-main-container">
-    
-        <AddVerification open={verificationModalOpen} setOpen={setVerificationModalOpen} localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
-        <Form layout="inline" className='btn-fileds-style'>
+      <AddVerification
+        open={verificationModalOpen}
+        setOpen={setVerificationModalOpen}
+        localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
+        validationResult={validationResult}
+      />
+      <Form layout="inline" className="btn-fileds-style">
         <MyInput
           vr={validationResult}
           column
@@ -39,17 +45,18 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
         />
-          <MyButton
+        <MyButton
           onClick={() => setVerificationModalOpen(true)}
           disabled={!localPatient.key}
-          prefixIcon={() => <PlusRound />}>
+          prefixIcon={() => <PlusRound />}
+        >
           Patient Verification
         </MyButton>
       </Form>
-      
+
       <Form layout="inline" fluid>
-        <h5 className='border-top'>HIPAA</h5>
-        <div className='covg-content'>
+        <h5 className="border-top">HIPAA</h5>
+        <div className="covg-content">
           <MyInput
             column
             vr={validationResult}
@@ -68,7 +75,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             record={localPatient}
             setRecord={setLocalPatient}
           />
-          <Divider className='divider-line-vertical' vertical />
+          <Divider className="divider-line-vertical" vertical />
           <MyInput
             vr={validationResult}
             column

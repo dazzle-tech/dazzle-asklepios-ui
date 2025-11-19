@@ -1,12 +1,11 @@
-import React from 'react';
-import type { ApPatient } from '@/types/model-types';
-import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import Translate from '@/components/Translate';
+import { Patient } from '@/types/model-types-new';
+import React from 'react';
+import { Form } from 'rsuite';
 interface ExtraDetailsTabProps {
-  localPatient: ApPatient;
-  setLocalPatient: (patient: ApPatient) => void;
+  localPatient: Patient;
+  setLocalPatient: (patient: Patient) => void;
   validationResult: any;
 }
 const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
@@ -30,7 +29,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         column
         fieldLabel="Marital Status"
         fieldType="select"
-        fieldName="maritalStatusLkey"
+        fieldName="maritalStatus"
         selectData={maritalStatusLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -43,7 +42,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         column
         fieldLabel="Nationality"
         fieldType="select"
-        fieldName="nationalityLkey"
+        fieldName="nationality"
         selectData={nationalityLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -56,7 +55,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         column
         fieldLabel="Religion"
         fieldType="select"
-        fieldName="religionLkey"
+        fieldName="religion"
         selectData={religeonLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -70,7 +69,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         column
         fieldLabel="Ethnicity"
         fieldType="select"
-        fieldName="ethnicityLkey"
+        fieldName="ethnicity"
         selectData={ethnicityLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -83,7 +82,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         column
         fieldLabel="Occupation"
         fieldType="select"
-        fieldName="occupationLkey"
+        fieldName="occupation"
         selectData={occupationLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -96,7 +95,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         column
         fieldLabel="Responsible Party"
         fieldType="select"
-        fieldName="responsiblePartyLkey"
+        fieldName="responsibleParty"
         selectData={responsiblePartyLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -109,7 +108,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         column
         fieldLabel="Educational Level"
         fieldType="select"
-        fieldName="educationalLevelLkey"
+        fieldName="educationalLevel"
         selectData={educationalLevelLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -138,7 +137,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         column
         fieldLabel="Details"
         fieldType="textarea"
-        fieldName="extraDetails"
+        fieldName="details"
         record={localPatient}
         setRecord={setLocalPatient}
       />

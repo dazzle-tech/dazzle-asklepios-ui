@@ -4,25 +4,26 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
 import { useGetPatientProfilePictureQuery } from '@/services/patients/attachmentService';
 import './styles.less';
+import { Patient } from '@/types/model-types-new';
 
 interface PatientCardWithPictureProps {
-  patient: any;
+  patient: Patient;
   onClick?: (patientWithUrl: any) => void;
   actions?: React.ReactNode;
   arrowDirection?: 'left' | 'right';
 }
 
-const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({ 
-  patient, 
-  onClick, 
-  actions, 
-  arrowDirection = 'left' 
+const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
+  patient,
+  onClick,
+  actions,
+  arrowDirection = 'left'
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
-  
+
   // Fetch profile picture for this patient
-  const patientId = patient?.key ? Number(patient.key) : undefined;
+  const patientId = patient?.id ? Number(patient.id) : undefined;
   const { data: profilePictureTicket } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
     { skip: !patientId }
@@ -58,11 +59,13 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
           }
           size="md"
         />
-        <Text className="patient-name">{patient.fullName}</Text>
-        <Text className="created-at">
-          {patient.createdAt ? new Date(patient.createdAt).toLocaleDateString('en-GB') : ''}
+        <Text className="patient-name">
+          {patient.firstName} {patient.secondName} {patient.thirdName} {patient.lastName}
         </Text>
-        <Text className="patient-mrn"># {patient.patientMrn}</Text>
+        <Text className="created-at">
+          {patient.createdDate ? new Date(patient.createdDate).toLocaleDateString('en-GB') : ''}
+        </Text>
+        <Text className="patient-mrn"># {patient.mrn}</Text>
       </div>
       <div className="actions">
         {actions}
@@ -75,4 +78,3 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
 };
 
 export default PatientCardWithPicture;
-
