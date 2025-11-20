@@ -62,8 +62,32 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
   labelFormatter: formatControlledEnumLabel
 });
 
+  const validateRequiredFields = () => {
+    const missingFields: string[] = [];
+    if (!activeIngredient?.name || !activeIngredient.name.trim()) {
+      missingFields.push('Active Ingredient Name');
+    }
+
+    if (missingFields.length > 0) {
+      const lines = missingFields.map(field => `• ${field}: is required`);
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines.join('\n')}`,
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   // handle save
   const handleSave = async () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     const sanitized = sanitizeActiveIngredient(activeIngredient);
     const isUpdate = sanitized.id !== undefined && sanitized.id !== null;
     try {
@@ -89,17 +113,49 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
         });
       }
     } catch (error: any) {
-      const message =
-        error?.data?.message ??
-        error?.data?.title ??
-        error?.error ??
-        'An unexpected error occurred while saving the active ingredient.';
-      dispatch(
-        notify({
-          msg: message,
-          sev: 'error'
-        })
-      );
+      const data = error?.data ?? {};
+      const traceId = data?.traceId || data?.requestId || data?.correlationId;
+      const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+      const isValidation =
+        data?.message === 'error.validation' ||
+        data?.title === 'Method argument not valid' ||
+        (typeof data?.type === 'string' && data.type.includes('constraint-violation'));
+
+      if (isValidation && Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+        const fieldLabels: Record<string, string> = {
+       name:'Active Ingredient Name'
+        };
+        const normalizeMsg = (msg: string) => {
+          const m = (msg || '').toLowerCase();
+          if (m.includes('must not be null')) return 'is required';
+          return msg || 'invalid value';
+        };
+
+        const lines = data.fieldErrors.map((fe: any) => {
+          const label = fieldLabels[fe.field] ?? fe.field;
+          return `• ${label}: ${normalizeMsg(fe.message)}`;
+        });
+
+        dispatch(notify({ msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix, sev: 'error' }));
+        return;
+      }
+
+      const messageProp: string = data?.message || '';
+      const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : undefined;
+
+      const keyMap: Record<string, string> = {
+        name: 'Active Ingredient Name is required.',
+      };
+
+      const humanMsg =
+        (errorKey && keyMap[errorKey]) ||
+        data?.detail ||
+        data?.title ||
+        data?.message ||
+        'Unexpected error';
+
+      dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
     } 
   };
 

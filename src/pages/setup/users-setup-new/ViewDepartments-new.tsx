@@ -111,8 +111,34 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
     }
   };
 
+  const validateFacilityDepartmentFields = () => {
+    const missingFields: string[] = [];
+    if (!userDepartment?.facilityId) {
+      missingFields.push('Facility');
+    }
+    if (!userDepartment?.departmentId) {
+      missingFields.push('Department');
+    }
+
+    if (missingFields.length > 0) {
+      const lines = missingFields.map(field => `• ${field}: is required`);
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines.join('\n')}`,
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+    return true;
+  };
+
   // Handle Save Facility Department
   const handleFacilityDepartmentSave = () => {
+    if (!validateFacilityDepartmentFields()) {
+      return;
+    }
+
     // Remove facilityId from the object before saving (API expects only userId and departmentId)
     const { facilityId, ...dataToSave } = userDepartment;
 
