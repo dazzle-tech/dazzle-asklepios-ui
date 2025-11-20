@@ -107,7 +107,7 @@ const Synonyms = ({ activeIngredients }) => {
   // Save (Create or Update)
   const save = async () => {
     if (!record.synonym?.trim()) {
-      dispatch(notify({ msg: "Please Enter Synonym", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Synonym is required", sev: "error" }));
       return;
     }
 
@@ -182,6 +182,7 @@ const Synonyms = ({ activeIngredients }) => {
             width="100%"
             record={record}
             setRecord={setRecord}
+            required
           />
         </div>
 

@@ -106,17 +106,17 @@ const SpecialPopulation = ({ selectedActiveIngredients }) => {
   // ---------------------------
   const save = async () => {
     if (!selectedActiveIngredients?.id) {
-      dispatch(notify({ msg: "No Active Ingredient selected", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
       return;
     }
 
     if (!record.specialPopulation) {
-      dispatch(notify({ msg: "Select Special Population", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Special Population is required", sev: "error" }));
       return;
     }
 
     if (!record.considerations || record.considerations.trim() === "") {
-      dispatch(notify({ msg: "Considerations is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Considerations is required", sev: "error" }));
       return;
     }
 

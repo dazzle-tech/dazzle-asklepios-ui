@@ -127,17 +127,17 @@ const [sortType, setSortType] = useState<"asc" | "desc">("asc");
       }
 
       if (!record?.interactedIngredientId) {
-        dispatch(notify({ msg: "Select Active Ingredient", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
         return;
       }
 
       if (!record?.severity) {
-        dispatch(notify({ msg: "Select Severity", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • Severity is required", sev: "error" }));
         return;
       }
 
       if (!record?.description || record.description.trim() === "") {
-        dispatch(notify({ msg: "Please Enter A Description", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • Description is required", sev: "error" }));
         return;
       }
 

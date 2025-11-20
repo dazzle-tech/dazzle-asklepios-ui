@@ -94,7 +94,7 @@ const AdversEffects = ({ activeIngredients }) => {
   // ---------------------------
   const save = async () => {
     if (!record.adverseEffect) {
-      dispatch(notify({ msg: "Select adverse effect", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • adverse effect is required", sev: "error" }));
       return;
     }
 
@@ -202,6 +202,7 @@ const sortedList = useMemo(() => {
               selectDataValue="lovDisplayVale"
               width={220}
               menuMaxHeight={150}
+              required
             />
 
             {record.adverseEffect === "Other" && (
