@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Text, Form } from 'rsuite';
-import { Plus } from '@rsuite/icons';
+import { Plus, Width } from '@rsuite/icons';
 import { initialListRequest } from '@/types/types';
 import { MdDelete } from 'react-icons/md';
 import { MdSave } from 'react-icons/md';
@@ -19,6 +19,7 @@ import { ActiveIngredientIndication } from '@/types/model-types-new';
 import { newActiveIngredientIndication } from '@/types/model-types-constructor-new';
 import { useGetIcdListQuery } from '@/services/setupService';
 import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList } from '@/utils';
+import { Block } from '@mui/icons-material';
 
 const Indications = ({ selectedActiveIngredients }) => {
 
@@ -115,12 +116,12 @@ const isSelected = (rowData) => {
   //Table columns
   const tableColumns = [
     {
-      key: 'icdCode',
+      key: 'icd10CodeId',
       title: <Translate>ICD Code</Translate>,
       render: rowData => <Text>{rowData.icd10CodeId}</Text>
     },
     {
-      key: 'offLabel',
+      key: 'isOffLabel',
       title: <Translate>Off-Label</Translate>,
       render: rowData => <Text>{rowData.isOffLabel ? 'Yes' : 'No'}</Text>
     },
@@ -134,8 +135,11 @@ const isSelected = (rowData) => {
       title: <Translate>Unit</Translate>,
       render: rowData => (
         <Text>
-          {conjureValueBasedOnKeyFromList(valueUnitLovQueryResponse?.object ?? [], rowData?.unit, 'lovDisplayVale')}
-
+          {conjureValueBasedOnKeyFromList(
+            valueUnitLovQueryResponse?.object ?? [],
+            rowData?.unit,
+            'lovDisplayVale'
+          )}
         </Text>
       )
     },
@@ -145,6 +149,7 @@ const isSelected = (rowData) => {
       render: (rowData) => iconsForActions(rowData)
     }
   ];
+
 
 
 const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
@@ -166,6 +171,9 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
         activeIngredientId: selectedActiveIngredients.id,
         icd10CodeId: icdId,
       };
+
+      delete payload.icdCodeId;
+
       if (activeIngredientIndication.id) {
         updateActiveIngredientIndication(payload)
           .unwrap()
@@ -290,8 +298,27 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
   };
 
 
+const sortedList = useMemo(() => {
+  if (!indicationListResponseData || !sortColumn) return indicationListResponseData ?? [];
 
+  return [...indicationListResponseData].sort((a, b) => {
+    const aVal = a[sortColumn];
+    const bVal = b[sortColumn];
 
+    if (aVal == null) return -1;
+    if (bVal == null) return 1;
+
+    let result = 0;
+    if (typeof aVal === "string") {
+      result = aVal.toString().localeCompare(bVal.toString());
+    } else {
+      result = aVal > bVal ? 1 : -1;
+    }
+
+    return sortType === "asc" ? result : -result;
+  });
+
+}, [indicationListResponseData, sortColumn, sortType]);
 
 
 
@@ -313,14 +340,14 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
   const pageIndex = paginationParams.page ?? 0;
   const rowsPerPage = paginationParams.size ?? 5;
 
-  const paginatedData = useMemo(() => {
-    if (!indicationListResponseData) return [];
+const paginatedData = useMemo(() => {
+  if (!sortedList) return [];
 
-    const start = pageIndex * rowsPerPage;
-    const end = start + rowsPerPage;
+  const start = pageIndex * rowsPerPage;
+  const end = start + rowsPerPage;
 
-    return indicationListResponseData.slice(start, end);
-  }, [indicationListResponseData, pageIndex, rowsPerPage]);
+  return sortedList.slice(start, end);
+}, [sortedList, pageIndex, rowsPerPage]);
 
 
   return (
@@ -376,10 +403,10 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
             title="Save"
           ></MyButton>
           <MyButton
-            prefixIcon={() => <Plus />}
+            prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
             color="var(--deep-blue)"
             onClick={handleIndicationsNew}
-            title="New"
+            title="Clear"
           ></MyButton>
         </div>
       </div>

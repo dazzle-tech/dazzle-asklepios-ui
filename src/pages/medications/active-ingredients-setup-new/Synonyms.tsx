@@ -17,6 +17,7 @@ import {
 } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
 import { newActiveIngredientSynonym } from '@/types/model-types-constructor-new';
 import './styles.less';
+import { Block } from '@mui/icons-material';
 
 const Synonyms = ({ activeIngredients }) => {
 
@@ -192,10 +193,10 @@ const Synonyms = ({ activeIngredients }) => {
             title="Save"
           />
           <MyButton
-            prefixIcon={() => <Plus />}
+            prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
             color="var(--deep-blue)"
             onClick={handleNew}
-            title="New"
+            title="Clear"
           />
         </div>
       </div>

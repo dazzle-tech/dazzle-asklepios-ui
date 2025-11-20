@@ -18,6 +18,7 @@ import {
 
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
+import { Block } from "@mui/icons-material";
 
 const PreRequestedTests = ({ activeIngredient }) => {
 
@@ -220,11 +221,10 @@ const isSelected = (row) => {
         </MyButton>
 
         <MyButton
-          prefixIcon={() => <Plus />}
+          prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
           width="80px"
           onClick={() => setRecord({ ...newActiveIngredientPreRequestedTest })}
         >
-          New
         </MyButton>
 
       </div>
