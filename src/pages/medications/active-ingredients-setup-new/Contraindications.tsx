@@ -104,7 +104,7 @@ import { Block } from "@mui/icons-material";
     // ---------------------------------------------
       const save = () => {
         if (!contraindication.icd10CodeId) {
-          return dispatch(notify({ msg: "Invalid ICD Code", sev: "error" }));
+          return dispatch(notify({ msg: "Please fix the following fields: • ICD Code: is required", sev: "error" }));
         }
 
         const payload = {
@@ -213,6 +213,7 @@ const paginatedData = useMemo(() => {
               fieldName="icd10CodeId"
               label="Contraindications (ICD-10)"
               mode="singleICD10"
+              required
             />
           </div>
 

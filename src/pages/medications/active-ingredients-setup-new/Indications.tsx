@@ -162,7 +162,7 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
         activeIngredientIndication.icd10CodeId;
 
       if (!icdId) {
-        dispatch(notify({ msg: "Invalid ICD Code", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • ICD Code: is required", sev: "error" }));
         return;
       }
 
@@ -361,6 +361,7 @@ const paginatedData = useMemo(() => {
             fieldName="icdCodeId"
             label="Indications (ICD-10)"
             mode="singleICD10"
+            required
           />
           <MyInput
             fieldName="dosage"
@@ -388,7 +389,7 @@ const paginatedData = useMemo(() => {
             width={200}
             column
             fieldLabel="Off-Label"
-            fieldType="check"
+            fieldType="checkbox"
             showLabel={false}
             fieldName="isOffLabel"
             record={activeIngredientIndication}
