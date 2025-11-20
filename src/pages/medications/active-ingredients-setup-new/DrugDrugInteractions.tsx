@@ -26,6 +26,7 @@ import {
 
 import './styles.less';
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import { Block } from '@mui/icons-material';
 
 const DrugDrugInteractions = ({ selectedActiveIngredients }) => {
   const dispatch = useAppDispatch();
@@ -36,6 +37,8 @@ const DrugDrugInteractions = ({ selectedActiveIngredients }) => {
   const [record, setRecord] = useState({
     ...newActiveIngredientDrugInteraction
   });
+const [sortColumn, setSortColumn] = useState("interactedIngredientId");
+const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
   const [openDelete, setOpenDelete] = useState(false);
 
@@ -124,17 +127,17 @@ const DrugDrugInteractions = ({ selectedActiveIngredients }) => {
       }
 
       if (!record?.interactedIngredientId) {
-        dispatch(notify({ msg: "Select Active Ingredient", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
         return;
       }
 
       if (!record?.severity) {
-        dispatch(notify({ msg: "Select Severity", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • Severity is required", sev: "error" }));
         return;
       }
 
       if (!record?.description || record.description.trim() === "") {
-        dispatch(notify({ msg: "Please Enter A Description", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • Description is required", sev: "error" }));
         return;
       }
 
@@ -193,12 +196,53 @@ const DrugDrugInteractions = ({ selectedActiveIngredients }) => {
   // ---------------------------
   // PAGINATION
   // ---------------------------
+  // 📌 SORTING IMPLEMENTATION
+  const sortedList = useMemo(() => {
+    if (!list || !sortColumn) return list ?? [];
+
+    return [...list].sort((a, b) => {
+      let aVal = a[sortColumn];
+      let bVal = b[sortColumn];
+
+      // ⭐ Special Case: Interacted Ingredient (Sort by DISPLAY NAME, not ID)
+      if (sortColumn === "interactedIngredientId") {
+        aVal = conjureValueBasedOnIDFromList(
+          activeIngredientResponse?.data ?? [],
+          aVal,
+          "name"
+        );
+        bVal = conjureValueBasedOnIDFromList(
+          activeIngredientResponse?.data ?? [],
+          bVal,
+          "name"
+        );
+      }
+
+      if (aVal == null) return -1;
+      if (bVal == null) return 1;
+
+      let result = 0;
+
+      if (typeof aVal === "string") {
+        result = aVal.toString().localeCompare(bVal.toString(), undefined, {
+          numeric: true
+        });
+      } else {
+        result = aVal > bVal ? 1 : -1;
+      }
+
+      return sortType === "asc" ? result : -result;
+    });
+  }, [list, sortColumn, sortType, activeIngredientResponse]);
+
+
+
   const [pagination, setPagination] = useState({ page: 0, size: 5 });
 
   const paginatedData = useMemo(() => {
     const start = pagination.page * pagination.size;
-    return list.slice(start, start + pagination.size);
-  }, [list, pagination.page, pagination.size]);
+    return sortedList.slice(start, start + pagination.size);
+  }, [sortedList, pagination.page, pagination.size]);
 
   const totalCount = list.length;
 
@@ -250,9 +294,9 @@ const DrugDrugInteractions = ({ selectedActiveIngredients }) => {
             />
 
             <MyButton
-              prefixIcon={() => <Plus />}
+              prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
               onClick={() => setRecord({ ...newActiveIngredientDrugInteraction })}
-              title="New"
+              title="Clear"
               color="var(--deep-blue)"
             />
           </div>
@@ -295,6 +339,12 @@ const DrugDrugInteractions = ({ selectedActiveIngredients }) => {
           onRowsPerPageChange={e =>
             setPagination({ page: 0, size: Number(e.target.value) })
           }
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={(col, order) => {
+            setSortColumn(col);
+            setSortType(order);
+          }}
         />
 
         <DeletionConfirmationModal

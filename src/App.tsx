@@ -181,6 +181,14 @@ import LanguagesSetup from './pages/setup/language-setup/Language';
 import Pediatric from './pages/encounter/encounter-component/pediatric';
 import IncidentPortal from './pages/Incident/IncidentPortal';
 import Enums from './pages/setup/Enums';
+import InventoryManagementTransaction from './pages/inventory-management/inventory-transaction/inventory-transaction-new';
+import InventoryManagementTransfer from './pages/inventory-management/inventory-transaction/inventory-transfer-new';
+import InventoryManagementTransferApproval from './pages/inventory-management/inventory-transaction/inventory-transfer-approval';
+import InventoryManagementProductCatalog from './pages/inventory-management/product-catalog';
+import InventoryManagementProductSetup from './pages/inventory-management/product-setup/ProductSetup';
+import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
+import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
+import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -528,6 +536,14 @@ const App = () => {
               <Route path="language-setup" element={<LanguagesSetup />} />
               <Route path="service-and-products" element={<ServiceAndProducts />} />
               <Route path='enums' element={<Enums/> }/>
+              <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
+              <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
+              <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />
+              <Route path="inventory-management-transfer-approval" element={<InventoryManagementTransferApproval />} />
+              <Route path="inventory-management-product-catalog" element={<InventoryManagementProductCatalog />} />
+              <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
+              <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
+              <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

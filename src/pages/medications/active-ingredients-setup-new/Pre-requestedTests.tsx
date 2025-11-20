@@ -18,6 +18,7 @@ import {
 
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
+import { Block } from "@mui/icons-material";
 
 const PreRequestedTests = ({ activeIngredient }) => {
 
@@ -86,12 +87,12 @@ const PreRequestedTests = ({ activeIngredient }) => {
   // -------------------------------
   const save = async () => {
     if (!activeIngredient?.id) {
-      dispatch(notify({ msg: "Active ingredient is not selected!", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
       return;
     }
 
     if (!record.testId) {
-      dispatch(notify({ msg: "Please select a diagnostic test!", sev: "warning" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Diagnostic Test is required", sev: "error" }));
       return;
     }
 
@@ -202,6 +203,7 @@ const isSelected = (row) => {
         <MyInput
           width={200}
           fieldName="testId"
+          fieldLabel="Diagnostic Test"
           fieldType="select"
           selectData={diagnosticTests}
           selectDataLabel="name"
@@ -209,6 +211,7 @@ const isSelected = (row) => {
           record={record}
           setRecord={setRecord}
           menuMaxHeight={100}
+          required
         />
 
         <MyButton
@@ -220,11 +223,10 @@ const isSelected = (row) => {
         </MyButton>
 
         <MyButton
-          prefixIcon={() => <Plus />}
+          prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
           width="80px"
           onClick={() => setRecord({ ...newActiveIngredientPreRequestedTest })}
         >
-          New
         </MyButton>
 
       </div>

@@ -169,8 +169,34 @@ const Departments = () => {
     setRecordOfDepartmentCode({ departmentCode: nextDepartmentCode });
     setPopupOpen(true);
   };
+  const validateRequiredFields = () => {
+    const missingFields: string[] = [];
+    if (!department?.facilityId) {
+      missingFields.push('Facility');
+    }
+    if (!department?.name?.trim()) {
+      missingFields.push('Department Name');
+    }
+    if (!department?.departmentType) {
+      missingFields.push('Department Type');
+    }
+    if (missingFields.length > 0) {
+      const lines = missingFields.map(field => `• ${field}: is required`);
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines.join('\n')}`,
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+    return true;
+  };
   // add department
   const handleAdd = () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
     setPopupOpen(false);
     setLoad(true);
     addDepartment(department)
@@ -187,6 +213,9 @@ const Departments = () => {
   };
   // update department
   const handleUpdate = () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
     setPopupOpen(false);
     setLoad(true);
     updateDepartment(department)
