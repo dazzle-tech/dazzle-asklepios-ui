@@ -17,6 +17,7 @@ import {
 } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
 import { newActiveIngredientSynonym } from '@/types/model-types-constructor-new';
 import './styles.less';
+import { Block } from '@mui/icons-material';
 
 const Synonyms = ({ activeIngredients }) => {
 
@@ -106,7 +107,7 @@ const Synonyms = ({ activeIngredients }) => {
   // Save (Create or Update)
   const save = async () => {
     if (!record.synonym?.trim()) {
-      dispatch(notify({ msg: "Please Enter Synonym", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Synonym is required", sev: "error" }));
       return;
     }
 
@@ -181,6 +182,7 @@ const Synonyms = ({ activeIngredients }) => {
             width="100%"
             record={record}
             setRecord={setRecord}
+            required
           />
         </div>
 
@@ -192,10 +194,10 @@ const Synonyms = ({ activeIngredients }) => {
             title="Save"
           />
           <MyButton
-            prefixIcon={() => <Plus />}
+            prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
             color="var(--deep-blue)"
             onClick={handleNew}
-            title="New"
+            title="Clear"
           />
         </div>
       </div>

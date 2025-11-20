@@ -145,7 +145,6 @@ useEffect(() => {
               </Col>
                  <Col md={8}>
                 <MyInput
-                  required
                   width="100%"
                   fieldLabel="Brand Code"
                   fieldName="code"
