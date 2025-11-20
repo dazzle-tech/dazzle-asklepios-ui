@@ -183,7 +183,7 @@ export const MODULES: Module[] =
       { name: "Shift Setup", code: "SHIFT_SETUP", description: "", icon: "FaClock", viewOrder: 13, navPath: "shift-setup" },
       { name: "Supplier Setup", code: "SUPPLIER_SETUP", description: "Supplier Setup", icon: "FaRedRiver", viewOrder: 15, navPath: "supplier-setup" },
       { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
-      { name: "User New", code: "USER_NEW", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
+      { name: "User New", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
       { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
       
 
@@ -332,7 +332,7 @@ export const MODULES: Module[] =
     icon: "FaFlask",
     viewOrder: 9,
     screens: [{ name: "Clinical Laboratory",
-      code:"Clinical_Laboratory",
+      code:"CLINICAL_LABORATORY",
        description: "", icon: "FaFlaskVial",
         viewOrder: 0, navPath: "lab-module" }],
   },
@@ -341,7 +341,7 @@ export const MODULES: Module[] =
     icon: "FaXRay",
     viewOrder: 10,
     screens: [{ name: "Imaging Radiology",
-      code:"Imaging_Radiology",
+      code:"IMAGING_RADIOLOGY",
        description: "", 
        icon: "FaSkull", viewOrder: 0, navPath: "rad-module" }],
   },
@@ -351,7 +351,7 @@ export const MODULES: Module[] =
     viewOrder: 11,
     screens: [
       { name: "Internal Drug Orders",
-        code:"Internal_Drug_Orders",
+        code:"INTERNAL_DRUG_ORDERS",
          description: "", icon: "FaPills", viewOrder: 0, navPath: "pharmacy-internal-orders" },
       { name: "ePrescriptions", code: "EPRESCRIPTIONS", description: "", icon: "FaPrescription", viewOrder: 1, navPath: "pharmacy-ePrescriptions" },
       { name: "Controlled Medications", code: "CONTROLLED_MEDICATIONS", description: "", icon: "FaBiohazard", viewOrder: 2, navPath: "pharmacy-controlled-medications" },
@@ -448,7 +448,7 @@ export const MODULES: Module[] =
     icon: "FaMobileRetro",
     viewOrder: 13,
     screens: [
-      { name: "Supplier Management",code:"Supplier_Management", description: "", icon: "FaBriefcase", viewOrder: 3, navPath: "" },
+      { name: "Supplier Management",code:"SUPPLIER_MANAGEMENT", description: "", icon: "FaBriefcase", viewOrder: 3, navPath: "" },
       { name: "Quotation Management", code: "QUOTATION_MANAGEMENT", description: "", icon: "FaPenClip", viewOrder: 4, navPath: "" },
       { name: "Payment Tracking", code: "PAYMENT_TRACKING", description: "", icon: "FaCoins", viewOrder: 7, navPath: "" },
       { name: "List of Requisition", code: "LIST_OF_REQUISITION", description: "", icon: "FaMoneyBills", viewOrder: 5, navPath: "list-of-requisition" },
