@@ -1,4 +1,4 @@
-import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
+import { camelCaseToLabel, fromCamelCaseToDBName, formatEnumString } from '@/utils';
 import React, { useEffect, useState, useRef } from 'react';
 import { CheckPicker, TimePicker } from 'rsuite';
 import {
@@ -48,18 +48,18 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-  | 'text'
-  | 'textarea'
-  | 'checkbox'
-  | 'datetime'
-  | 'time'
-  | 'select'
-  | 'selectPagination'
-  | 'multyPicker'
-  | 'checkPicker'
-  | 'date'
-  | 'number'
-  | 'check';
+    | 'text'
+    | 'textarea'
+    | 'checkbox'
+    | 'datetime'
+    | 'time'
+    | 'select'
+    | 'selectPagination'
+    | 'multyPicker'
+    | 'checkPicker'
+    | 'date'
+    | 'number'
+    | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -83,9 +83,10 @@ type MyInputProps = {
   container?: HTMLElement | (() => HTMLElement);
   // select-related
   selectData?: any[];
-  selectDataLabel?: string;
+  selectDataLabel?: string | string[]; // 👈 يسمح string أو array
   selectDataValue?: string;
   renderMenuItem?: any;
+  renderOptionLabel?: (item: any) => string;
   searchBy?: any;
   searchable?: boolean;
   cleanable?: boolean;
@@ -110,6 +111,7 @@ type MyInputProps = {
   column?: boolean;
   fieldLabel?: string;
   enterClick?: () => Promise<boolean | void> | boolean | void;
+  isEnum?: boolean;
 };
 
 const MyInput = ({
@@ -143,7 +145,6 @@ const MyInput = ({
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
-
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
@@ -172,7 +173,6 @@ const MyInput = ({
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
   }, []);
-
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -281,6 +281,16 @@ const MyInput = ({
       return document.body;
     });
 
+  // helper: build label from single أو multiple keys
+  const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
+    if (!item || !labelKeys?.length) return fallback;
+    const parts = labelKeys
+      .map(key => (key ? item[key] : undefined))
+      .filter(v => v !== undefined && v !== null && v !== '');
+    const combined = parts.join(' ').trim();
+    return combined || fallback;
+  };
+
   const conjureFormControl = () => {
     switch (fieldType) {
       case 'textarea':
@@ -381,7 +391,13 @@ const MyInput = ({
           />
         );
 
-      case 'select':
+      case 'select': {
+        const isArrayLabel = Array.isArray(props.selectDataLabel);
+        const labelKeys = isArrayLabel
+          ? (props.selectDataLabel as string[])
+          : [props.selectDataLabel ?? ''];
+        const primaryLabelKey = labelKeys[0] ?? '';
+
         return (
           <Form.Control
             style={{ width: styleWidth, height: props?.height ?? 30 }}
@@ -389,7 +405,14 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={SelectPicker}
-            renderMenuItem={props.renderMenuItem}
+            renderMenuItem={
+              props.renderMenuItem ??
+              (isArrayLabel
+                ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
+                : props.isEnum
+                ? (label: any) => formatEnumString(String(label))
+                : undefined)
+            }
             searchBy={props.searchBy}
             container={resolveContainer()}
             placement={pickerPlacement}
@@ -399,7 +422,7 @@ const MyInput = ({
             readOnly={props.readOnly !== undefined ? props.readOnly : false}
             name={fieldName}
             data={props?.selectData ?? []}
-            labelKey={props?.selectDataLabel ?? ''}
+            labelKey={primaryLabelKey}
             valueKey={props?.selectDataValue ?? ''}
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
@@ -412,11 +435,29 @@ const MyInput = ({
             onOpen={() => setIsSelectOpen(true)}
             onClose={() => setIsSelectOpen(false)}
             virtualized={props?.virtualized ?? true}
+            renderValue={
+              isArrayLabel
+                ? (value, item, selectedElement) => {
+                    if (!item) return selectedElement;
+                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                  }
+                : props.isEnum
+                ? (value, item, selectedElement) => {
+                    const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
+                    return <span>{formatEnumString(String(base))}</span>;
+                  }
+                : undefined
+            }
           />
         );
+      }
 
       case 'selectPagination': {
-        const labelKey = props.selectDataLabel ?? 'name';
+        const isArrayLabel = Array.isArray(props.selectDataLabel);
+        const labelKeys = isArrayLabel
+          ? (props.selectDataLabel as string[])
+          : [props.selectDataLabel ?? 'name'];
+        const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
 
         return (
@@ -428,21 +469,19 @@ const MyInput = ({
             disabled={props.disabled}
             accepter={SelectPicker}
             searchKeyWard={props?.searchKeyWard}
-            // setSearchKeyWard={props?.setSearchKeyWard}
-            onSearch={(searchText) => {
-             
+            onSearch={searchText => {
               props.setSearchKeyWard?.(searchText);
             }}
             data={[
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                  {
-                    [valueKey]: '__load_more__',
-                    [labelKey]: 'Load more...',
-                    isLoadMore: true
-                  }
-                ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -456,6 +495,23 @@ const MyInput = ({
               } else {
                 handleValueChange(value);
               }
+            }}
+            renderValue={(value, item, selectedElement) => {
+              if (!item) return selectedElement;
+              if (item.isLoadMore) return selectedElement;
+
+              if (props.renderOptionLabel) {
+                const base = props.renderOptionLabel(item);
+                return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
+              }
+
+              if (isArrayLabel) {
+                const base = buildCombinedLabel(item, labelKeys, selectedElement);
+                return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
+              }
+
+              const base = item[labelKey];
+              return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
             }}
             renderMenuItem={(label, item) => {
               if (item?.isLoadMore) {
@@ -476,7 +532,18 @@ const MyInput = ({
                   </div>
                 );
               }
-              return label;
+
+              if (props.renderOptionLabel) {
+                const base = props.renderOptionLabel(item);
+                return props.isEnum ? formatEnumString(String(base)) : base;
+              }
+
+              if (isArrayLabel) {
+                const base = buildCombinedLabel(item, labelKeys, label);
+                return props.isEnum ? formatEnumString(String(base)) : base;
+              }
+
+              return props.isEnum ? formatEnumString(String(label)) : label;
             }}
             placeholder={props.placeholder ?? 'Select...'}
             searchable
@@ -507,12 +574,12 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : []} // Multiple values as array
-            onChange={handleValueChange} // Pass handler for multiple value selection
+            value={record ? record[fieldName] : []}
+            onChange={handleValueChange}
             placeholder={props.placeholder ?? 'Select...'}
-            creatable={props.creatable ?? false} // Optional: Allow users to create new tags
-            groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
-            searchBy={props.searchBy} // Optional: Search function for TagPicker
+            creatable={props.creatable ?? false}
+            groupBy={props.groupBy ?? null}
+            searchBy={props.searchBy}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isMultyPickerOpen}
@@ -535,11 +602,11 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : []} // Multiple values as array
-            onChange={handleValueChange} // Pass handler for multiple value selection
+            value={record ? record[fieldName] : []}
+            onChange={handleValueChange}
             placeholder={props.placeholder ?? 'Select...'}
-            groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
-            searchBy={props.searchBy} // Optional: Search function for checkPicker
+            groupBy={props.groupBy ?? null}
+            searchBy={props.searchBy}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isCheckPickerOpen}
@@ -684,6 +751,10 @@ const MyInput = ({
           (leftAddon ? (leftAddonwidth ? leftAddonwidth : addonWidth) : 0) +
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
+        const rawValue = record ? record[fieldName] : '';
+        const displayValue =
+          props.isEnum && typeof rawValue === 'string' ? formatEnumString(rawValue) : rawValue;
+
         const inputControl = (
           <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
             <Form.Control
@@ -695,7 +766,7 @@ const MyInput = ({
               disabled={props.disabled}
               name={fieldName}
               type={fieldType}
-              value={record ? record[fieldName] : ''}
+              value={displayValue}
               onChange={handleValueChange}
               placeholder={props.placeholder}
               onKeyDown={async e => {
@@ -759,8 +830,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                  ? 'orange'
-                  : 'grey'
+                ? 'orange'
+                : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
