@@ -106,8 +106,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
 
       if (isUnknown) {
         savedPatient = await addUnknownPatient().unwrap();
-      }
-      else {
+      } else {
         const payload: Patient = {
           ...localPatient,
           isCompletedPatient: false,
