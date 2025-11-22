@@ -693,3 +693,30 @@ export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFood
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+export const newCountry: modelTypes.Country = {
+  id: undefined,
+  name: '',
+  code: '',
+  isActive: true
+};
+export const newCountryDistrict: modelTypes.CountryDistrict = {
+  id: undefined,
+  countryId: undefined,
+  name: '',
+  code: '',
+  isActive: true,
+};
+
+export const newDistrictCommunity: modelTypes.DistrictCommunity = {
+  id: undefined,
+  districtId: undefined,
+  name: '',
+  isActive: true,
+};
+
+export const newCommunityArea: modelTypes.CommunityArea = {
+  id: undefined,
+  communityId: undefined,
+  name: '',
+  isActive: true,
+};

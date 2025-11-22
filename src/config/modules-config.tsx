@@ -185,7 +185,7 @@ export const MODULES: Module[] =
       { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
       { name: "User New", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
       { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
-      
+      { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
 
     ],
   },
