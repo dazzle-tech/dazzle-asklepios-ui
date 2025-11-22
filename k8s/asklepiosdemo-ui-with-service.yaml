@@ -1,0 +1,42 @@
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+    name: asklepiosdemo-ui
+    namespace: asklepios-sandbox
+spec:
+    type: ClusterIP
+    selector:
+        app: asklepiosdemo-ui
+    ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 80
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: asklepiosdemo-ui
+    namespace: asklepios-sandbox
+spec:
+    selector:
+        matchLabels:
+            app: asklepiosdemo-ui
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: asklepiosdemo-ui
+        spec:
+            containers:
+                - name: asklepiosdemo-ui
+                  image: registry.digitalocean.com/asklepios/asklepios-ui:demo.1500ec542e40358c1eeecf4311820c7fc659d4b9
+                  imagePullPolicy: IfNotPresent
+                  ports:
+                      - containerPort: 80
+                        name: asklepios-ui
+            imagePullSecrets:
+                - name: asklepios
+
