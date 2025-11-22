@@ -1,6 +1,6 @@
+import MyInput from '@/components/MyInput';
 import React from 'react';
 import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
 
 const BasicInfo = ({
   validationResult,
@@ -59,6 +59,7 @@ const BasicInfo = ({
         searchable={false}
       />
       <MyInput
+        required
         vr={validationResult}
         column
         fieldType="date"
@@ -74,7 +75,7 @@ const BasicInfo = ({
         fieldType="text"
         disabled
         fieldName="ageFormat"
-        record={localPatient?.dob ? ageFormatType : null}
+        record={localPatient?.dateOfBirth ? ageFormatType : null}
       />
       <MyInput
         vr={validationResult}
@@ -83,7 +84,8 @@ const BasicInfo = ({
         fieldType="text"
         fieldName="ageGroup"
         disabled
-        record={localPatient?.dob ? ageGroupValue : null}
+        record={localPatient?.dateOfBirth ? ageGroupValue : null}
+        isEnum
       />
       <MyInput
         vr={validationResult}

@@ -248,7 +248,6 @@ export const store = configureStore({
 
     [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
-    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     [BrandMedicationActiveIngredientService.reducerPath]:
       BrandMedicationActiveIngredientService.reducer,
     [activeIngredientDrugInteractionService.reducerPath]:

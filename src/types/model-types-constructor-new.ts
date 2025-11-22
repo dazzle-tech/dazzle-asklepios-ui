@@ -733,23 +733,18 @@ export const newVisitDuration: modelTypes.VisitDuration = {
 export const newPatient: modelTypes.Patient = {
   id: undefined,
   mrn: '',
-
   firstName: '',
   secondName: '',
   thirdName: '',
   lastName: '',
-
   sexAtBirth: null,
   dateOfBirth: null,
-
   patientClasses: '',
   isPrivatePatient: false,
-
   firstNameSecondaryLang: '',
   secondNameSecondaryLang: '',
   thirdNameSecondaryLang: '',
   lastNameSecondaryLang: '',
-
   primaryMobileNumber: '',
   receiveSms: false,
   secondMobileNumber: '',
@@ -758,12 +753,10 @@ export const newPatient: modelTypes.Patient = {
   email: '',
   receiveEmail: false,
   preferredWayOfContact: null,
-
   nativeLanguage: '',
   emergencyContactName: '',
   emergencyContactRelation: '',
   emergencyContactPhone: '',
-
   role: '',
   maritalStatus: '',
   nationality: '',
@@ -772,16 +765,13 @@ export const newPatient: modelTypes.Patient = {
   occupation: '',
   responsibleParty: '',
   educationalLevel: '',
-
   previousId: '',
   archivingNumber: '',
-
   details: '',
   isUnknown: false,
-
   isVerified: false,
   isCompletedPatient: false,
-
+  securityAccessLevel:null,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -800,6 +790,19 @@ export const newAddress: modelTypes.Address = {
   additionalAddressLine: '',
   countryId: '',
   isCurrent: true,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredHealthProfessional = {
+  id: undefined,
+  patientId: 0,
+  practitionerId: 0,
+  facilityId: 0,
+  networkAffiliation: '',
+  relatedWith: '',
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,

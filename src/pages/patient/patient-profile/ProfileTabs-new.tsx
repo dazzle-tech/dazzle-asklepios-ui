@@ -1,7 +1,7 @@
 import MyTab from '@/components/MyTab';
 import Translate from '@/components/Translate';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAgeGroupValueQuery } from '@/services/patientService';
+import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
@@ -40,15 +40,9 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     ageFormat: ''
   });
 
-  // Fetch age group data
-  const { data: patientAgeGroupResponse } = useGetAgeGroupValueQuery(
-    {
-      dob: localPatient?.dateOfBirth ? new Date(localPatient.dateOfBirth).toISOString() : null
-    },
-    { skip: !localPatient?.dateOfBirth }
-  );
+  const [fetchAgeGroupByBirthDate, { data: patientAgeGroupResponse }] =
+    useLazyGetAgeGroupByBirthDateQuery();
 
-  // Fetch LOV data for various fields
   const genderEnum = useEnumOptions('Gender');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
@@ -113,27 +107,31 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       )
     }
   ];
-  // Update age format when DOB changes
+
   useEffect(() => {
     if (localPatient?.dateOfBirth) {
       const calculatedFormat = calculateAgeFormat(localPatient.dateOfBirth);
-      setAgeFormatType(prevState => ({
-        ...prevState,
+
+      setAgeFormatType(prev => ({
+        ...prev,
         ageFormat: calculatedFormat
       }));
+
+      fetchAgeGroupByBirthDate({
+        birthDate: String(localPatient.dateOfBirth)
+      });
     } else {
-      setAgeFormatType(prevState => ({
-        ...prevState,
+      setAgeFormatType(prev => ({
+        ...prev,
         ageFormat: ''
       }));
     }
   }, [localPatient?.dateOfBirth]);
 
-  // Update age group when response changes
   useEffect(() => {
-    if (patientAgeGroupResponse?.object?.lovDisplayVale) {
+    if (patientAgeGroupResponse?.ageGroup) {
       setAgeGroupValue({
-        ageGroup: patientAgeGroupResponse.object.lovDisplayVale
+        ageGroup: patientAgeGroupResponse.ageGroup
       });
     }
   }, [patientAgeGroupResponse]);
