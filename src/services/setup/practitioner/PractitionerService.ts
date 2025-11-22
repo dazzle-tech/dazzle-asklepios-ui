@@ -170,4 +170,5 @@ export const {
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
+  useLazyGetPractitionerByIdQuery,
 } = PractitionerService;
