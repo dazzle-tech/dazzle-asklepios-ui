@@ -824,3 +824,10 @@ export interface Address {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+export interface PatientHIPAA {
+  patientId?: number;
+  noticeOfPrivacyPractice: boolean;
+  privacyAuthorization: boolean;
+  noticeOfPrivacyPracticeDate: string | null;
+  privacyAuthorizationDate: string | null;
+}

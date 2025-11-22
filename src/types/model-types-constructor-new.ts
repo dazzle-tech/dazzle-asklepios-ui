@@ -691,3 +691,11 @@ export const newAddress: modelTypes.Address = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
+
+export const  newPatientHIPAA:modelTypes.PatientHIPAA= {
+  patientId: undefined,
+  noticeOfPrivacyPractice: false,
+  privacyAuthorization: false,
+  noticeOfPrivacyPracticeDate:  null,
+  privacyAuthorizationDate: null,
+}

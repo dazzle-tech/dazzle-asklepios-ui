@@ -11,7 +11,7 @@ const Translate = props => {
     .replace(/\s+/g, '_')            // replace all spaces with underscores
     .toUpperCase();
 } else {
-  console.warn('Expected a string, got:', s);
+  // console.warn('Expected a string, got:', s);
   return s;
 }
 };

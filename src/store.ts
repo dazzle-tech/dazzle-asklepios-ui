@@ -76,6 +76,7 @@ import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesInte
 import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
 import { vaccineService } from './services/vaccine/vaccineService';
 import callReducer from './store/callSlice';
+import {hipaaService } from '@/services/patients/hipaaService';
 
 export const store = configureStore({
   reducer: {
@@ -228,7 +229,9 @@ export const store = configureStore({
     [newPatientService.reducerPath]: newPatientService.reducer,
 
     //
-    [addressService.reducerPath]: addressService.reducer
+    [addressService.reducerPath]: addressService.reducer,
+    [hipaaService.reducerPath]: hipaaService.reducer
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -304,7 +307,8 @@ export const store = configureStore({
       CdtDentalActionService.middleware,
       BrandMedicationActiveIngredientService.middleware,
       newPatientService.middleware,
-      addressService.middleware
+      addressService.middleware,
+      hipaaService.middleware
     ])
 });
 
