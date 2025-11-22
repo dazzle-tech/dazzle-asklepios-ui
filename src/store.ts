@@ -287,9 +287,9 @@ export const store = configureStore({
 
     [hipaaService.reducerPath]: hipaaService.reducer,
 
-    [patientPreferredHealthProfessionalService.reducerPath]: patientPreferredHealthProfessionalService.reducer,
+    [patientPreferredHealthProfessionalService.reducerPath]:
+      patientPreferredHealthProfessionalService.reducer,
     [patientDocumentsService.reducerPath]: patientDocumentsService.reducer
-
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -388,7 +388,7 @@ export const store = configureStore({
       addressService.middleware,
       hipaaService.middleware,
       patientPreferredHealthProfessionalService.middleware,
-      patientDocumentsService.middleware,
+      patientDocumentsService.middleware
     ])
 });
 
