@@ -22,6 +22,12 @@ import {
   useGetDiagnosticTestNormalRangesByProfileTestIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
 import {
+  useGetAllActiveDiagnosticTestsQuery
+} from '@/services/setup/diagnosticTest/diagnosticTestService';
+import {
+  useGetAllLaboratoriesQuery
+} from '@/services/setup/diagnosticTest/laboratoryService';
+import {
   newApDiagnosticOrderTests,
   newApDiagnosticOrderTestsNotes,
   newApDiagnosticOrderTestsResult
@@ -67,6 +73,11 @@ const Tests = forwardRef<unknown, Props>(
     const [openSampleModal, setOpenSampleModal] = useState(false);
     const [openRejectedModal, setOpenRejectedModal] = useState(false);
     const { data: labCatLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
+    console.log('labCatLovQueryResponse: ', labCatLovQueryResponse);
+    const orderTypeString = ['862810597620632', 'LABORATORY']
+    .map(v => `(${v})`)
+    .join('');
+    console.log('orderTypeString => ', orderTypeString);
     const [listRequest, setListRequest] = useState<ListRequest>({
       ...initialListRequest,
       filters: [
@@ -77,8 +88,8 @@ const Tests = forwardRef<unknown, Props>(
         },
         {
           fieldName: 'order_type_lkey',
-          operator: 'match',
-          value: '862810597620632'
+          operator: 'in',
+          value: orderTypeString
         },
         {
           fieldName: 'status_lkey',
@@ -108,6 +119,110 @@ const Tests = forwardRef<unknown, Props>(
     const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
       ...initialListRequest
     });
+
+    // Fetch all active diagnostic tests for lookup map
+    const { data: allTestsList } = useGetAllActiveDiagnosticTestsQuery({
+      page: 0,
+      size: 1000,
+      sort: 'id,asc'
+    });
+
+    // Create a lookup map for tests by testKey/id for efficient access in table columns
+    const testsLookupMap = React.useMemo(() => {
+      const allTests = allTestsList?.data || [];
+      const map = new Map();
+      allTests.forEach(test => {
+        // Try multiple key formats to match different possible identifiers
+        const idKey = test.id?.toString();
+        const keyStr = test.key?.toString();
+        const testId = test.testId?.toString();
+        
+        // Store test by all possible identifiers
+        if (idKey) {
+          map.set(idKey, test);
+        }
+        if (keyStr && keyStr !== idKey) {
+          map.set(keyStr, test);
+        }
+        if (testId && testId !== idKey && testId !== keyStr) {
+          map.set(testId, test);
+        }
+        
+        // Also store as number if it's numeric
+        const numId = Number(idKey || keyStr || testId);
+        if (!isNaN(numId)) {
+          map.set(numId.toString(), test);
+        }
+      });
+      return map;
+    }, [allTestsList]);
+
+    // Helper function to get test by testKey
+    const getTestByKey = React.useCallback((testKey: string | number | undefined) => {
+      if (!testKey) return null;
+      const key = testKey.toString();
+      let test = testsLookupMap.get(key);
+      
+      // If not found, try as number
+      if (!test) {
+        const numKey = Number(key);
+        if (!isNaN(numKey)) {
+          test = testsLookupMap.get(numKey.toString());
+        }
+      }
+      
+      return test || null;
+    }, [testsLookupMap]);
+
+    // Fetch all laboratories from new service for lookup map
+    const { data: allLaboratoriesList } = useGetAllLaboratoriesQuery({
+      page: 0,
+      size: 1000,
+      sort: 'id,asc'
+    });
+
+    // Create a lookup map for laboratories by testId for efficient access
+    const laboratoriesLookupMap = React.useMemo(() => {
+      const allLaboratories = allLaboratoriesList?.data || [];
+      const map = new Map();
+      allLaboratories.forEach(lab => {
+        // Store laboratory by testId (could be testId, test.id, or related test identifier)
+        const testId = lab.testId?.toString();
+        const test = lab.test;
+        const testIdFromTest = test?.id?.toString();
+        
+        if (testId) {
+          map.set(testId, lab);
+        }
+        if (testIdFromTest && testIdFromTest !== testId) {
+          map.set(testIdFromTest, lab);
+        }
+        
+        // Also store as number if it's numeric
+        const numTestId = Number(testId || testIdFromTest);
+        if (!isNaN(numTestId)) {
+          map.set(numTestId.toString(), lab);
+        }
+      });
+      return map;
+    }, [allLaboratoriesList]);
+
+    // Helper function to get laboratory by testId
+    const getLaboratoryByTestId = React.useCallback((testId: string | number | undefined) => {
+      if (!testId) return null;
+      const key = testId.toString();
+      let lab = laboratoriesLookupMap.get(key);
+      
+      // If not found, try as number
+      if (!lab) {
+        const numKey = Number(key);
+        if (!isNaN(numKey)) {
+          lab = laboratoriesLookupMap.get(numKey.toString());
+        }
+      }
+      
+      return lab || null;
+    }, [laboratoriesLookupMap]);
 
     const { data: laboratoryListToFilter } = useGetDiagnosticsTestLaboratoryListQuery(
       {
@@ -188,8 +303,8 @@ const Tests = forwardRef<unknown, Props>(
             },
             {
               fieldName: 'order_type_lkey',
-              operator: 'match',
-              value: '862810597620632'
+              operator: 'in',
+              value: orderTypeString
             },
             ,
             {
@@ -217,8 +332,8 @@ const Tests = forwardRef<unknown, Props>(
         },
         {
           fieldName: 'order_type_lkey',
-          operator: 'match',
-          value: '862810597620632'
+          operator: 'in',
+          value: orderTypeString
         },
         {
           fieldName: 'status_lkey',
@@ -348,9 +463,35 @@ const Tests = forwardRef<unknown, Props>(
         title: <Translate>TEST CATEGORY</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
+          // First try to get category from new laboratory service using testId
+          const testKey = rowData.testKey;
+          if (testKey) {
+            const laboratory = getLaboratoryByTestId(testKey);
+            if (laboratory) {
+                           // If category is stored as a key, try to get display value from LOV
+              const categoryKey = laboratory.categoryLkey ||
+                                
+                                 laboratory.category||
+                                 null;
+              
+              if (categoryKey) {
+                // Try to find category display value from LOV
+                const categoryLov = labCatLovQueryResponse?.object?.find(
+                  item => item.key?.toString() === categoryKey?.toString()
+                );
+                if (categoryLov?.lovDisplayVale) {
+                  return categoryLov.lovDisplayVale;
+                }
+                // If LOV lookup fails, return the key as fallback
+                return categoryKey.toString();
+              }
+            }
+          }
+          
+          // Fallback to old backend method using laboratoryList
           const cat = laboratoryList?.object?.find(item => item.testKey === rowData.testKey);
           if (cat) {
-            return cat?.categoryLvalue?.lovDisplayVale;
+            return cat?.categoryLvalue?.lovDisplayVale || '';
           }
           return '';
         }
@@ -361,7 +502,20 @@ const Tests = forwardRef<unknown, Props>(
         title: <Translate>TEST NAME</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
-          return rowData.test.testName;
+          // First try to get from rowData.test (if available from backend)
+          if (rowData.test?.testName) {
+            return rowData.test.testName;
+          }
+          // Otherwise, fetch from new backend service using testKey
+          const testKey = rowData.testKey;
+          if (!testKey) return '';
+          
+          const test = getTestByKey(testKey);
+          if (test) {
+            // Try different possible field names from the new backend
+            return test.testName || test.name || test.testNameEn || '';
+          }
+          return '';
         }
       },
       {
@@ -370,8 +524,25 @@ const Tests = forwardRef<unknown, Props>(
         title: <Translate>IS PROFILE</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
-          const cat = laboratoryList?.object?.find(item => item.testKey === rowData.testKey);
-          return cat?.isProfile ? 'Yes' : 'NO';
+          // First try to get from new backend service using testKey
+          const testKey = rowData.testKey;
+          if (testKey) {
+            const test = getTestByKey(testKey);
+            if (test) {
+              // Try different possible field names for isProfile from the new backend
+              const isProfile = test.isProfile !== undefined 
+                ? test.isProfile 
+                : test.profile !== undefined 
+                  ? test.profile 
+                  : test.testProfile !== undefined
+                    ? test.testProfile
+                    : null;
+              
+              if (isProfile !== null) {
+                return isProfile ? 'Yes' : 'No';
+              }
+            }
+          }
         }
       },
       {
@@ -662,8 +833,8 @@ const Tests = forwardRef<unknown, Props>(
             },
             {
               fieldName: 'order_type_lkey',
-              operator: 'match',
-              value: '862810597620632'
+              operator: 'in',
+              value: orderTypeString
             },
             {
               fieldName: 'status_lkey',
