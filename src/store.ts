@@ -89,7 +89,8 @@ import { communityAreaService } from './services/setup/country/communityAreaServ
 import { dischargePService } from './services/setup/dischargeService';
 import { resultReportApi } from './services/setup/resultReportApi';
 import { invoiceReportApi } from './services/setup/invoiceReportApi';
-
+import { catalogService } from './services/setup/catalog/catalogService';
+import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 export const store = configureStore({
