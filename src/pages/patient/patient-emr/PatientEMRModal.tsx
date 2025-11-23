@@ -690,7 +690,7 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
         <div className="patient-side-main-container-handle">
           <PatientSide patient={localPatient} encounter={encounter} />
         </div>
-        {/* <div className="profile-sidebar-main-container-handle">
+        <div className="profile-sidebar-main-container-handle">
           <ProfileSidebar
             expand={expand}
             setExpand={setExpand}
@@ -699,7 +699,7 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
             setRefetchData={setRefetchData}
             refetchData={refetchData}
           />
-        </div> */}
+        </div>
       </div>
     </div>
   );

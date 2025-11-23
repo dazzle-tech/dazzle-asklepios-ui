@@ -149,7 +149,7 @@ const InformationDesk: React.FC = () => {
     { key: 'bed', title: 'Bed', dataKey: 'bed' },
     {
       key: 'gender',
-      title: 'Sex at Birth',
+      title: 'Gender',
       render: (rowData: any) =>
         rowData.genderLvalue ? rowData.genderLvalue.lovDisplayVale : rowData.genderLkey
     },
@@ -368,7 +368,7 @@ const InformationDesk: React.FC = () => {
             />
             <MyInput
               column
-              fieldLabel="Sex at Birth"
+              fieldLabel="Gender"
               fieldType="select"
               fieldName="genderLkey"
               selectData={genderLovQueryResponse?.object ?? []}

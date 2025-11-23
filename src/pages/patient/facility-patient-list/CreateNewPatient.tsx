@@ -166,7 +166,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             width={200}
                             required
                             column
-                            fieldLabel="Sex at Birth"
+                            fieldLabel="Gender"
                             fieldType="select"
                             fieldName="genderLkey"
                             selectData={genderLovQueryResponse?.object ?? []}
