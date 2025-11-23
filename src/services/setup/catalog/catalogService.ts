@@ -119,6 +119,14 @@ export const catalogService = createApi({
       }),
       invalidatesTags: ['Catalog'],
     }),
+
+     deleteCatalog: builder.mutation({
+      query: id => ({
+        url: `/api/setup/catalog/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Catalog'],
+    }),
   }),
 });
 
@@ -133,4 +141,5 @@ export const {
   useLazyGetCatalogByNameQuery,
   useAddCatalogMutation,
   useUpdateCatalogMutation,
+  useDeleteCatalogMutation
 } = catalogService;

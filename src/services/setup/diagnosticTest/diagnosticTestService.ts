@@ -56,6 +56,23 @@ export const diagnosticTestService = createApi({
       providesTags: ["DiagnosticTest"],
     }),
 
+    getAllDiagnosticTestsByNameAndType: builder.query({
+      query: ({ type, name, ...params }) => ({
+        url: `/api/setup/diagnostic-test/by-type-and-name/${type}/${name}`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["DiagnosticTest"],
+    }),
+
     // 🔹 Get diagnostic tests by type
     getDiagnosticTestsByType: builder.query({
       query: ({ type, ...params }) => ({
@@ -153,4 +170,5 @@ export const {
   useCreateDiagnosticTestMutation,
   useUpdateDiagnosticTestMutation,
   useToggleDiagnosticTestActiveMutation,
+  useGetAllDiagnosticTestsByNameAndTypeQuery
 } = diagnosticTestService;

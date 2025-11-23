@@ -630,7 +630,9 @@ export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   description: null,
   type: '',
   departmentId: 0,
-  departmentName: null
+  departmentName: null,
+  facilityId: 0,
+  facilityName: null
 };
 
 export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
@@ -638,6 +640,7 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   description: null,
   type: '',
   departmentId: 0,
+  facilityId: 0
 };
 
 export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
@@ -645,6 +648,7 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   description: null,
   type: '',
   departmentId: 0,
+  facilityId: 0
 };
 export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
   id: 0,

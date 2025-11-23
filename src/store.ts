@@ -91,7 +91,8 @@ import { dischargePService } from './services/setup/dischargeService';
 import { resultReportApi } from './services/setup/resultReportApi';
 import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
-
+import { catalogService } from './services/setup/catalog/catalogService';
+import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -173,6 +174,11 @@ export const store = configureStore({
 
     //procedure 
     [procedureService.reducerPath]: procedureService.reducer,
+
+    // catalog
+     [catalogService.reducerPath]: catalogService.reducer,
+     [catalogDiagnosticTestService.reducerPath]: catalogDiagnosticTestService.reducer,
+
  
     //prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
@@ -363,6 +369,8 @@ export const store = configureStore({
       resultReportApi.middleware,
       invoiceReportApi.middleware,
       visitDurationService.middleware,
+      catalogService.middleware,
+      catalogDiagnosticTestService.middleware
     ])
 });
 
