@@ -82,6 +82,8 @@ import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
 import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
+import { catalogService } from './services/setup/catalog/catalogService';
+import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 
 export const store = configureStore({
   reducer: {
@@ -164,6 +166,11 @@ export const store = configureStore({
 
     //procedure 
     [procedureService.reducerPath]: procedureService.reducer,
+
+    // catalog
+     [catalogService.reducerPath]: catalogService.reducer,
+     [catalogDiagnosticTestService.reducerPath]: catalogDiagnosticTestService.reducer,
+
  
     //prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
@@ -324,7 +331,9 @@ export const store = configureStore({
       CdtDentalActionService.middleware,
       uomGroupService.middleware,
       activeIngredientDrugInteractionService.middleware,
-      activeIngredientFoodInteractionService.middleware
+      activeIngredientFoodInteractionService.middleware,
+      catalogService.middleware,
+      catalogDiagnosticTestService.middleware
     ])
 });
 

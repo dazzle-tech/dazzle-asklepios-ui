@@ -739,12 +739,15 @@ export interface ActiveIngredientIndication {
   type: string;
   departmentId: number;
   departmentName?: string | null;
+  facilityId: number;
+  facilityName: string | null;
 };
 
 export type CatalogCreateVM = {
   name: string;
   description?: string | null;
   type: string;
+  facilityId: number;
   departmentId: number;
 };
 
@@ -753,6 +756,7 @@ export type CatalogUpdateVM = {
   description?: string | null;
   type?: string;
   departmentId?: number;
+  facilityId: number;
 };
 
 export type CatalogDiagnosticTest = {
