@@ -1,6 +1,7 @@
 import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
@@ -8,6 +9,7 @@ import {
   useGetOrderTestResultNotesByResultIdQuery,
   useSaveDiagnosticOrderTestResultsNotesMutation
 } from '@/services/labService';
+import { useGenerateLabResultsPdfMutation } from '@/services/setup/resultReportApi';
 import {
   useGetDiagnosticsTestLaboratoryListQuery,
   useGetLovAllValuesQuery
@@ -30,12 +32,18 @@ import {
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { set } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import './styles.less';
-import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
-const Result = ({ patient, user }) => {
+import { Checkbox, Form, HStack, Tooltip, Whisper, Message, useToaster } from 'rsuite';
+
+interface ResultProps {
+  patient: any;
+  user: any;
+}
+
+const Result: React.FC<ResultProps> = ({ patient, user }) => {
   const dispatch = useAppDispatch();
+  const toaster = useToaster();
   const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
   const [record, setRecord] = useState({});
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
@@ -65,6 +73,8 @@ const Result = ({ patient, user }) => {
 
   const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
   const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
+  const [generateLabResultsPdf, { isLoading: isGeneratingPdf }] = useGenerateLabResultsPdfMutation();
+
   const {
     data: resultsList,
     refetch: resultFetch,
@@ -80,15 +90,18 @@ const Result = ({ patient, user }) => {
   const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
     ...initialListRequest
   });
-  const isResultSelected = rowData => {
+
+  const isResultSelected = (rowData: any) => {
     if (rowData && result && rowData.key === result.key) {
       return 'selected-row';
     } else return '';
   };
+
   useEffect(() => {
-    const cat = laboratoryList?.object?.find(item => item.testKey === test.testKey);
+    const cat = laboratoryList?.object?.find((item: any) => item.testKey === test.testKey);
     setLabDetails(cat);
-  }, [test]);
+  }, [test, laboratoryList]);
+
   useEffect(() => {
     setTest({ ...result?.test });
   }, [result]);
@@ -109,7 +122,8 @@ const Result = ({ patient, user }) => {
         }
       ]
     }));
-  }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+  }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate, patient?.key]);
+
   useEffect(() => {
     if (!resultLoding && resultsList?.object?.length) {
       const fromDate = dateOrderFilter.fromDate ? new Date(dateOrderFilter.fromDate) : null;
@@ -118,12 +132,12 @@ const Result = ({ patient, user }) => {
       if (fromDate) fromDate.setHours(0, 0, 0, 0);
       if (toDate) toDate.setHours(23, 59, 59, 999);
 
-      const filtered = resultsList.object.filter(item => {
+      const filtered = resultsList.object.filter((item: any) => {
         const createdAt = new Date(item.test?.order?.createdAt);
         return (!fromDate || createdAt >= fromDate) && (!toDate || createdAt <= toDate);
       });
 
-      const value = filtered.map(order => `(${order.key})`).join(' ') || '("")';
+      const value = filtered.map((order: any) => `(${order.key})`).join(' ') || '("")';
 
       setListResultResponse(prev => addFilterToListRequest('key', 'in', value, prev));
     }
@@ -150,7 +164,7 @@ const Result = ({ patient, user }) => {
     }
 
     setListResultResponse(prev => {
-      let updatedFilters = prev.filters.filter(f => f.fieldName !== 'marker');
+      let updatedFilters = prev.filters.filter((f: any) => f.fieldName !== 'marker');
 
       if (showAbnormal) {
         updatedFilters.push({
@@ -167,18 +181,21 @@ const Result = ({ patient, user }) => {
     });
 
     resultFetch();
-  }, [showAbnormal]);
+  }, [showAbnormal, patient?.key, resultFetch]);
+
   useEffect(() => {
     resultFetch();
-  }, [listResultResponse.filters]);
-  const joinValuesFromArray = keys => {
+  }, [listResultResponse.filters, resultFetch]);
+
+  const joinValuesFromArray = (keys: string[]) => {
     return keys
-      .map(key => lovValues?.object?.find(lov => lov.key === key))
-      .filter(obj => obj !== undefined)
-      .map(obj => obj.lovDisplayVale)
+      .map((key: string) => lovValues?.object?.find((lov: any) => lov.key === key))
+      .filter((obj: any) => obj !== undefined)
+      .map((obj: any) => obj.lovDisplayVale)
       .join(', ');
   };
-  const handleSendResultMessage = async value => {
+
+  const handleSendResultMessage = async (value: string) => {
     try {
       await saveResultNote({
         ...newApDiagnosticOrderTestsResultNotes,
@@ -190,9 +207,126 @@ const Result = ({ patient, user }) => {
       }).unwrap();
       dispatch(notify({ msg: 'Send Successfully', sev: 'success' }));
     } catch (error) {
-      dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
+      dispatch(notify({ msg: 'Send Failed', sev: 'error' }));
     }
     await fecthResultNotes();
+  };
+
+  // Function to calculate age from date of birth
+  const calculateAgeFormat = (dob: string) => {
+    if (!dob) return 'N/A';
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Function to prepare data for PDF generation
+  const prepareResultsData = () => {
+    const results = resultsList?.object?.map((rowData: any) => {
+      let testName = '';
+      if (rowData.isProfile) {
+        testName = rowData.test?.profileList?.find((item: any) => item.key == rowData?.testProfileKey)?.testName || 'N/A';
+      } else {
+        testName = rowData.test?.test?.testName || 'N/A';
+      }
+
+      let resultValue = '';
+      let unit = '';
+      let normalRange = '';
+
+      if (rowData.normalRangeKey) {
+        if (rowData.normalRange?.resultTypeLkey === '6209578532136054') {
+          resultValue = rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey;
+          unit = labDetails?.resultUnitLvalue?.lovDisplayVale || '';
+          normalRange = joinValuesFromArray(rowData.normalRange?.lovList) + ' ' + unit;
+        } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618') {
+          resultValue = String(rowData.resultValueNumber);
+          unit = labDetails?.resultUnitLvalue?.lovDisplayVale || '';
+
+          if (rowData.normalRange?.normalRangeTypeLkey == '6221150241292558') {
+            normalRange = rowData.normalRange?.rangeFrom + '-' + rowData.normalRange?.rangeTo + ' ' + unit;
+          } else if (rowData.normalRange?.normalRangeTypeLkey == '6221162489019880') {
+            normalRange = 'Less Than ' + rowData.normalRange?.rangeFrom + ' ' + unit;
+          } else if (rowData.normalRange?.normalRangeTypeLkey == '6221175556193180') {
+            normalRange = 'More Than ' + rowData.normalRange?.rangeTo + ' ' + unit;
+          }
+        }
+      } else {
+        resultValue = rowData.resultText || 'N/A';
+        normalRange = 'Not Defined';
+      }
+
+      return {
+        orderId: rowData.test?.orderId || 'N/A',
+        approvedAt: rowData.approvedAt,
+        testName: testName,
+        resultValue: resultValue,
+        unit: unit,
+        normalRange: normalRange,
+        marker: rowData.marker,
+        reviewDate: rowData.reviewAt ? formatDateWithoutSeconds(rowData.reviewAt) : 'N/A',
+        reviewBy: rowData.reviewByUser?.fullName || 'N/A'
+      };
+    }) || [];
+
+    return {
+      patientInfo: {
+        name: patient?.fullName || 'N/A',
+        mrn: patient?.patientMrn || 'N/A',
+        dob: patient?.dob || 'N/A',
+        age: patient?.dob ? calculateAgeFormat(patient.dob) + ' years' : 'N/A',
+        gender: patient?.genderLvalue?.lovDisplayVale || 'Not specified'
+      },
+      results: results
+    };
+  };
+
+  // Function to generate and download PDF
+  const handleGeneratePdf = async () => {
+    try {
+      console.log('Starting Results PDF generation...');
+
+      const data = prepareResultsData();
+      console.log('Prepared data:', data);
+
+      const result = await generateLabResultsPdf(data).unwrap();
+
+      // Create blob URL and trigger download
+      const blob = new Blob([result], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Lab_Results_Report_${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Show success message
+      toaster.push(
+        <Message showIcon type="success" closable>
+          Laboratory Results Report generated successfully!
+        </Message>,
+        { placement: 'topEnd', duration: 5000 }
+      );
+
+      console.log('Results PDF generated and downloaded successfully');
+    } catch (error) {
+      console.error('Error generating Results PDF:', error);
+
+      // Show error message
+      toaster.push(
+        <Message showIcon type="error" closable>
+          Failed to generate Laboratory Results Report. Please try again.
+        </Message>,
+        { placement: 'topEnd', duration: 5000 }
+      );
+    }
   };
 
   const tableColomns = [
@@ -200,7 +334,6 @@ const Result = ({ patient, user }) => {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
       flexGrow: 1,
-
       render: (rowData: any) => {
         return rowData.test?.orderId;
       }
@@ -209,7 +342,6 @@ const Result = ({ patient, user }) => {
       key: 'approvedAt',
       title: <Translate>Result Date</Translate>,
       flexGrow: 1,
-
       render: (rowData: any) => {
         return formatDateWithoutSeconds(rowData.approvedAt);
       }
@@ -221,7 +353,7 @@ const Result = ({ patient, user }) => {
       fullText: true,
       render: (rowData: any) => {
         if (rowData.isProfile) {
-          return rowData.test?.profileList?.find(item => item.key == rowData?.testProfileKey)
+          return rowData.test?.profileList?.find((item: any) => item.key == rowData?.testProfileKey)
             ?.testName;
         } else {
           return rowData.test?.test?.testName;
@@ -233,7 +365,7 @@ const Result = ({ patient, user }) => {
       title: <Translate>TEST RESULT,UNIT</Translate>,
       flexGrow: 2,
       fullText: true,
-      render: rowData => {
+      render: (rowData: any) => {
         if (rowData.normalRangeKey) {
           if (rowData.normalRange?.resultTypeLkey === '6209578532136054') {
             return (
@@ -259,8 +391,8 @@ const Result = ({ patient, user }) => {
           if (rowData.normalRange?.resultTypeLkey == '6209578532136054') {
             return (
               joinValuesFromArray(rowData.normalRange?.lovList) +
-                ' ' +
-                labDetails?.resultUnitLvalue?.lovDisplayVale || ''
+              ' ' +
+              labDetails?.resultUnitLvalue?.lovDisplayVale || ''
             );
           } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618') {
             if (rowData.normalRange?.normalRangeTypeLkey == '6221150241292558') {
@@ -335,25 +467,14 @@ const Result = ({ patient, user }) => {
               icon={faComment}
               style={{
                 fontSize: '1em',
-                color: rowData.hasComments ? '#007bff' : 'gray'
+                color: rowData.hasComments ? '#007bff' : 'gray',
+                cursor: 'pointer'
               }}
-              onClick={() => setOpenNoteResultModal(true)}
+              onClick={() => {
+                setResult(rowData);
+                setOpenNoteResultModal(true);
+              }}
             />
-          </HStack>
-        );
-      }
-    },
-    {
-      key: 'action',
-      title: <Translate>Print</Translate>,
-      flexGrow: 3,
-      fullText: true,
-      render: (rowData: any) => {
-        return (
-          <HStack spacing={5}>
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Print</Tooltip>}>
-              <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
-            </Whisper>
           </HStack>
         );
       }
@@ -375,32 +496,36 @@ const Result = ({ patient, user }) => {
       }
     }
   ];
+
   const pageIndex = listResultResponse.pageNumber - 1;
-
-  // how many rows per page:
   const rowsPerPage = listResultResponse.pageSize;
-
-  // total number of items in the backend:
   const totalCount = resultsList?.extraNumeric ?? 0;
 
-  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-
     setListResultResponse({ ...listResultResponse, pageNumber: newPage + 1 });
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setListResultResponse({
       ...listResultResponse,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
+      pageNumber: 1
     });
   };
+
   const filters = () => {
     return (
-      <Form layout="inline" fluid className="date-filter-form">
+      <Form
+        layout="inline"
+        fluid
+        className="date-filter-form"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+          gap: "8px 16px"
+        }}
+      >
         <MyInput
           column
           width={160}
@@ -419,7 +544,6 @@ const Result = ({ patient, user }) => {
           record={dateOrderFilter}
           setRecord={setDateOrderFilter}
         />
-
         <MyInput
           width={160}
           column
@@ -429,37 +553,62 @@ const Result = ({ patient, user }) => {
           record={record}
           setRecord={setRecord}
         />
-
         <Checkbox
           className="result-checkbox-show-abnormal-result"
           checked={showAbnormal}
           onChange={() => {
             if (showAbnormal) {
               const updatedFilters = listResultResponse.filters.filter(
-                f => f.fieldName !== 'marker'
+                (f: any) => f.fieldName !== "marker"
               );
               setListResultResponse({
                 ...listResultResponse,
                 filters: updatedFilters
               });
             }
-
             setShowAbnormal(!showAbnormal);
           }}
         >
           Show Abnormal Result
         </Checkbox>
+
+        <MyButton
+          onClick={handleGeneratePdf}
+          loading={isGeneratingPdf}
+          disabled={isGeneratingPdf || !resultsList?.object?.length}
+          prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+          color="var(--deep-blue)"
+          className="generate-report-btn"
+          style={{
+            marginLeft: "auto"
+          }}
+        >
+          {isGeneratingPdf ? "Generating Report..." : "Generate Complete Report"}
+        </MyButton>
       </Form>
     );
   };
+
+
   return (
     <>
+      <div className="results-actions-header">
+
+
+        {resultsList?.object?.length > 0 && (
+          <div className="results-count-badge">
+            <FontAwesomeIcon icon={faCircleExclamation} style={{ marginRight: '5px' }} />
+            <span>{resultsList.object.length} Results Available</span>
+          </div>
+        )}
+      </div>
+
       <MyTable
         filters={filters()}
         columns={tableColomns}
         data={resultsList?.object || []}
-        loading={resultLoding}
-        onRowClick={rowData => {
+        loading={resultLoding || isGeneratingPdf}
+        onRowClick={(rowData: any) => {
           setResult(rowData);
         }}
         rowClassName={isResultSelected}
@@ -469,7 +618,7 @@ const Result = ({ patient, user }) => {
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
-      ></MyTable>
+      />
       <ChatModal
         open={openNoteResultModal}
         setOpen={setOpenNoteResultModal}
@@ -481,4 +630,5 @@ const Result = ({ patient, user }) => {
     </>
   );
 };
+
 export default Result;

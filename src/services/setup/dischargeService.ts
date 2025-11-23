@@ -1,33 +1,82 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery } from '@/api';
 
+// Define the discharge data structure
+export interface DischargeData {
+  patient: {
+    fullName: string;
+    patientMrn: string;
+    dob: string;
+    age: string;
+    gender: string;
+  };
+  encounter: {
+    chiefComplain: string;
+    admissionDate: string;
+  };
+  user: {
+    fullName: string;
+    email: string;
+  };
+  facility: {
+    name: string;
+  };
+  diagnoses: Array<{
+    diagnoseType: string;
+    icdCode: string;
+    description: string;
+  }>;
+  reviewSystems: Array<{
+    system: string;
+    systemDetail: string;
+    notes: string;
+  }>;
+  procedures: Array<{
+    procedureName: string;
+    procedureId: string;
+  }>;
+  prescriptions: Array<{
+    medicationName: string;
+    instructions: string;
+  }>;
+  diagnosticTests: Array<{
+    testName: string;
+    processingStatus: string;
+  }>;
+}
+
 export const dischargePService = createApi({
   reducerPath: 'dischargeApi',
   baseQuery: baseQuery,
   tagTypes: ['DischargePdf'],
   endpoints: (builder) => ({
-    generateDischargePdf: builder.mutation<Blob, void>({
-      query: () => ({
+    generateDischargePdf: builder.mutation<Blob, DischargeData>({
+      query: (dischargeData) => ({
         url: '/pas/generate-discharge-pdf',
         method: 'POST',
+        body: dischargeData,
         responseHandler: async (response) => {
-          // Check if response is ok
           if (!response.ok) {
-            const errorText = await response.text();
+            let errorText = 'Unknown error';
+            try {
+              const errorJson = await response.json();
+              errorText = errorJson.error || errorJson.message || errorText;
+            } catch {
+              errorText = await response.text();
+            }
             throw new Error(`Discharge PDF generation failed: ${errorText}`);
           }
-          // Return blob for PDF
           return response.blob();
         },
-        // Important: Tell RTK Query we're expecting a blob response
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/pdf',
         },
       }),
       invalidatesTags: [{ type: 'DischargePdf', id: 'GENERATED' }],
     }),
 
-    // Optional: Health check endpoint
+    // ✅ بعد التصحيح
     checkDischargeServiceHealth: builder.query<
       { status: string; service: string; timestamp: string },
       void
@@ -45,5 +94,3 @@ export const {
   useLazyCheckDischargeServiceHealthQuery,
   useCheckDischargeServiceHealthQuery,
 } = dischargePService;
-
-export default dischargePService;
