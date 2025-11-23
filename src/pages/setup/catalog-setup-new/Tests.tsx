@@ -19,13 +19,13 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetAllDiagnosticTestsByNameAndTypeQuery, useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useAddTestsToCatalogMutation, useGetCatalogTestsQuery, useRemoveTestFromCatalogMutation } from '@/services/setup/catalog/catalogTestService';
 
+
 const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   const dispatch = useAppDispatch();
 
   const [record, setRecord] = useState({ value: '' });
   const [openChild, setOpenChild] = useState<boolean>(false);
   const [selectedRows, setSelectedRows] = useState([]);
- 
   const [openConfirmDeleteTest, setOpenConfirmDeleteTest] = useState<boolean>(false);
   const [catalogDiagnosticsTests, setCatalogDiagnosticsTests] = useState<ApCatalogDiagnosticTest[]>([]);
   const [pageIndexTable1, setPageIndexTable1] = useState(0);
@@ -47,7 +47,8 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
         timestamp: Date.now()
       });
   // Fetch diagnostics test list response(all tests for specific type)
-  const {data: diagnosticsListResponse, refetch} = useGetAllDiagnosticTestsByNameAndTypeQuery({ type: diagnosticsTestCatalogHeader.type,name: record['value'], ...paginationParamsForAllTests });
+
+  const {data: diagnosticsListResponse} = useGetAllDiagnosticTestsByNameAndTypeQuery({ type: diagnosticsTestCatalogHeader.type,name: record['value'], ...paginationParamsForAllTests });
   // Fetch selected diagnostics test list response for catalog
   // const catalogDiagnosticsTestListResponse = useGetCatalogDiagnosticsTestListQuery(
   //   diagnosticsTestCatalogHeader.key
@@ -60,7 +61,8 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       timestamp: Date.now()
     });
     
- const { data: catalogDiagnosticsTestListResponse, refetchTests } =
+
+ const { data: catalogDiagnosticsTestListResponse } =
   useGetCatalogTestsQuery(
     {
       catalogId: diagnosticsTestCatalogHeader?.id,
@@ -70,7 +72,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       skip: !diagnosticsTestCatalogHeader?.id,
     }
   );
-  
+
 
   // remove test
   const [removeTest] = useRemoveTestFromCatalogMutation();
@@ -205,11 +207,10 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
     addTestsToCatalog({catalogId: diagnosticsTestCatalogHeader?.id, body: {testIds: selectedRows}})
       .unwrap()
       .then(() => {
-        refetch();
-        refetchTests();
         // catalogDiagnosticsTestListResponse.refetch();
         dispatch(notify({ msg: 'The Tests have been saved successfully', sev: 'success' }));
       });
+
   };
   
   // Handle test selection by checking the checkbox
@@ -244,7 +245,6 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
               rowClassName={isSelectedOnTable1}
               onRowClick={rowData => {
                 setSelectedTestOnTable1(rowData);
-              
               }}
               // data={paginatedDataTable1 ?? []}
               data={catalogDiagnosticsTestListResponse?.data?.testIds ?? []}
@@ -288,6 +288,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
             <MyTable
               height={350}
               data={combinedArrayTable2 ?? []}
+
               // data={diagnosticsListResponse?.data ?? []}
               rowClassName={isSelectedOnTable2}
               onRowClick={rowData => {
@@ -318,11 +319,6 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       !catalogDiagnosticsTestListResponse?.data?.testIds.includes(item.id)
   ));
   }, [diagnosticsListResponse, selectedTestKeys]);
-
-  useEffect(() => {
-    console.log("combinedArrayTable2");
-     console.log(combinedArrayTable2);
-  },[combinedArrayTable2]);
 
   useEffect(() => {
     setPaginatedDataTable1(
