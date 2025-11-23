@@ -9,43 +9,7 @@ import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { faSquareXmark } from '@fortawesome/free-solid-svg-icons';
 
 const PatientAppointments = ({patient}) => {
-  const data = [
-    {
-      appointmentDate: '2025-08-28',
-      resourceType: 'Doctor',
-      resource: 'Dr. Ahmad Khalil',
-      visitType: 'Consultation',
-      priority: 'High'
-    },
-    {
-      appointmentDate: '2025-08-30',
-      resourceType: 'Nurse',
-      resource: 'Nurse Sara Ali',
-      visitType: 'Follow-up',
-      priority: 'Medium'
-    },
-    {
-      appointmentDate: '2025-09-01',
-      resourceType: 'Lab',
-      resource: 'Blood Test - Lab A',
-      visitType: 'Diagnostic',
-      priority: 'Low'
-    },
-    {
-      appointmentDate: '2025-09-05',
-      resourceType: 'Physiotherapist',
-      resource: 'Omar Hamed',
-      visitType: 'Therapy Session',
-      priority: 'Medium'
-    },
-    {
-      appointmentDate: '2025-09-10',
-      resourceType: 'Doctor',
-      resource: 'Dr. Lina Nasser',
-      visitType: 'Surgery',
-      priority: 'High'
-    }
-  ];
+  const data = [];
 
   // Icons column (Change, View, Cancel)
   const iconsForActions = () => (
