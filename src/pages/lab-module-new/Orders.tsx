@@ -13,6 +13,7 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
     sortBy: 'isUrgent',
     sortType: 'desc'
   });
+  console.log("ordersList", ordersList);
   const filterdOrderList = ordersList?.object.filter(item => item.hasLaboratory === true);
   const isSelected = rowData => {
     if (rowData && order && rowData.key === order.key) {

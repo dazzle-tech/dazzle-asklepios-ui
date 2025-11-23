@@ -82,7 +82,7 @@ const Lab = () => {
     { skip: test.key == null }
   );
   const divContent = (
-      "Clinical Laboratory"
+    "Clinical Laboratory"
   );
   dispatch(setPageCode('Lab'));
   dispatch(setDivContent(divContent));
@@ -141,9 +141,14 @@ const Lab = () => {
     ]
   });
   const { data: ordersListForToday } = useGetDiagnosticOrderQuery(listOrdersForTodayResponse);
+  console.log("ordersListForToday", ordersListForToday);
   const filterdOrderListForToday = ordersListForToday?.object.filter(
     item => item.hasLaboratory === true
   );
+  const orderTypeString = ['862810597620632', 'LABORATORY']
+  .map(v => `(${v})`)
+  .join('');
+  console.log("orderTypeString", orderTypeString);
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 1000,
@@ -158,9 +163,10 @@ const Lab = () => {
       },
       {
         fieldName: 'order_type_lkey',
-        operator: 'match',
-        value: '862810597620632'
-      },
+        operator: 'in',
+        value: orderTypeString  // بتطلع: (862810597620632) (LABORATORY)
+      }
+,      
       {
         fieldName: 'status_lkey',
         operator: 'match',
@@ -203,13 +209,23 @@ const Lab = () => {
 
   // Effects
   useEffect(() => {
-    if (!filterdOrderListForToday || filterdOrderListForToday.length === 0) return;
-
-    const orderKeysString = filterdOrderListForToday.map(order => `(${order.key})`).join(' ');
-
-    if (listRequest.filters?.[0]?.value !== orderKeysString) {
+    if (!filterdOrderListForToday?.length) return;
+  
+    const orderKeysString = filterdOrderListForToday
+      .map(order => `(${order.key})`)
+      .join(' '); // (1) (2) (3)
+  
+    const orderTypeString = ['862810597620632', 'LABORATORY']
+      .map(v => `(${v})`)
+      .join(''); // (862...)(LABORATORY)
+  
+    const prevOrderKeys = listRequest.filters?.find(f => f.fieldName === 'order_key')?.value;
+    const prevOrderTypes = listRequest.filters?.find(f => f.fieldName === 'order_type_lkey')?.value;
+  
+    if (prevOrderKeys !== orderKeysString || prevOrderTypes !== orderTypeString) {
       setListRequest(prev => ({
         ...prev,
+        filterLogic: 'and',
         filters: [
           {
             fieldName: 'order_key',
@@ -218,8 +234,8 @@ const Lab = () => {
           },
           {
             fieldName: 'order_type_lkey',
-            operator: 'match',
-            value: '862810597620632'
+            operator: 'in',
+            value: orderTypeString   // ✅ هون التصحيح
           },
           {
             fieldName: 'status_lkey',
@@ -230,6 +246,7 @@ const Lab = () => {
       }));
     }
   }, [filterdOrderListForToday]);
+  
 
   useEffect(() => {
     let newTests = 0;
@@ -256,7 +273,7 @@ const Lab = () => {
     handleManualSearch();
   }, []);
 
-  useEffect(() => {}, [refetchResult]);
+  useEffect(() => { }, [refetchResult]);
 
   useEffect(() => {
     setResult({ ...newApDiagnosticOrderTestsResult });
