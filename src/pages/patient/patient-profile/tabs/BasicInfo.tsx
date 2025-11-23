@@ -48,7 +48,7 @@ const BasicInfo = ({
         required
         vr={validationResult}
         column
-        fieldLabel="Sex at Birth"
+        fieldLabel="Gender"
         fieldType="select"
         fieldName="genderLkey"
         selectData={genderLovQueryResponse?.object ?? []}

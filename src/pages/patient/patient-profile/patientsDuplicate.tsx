@@ -31,7 +31,7 @@ const PatientDuplicate = ({ list, handleSave, open, setOpen ,setlocalPatient }) 
         },
         {
             key: "genderLkey",
-            title: <Translate>Sex at Birth</Translate>,
+            title: <Translate>Gender</Translate>,
             render: (rowData: any) => {
                 return rowData.genderLvalue ? rowData.genderLvalue?.lovDisplayVale : rowData.genderLkey
             }
