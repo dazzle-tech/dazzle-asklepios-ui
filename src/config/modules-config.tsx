@@ -539,7 +539,7 @@ export const MODULES: Module[] =
           description: "",
           icon: "FaMobileRetro",
           viewOrder: 1,
-          navPath: "",
+          navPath: "billing-accounting",
         },
         {
           name: "Price Lists",

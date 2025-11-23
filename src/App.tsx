@@ -109,6 +109,7 @@ import GenericMedications from './pages/medications/generic-medications-new';
 import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
 import PrescriptionInstructions from './pages/medications/prescription_instructions-new';
 import Operation from './pages/operation-module';
+import Accounting from './pages/billing-module';
 import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
 import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList';
 import PatientChart from './pages/patient/patient-chart';
@@ -495,6 +496,7 @@ const App = () => {
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
+              <Route path="billing-accounting" element={<Accounting />} />
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
