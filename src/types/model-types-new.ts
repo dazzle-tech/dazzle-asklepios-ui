@@ -840,3 +840,30 @@ export interface ActiveIngredientSpecialPopulation {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;
 }
+export interface Country {
+  id?: number;
+  name: string;
+  code: string;
+  isActive?: boolean;
+}
+export interface CountryDistrict {
+  id?: number;
+  countryId: number;   
+  name: string;
+  code: string;
+  isActive?: boolean;
+}
+
+export interface DistrictCommunity {
+  id?: number;
+  districtId: number;  
+  name: string;
+  isActive?: boolean;
+}
+
+export interface CommunityArea {
+  id?: number;
+  communityId: number; 
+  name: string;
+  isActive?: boolean;
+}

@@ -1,9 +1,10 @@
 import MyButton from '@/components/MyButton/MyButton';
 import React, { useState } from 'react';
-import { Col, Form, Row, Text } from 'rsuite';
+import { Col, Form, Row, Text, Message, useToaster } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGenerateDischargePdfMutation } from '@/services/setup/dischargeService';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import MyLabel from '@/components/MyLabel';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,14 +18,100 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
+import { useLocation } from 'react-router-dom';
 
 const DischargePlanning = () => {
   // Fetch readiness Status Lov response
   const { data: readinessStatusLovQueryResponse } = useGetLovValuesByCodeQuery('READINESS_STATUS');
+  
+  // Discharge PDF Generation
+  const [generateDischargePdf, { isLoading: isGeneratingPdf }] = useGenerateDischargePdfMutation();
+  const toaster = useToaster();
+
   const [object, setObject] = useState({ homeCareNeeded: false, readinessStatus: '' });
   const [medicalEquipmentTags, setMedicalEquipmentTags] = useState([]);
   const [homeCareNeedsTags, setHomeCareNeedsTags] = useState([]);
   const [topicsCoveredTags, setTopicsCoveredTags] = useState([]);
+
+  // Function to handle PDF generation
+  const handleGenerateReport = async () => {
+    try {
+      console.log('Starting Discharge PDF generation...');
+      
+      const result = await generateDischargePdf().unwrap();
+      
+      // Create blob URL and trigger download
+      const blob = new Blob([result], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Discharge_Summary_Report_${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Show success message
+      toaster.push(
+        <Message showIcon type="success" closable>
+          Discharge Summary Report generated successfully!
+        </Message>,
+        { placement: 'topEnd', duration: 5000 }
+      );
+
+      console.log('Discharge PDF generated and downloaded successfully');
+    } catch (error) {
+      console.error('Error generating Discharge PDF:', error);
+      
+      // Show error message
+      toaster.push(
+        <Message showIcon type="error" closable>
+          Failed to generate Discharge Summary Report. Please try again.
+        </Message>,
+        { placement: 'topEnd', duration: 5000 }
+      );
+    }
+  };
+
+  // Function to handle print (generates PDF and opens in new window for printing)
+  const handlePrintReport = async () => {
+    try {
+      console.log('Starting Discharge PDF generation for printing...');
+      
+      const result = await generateDischargePdf().unwrap();
+      
+      // Create blob URL and open in new window
+      const blob = new Blob([result], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank');
+      
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+
+      // Show success message
+      toaster.push(
+        <Message showIcon type="success" closable>
+          Discharge Summary Report opened for printing!
+        </Message>,
+        { placement: 'topEnd', duration: 5000 }
+      );
+
+      console.log('Discharge PDF opened for printing');
+    } catch (error) {
+      console.error('Error generating Discharge PDF for printing:', error);
+      
+      // Show error message
+      toaster.push(
+        <Message showIcon type="error" closable>
+          Failed to open Discharge Summary Report for printing. Please try again.
+        </Message>,
+        { placement: 'topEnd', duration: 5000 }
+      );
+    }
+  };
 
   return (
     <>
@@ -277,7 +364,7 @@ const DischargePlanning = () => {
                       <Col md={12}>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}>
                           Create Follow-up
-                        </MyButton>{' '}
+                        </MyButton>
                       </Col>
                     </Row>
                   </>
@@ -383,8 +470,13 @@ const DischargePlanning = () => {
         </Form>
       </Row>
       <div className="container-of-buttons-discharge">
-        <MyButton>
-          <FaModx title="Generate Report" size={20} /> Generate Report
+        <MyButton 
+          onClick={handleGenerateReport}
+          loading={isGeneratingPdf}
+          disabled={isGeneratingPdf}
+        >
+          <FaModx title="Generate Report" size={20} /> 
+          {isGeneratingPdf ? 'Generating...' : 'Generate Report'}
         </MyButton>
 
         <MyButton
@@ -404,17 +496,9 @@ const DischargePlanning = () => {
         >
           Sign & Submit
         </MyButton>
-
-        <MyButton
-          color="var(--deep-blue)"
-          width="120px"
-          height="32px"
-          prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
-        >
-          Print Report
-        </MyButton>
       </div>
     </>
   );
 };
+
 export default DischargePlanning;

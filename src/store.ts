@@ -82,7 +82,11 @@ import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
 import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
-
+import { countryService } from './services/setup/country/countryService';
+import { countryDistrictService } from './services/setup/country/countryDistrictService';
+import { districtCommunityService } from './services/setup/country/districtCommunityService';
+import { communityAreaService } from './services/setup/country/communityAreaService';
+import { dischargePService } from './services/setup/dischargeService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -236,6 +240,7 @@ export const store = configureStore({
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
     [vaccineDosesService.reducerPath]: vaccineDosesService.reducer,
     [vaccineDosesIntervalService.reducerPath]: vaccineDosesIntervalService.reducer,
+
     [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
@@ -243,6 +248,14 @@ export const store = configureStore({
     [activeIngredientDrugInteractionService.reducerPath]: activeIngredientDrugInteractionService.reducer,
     [activeIngredientFoodInteractionService.reducerPath]: activeIngredientFoodInteractionService.reducer,
 
+    // country
+    [countryService.reducerPath]: countryService.reducer,
+    [countryDistrictService.reducerPath]: countryDistrictService.reducer,
+    [districtCommunityService.reducerPath]: districtCommunityService.reducer,
+    [communityAreaService.reducerPath]: communityAreaService.reducer, 
+  
+    // discharge
+    [dischargePService.reducerPath]: dischargePService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -324,7 +337,12 @@ export const store = configureStore({
       CdtDentalActionService.middleware,
       uomGroupService.middleware,
       activeIngredientDrugInteractionService.middleware,
-      activeIngredientFoodInteractionService.middleware
+      activeIngredientFoodInteractionService.middleware,
+      countryService.middleware,
+      countryDistrictService.middleware,
+      districtCommunityService.middleware,
+      communityAreaService.middleware,
+      dischargePService.middleware,
     ])
 });
 
