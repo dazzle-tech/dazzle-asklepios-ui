@@ -20,6 +20,7 @@ import {
 } from '@/services/setup/catalog/catalogTestService';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 
+
 const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   const dispatch = useAppDispatch();
 
@@ -35,7 +36,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   });
   const pageIndexTable1 = paginationParams.page;
   const rowsPerPageTable1 = paginationParams.size;
-  const [selectedTestOnTable1, setSelectedTestOnTable1] = useState();
+  const [selectedTestOnTable1, setSelectedTestOnTable1] = useState({});
   const [combinedArrayTable2, setCombinedArrayTable2] = useState([]);
   const [selectedTestOnTable2, setSelectedTestOnTable2] = useState();
 
@@ -83,14 +84,9 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   console.log(catalogDiagnosticsTestListResponseWithoutPagination);
 
   const totalCountForCatalogTests = catalogDiagnosticsTestListResponse?.totalCount ?? 0;
-  
-
 
   // remove test
   const [removeTest] = useRemoveTestFromCatalogMutation();
-  // save tests
-  const [saveCatalogDiagnosticsTest] = useSaveCatalogDiagnosticsTestMutation();
-
   const [addTestsToCatalog] = useAddTestsToCatalogMutation();
   const links = catalogDiagnosticsTestListResponse?.links;
   
@@ -160,14 +156,11 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       key: 'internalCode',
       title: 'Code'
     }
+
   ];
 
   // Handle page change in navigation
   const handlePageChangeTable1 = (_: unknown, newPage: number) => {
-     // if (isFiltered) {
-    //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
-    // }
-    // else {
     PaginationPerPage.handlePageChange(
       event,
       newPage,
@@ -175,17 +168,12 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       links,
       setPaginationParams
     );
-    // }
   };
 
   
 
   // Handle page change in navigation
   const handlePageChangeTable2 = (event, newPage) => {
-    // if (isFiltered) {
-    //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
-    // }
-    // else {
     PaginationPerPage.handlePageChange(
       event,
       newPage,
@@ -193,7 +181,6 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       linkForAllTests,
       setPaginationParamsForAllTests
     );
-    // }
   };
 
   // handle delete test from selected list
@@ -271,27 +258,19 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
                 setSelectedTestOnTable1(rowData);
               }}
               totalCount={totalCountForCatalogTests}
-              // data={paginatedDataTable1 ?? []}
               data={catalogDiagnosticsTestListResponse?.data?.tests ?? []}
-              // loading={catalogDiagnosticsTestListResponse.isFetching}
               columns={tableColumns}
               page={pageIndexTable1}
               rowsPerPage={rowsPerPageTable1}
               onPageChange={handlePageChangeTable1}
               onRowsPerPageChange={e => {
                 const newSize = Number(e.target.value);
-
-                // if (isFiltered) {
-                //   setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
-                //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-                // } else {
                 setPaginationParams({
                   ...paginationParams,
                   size: newSize,
                   page: 0,
                   timestamp: Date.now()
                 });
-                // }
               }}
             />
             <DeletionConfirmationModal
@@ -327,8 +306,6 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
               height={350}
               data={combinedArrayTable2 ?? []}
               totalCount={combinedArrayTable2?.length}
-              // data={diagnosticsListResponse?.data?.filter(x => !(catalogDiagnosticsTestListResponse?.data?.tests?.map(item => item.id)).includes(x.id)) ?? []}
-              // totalCount={diagnosticsListResponse?.totalCount ?? 0}
               rowClassName={isSelectedOnTable2}
               onRowClick={rowData => {
                 setSelectedTestOnTable2(rowData);
@@ -339,25 +316,18 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
               onPageChange={handlePageChangeTable2}
               onRowsPerPageChange={e => {
                 const newSize = Number(e.target.value);
-
-                // if (isFiltered) {
-                //   setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
-                //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
-                // } else {
                 setPaginationParamsForAllTests({
                   ...paginationParamsForAllTests,
                   size: newSize,
                   page: 0,
                   timestamp: Date.now()
                 });
-                // }
               }}
             />
           </div>
         );
     }
   };
-
   useEffect(() => {
     const testIds = catalogDiagnosticsTestListResponseWithoutPagination?.data?.tests?.map(item => item.id);
     setLinkForAllTests(diagnosticsListResponse?.links);

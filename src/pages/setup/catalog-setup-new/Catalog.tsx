@@ -23,8 +23,8 @@ import { CatalogResponseVM } from '@/types/model-types-new';
 import { newCatalogResponseVM } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
-import { useGetDepartmentsQuery } from '@/services/setupService';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+
 const Catalog = () => {
   const dispatch = useAppDispatch();
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
@@ -52,8 +52,6 @@ const Catalog = () => {
     refetch,
     isFetching
   } = useGetCatalogsQuery(paginationParams);
-  console.log("diagnosticsTestCatalogHeaderListResponse");
-  console.log(diagnosticsTestCatalogHeaderListResponse);
 
   const [deleteCatalog] = useDeleteCatalogMutation();
  
@@ -72,9 +70,9 @@ const Catalog = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [filteredList, setFilteredList] = useState<CatalogResponseVM[]>([]);
 
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);  
   const {data: departmentListResponse} = useGetAllDepartmentsWithoutPaginationQuery({});
+
 
   const testTypeEnum = useEnumOptions('TestType');
 
@@ -229,7 +227,7 @@ const Catalog = () => {
     setDiagnosticsTestCatalogHeader({ ...newCatalogResponseVM });
     setPopupOpen(true);
   };
-  
+
    // ──────────────────────────── PAGINATION ────────────────────────────
     const handlePageChange = (event, newPage) => {
       if (isFiltered) {
@@ -398,10 +396,7 @@ const Catalog = () => {
         open={popupOpen}
         setOpen={setPopupOpen}
         diagnosticsTestCatalogHeader={diagnosticsTestCatalogHeader}
-        setDiagnosticsTestCatalogHeader={setDiagnosticsTestCatalogHeader}
-        // departmentListResponse={departmentListResponse}
         width={width}
-        // handleSave={handleSave}
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteCatalog}

@@ -12,7 +12,7 @@ import { newCatalogCreateVM, newCatalogUpdateVM } from '@/types/model-types-cons
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagnosticsTestCatalogHeader, width }) => {
+const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) => {
 
   const dispatch = useAppDispatch();
   // Fetch test Type Lov Response
@@ -68,7 +68,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
           dispatch(notify({ msg: 'Failed to add this Catalog', sev: 'error' }));
         });
       }
-        else{
+        else {
           updateCatalog({id: diagnosticsTestCatalogHeader?.id, body: catalogUpdateVM})
         .unwrap()
         .then(() => {
@@ -97,17 +97,6 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
               setRecord={!diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM}
               searchable={false}
             />
-            {/* <MyInput
-              width="100%"
-              fieldType="select"
-              fieldName="facilityId"
-              fieldLabel="Facility"
-              selectData={departmentListResponse?.object ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-              setRecord={!diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM}
-            /> */}
             <MyInput
                   placeholder="Select Facility"
                   width="100%"
@@ -136,8 +125,6 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
               width="100%"
               fieldName="name"
               fieldLabel="Catalog Name"
-              // record={diagnosticsTestCatalogHeader}
-              // setRecord={setDiagnosticsTestCatalogHeader}
               record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
               setRecord={!diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM}
             />
@@ -145,8 +132,6 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
             <MyInput
               width="100%"
               fieldName="description"
-              // record={diagnosticsTestCatalogHeader}
-              // setRecord={setDiagnosticsTestCatalogHeader}
               record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
               setRecord={!diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM}
             />
