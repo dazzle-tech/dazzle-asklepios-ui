@@ -295,7 +295,7 @@ export const MODULES: Module[] =
     icon: "FaExplosion",
     viewOrder: 6,
     screens: [
-      { name: "Er Triage",
+      { name: "ER Triage",
         code:"ER_TRIAGE",
          description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "ER-triage" },
      
