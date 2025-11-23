@@ -140,6 +140,7 @@ import CPTSetup from './pages/setup/cpt-setup';
 import DentalActions from './pages/setup/dental-actions-new';
 import Departments from './pages/setup/departments-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
+import Diagnostic from './pages/setup/diagnostics-tests-definition';
 import DVM from './pages/setup/dvm-setup';
 import Facilities from './pages/setup/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
@@ -488,6 +489,7 @@ const App = () => {
               <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
+              <Route path="diagnostics-test-old" element={<Diagnostic/>} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
