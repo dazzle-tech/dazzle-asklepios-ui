@@ -29,7 +29,7 @@ import {
 } from 'rsuite';
 import TransferList from './TransferTestList';
 import './styles.less';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
@@ -721,7 +721,7 @@ const DiagnosticsOrder = props => {
         const test = getTestByKey(testKey);
         if (test) {
           // Try different possible field names from the new backend
-          return test.testType || test.testTypeName || test.type || '';
+          return test.testType || test.testTypeName || formatEnumString(test.type) || '';
         }
         // Fallback to orderTypeLkey if available
         return rowData.orderTypeLvalue?.lovDisplayVale ?? rowData.orderTypeLkey ?? '';

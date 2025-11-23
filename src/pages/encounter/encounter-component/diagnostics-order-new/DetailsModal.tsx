@@ -10,6 +10,7 @@ import { useGetDepartmentListByTypeQuery } from '@/services/setupService';
 import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
 import { useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import clsx from 'clsx';
+import { formatEnumString } from '@/utils';
 
 const DetailsModal = ({
   test,
@@ -173,7 +174,7 @@ const DetailsModal = ({
               const testType = currentTest?.testType || 
                              currentTest?.type?.lovDisplayVale || 
                              currentTest?.testTypeName ||
-                             currentTest?.type ||
+                           formatEnumString( currentTest?.type) ||
                              '';
               
               // Get test name - try different possible field names
