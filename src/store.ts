@@ -87,6 +87,7 @@ import { countryDistrictService } from './services/setup/country/countryDistrict
 import { districtCommunityService } from './services/setup/country/districtCommunityService';
 import { communityAreaService } from './services/setup/country/communityAreaService';
 import { dischargePService } from './services/setup/dischargeService';
+import { resultReportApi } from './services/setup/resultReportApi';
 export const store = configureStore({
   reducer: {
     // ui
@@ -256,6 +257,9 @@ export const store = configureStore({
   
     // discharge
     [dischargePService.reducerPath]: dischargePService.reducer,
+
+    // result report
+    [resultReportApi.reducerPath]: resultReportApi.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -343,6 +347,7 @@ export const store = configureStore({
       districtCommunityService.middleware,
       communityAreaService.middleware,
       dischargePService.middleware,
+      resultReportApi.middleware,
     ])
 });
 
