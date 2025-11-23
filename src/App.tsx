@@ -104,6 +104,8 @@ import InventoryTransferNew from './pages/inventory-transaction/inventory-transf
 import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import Lab from './pages/lab-module';
+import LabNew from './pages/lab-module-new';
+
 import ListOfRequisition from './pages/list-of-requisition';
 import GenericMedications from './pages/medications/generic-medications-new';
 import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
@@ -519,7 +521,7 @@ const App = () => {
               <Route path="playground" element={<Playground />} />
               <Route path="schedual-screen" element={<ScheduleScreen />} />
               <Route path="patient-EMR" element={<PatientEMR />} />
-              <Route path="lab-module" element={<Lab />} />
+              <Route path="lab-module" element={<LabNew />} />
               <Route path="rad-module" element={<Rad />} />
               <Route path="operation-module" element={<Operation />} />
               <Route path="operation-setup" element={<OperationSetup />} />

@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetDepartmentListByTypeQuery } from '@/services/setupService';
 import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
+import { useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import clsx from 'clsx';
 
 const DetailsModal = ({
@@ -33,6 +34,24 @@ const DetailsModal = ({
 
   const { data: receivedLabList } = useGetDepartmentListByTypeQuery(receivedType);
 
+  // Fetch test details from new backend service using testKey from orderTest
+  const testId = orderTest?.testKey;
+  const { data: testDetailsResponse, isLoading: isLoadingTestDetails } = useGetDiagnosticTestByIdQuery(
+    testId || '',
+    { skip: !testId || !openDetailsModel }
+  );
+  
+  // Extract test data from response (response structure is { data: testObject } or { data: [testObject] })
+  const testDetails = React.useMemo(() => {
+    if (!testDetailsResponse) return null;
+    // Handle array response
+    if (Array.isArray(testDetailsResponse?.data)) {
+      return testDetailsResponse.data[0] || null;
+    }
+    // Handle single object response
+    return testDetailsResponse?.data || null;
+  }, [testDetailsResponse]);
+
   const {
     data: fetchAttachmentByKeyResponce,
     error,
@@ -46,16 +65,20 @@ const DetailsModal = ({
   );
 
   useEffect(() => {
-    if (test?.testTypeLkey == '862810597620632') {
+    // Use testDetails from new backend service, fallback to test prop
+    const currentTest = testDetails || test;
+    const testType = currentTest?.testType || currentTest?.testTypeLkey;
+    
+    if (testType == '862810597620632') {
       setReceivedType('5673990729647007');
-    } else if (test?.testTypeLkey == '862828331135792') {
+    } else if (testType == '862828331135792') {
       setReceivedType('5673990729647008');
-    } else if (test?.testTypeLkey == '862842242812880') {
+    } else if (testType == '862842242812880') {
       setReceivedType('5673990729647009');
     } else {
       setReceivedType('');
     }
-  }, [test]);
+  }, [testDetails, test]);
 
   useEffect(() => {
     if (isSuccess && fetchAttachmentByKeyResponce) {
@@ -142,7 +165,29 @@ const DetailsModal = ({
         size="35vw"
         steps={[
           {
-            title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''),
+            title: (() => {
+              // Use testDetails from new backend service, fallback to test prop
+              const currentTest = testDetails || test;
+              
+              // Get test type - try different possible field names
+              const testType = currentTest?.testType || 
+                             currentTest?.type?.lovDisplayVale || 
+                             currentTest?.testTypeName ||
+                             currentTest?.type ||
+                             '';
+              
+              // Get test name - try different possible field names
+              const testName = currentTest?.testName || 
+                             currentTest?.name || 
+                             currentTest?.testNameEn ||
+                             '';
+              
+              // Format: "Type - Name" or just "Name" if type not available
+              if (testType && testName) {
+                return `${testType} - ${testName}`;
+              }
+              return testName || testType || 'Test Details';
+            })(),
             icon: <FontAwesomeIcon icon={faVials} />
           }
         ]}

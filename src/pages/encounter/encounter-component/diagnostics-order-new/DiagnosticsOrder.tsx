@@ -53,7 +53,7 @@ import DetailsModal from './DetailsModal';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import CancellationModal from '@/components/CancellationModal';
 import { useLocation } from 'react-router-dom';
-import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
+import { useGetAllActiveDiagnosticTestsQuery, useGetDiagnosticTestsByNameQuery, useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import PatientPrevTests from './PatientPrevTests';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
@@ -132,11 +132,34 @@ const DiagnosticsOrder = props => {
     ...newApDrugOrderMedications,
     drugOrderKey: drugKey
   });
-  const [listTestRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    pageSize: 1000
+  // State for pagination with new service
+  const [testPage] = useState(0);
+  const [testPageSize] = useState(1000);
+  
+  // Use new service for diagnostic tests - get all active tests
+  const { data: testsList, isFetching } = useGetAllActiveDiagnosticTestsQuery({
+    page: testPage,
+    size: testPageSize,
+    sort: 'id,asc'
   });
-  const { data: testsList, isFetching } = useGetDiagnosticsTestListQuery(listTestRequest);
+  
+  // Search query when searchTerm is provided
+  const { data: searchTestsList, isFetching: isSearchingTests } = useGetDiagnosticTestsByNameQuery(
+    {
+      name: searchTerm || '',
+      page: 0,
+      size: 1000
+    },
+    {
+      skip: !searchTerm || searchTerm.trim() === ''
+    }
+  );
+  
+  // Use search results if searching, otherwise use all tests
+  const finalTestsList = searchTerm?.trim() ? searchTestsList : testsList;
+  
+  // Combined loading state
+  const isLoadingTests = isFetching || (searchTerm?.trim() ? isSearchingTests : false);
   const [leftItems, setLeftItems] = useState([]);
   const [selectedTestsList, setSelectedTestsList] = useState([]);
   const [listOrdersRequest, setListOrdersRequest] = useState<ListRequest>({
@@ -196,6 +219,59 @@ const DiagnosticsOrder = props => {
   } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
   const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
   const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
+  
+  // Create a lookup map for tests by testKey/id for efficient access in table columns
+  const testsLookupMap = React.useMemo(() => {
+    const allTests = testsList?.data || [];
+    const map = new Map();
+    allTests.forEach(test => {
+      // Try multiple key formats to match different possible identifiers
+      const idKey = test.id?.toString();
+      const keyStr = test.key?.toString();
+      const testId = test.testId?.toString();
+      
+      // Store test by all possible identifiers
+      if (idKey) {
+        map.set(idKey, test);
+      }
+      if (keyStr && keyStr !== idKey) {
+        map.set(keyStr, test);
+      }
+      if (testId && testId !== idKey && testId !== keyStr) {
+        map.set(testId, test);
+      }
+      
+      // Also store as number if it's numeric
+      const numId = Number(idKey || keyStr || testId);
+      if (!isNaN(numId)) {
+        map.set(numId.toString(), test);
+      }
+    });
+    
+    // Debug: log first test structure to understand data format
+    if (allTests.length > 0 && process.env.NODE_ENV === 'development') {
+      console.log('Tests lookup map created with', map.size, 'entries. Sample test:', allTests[0]);
+    }
+    
+    return map;
+  }, [testsList]);
+  
+  // Helper function to get test by testKey
+  const getTestByKey = React.useCallback((testKey: string | number | undefined) => {
+    if (!testKey) return null;
+    const key = testKey.toString();
+    let test = testsLookupMap.get(key);
+    
+    // If not found, try as number
+    if (!test) {
+      const numKey = Number(key);
+      if (!isNaN(numKey)) {
+        test = testsLookupMap.get(numKey.toString());
+      }
+    }
+    
+    return test || null;
+  }, [testsLookupMap]);
   const [openDetailsModel, setOpenDetailsModel] = useState(false);
   const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
   const [selectedGeneric, setSelectedGeneric] = useState(null);
@@ -219,28 +295,16 @@ const DiagnosticsOrder = props => {
 
   // Effects
   useEffect(() => {
-    if (testsList?.object) {
-      setLeftItems(testsList.object);
+    // Use finalTestsList which includes search results or all tests
+    const testsData = finalTestsList?.data || [];
+    if (testsData.length > 0 || !isFetching) {
+      setLeftItems(testsData);
       setSelectedTestsList([]);
     }
-  }, [openTestsModal, testsList]);
+  }, [openTestsModal, finalTestsList, isFetching]);
 
-  useEffect(() => {
-    if (searchTerm.trim() !== '') {
-      setListRequest({
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'test_name',
-            operator: 'containsIgnoreCase',
-            value: searchTerm
-          }
-        ]
-      });
-    } else {
-      setListRequest({ ...initialListRequest, pageSize: 1000 });
-    }
-  }, [searchTerm]);
+  // Note: Search is now handled by the useGetDiagnosticTestsByNameQuery hook
+  // No need for separate useEffect for searchTerm
 
   useEffect(() => {
     const draftOrder = ordersList?.object?.find(order => order.saveDraft === true);
@@ -422,10 +486,10 @@ const DiagnosticsOrder = props => {
             patientKey: patient.key,
             visitKey: encounter?.key,
             orderKey: orders?.key,
-            testKey: item?.key,
+            testKey: item?.id,
             statusLkey: '164797574082125',
             processingStatusLkey: '6055029972709625',
-            orderTypeLkey: item?.testTypeLkey
+            orderTypeLkey: item?.type
           }).unwrap()
         )
       );
@@ -449,6 +513,7 @@ const DiagnosticsOrder = props => {
           statusLkey: '164797574082125',
           labStatusLkey: '6055029972709625',
           radStatusLkey: '6055029972709625',
+          saveDraft: true,
           // Add new fields to the order
           typeKey: selectedType,
           catalogKey: selectedCatalog,
@@ -459,8 +524,9 @@ const DiagnosticsOrder = props => {
         });
 
         setOpenTestsModal(true);
-        dispatch(notify('Start New Order with ID:' + response?.data?.orderId));
-        setOrders(response?.data);
+        const orderData = (response as any)?.data || response;
+        dispatch(notify('Start New Order with ID:' + orderData?.orderId));
+        setOrders(orderData);
       } catch (error) {
         console.error('Error saving prescription:', error);
       }
@@ -622,6 +688,7 @@ const DiagnosticsOrder = props => {
   const joinValuesFromArray = values => {
     return values.filter(Boolean).join(', ');
   };
+  // Define table columns with access to getTestByKey function
   const tableColumns = [
     {
       key: 'check',
@@ -643,7 +710,21 @@ const DiagnosticsOrder = props => {
       flexGrow: 1,
       fullText: true,
       render: rowData => {
-        return rowData.test?.testTypeLvalue?.lovDisplayVale ?? '';
+        // First try to get from rowData.test (if available from backend)
+        if (rowData.test?.testTypeLvalue?.lovDisplayVale) {
+          return rowData.test.testTypeLvalue.lovDisplayVale;
+        }
+        // Otherwise, fetch from new backend service using testKey
+        const testKey = rowData.testKey;
+        if (!testKey) return rowData.orderTypeLvalue?.lovDisplayVale ?? rowData.orderTypeLkey ?? '';
+        
+        const test = getTestByKey(testKey);
+        if (test) {
+          // Try different possible field names from the new backend
+          return test.testType || test.testTypeName || test.type || '';
+        }
+        // Fallback to orderTypeLkey if available
+        return rowData.orderTypeLvalue?.lovDisplayVale ?? rowData.orderTypeLkey ?? '';
       }
     },
     {
@@ -651,7 +732,26 @@ const DiagnosticsOrder = props => {
       title: <Translate>TEST NAME</Translate>,
       flexGrow: 2,
       fullText: true,
-      render: rowData => rowData.test.testName
+      render: rowData => {
+        // First try to get from rowData.test (if available from backend)
+        if (rowData.test?.testName) {
+          return rowData.test.testName;
+        }
+        // Otherwise, fetch from new backend service using testKey
+        const testKey = rowData.testKey;
+        if (!testKey) {
+          console.log('No testKey in rowData:', rowData);
+          return '';
+        }
+        const test = getTestByKey(testKey);
+        if (test) {
+          // Try different possible field names from the new backend
+          return test.testName || test.name || test.testNameEn || '';
+        } else {
+          console.log('Test not found for testKey:', testKey, 'RowData:', rowData);
+        }
+        return '';
+      }
     },
     {
       key: 'internalCode',
@@ -659,7 +759,15 @@ const DiagnosticsOrder = props => {
       title: <Translate>INTERNAL CODE</Translate>,
       flexGrow: 2,
       fullText: true,
-      render: rowData => rowData.test.internalCode
+      render: rowData => {
+        // First try to get from rowData.test (if available from backend)
+        if (rowData.test?.internalCode) {
+          return rowData.test.internalCode;
+        }
+        // Otherwise, fetch from new backend service using testKey
+        const test = getTestByKey(rowData.testKey);
+        return test?.internalCode || '';
+      }
     },
     {
       key: 'statusLkey',
@@ -916,7 +1024,7 @@ const DiagnosticsOrder = props => {
             {/* Buttons */}
             <div className="buttons-group">
               <MyButton
-                loading={isFetching}
+                loading={false}
                 onClick={handleSaveOrdersAndDraft}
                 disabled={!edit ? isdraft : true}
                 prefixIcon={() => <PlusIcon />}
@@ -946,7 +1054,7 @@ const DiagnosticsOrder = props => {
                 fieldType="text"
                 fieldLabel="Test Name"
                 record={''}
-                setRecord={{}}
+                setRecord={() => {}}
               />
             </Form>
             {/* Type */}
@@ -1010,7 +1118,7 @@ const DiagnosticsOrder = props => {
                 record={{ proposedExecutionDate }}
                 setRecord={rec => setProposedExecutionDate(rec.proposedExecutionDate)}
                 width={220}
-                fieldLabel={<Translate>Proposed Execution Date</Translate>}
+                fieldLabel="Proposed Execution Date"
               />
             </Form>
 
@@ -1105,7 +1213,7 @@ const DiagnosticsOrder = props => {
             data={orderTestList?.object ?? []}
             onRowClick={rowData => {
               setOrderTest(rowData);
-              setTest(rowData.test);
+              setTest(rowData.test || {});
               setPreviewDiagnosticsOrder(rowData); // Show preview when selecting a row
             }}
             rowClassName={isSelected}
@@ -1153,7 +1261,7 @@ const DiagnosticsOrder = props => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${orderTest?.test?.testName || 'Test'}`}
+        title={`Attachments - ${(orderTest as any)?.test?.testName || test?.testName || 'Test'}`}
         size="lg"
         hideActionBtn={true}
         content={
@@ -1335,13 +1443,14 @@ const DiagnosticsOrder = props => {
       <SampleModal
         open={openSampleModal}
         setOpen={setOpenSampleModal}
-        order={orders}
-        test={test}
-        orderTest={orderTest}
-        patient={patient}
-        encounter={encounter}
-        edit={edit}
-        onSave={handleSaveTest}
+        labDetails={undefined}
+        samplesList={[]}
+        test={orderTest}
+        setTest={setOrderTest}
+        saveTest={saveOrderTests}
+        fetchTest={orderTestRefetch}
+        fecthSample={() => {}}
+        fetchAllTests={() => {}}
       />
     </>
   );

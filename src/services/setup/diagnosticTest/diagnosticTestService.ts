@@ -145,6 +145,7 @@ export const diagnosticTestService = createApi({
 
 export const {
   useGetAllDiagnosticTestsQuery,
+  useGetAllActiveDiagnosticTestsQuery,
   useGetDiagnosticTestsByTypeQuery,
   useLazyGetDiagnosticTestsByTypeQuery,
   useLazyGetDiagnosticTestsByNameQuery,
