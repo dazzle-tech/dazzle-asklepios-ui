@@ -314,7 +314,7 @@ const Result = forwardRef<unknown, ResultProps>(
         fullText: true,
         render: rowData => {
           if (rowData.normalRangeKey) {
-            if (rowData.normalRange?.resultTypeLkey === '6209578532136054') {
+            if (rowData.normalRange?.resultTypeLkey === '6209578532136054' || rowData.normalRange?.resultTypeLkey === 'LOV') {
               const list = lovValues?.object.filter(
                 item => item.lovKey === rowData.normalRange?.resultLovKey
               );
@@ -340,7 +340,7 @@ const Result = forwardRef<unknown, ResultProps>(
                   {rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey}
                 </span>
               );
-            } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618') {
+            } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618' || rowData.normalRange?.resultTypeLkey == 'NUMBER') {
               return activeRowKey === rowData.key ? (
                 <Input
                   type="number"
@@ -678,13 +678,13 @@ const Result = forwardRef<unknown, ResultProps>(
         fullText: true,
         render: (rowData: any) => {
           if (rowData.normalRangeKey) {
-            if (rowData.normalRange?.resultTypeLkey == '6209578532136054') {
+            if (rowData.normalRange?.resultTypeLkey == '6209578532136054' || rowData.normalRange?.resultTypeLkey == 'LOV') {
               return (
                 joinValuesFromArray(rowData.normalRange?.lovList) +
                 ' ' +
                 labDetails?.resultUnitLvalue?.lovDisplayVale || ''
               );
-            } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618') {
+            } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618' || rowData.normalRange?.resultTypeLkey == 'NUMBER') {
               if (rowData.normalRange?.normalRangeTypeLkey == '6221150241292558') {
                 return (
                   rowData.normalRange?.rangeFrom +
@@ -772,7 +772,7 @@ const Result = forwardRef<unknown, ResultProps>(
 
           return (
             <>
-              {key === '6209578532136054' && (
+              {key === '6209578532136054' || key === 'LOV' && (
                 <>
                   {prevResultsList?.object[1]?.reasonLvalue
                     ? prevResultsList?.object[1]?.reasonLvalue?.lovDisplayVale
@@ -780,9 +780,9 @@ const Result = forwardRef<unknown, ResultProps>(
                 </>
               )}
 
-              {key === '6209569237704618' && <>{prevResultsList?.object[1]?.resultValueNumber}</>}
+              {key === '6209569237704618' || key === 'NUMBER' && <>{prevResultsList?.object[1]?.resultValueNumber}</>}
 
-              {!['6209578532136054', '6209569237704618'].includes(key) && (
+              {!['6209578532136054', '6209569237704618', 'NUMBER', 'LOV'].includes(key) && (
                 <></> // optional placeholder; can be removed if nothing should render
               )}
             </>
