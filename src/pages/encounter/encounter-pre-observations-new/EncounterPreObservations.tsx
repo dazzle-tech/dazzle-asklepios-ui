@@ -36,7 +36,7 @@ const EncounterPreObservations = ({}) => {
   const [localEncounter] = useState<any>({ ...propsData.encounter });
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
-  const [activeKey, setActiveKey] = useState<string | number>('0');
+  const [activeKey, setActiveKey] = useState<string | number>('1');
   const [completeEncounter] = useCompleteEncounterMutation();
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
 
@@ -142,14 +142,14 @@ const EncounterPreObservations = ({}) => {
                 </div>
               </div>
               <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
-                <Tabs.Tab eventKey="0" title="Triage">
+                {/* <Tabs.Tab eventKey="0" title="Triage">
                   <StartTriage
                     patient={propsData.patient}
                     encounter={propsData.encounter}
                     sourcePage={"Nurse_Station"}
                    />
                   
-                </Tabs.Tab>
+                </Tabs.Tab> */}
                 <Tabs.Tab eventKey="1" title="Observations">
                   <Observations
                     edit={propsData.edit}
