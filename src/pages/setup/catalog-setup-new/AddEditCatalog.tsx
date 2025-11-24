@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import {
-  useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';

@@ -1,23 +1,13 @@
-import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Panel } from 'rsuite';
-import { FaUndo } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
 import './styles.less';
-import {
-  useSaveDiagnosticsTestCatalogHeaderMutation,
-  useGetDepartmentsQuery
-} from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { FaListAlt } from 'react-icons/fa';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import {
-  conjureValueBasedOnKeyFromList,
-  addFilterToListRequest,
-  fromCamelCaseToDBName,
   formatEnumString
 } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -43,11 +33,6 @@ const Catalog = () => {
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
   const [diagnosticsTestCatalogHeader, setDiagnosticsTestCatalogHeader] =
     useState<CatalogResponseVM>({ ...newCatalogResponseVM });
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [departmentListRequest] = useState<ListRequest>({
-    ...initialListRequest
-  });
-
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 5,
@@ -67,12 +52,7 @@ const Catalog = () => {
   } = useGetCatalogsQuery(paginationParams);
 
   const [deleteCatalog] = useDeleteCatalogMutation();
-
-  // Fetch department list Response
-  // const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-  // save diagnostics test catalog header
-  const [saveDiagnosticsTestCatalogHeader, saveDiagnosticTestCatalogHeaderMutation] =
-    useSaveDiagnosticsTestCatalogHeaderMutation();
+ 
   // Header page setUp
   const divContent = 'Catalog';
   dispatch(setPageCode('Catalog'));
@@ -160,25 +140,11 @@ const Catalog = () => {
     {
       key: 'departmentName',
       title: 'Department'
-      // render: rowData => (
-      //   <span>
-      //     {conjureValueBasedOnKeyFromList(
-      //       departmentListResponse?.object ?? [],
-      //       rowData.departmentKey,
-      //       'name'
-      //     )}
-      //   </span>
-      // )
     },
     {
       key: 'description',
       title: 'Description'
     },
-    // {
-    //   key: 'deleted_at',
-    //   title: <Translate>Status</Translate>,
-    //   render: rowData => (rowData.deletedAt === null ? 'Active' : 'InActive')
-    // },
     {
       key: 'icons',
       title: '',
@@ -211,7 +177,6 @@ const Catalog = () => {
       {recordOfFilter['filter'] == 'departmentId' ? (
         <MyInput
           fieldName="value"
-          // fieldType="select"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
           showLabel={false}
@@ -253,21 +218,7 @@ const Catalog = () => {
     setDiagnosticsTestCatalogHeader({ ...newCatalogResponseVM });
     setPopupOpen(true);
   };
-  // // handle Save catalog
-  // const handleSave = () => {
-
-  //   setPopupOpen(false);
-  //   saveDiagnosticsTestCatalogHeader(diagnosticsTestCatalogHeader)
-  //     .unwrap()
-  //     .then(() => {
-  //       dispatch(notify({ msg: 'The Catalog has been saved successfully', sev: 'success' }));
-  //     })
-  //     .catch(() => {
-  //       dispatch(notify({ msg: 'Failed to save this Catalog', sev: 'error' }));
-  //     });
-  // };
-  // Ha
-  // handle page change in navigation
+  
    // ──────────────────────────── PAGINATION ────────────────────────────
     const handlePageChange = (event, newPage) => {
       if (isFiltered) {
@@ -372,32 +323,6 @@ const Catalog = () => {
   useEffect(() => {
       setLink(diagnosticsTestCatalogHeaderListResponse?.links);
     }, [diagnosticsTestCatalogHeaderListResponse?.links]);
-
-  // update list when filter is changed
-  // useEffect(() => {
-  //   if (recordOfFilter['filter']) {
-  //     handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
-  //   } else {
-  //     setListRequest({
-  //       ...initialListRequest,
-  //       filters: [
-  //         {
-  //           fieldName: 'deleted_at',
-  //           operator: 'isNull',
-  //           value: undefined
-  //         }
-  //       ],
-  //       pageSize: listRequest.pageSize,
-  //       pageNumber: 1
-  //     });
-  //   }
-  // }, [recordOfFilter]);
-
-  useEffect(() => {
-    if (saveDiagnosticTestCatalogHeaderMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveDiagnosticTestCatalogHeaderMutation.data]);
 
   useEffect(() => {
     return () => {
