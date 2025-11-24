@@ -55,6 +55,9 @@
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import PaymentModal from './PaymentModal';
+import { IconButton } from 'rsuite';
+import { Print, PrintSharp } from '@mui/icons-material';
+import { Printer } from 'lucide-react';
 
 type ReceiptItem = {
   invoiceNumber: string;
@@ -69,6 +72,15 @@ type ReceiptItem = {
 
 const Receipt: React.FC = () => {
   const [openPayModal, setOpenPayModal] = useState<boolean>(false);
+
+    const iconsForActions = () => (
+      <div className="container-of-icons">
+        <Printer
+          size={22}
+          className="icons-style"
+        />
+      </div>
+    );
 
   const dummyData: ReceiptItem[] = [
     {
@@ -185,6 +197,11 @@ const Receipt: React.FC = () => {
     {
       key: 'total',
       title: 'Total'
+    },
+    {
+      key: 'actions',
+      title: '',
+      render: () => iconsForActions()
     }
   ];
 

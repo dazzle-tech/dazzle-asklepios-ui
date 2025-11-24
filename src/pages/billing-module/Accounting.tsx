@@ -548,6 +548,8 @@ const Accounting: React.FC = () => {
     setFilteredBilling(updatedFilteredBilling);
   };
 
+
+
   // ---------- AUTO REFRESH ----------
 
   // When patient changes (and is selected), auto-show all unbilled items
@@ -563,6 +565,7 @@ const Accounting: React.FC = () => {
   useEffect(() => {
   if (!patient?.key) {
     setFilteredBilling([]);
+    setAllInvoices([]);
     return;
   }
 
