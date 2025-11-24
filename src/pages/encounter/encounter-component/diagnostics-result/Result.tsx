@@ -576,11 +576,15 @@ const Result: React.FC<ResultProps> = ({ patient, user }) => {
           onClick={handleGeneratePdf}
           loading={isGeneratingPdf}
           disabled={isGeneratingPdf || !resultsList?.object?.length}
-          prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+          prefixIcon={() => (
+            <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
+          )}
           color="var(--deep-blue)"
           className="generate-report-btn"
           style={{
-            marginLeft: "auto"
+            marginLeft: "auto",
+            backgroundColor: "var(--deep-blue)"
+            
           }}
         >
           {isGeneratingPdf ? "Generating Report..." : "Generate Complete Report"}
