@@ -24,12 +24,13 @@ type BillingItem = {
   discount: number;
   priceList: string;
   patientKey: string;
+  quantity: number; // <-- مضافة من الكود القديم (عمود الكمية)
 };
 
 type BillingProps = {
   data: BillingItem[];
   patient?: any; // Patient object from your system
-  onCreateInvoice: (ids: string[]) => void;
+  onCreateInvoice: (ids: string[]) => void; // من الكود القديم
 };
 
 const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => {
@@ -37,17 +38,19 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [openDiscountModal, setOpenDiscountModal] = useState<boolean>(false);
   const [openRefundModal, setOpenRefundModal] = useState<boolean>(false);
-  const [openChangePriceListModal, setOpenChangePriceListModal] = useState<boolean>(false);
+  const [openChangePriceListModal, setOpenChangePriceListModal] =
+    useState<boolean>(false);
   const [forAllServises, setForAllServices] = useState<boolean>(false);
 
   // RTK Query mutation
-  const [generateInvoicePdf, { isLoading: isGeneratingPdf }] = useGenerateInvoicePdfMutation();
+  const [generateInvoicePdf, { isLoading: isGeneratingPdf }] =
+    useGenerateInvoicePdfMutation();
 
   // Handle selection
   const handleCheckboxChange = (key: string) => {
-    setSelectedRows((prev) => {
+    setSelectedRows(prev => {
       if (prev.includes(key)) {
-        return prev.filter((item) => item !== key);
+        return prev.filter(item => item !== key);
       } else {
         return [...prev, key];
       }
@@ -55,8 +58,9 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
   };
 
   console.log('patient', patient);
+  console.log('Billing data:', data);
 
-  // Generate Invoice PDF
+  // Generate Invoice PDF + استدعاء onCreateInvoice القديم
   const handleCreateInvoice = async () => {
     if (selectedRows.length === 0) {
       toaster.push(
@@ -68,32 +72,45 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
       return;
     }
 
+    // 🔹 استدعاء سلوكك القديم: إنشاء الفاتورة في الباك إند/الستيت
+    onCreateInvoice(selectedRows);
+
     try {
       // Filter selected items
-      const selectedItems = data.filter((item) => selectedRows.includes(item.id));
+      const selectedItems = data.filter(item => selectedRows.includes(item.id));
 
-      // Calculate total
+      // Calculate total (حسب الخصم كنسبة مئوية)
       const totalAmount = selectedItems.reduce((sum, item) => {
-        const discountedPrice = item.price - (item.price * item.discount) / 100;
+        const discountedPrice =
+          item.price - (item.price * (item.discount || 0)) / 100;
         return sum + discountedPrice;
       }, 0);
 
-      // Generate invoice number (you can customize this)
+      // Generate invoice number
       const invoiceNumber = `INV-${Date.now()}`;
 
       // Build patient full name
       const patientFullName = patient
-        ? `${patient.firstName || ''} ${patient.secondName || ''} ${patient.thirdName || ''} ${patient.lastName || ''}`.trim()
+        ? `${patient.firstName || ''} ${patient.secondName || ''} ${
+            patient.thirdName || ''
+          } ${patient.lastName || ''}`.trim()
         : 'N/A';
 
       // Get gender display value
-      const genderDisplay = patient?.genderLvalue?.lovDisplayVale || 'Not specified';
+      const genderDisplay =
+        patient?.genderLvalue?.lovDisplayVale || 'Not specified';
 
       // Calculate age
-      const ageDisplay = patient?.dob ? calculateAgeFormat(patient.dob) : 'N/A';
+      const ageDisplay = patient?.dob
+        ? calculateAgeFormat(patient.dob)
+        : 'N/A';
 
       // Get phone number
-      const phoneNumber = patient?.phoneNumber || patient?.mobileNumber || patient?.homePhone || 'N/A';
+      const phoneNumber =
+        patient?.phoneNumber ||
+        patient?.mobileNumber ||
+        patient?.homePhone ||
+        'N/A';
 
       // Prepare data for backend
       const invoiceData = {
@@ -103,7 +120,7 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
           dob: patient?.dob || 'N/A',
           age: ageDisplay || 'N/A',
           gender: genderDisplay || 'N/A',
-          phoneNumber: phoneNumber || 'N/A',
+          phoneNumber: phoneNumber || 'N/A'
         },
         visitInfo: {
           visitDate: new Date().toLocaleDateString('en-GB'),
@@ -112,9 +129,9 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
         invoiceInfo: {
           invoiceNumber: invoiceNumber || 'N/A',
           totalAmount: totalAmount.toFixed(2) || '0.00',
-          currency: selectedItems[0]?.currency || 'USD',
+          currency: selectedItems[0]?.currency || 'USD'
         },
-        items: selectedItems.map((item) => ({
+        items: selectedItems.map(item => ({
           chargeDate: item.chargeDate || 'N/A',
           clinic: item.clinic || 'N/A',
           name: item.name || 'N/A',
@@ -122,7 +139,8 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
           price: item.price || 0,
           currency: item.currency || 'USD',
           discount: item.discount || 0,
-        })),
+          quantity: item.quantity || 1 // <-- إضافة الكمية للـ PDF أيضاً
+        }))
       };
 
       console.log('Sending invoice data:', invoiceData);
@@ -159,8 +177,6 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
       );
     }
   };
-
-  console.log('Billing data:', data);
 
   const tableButtons = (
     <div style={{ display: 'flex', gap: '10px' }}>
@@ -214,7 +230,7 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
           checked={selectedRows.includes(rowData.id)}
           onChange={() => handleCheckboxChange(rowData.id)}
         />
-      ),
+      )
     },
     { key: 'clinic', title: 'Clinic' },
     { key: 'chargeDate', title: 'Charge Date' },
@@ -222,18 +238,24 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
     { key: 'name', title: 'Name' },
     { key: 'price', title: 'Price' },
     { key: 'currency', title: 'Currency' },
+    { key: 'quantity', title: 'Quantity' }, // <-- العمود اللي كان في الكود الأول
     { key: 'discount', title: 'Discount' },
     { key: 'priceList', title: 'Price List' },
     {
       key: 'actions',
       title: '',
-      render: () => iconsForActions(),
-    },
+      render: () => iconsForActions()
+    }
   ];
 
   return (
     <div>
-      <MyTable data={data} columns={columns} loading={false} tableButtons={tableButtons} />
+      <MyTable
+        data={data}
+        columns={columns}
+        loading={false}
+        tableButtons={tableButtons}
+      />
 
       <DiscountModal
         open={openDiscountModal}
@@ -241,7 +263,12 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
         record=""
         setRecord=""
       />
-      <RefundModal open={openRefundModal} setOpen={setOpenRefundModal} record="" setRecord="" />
+      <RefundModal
+        open={openRefundModal}
+        setOpen={setOpenRefundModal}
+        record=""
+        setRecord=""
+      />
       <ChangePriceListModal
         open={openChangePriceListModal}
         setOpen={setOpenChangePriceListModal}

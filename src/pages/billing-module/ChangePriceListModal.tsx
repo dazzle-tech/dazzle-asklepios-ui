@@ -18,7 +18,7 @@ const ChangePriceListModal = ({
         return (
           <Form fluid>
             <MyInput
-              fieldLabel="Pricelists"
+              fieldLabel="Price Lists"
               fieldName="priceList"
               fieldType="select"
               selectData={[]}

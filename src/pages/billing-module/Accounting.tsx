@@ -160,7 +160,8 @@ type BillingItem = {
   currency: string;
   discount: number;
   priceList: string;
-  patientKey: string; // for future real backend
+  patientKey: string;   // REAL patient key
+  quantity: number;     // NEW
 };
 
 type Invoice = {
@@ -174,31 +175,33 @@ type Invoice = {
   items: BillingItem[]; // exact services/products in this invoice
 };
 
-// Demo "unbilled" services
+
 const DEMO_BILLING_ITEMS: BillingItem[] = [
   {
     id: '1',
     clinic: 'Dental Clinic',
-    chargeDate: '2025-11-23',
+    chargeDate: '2025-11-24',
     type: 'Service',
     name: 'Initial Checkup',
     price: 50,
     currency: 'USD',
     discount: 0,
     priceList: 'Standard',
-    patientKey: 'P001'
+    patientKey: '9831645059544435', // <-- first patient
+    quantity: 1
   },
   {
     id: '2',
     clinic: 'Dental Clinic',
-    chargeDate: '2025-11-23',
+    chargeDate: '2025-11-24',
     type: 'Service',
     name: 'X-Ray',
     price: 100,
     currency: 'USD',
     discount: 0,
     priceList: 'Standard',
-    patientKey: 'P001'
+    patientKey: '9831645059544435', // <-- first patient
+    quantity: 1
   },
   {
     id: '3',
@@ -210,7 +213,166 @@ const DEMO_BILLING_ITEMS: BillingItem[] = [
     currency: 'USD',
     discount: 0,
     priceList: 'Standard',
-    patientKey: 'P002'
+    patientKey: '9831645059544435', // <-- first patient (so 3 items)
+    quantity: 1
+  },
+
+    {
+    id: '4',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Service',
+    name: 'Creatinine',
+    price: 50,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+   patientKey: '10712011367990058',
+    quantity: 1
+  },
+  {
+    id: '5',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Service',
+    name: 'Blood Sugar - Fasting (FBS)',
+    price: 100,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+   patientKey: '10712011367990058', quantity: 1
+  },
+  {
+    id: '6',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Service',
+    name: ' TPHA Screening Test	Positive	',
+    price: 80,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+  {
+    id: '7',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Service',
+    name: 'HIV Screening Test',
+    price: 70,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+    {
+    id: '9',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Service',
+    name: 'Consultation Service',
+    price: 40,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+    {
+    id: '10',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Product',
+    name: 'BSM Kit Product',
+    price: 60,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+    {
+    id: '11',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Product',
+    name: 'Vital Signs',
+    price: 50,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+    {
+    id: '12',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Product',
+    name: 'AMLODINE HD',
+    price: 20,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+    {
+    id: '13',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Product',
+    name: 'VOLTAREN 50MG',
+    price: 15,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+    {
+    id: '14',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Product',
+    name: 'ADVIL',
+    price: 50,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+  {
+    id: '15',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Product',
+    name: 'Central Line',
+    price: 75,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+  {
+    id: '16',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Service',
+    name: 'Central Line insertion',
+    price: 80,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
+  },
+  {
+    id: '17',
+    clinic: 'Internal Medicine Clinic',
+    chargeDate: '2025-11-24',
+    type: 'Service',
+    name: 'X-Ray - Chest PA',
+    price: 70,
+    currency: 'USD',
+    discount: 0,
+    priceList: 'Standard',
+    patientKey: '10712011367990058', quantity: 1
   }
 ];
 
@@ -277,24 +439,56 @@ const Accounting: React.FC = () => {
   // ---------- HANDLERS ----------
 
   // Filter billing items by date (requires patient selected, just for UX)
+  // const handleSearch = () => {
+  //   if (!patient?.key) return;
+
+  //   const fromDate = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
+  //   const toDate = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
+
+  //   const billing = applyDateFilterToBilling(allBillingItems, fromDate, toDate);
+  //   setFilteredBilling(billing);
+  // };
+
   const handleSearch = () => {
-    if (!patient?.key) return;
+  if (!patient?.key) return;
 
-    const fromDate = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
-    const toDate = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
+  const fromDate = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
+  const toDate = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
 
-    const billing = applyDateFilterToBilling(allBillingItems, fromDate, toDate);
-    setFilteredBilling(billing);
-  };
+  // Only items for this patient
+  const patientItems = allBillingItems.filter(
+    item => item.patientKey === patient.key
+  );
+
+  const billing = applyDateFilterToBilling(patientItems, fromDate, toDate);
+  setFilteredBilling(billing);
+};
+
+  // const handleClearFilters = () => {
+  //   setDateFilter({
+  //     fromDate: null,
+  //     toDate: null
+  //   });
+  //   // show all remaining unbilled items when clearing
+  //   setFilteredBilling(allBillingItems);
+  // };
 
   const handleClearFilters = () => {
-    setDateFilter({
-      fromDate: null,
-      toDate: null
-    });
-    // show all remaining unbilled items when clearing
-    setFilteredBilling(allBillingItems);
-  };
+  setDateFilter({
+    fromDate: null,
+    toDate: null
+  });
+
+  if (!patient?.key) {
+    setFilteredBilling([]);
+    return;
+  }
+
+  const patientItems = allBillingItems.filter(
+    item => item.patientKey === patient.key
+  );
+  setFilteredBilling(patientItems);
+};
 
   // Create an invoice from selected billing row IDs
   const handleCreateInvoiceFromBilling = (selectedIds: string[]) => {
@@ -321,7 +515,7 @@ const Accounting: React.FC = () => {
 
     const newInvoice: Invoice = {
       invoiceNumber: newInvoiceNumber,
-      createdBy: 'Demo User',
+      createdBy: 'systemadmin',
       createdAt: today,
       amount: totalAmount,
       status: 'Pending',
@@ -354,16 +548,32 @@ const Accounting: React.FC = () => {
     setFilteredBilling(updatedFilteredBilling);
   };
 
+
+
   // ---------- AUTO REFRESH ----------
 
   // When patient changes (and is selected), auto-show all unbilled items
+  // useEffect(() => {
+  //   if (!patient?.key) {
+  //     setFilteredBilling([]);
+  //     return;
+  //   }
+  //   setFilteredBilling(allBillingItems);
+  // }, [patient, allBillingItems]);
+
+
   useEffect(() => {
-    if (!patient?.key) {
-      setFilteredBilling([]);
-      return;
-    }
-    setFilteredBilling(allBillingItems);
-  }, [patient, allBillingItems]);
+  if (!patient?.key) {
+    setFilteredBilling([]);
+    setAllInvoices([]);
+    return;
+  }
+
+  const patientItems = allBillingItems.filter(
+    item => item.patientKey === patient.key
+  );
+  setFilteredBilling(patientItems);
+}, [patient, allBillingItems]);
 
   // ---------- UI SECTIONS ----------
 
