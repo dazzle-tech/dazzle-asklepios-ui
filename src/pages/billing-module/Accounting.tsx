@@ -134,7 +134,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faBroom } from '@fortawesome/free-solid-svg-icons';
 import { getHeight } from 'rsuite/esm/DOMHelper';
 
-import { newApPatient } from '@/types/model-types-constructor';
+import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
@@ -147,7 +147,7 @@ import Billing from './Billing';
 import Invoices from './Invoices';
 import Receipt from './Receipt';
 import ProfileSidebar from '../patient/patient-profile/ProfileSidebar-new';
-
+import PatientSide from '../encounter/encounter-main-info-section/PatienSide';
 // ---------- TYPES & DEMO DATA ----------
 
 type BillingItem = {
@@ -218,6 +218,7 @@ const DEMO_BILLING_ITEMS: BillingItem[] = [
 
 const Accounting: React.FC = () => {
   const dispatch = useAppDispatch();
+  const [encounter, setEncounter] = useState({ ...newApEncounter });
 
   // patient selection (your existing behavior)
   const [expand, setExpand] = useState<boolean>(false);
@@ -239,6 +240,11 @@ const Accounting: React.FC = () => {
 
   // what is actually shown in Billing tab
   const [filteredBilling, setFilteredBilling] = useState<BillingItem[]>([]);
+
+  const balance = {
+    freeBalance : 250,
+    outstanding: 1025
+  };
 
   const divContent = 'Accounting';
 
@@ -439,8 +445,9 @@ const Accounting: React.FC = () => {
       </div>
 
       <br />
-
+      
       <div>
+        {!patient?.key ? (
         <ProfileSidebar
           expand={expand}
           setExpand={setExpand}
@@ -449,7 +456,23 @@ const Accounting: React.FC = () => {
           refetchData={refetchData}
           setRefetchData={setRefetchData}
         />
+        ) : (
+          <div style={{border: "1px solid var(--rs-border-primary)", borderRadius: "5px"}}>
+        <PatientSide patient={patient} encounter={encounter} setPatient={setPatient} hideVisitDetails balance={balance} />
+         </div>
+        )};
       </div>
+      {/* <div style={{display: "flex", gap: "5px"}}>
+        <PatientSide patient={patient} encounter={encounter} />
+        <ProfileSidebar
+          expand={expand}
+          setExpand={setExpand}
+          windowHeight={windowHeight}
+          setLocalPatient={setPatient}
+          refetchData={refetchData}
+          setRefetchData={setRefetchData}
+        />
+      </div> */}
     </div>
   );
 };
