@@ -84,7 +84,7 @@ const AddEditUser = ({
               <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
                 <MyInput
                   column
-                  fieldLabel="sex at birth"
+                  fieldLabel="Gender"
                   fieldType="select"
                   fieldName="sexAtBirthLkey"
                   selectData={gndrLovQueryResponse?.object ?? []}

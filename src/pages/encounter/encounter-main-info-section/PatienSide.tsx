@@ -243,7 +243,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
         </div>
 
         <div className="info-column">
-          <Text className="info-label">Sex at Birth</Text>
+          <Text className="info-label">Gender</Text>
           <Text className="info-value"> {textOr(patient?.genderLvalue?.lovDisplayVale, '')}</Text>
         </div>
       </div>

@@ -76,7 +76,7 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
     },
     {
       key: 'genderLvalue',
-      title: <Translate>Sex at Birth</Translate>,
+      title: <Translate>Gender</Translate>,
       render: rowData => <span>{rowData?.genderLvalue?.lovDisplayVale}</span>
     }
   ];

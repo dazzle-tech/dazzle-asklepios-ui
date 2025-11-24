@@ -109,6 +109,7 @@ import GenericMedications from './pages/medications/generic-medications-new';
 import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
 import PrescriptionInstructions from './pages/medications/prescription_instructions-new';
 import Operation from './pages/operation-module';
+import Accounting from './pages/billing-module';
 import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
 import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList';
 import PatientChart from './pages/patient/patient-chart';
@@ -140,6 +141,7 @@ import CPTSetup from './pages/setup/cpt-setup';
 import DentalActions from './pages/setup/dental-actions-new';
 import Departments from './pages/setup/departments-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
+import Diagnostic from './pages/setup/diagnostics-tests-definition';
 import DVM from './pages/setup/dvm-setup';
 import Facilities from './pages/setup/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
@@ -488,11 +490,13 @@ const App = () => {
               <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
+              <Route path="diagnostics-test-old" element={<Diagnostic/>} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
+              <Route path="billing-accounting" element={<Accounting />} />
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />

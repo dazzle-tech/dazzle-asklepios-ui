@@ -35,7 +35,7 @@ const columns = [
   { key: 'age', title: 'Age', dataKey: 'age' },
   {
     key: 'gender',
-    title: 'Sex at Birth',
+    title: 'Gender',
     dataKey: 'genderLvalue.lovDisplayVale'
   },
   {
