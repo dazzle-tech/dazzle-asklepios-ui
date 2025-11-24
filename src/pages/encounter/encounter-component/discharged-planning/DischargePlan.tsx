@@ -30,6 +30,7 @@ import {
 import { useGetProceduresQuery } from '@/services/procedureService';
 import { calculateAgeFormat } from '@/utils';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
+
 // Helper: join values into one string, ignoring empty values
 const joinValuesFromArray = (values: any[]) => {
   return values
@@ -66,7 +67,10 @@ const DischargePlanning = () => {
     ]
   });
 
-  const { data: patientDiagnoseListResponse } = useGetPatientDiagnosisQuery(diagnosisListRequest);
+  const {
+    data: patientDiagnoseListResponse,
+    isFetching: isDiagnosisFetching // NEW
+  } = useGetPatientDiagnosisQuery(diagnosisListRequest);
 
   useEffect(() => {
     if (patientDiagnoseListResponse?.object?.length > 0) {
@@ -75,8 +79,10 @@ const DischargePlanning = () => {
   }, [patientDiagnoseListResponse]);
 
   // Fetch review of systems
-  const { data: encounterReviewOfSystemsSummaryResponse } =
-    useGetEncounterReviewOfSystemsQuery(encounter.key);
+  const {
+    data: encounterReviewOfSystemsSummaryResponse,
+    isFetching: isReviewSystemsFetching // NEW
+  } = useGetEncounterReviewOfSystemsQuery(encounter.key);
 
   // Fetch procedures
   const [proceduresListRequest] = useState({
@@ -85,7 +91,10 @@ const DischargePlanning = () => {
       { fieldName: 'encounter_key', operator: 'match', value: encounter?.key }
     ]
   });
-  const { data: proceduresResponse } = useGetProceduresQuery(proceduresListRequest);
+  const {
+    data: proceduresResponse,
+    isFetching: isProceduresFetching // NEW
+  } = useGetProceduresQuery(proceduresListRequest);
 
   const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -103,6 +112,7 @@ const DischargePlanning = () => {
     refetch: orderTestRefetch,
     isLoading: loadTests
   } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
+
   // Fetch prescriptions
   const [prescriptionsListRequest] = useState({
     ...initialListRequest,
@@ -111,31 +121,59 @@ const DischargePlanning = () => {
       { fieldName: 'visit_key', operator: 'match', value: encounter.key }
     ]
   });
-  const { data: prescriptionsResponse } = useGetPrescriptionMedicationsQuery(prescriptionsListRequest);
-  const { data: genericMedicationListResponse } =
-    useGetGenericMedicationWithActiveIngredientQuery('');
+  const {
+    data: prescriptionsResponse,
+    isFetching: isPrescriptionsFetching // NEW
+  } = useGetPrescriptionMedicationsQuery(prescriptionsListRequest);
+
+  const {
+    data: genericMedicationListResponse,
+    isFetching: isGenericMedicationsFetching // NEW
+  } = useGetGenericMedicationWithActiveIngredientQuery('');
+
   // Fetch diagnostic tests
   const [diagnosticTestsListRequest] = useState({
     ...initialListRequest,
     filters: [
       { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-      { fieldName: 'status_lkey', operator: 'notMatch', value: "7076094029034732" }
-
+      { fieldName: 'status_lkey', operator: 'notMatch', value: '7076094029034732' }
     ]
   });
-  const { data: diagnosticTestsResponse } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
+  const {
+    data: diagnosticTestsResponse,
+    isFetching: isDiagnosticTestsFetching // NEW
+  } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
 
   // Fetch readiness Status Lov response
-  const { data: readinessStatusLovQueryResponse } = useGetLovValuesByCodeQuery('READINESS_STATUS');
+  const {
+    data: readinessStatusLovQueryResponse,
+    isFetching: isReadinessStatusLoading // NEW
+  } = useGetLovValuesByCodeQuery('READINESS_STATUS');
 
   // Discharge PDF Generation
-  const [generateDischargePdf, { isLoading: isGeneratingPdf }] = useGenerateDischargePdfMutation();
+  const [generateDischargePdf, { isLoading: isGeneratingPdf }] =
+    useGenerateDischargePdfMutation();
+
   const toaster = useToaster();
 
-  const [object, setObject] = useState({ homeCareNeeded: false, readinessStatus: '' });
+  const [object, setObject] = useState({
+    homeCareNeeded: false,
+    readinessStatus: ''
+  });
   const [medicalEquipmentTags, setMedicalEquipmentTags] = useState([]);
   const [homeCareNeedsTags, setHomeCareNeedsTags] = useState([]);
   const [topicsCoveredTags, setTopicsCoveredTags] = useState([]);
+
+  const isDataLoading =
+    isGeneratingPdf ||
+    isDiagnosisFetching ||
+    isReviewSystemsFetching ||
+    isProceduresFetching ||
+    loadTests ||
+    isPrescriptionsFetching ||
+    isGenericMedicationsFetching ||
+    isDiagnosticTestsFetching ||
+    isReadinessStatusLoading;
 
   // Helper function to format date
   const formatDate = (timestamp: number) => {
@@ -145,7 +183,6 @@ const DischargePlanning = () => {
 
   // Prepare discharge data - Complete structure
   const prepareDischargeData = () => {
- 
     // Patient data
     const patientData = {
       fullName: patient?.fullName || '',
@@ -173,22 +210,28 @@ const DischargePlanning = () => {
     };
 
     // Diagnoses data
-    const diagnosesData = patientDiagnoseListResponse?.object?.map((diag: any) => {
-      const diagType = diag?.diagnoseTypeLvalue?.lovDisplayVale ||
-        (diag?.diagnoseTypeLvalue?.valueCode === 'DIAG_TYP_PRIMARY' ? 'Primary' : 'Secondary');
-      return {
-        diagnoseType: diagType,
-        icdCode: diag?.diagnosisObject?.icdCode || '',
-        description: diag?.diagnosisObject?.description || ''
-      };
-    }) || [];
+    const diagnosesData =
+      patientDiagnoseListResponse?.object?.map((diag: any) => {
+        const diagType =
+          diag?.diagnoseTypeLvalue?.lovDisplayVale ||
+          (diag?.diagnoseTypeLvalue?.valueCode === 'DIAG_TYP_PRIMARY'
+            ? 'Primary'
+            : 'Secondary');
+        return {
+          diagnoseType: diagType,
+          icdCode: diag?.diagnosisObject?.icdCode || '',
+          description: diag?.diagnosisObject?.description || ''
+        };
+      }) || [];
 
     // Review of systems data
-    const reviewSystemsData = encounterReviewOfSystemsSummaryResponse?.object?.map((item: any) => ({
-      system: item?.systemLvalue?.lovDisplayVale || '',
-      systemDetail: item?.systemDetailLvalue?.lovDisplayVale || item?.systemDetailLkey || '',
-      notes: item?.notes || ''
-    })) || [];
+    const reviewSystemsData =
+      encounterReviewOfSystemsSummaryResponse?.object?.map((item: any) => ({
+        system: item?.systemLvalue?.lovDisplayVale || '',
+        systemDetail:
+          item?.systemDetailLvalue?.lovDisplayVale || item?.systemDetailLkey || '',
+        notes: item?.notes || ''
+      })) || [];
 
     // Procedures data
     const joinValues = (keys: any[], lovValues: any) => {
@@ -204,13 +247,11 @@ const DischargePlanning = () => {
         procedureName: proc?.procedureName || '',
         procedureId: proc?.procedureId || ''
       })) || []),
-
       ...(orderTestList?.object?.map((row: any) => ({
         procedureName: row?.test?.testName || '',
         procedureId: row?.orderId || ''
       })) || [])
     ];
-
 
     const prescriptionsData =
       prescriptionsResponse?.object?.map((rowData: any) => {
@@ -221,9 +262,7 @@ const DischargePlanning = () => {
         const instructions = joinValuesFromArray([
           rowData.dose,
           rowData.doseUnitLvalue?.lovDisplayVale,
-          rowData.drugOrderTypeLkey === '2937757567806213'
-            ? 'STAT'
-            : ``,
+          rowData.drugOrderTypeLkey === '2937757567806213' ? 'STAT' : ``,
           rowData.roaLvalue?.lovDisplayVale
         ]);
 
@@ -233,13 +272,15 @@ const DischargePlanning = () => {
         };
       }) || [];
 
-
-
     // Diagnostic tests data
-    const diagnosticTestsData = diagnosticTestsResponse?.object?.map((test: any) => ({
-      testName: test?.test?.testName || '',
-      processingStatus: test?.processingStatusLvalue?.lovDisplayVale || test?.processingStatusLkey || ''
-    })) || [];
+    const diagnosticTestsData =
+      diagnosticTestsResponse?.object?.map((test: any) => ({
+        testName: test?.test?.testName || '',
+        processingStatus:
+          test?.processingStatusLvalue?.lovDisplayVale ||
+          test?.processingStatusLkey ||
+          ''
+      })) || [];
 
     const completeData = {
       patient: patientData,
@@ -259,7 +300,6 @@ const DischargePlanning = () => {
   // Function to handle PDF generation
   const handleGenerateReport = async () => {
     try {
-     
       const dischargeData = prepareDischargeData();
       const result = await generateDischargePdf(dischargeData).unwrap();
 
@@ -282,8 +322,7 @@ const DischargePlanning = () => {
         </Message>,
         { placement: 'topEnd', duration: 5000 }
       );
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('==========================================');
       console.error('Error generating Discharge PDF:', error);
       console.error('Error details:', {
@@ -307,7 +346,6 @@ const DischargePlanning = () => {
   // Function to handle print
   const handlePrintReport = async () => {
     try {
-
       const dischargeData = prepareDischargeData();
       const result = await generateDischargePdf(dischargeData).unwrap();
 
@@ -331,8 +369,7 @@ const DischargePlanning = () => {
         </Message>,
         { placement: 'topEnd', duration: 5000 }
       );
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating Discharge PDF for printing:', error);
 
       // Show error message
@@ -705,11 +742,11 @@ const DischargePlanning = () => {
       <div className="container-of-buttons-discharge">
         <MyButton
           onClick={handleGenerateReport}
-          loading={isGeneratingPdf}
-          disabled={isGeneratingPdf}
+          loading={isDataLoading}      // NEW
+          disabled={isDataLoading}     // NEW
         >
           <FaModx title="Generate Report" size={20} />
-          {isGeneratingPdf ? 'Generating...' : 'Generate Report'}
+          {isDataLoading ? 'Preparing...' : isGeneratingPdf ? 'Generating...' : 'Generate Report'}
         </MyButton>
 
         <MyButton
