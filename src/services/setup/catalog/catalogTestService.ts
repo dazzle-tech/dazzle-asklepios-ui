@@ -56,7 +56,10 @@ export const catalogDiagnosticTestService = createApi({
       query: ({ catalogId, body }) => ({
         url: `/api/setup/catalog/${catalogId}/tests`,
         method: 'POST',
-        body,
+        body: {
+          catalogId: [catalogId],
+          testIds: body
+        },
       }),
       // Invalidate list-by-catalog so the modal refreshes
       invalidatesTags: ['CatalogTests'],
