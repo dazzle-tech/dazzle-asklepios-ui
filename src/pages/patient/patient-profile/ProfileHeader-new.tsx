@@ -252,7 +252,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 {localPatient?.firstName} {localPatient?.lastName}
               </span>
               <div className="patient-info">
-                {localPatient.key != undefined && <FaUser />}
                 {
                   genderLovQueryResponse?.object?.find(item => item.key === localPatient.genderLkey)
                     ?.lovDisplayVale
