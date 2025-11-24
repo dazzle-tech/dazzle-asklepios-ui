@@ -1,197 +1,5 @@
-// import React, { useState } from 'react';
-// import MyButton from '@/components/MyButton/MyButton';
-// import MyTable from '@/components/MyTable';
-// import { Checkbox } from 'rsuite';
-// import DiscountModal from './DiscountModal';
-// import RefundModal from './RefundModal';
-// import { CiDiscount1 } from 'react-icons/ci';
-// import { MdOutlinePriceChange } from 'react-icons/md';
-// import ChangePriceListModal from './ChangePriceListModal';
-// const Billing = () => {
-//   const [selectedRows, setSelectedRows] = useState([]);
-//   const [openDiscountModal, setOpenDiscountModal] = useState<boolean>(false);
-//   const [openRefundModal, setOpenRefundModal] = useState<boolean>(false);
-//   const [openChangePriceListModal, setOpenChangePriceListModal] = useState<boolean>(false);
-//   const [forAllServises, setForAllServices] = useState<boolean>(false);
-//   const dummyData = [
-//     {
-//       id: '1',
-//       clinic: 'Dental Clinic',
-//       chargeDate: '2025-11-23',
-//       type: 'Service1',
-//       name: 'Initial Checkup',
-//       price: 50,
-//       currency: 'USD',
-//       discount: 0,
-//       priceList: 'Standard'
-//     },
-//     {
-//       id: '2',
-//       clinic: 'Dental Clinic',
-//       chargeDate: '2025-11-23',
-//       type: 'Service2',
-//       name: 'Initial Checkup',
-//       price: 50,
-//       currency: 'USD',
-//       discount: 0,
-//       priceList: 'Standard'
-//     },
-//     {
-//       id: '3',
-//       clinic: 'Dental Clinic',
-//       chargeDate: '2025-11-23',
-//       type: 'Service3',
-//       name: 'Initial Checkup',
-//       price: 50,
-//       currency: 'USD',
-//       discount: 0,
-//       priceList: 'Standard'
-//     }
-//   ];
-
-//   const tableButtons = (
-//     <div style={{ display: 'flex', gap: '10px' }}>
-//       <MyButton disabled={!(selectedRows.length >= 3)}>Invoice</MyButton>
-//       {/* <MyButton onClick={() => setOpenDiscountModal(true)}>Discount</MyButton> */}
-//       <MyButton
-//         onClick={() => {
-//           setOpenChangePriceListModal(true);
-//           setForAllServices(true);
-//         }}
-//       >
-//         Bulk Price List Change
-//       </MyButton>
-//       <MyButton onClick={() => setOpenRefundModal(true)}>Refund</MyButton>
-//     </div>
-//   );
-//   // Handle test selection by checking the checkbox
-//   const handleCheckboxChange = key => {
-//     setSelectedRows(prev => {
-//       if (prev.includes(key)) {
-//         return prev.filter(item => item !== key);
-//       } else {
-//         return [...prev, key];
-//       }
-//     });
-//   };
-
-//   // Icons column (Edite, reactive/Deactivate)
-//   const iconsForActions = () => (
-//     <div className="container-of-icons">
-//       {/* deactivate/activate  when click on one of these icon */}
-//       {/* {!rowData?.deletedAt ? (
-//           <MdDelete
-//             className="icons-style"
-//             title="Deactivate"
-//             size={24}
-//             fill="var(--primary-pink)"
-//             onClick={() => {
-//               setStateOfDeleteUserModal('deactivate');
-//               setOpenConfirmDeleteUserModal(true);
-//             }}
-//           />
-//         ) : (
-//           <FaUndo
-//             className="icons-style"
-//             title="Activate"
-//             size={20}
-//             fill="var(--primary-gray)"
-//             onClick={() => {
-//               setStateOfDeleteUserModal('reactivate');
-//               setOpenConfirmDeleteUserModal(true);
-//             }}
-//           />
-//         )} */}
-//       <CiDiscount1
-//         size={22}
-//         onClick={() => setOpenDiscountModal(true)}
-//         className="icons-style"
-//         title="Discount"
-//       />
-//       <MdOutlinePriceChange
-//         size={22}
-//         onClick={() => {
-//           setOpenChangePriceListModal(true);
-//           setForAllServices(false);
-//         }}
-//         className="icons-style"
-//         title="Change Price List"
-//       />
-//     </div>
-//   );
-//   //  const servicesAndProductsForPatient = [];
-//   const columns = [
-//     {
-//       key: '',
-//       title: '',
-//       render: rowData => (
-//         <Checkbox
-//           checked={selectedRows.includes(rowData.id)}
-//           onChange={() => handleCheckboxChange(rowData.id)}
-//         />
-//       )
-//     },
-//     {
-//       key: 'clinic',
-//       title: 'Clinic'
-//     },
-//     {
-//       key: 'chargeDate',
-//       title: 'Charge Date'
-//     },
-//     {
-//       key: 'type',
-//       title: 'Type'
-//     },
-//     {
-//       key: 'name',
-//       title: 'Name'
-//     },
-//     {
-//       key: 'price',
-//       title: 'Price'
-//     },
-//     {
-//       key: 'currency',
-//       title: 'Currency'
-//     },
-//     {
-//       key: 'discount',
-//       title: 'Discount'
-//     },
-//     {
-//       key: 'priceList',
-//       title: 'Price List'
-//     },
-//     {
-//       key: '',
-//       title: '',
-//       render: () => iconsForActions()
-//     }
-//   ];
-//   return (
-//     <div>
-//       <MyTable data={dummyData} columns={columns} loading={false} tableButtons={tableButtons} />
-//       <DiscountModal
-//         open={openDiscountModal}
-//         setOpen={setOpenDiscountModal}
-//         record=""
-//         setRecord=""
-//       />
-//       <RefundModal open={openRefundModal} setOpen={setOpenRefundModal} record="" setRecord="" />
-//       <ChangePriceListModal
-//         open={openChangePriceListModal}
-//         setOpen={setOpenChangePriceListModal}
-//         record=""
-//         setRecord=""
-//         forAllServises={forAllServises}
-//       />
-//     </div>
-//   );
-// };
-// export default Billing;
 import React, { useState } from 'react';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Message, useToaster } from 'rsuite';
 import { CiDiscount1 } from 'react-icons/ci';
 import { MdOutlinePriceChange } from 'react-icons/md';
 
@@ -201,6 +9,9 @@ import MyTable from '@/components/MyTable';
 import DiscountModal from './DiscountModal';
 import RefundModal from './RefundModal';
 import ChangePriceListModal from './ChangePriceListModal';
+
+import { useGenerateInvoicePdfMutation } from '@/services/setup/invoiceReportApi';
+import { calculateAgeFormat } from '@/utils';
 
 type BillingItem = {
   id: string;
@@ -217,38 +28,148 @@ type BillingItem = {
 
 type BillingProps = {
   data: BillingItem[];
+  patient?: any; // Patient object from your system
   onCreateInvoice: (ids: string[]) => void;
 };
 
-const Billing: React.FC<BillingProps> = ({ data, onCreateInvoice }) => {
+const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => {
+  const toaster = useToaster();
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [openDiscountModal, setOpenDiscountModal] = useState<boolean>(false);
   const [openRefundModal, setOpenRefundModal] = useState<boolean>(false);
-  const [openChangePriceListModal, setOpenChangePriceListModal] =
-    useState<boolean>(false);
+  const [openChangePriceListModal, setOpenChangePriceListModal] = useState<boolean>(false);
   const [forAllServises, setForAllServices] = useState<boolean>(false);
+
+  // RTK Query mutation
+  const [generateInvoicePdf, { isLoading: isGeneratingPdf }] = useGenerateInvoicePdfMutation();
 
   // Handle selection
   const handleCheckboxChange = (key: string) => {
-    setSelectedRows(prev => {
+    setSelectedRows((prev) => {
       if (prev.includes(key)) {
-        return prev.filter(item => item !== key);
+        return prev.filter((item) => item !== key);
       } else {
         return [...prev, key];
       }
     });
   };
 
+  console.log('patient', patient);
+
+  // Generate Invoice PDF
+  const handleCreateInvoice = async () => {
+    if (selectedRows.length === 0) {
+      toaster.push(
+        <Message showIcon type="warning" closable>
+          Please select at least one item
+        </Message>,
+        { placement: 'topEnd', duration: 3000 }
+      );
+      return;
+    }
+
+    try {
+      // Filter selected items
+      const selectedItems = data.filter((item) => selectedRows.includes(item.id));
+
+      // Calculate total
+      const totalAmount = selectedItems.reduce((sum, item) => {
+        const discountedPrice = item.price - (item.price * item.discount) / 100;
+        return sum + discountedPrice;
+      }, 0);
+
+      // Generate invoice number (you can customize this)
+      const invoiceNumber = `INV-${Date.now()}`;
+
+      // Build patient full name
+      const patientFullName = patient
+        ? `${patient.firstName || ''} ${patient.secondName || ''} ${patient.thirdName || ''} ${patient.lastName || ''}`.trim()
+        : 'N/A';
+
+      // Get gender display value
+      const genderDisplay = patient?.genderLvalue?.lovDisplayVale || 'Not specified';
+
+      // Calculate age
+      const ageDisplay = patient?.dob ? calculateAgeFormat(patient.dob) : 'N/A';
+
+      // Get phone number
+      const phoneNumber = patient?.phoneNumber || patient?.mobileNumber || patient?.homePhone || 'N/A';
+
+      // Prepare data for backend
+      const invoiceData = {
+        patientInfo: {
+          name: patientFullName || 'N/A',
+          mrn: patient?.patientMrn || 'N/A',
+          dob: patient?.dob || 'N/A',
+          age: ageDisplay || 'N/A',
+          gender: genderDisplay || 'N/A',
+          phoneNumber: phoneNumber || 'N/A',
+        },
+        visitInfo: {
+          visitDate: new Date().toLocaleDateString('en-GB'),
+          visitType: 'General'
+        },
+        invoiceInfo: {
+          invoiceNumber: invoiceNumber || 'N/A',
+          totalAmount: totalAmount.toFixed(2) || '0.00',
+          currency: selectedItems[0]?.currency || 'USD',
+        },
+        items: selectedItems.map((item) => ({
+          chargeDate: item.chargeDate || 'N/A',
+          clinic: item.clinic || 'N/A',
+          name: item.name || 'N/A',
+          type: item.type || 'N/A',
+          price: item.price || 0,
+          currency: item.currency || 'USD',
+          discount: item.discount || 0,
+        })),
+      };
+
+      console.log('Sending invoice data:', invoiceData);
+
+      // Call API
+      const blob = await generateInvoicePdf(invoiceData).unwrap();
+
+      // Download PDF
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice_${invoiceNumber}_${new Date().getTime()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toaster.push(
+        <Message showIcon type="success" closable>
+          Invoice PDF generated successfully!
+        </Message>,
+        { placement: 'topEnd', duration: 3000 }
+      );
+
+      // Clear selection
+      setSelectedRows([]);
+    } catch (error: any) {
+      console.error('Error generating invoice:', error);
+      toaster.push(
+        <Message showIcon type="error" closable>
+          Failed to generate invoice: {error?.message || 'Unknown error'}
+        </Message>,
+        { placement: 'topEnd', duration: 5000 }
+      );
+    }
+  };
+
+  console.log('Billing data:', data);
+
   const tableButtons = (
     <div style={{ display: 'flex', gap: '10px' }}>
       <MyButton
-        disabled={selectedRows.length === 0}
-        onClick={() => {
-          onCreateInvoice(selectedRows);
-          setSelectedRows([]);
-        }}
+        disabled={selectedRows.length === 0 || isGeneratingPdf}
+        onClick={handleCreateInvoice}
+        loading={isGeneratingPdf}
       >
-        Invoice
+        {isGeneratingPdf ? 'Generating...' : 'Invoice'}
       </MyButton>
 
       <MyButton
@@ -293,7 +214,7 @@ const Billing: React.FC<BillingProps> = ({ data, onCreateInvoice }) => {
           checked={selectedRows.includes(rowData.id)}
           onChange={() => handleCheckboxChange(rowData.id)}
         />
-      )
+      ),
     },
     { key: 'clinic', title: 'Clinic' },
     { key: 'chargeDate', title: 'Charge Date' },
@@ -306,18 +227,13 @@ const Billing: React.FC<BillingProps> = ({ data, onCreateInvoice }) => {
     {
       key: 'actions',
       title: '',
-      render: () => iconsForActions()
-    }
+      render: () => iconsForActions(),
+    },
   ];
 
   return (
     <div>
-      <MyTable
-        data={data}
-        columns={columns}
-        loading={false}
-        tableButtons={tableButtons}
-      />
+      <MyTable data={data} columns={columns} loading={false} tableButtons={tableButtons} />
 
       <DiscountModal
         open={openDiscountModal}
@@ -325,12 +241,7 @@ const Billing: React.FC<BillingProps> = ({ data, onCreateInvoice }) => {
         record=""
         setRecord=""
       />
-      <RefundModal
-        open={openRefundModal}
-        setOpen={setOpenRefundModal}
-        record=""
-        setRecord=""
-      />
+      <RefundModal open={openRefundModal} setOpen={setOpenRefundModal} record="" setRecord="" />
       <ChangePriceListModal
         open={openChangePriceListModal}
         setOpen={setOpenChangePriceListModal}

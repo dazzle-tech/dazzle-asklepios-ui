@@ -414,6 +414,7 @@ const Accounting: React.FC = () => {
         <Billing
           data={filteredBilling}
           onCreateInvoice={handleCreateInvoiceFromBilling}
+          patient={patient}
         />
       )
     },
