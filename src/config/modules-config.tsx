@@ -218,6 +218,62 @@ export const MODULES: Module[] =
       ],
     },
     {
+      name: "Patient Old",
+      description: "Legacy patient screens",
+      icon: "FaUserClock",
+      viewOrder: 2,
+      screens: [
+        {
+          name: "Patient Registration (Old)",
+          code: "PATIENT_REGISTRATION_OLD",
+          description: "",
+          icon: "FaFilePen",
+          viewOrder: 0,
+          navPath: "patient-old/patient-profile"
+        },
+        {
+          name: "Facility Patient List (Old)",
+          code: "FACILITY_PATIENT_LIST_OLD",
+          description: "",
+          icon: "FaPersonRays",
+          viewOrder: 1,
+          navPath: "patient-old/facility-patient-list"
+        },
+        {
+          name: "Patient List (Old)",
+          code: "PATIENT_LIST_OLD",
+          description: "",
+          icon: "FaList",
+          viewOrder: 2,
+          navPath: "patient-old/patient-list"
+        },
+        {
+          name: "Patient Chart (Old)",
+          code: "PATIENT_CHART_OLD",
+          description: "",
+          icon: "FaChartLine",
+          viewOrder: 3,
+          navPath: "patient-old/patient-chart"
+        },
+        {
+          name: "Patient EMR (Old)",
+          code: "PATIENT_EMR_OLD",
+          description: "",
+          icon: "FaFileWaveform",
+          viewOrder: 4,
+          navPath: "patient-old/patient-emr"
+        },
+        {
+          name: "Merge Patient Files (Old)",
+          code: "MERGE_PATIENT_FILES_OLD",
+          description: "",
+          icon: "FaFolderTree",
+          viewOrder: 5,
+          navPath: "patient-old/patient-merge-files"
+        }
+      ]
+    },
+    {
       name: "Scheduling",
       description: "",
       icon: "FaCalendarDay",
