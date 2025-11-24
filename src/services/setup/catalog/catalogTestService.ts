@@ -58,7 +58,7 @@ export const catalogDiagnosticTestService = createApi({
         method: 'POST',
         body: {
           catalogId: [catalogId],
-          testIds: body
+          testIds: body.testIds
         },
       }),
       // Invalidate list-by-catalog so the modal refreshes

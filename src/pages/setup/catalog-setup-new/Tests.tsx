@@ -9,14 +9,13 @@ import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import MyButton from '@/components/MyButton/MyButton';
 import { ApCatalogDiagnosticTest } from '@/types/model-types';
-import { newApCatalogDiagnosticTest } from '@/types/model-types-constructor';
 import MyTable from '@/components/MyTable';
 import ChildModal from '@/components/ChildModal';
 import MyInput from '@/components/MyInput';
 import { MdDelete } from 'react-icons/md';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { useGetAllDiagnosticTestsByNameAndTypeQuery, useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetAllDiagnosticTestsByNameAndTypeQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useAddTestsToCatalogMutation, useGetCatalogTestsQuery, useRemoveTestFromCatalogMutation } from '@/services/setup/catalog/catalogTestService';
 
 
@@ -27,7 +26,6 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   const [openChild, setOpenChild] = useState<boolean>(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [openConfirmDeleteTest, setOpenConfirmDeleteTest] = useState<boolean>(false);
-  const [catalogDiagnosticsTests, setCatalogDiagnosticsTests] = useState<ApCatalogDiagnosticTest[]>([]);
   const [pageIndexTable1, setPageIndexTable1] = useState(0);
   const [rowsPerPageTable1, setRowsPerPageTable1] = useState(5);
   const [combinedArrayTable1, setCombinedArrayTable1] = useState([]);
@@ -61,7 +59,6 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       timestamp: Date.now()
     });
     
-
  const { data: catalogDiagnosticsTestListResponse } =
   useGetCatalogTestsQuery(
     {
@@ -207,8 +204,9 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
     addTestsToCatalog({catalogId: diagnosticsTestCatalogHeader?.id, body: {testIds: selectedRows}})
       .unwrap()
       .then(() => {
-        // catalogDiagnosticsTestListResponse.refetch();
+        setSelectedRows([]);
         dispatch(notify({ msg: 'The Tests have been saved successfully', sev: 'success' }));
+
       });
 
   };
@@ -252,7 +250,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
               columns={tableColumns}
               page={pageIndexTable1}
               rowsPerPage={rowsPerPageTable1}
-              totalCount={combinedArrayTable1.length}
+              totalCount={totalCountForCatalogTests}
               onPageChange={handlePageChangeTable1}
               onRowsPerPageChange={handleRowsPerPageChangeTable1}
             />
@@ -318,7 +316,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       // item.name.toLowerCase().includes(record['value'].toLowerCase()) &&
       !catalogDiagnosticsTestListResponse?.data?.testIds.includes(item.id)
   ));
-  }, [diagnosticsListResponse, selectedTestKeys]);
+  }, [diagnosticsListResponse, selectedTestKeys, catalogDiagnosticsTestListResponse]);
 
   useEffect(() => {
     setPaginatedDataTable1(
