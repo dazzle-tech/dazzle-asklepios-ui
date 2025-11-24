@@ -50,7 +50,7 @@ type Props = {
   fecthSample: () => void;
 };
 const Tests = forwardRef<unknown, Props>(
-  ({ order, test, setTest, samplesList, resultFetch,fetchAllTests ,fecthSample }, ref) => {
+  ({ order, test, setTest, samplesList, resultFetch, fetchAllTests, fecthSample }, ref) => {
     useImperativeHandle(ref, () => ({
       fetchTest
     }));
@@ -365,12 +365,15 @@ const Tests = forwardRef<unknown, Props>(
         flexGrow: 1,
         render: (rowData: any) => {
           const cat = laboratoryList?.object?.find(item => item.testKey === rowData.testKey);
-          if (cat) {
-            return cat?.testDurationTime + ' ' + cat?.timeUnitLvalue?.lovDisplayVale;
-          }
-          return '';
+          if (!cat) return '';
+
+          const unit = cat?.timeUnitLvalue?.lovDisplayVale ?? '';
+          const duration = cat?.testDurationTime ?? '';
+
+          return `${duration} ${unit}`.trim();
         }
       },
+
       {
         key: 'notes',
         dataKey: 'notes',
@@ -652,61 +655,62 @@ const Tests = forwardRef<unknown, Props>(
     };
     console.log("testsList: ");
     console.log(testsList);
-return (
-  <Panel ref={ref} header="Order's Tests" defaultExpanded>
-    <MyTable
-      filters={filters()}
-      columns={tableClumns}
-      data={testsList?.object ?? []}
-      onRowClick={rowData => {
-        setTest(rowData);
-      }}
-      rowClassName={isTestSelected}
-      loading={isTestsFetching}
-      sortColumn={listRequest.sortBy}
-      sortType={listRequest.sortType}
-      onSortChange={(sortBy, sortType) => {
-        setListRequest({ ...listRequest, sortBy, sortType });
-      }}
-      page={pageIndex}
-      rowsPerPage={rowsPerPage}
-      totalCount={totalCount}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-    />
+    return (
+      <Panel ref={ref} header="Order's Tests" defaultExpanded>
+        <MyTable
+          filters={filters()}
+          columns={tableClumns}
+          height={450}
+          data={testsList?.object ?? []}
+          onRowClick={rowData => {
+            setTest(rowData);
+          }}
+          rowClassName={isTestSelected}
+          loading={isTestsFetching}
+          sortColumn={listRequest.sortBy}
+          sortType={listRequest.sortType}
+          onSortChange={(sortBy, sortType) => {
+            setListRequest({ ...listRequest, sortBy, sortType });
+          }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
 
-    <SampleModal
-      open={openSampleModal}
-      setOpen={setOpenSampleModal}
-      samplesList={samplesList}
-      labDetails={laboratoryList?.object?.find(item => item.testKey === test.testKey)}
-      saveTest={saveTest}
-      fetchTest={fetchTest}
-      test={test}
-      setTest={setTest}
-      fecthSample={fecthSample}
-      fetchAllTests={fetchAllTests}
-    />
-    <ChatModal
-      open={openNoteModal}
-      setOpen={setOpenNoteModal}
-      handleSendMessage={handleSendMessage}
-      title="Technician Notes"
-      list={messagesList?.object}
-      fieldShowName="notes"
-    />
-    <CancellationModal
-      open={openRejectedModal}
-      setOpen={setOpenRejectedModal}
-      fieldName="rejectedReason"
-      handleCancle={handleRejectedTest}
-      object={test}
-      setObject={setTest}
-      fieldLabel="Reject Reason"
-      title="Reject"
-    />
-  </Panel>
-);
+        <SampleModal
+          open={openSampleModal}
+          setOpen={setOpenSampleModal}
+          samplesList={samplesList}
+          labDetails={laboratoryList?.object?.find(item => item.testKey === test.testKey)}
+          saveTest={saveTest}
+          fetchTest={fetchTest}
+          test={test}
+          setTest={setTest}
+          fecthSample={fecthSample}
+          fetchAllTests={fetchAllTests}
+        />
+        <ChatModal
+          open={openNoteModal}
+          setOpen={setOpenNoteModal}
+          handleSendMessage={handleSendMessage}
+          title="Technician Notes"
+          list={messagesList?.object}
+          fieldShowName="notes"
+        />
+        <CancellationModal
+          open={openRejectedModal}
+          setOpen={setOpenRejectedModal}
+          fieldName="rejectedReason"
+          handleCancle={handleRejectedTest}
+          object={test}
+          setObject={setTest}
+          fieldLabel="Reject Reason"
+          title="Reject"
+        />
+      </Panel>
+    );
 
   }
 );
