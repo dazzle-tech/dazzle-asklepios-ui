@@ -118,7 +118,14 @@ import PatientList from './pages/patient/patient-list';
 import PatientMergeFiles from './pages/patient/patient-merge-files';
 import PatientProfile from './pages/patient/patient-profile';
 import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
+import PatientProfileOLD from './pages/patient-old/patient-profile/PatientProfileCopy-new';
 import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
+import PatientProfileLegacy from './pages/patient-old/patient-profile';
+import PatientOldFacilityPatientList from './pages/patient-old/facility-patient-list';
+import PatientChartLegacy from './pages/patient-old/patient-chart';
+import PatientEMRLegacy from './pages/patient-old/patient-emr';
+import PatientListLegacy from './pages/patient-old/patient-list';
+import PatientMergeFilesLegacy from './pages/patient-old/patient-merge-files';
 import ControlledMedications from './pages/pharmacy/controlled-medications';
 import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescription';
 import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
@@ -373,8 +380,7 @@ const App = () => {
             <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
-              <Route path="patient-profile-old" element={<PatientProfile />} />
-              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
+              <Route path="patient-profile-old" element={<PatientProfile />} />              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
@@ -382,6 +388,12 @@ const App = () => {
               <Route path="start-tele-consultation" element={<StartTeleConsultation />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="information-desk" element={<FacilityPatientList />} />
+              <Route path="patient-old/patient-profile" element={<PatientProfileOLD />} />
+              <Route path="patient-old/facility-patient-list" element={<PatientOldFacilityPatientList />} />
+              <Route path="patient-old/patient-chart" element={<PatientChartLegacy />} />
+              <Route path="patient-old/patient-emr" element={<PatientEMRLegacy />} />
+              <Route path="patient-old/patient-list" element={<PatientListLegacy />} />
+              <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriage />} />
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="ER-dashboard" element={<ERDashboards />} />

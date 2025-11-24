@@ -76,7 +76,6 @@ export const dischargePService = createApi({
       invalidatesTags: [{ type: 'DischargePdf', id: 'GENERATED' }],
     }),
 
-    // ✅ بعد التصحيح
     checkDischargeServiceHealth: builder.query<
       { status: string; service: string; timestamp: string },
       void
