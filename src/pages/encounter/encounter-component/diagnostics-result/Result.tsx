@@ -381,49 +381,38 @@ const Result: React.FC<ResultProps> = ({ patient, user }) => {
         }
       }
     },
-    {
-      key: 'normalRange',
-      title: <Translate>NORMAL RANGE</Translate>,
-      flexGrow: 2,
-      fullText: true,
-      render: (rowData: any) => {
-        if (rowData.normalRangeKey) {
-          if (rowData.normalRange?.resultTypeLkey == '6209578532136054') {
-            return (
-              joinValuesFromArray(rowData.normalRange?.lovList) +
-              ' ' +
-              labDetails?.resultUnitLvalue?.lovDisplayVale || ''
-            );
-          } else if (rowData.normalRange?.resultTypeLkey == '6209569237704618') {
-            if (rowData.normalRange?.normalRangeTypeLkey == '6221150241292558') {
-              return (
-                rowData.normalRange?.rangeFrom +
-                '_' +
-                rowData.normalRange?.rangeTo +
-                ' ' +
-                labDetails?.resultUnitLvalue?.lovDisplayVale
-              );
-            } else if (rowData.normalRange?.normalRangeTypeLkey == '6221162489019880') {
-              return (
-                'Less Than ' +
-                rowData.normalRange?.rangeFrom +
-                ' ' +
-                labDetails?.resultUnitLvalue?.lovDisplayVale
-              );
-            } else if (rowData.normalRange?.normalRangeTypeLkey == '6221175556193180') {
-              return (
-                'More Than ' +
-                rowData.normalRange?.rangeTo +
-                ' ' +
-                labDetails?.resultUnitLvalue?.lovDisplayVale
-              );
-            }
-          }
-        } else {
-          return 'Normal Range Not Defined';
+  {
+  key: 'normalRange',
+  title: <Translate>NORMAL RANGE</Translate>,
+  flexGrow: 2,
+  fullText: true,
+  render: (rowData: any) => {
+    const unit = labDetails?.resultUnitLvalue?.lovDisplayVale ?? '';
+
+    if (rowData.normalRangeKey) {
+      if (rowData.normalRange?.resultTypeLkey === '6209578532136054') {
+        return `${joinValuesFromArray(rowData.normalRange?.lovList)} ${unit}`.trim();
+      }
+
+      if (rowData.normalRange?.resultTypeLkey === '6209569237704618') {
+        if (rowData.normalRange?.normalRangeTypeLkey === '6221150241292558') {
+          return `${rowData.normalRange?.rangeFrom}_${rowData.normalRange?.rangeTo} ${unit}`.trim();
+        }
+
+        if (rowData.normalRange?.normalRangeTypeLkey === '6221162489019880') {
+          return `Less Than ${rowData.normalRange?.rangeFrom} ${unit}`.trim();
+        }
+
+        if (rowData.normalRange?.normalRangeTypeLkey === '6221175556193180') {
+          return `More Than ${rowData.normalRange?.rangeTo} ${unit}`.trim();
         }
       }
-    },
+    }
+
+    return 'Normal Range Not Defined';
+  }
+}
+,
     {
       key: 'marker',
       title: <Translate>MARKER</Translate>,
