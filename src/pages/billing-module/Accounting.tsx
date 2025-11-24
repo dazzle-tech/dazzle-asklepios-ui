@@ -462,17 +462,6 @@ const Accounting: React.FC = () => {
          </div>
         )};
       </div>
-      {/* <div style={{display: "flex", gap: "5px"}}>
-        <PatientSide patient={patient} encounter={encounter} />
-        <ProfileSidebar
-          expand={expand}
-          setExpand={setExpand}
-          windowHeight={windowHeight}
-          setLocalPatient={setPatient}
-          refetchData={refetchData}
-          setRefetchData={setRefetchData}
-        />
-      </div> */}
     </div>
   );
 };
