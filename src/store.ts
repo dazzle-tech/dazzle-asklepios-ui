@@ -90,6 +90,8 @@ import { communityAreaService } from './services/setup/country/communityAreaServ
 import { dischargePService } from './services/setup/dischargeService';
 import { resultReportApi } from './services/setup/resultReportApi';
 import { invoiceReportApi } from './services/setup/invoiceReportApi';
+import { visitDurationService } from './services/setup/visitDurationService';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -267,7 +269,9 @@ export const store = configureStore({
     [resultReportApi.reducerPath]: resultReportApi.reducer,
 
     // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
+   // Visit Duration
+    [visitDurationService.reducerPath]: visitDurationService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -359,6 +363,7 @@ export const store = configureStore({
       dischargePService.middleware,
       resultReportApi.middleware,
       invoiceReportApi.middleware,
+      visitDurationService.middleware,
     ])
 });
 

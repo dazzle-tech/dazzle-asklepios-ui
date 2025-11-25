@@ -731,3 +731,13 @@ export const newCommunityArea: modelTypes.CommunityArea = {
   name: '',
   isActive: true,
 };
+export const newVisitDuration: modelTypes.VisitDuration = {
+  id: undefined,
+  visitType: null,
+  durationInMinutes: 0,
+  resourceSpecific: false,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

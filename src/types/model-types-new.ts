@@ -879,3 +879,13 @@ export interface CommunityArea {
   name: string;
   isActive?: boolean;
 }
+export const newVisitDuration: modelTypes.VisitDuration = {
+  id: undefined,
+  visitType: null,
+  durationInMinutes: 0,
+  resourceSpecific: false,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
