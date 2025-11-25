@@ -1,267 +1,318 @@
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Text, Form } from 'rsuite';
-import { MdDelete } from 'react-icons/md';
-import { Plus } from '@rsuite/icons';
-import { MdSave } from 'react-icons/md';
-import { ApActiveIngredientFoodInteraction } from '@/types/model-types';
-import { newApActiveIngredientFoodInteraction } from '@/types/model-types-constructor';
-import { initialListRequest } from '@/types/types';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import React, { useState, useMemo } from "react";
+import { Form, Text, Panel } from "rsuite";
+import { MdSave, MdDelete } from "react-icons/md";
+import { Plus } from "@rsuite/icons";
+
+import Translate from "@/components/Translate";
+import MyTable from "@/components/MyTable";
+import MyInput from "@/components/MyInput";
+import MyButton from "@/components/MyButton/MyButton";
+import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
+
+import { useAppDispatch } from "@/hooks";
+import { notify } from "@/utils/uiReducerActions";
+
 import {
-  useGetActiveIngredientFoodInteractionQuery,
-  useSaveActiveIngredientFoodInteractionMutation,
-  useRemoveActiveIngredientFoodInteractionMutation
-} from '@/services/medicationsSetupService';
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+  useGetFoodInteractionsByActiveIngredientIdQuery,
+  useCreateFoodInteractionMutation,
+  useUpdateFoodInteractionMutation,
+  useDeleteFoodInteractionMutation
+} from "@/services/setup/activeIngredients/ActiveIngredientFoodInteraction";
 
-const DrugFoodInteractions = ({ activeIngredients }) => {
+
+import {
+  newActiveIngredientFoodInteraction
+} from "@/types/model-types-constructor-new";
+
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+
+import "./styles.less";
+import { Block } from "@mui/icons-material";
+
+const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
   const dispatch = useAppDispatch();
-  const [selectedActiveIngredientFoodInteraction, setSelectedActiveIngredientFoodInteraction] =
-    useState<ApActiveIngredientFoodInteraction>({
-      ...newApActiveIngredientFoodInteraction
-    });
-  const [openConfirmDeleteFoodInteractionModal, setOpenConfirmDeleteFoodInteractionModal] =
-    useState<boolean>(false);
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest,
-    pageSize: 100,
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
+
+  // ---------------------------
+  // STATE
+  // ---------------------------
+  const [record, setRecord] = useState({
+    ...newActiveIngredientFoodInteraction,
   });
-  // Fetch food list response
+  const [sortColumn, setSortColumn] = useState("food");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+  const [openDelete, setOpenDelete] = useState(false);
+
+  // ---------------------------
+  // LOVs
+  // ---------------------------
+
+  const { data: severityLovQueryResponseData } =
+    useGetLovValuesByCodeQuery("SEVERITY");
+
+  // ---------------------------
+  // API
+  // ---------------------------
   const {
-    data: foodListResponseData,
+    data: list = [],
+    isFetching,
     refetch,
-    isFetching
-  } = useGetActiveIngredientFoodInteractionQuery(listRequest);
-  // Fetch severity Lov response
-  const { data: severityLovQueryResponseData } = useGetLovValuesByCodeQuery('SEVERITY');
-  // save active ingredient food interaction
-  const [saveActiveIngredientFoodInteraction, saveActiveIngredientFoodInteractionMutation] =
-    useSaveActiveIngredientFoodInteractionMutation();
-  // remove active ingredient food interaction
-  const [removeActiveIngredientFoodInteraction, removeActiveIngredientFoodInteractionMutation] =
-    useRemoveActiveIngredientFoodInteractionMutation();
-
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && rowData.key === selectedActiveIngredientFoodInteraction.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  // Icons column (remove)
-  const iconsForActions = () => (
-    <div className="container-of-icons">
-      <MdDelete
-        className="icons-style"
-        title="Delete"
-        size={24}
-        fill="var(--primary-pink)"
-        onClick={() => setOpenConfirmDeleteFoodInteractionModal(true)}
-      />
-    </div>
+  } = useGetFoodInteractionsByActiveIngredientIdQuery(
+    selectedActiveIngredients?.id,
+    { skip: !selectedActiveIngredients?.id }
   );
 
-  //Table columns
-  const tableColumns = [
+  const [createFoodInteraction] = useCreateFoodInteractionMutation();
+  const [updateFoodInteraction] = useUpdateFoodInteractionMutation();
+  const [deleteFoodInteraction] = useDeleteFoodInteractionMutation();
+
+  // ---------------------------
+  // TABLE COLUMNS
+  // ---------------------------
+  const columns = [
     {
-      key: 'food',
+      key: "food",
       title: <Translate>Food</Translate>,
-      render: rowData => <Text>{rowData.foodDescription}</Text>
+      render: (row) => <Text>{row.food}</Text>,
     },
     {
-      key: 'severity',
+      key: "severity",
       title: <Translate>Severity</Translate>,
-      render: rowData =>
-        rowData.severityLvalue ? rowData.severityLvalue.lovDisplayVale : rowData.severityLkey
+      render: (row) => <Text>{row.severity}</Text>,
     },
     {
-      key: 'description',
+      key: "description",
       title: <Translate>Description</Translate>,
-      render: rowData => <Text>{rowData.description}</Text>
+      render: (row) => <Text>{row.description}</Text>,
     },
     {
-      key: 'icons',
-      title: <Translate></Translate>,
-      render: () => iconsForActions()
-    }
+      key: "icons",
+      title: "",
+      render: (row) => (
+        <MdDelete
+          size={24}
+          fill="var(--primary-pink)"
+          className="icons-style"
+          onClick={() => {
+            setRecord(row);
+            setOpenDelete(true);
+          }}
+        />
+      ),
+    },
   ];
 
-  // handle save
-  const save = () => {
-    saveActiveIngredientFoodInteraction({
-      ...selectedActiveIngredientFoodInteraction,
-      activeIngredientKey: activeIngredients.key,
-      createdBy: 'Administrator'
-    })
-      .unwrap()
-      .then(() => {
-        dispatch(notify('Saved successfully'));
-        setSelectedActiveIngredientFoodInteraction({
-          ...newApActiveIngredientFoodInteraction,
-          severityLkey: null
-        });
-      });
-  };
-
-  // handle new
-  const handleFoodsNew = () => {
-    setSelectedActiveIngredientFoodInteraction({
-      ...newApActiveIngredientFoodInteraction
-    });
-  };
-
-  // handle remove
-  const remove = () => {
-    setOpenConfirmDeleteFoodInteractionModal(false);
-    if (selectedActiveIngredientFoodInteraction.key) {
-      removeActiveIngredientFoodInteraction({
-        ...selectedActiveIngredientFoodInteraction
-      })
-        .unwrap()
-        .then(() => {
-          refetch();
-          dispatch(notify('Deleted successfully'));
-        });
+  // ---------------------------
+  // SAVE
+  // ---------------------------
+  const save = async () => {
+    if (!selectedActiveIngredients || !selectedActiveIngredients.id) {
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
+      return;
     }
-  };
 
-  // Effects
-  useEffect(() => {
-    if (saveActiveIngredientFoodInteractionMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
-
-      setSelectedActiveIngredientFoodInteraction({ ...newApActiveIngredientFoodInteraction });
+    if (!record?.food || record.food.trim() === "") {
+      dispatch(notify({ msg: "Please fix the following fields: • Food is required", sev: "error" }));
+      return;
     }
-  }, [saveActiveIngredientFoodInteractionMutation]);
 
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'active_ingredient_key',
-        operator: 'match',
-        value: activeIngredients.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
+    if (!record?.severity) {
+      dispatch(notify({ msg: "Please fix the following fields: • Severity is required", sev: "error" }));
+      return;
+    }
+
+    if (!record?.description || record.description.trim() === "") {
+      dispatch(notify({ msg: "Please fix the following fields: • Description is required", sev: "error" }));
+      return;
+    }
+
+    const payload = {
+      ...record,
+      id: record.id ?? record.Id ?? record.ID ?? null,
+      activeIngredientId: selectedActiveIngredients.id,
+    };
+
+    delete payload.Id;
+    delete payload.ID;
+
+    try {
+      if (payload.id) {
+        await updateFoodInteraction(payload).unwrap();
+        dispatch(notify({ msg: "Updated successfully", sev: "success" }));
+      } else {
+        await createFoodInteraction(payload).unwrap();
+        dispatch(notify({ msg: "Added successfully", sev: "success" }));
       }
-    ];
-    setListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
-  }, [activeIngredients.key]);
 
-  useEffect(() => {
-    if (removeActiveIngredientFoodInteractionMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
-
-      setSelectedActiveIngredientFoodInteraction({ ...newApActiveIngredientFoodInteraction });
+      refetch();
+      setRecord({ ...newActiveIngredientFoodInteraction });
+    } catch (e) {
+      console.error("SAVE ERROR:", e);
+      dispatch(notify({ msg: "Save failed", sev: "error" }));
     }
-  }, [removeActiveIngredientFoodInteractionMutation]);
+  };
 
+  // ---------------------------
+  // DELETE
+  // ---------------------------
+  const remove = async () => {
+    setOpenDelete(false);
+
+    if (!record?.id) {
+      dispatch(notify({ msg: "Invalid item", sev: "error" }));
+      return;
+    }
+
+    try {
+      await deleteFoodInteraction(record.id).unwrap();
+      dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
+      refetch();
+      setRecord({ ...newActiveIngredientFoodInteraction });
+    } catch {
+      dispatch(notify({ msg: "Delete failed", sev: "error" }));
+    }
+  };
+
+  // ---------------------------
+  // PAGINATION
+  // ---------------------------
+
+  // 📌 SORTING IMPLEMENTATION
+  const sortedList = useMemo(() => {
+    if (!list || !sortColumn) return list ?? [];
+
+    return [...list].sort((a, b) => {
+      const aVal = a[sortColumn];
+      const bVal = b[sortColumn];
+
+      if (aVal == null) return -1;
+      if (bVal == null) return 1;
+
+      let result = 0;
+
+      if (typeof aVal === "string") {
+        result = aVal.toString().localeCompare(bVal.toString(), undefined, { numeric: true });
+      } else {
+        result = aVal > bVal ? 1 : -1;
+      }
+
+      return sortType === "asc" ? result : -result;
+    });
+  }, [list, sortColumn, sortType]);
+
+
+  const [pagination, setPagination] = useState({ page: 0, size: 5 });
+
+  const paginatedData = useMemo(() => {
+    const start = pagination.page * pagination.size;
+    return sortedList.slice(start, start + pagination.size);
+  }, [sortedList, pagination.page, pagination.size]);
+
+  const totalCount = list.length;
+
+  // ---------------------------
+  // RENDER
+  // ---------------------------
   return (
-    <Form fluid>
-      <div className="container-of-actions-header-active">
-        <div className="container-of-fields-active">
-          <MyInput
-            fieldType="select"
-            selectData={[]}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            width={200}
-            fieldName=""
-            fieldLabel="Food"
-            record={selectedActiveIngredientFoodInteraction}
-            setRecord={setSelectedActiveIngredientFoodInteraction}
-            required
-          />
-          <MyInput
-            fieldType="select"
-            selectData={severityLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            width={200}
-            fieldName="severityLkey"
-            fieldLabel="Severity"
-            record={selectedActiveIngredientFoodInteraction}
-            setRecord={setSelectedActiveIngredientFoodInteraction}
-            required
-          />
+    <Panel>
+      <Form fluid>
+        <div className="container-of-actions-header-active">
+          <div className="container-of-fields-active">
+            <MyInput
+              fieldLabel="Food"
+              fieldName="food"
+              fieldType="text"
+              record={record}
+              setRecord={setRecord}
+              width={220}
+              required
+            />
+
+            <MyInput
+              fieldType="select"
+              selectData={severityLovQueryResponseData?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="lovDisplayVale"
+              fieldName="severity"
+              width={180}
+              fieldLabel="Severity"
+              record={record}
+              setRecord={setRecord}
+              required
+            />
+          </div>
+
+          <div className="container-of-buttons-active">
+            <MyButton
+              prefixIcon={() => <MdSave />}
+              onClick={save}
+              title="Save"
+              color="var(--deep-blue)"
+            />
+
+            <MyButton
+              prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
+              onClick={() => setRecord({ ...newActiveIngredientFoodInteraction })}
+              title="Clear"
+              color="var(--deep-blue)"
+            />
+          </div>
         </div>
-        <div className="container-of-buttons-active">
-          <MyButton
-            prefixIcon={() => <MdSave />}
-            color="var(--deep-blue)"
-            onClick={save}
-            title="Save"
-          ></MyButton>
-          <MyButton
-            prefixIcon={() => <Plus />}
-            color="var(--deep-blue)"
-            onClick={handleFoodsNew}
-            title="New"
-          ></MyButton>
-        </div>
-      </div>
-      <MyInput
-        width="100%"
-        fieldName="description"
-        fieldType="textarea"
-        record={selectedActiveIngredientFoodInteraction}
-        setRecord={setSelectedActiveIngredientFoodInteraction}
-        required
-      />
-      <br />
-      <Row gutter={15}>
-        <Col xs={24}>
-          <MyTable
-            noBorder
-            height={450}
-            data={foodListResponseData?.object ?? []}
-            loading={isFetching}
-            columns={tableColumns}
-            rowClassName={isSelected}
-            onRowClick={rowData => {
-              setSelectedActiveIngredientFoodInteraction(rowData);
-            }}
-            sortColumn={listRequest.sortBy}
-            onSortChange={(sortBy, sortType) => {
-              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-            }}
-          />
-          <DeletionConfirmationModal
-            open={openConfirmDeleteFoodInteractionModal}
-            setOpen={setOpenConfirmDeleteFoodInteractionModal}
-            itemToDelete="Food Interaction"
-            actionButtonFunction={remove}
-            actionType="Delete"
-          />
-        </Col>
-      </Row>
-    </Form>
+
+        <MyInput
+          width="100%"
+          fieldName="description"
+          fieldType="textarea"
+          record={record}
+          setRecord={setRecord}
+          required
+        />
+
+        <br />
+
+        <MyTable
+          height={450}
+          data={paginatedData}
+          loading={isFetching}
+          columns={columns}
+          onRowClick={(row) => {
+            const normalizedId = row.id ?? row.Id ?? row.ID ?? null;
+
+            setRecord({
+              ...row,
+              id: normalizedId,
+            });
+          }}
+          rowClassName={(row) => {
+            const rowId = row.id ?? row.Id ?? row.ID ?? null;
+            const selectedId = record.id ?? null;
+
+            return rowId === selectedId ? "selected-row" : "";
+          }}
+          page={pagination.page}
+          rowsPerPage={pagination.size}
+          totalCount={totalCount}
+          onPageChange={(_, p) => setPagination({ ...pagination, page: p })}
+          onRowsPerPageChange={(e) =>
+            setPagination({ page: 0, size: Number(e.target.value) })
+          }
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={(col, order) => {
+            setSortColumn(col);
+            setSortType(order);
+          }}
+        />
+
+        <DeletionConfirmationModal
+          open={openDelete}
+          setOpen={setOpenDelete}
+          itemToDelete="Food Interaction"
+          actionButtonFunction={remove}
+          actionType="Delete"
+        />
+      </Form>
+    </Panel>
   );
 };
 

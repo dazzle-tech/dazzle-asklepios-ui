@@ -3,7 +3,6 @@ import { configureStore } from '@reduxjs/toolkit';
 import uiSlice from './reducers/uiSlice';
 import { uiService } from '@/services/uiService';
 import { authService } from '@/services/authService';
-import authSlice from '@/reducers/authSlice';
 import { authServiceApi } from '@/services/authServiceApi';
 import { patientService } from '@/services/patientService';
 import patientSlice from '@/reducers/patientSlice';
@@ -13,6 +12,11 @@ import { encounterService } from '@/services/encounterService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
+import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
+import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
+import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
+import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
+import { activeIngredientPreRequestedTestService } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
@@ -54,22 +58,38 @@ import { inventoryTransactionAttachmentService } from './services/inventory/inve
 import { loincCodeService } from './services/setup/loincCodeService';
 import { cptCodeService } from './services/setup/cptCodeService';
 import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
-import{diagnosticTestProfileService} from './services/setup/diagnosticTestProfileService';
+import{diagnosticTestProfileService} from './services/setup/diagnosticTest/diagnosticTestProfileService';
 import{diagnosticTestPathologyService} from'@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import {radiologyService} from '@/services/setup/diagnosticTest/radiologyTestService';
+import { procedureSetupService } from './services/setup/procedure/procedureService';
+import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
+import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
+import { vaccineService } from './services/vaccine/vaccineService';
+import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
+import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
+import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesIntervalService';
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
 import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-import { vaccineService } from './services/vaccine/vaccineService';
-import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
-import { procedureSetupService } from './services/setup/procedure/procedureService';
-import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
-import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
-
 import {diagnosticTestCodingService} from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
+import {BrandMedicationService} from './services/setup/brandmedication/BrandMedicationService ';
+import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
+import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
 import {CdtDentalActionService} from '@/services/setup/dental-action/CdtDentalActionService';
+import {BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
+import { uomGroupService } from './services/setup/uom-group/uomGroupService';
+import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
+import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
+import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
+import { countryService } from './services/setup/country/countryService';
+import { countryDistrictService } from './services/setup/country/countryDistrictService';
+import { districtCommunityService } from './services/setup/country/districtCommunityService';
+import { communityAreaService } from './services/setup/country/communityAreaService';
+import { dischargePService } from './services/setup/dischargeService';
+import { resultReportApi } from './services/setup/resultReportApi';
+import { invoiceReportApi } from './services/setup/invoiceReportApi';
 export const store = configureStore({
   reducer: {
     // ui
@@ -94,7 +114,18 @@ export const store = configureStore({
 
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
+    [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
+    [activeIngredientSpecialPopulationService.reducerPath]:
+      activeIngredientSpecialPopulationService.reducer,
+    [activeIngredientContraindicationService.reducerPath]:
+      activeIngredientContraindicationService.reducer,
+    [activeIngredientPreRequestedTestService.reducerPath]:
+      activeIngredientPreRequestedTestService.reducer,
 
+    [activeIngredientAdverseEffectService.reducerPath]: activeIngredientAdverseEffectService.reducer,
+
+
+    [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
     //account
     [accountApi.reducerPath]: accountApi.reducer,
 
@@ -140,6 +171,9 @@ export const store = configureStore({
 
     //procedure 
     [procedureService.reducerPath]: procedureService.reducer,
+ 
+    //prescription instruction
+    [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
 
     //recovery
 
@@ -162,6 +196,10 @@ export const store = configureStore({
 
      // Language slice
     [languageService.reducerPath]: languageService.reducer,
+
+    // uom
+    [uomGroupService.reducerPath]: uomGroupService.reducer,
+
 
     // Translation slice
     [translationService.reducerPath]: translationService.reducer,
@@ -193,10 +231,6 @@ export const store = configureStore({
     //cdt code
     [cdtCodeService.reducerPath]: cdtCodeService.reducer,
 
-    //vaccine
-    [vaccineService.reducerPath]: vaccineService.reducer,
-    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
-
     // procedure
     // procedure setup
     [procedureSetupService.reducerPath]: procedureSetupService.reducer,
@@ -206,7 +240,34 @@ export const store = configureStore({
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
 
     [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
-    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
+    //vaccine
+    [vaccineService.reducerPath]: vaccineService.reducer,
+    [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
+    [vaccineDosesService.reducerPath]: vaccineDosesService.reducer,
+    [vaccineDosesIntervalService.reducerPath]: vaccineDosesIntervalService.reducer,
+
+    [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
+    [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
+    [BrandMedicationActiveIngredientService.reducerPath]: BrandMedicationActiveIngredientService.reducer,
+    [activeIngredientDrugInteractionService.reducerPath]: activeIngredientDrugInteractionService.reducer,
+    [activeIngredientFoodInteractionService.reducerPath]: activeIngredientFoodInteractionService.reducer,
+
+    // country
+    [countryService.reducerPath]: countryService.reducer,
+    [countryDistrictService.reducerPath]: countryDistrictService.reducer,
+    [districtCommunityService.reducerPath]: districtCommunityService.reducer,
+    [communityAreaService.reducerPath]: communityAreaService.reducer, 
+  
+    // discharge
+    [dischargePService.reducerPath]: dischargePService.reducer,
+
+    // result report
+    [resultReportApi.reducerPath]: resultReportApi.reducer,
+
+    // invoice report
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -219,6 +280,12 @@ export const store = configureStore({
       inventoryService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
+      activeIngredientSynonymsService.middleware,
+      activeIngredientAdverseEffectService.middleware,
+      activeIngredientIndicationService.middleware,
+      activeIngredientSpecialPopulationService.middleware,
+      activeIngredientContraindicationService.middleware,
+      activeIngredientPreRequestedTestService.middleware,
       appointmentService.middleware,
       dvmService.middleware,
       encounterService.middleware,
@@ -267,12 +334,31 @@ export const store = configureStore({
       diagnosticTestNormalRangeService.middleware,
       vaccineService.middleware,
       vaccineBrandsService.middleware,
-      potintialService.middleware,
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
       diagnosticTestCodingService.middleware,
-      CdtDentalActionService.middleware
+      CdtDentalActionService.middleware,
+      vaccineService.middleware,
+      vaccineBrandsService.middleware,
+      vaccineDosesService.middleware,
+      vaccineDosesIntervalService.middleware,
+      BrandMedicationService.middleware,
+      BrandMedicationSubstituteService.middleware,
+      prescriptionInstructionService.middleware,
+      CdtDentalActionService.middleware,
+      BrandMedicationActiveIngredientService.middleware,
+      CdtDentalActionService.middleware,
+      uomGroupService.middleware,
+      activeIngredientDrugInteractionService.middleware,
+      activeIngredientFoodInteractionService.middleware,
+      countryService.middleware,
+      countryDistrictService.middleware,
+      districtCommunityService.middleware,
+      communityAreaService.middleware,
+      dischargePService.middleware,
+      resultReportApi.middleware,
+      invoiceReportApi.middleware,
     ])
 });
 

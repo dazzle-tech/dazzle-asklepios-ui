@@ -449,6 +449,7 @@ const DiagnosticsOrder = props => {
           statusLkey: '164797574082125',
           labStatusLkey: '6055029972709625',
           radStatusLkey: '6055029972709625',
+          saveDraft: true,
           // Add new fields to the order
           typeKey: selectedType,
           catalogKey: selectedCatalog,

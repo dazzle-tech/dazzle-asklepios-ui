@@ -97,11 +97,15 @@ const Prescription = props => {
 
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
-    return (
+    // Check if inside any form field or picker menu (including SelectPicker dropdown)
+    if (
       node.closest(
-        'input, textarea, select, button, [contenteditable="true"], .rs-input, .rs-picker, .rs-checkbox, .rs-btn'
+        'input, textarea, select, button, [contenteditable="true"], .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-picker-menu, .rs-picker-select-menu, .rs-picker-popup, .rs-modal, .rs-modal-body'
       ) !== null
-    );
+    ) {
+      return true;
+    }
+    return false;
   };
   const addToFavorites = rowData => {
     const alreadyExists = favoriteMedications.some(
@@ -274,6 +278,9 @@ const Prescription = props => {
 
       // If on field/button: ignore
       if (isFormField(e.target)) return;
+
+      // If inside a modal (like DetailsModal): ignore
+      if ((e.target as Element)?.closest('.rs-modal, .rs-modal-body, .rs-modal-dialog')) return;
 
       // Hide under table + clean row selection
       setSelectedPreviewMedication(null);
@@ -847,6 +854,9 @@ const Prescription = props => {
         preKey={preKeyRecord['preKey']}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
+        setOrderMedication={() => {}}
+        drugKey={null}
+        editing={false}
       />
       <CancellationModal
         open={openCancellation}

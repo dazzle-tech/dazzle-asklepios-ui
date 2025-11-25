@@ -77,11 +77,10 @@ const DiagnosticsTest = () => {
     error?.error ||
     "Unexpected server error";
 
-  // 🔹 لو تحتوي الرسالة على interpolatedMessage=... فاستخرجها فقط
   const match = detail.match(/interpolatedMessage='([^']+)'/);
-  if (match && match[1]) return match[1]; // يرجّع "Type cannot be null"
+  if (match && match[1]) return match[1];
 
-  // 🔹 fallback للرسالة الكاملة لو ما في match
+ 
   return detail;
 };
 

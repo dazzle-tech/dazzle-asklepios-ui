@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
   useGetDiagnosticsTestNormalRangeListQuery,
+  useGetLovAllValuesQuery,
   useGetLovValuesByCodeQuery,
   useRemoveDiagnosticsTestProfileMutation,
   useSaveDiagnosticsTestNormalRangeMutation,
- 
+
 } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
@@ -24,84 +25,89 @@ import {
   useGetDiagnosticTestProfilesByTestIdQuery,
   useCreateDiagnosticTestProfileMutation,
   useUpdateDiagnosticTestProfileMutation,
-  useDeleteDiagnosticTestProfileMutation} from '@/services/setup/diagnosticTestProfileService';
+  useDeleteDiagnosticTestProfileMutation
+} from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 
-  import {
-    useGetDiagnosticTestNormalRangesByTestIdQuery,
-    useCreateDiagnosticTestNormalRangeMutation,
-    useUpdateDiagnosticTestNormalRangeMutation,
-    useDeleteDiagnosticTestNormalRangeMutation,
-    useGetDiagnosticTestNormalRangesByProfileTestIdQuery} from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import {
+  useGetDiagnosticTestNormalRangesByTestIdQuery,
+  useCreateDiagnosticTestNormalRangeMutation,
+  useUpdateDiagnosticTestNormalRangeMutation,
+  useDeleteDiagnosticTestNormalRangeMutation,
+  useGetDiagnosticTestNormalRangesByProfileTestIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
 
 import { DiagnosticTestNormalRange, DiagnosticTestProfile } from '@/types/model-types-new';
 import { newDiagnosticTestNormalRange, newDiagnosticTestProfile, newLaboratory, newPathology } from '@/types/model-types-constructor-new';
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
+import { initialListRequestAllValues } from '@/types/types';
 const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const dispatch = useAppDispatch();
   const [diagnosticsTestProfile, setDiagnosticsTestProfile] = useState<DiagnosticTestProfile>({
     ...newDiagnosticTestProfile
   });
   const [openConfirmDeleteProfile, setOpenConfirmDeleteProfile] = useState<boolean>(false);
+  const [openConfirmDeleteProfileNormalRange, setOpenConfirmDeleteProfileNormalRange] = useState<boolean>(false);
   const [openChild, setOpenChild] = useState<boolean>(false);
   const [openSubChild, setOpenSubChild] = useState<boolean>(false);
   const [diagnosticTestNormalRange, setDiagnosticTestNormalRange] =
     useState<DiagnosticTestNormalRange>({
       ...newDiagnosticTestNormalRange
     });
- 
 
-    const [createDiagnosticTestNormalRange] = useCreateDiagnosticTestNormalRangeMutation();
-    const [updateDiagnosticTestNormalRange] = useUpdateDiagnosticTestNormalRangeMutation();
-    
-    const [laboratory,setLaboratory]=useState({...newLaboratory});
+
+  const [createDiagnosticTestNormalRange] = useCreateDiagnosticTestNormalRangeMutation();
+  const [updateDiagnosticTestNormalRange] = useUpdateDiagnosticTestNormalRangeMutation();
+
+  const [laboratory, setLaboratory] = useState({ ...newLaboratory });
 
   // Fetch units Lov response
   const { data: unitsLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   // Fetch diagnostics test profile List response
 
+const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
 
-    const [paginationParams, setPaginationParams] = useState({
+  const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 5,
     sort: "id,asc",
     timestamp: Date.now(),
   });
 
-const { data: allDiagnosticTestProfiles ,refetch:refetchDiagnosticsTestProfile,isFetching} = useGetDiagnosticTestProfilesByTestIdQuery({
-  testId: diagnosticsTest?.id ,
-  page: paginationParams.page,
-  size: paginationParams.size,
-  sort: paginationParams.sort,
-}, { skip: !diagnosticsTest?.id });
-
-  // Fetch normal range List response
-const {
-  data: normalRangeListResponse,
-  refetch: refetchNormalRange,
-  isFetching: isFetchingNormalRanges
-} = useGetDiagnosticTestNormalRangesByProfileTestIdQuery(
-  {
-    profileTestId: diagnosticsTestProfile?.id,
+  const { data: allDiagnosticTestProfiles, refetch: refetchDiagnosticsTestProfile, isFetching } = useGetDiagnosticTestProfilesByTestIdQuery({
+    testId: diagnosticsTest?.id,
     page: paginationParams.page,
     size: paginationParams.size,
-  },
-  { skip: !diagnosticsTestProfile?.id }
-);
+    sort: paginationParams.sort,
+  }, { skip: !diagnosticsTest?.id });
+
+  // Fetch normal range List response
+  const {
+    data: normalRangeListResponse,
+    refetch: refetchNormalRange,
+    isFetching: isFetchingNormalRanges
+  } = useGetDiagnosticTestNormalRangesByProfileTestIdQuery(
+    {
+      profileTestId: diagnosticsTestProfile?.id,
+      page: paginationParams.page,
+      size: paginationParams.size,
+    },
+    { skip: !diagnosticsTestProfile?.id }
+  );
 
 
   // save diagnostics Test Profile
 
-  const [addTestProfile]=useCreateDiagnosticTestProfileMutation();
-  const [updateTestProfile]=useUpdateDiagnosticTestProfileMutation();
-  const [deleteTestProfile]=useDeleteDiagnosticTestProfileMutation();
-
+  const [addTestProfile] = useCreateDiagnosticTestProfileMutation();
+  const [updateTestProfile] = useUpdateDiagnosticTestProfileMutation();
+  const [deleteTestProfile] = useDeleteDiagnosticTestProfileMutation();
+  const [deleteNormalRange] = useDeleteDiagnosticTestNormalRangeMutation();
   // class name for selected row 
   const isSelected = rowData => {
     if (rowData && diagnosticsTestProfile && rowData.id === diagnosticsTestProfile.id) {
       return 'selected-row';
     } else return '';
   };
-   // class name for selected row 
+  // class name for selected row 
   const isSelectedDiagnosticTestNormalRange = rowData => {
     if (rowData && diagnosticTestNormalRange && rowData.key === diagnosticTestNormalRange.id) {
       return 'selected-row';
@@ -147,11 +153,11 @@ const {
       title: <Translate>Result Unit</Translate>,
       render: rowData => (
         <span>
-         {conjureValueBasedOnKeyFromList(
-                    unitsLovQueryResponse?.object?? [],
-                    rowData.resultUnit,
-                    'lovDisplayVale'
-                  )}
+          {conjureValueBasedOnKeyFromList(
+            unitsLovQueryResponse?.object ?? [],
+            rowData.resultUnit,
+            'lovDisplayVale'
+          )}
         </span>
       )
     },
@@ -190,10 +196,11 @@ const {
       key: "lovKeys",
       title: <Translate>LOV Values</Translate>,
       render: (rowData) => {
-        if (!rowData.lovKeys || !allLovValues?.object) return "-";
+        
+        if (!rowData.lovKeys || !lovValues?.object) return "-";
 
         const names = rowData.lovKeys
-          .map(key => allLovValues.object.find(lov => lov.key === key)?.lovDisplayVale)
+          .map(key => lovValues.object.find(lov => lov.key === key)?.lovDisplayVale)
           .filter(Boolean);
 
         return names.length ? names.join(", ") : "-";
@@ -205,66 +212,76 @@ const {
       render: (rowData) => <p>{formatEnumString(rowData?.condition)}</p>,
     },
     {
-      key: 'isValid',
-      title: <Translate>Status</Translate>,
-      render: rowData => (rowData.deletedAt === null ? 'Active' : 'InActive')
+      key: 'actions',
+      title: <Translate>actions</Translate>,
+      render: rowData => (
+        <MdDelete
+          className="icons-style"
+          title="Remove"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+           setOpenConfirmDeleteProfileNormalRange(true);
+          }}
+        />
+      )
     }
   ];
 
   // handle save diagnostics test profile
-const handleSave = async () => {
-  try {
-    if (diagnosticsTestProfile.id) {
-      await updateTestProfile({
-        id: diagnosticsTestProfile.id,
-        body: {
+  const handleSave = async () => {
+    try {
+      if (diagnosticsTestProfile.id) {
+        await updateTestProfile({
+          id: diagnosticsTestProfile.id,
+          body: {
+            ...diagnosticsTestProfile,
+            testId: diagnosticsTest.id,
+          },
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
+        await refetchDiagnosticsTestProfile();
+        setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
+      } else {
+        await addTestProfile({
           ...diagnosticsTestProfile,
           testId: diagnosticsTest.id,
-        },
-      }).unwrap();
+        }).unwrap();
 
-      dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
-      await refetchDiagnosticsTestProfile();
-     setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
-    } else {
-      await addTestProfile({
-        ...diagnosticsTestProfile,
-        testId: diagnosticsTest.id,
-      }).unwrap();
- 
-      dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
-      await refetchDiagnosticsTestProfile();
-      setDiagnosticsTestProfile({ ...newDiagnosticTestProfile});
+        dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
+        await refetchDiagnosticsTestProfile();
+        setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
+      }
     }
-  } 
-  catch (error: any) {
-  console.error('Error saving test profile:', error);
-    console.error('Error saving test', error?.data.fieldErrors);
- 
-  let errorMessage =
-    error?.data?.detail ||
-    error?.data?.message ||
-    error?.error ||
-    error?.statusText ||
-    'Failed to save Test Profile';
+    catch (error: any) {
+      console.error('Error saving test profile:', error);
+      console.error('Error saving test', error?.data.fieldErrors);
+
+      let errorMessage =
+        error?.data?.detail ||
+        error?.data?.message ||
+        error?.error ||
+        error?.statusText ||
+        'Failed to save Test Profile';
 
 
-  if (error?.data?.fieldErrors?.length > 0) {
-    const fieldError = error.data.fieldErrors[0];
-    if (fieldError.field === "name") {
-      errorMessage = "Name cannot be empty";
-    } else {
-      errorMessage = fieldError.message;
+      if (error?.data?.fieldErrors?.length > 0) {
+        const fieldError = error.data.fieldErrors[0];
+        if (fieldError.field === "name") {
+          errorMessage = "Name cannot be empty";
+        } else {
+          errorMessage = fieldError.message;
+        }
+        dispatch(
+          notify({
+            msg: errorMessage,
+            sev: 'error',
+          })
+        );
+      }
     }
-  dispatch(
-    notify({
-      msg: errorMessage,
-      sev: 'error',
-    })
-  );
-}
-  }
-};
+  };
 
 
   // handle remove diagnostics test profile
@@ -281,6 +298,18 @@ const handleSave = async () => {
       });
   };
 
+  const handleRemoveNormalRange = () => {
+    setOpenConfirmDeleteProfileNormalRange(false);
+    deleteNormalRange(diagnosticTestNormalRange.id)
+      .unwrap()
+      .then(() => {
+        refetchDiagnosticsTestProfile();
+        setDiagnosticTestNormalRange({
+          ...newDiagnosticTestNormalRange
+        });
+        dispatch(notify({msg:'Deleted Successfully ',sev:"success"}));
+      });
+  };
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -308,7 +337,7 @@ const handleSave = async () => {
                   selectData={unitsLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
-                 record={diagnosticsTestProfile}
+                  record={diagnosticsTestProfile}
                   setRecord={setDiagnosticsTestProfile}
                 />
               </div>
@@ -332,7 +361,7 @@ const handleSave = async () => {
                 setOpenChild(true); // ✅ افتح Child Modal مباشرة
               }}
 
-            
+
             />
             <DeletionConfirmationModal
               open={openConfirmDeleteProfile}
@@ -341,6 +370,15 @@ const handleSave = async () => {
               actionButtonFunction={handleRemove}
               actionType="Delete"
             />
+            <DeletionConfirmationModal
+              open={openConfirmDeleteProfileNormalRange}
+              setOpen={setOpenConfirmDeleteProfileNormalRange}
+              itemToDelete="Normal Range"
+              actionButtonFunction={handleRemoveNormalRange}
+              actionType="Delete"
+            />
+
+
           </Form>
         );
     }
@@ -384,57 +422,57 @@ const handleSave = async () => {
       />
     );
   };
-   // handle save normal range
-   const handleSaveNormalRange = async () => {
-      try {
+  // handle save normal range
+  const handleSaveNormalRange = async () => {
+    try {
 
-          if (!diagnosticTestNormalRange.resultType) {
-            return dispatch(notify({ msg: "Please select Result Type", sev: "error" }));
-          }
-
-          const payload = {
-            ...(diagnosticTestNormalRange.id && { id: diagnosticTestNormalRange.id }),
-            testId: diagnosticsTest.id,
-            profileTestId: diagnosticsTestProfile?.id,
-
-            gender: diagnosticTestNormalRange.gender ?? null,
-            condition: diagnosticTestNormalRange.condition ?? null,
-
-            ageFrom: diagnosticTestNormalRange.ageFrom,
-            ageFromUnit: diagnosticTestNormalRange.ageFromUnit ?? null,
-            ageTo:diagnosticTestNormalRange.ageTo,
-            ageToUnit: diagnosticTestNormalRange.ageToUnit ?? null,
-
-            resultType: diagnosticTestNormalRange.resultType ?? null,
-            resultLov: diagnosticTestNormalRange.resultLov ?? null,
-
-            normalRangeType: diagnosticTestNormalRange.normalRangeType ?? null,
-            rangeFrom: diagnosticTestNormalRange.rangeFrom,
-            rangeTo: diagnosticTestNormalRange.rangeTo,
-
-            criticalValue: diagnosticTestNormalRange.criticalValue ?? false,
-            criticalValueLessThan: diagnosticTestNormalRange.criticalValueLessThan,
-            criticalValueMoreThan: diagnosticTestNormalRange.criticalValueMoreThan,
-            lovKeys: diagnosticTestNormalRange.lovKeys ?? [],
-          };
-
-          if (diagnosticTestNormalRange.id) {
-            await updateDiagnosticTestNormalRange({ id: diagnosticTestNormalRange.id, body: payload });
-            dispatch(notify({ msg: "Normal Range Updated", sev: "success" }));
-          } else {
-            await createDiagnosticTestNormalRange(payload);
-            dispatch(notify({ msg: "Normal Range Created", sev: "success" }));
-          }
-
-
-setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnosticsTest.id });
-
-
-      } catch (err) {
-        console.log("HANDLE SAVE ERROR", err);
-        dispatch(notify({ msg: "Failed to Save Normal Range", sev: "error" }));
+      if (!diagnosticTestNormalRange.resultType) {
+        return dispatch(notify({ msg: "Please select Result Type", sev: "error" }));
       }
-    };
+
+      const payload = {
+        ...(diagnosticTestNormalRange.id && { id: diagnosticTestNormalRange.id }),
+        testId: diagnosticsTest.id,
+        profileTestId: diagnosticsTestProfile?.id,
+
+        gender: diagnosticTestNormalRange.gender ?? null,
+        condition: diagnosticTestNormalRange.condition ?? null,
+
+        ageFrom: diagnosticTestNormalRange.ageFrom,
+        ageFromUnit: diagnosticTestNormalRange.ageFromUnit ?? null,
+        ageTo: diagnosticTestNormalRange.ageTo,
+        ageToUnit: diagnosticTestNormalRange.ageToUnit ?? null,
+
+        resultType: diagnosticTestNormalRange.resultType ?? null,
+        resultLov: diagnosticTestNormalRange.resultLov ?? null,
+
+        normalRangeType: diagnosticTestNormalRange.normalRangeType ?? null,
+        rangeFrom: diagnosticTestNormalRange.rangeFrom,
+        rangeTo: diagnosticTestNormalRange.rangeTo,
+
+        criticalValue: diagnosticTestNormalRange.criticalValue ?? false,
+        criticalValueLessThan: diagnosticTestNormalRange.criticalValueLessThan,
+        criticalValueMoreThan: diagnosticTestNormalRange.criticalValueMoreThan,
+        lovKeys: diagnosticTestNormalRange.lovKeys ?? [],
+      };
+
+      if (diagnosticTestNormalRange.id) {
+        await updateDiagnosticTestNormalRange({ id: diagnosticTestNormalRange.id, body: payload });
+        dispatch(notify({ msg: "Normal Range Updated", sev: "success" }));
+      } else {
+        await createDiagnosticTestNormalRange(payload);
+        dispatch(notify({ msg: "Normal Range Created", sev: "success" }));
+      }
+
+
+      setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnosticsTest.id });
+
+
+    } catch (err) {
+      console.log("HANDLE SAVE ERROR", err);
+      dispatch(notify({ msg: "Failed to Save Normal Range", sev: "error" }));
+    }
+  };
 
 
   return (
@@ -450,7 +488,7 @@ setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnost
       title="Profiles"
       mainContent={conjureFormContentOfMainModal}
       mainStep={[{ title: 'Profile', icon: <FaChartLine /> }]}
-      childStep={[{ title: 'Normal Range Info', icon: <FaChartLine /> }]} 
+      childStep={[{ title: 'Normal Range Info', icon: <FaChartLine /> }]}
       childTitle="Normal Ranges"
       childContent={conjureFormContentOfChildModal}
       actionSubChildButtonFunction={handleSaveNormalRange}

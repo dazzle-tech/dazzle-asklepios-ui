@@ -267,7 +267,7 @@ const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
         },
         {
             key: 'patientFullName',
-            title: <Translate>PATIENT NAME</Translate>,
+            title: <Translate>PATIENT NAME </Translate>,
             fullText: true,
             render: rowData => {
                 const tooltipSpeaker = (
