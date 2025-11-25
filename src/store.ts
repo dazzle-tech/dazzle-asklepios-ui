@@ -73,6 +73,7 @@ import { MedicationCategoriesClassService } from '@/services/setup/medication-ca
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
 import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import {diagnosticTestCodingService} from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
 import {BrandMedicationService} from './services/setup/brandmedication/BrandMedicationService ';
 import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
@@ -237,6 +238,9 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
+
+    [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     //vaccine
     [vaccineService.reducerPath]: vaccineService.reducer,
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
@@ -333,6 +337,8 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      diagnosticTestCodingService.middleware,
+      CdtDentalActionService.middleware,
       vaccineService.middleware,
       vaccineBrandsService.middleware,
       vaccineDosesService.middleware,
