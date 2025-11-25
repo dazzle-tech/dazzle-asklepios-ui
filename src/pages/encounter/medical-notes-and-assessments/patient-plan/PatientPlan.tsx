@@ -8,36 +8,15 @@ import { initialListRequest } from '@/types/types';
 import { newApEncounter } from '@/types/model-types-constructor';
 import './styles.less';
 
-const PatientPlan = ({ encounter, patient }) => {
+const PatientPlan = ({  patient, localEncounter, setLocalEncounter }) => {
   const dispatch = useAppDispatch();
 
   const { data: planLovQueryResponse } = useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
 
-  const encounterPlanListResponse = useGetEncountersQuery({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'visit_key', operator: 'match', value: encounter.key },
-      { fieldName: 'patient_key', operator: 'match', value: patient.key }
-    ]
-  });
+ console.log("localEncounter", localEncounter);
+  
 
-  const [localEncounter, setLocalEncounter] = useState<any>({
-    ...newApEncounter,
-    visitKey: encounter.key,
-    patientKey: patient.key,
-    createdBy: 'Administrator',
-    planInstructionsNote: ''
-  });
-
-  useEffect(() => {
-    if (encounterPlanListResponse.data?.object?.length > 0) {
-      setLocalEncounter(prev => ({
-        ...prev,
-        ...encounterPlanListResponse.data.object[0],
-        planInstructionsNote: encounterPlanListResponse.data.object[0].planInstructionsNote || ''
-      }));
-    }
-  }, [encounterPlanListResponse.data]);
+  
 
   useEffect(() => {
     if (localEncounter.planInstructionsLkey && planLovQueryResponse?.object?.length > 0) {
@@ -68,7 +47,7 @@ const PatientPlan = ({ encounter, patient }) => {
         record={localEncounter}
         setRecord={setLocalEncounter}
         fieldLabel="Plan Instruction"
-        disabled={encounter.encounterStatusLkey === '91109811181900'}
+        disabled={localEncounter.encounterStatusLkey === '91109811181900'}
       />
       <MyInput
         width="100%"

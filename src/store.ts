@@ -73,6 +73,7 @@ import { MedicationCategoriesClassService } from '@/services/setup/medication-ca
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
 import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import {diagnosticTestCodingService} from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
 import {BrandMedicationService} from './services/setup/brandmedication/BrandMedicationService ';
 import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
@@ -86,6 +87,10 @@ import { countryService } from './services/setup/country/countryService';
 import { countryDistrictService } from './services/setup/country/countryDistrictService';
 import { districtCommunityService } from './services/setup/country/districtCommunityService';
 import { communityAreaService } from './services/setup/country/communityAreaService';
+import { dischargePService } from './services/setup/dischargeService';
+import { resultReportApi } from './services/setup/resultReportApi';
+import { invoiceReportApi } from './services/setup/invoiceReportApi';
+import { visitDurationService } from './services/setup/visitDurationService';
 
 export const store = configureStore({
   reducer: {
@@ -235,6 +240,9 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
+
+    [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     //vaccine
     [vaccineService.reducerPath]: vaccineService.reducer,
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
@@ -253,7 +261,17 @@ export const store = configureStore({
     [countryDistrictService.reducerPath]: countryDistrictService.reducer,
     [districtCommunityService.reducerPath]: districtCommunityService.reducer,
     [communityAreaService.reducerPath]: communityAreaService.reducer, 
-    
+  
+    // discharge
+    [dischargePService.reducerPath]: dischargePService.reducer,
+
+    // result report
+    [resultReportApi.reducerPath]: resultReportApi.reducer,
+
+    // invoice report
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
+   // Visit Duration
+    [visitDurationService.reducerPath]: visitDurationService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -323,6 +341,8 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      diagnosticTestCodingService.middleware,
+      CdtDentalActionService.middleware,
       vaccineService.middleware,
       vaccineBrandsService.middleware,
       vaccineDosesService.middleware,
@@ -339,7 +359,11 @@ export const store = configureStore({
       countryService.middleware,
       countryDistrictService.middleware,
       districtCommunityService.middleware,
-      communityAreaService.middleware
+      communityAreaService.middleware,
+      dischargePService.middleware,
+      resultReportApi.middleware,
+      invoiceReportApi.middleware,
+      visitDurationService.middleware,
     ])
 });
 

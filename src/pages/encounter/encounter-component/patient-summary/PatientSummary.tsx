@@ -142,7 +142,7 @@ const PatientSummary = () => {
 
   return (
     <>
-      <MedicalTimeline />
+      {/* <MedicalTimeline /> */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="patient-summary-container">
           {Object.entries(columns).map(([colId, items]) => (
