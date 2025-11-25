@@ -731,6 +731,7 @@ export const newCommunityArea: modelTypes.CommunityArea = {
   name: '',
   isActive: true,
 };
+
 export const newVisitDuration: modelTypes.VisitDuration = {
   id: undefined,
   visitType: null,

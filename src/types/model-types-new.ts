@@ -860,7 +860,7 @@ export interface Country {
 }
 export interface CountryDistrict {
   id?: number;
-  countryId: number;
+  countryId: number;   
   name: string;
   code: string;
   isActive?: boolean;
@@ -868,17 +868,18 @@ export interface CountryDistrict {
 
 export interface DistrictCommunity {
   id?: number;
-  districtId: number;
+  districtId: number;  
   name: string;
   isActive?: boolean;
 }
 
 export interface CommunityArea {
   id?: number;
-  communityId: number;
+  communityId: number; 
   name: string;
   isActive?: boolean;
 }
+
 export const newVisitDuration: modelTypes.VisitDuration = {
   id: undefined,
   visitType: null,

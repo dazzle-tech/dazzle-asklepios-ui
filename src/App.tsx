@@ -6,7 +6,7 @@ import * as icons from 'react-icons/fa6';
 import { MdDashboard } from 'react-icons/md';
 import { IntlProvider } from 'react-intl';
 import { useSelector } from 'react-redux';
-import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Outlet, Route, Routes } from 'react-router-dom';
 import { CustomProvider } from 'rsuite';
 import enGB from 'rsuite/locales/en_GB';
 import config from '../app-config';
@@ -79,8 +79,8 @@ import VaccineReccord from './pages/encounter/encounter-component/vaccine-reccor
 import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-assessment';
 import EncounterList from './pages/encounter/encounter-list';
 import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
-import Allergies from './pages/encounter/encounter-pre-observations/AllergiesNurse';
 import EncounterPreObservationsNew from './pages/encounter/encounter-pre-observations-new/EncounterPreObservations';
+import Allergies from './pages/encounter/encounter-pre-observations/AllergiesNurse';
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import Observations from './pages/encounter/encounter-pre-observations/observations/Observations';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
@@ -100,13 +100,13 @@ import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
 import InpatientList from './pages/Inpatient/inpatientList';
 import InpatientWaitingLists from './pages/Inpatient/waitingList/InpatientWaitingLists';
 import InventoryTransactionNew from './pages/inventory-transaction/inventory-transaction-new';
-import InventoryTransferNew from './pages/inventory-transaction/inventory-transfer-new';
 import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
+import InventoryTransferNew from './pages/inventory-transaction/inventory-transfer-new';
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import Lab from './pages/lab-module';
 import ListOfRequisition from './pages/list-of-requisition';
-import GenericMedications from './pages/medications/generic-medications-new';
 import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
+import GenericMedications from './pages/medications/generic-medications-new';
 import PrescriptionInstructions from './pages/medications/prescription_instructions-new';
 import Operation from './pages/operation-module';
 import Accounting from './pages/billing-module';
@@ -146,7 +146,6 @@ import Catalog from './pages/setup/catalog-setup';
 import CDTSetup from './pages/setup/cdt-setup';
 import CPTSetup from './pages/setup/cpt-setup';
 import DentalActions from './pages/setup/dental-actions-new';
-import Departments from './pages/setup/departments-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
 import Diagnostic from './pages/setup/diagnostics-tests-definition';
 import DVM from './pages/setup/dvm-setup';
@@ -161,8 +160,24 @@ import Modules from './pages/setup/modules-setup';
 import OperationSetup from './pages/setup/operation-setup';
 import Checklist from './pages/setup/operations/checklist';
 
-import Practitioners from './pages/setup/practioners-setup-new';
+import { MODULES } from '@/config/modules-config';
+import CallOverlay from './components/Overlay/CallOverlay';
+import Pediatric from './pages/encounter/encounter-component/pediatric';
+import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
+import IncidentPortal from './pages/Incident/IncidentPortal';
+import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
+import InventoryManagementTransaction from './pages/inventory-management/inventory-transaction/inventory-transaction-new';
+import InventoryManagementTransferApproval from './pages/inventory-management/inventory-transaction/inventory-transfer-approval';
+import InventoryManagementTransfer from './pages/inventory-management/inventory-transaction/inventory-transfer-new';
+import InventoryManagementProductCatalog from './pages/inventory-management/product-catalog';
+import InventoryManagementProductSetup from './pages/inventory-management/product-setup/ProductSetup';
+import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
+import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
+import NewDepartments from './pages/setup/departments-setup/Departments-new';
+import Enums from './pages/setup/Enums';
+import LanguagesSetup from './pages/setup/language-setup/Language';
 import PotintialDuplicate from './pages/setup/potential-duplicate - new';
+import Practitioners from './pages/setup/practioners-setup-new';
 import ProcedureSetup from './pages/setup/procedure-setup';
 import ProductSetup from './pages/setup/product-setup';
 import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
@@ -178,26 +193,8 @@ import Vaccine from './pages/setup/vaccine-setup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
-import { useLoadNavigationMapQuery } from './services/uiService';
-import { setScreenKey } from './utils/uiReducerActions';
-import NewDepartments from './pages/setup/departments-setup/Departments-new';
-import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
-import { MODULES } from '@/config/modules-config';
-import RoleManegment from './pages/setup/role-managemen';
-import { useGetMenuQuery } from './services/security/UserRoleService';
-import CallOverlay from './components/Overlay/CallOverlay';
-import LanguagesSetup from './pages/setup/language-setup/Language';
-import Pediatric from './pages/encounter/encounter-component/pediatric';
-import IncidentPortal from './pages/Incident/IncidentPortal';
-import Enums from './pages/setup/Enums';
-import InventoryManagementTransaction from './pages/inventory-management/inventory-transaction/inventory-transaction-new';
-import InventoryManagementTransfer from './pages/inventory-management/inventory-transaction/inventory-transfer-new';
-import InventoryManagementTransferApproval from './pages/inventory-management/inventory-transaction/inventory-transfer-approval';
-import InventoryManagementProductCatalog from './pages/inventory-management/product-catalog';
-import InventoryManagementProductSetup from './pages/inventory-management/product-setup/ProductSetup';
-import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
-import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
-import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
+import CountrySetup from './pages/setup/country-setup/CountrySetup';
+import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -211,11 +208,8 @@ const App = () => {
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
 
-
-
   // ------------------------------ MENU BUILD HELPERS ---------------------------
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
-
 
   const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
     const globalAllowed = new Set<string>();
@@ -223,7 +217,7 @@ const App = () => {
 
     for (const m of menuItems ?? []) {
       const nLabel = m.label;
-      const nScreen = (m.screen ?? '');
+      const nScreen = m.screen ?? '';
       const nModule = m.module;
 
       if (nLabel) globalAllowed.add(nLabel);
@@ -263,7 +257,7 @@ const App = () => {
 
   // ------------------------------ BUILD NAVIGATION ----------------------------
   useEffect(() => {
-    if (!authSlice?.menu ) return;
+    if (!authSlice?.menu) return;
     loadNavs();
   }, [authSlice?.menu]);
 
@@ -296,7 +290,7 @@ const App = () => {
           childrenNavs.push({
             eventKey: `nav:${module.name}:${screen.navPath}:${sIdx}`,
             icon: <Icon as={IconComp} />,
-            title:screen.name,
+            title: screen.name,
             to: `/${screen.navPath}`
           });
         }
@@ -482,6 +476,8 @@ const App = () => {
               <Route path="visit-duration-setup" element={<VisitDurationSetup />} />
               <Route path="modules-setup" element={<Modules />} />
               <Route path="shift-setup" element={<Shifts />} />
+              <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
+
               <Route
                 path="user-access-patient-private"
                 element={<EncounterPatientPrivateLogin />}
@@ -550,16 +546,41 @@ const App = () => {
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
+              <Route path="country-setup" element={<CountrySetup />} />
               <Route path="service-and-products" element={<ServiceAndProducts />} />
-              <Route path='enums' element={<Enums/> }/>
-              <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
-              <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
-              <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />
-              <Route path="inventory-management-transfer-approval" element={<InventoryManagementTransferApproval />} />
-              <Route path="inventory-management-product-catalog" element={<InventoryManagementProductCatalog />} />
-              <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
-              <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
-              <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
+              <Route path="enums" element={<Enums />} />
+              <Route
+                path="inventory-management-product-setup"
+                element={<InventoryManagementProductSetup />}
+              />
+              <Route
+                path="inventory-management-transaction"
+                element={<InventoryManagementTransaction />}
+              />
+              <Route
+                path="inventory-management-transfer"
+                element={<InventoryManagementTransfer />}
+              />
+              <Route
+                path="inventory-management-transfer-approval"
+                element={<InventoryManagementTransferApproval />}
+              />
+              <Route
+                path="inventory-management-product-catalog"
+                element={<InventoryManagementProductCatalog />}
+              />
+              <Route
+                path="inventory-management-warehouse-setup"
+                element={<InventoryManagementWarehouseSetup />}
+              />
+              <Route
+                path="inventory-management-warehouse-items-setup"
+                element={<InventoryManagementWarehouseItemsSetup />}
+              />
+              <Route
+                path="inventory-management-department-stock"
+                element={<InventoryManagementDepartmentStock />}
+              />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
