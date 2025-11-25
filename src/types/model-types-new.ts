@@ -879,13 +879,15 @@ export interface CommunityArea {
   name: string;
   isActive?: boolean;
 }
-export const newVisitDuration: modelTypes.VisitDuration = {
-  id: undefined,
-  visitType: null,
-  durationInMinutes: 0,
-  resourceSpecific: false,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
-};
+export interface VisitDuration {
+  id?: number;
+  visitType: string | null;        
+  durationInMinutes: number | null;
+  resourceSpecific?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+
+}
+ 
