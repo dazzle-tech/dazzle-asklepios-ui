@@ -68,7 +68,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
               <MyInput
-                fieldLabel="Sex at Birth"
+                fieldLabel="Gender"
                 fieldType="select"
                 fieldName="gender"
                 selectData={genders ?? []}

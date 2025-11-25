@@ -18,6 +18,7 @@ import {
   faIdCard,
   faUser
 } from '@fortawesome/free-solid-svg-icons';
+import { IoMdClose } from "react-icons/io";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaWeight } from 'react-icons/fa';
@@ -25,8 +26,10 @@ import { GiMedicalThermometer } from 'react-icons/gi';
 import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, Divider, Panel, Text } from 'rsuite';
 import './styles.less';
+import { newApPatient } from '@/types/model-types-constructor';
+import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 
-const PatientSide = ({ patient, encounter, refetchList = null }) => {
+const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const dispatch = useDispatch();
@@ -189,6 +192,11 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
 
   return (
     <Panel className="patient-panel">
+      {props?.setPatient && (
+        <div style={{display: 'flex', justifyContent: "end", marginBottom: "5px"}}>
+        <IoMdClose size={22} className='icons-style' onClick={() => props?.setPatient({ ...newApPatient })}/>
+        </div>
+      )}
       <div className="div-avatar">
         <Avatar
           circle
@@ -243,7 +251,7 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
         </div>
 
         <div className="info-column">
-          <Text className="info-label">Sex at Birth</Text>
+          <Text className="info-label">Gender</Text>
           <Text className="info-value"> {textOr(patient?.genderLvalue?.lovDisplayVale, '')}</Text>
         </div>
       </div>
@@ -298,7 +306,8 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
         </div>
       </div>
       <Divider className="divider-style" />
-
+      
+      {!props?.hideVisitDetails && (
       <Text className="main-info-patient-side">
         <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
         <span className="section-title-patient-side">
@@ -307,7 +316,8 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
             : 'Admission Details'}
         </span>
       </Text>
-      {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT' && (
+      )}
+      {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT' && !props?.hideVisitDetails && (
         <div className="details-sections">
           <br />
 
@@ -398,6 +408,9 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
           </div>
         </>
       )}
+
+     
+
       {/* ==== Allergy & Warning Banners ==== */}
       <div className="my-container">
         {/* Individual Allergies Badges */}
@@ -434,6 +447,29 @@ const PatientSide = ({ patient, encounter, refetchList = null }) => {
           />
         ))}
       </div>
+
+     {props?.balance && (
+      <div>
+      <Text className="main-info-patient-side">
+        <FontAwesomeIcon icon={faScaleBalanced} className="icon-color" />{' '}
+        <span className="section-title-patient-side">Balance</span>
+      </Text>
+      <br />
+
+      <div className="info-section">
+        <div className="info-column">
+          <Text className="info-label">Free Balance</Text>
+          <Text className="info-value">{props?.balance?.freeBalance}</Text>
+        </div>
+
+        <div className="info-column">
+          <Text className="info-label">Outstanding</Text>
+          <Text className="info-value"> {props?.balance?.outstanding}</Text>
+        </div>
+      </div>
+      <Divider className="divider-style" />
+      </div>
+     )}
     </Panel>
   );
 };

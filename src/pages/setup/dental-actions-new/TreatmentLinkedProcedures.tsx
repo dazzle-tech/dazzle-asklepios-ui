@@ -38,7 +38,6 @@ const TreatmentLinkedProcedures = ({
   // -----------------------------------------
   const { data: linkedProcedures = [], refetch } =
     useGetByDentalActionQuery(dentalAction?.id, { skip: !dentalAction?.id });
-console.log("den",linkedProcedures)
   const [createLink] = useCreateMutation();
   const [deleteLink] = useDeleteMutation();
 
@@ -104,7 +103,7 @@ console.log("den",linkedProcedures)
     try {
       await createLink({
         dentalActionId: dentalAction.id,
-        cdtCode: selectedCdt.selectedCdtCode,
+        cdtId: selectedCdt.selectedCdtCode,
       }).unwrap();
 
       dispatch(notify({ msg: 'Linked successfully', sev: 'success' }));
@@ -196,7 +195,7 @@ console.log("den",linkedProcedures)
                 showLabel={false}
                 selectData={allCdts}
                 selectDataLabel="combinedLabel"
-                selectDataValue="code"
+                selectDataValue="id"
                 record={selectedCdt}
                 setRecord={setSelectedCdt}
                 searchable

@@ -1,0 +1,303 @@
+.input-container {
+  display: flex;
+  align-items: center;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  opacity: 0;
+}
+
+.input-container.show {
+  opacity: 1;
+}
+
+.input-container.hide {
+  opacity: 0;
+}
+
+.clickedInputs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.my-table-row:hover {
+  background-color: #f0f0f0;
+}
+
+.my-table-row-primary {
+  background-color: #e6f0ff;
+}
+.react-tabs__tab--selected {
+  border-bottom: 2px solid #a8cce5 !important;
+}
+.react-tabs__tab {
+  background-color: white;
+  border-radius: 0px !important;
+}
+.react-tabs__tab--selected {
+  background: #fff;
+  border-color: #aaa;
+  color: black;
+  border-radius: 5px 5px 0 0;
+}
+.react-tabs__tab {
+  display: inline-block;
+  border: 1px solid transparent;
+  border-bottom: none;
+  bottom: -1px;
+  position: relative;
+  list-style: none;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.patient-profile-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  max-height: 100%;
+}
+
+.profile-sidebar-container {
+  width: 56px;
+  height: 91vh;
+
+  &.expanded {
+    width: 300px;
+  }
+  .sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 10px;
+    width: 100%;
+
+    .rs-panel-header {
+      text-align: left;
+      width: 100%;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .rs-panel-body {
+      width: 100%;
+    }
+
+    .expand-sidebar {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+    }
+  }
+
+  .patient-list {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    gap: 15px;
+    overflow: auto;
+    height: calc(100vh - 250px);
+    padding: 5px;
+    margin-left: -5px;
+    margin-right: -5px;
+
+    .actions-button {
+      background: none;
+      svg {
+        color: var(--icon-gray);
+      }
+    }
+  }
+}
+.profile-sidebar {
+  background: #fff !important;
+  border: 1px solid var(--rs-border-primary);
+  border-radius: 8px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 91vh !important;
+
+  .rs-sidenav.profile-sidenav {
+    border-top: none;
+  }
+
+  .patient-search-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+}
+
+.patient-profile-info {
+  width: 100%;
+  height: 100%;
+
+  &.expanded {
+    width: calc(100% - 300px);
+  }
+}
+
+.rs-btn.user-search-btn {
+  background: none;
+  padding: 10px;
+
+  &:hover,
+  &:focus {
+    background: none;
+    svg {
+      g {
+        fill: var(--primary-blue);
+      }
+    }
+  }
+
+  svg {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+.patient-info-tabs {
+  .rs-nav {
+    white-space: wrap;
+    // overflow: auto;
+    // scrollbar-width: none;
+    // -ms-overflow-style: none;
+    // &::-webkit-scrollbar {
+    //   display: none;
+    // }
+    .rs-nav-item {
+      border-bottom: 1px solid #efefef;
+    }
+  }
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+
+  .icons-style:hover {
+    color: inherit !important;
+  }
+  .avatar-card-parent {
+    align-items: flex-start !important;
+    padding: 5px;
+    .avatar-image {
+      cursor: pointer;
+    }
+    .avatar-container {
+      display: flex;
+      flex-direction: column;
+      font-family: 'Manrope Medium' !important;
+      .patient-name {
+        font-size: 14px;
+      }
+
+      .patient-info {
+        display: flex;
+        gap: 4px;
+        color: var(--primary-gray);
+        font-size: 12px;
+        font-family: 'Manrope Medium' !important;
+        font-weight: 500 !important;
+      }
+
+      .patient-mrn {
+        color: var(--icon-gray);
+        font-family: 'Manrope Bold' !important;
+        font-size: 12px;
+      }
+    }
+    .status-icons-container {
+      display: flex;
+      flex-direction: column;
+      .status-icon {
+        font-size: 18px;
+        position: relative;
+        margin-right: 10px;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+.btn-fileds-above-table {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.fields-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.payment-method-container {
+  .payment-method-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+.family-member-input-search {
+  width: 250px !important;
+  height: 40px !important;
+  direction: ltr;
+}
+
+.header-buttons-patient-profile {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 0.8vw;
+  bottom: 3.8vw;
+  right: 0.1vw;
+}
+.container-of-bulk-registration {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 30px;
+  border: 1px solid var(--rs-border-primary);
+  border-radius: 5px;
+}
+.container-of-icon-and-text-bulk-registration {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.container-of-uploader-bulk-registration{
+  display: flex !important;
+  justify-content: center !important;
+  padding: 7px !important;
+  gap: 10px !important;
+  border: 1px solid var(--rs-border-primary) !important;
+  border-radius: 5px !important;
+}
+.container-of-instruction-bulk-registration {
+  background-color: #e8f3fc;
+  padding: 10px;
+}
+.download-color-text{
+  color: #353B66 !important;
+  font-weight: bold;
+}
+.gray-color-text{
+  color: #B1B7BD !important;
+}
+
+.button-group-left-align {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+
+.profile-sidebar-container.dark {
+  .sidebar-panel {
+   background-color: var(--black);
+  }
+  .profile-sidebar {
+  background: var(--black) !important;
+  }
+}

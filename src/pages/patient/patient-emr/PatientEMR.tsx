@@ -97,12 +97,13 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         operator: 'match',
         value: localPatient?.key || undefined
       }
+   
     ]
   });
 
   // Fetch patient Encounters List
   const { data: encounterListResponse, isFetching } = useGetEncountersQuery(listRequest);
-
+  console.log('encounterListResponse', encounterListResponse);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
 
   const [activeCard, setActiveCard] = useState<string | null>(null);
@@ -645,7 +646,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
 
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
-        {activeCard === 'clinicvisits' && <ClinicVisitsTable />}
+        {activeCard === 'clinicvisits' && <ClinicVisitsTable  patient={localPatient}/>}
         {activeCard === 'inpatient' && <InpatientTable />}
         {activeCard === 'daycase' && <DayCaseTable />}
         {activeCard === 'emergency' && <EmergencyTable />}
@@ -653,7 +654,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         {activeCard === 'procedures' && <ProceduresTable />}
         {activeCard === 'operations' && <OperationsTable />}
         {activeCard === 'consultations' && <ConsultationsTable />}
-        {activeCard === 'laboratory' && <LaboratoryTable />}
+        {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient}  />}
         {activeCard === 'radiology' && <RadiologyTable />}
         {activeCard === 'pathology' && <PathologyTable />}
         {activeCard === 'medications' && <CurrentMedicationsTable />}

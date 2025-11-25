@@ -105,10 +105,11 @@ import InventoryTransferApproval from './pages/inventory-transaction/inventory-t
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import Lab from './pages/lab-module';
 import ListOfRequisition from './pages/list-of-requisition';
+import GenericMedications from './pages/medications/generic-medications-new';
 import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
-import GenericMedications from './pages/medications/generic-medications';
-import PrescriptionInstructions from './pages/medications/prescription_instructions';
+import PrescriptionInstructions from './pages/medications/prescription_instructions-new';
 import Operation from './pages/operation-module';
+import Accounting from './pages/billing-module';
 import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
 import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList';
 import PatientChart from './pages/patient/patient-chart';
@@ -117,7 +118,14 @@ import PatientList from './pages/patient/patient-list';
 import PatientMergeFiles from './pages/patient/patient-merge-files';
 import PatientProfile from './pages/patient/patient-profile';
 import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
+import PatientProfileOLD from './pages/patient-old/patient-profile/PatientProfileCopy-new';
 import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
+import PatientProfileLegacy from './pages/patient-old/patient-profile';
+import PatientOldFacilityPatientList from './pages/patient-old/facility-patient-list';
+import PatientChartLegacy from './pages/patient-old/patient-chart';
+import PatientEMRLegacy from './pages/patient-old/patient-emr';
+import PatientListLegacy from './pages/patient-old/patient-list';
+import PatientMergeFilesLegacy from './pages/patient-old/patient-merge-files';
 import ControlledMedications from './pages/pharmacy/controlled-medications';
 import EPrepscriptions from './pages/pharmacy/ePrescriptions/EPrescription';
 import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
@@ -140,6 +148,7 @@ import CPTSetup from './pages/setup/cpt-setup';
 import DentalActions from './pages/setup/dental-actions-new';
 import Departments from './pages/setup/departments-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
+import Diagnostic from './pages/setup/diagnostics-tests-definition';
 import DVM from './pages/setup/dvm-setup';
 import Facilities from './pages/setup/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
@@ -162,7 +171,7 @@ import ServiceSetup from './pages/setup/service-setup';
 import Shifts from './pages/setup/shift-setup';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
-import UOMGroup from './pages/setup/uom-group';
+import UOMGroup from './pages/setup/uom-group-new';
 import Users from './pages/setup/users-setup';
 import UsersNew from './pages/setup/users-setup-new';
 import Vaccine from './pages/setup/vaccine-setup';
@@ -181,6 +190,14 @@ import LanguagesSetup from './pages/setup/language-setup/Language';
 import Pediatric from './pages/encounter/encounter-component/pediatric';
 import IncidentPortal from './pages/Incident/IncidentPortal';
 import Enums from './pages/setup/Enums';
+import InventoryManagementTransaction from './pages/inventory-management/inventory-transaction/inventory-transaction-new';
+import InventoryManagementTransfer from './pages/inventory-management/inventory-transaction/inventory-transfer-new';
+import InventoryManagementTransferApproval from './pages/inventory-management/inventory-transaction/inventory-transfer-approval';
+import InventoryManagementProductCatalog from './pages/inventory-management/product-catalog';
+import InventoryManagementProductSetup from './pages/inventory-management/product-setup/ProductSetup';
+import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
+import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
+import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -363,8 +380,7 @@ const App = () => {
             <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
-              <Route path="patient-profile-old" element={<PatientProfile />} />
-              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
+              <Route path="patient-profile-old" element={<PatientProfile />} />              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
@@ -372,6 +388,12 @@ const App = () => {
               <Route path="start-tele-consultation" element={<StartTeleConsultation />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="information-desk" element={<FacilityPatientList />} />
+              <Route path="patient-old/patient-profile" element={<PatientProfileOLD />} />
+              <Route path="patient-old/facility-patient-list" element={<PatientOldFacilityPatientList />} />
+              <Route path="patient-old/patient-chart" element={<PatientChartLegacy />} />
+              <Route path="patient-old/patient-emr" element={<PatientEMRLegacy />} />
+              <Route path="patient-old/patient-list" element={<PatientListLegacy />} />
+              <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriage />} />
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="ER-dashboard" element={<ERDashboards />} />
@@ -480,11 +502,13 @@ const App = () => {
               <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
+              <Route path="diagnostics-test-old" element={<Diagnostic/>} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
+              <Route path="billing-accounting" element={<Accounting />} />
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
@@ -528,6 +552,14 @@ const App = () => {
               <Route path="language-setup" element={<LanguagesSetup />} />
               <Route path="service-and-products" element={<ServiceAndProducts />} />
               <Route path='enums' element={<Enums/> }/>
+              <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
+              <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
+              <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />
+              <Route path="inventory-management-transfer-approval" element={<InventoryManagementTransferApproval />} />
+              <Route path="inventory-management-product-catalog" element={<InventoryManagementProductCatalog />} />
+              <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
+              <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
+              <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

@@ -1,4 +1,3 @@
-// src/services/vaccineBrandsService.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
@@ -33,8 +32,7 @@ export const vaccineBrandsService = createApi({
   reducerPath: 'vaccineBrandsApi',
   baseQuery: BaseQuery,
   tagTypes: ['VaccineBrand'],
-  endpoints: (builder) => ({
-    // ====================== LIST BY VACCINE (Paged) ======================
+  endpoints: builder => ({
     getVaccineBrandsByVaccine: builder.query<
       PagedResult<modelTypes.VaccineBrand>,
       { vaccineId: Id } & PagedParams
@@ -47,7 +45,6 @@ export const vaccineBrandsService = createApi({
       providesTags: (_res, _err, { vaccineId }) => [{ type: 'VaccineBrand', id: `vaccine-${vaccineId}` }, 'VaccineBrand'],
     }),
 
-    // ====================== CREATE ======================
     addVaccineBrand: builder.mutation<
       modelTypes.VaccineBrand,
       { vaccineId: Id; data: modelTypes.VaccineBrand }
@@ -64,7 +61,6 @@ export const vaccineBrandsService = createApi({
       ],
     }),
 
-    // ====================== UPDATE ======================
     updateVaccineBrand: builder.mutation<
       modelTypes.VaccineBrand,
       { id: Id; vaccineId: Id; data: modelTypes.VaccineBrand }
@@ -82,7 +78,6 @@ export const vaccineBrandsService = createApi({
       ],
     }),
 
-    // ====================== TOGGLE ACTIVE ======================
     toggleVaccineBrandActive: builder.mutation<modelTypes.VaccineBrand, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/vaccine-brands/${id}/toggle-active`,
@@ -94,11 +89,8 @@ export const vaccineBrandsService = createApi({
 });
 
 export const {
-  // QUERIES
-  useGetVaccineBrandsByVaccineQuery,
+ useGetVaccineBrandsByVaccineQuery,
   useLazyGetVaccineBrandsByVaccineQuery,
-
-  // MUTATIONS
   useAddVaccineBrandMutation,
   useUpdateVaccineBrandMutation,
   useToggleVaccineBrandActiveMutation,

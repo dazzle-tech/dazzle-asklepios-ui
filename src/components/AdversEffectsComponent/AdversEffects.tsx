@@ -11,7 +11,7 @@ import './styles.less';
 type Props = {
   object: any;
   setOpject: (next: any | ((prev: any) => any)) => void;
-  fieldName: string; // e.g., 'possibleReactions' -> STORED AS STRING
+  fieldName: string; // e.g., 'AdversEffects' -> STORED AS STRING
   label?: string;
   disabled?: boolean;
 };
@@ -20,7 +20,7 @@ type Props = {
 const DELIMS = /[,،\n]+/g;
 const SEPARATOR = ', ';
 
-const PossibleReactions: React.FC<Props> = ({
+const AdversEffects: React.FC<Props> = ({
   object,
   setOpject,
   fieldName,
@@ -233,4 +233,4 @@ const PossibleReactions: React.FC<Props> = ({
   );
 };
 
-export default PossibleReactions;
+export default AdversEffects;
