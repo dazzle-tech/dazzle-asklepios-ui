@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import {
+  useGetLovValuesByCodeQuery,
+} from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
@@ -59,6 +62,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
     const handleSave = () => {
       setOpen(false);
       if(!diagnosticsTestCatalogHeader?.id){
+
       addCatalog(catalogCreateVM)
         .unwrap()
         .then(() => {
@@ -78,6 +82,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
           dispatch(notify({ msg: 'Failed to update this Catalog', sev: 'error' }));
         });
       }
+
     };
 
   // Main modal content

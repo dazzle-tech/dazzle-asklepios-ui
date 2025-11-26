@@ -3,11 +3,26 @@ import { Panel } from 'rsuite';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
 import './styles.less';
+import Translate from '@/components/Translate';
+import { initialListRequest, ListRequest } from '@/types/types';
+import React, { useState, useEffect } from 'react';
+import { Panel } from 'rsuite';
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import './styles.less';
+import {
+  useSaveDiagnosticsTestCatalogHeaderMutation,
+  useGetDepartmentsQuery
+} from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { FaListAlt } from 'react-icons/fa';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import {
+  conjureValueBasedOnKeyFromList,
+  addFilterToListRequest,
+  fromCamelCaseToDBName,
   formatEnumString
 } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -35,6 +50,10 @@ const Catalog = () => {
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
   const [diagnosticsTestCatalogHeader, setDiagnosticsTestCatalogHeader] =
     useState<CatalogResponseVM>({ ...newCatalogResponseVM });
+  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [departmentListRequest] = useState<ListRequest>({
+    ...initialListRequest
+  });
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 5,
@@ -56,7 +75,6 @@ const Catalog = () => {
   console.log(diagnosticsTestCatalogHeaderListResponse);
 
   const [deleteCatalog] = useDeleteCatalogMutation();
- 
   // Header page setUp
   const divContent = 'Catalog';
   dispatch(setPageCode('Catalog'));
@@ -72,9 +90,9 @@ const Catalog = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [filteredList, setFilteredList] = useState<CatalogResponseVM[]>([]);
 
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);
-  
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);  
   const {data: departmentListResponse} = useGetAllDepartmentsWithoutPaginationQuery({});
+
 
   const testTypeEnum = useEnumOptions('TestType');
 
@@ -193,6 +211,7 @@ const Catalog = () => {
               showLabel={false}
               searchable={false}
             />
+
       ) : recordOfFilter['filter'] == 'type' ? (
         <MyInput
           fieldName="value"
@@ -229,7 +248,7 @@ const Catalog = () => {
     setDiagnosticsTestCatalogHeader({ ...newCatalogResponseVM });
     setPopupOpen(true);
   };
-  
+
    // ──────────────────────────── PAGINATION ────────────────────────────
     const handlePageChange = (event, newPage) => {
       if (isFiltered) {

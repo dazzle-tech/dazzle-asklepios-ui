@@ -12,13 +12,13 @@ import MyInput from '@/components/MyInput';
 import { MdDelete } from 'react-icons/md';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { useGetAllDiagnosticTestsByNameAndTypeQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import {
   useAddTestsToCatalogMutation,
   useGetCatalogTestsQuery,
   useRemoveTestFromCatalogMutation
 } from '@/services/setup/catalog/catalogTestService';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
+import { useGetAllDiagnosticTestsByNameAndTypeQuery, useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   const dispatch = useAppDispatch();
@@ -93,21 +93,19 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
 
   const [addTestsToCatalog] = useAddTestsToCatalogMutation();
   const links = catalogDiagnosticsTestListResponse?.links;
-  
-  // class name for selected row
+
   const isSelectedOnTable1 = rowData => {
     if (rowData && selectedTestOnTable1 && rowData === selectedTestOnTable1) {
       return 'selected-row';
     } else return '';
   };
 
-  // class name for selected row
   const isSelectedOnTable2 = rowData => {
     if (rowData && selectedTestOnTable2 && rowData === selectedTestOnTable2) {
       return 'selected-row';
     } else return '';
   };
-  // Icons column (delete)
+
   const iconsForActions = () => (
     <div className="container-of-icons">
       <MdDelete
@@ -131,6 +129,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
     {
       key: 'name',
       title: 'Name'
+
     },
     {
       key: 'icons',
@@ -160,6 +159,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       key: 'internalCode',
       title: 'Code'
     }
+
   ];
 
   // Handle page change in navigation
@@ -202,6 +202,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
     removeTest({
       catalogId: diagnosticsTestCatalogHeader?.id,
       testId: selectedTestOnTable1?.id
+
     })
       .unwrap()
       .then(() => {
@@ -215,6 +216,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       })
       .catch(() => {
         dispatch(
+
           notify({
             msg: 'Fail',
             sev: 'error'
@@ -236,6 +238,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
         dispatch(notify({ msg: 'The Tests have been saved successfully', sev: 'success' }));
       });
   };
+
 
   // Handle test selection by checking the checkbox
   const handleCheckboxChange = key => {
@@ -273,6 +276,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
               totalCount={totalCountForCatalogTests}
               // data={paginatedDataTable1 ?? []}
               data={catalogDiagnosticsTestListResponse?.data?.tests ?? []}
+
               // loading={catalogDiagnosticsTestListResponse.isFetching}
               columns={tableColumns}
               page={pageIndexTable1}
@@ -372,6 +376,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   
 
   useEffect(() => {
+
     setSelectedRows([]);
   }, [diagnosticsTestCatalogHeader]);
 

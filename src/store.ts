@@ -91,6 +91,7 @@ import { resultReportApi } from './services/setup/resultReportApi';
 import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
+
 export const store = configureStore({
   reducer: {
     // ui
