@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Panel } from 'rsuite';
-import { MdModeEdit } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
 import './styles.less';
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
 import { Panel } from 'rsuite';
 import { FaUndo } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
