@@ -1,4 +1,3 @@
-import { tr } from 'date-fns/locale';
 import * as modelTypes from './model-types-new';
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
@@ -467,7 +466,6 @@ export const newProcedureCoding: modelTypes.ProcedureCoding = {
   procedureId: undefined,
   codeType: 'CPT_CODES',
   codeId: '',
-  // doseAdjustmentPugC: null,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -728,8 +726,9 @@ export const newVisitDuration: modelTypes.VisitDuration = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
+
 export const newPatient: modelTypes.Patient = {
   id: undefined,
   mrn: '',
@@ -815,5 +814,12 @@ export const newPatientDocument: modelTypes.PatientDocument = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
+};
+export const newPatientHIPAA: modelTypes.PatientHIPAA = {
+  patientId: undefined,
+  noticeOfPrivacyPractice: false,
+  privacyAuthorization: false,
+  noticeOfPrivacyPracticeDate: null,
+  privacyAuthorizationDate: null
 };

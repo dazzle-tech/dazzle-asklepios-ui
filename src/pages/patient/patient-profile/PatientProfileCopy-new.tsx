@@ -140,7 +140,6 @@ const PatientProfile = () => {
         })
       );
 
-      // تنفيذ البحث تلقائياً بعد الحفظ
       if (searchRef.current) {
         setTimeout(() => {
           searchRef.current?.();
