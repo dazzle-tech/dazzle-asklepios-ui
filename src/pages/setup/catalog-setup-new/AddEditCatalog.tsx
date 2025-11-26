@@ -58,7 +58,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
    
     const handleSave = () => {
       setOpen(false);
-      if(!diagnosticsTestCatalogHeader?.id)
+      if(!diagnosticsTestCatalogHeader?.id){
       addCatalog(catalogCreateVM)
         .unwrap()
         .then(() => {
@@ -67,7 +67,8 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
         .catch(() => {
           dispatch(notify({ msg: 'Failed to add this Catalog', sev: 'error' }));
         });
-        else
+      }
+        else{
           updateCatalog({id: diagnosticsTestCatalogHeader?.id, body: catalogUpdateVM})
         .unwrap()
         .then(() => {
@@ -76,6 +77,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, setDiagno
         .catch(() => {
           dispatch(notify({ msg: 'Failed to update this Catalog', sev: 'error' }));
         });
+      }
     };
 
   // Main modal content

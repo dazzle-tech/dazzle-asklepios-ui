@@ -57,7 +57,6 @@ export const catalogDiagnosticTestService = createApi({
         url: `/api/setup/catalog/${catalogId}/tests`,
         method: 'POST',
         body: {
-          catalogId: [catalogId],
           testIds: body.testIds
         },
       }),

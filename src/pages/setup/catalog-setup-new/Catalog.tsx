@@ -23,6 +23,8 @@ import { CatalogResponseVM } from '@/types/model-types-new';
 import { newCatalogResponseVM } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
+import { useGetDepartmentsQuery } from '@/services/setupService';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 const Catalog = () => {
   const dispatch = useAppDispatch();
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
@@ -50,6 +52,8 @@ const Catalog = () => {
     refetch,
     isFetching
   } = useGetCatalogsQuery(paginationParams);
+  console.log("diagnosticsTestCatalogHeaderListResponse");
+  console.log(diagnosticsTestCatalogHeaderListResponse);
 
   const [deleteCatalog] = useDeleteCatalogMutation();
  
@@ -69,6 +73,8 @@ const Catalog = () => {
   const [filteredList, setFilteredList] = useState<CatalogResponseVM[]>([]);
 
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  
+  const {data: departmentListResponse} = useGetAllDepartmentsWithoutPaginationQuery({});
 
   const testTypeEnum = useEnumOptions('TestType');
 
@@ -176,12 +182,17 @@ const Catalog = () => {
       />
       {recordOfFilter['filter'] == 'departmentId' ? (
         <MyInput
-          fieldName="value"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
+              fieldName="value"
+              fieldType="select"
+              selectData={departmentListResponse ?? []}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={recordOfFilter}
+              setRecord={setRecordOfFilter}
+               menuMaxHeight={150}
+              showLabel={false}
+              searchable={false}
+            />
       ) : recordOfFilter['filter'] == 'type' ? (
         <MyInput
           fieldName="value"

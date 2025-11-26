@@ -129,7 +129,15 @@ export const departmentService = createApi({
     getActiveDepartmentByFacilityList: builder.query<any[], { facilityId: number | string }>({
       query: ({ facilityId }) => `/api/setup/department/facility/${facilityId}/active/list`,
     }),
+
+    getAllDepartmentsWithoutPagination: builder.query({
+      query: () => `/api/setup/department/all`,
+    }),
+
   }),
+
+   
+
 });
 
 export const {
@@ -147,4 +155,5 @@ export const {
   useToggleDepartmentIsActiveMutation,
   useGetActiveDepartmentByFacilityListQuery,
   useLazyGetActiveDepartmentByFacilityListQuery,
+  useGetAllDepartmentsWithoutPaginationQuery
 } = departmentService;

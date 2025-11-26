@@ -58,7 +58,7 @@ export const diagnosticTestService = createApi({
 
     getAllDiagnosticTestsByNameAndType: builder.query({
       query: ({ type, name, ...params }) => ({
-        url: `/api/setup/diagnostic-test/by-type-and-name/${type}/${name}`,
+        url: `/api/setup/diagnostic-test/by-type-and-name?type=${type}&name=${name}`,
         method: "GET",
         params,
       }),
