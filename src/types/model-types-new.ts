@@ -1417,3 +1417,16 @@ export interface PatientDocument {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+
+export interface PatientDocument {
+  id?: number;
+  patientId: number; // FK -> Patient
+  countryId: number; // FK -> Country
+  category?: string | null; // PRIMARY / SECONDARY
+  type: string; // NATIONAL_ID / PASSPORT / ...
+  number: string; // Document number
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
