@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  useSaveCatalogDiagnosticsTestMutation
-} from '@/services/setupService';
+import { useSaveCatalogDiagnosticsTestMutation } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { FaListAlt } from 'react-icons/fa';
 import { Checkbox, Form } from 'rsuite';
 import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import MyButton from '@/components/MyButton/MyButton';
-import { ApCatalogDiagnosticTest } from '@/types/model-types';
 import MyTable from '@/components/MyTable';
 import ChildModal from '@/components/ChildModal';
 import MyInput from '@/components/MyInput';
@@ -16,8 +13,12 @@ import { MdDelete } from 'react-icons/md';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetAllDiagnosticTestsByNameAndTypeQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useAddTestsToCatalogMutation, useGetCatalogTestsQuery, useRemoveTestFromCatalogMutation } from '@/services/setup/catalog/catalogTestService';
-
+import {
+  useAddTestsToCatalogMutation,
+  useGetCatalogTestsQuery,
+  useRemoveTestFromCatalogMutation
+} from '@/services/setup/catalog/catalogTestService';
+import { PaginationPerPage } from '@/utils/paginationPerPage';
 
 const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   const dispatch = useAppDispatch();
@@ -26,49 +27,63 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   const [openChild, setOpenChild] = useState<boolean>(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [openConfirmDeleteTest, setOpenConfirmDeleteTest] = useState<boolean>(false);
-  const [pageIndexTable1, setPageIndexTable1] = useState(0);
-  const [rowsPerPageTable1, setRowsPerPageTable1] = useState(5);
-  const [combinedArrayTable1, setCombinedArrayTable1] = useState([]);
-  const [paginatedDataTable1, setPaginatedDataTable1] = useState([]);
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 5,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+  const pageIndexTable1 = paginationParams.page;
+  const rowsPerPageTable1 = paginationParams.size;
   const [selectedTestOnTable1, setSelectedTestOnTable1] = useState();
-   const [selectedTestKeys, setSelectedTestKeys] = useState([]); // arr of keys for selected tests
-  const [pageIndexTable2, setPageIndexTable2] = useState(0);
-  const [rowsPerPageTable2, setRowsPerPageTable2] = useState(5);
   const [combinedArrayTable2, setCombinedArrayTable2] = useState([]);
-  const [paginatedDataTable2, setPaginatedDataTable2] = useState([]);
   const [selectedTestOnTable2, setSelectedTestOnTable2] = useState();
- 
+
   const [paginationParamsForAllTests, setPaginationParamsForAllTests] = useState({
-        page: 0,
-        size: 5,
-        sort: 'id,asc',
-        timestamp: Date.now()
-      });
+    page: 0,
+    size: 5,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
   // Fetch diagnostics test list response(all tests for specific type)
 
-  const {data: diagnosticsListResponse} = useGetAllDiagnosticTestsByNameAndTypeQuery({ type: diagnosticsTestCatalogHeader.type,name: record['value'], ...paginationParamsForAllTests });
-  // Fetch selected diagnostics test list response for catalog
-  // const catalogDiagnosticsTestListResponse = useGetCatalogDiagnosticsTestListQuery(
-  //   diagnosticsTestCatalogHeader.key
-  // );
+  const { data: diagnosticsListResponse } = useGetAllDiagnosticTestsByNameAndTypeQuery({
+    type: diagnosticsTestCatalogHeader.type,
+    name: record['value'],
+    ...paginationParamsForAllTests
+  });
 
-  const [paginationParams, setPaginationParams] = useState({
-      page: 0,
-      size: 5,
-      sort: 'id,asc',
-      timestamp: Date.now()
-    });
-    
- const { data: catalogDiagnosticsTestListResponse } =
-  useGetCatalogTestsQuery(
+  // Pagination values
+  const pageIndexForAllTests = paginationParamsForAllTests.page;
+  const rowsPerPageForAllTests = paginationParamsForAllTests.size;
+  const [linkForAllTests, setLinkForAllTests] = useState({});
+  const [sortColumnForAllTests, setSortColumnForAllTests] = useState('id');
+  const [sortTypeForAllTests, setSortTypeForAllTests] = useState<'asc' | 'desc'>('asc');
+
+  const { data: catalogDiagnosticsTestListResponse } = useGetCatalogTestsQuery(
     {
       catalogId: diagnosticsTestCatalogHeader?.id,
-      ...paginationParams, // page, size, sort
+      ...paginationParams // page, size, sort
     },
     {
-      skip: !diagnosticsTestCatalogHeader?.id,
+      skip: !diagnosticsTestCatalogHeader?.id
     }
   );
+
+    const { data: catalogDiagnosticsTestListResponseWithoutPagination } = useGetCatalogTestsQuery(
+    {
+      catalogId: diagnosticsTestCatalogHeader?.id,
+    },
+    {
+      skip: !diagnosticsTestCatalogHeader?.id
+    }
+  );
+
+  console.log("catalogDiagnosticsTestListResponseWithoutPagination");
+  console.log(catalogDiagnosticsTestListResponseWithoutPagination);
+
+  const totalCountForCatalogTests = catalogDiagnosticsTestListResponse?.totalCount ?? 0;
+  
 
 
   // remove test
@@ -77,21 +92,22 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   const [saveCatalogDiagnosticsTest] = useSaveCatalogDiagnosticsTestMutation();
 
   const [addTestsToCatalog] = useAddTestsToCatalogMutation();
-
-   // class name for selected row
+  const links = catalogDiagnosticsTestListResponse?.links;
+  
+  // class name for selected row
   const isSelectedOnTable1 = rowData => {
     if (rowData && selectedTestOnTable1 && rowData === selectedTestOnTable1) {
       return 'selected-row';
     } else return '';
   };
 
- // class name for selected row
+  // class name for selected row
   const isSelectedOnTable2 = rowData => {
     if (rowData && selectedTestOnTable2 && rowData === selectedTestOnTable2) {
       return 'selected-row';
     } else return '';
   };
-   // Icons column (delete)
+  // Icons column (delete)
   const iconsForActions = () => (
     <div className="container-of-icons">
       <MdDelete
@@ -109,16 +125,12 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   //Table columns
   const tableColumns = [
     {
-      key: 'internalCode',
-      title: 'Test Code'
+      key: 'code',
+      title: 'Code'
     },
     {
-      key: 'testName',
-      title: 'Test Name'
-    },
-    {
-      key: 'internationalCodeOne',
-      title: 'International Code'
+      key: 'name',
+      title: 'Name'
     },
     {
       key: 'icons',
@@ -142,42 +154,54 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
     },
     {
       key: 'name',
-      title: 'Test Name',
+      title: 'Test Name'
     },
     {
       key: 'internalCode',
-      title: 'Code',
-    } 
+      title: 'Code'
+    }
   ];
 
   // Handle page change in navigation
   const handlePageChangeTable1 = (_: unknown, newPage: number) => {
-    setPageIndexTable1(newPage);
+     // if (isFiltered) {
+    //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+    // }
+    // else {
+    PaginationPerPage.handlePageChange(
+      event,
+      newPage,
+      paginationParams,
+      links,
+      setPaginationParams
+    );
+    // }
   };
 
-  // Handle change rows per page in navigation
-  const handleRowsPerPageChangeTable1 = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPageTable1(parseInt(event.target.value, 10));
-    setPageIndexTable1(0);
-  };
-
-   // Handle page change in navigation
-  const handlePageChangeTable2 = (_: unknown, newPage: number) => {
-    setPageIndexTable2(newPage);
-  };
-
-  // Handle change rows per page in navigation
-  const handleRowsPerPageChangeTable2 = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPageTable2(parseInt(event.target.value, 10));
-    setPageIndexTable2(0);
-  };
   
+
+  // Handle page change in navigation
+  const handlePageChangeTable2 = (event, newPage) => {
+    // if (isFiltered) {
+    //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+    // }
+    // else {
+    PaginationPerPage.handlePageChange(
+      event,
+      newPage,
+      paginationParamsForAllTests,
+      linkForAllTests,
+      setPaginationParamsForAllTests
+    );
+    // }
+  };
+
   // handle delete test from selected list
   const handleDeleteTestFromDialog = () => {
     setOpenConfirmDeleteTest(false);
     removeTest({
       catalogId: diagnosticsTestCatalogHeader?.id,
-      testId: selectedTestOnTable1
+      testId: selectedTestOnTable1?.id
     })
       .unwrap()
       .then(() => {
@@ -188,8 +212,9 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
             sev: 'success'
           })
         );
-      }).catch(() => {
-          dispatch(
+      })
+      .catch(() => {
+        dispatch(
           notify({
             msg: 'Fail',
             sev: 'error'
@@ -197,20 +222,21 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
         );
       });
   };
-  
+
   // handle save tests(on selected list)
   const handleSaveTest = () => {
-    console.log(diagnosticsTestCatalogHeader);
-    addTestsToCatalog({catalogId: diagnosticsTestCatalogHeader?.id, body: {testIds: selectedRows}})
+ 
+    addTestsToCatalog({
+      catalogId: diagnosticsTestCatalogHeader?.id,
+      body: { testIds: selectedRows }
+    })
       .unwrap()
       .then(() => {
         setSelectedRows([]);
         dispatch(notify({ msg: 'The Tests have been saved successfully', sev: 'success' }));
-
       });
-
   };
-  
+
   // Handle test selection by checking the checkbox
   const handleCheckboxChange = key => {
     setSelectedRows(prev => {
@@ -239,20 +265,34 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
               </MyButton>
             </div>
             <MyTable
-              height={350}
+              height={250}
               rowClassName={isSelectedOnTable1}
               onRowClick={rowData => {
                 setSelectedTestOnTable1(rowData);
               }}
+              totalCount={totalCountForCatalogTests}
               // data={paginatedDataTable1 ?? []}
-              data={catalogDiagnosticsTestListResponse?.data?.testIds ?? []}
+              data={catalogDiagnosticsTestListResponse?.data?.tests ?? []}
               // loading={catalogDiagnosticsTestListResponse.isFetching}
               columns={tableColumns}
               page={pageIndexTable1}
               rowsPerPage={rowsPerPageTable1}
-              totalCount={totalCountForCatalogTests}
               onPageChange={handlePageChangeTable1}
-              onRowsPerPageChange={handleRowsPerPageChangeTable1}
+              onRowsPerPageChange={e => {
+                const newSize = Number(e.target.value);
+
+                // if (isFiltered) {
+                //   setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
+                //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+                // } else {
+                setPaginationParams({
+                  ...paginationParams,
+                  size: newSize,
+                  page: 0,
+                  timestamp: Date.now()
+                });
+                // }
+              }}
             />
             <DeletionConfirmationModal
               open={openConfirmDeleteTest}
@@ -286,50 +326,52 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
             <MyTable
               height={350}
               data={combinedArrayTable2 ?? []}
-
-              // data={diagnosticsListResponse?.data ?? []}
+              totalCount={combinedArrayTable2?.length}
+              // data={diagnosticsListResponse?.data?.filter(x => !(catalogDiagnosticsTestListResponse?.data?.tests?.map(item => item.id)).includes(x.id)) ?? []}
+              // totalCount={diagnosticsListResponse?.totalCount ?? 0}
               rowClassName={isSelectedOnTable2}
               onRowClick={rowData => {
                 setSelectedTestOnTable2(rowData);
               }}
               columns={tableAddTestColumns}
-               page={pageIndexTable2}
-              rowsPerPage={rowsPerPageTable2}
-              totalCount={combinedArrayTable2?.length}
+              page={pageIndexForAllTests}
+              rowsPerPage={rowsPerPageForAllTests}
               onPageChange={handlePageChangeTable2}
-              onRowsPerPageChange={handleRowsPerPageChangeTable2}
+              onRowsPerPageChange={e => {
+                const newSize = Number(e.target.value);
+
+                // if (isFiltered) {
+                //   setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
+                //   handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+                // } else {
+                setPaginationParamsForAllTests({
+                  ...paginationParamsForAllTests,
+                  size: newSize,
+                  page: 0,
+                  timestamp: Date.now()
+                });
+                // }
+              }}
             />
           </div>
         );
     }
   };
-  //Effects
-//  useEffect(() => {
-//     setCombinedArrayTable1(Object.values(catalogDiagnosticsTestListResponse?.data ?? {}));
-//     setSelectedTestKeys(catalogDiagnosticsTestListResponse?.data?.map(item => item.key) ?? []);
-//   }, [catalogDiagnosticsTestListResponse]);
 
   useEffect(() => {
-    console.log("in effect");
-    setCombinedArrayTable2(diagnosticsListResponse?.data?.filter(
-    item =>
-      // item.name.toLowerCase().includes(record['value'].toLowerCase()) &&
-      !catalogDiagnosticsTestListResponse?.data?.testIds.includes(item.id)
-  ));
-  }, [diagnosticsListResponse, selectedTestKeys, catalogDiagnosticsTestListResponse]);
-
-  useEffect(() => {
-    setPaginatedDataTable1(
-      combinedArrayTable1?.slice(pageIndexTable1 * rowsPerPageTable1, pageIndexTable1 * rowsPerPageTable1 + rowsPerPageTable1)
+    const testIds = catalogDiagnosticsTestListResponseWithoutPagination?.data?.tests?.map(item => item.id);
+    setLinkForAllTests(diagnosticsListResponse?.links);
+    setCombinedArrayTable2(
+      diagnosticsListResponse?.data?.filter(
+        item =>
+          !testIds?.includes(item.id)
+      )
     );
-  }, [combinedArrayTable1, pageIndexTable1, rowsPerPageTable1]);
-  useEffect(() => {
-    setPaginatedDataTable2(
-      combinedArrayTable2?.slice(pageIndexTable2 * rowsPerPageTable2, pageIndexTable2 * rowsPerPageTable2 + rowsPerPageTable2)
-    );
-  }, [combinedArrayTable2, pageIndexTable2, rowsPerPageTable2]);
+  }, [diagnosticsListResponse, catalogDiagnosticsTestListResponseWithoutPagination]);
 
-   useEffect(() => {
+  
+
+  useEffect(() => {
     setSelectedRows([]);
   }, [diagnosticsTestCatalogHeader]);
 

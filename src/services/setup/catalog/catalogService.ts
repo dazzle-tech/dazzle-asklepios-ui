@@ -52,7 +52,7 @@ export const catalogService = createApi({
       { departmentId: number | string } & PagedParams
     >({
       query: ({ departmentId, page, size, sort = 'id,asc' }) => ({
-        url: `/api/setup/catalog/by-department/${departmentId}`,
+        url: `/api/setup/catalog/by-department?departmentId=${departmentId}`,
         params: { page, size, sort },
       }),
       transformResponse: (response: CatalogResponseVM[], meta): PagedResult<CatalogResponseVM> => {
@@ -69,7 +69,7 @@ export const catalogService = createApi({
     // GET /api/setup/catalog/by-type/{type}?page=&size=&sort=
     getCatalogByType: builder.query<PagedResult<CatalogResponseVM>, { type: string } & PagedParams>({
       query: ({ type, page, size, sort = 'id,asc' }) => ({
-        url: `/api/setup/catalog/by-type/${type}`,
+        url: `/api/setup/catalog/by-type?type=${type}`,
         params: { page, size, sort },
       }),
       transformResponse: (response: CatalogResponseVM[], meta): PagedResult<CatalogResponseVM> => {
@@ -86,7 +86,7 @@ export const catalogService = createApi({
     // GET /api/setup/catalog/by-name/{name}?page=&size=&sort=
     getCatalogByName: builder.query<PagedResult<CatalogResponseVM>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
-        url: `/api/setup/catalog/by-name/${encodeURIComponent(name)}`,
+        url: `/api/setup/catalog/by-name?name=${encodeURIComponent(name)}`,
         params: { page, size, sort },
       }),
       transformResponse: (response: CatalogResponseVM[], meta): PagedResult<CatalogResponseVM> => {
