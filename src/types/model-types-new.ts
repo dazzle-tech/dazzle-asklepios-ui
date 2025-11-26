@@ -697,10 +697,10 @@ export interface BrandMedication {
   costCategory?: string;
   roa?: string;
   isActive?: boolean;
+  uomGroupId?: number;
+  uomGroupUnitId?: number;
+  hasActiveIngredient?:boolean;
   hasActiveIngredient?: boolean;
-  // 🟡 future fields (currently commented out in backend)
-  // uomGroupId?: number;
-  // uomGroupUnitId?: number;
 }
 export interface Substitute {
   brandId: number;

@@ -8,6 +8,7 @@ import {
   useGetUomGroupsQuery,
   useGetUomGroupsUnitsQuery
 } from '@/services/setupService';
+import {useGetAllUOMGroupsQuery, useGetAllUnitsByGroupIdQuery} from '@/services/setup/uom-group/uomGroupService';
 import {
   ApUomGroups
 } from '@/types/model-types';
@@ -22,6 +23,8 @@ import { MdOutlineMedicationLiquid } from 'react-icons/md';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
+import { uomGroup } from '@/types/model-types-new';
+import { newUOMGroup } from '@/types/model-types-constructor-new';
 const AddEditBrandMedication = ({
   open,
   setOpen,
@@ -35,7 +38,7 @@ const AddEditBrandMedication = ({
  const [rout,setRout]=useState({roa:[]})
 
   const [uomGroupOpen, setUomGroupOpen] = useState(false);
-  const [uomGroup, setUomGroup] = useState<ApUomGroups>({ ...newApUomGroups });
+  const [uomGroup, setUomGroup] = useState<uomGroup>({ ...newUOMGroup});
 
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -50,46 +53,12 @@ const AddEditBrandMedication = ({
 
   const units=useEnumOptions("Unit")
 
-  const [UOMListRequest, setUOMListRequest] = useState<ListRequest>({
-    ...initialListRequest
-  });
+  
   const {
     data: uomGroupsListResponse,
     refetch: refetchUomGroups,
     isFetching
-  } = useGetUomGroupsQuery(UOMListRequest);
-  const [unitListRequest, setUnitListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'uom_group_key',
-        operator: 'match',
-        value: brandMedication?.uomGroupKey
-      }
-    ]
-  });
-  useEffect(() => {
-    setUnitListRequest({
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        {
-          fieldName: 'uom_group_key',
-          operator: 'match',
-          value: brandMedication?.uomGroupKey
-        }
-      ]
-    });
-  }, [brandMedication?.uomGroupKey]);
+  } = useGetAllUOMGroupsQuery({name:''});
  
 useEffect(() => {
   if (rout?.roa?.length) {
@@ -117,12 +86,7 @@ useEffect(() => {
 
 
   const { data: uomGroupsUnitsListResponse, refetch: refetchUomGroupsUnit } =
-    useGetUomGroupsUnitsQuery(unitListRequest);
-
-
-
-
-
+    useGetAllUnitsByGroupIdQuery(brandMedication?.uomGroupId);
 
 
   // Main modal content
@@ -294,11 +258,11 @@ useEffect(() => {
             required
               width="100%"
               fieldLabel="UOM Group"
-              fieldName="uomGroupKey"
+              fieldName="uomGroupId"
               fieldType="select"
-              selectData={uomGroupsListResponse?.object ?? []}
+              selectData={uomGroupsListResponse?.data ?? []}
               selectDataLabel="name"
-              selectDataValue="key"
+              selectDataValue="id"
               record={brandMedication}
               setRecord={setBrandMedication}
               searchable={true}
@@ -307,11 +271,11 @@ useEffect(() => {
             required
               width="100%"
               fieldLabel="Base UOM"
-              fieldName="baseUomKey"
+              fieldName="uomGroupUnitId"
               fieldType="select"
-              selectData={uomGroupsUnitsListResponse?.object ?? []}
-              selectDataLabel="units"
-              selectDataValue="key"
+              selectData={uomGroupsUnitsListResponse ?? []}
+              selectDataLabel="uom"
+              selectDataValue="id"
               record={brandMedication}
               setRecord={setBrandMedication}
             />

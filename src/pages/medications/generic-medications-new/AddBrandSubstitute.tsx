@@ -43,7 +43,6 @@ const AddBrandSubstitute = ({ open, setOpen, brandMedication }) => {
   } = useGetBrandMedicationSubstitutesByBrandQuery(brandMedication?.id, {
     skip: !brandMedication?.id,
   });
-  console.log("Subs",substitutesData)
 
   const [createSubstitute, { isLoading: creating }] =
     useCreateBrandMedicationSubstituteMutation();

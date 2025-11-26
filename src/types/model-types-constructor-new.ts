@@ -517,10 +517,10 @@ export const newBrandMedication:modelTypes.BrandMedication= {
   costCategory: '',
   roa: '',
   isActive: true,
-  hasActiveIngredient:false,
-  // 🟡 future fields (currently commented out in backend)
-  // uomGroupId?: null,
-  // uomGroupUnitId?: null
+  uomGroupId: null,
+  uomGroupUnitId: null,
+  hasActiveIngredient:false
+ 
 }
 
 export const newSubstitute:modelTypes.Substitute={
