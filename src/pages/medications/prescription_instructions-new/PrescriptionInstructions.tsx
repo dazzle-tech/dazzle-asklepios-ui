@@ -1,4 +1,3 @@
-import Translate from '@/components/Translate';
 import React, { useState, useEffect } from 'react';
 import { Panel } from 'rsuite';
 import { MdModeEdit } from 'react-icons/md';
@@ -239,7 +238,7 @@ const PrescriptionInstructions = () => {
       };
 
       if (field === 'rout') {
-        response = await fetchByRoute({ rout: value, ...params }).unwrap();
+        response = await fetchByRoute({ route: value, ...params }).unwrap();
       } else if (field === 'category') {
         response = await fetchByCategory({ category: value, ...params }).unwrap();
       } else if (field === 'unit') {
@@ -253,7 +252,6 @@ const PrescriptionInstructions = () => {
       setIsFiltered(true);
       setFilterPagination({ ...filterPagination, page, size: currentSize });
     } catch (error) {
-      console.error('Error filtering Prescription Instructions:', error);
       dispatch(notify({ msg: 'Failed to filter Prescription Instructions', sev: 'error' }));
       setIsFiltered(false);
     }
@@ -276,31 +274,31 @@ const PrescriptionInstructions = () => {
   const tableColumns = [
     {
       key: 'category',
-      title: <Translate>Category</Translate>,
+      title: 'Category',
       render: (row: any) => (row?.category ? formatEnumString(row?.category) : '')
     },
     {
       key: 'dose',
-      title: <Translate>Dose</Translate>
+      title: 'Dose'
     },
     {
       key: 'unit',
-      title: <Translate>Unit</Translate>,
+      title: 'Unit',
       render: (row: any) => (row?.unit ? formatEnumString(row?.unit) : '')
     },
     {
       key: 'rout',
-      title: <Translate>Rout</Translate>,
+      title: 'Rout',
       render: (row: any) => (row?.rout ? formatEnumString(row?.rout) : '')
     },
     {
       key: 'frequency',
-      title: <Translate>Frequency</Translate>,
+      title: 'Frequency',
       render: (row: any) => (row?.frequency ? formatEnumString(row?.frequency) : '')
     },
     {
       key: 'icons',
-      title: <Translate></Translate>,
+      title: '',
       render: () => iconsForActions()
     }
   ];
