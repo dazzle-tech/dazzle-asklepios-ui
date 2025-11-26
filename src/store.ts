@@ -92,6 +92,9 @@ import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { newPatientService } from './services/patient/patientService';
 import { addressService } from './services/patients/AddressService';
+import { hipaaService } from './services/patients/hipaaService';
+import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
+import { patientDocumentsService } from './services/patients/patientDocumentsService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -274,7 +277,13 @@ export const store = configureStore({
 
     // Patient
     [newPatientService.reducerPath]: newPatientService.reducer,
-    [addressService.reducerPath]: addressService.reducer
+    [addressService.reducerPath]: addressService.reducer,
+
+    [hipaaService.reducerPath]: hipaaService.reducer,
+
+    [patientPreferredHealthProfessionalService.reducerPath]: patientPreferredHealthProfessionalService.reducer,
+    [patientDocumentsService.reducerPath]: patientDocumentsService.reducer
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -368,7 +377,10 @@ export const store = configureStore({
       invoiceReportApi.middleware,
       visitDurationService.middleware,
       newPatientService.middleware,
-      addressService.middleware
+      addressService.middleware,
+      hipaaService.middleware,
+      patientPreferredHealthProfessionalService.middleware,
+      patientDocumentsService.middleware,
     ])
 });
 

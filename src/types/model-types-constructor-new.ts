@@ -805,3 +805,15 @@ export const newAddress: modelTypes.Address = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
+export const newPatientDocument: modelTypes.PatientDocument = {
+  id: undefined,
+  patientId: undefined,
+  countryId: undefined,
+  category: null,
+  type: '',
+  number: '',
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

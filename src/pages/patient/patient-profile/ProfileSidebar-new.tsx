@@ -16,7 +16,7 @@ import type { ApPatient } from '@/types/model-types';
 import { Box, Skeleton } from '@mui/material';
 import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
 import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav } from 'rsuite';
@@ -41,22 +41,18 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   setLocalPatient,
   title = <Translate>Search Patient</Translate>,
   direction = 'left',
-  showButton = true
+  showButton = true,
+  refetchData,
+  setRefetchData
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
   const [searchKeyword, setSearchKeyword] = useState('');
 
-  const [page, setPage] = useState(0);
   const [patients, setPatients] = useState<any[]>([]);
-  const [isLastPage, setIsLastPage] = useState(false);
-
-  // NEW LOADING STATE
+  const [fullResults, setFullResults] = useState<any[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
-
-  // Lazy Endpoints
-  const [triggerFn, setTriggerFn] = useState<any>(() => null);
 
   const [fetchPatients] = useLazyGetPatientsQuery();
   const [fetchByMrn] = useLazyGetPatientsByMrnQuery();
@@ -65,87 +61,74 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [fetchByDob] = useLazyGetPatientsByDateOfBirthQuery();
   const [fetchByFullName] = useLazyGetPatientsByFullNameQuery();
 
-  const searchCriteriaOptions = [
-    { label: <Translate>MRN</Translate>, value: 'patientMrn' },
-    { label: <Translate>Document Number</Translate>, value: 'documentNo' },
-    { label: <Translate>Full Name</Translate>, value: 'fullName' },
-    { label: <Translate>Archiving Number</Translate>, value: 'archivingNumber' },
-    { label: <Translate>Primary Phone Number</Translate>, value: 'phoneNumber' },
-    { label: <Translate>Date of Birth</Translate>, value: 'dob' }
-  ];
-
-  const search = () => {
-    if (searchKeyword.length < 3) return;
-
-    setPage(0);
-    setPatients([]);
-    setIsLastPage(false);
-
-    let newTriggerFn: any;
-
+  const selectTrigger = () => {
     switch (selectedCriterion) {
       case 'patientMrn':
-        newTriggerFn = fetchByMrn;
-        break;
+        return fetchByMrn;
       case 'archivingNumber':
-        newTriggerFn = fetchByArchiving;
-        break;
+        return fetchByArchiving;
       case 'phoneNumber':
-        newTriggerFn = fetchByPrimaryPhone;
-        break;
+        return fetchByPrimaryPhone;
       case 'dob':
-        newTriggerFn = fetchByDob;
-        break;
+        return fetchByDob;
       case 'fullName':
-        newTriggerFn = fetchByFullName;
-        break;
+        return fetchByFullName;
       default:
-        newTriggerFn = fetchPatients;
-        break;
+        return fetchPatients;
     }
-
-    setTriggerFn(() => newTriggerFn);
-
-    loadPage(0, newTriggerFn);
   };
 
-  const loadPage = async (pageIndex: number, fn?: any) => {
-    const effectiveTrigger = fn || triggerFn;
-    if (!effectiveTrigger) return;
+  const search = useCallback(async () => {
+    if (searchKeyword.length < 3) return;
 
-    setIsLoadingPatients(true); 
+    const trigger = selectTrigger();
 
-    const params: any = {
-      page: pageIndex,
-      size: PAGE_SIZE
-    };
+    setIsLoadingPatients(true);
 
-    if (selectedCriterion === 'patientMrn') params.mrn = searchKeyword;
-    if (selectedCriterion === 'archivingNumber') params.archivingNumber = searchKeyword;
-    if (selectedCriterion === 'phoneNumber') params.phone = searchKeyword;
-    if (selectedCriterion === 'dob') params.date = searchKeyword;
-    if (selectedCriterion === 'fullName') params.keyword = searchKeyword;
-
-    const result = await effectiveTrigger(params);
+    const result = await trigger({
+      page: 0,
+      size: 9999, // نجلب كل النتائج مرة واحدة
+      mrn: searchKeyword,
+      archivingNumber: searchKeyword,
+      phone: searchKeyword,
+      date: searchKeyword,
+      keyword: searchKeyword
+    });
 
     const response = result?.data;
-    const newData = response?.data || [];
-    const last = response?.last ?? true;
+    const data = response?.data || [];
 
-    if (pageIndex === 0) setPatients(newData);
-    else setPatients(prev => [...prev, ...newData]);
+    // خزّن كل النتائج
+    setFullResults(data);
 
-    setIsLastPage(last);
+    // أظهر أول PAGE_SIZE فقط
+    setPatients(data.slice(0, PAGE_SIZE));
+
     setIsLoadingPatients(false);
+  }, [searchKeyword, selectedCriterion]);
+
+  // لو refetchData = true → أعمل Search من جديد
+  useEffect(() => {
+    if (refetchData) {
+      search();
+      setRefetchData?.(false);
+    }
+  }, [refetchData]);
+
+  // عند تغيير المعايير
+  useEffect(() => {
+    setPatients([]);
+    setFullResults([]);
+    setSearchKeyword('');
+  }, [selectedCriterion]);
+
+  const loadMore = () => {
+    const current = patients.length;
+    const nextSlice = fullResults.slice(0, current + PAGE_SIZE);
+    setPatients(nextSlice);
   };
 
-
-  useEffect(() => {
-    setSearchKeyword('');
-    setPatients([]);
-    setPage(0);
-    setIsLastPage(false);
-  }, [selectedCriterion]);
+  const hasMore = patients.length < fullResults.length;
 
   return (
     <div
@@ -166,32 +149,33 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     </Button>
                   )}
 
-                  {/* Search UI */}
                   <div className="patient-search-container">
                     <Form fluid>
                       <MyInput
                         fieldType="select"
                         fieldName="searchCriteria"
-                        selectData={searchCriteriaOptions}
+                        selectData={[
+                          { label: <Translate>MRN</Translate>, value: 'patientMrn' },
+                          { label: <Translate>Document Number</Translate>, value: 'documentNo' },
+                          { label: <Translate>Full Name</Translate>, value: 'fullName' },
+                          { label: <Translate>Archiving Number</Translate>, value: 'archivingNumber' },
+                          { label: <Translate>Primary Phone Number</Translate>, value: 'phoneNumber' },
+                          { label: <Translate>Date of Birth</Translate>, value: 'dob' }
+                        ]}
                         selectDataLabel="label"
                         selectDataValue="value"
                         showLabel={false}
                         record={{ searchCriteria: selectedCriterion }}
                         setRecord={record => setSelectedCriterion(record.searchCriteria)}
-                        placeholder="Select Search Criteria"
-                        searchable={false}
-                        width="auto"
                       />
                     </Form>
 
                     <InputGroup inside>
                       <Input
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') search();
-                        }}
                         placeholder="Search Patients"
                         value={searchKeyword}
                         onChange={val => setSearchKeyword(val)}
+                        onKeyDown={e => e.key === 'Enter' && search()}
                       />
                       <InputGroup.Button onClick={search}>
                         <SearchIcon />
@@ -201,52 +185,45 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
                   <Box className="patient-list">
                     {isLoadingPatients ? (
-                      Array.from({ length: 4 }).map((_, index) => (
-                        <Box width={250} key={index} className="patient-list-loader">
-                          <div className="patient-list-loader-circle">
-                            <Skeleton variant="circular" width={40} height={40} />
-                            <Skeleton variant="text" width="80%" height={25} />
-                          </div>
-                          <Skeleton variant="rectangular" height={90} />
-                          <Skeleton width="100%" />
-                        </Box>
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <Skeleton
+                          key={i}
+                          variant="rectangular"
+                          height={80}
+                          style={{ marginBottom: 10 }}
+                        />
                       ))
                     ) : patients.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: 20 }}>
                         <Translate>No patients found</Translate>
                       </div>
                     ) : (
-                      patients.map(patient => (
-                        <PatientCardWithPicture
-                          key={patient.id}
-                          patient={patient}
-                          onClick={() => setLocalPatient(patient)}
-                          actions={
-                            <Button className="actions-button">
-                              <FaEllipsis />
-                            </Button>
-                          }
-                          arrowDirection={direction as 'left' | 'right'}
-                        />
-                      ))
-                    )}
+                      <>
+                        {patients.map(p => (
+                          <PatientCardWithPicture
+                            key={p.id}
+                            patient={p}
+                            onClick={() => setLocalPatient(p)}
+                            actions={
+                              <Button className="actions-button">
+                                <FaEllipsis />
+                              </Button>
+                            }
+                            arrowDirection={direction as any}
+                          />
+                        ))}
 
-                    {!isLoadingPatients &&
-                      !isLastPage &&
-                      patients.length !== 0 &&
-                      patients.length % PAGE_SIZE === 0 && (
-                        <Button
-                          appearance="ghost"
-                          onClick={() => {
-                            const nextPage = page + 1;
-                            setPage(nextPage);
-                            loadPage(nextPage);
-                          }}
-                          style={{ width: '100%', marginTop: 10 }}
-                        >
-                          Load More
-                        </Button>
-                      )}
+                        {hasMore && (
+                          <Button
+                            appearance="ghost"
+                            onClick={loadMore}
+                            style={{ width: '100%', marginTop: 10 }}
+                          >
+                            Load More
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </Box>
                 </Panel>
               ) : (
