@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './styles.less';
 import { Panel } from 'rsuite';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
