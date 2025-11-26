@@ -24,6 +24,7 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 import "./styles.less";
 import { conjureValueBasedOnKeyFromList } from "@/utils";
+import { Block } from "@mui/icons-material";
 
 const SpecialPopulation = ({ selectedActiveIngredients }) => {
   const dispatch = useAppDispatch();
@@ -36,6 +37,8 @@ const SpecialPopulation = ({ selectedActiveIngredients }) => {
   });
 
   const [openDelete, setOpenDelete] = useState(false);
+  const [sortColumn, setSortColumn] = useState("specialPopulation");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
   // ---------------------------
   // LOVs
@@ -103,17 +106,17 @@ const SpecialPopulation = ({ selectedActiveIngredients }) => {
   // ---------------------------
   const save = async () => {
     if (!selectedActiveIngredients?.id) {
-      dispatch(notify({ msg: "No Active Ingredient selected", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
       return;
     }
 
     if (!record.specialPopulation) {
-      dispatch(notify({ msg: "Select Special Population", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Special Population is required", sev: "error" }));
       return;
     }
 
     if (!record.considerations || record.considerations.trim() === "") {
-      dispatch(notify({ msg: "Considerations is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Considerations is required", sev: "error" }));
       return;
     }
 
@@ -171,12 +174,50 @@ const SpecialPopulation = ({ selectedActiveIngredients }) => {
   // ---------------------------
   // PAGINATION
   // ---------------------------
+
+  // 📌 SORTING IMPLEMENTATION
+  const sortedList = useMemo(() => {
+    if (!list || !sortColumn) return list ?? [];
+
+    return [...list].sort((a, b) => {
+      let aVal = a[sortColumn];
+      let bVal = b[sortColumn];
+
+      // ⭐ Special sorting: LOV — sort by display name
+      if (sortColumn === "specialPopulation") {
+        aVal = conjureValueBasedOnKeyFromList(
+          specialLov?.object ?? [],
+          a.additionalPopulation,
+          "lovDisplayVale"
+        );
+        bVal = conjureValueBasedOnKeyFromList(
+          specialLov?.object ?? [],
+          b.additionalPopulation,
+          "lovDisplayVale"
+        );
+      }
+
+      if (aVal == null) return -1;
+      if (bVal == null) return 1;
+
+      let result = 0;
+
+      if (typeof aVal === "string") {
+        result = aVal.toString().localeCompare(bVal.toString(), undefined, { numeric: true });
+      } else {
+        result = aVal > bVal ? 1 : -1;
+      }
+
+      return sortType === "asc" ? result : -result;
+    });
+  }, [list, sortColumn, sortType, specialLov]);
+
   const [pagination, setPagination] = useState({ page: 0, size: 5 });
 
   const paginatedData = useMemo(() => {
     const start = pagination.page * pagination.size;
-    return list.slice(start, start + pagination.size);
-  }, [list, pagination.page, pagination.size]);
+    return sortedList.slice(start, start + pagination.size);
+  }, [sortedList, pagination.page, pagination.size]);
 
   const totalCount = list.length;
 
@@ -208,8 +249,8 @@ const SpecialPopulation = ({ selectedActiveIngredients }) => {
               color="var(--deep-blue)"
             />
             <MyButton
-              prefixIcon={() => <Plus />}
-              title="New"
+              prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
+              title="Clear"
               color="var(--deep-blue)"
               onClick={() => setRecord({ ...newActiveIngredientSpecialPopulation })}
             />
@@ -254,6 +295,12 @@ const SpecialPopulation = ({ selectedActiveIngredients }) => {
           onRowsPerPageChange={(e) =>
             setPagination({ page: 0, size: Number(e.target.value) })
           }
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={(col, order) => {
+            setSortColumn(col);
+            setSortType(order);
+          }}
         />
 
         <DeletionConfirmationModal

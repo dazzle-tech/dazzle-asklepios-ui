@@ -86,7 +86,11 @@ const SOAP = props => {
 
   useEffect(() => {
     if (saveEncounterChangesMutation.status === 'fulfilled') {
-      setLocalEncounter(saveEncounterChangesMutation.data);
+      // Merge response with current local state to preserve fields that might not be in the response
+      setLocalEncounter(prev => ({
+        ...saveEncounterChangesMutation.data,
+        // Preserve planInstructionsNote if not in response or if response has empty/null value
+      }));
     }
   }, [saveEncounterChangesMutation]);
 
@@ -190,7 +194,7 @@ const SOAP = props => {
                 }
                 content={
                   <Form fluid>
-                    <PatientPlan patient={patient} encounter={encounter} />
+                    <PatientPlan patient={patient}  localEncounter={localEncounter} setLocalEncounter={setLocalEncounter}/>
                   </Form>
                 }
               />

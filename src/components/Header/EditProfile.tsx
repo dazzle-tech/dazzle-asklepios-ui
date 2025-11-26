@@ -75,7 +75,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
                     <MyInput
                         disabled={!editing}
                         column
-                        fieldLabel="sex at birth"
+                        fieldLabel="Gender"
                         fieldType="select"
                         fieldName="sexAtBirthLkey"
                         selectData={gndrLovQueryResponse?.object ?? []}

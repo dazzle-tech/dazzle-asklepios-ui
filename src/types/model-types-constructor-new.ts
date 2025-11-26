@@ -693,3 +693,51 @@ export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFood
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+export const newDiagnosticTestCoding: modelTypes.DiagnosticTestCoding = {
+  id: undefined,
+  procedureId: undefined,        
+  codeType: null,           
+  codeId: '',                      
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+export const newCountry: modelTypes.Country = {
+  id: undefined,
+  name: '',
+  code: '',
+  isActive: true
+};
+export const newCountryDistrict: modelTypes.CountryDistrict = {
+  id: undefined,
+  countryId: undefined,
+  name: '',
+  code: '',
+  isActive: true,
+};
+
+export const newDistrictCommunity: modelTypes.DistrictCommunity = {
+  id: undefined,
+  districtId: undefined,
+  name: '',
+  isActive: true,
+};
+
+export const newCommunityArea: modelTypes.CommunityArea = {
+  id: undefined,
+  communityId: undefined,
+  name: '',
+  isActive: true,
+};
+export const newVisitDuration: modelTypes.VisitDuration = {
+  id: undefined,
+  visitType: null,
+  durationInMinutes: 0,
+  resourceSpecific: false,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};

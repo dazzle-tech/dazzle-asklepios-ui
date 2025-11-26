@@ -26,6 +26,8 @@ import PatientHistory from '../encounter-component/patient-history';
 import { notify } from '@/utils/uiReducerActions';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import ERStartTriage from '../ER-triage/ERStartTriage';
+import StartTriage from '../ER-triage/StartTriage';
 const EncounterPreObservations = ({}) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -140,6 +142,14 @@ const EncounterPreObservations = ({}) => {
                 </div>
               </div>
               <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
+                {/* <Tabs.Tab eventKey="0" title="Triage">
+                  <StartTriage
+                    patient={propsData.patient}
+                    encounter={propsData.encounter}
+                    sourcePage={"Nurse_Station"}
+                   />
+                  
+                </Tabs.Tab> */}
                 <Tabs.Tab eventKey="1" title="Observations">
                   <Observations
                     edit={propsData.edit}

@@ -27,6 +27,7 @@ import {
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 import "./styles.less";
+import { Block } from "@mui/icons-material";
 
 const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
   const dispatch = useAppDispatch();
@@ -37,6 +38,8 @@ const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
   const [record, setRecord] = useState({
     ...newActiveIngredientFoodInteraction,
   });
+  const [sortColumn, setSortColumn] = useState("food");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
   const [openDelete, setOpenDelete] = useState(false);
 
@@ -104,22 +107,22 @@ const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
   // ---------------------------
   const save = async () => {
     if (!selectedActiveIngredients || !selectedActiveIngredients.id) {
-      dispatch(notify({ msg: "No Active Ingredient selected", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
       return;
     }
 
     if (!record?.food || record.food.trim() === "") {
-      dispatch(notify({ msg: "Please enter Food name", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Food is required", sev: "error" }));
       return;
     }
 
     if (!record?.severity) {
-      dispatch(notify({ msg: "Select Severity", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Severity is required", sev: "error" }));
       return;
     }
 
     if (!record?.description || record.description.trim() === "") {
-      dispatch(notify({ msg: "Please Enter A Description", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Description is required", sev: "error" }));
       return;
     }
 
@@ -173,12 +176,37 @@ const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
   // ---------------------------
   // PAGINATION
   // ---------------------------
+
+  // 📌 SORTING IMPLEMENTATION
+  const sortedList = useMemo(() => {
+    if (!list || !sortColumn) return list ?? [];
+
+    return [...list].sort((a, b) => {
+      const aVal = a[sortColumn];
+      const bVal = b[sortColumn];
+
+      if (aVal == null) return -1;
+      if (bVal == null) return 1;
+
+      let result = 0;
+
+      if (typeof aVal === "string") {
+        result = aVal.toString().localeCompare(bVal.toString(), undefined, { numeric: true });
+      } else {
+        result = aVal > bVal ? 1 : -1;
+      }
+
+      return sortType === "asc" ? result : -result;
+    });
+  }, [list, sortColumn, sortType]);
+
+
   const [pagination, setPagination] = useState({ page: 0, size: 5 });
 
   const paginatedData = useMemo(() => {
     const start = pagination.page * pagination.size;
-    return list.slice(start, start + pagination.size);
-  }, [list, pagination.page, pagination.size]);
+    return sortedList.slice(start, start + pagination.size);
+  }, [sortedList, pagination.page, pagination.size]);
 
   const totalCount = list.length;
 
@@ -223,9 +251,9 @@ const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
             />
 
             <MyButton
-              prefixIcon={() => <Plus />}
+              prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
               onClick={() => setRecord({ ...newActiveIngredientFoodInteraction })}
-              title="New"
+              title="Clear"
               color="var(--deep-blue)"
             />
           </div>
@@ -268,6 +296,12 @@ const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
           onRowsPerPageChange={(e) =>
             setPagination({ page: 0, size: Number(e.target.value) })
           }
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={(col, order) => {
+            setSortColumn(col);
+            setSortType(order);
+          }}
         />
 
         <DeletionConfirmationModal

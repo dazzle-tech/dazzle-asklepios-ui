@@ -46,7 +46,7 @@ import {
 import { GiKidneys } from 'react-icons/gi';
 export interface Screen {
   name: string;
-  code:string;
+  code: string;
   description?: string | null;
   icon: string;
   viewOrder: number;
@@ -66,12 +66,12 @@ export interface MedicalSheet {
   code: string;
   icon: JSX.Element;
   type?: string;
-  path:string;
+  path: string;
 }
 export const MedicalSheets: MedicalSheet[] = [
-  
+
   { name: 'ICU', code: 'ICU', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/icu' },
-  { name: 'Pregnancy Follow-up', code: 'PREGNANCY_FOLLOW_UP', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pregnancy-follow-up',type:"Specialty" },
+  { name: 'Pregnancy Follow-up', code: 'PREGNANCY_FOLLOW_UP', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pregnancy-follow-up', type: "Specialty" },
   { name: 'VTE Risk Assessment', code: 'VTE_RISK_ASSESSMENT', icon: <FontAwesomeIcon icon={faBraille} className="icon" />, path: '/vte-risk-assessment' },
   { name: 'Pressure Ulcer Risk Assessment', code: 'BRADEN_SCALE_FOR_PRESSURE_ULCER', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/pressure-ulce-risk-assessment' },
   { name: 'Glasgow Coma Scale', code: 'GLASGOW_COMA_SCALE', icon: <FontAwesomeIcon icon={faG} className="icon" />, path: '/glasgow-coma-scale' },
@@ -81,7 +81,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Medical Warnings', code: 'MEDICAL_WARNINGS', icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />, path: '/medical-warnings' },
   { name: 'Diagnostics Test Result', code: 'DIAGNOSTICS_RESULT', icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />, path: '/diagnostics-result' },
   { name: 'Dialysis Request', code: 'DIALYSIS_REQUEST', icon: <GiKidneys className="icon" />, path: '/dialysis-request' },
-  { name: 'Vaccination', code: 'VACCINATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccination' ,type:"Specialty"},
+  { name: 'Vaccination', code: 'VACCINATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccination', type: "Specialty" },
   { name: 'Prescription', code: 'PRESCRIPTION', icon: <FontAwesomeIcon icon={faFilePrescription} className="icon" />, path: '/prescription' },
   { name: 'Medication Order', code: 'DRUG_ORDER', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medication-order' },
   { name: 'Diagnostics Order', code: 'DIAGNOSTICS_ORDER', icon: <FontAwesomeIcon icon={faVials} className="icon" />, path: '/diagnostics-order' },
@@ -99,12 +99,12 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Johns Hopkins Tool', code: 'JOHNS_HOPKINS_FALL_RISK_ASSESSMENT_TOOL', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/johns-hopkins-tool' },
   { name: 'Medications Record', code: 'MEDICATIONS_RECORD', icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: '/medications-record' },
   { name: 'Vaccine Record', code: 'VACCINE_RECCORD', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/vaccine-record' },
-  { name: 'Cardiology', code: 'CARDIOLOGY', icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />, path: '/cardiology',type:"Specialty" },
-  { name: 'Dental Care', code: 'DENTAL_CARE', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-care' ,type:"Specialty" },
-  { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam',type:"Specialty" },
-  { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry',type:"Specialty" },
+  { name: 'Cardiology', code: 'CARDIOLOGY', icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />, path: '/cardiology', type: "Specialty" },
+  { name: 'Dental Care', code: 'DENTAL_CARE', icon: <FontAwesomeIcon icon={faTooth} className="icon" />, path: '/dental-care', type: "Specialty" },
+  { name: 'Optometric Exam', code: 'OPTOMETRIC_EXAM', icon: <FontAwesomeIcon icon={faEye} className="icon" />, path: '/optometric-exam', type: "Specialty" },
+  { name: 'Audiometry Puretone', code: 'AUDIOMETRY_PURETONE', icon: <FontAwesomeIcon icon={faEarListen} className="icon" />, path: '/audiometry', type: "Specialty" },
   { name: 'Progress Notes', code: 'PROGRESS_NOTES', icon: <FontAwesomeIcon icon={faFileLines} className="icon" />, path: '/progress-notes' },
-  { name: 'Psychological Exam', code: 'PSYCHOLOGICAL_EXAM', icon: <FontAwesomeIcon icon={faBrain} className="icon" />, path: '/psychological-exam'  ,type:"Specialty"},
+  { name: 'Psychological Exam', code: 'PSYCHOLOGICAL_EXAM', icon: <FontAwesomeIcon icon={faBrain} className="icon" />, path: '/psychological-exam', type: "Specialty" },
   { name: 'DayCase', code: 'DAY_CASE', icon: <FontAwesomeIcon icon={faBed} className="icon" />, path: '/day-case' },
   { name: 'IV Fluid Order', code: 'IV_FLUID_ORDER', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-order' },
   { name: 'Morse Fall Scale', code: 'MORSE_FALL_SCALE', icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />, path: '/morse-fall-scale' },
@@ -114,9 +114,9 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Nutrition State', code: 'NUTRITION_STATE_ASSESSMENT', icon: <FontAwesomeIcon icon={faLeaf} className="icon" />, path: '/nutrition-state-asssessment' },
   { name: 'Dietary Request', code: 'DIETARY_REQUEST', icon: <FontAwesomeIcon icon={faLeaf} className="icon" />, path: '/dietary-request' },
   { name: 'MAR', code: 'MEDICATION_ADMINISTRATION_RECORD', icon: <FontAwesomeIcon icon={faCapsules} className="icon" />, path: '/medication-administration-record' },
-  { name: 'Physiotherapy Plan', code: 'PHYSIOTHERAPY_PLAN', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/physiotherapy-plan',type:"Specialty" },
-  { name: 'Occupational Therapy', code: 'OCCUPATIONAL_THERAPY', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/occupational-therapy',type:"Specialty" },
-  { name: 'Speech Therapy', code: 'SPEECH_THERAPY', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/speech-therapy' ,type:"Specialty"},
+  { name: 'Physiotherapy Plan', code: 'PHYSIOTHERAPY_PLAN', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/physiotherapy-plan', type: "Specialty" },
+  { name: 'Occupational Therapy', code: 'OCCUPATIONAL_THERAPY', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/occupational-therapy', type: "Specialty" },
+  { name: 'Speech Therapy', code: 'SPEECH_THERAPY', icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />, path: '/speech-therapy', type: "Specialty" },
   { name: 'IV Fluid Administration', code: 'IV_FLUID_ADMINISTRATION', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/iv-fluid-administration' },
   { name: 'Continuous Observation', code: 'CONTINUOUS_OBSERVATIONS', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/continuous-observation' },
   { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
@@ -133,337 +133,502 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Medication Reconciliation", code: "MEDICATION_RECONCILIATION", icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: "/medication-reconciliation" },
   { name: "Wound Care Documentation", code: "WOUND_CARE_DOCUMENTATION", icon: <FontAwesomeIcon icon={faBandAid} className="icon" />, path: "/wound-care-documentation" },
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
-  { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric',type:"Specialty" }
+  { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" }
 ];
 
 
 export const MODULES: Module[] =
- [
-   { name: "System Setup",
-    description: "",
-    icon: "FaWrench",
-    viewOrder: 0,
-    screens: [
+  [
+    {
+      name: "System Setup",
+      description: "",
+      icon: "FaWrench",
+      viewOrder: 0,
+      screens: [
 
-      { name: "Allergens",code:"ALLERGENS" ,description: "Allergens setup", icon: "Fa500Px", viewOrder: 10, navPath: "allergens" },
-      { name: "Potential Duplicate", code: "POTENTIAL_DUPLICATE", description: "", icon: "FaInstalod", viewOrder: 15, navPath: "potintial-duplicate" },
-      { name: "Brand Medications", code: "BRAND_MEDICATIONS", description: "", icon: "FaBottleDroplet", viewOrder: 8, navPath: "brand-medications" },
-      { name: "Lists Of Value", code: "LISTS_OF_VALUE", description: "", icon: "FaList", viewOrder: 8, navPath: "lov-setup" },
-      { name: "Modules And Screens", code: "MODULES_AND_SCREENS", description: "", icon: "FaDesktop", viewOrder: 0, navPath: "modules-setup" },
-      { name: "Data Validation Manager", code: "DATA_VALIDATION_MANAGER", description: "", icon: "FaDatabase", viewOrder: 1, navPath: "dvm" },
-      { name: "Access Roles", code: "ACCESS_ROLES", description: "", icon: "FaKey", viewOrder: 2, navPath: "access-roles" },
-      { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 3, navPath: "facilities" },
-      { name: "Departments", code: "DEPARTMENTS", description: "", icon: "FaHouseMedical", viewOrder: 4, navPath: "departments" },
-      { name: "Uom Group", code: "UOM_GROUP", description: "", icon: "FaBox", viewOrder: 7, navPath: "uom-group" },
-      { name: "Prescription Instructions", code: "PRESCRIPTION_INSTRUCTIONS", description: "", icon: "FaPrescriptionBottle", viewOrder: 15, navPath: "prescription-instructions" },
-      { name: "Age Group", code: "AGE_GROUP", description: "Age Group Setup", icon: "FaBaby", viewOrder: 10, navPath: "age-group" },
-      { name: "Practitioners", code: "PRACTITIONERS", description: "", icon: "FaBriefcaseMedical", viewOrder: 5, navPath: "practitioners" },
-      { name: "Active Ingredients", code: "ACTIVE_INGREDIENTS", description: "", icon: "FaPills", viewOrder: 7, navPath: "active-ingredients" },
-      { name: "Metadata", code: "METADATA", description: "", icon: "FaTags", viewOrder: 0, navPath: "metadata" },
-      { name: "Resources", code: "RESOURCES", description: "Resources setup", icon: "FaBilibili", viewOrder: 6, navPath: "resources" },
-      { name: "Dental Actions", code: "DENTAL_ACTIONS", description: "", icon: "FaTeeth", viewOrder: 9, navPath: "dental-actions" },
-      { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "users" },
-      { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },
-      { name: "Diagnostics Setup", code: "DIAGNOSTICS_SETUP", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "diagnostics-test" },
-      { name: "Vaccine Setup", code: "VACCINE_SETUP", description: "Vaccine", icon: "FaSyringe", viewOrder: 9, navPath: "vaccine-setup" },
-      { name: "Procedure Setup", code: "PROCEDURE_SETUP", description: "", icon: "FaProductHunt", viewOrder: 10, navPath: "procedure-setup" },
-      { name: "Room Bed Setup", code: "ROOM_BED_SETUP", description: "", icon: "FaBed", viewOrder: 16, navPath: "room" },
-      { name: "Medication Matrix Setup", code: "MEDICATION_MATRIX_SETUP", description: "", icon: "FaMendeley", viewOrder: 12, navPath: "med-matrix-setup" },
-      { name: "Services Setup", code: "SERVICES_SETUP", description: "", icon: "FaSprayCanSparkles", viewOrder: 11, navPath: "services-setup" },
-      { name: "Vaccine Schedule Setup", code: "VACCINE_SCHEDULE_SETUP", description: "define vaccine age time", icon: "FaSyringe", viewOrder: 8, navPath: "vaccines-schedule-setup" },
-      { name: "Checklists", code: "CHECKLISTS", description: "Cheklist", icon: "FaAdn", viewOrder: 5, navPath: "checklists" },
-      { name: "Operation Setup", code: "OPERATION_SETUP", description: "Major Operations", icon: "FaHeadSideMask", viewOrder: 10, navPath: "operation-setup" },
-      { name: "Purchase Approval", code: "PURCHASE_APPROVAL", description: "", icon: "FaBoxOpen", viewOrder: 10, navPath: "purchase-approvals-setup" },
-      { name: "Questionnaire Setup", code: "QUESTIONNAIRE_SETUP", description: "", icon: "FaClipboardQuestion", viewOrder: 5, navPath: "questionnaire-setup" },
-      { name: "Medication Schedule Setup", code: "MEDICATION_SCHEDULE_SETUP", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
-      { name: "Visit Duration", code: "VISIT_DURATION", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
-      { name: "Language setup", code: "LANGUAGE_SETUP", description: "", icon: "FaClock", viewOrder: 20, navPath: "language-setup" },
+        { name: "Allergens", code: "ALLERGENS", description: "Allergens setup", icon: "Fa500Px", viewOrder: 10, navPath: "allergens" },
+        { name: "Potential Duplicate", code: "POTENTIAL_DUPLICATE", description: "", icon: "FaInstalod", viewOrder: 15, navPath: "potintial-duplicate" },
+        { name: "Brand Medications", code: "BRAND_MEDICATIONS", description: "", icon: "FaBottleDroplet", viewOrder: 8, navPath: "brand-medications" },
+        { name: "Lists Of Value", code: "LISTS_OF_VALUE", description: "", icon: "FaList", viewOrder: 8, navPath: "lov-setup" },
+        { name: "Modules And Screens", code: "MODULES_AND_SCREENS", description: "", icon: "FaDesktop", viewOrder: 0, navPath: "modules-setup" },
+        { name: "Data Validation Manager", code: "DATA_VALIDATION_MANAGER", description: "", icon: "FaDatabase", viewOrder: 1, navPath: "dvm" },
+        { name: "Access Roles", code: "ACCESS_ROLES", description: "", icon: "FaKey", viewOrder: 2, navPath: "access-roles" },
+        { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 3, navPath: "facilities" },
+        { name: "Departments", code: "DEPARTMENTS", description: "", icon: "FaHouseMedical", viewOrder: 4, navPath: "departments" },
+        { name: "Uom Group", code: "UOM_GROUP", description: "", icon: "FaBox", viewOrder: 7, navPath: "uom-group" },
+        { name: "Prescription Instructions", code: "PRESCRIPTION_INSTRUCTIONS", description: "", icon: "FaPrescriptionBottle", viewOrder: 15, navPath: "prescription-instructions" },
+        { name: "Age Group", code: "AGE_GROUP", description: "Age Group Setup", icon: "FaBaby", viewOrder: 10, navPath: "age-group" },
+        { name: "Practitioners", code: "PRACTITIONERS", description: "", icon: "FaBriefcaseMedical", viewOrder: 5, navPath: "practitioners" },
+        { name: "Active Ingredients", code: "ACTIVE_INGREDIENTS", description: "", icon: "FaPills", viewOrder: 7, navPath: "active-ingredients" },
+        { name: "Metadata", code: "METADATA", description: "", icon: "FaTags", viewOrder: 0, navPath: "metadata" },
+        { name: "Resources", code: "RESOURCES", description: "Resources setup", icon: "FaBilibili", viewOrder: 6, navPath: "resources" },
+        { name: "Dental Actions", code: "DENTAL_ACTIONS", description: "", icon: "FaTeeth", viewOrder: 9, navPath: "dental-actions" },
+        { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "users" },
+        { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },
+        { name: "Diagnostics Setup", code: "DIAGNOSTICS_SETUP", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "diagnostics-test" },
+        { name: "Diagnostics Setup Old", code: "DIAGNOSTICS_SETUP_OLD", description: "Define Diagnostic tests (Lab, Rad, Path)", icon: "FaMicroscope", viewOrder: 13, navPath: "diagnostics-test-old" },
+        { name: "Vaccine Setup", code: "VACCINE_SETUP", description: "Vaccine", icon: "FaSyringe", viewOrder: 9, navPath: "vaccine-setup" },
+        { name: "Procedure Setup", code: "PROCEDURE_SETUP", description: "", icon: "FaProductHunt", viewOrder: 10, navPath: "procedure-setup" },
+        { name: "Room Bed Setup", code: "ROOM_BED_SETUP", description: "", icon: "FaBed", viewOrder: 16, navPath: "room" },
+        { name: "Medication Matrix Setup", code: "MEDICATION_MATRIX_SETUP", description: "", icon: "FaMendeley", viewOrder: 12, navPath: "med-matrix-setup" },
+        { name: "Services Setup", code: "SERVICES_SETUP", description: "", icon: "FaSprayCanSparkles", viewOrder: 11, navPath: "services-setup" },
+        { name: "Vaccine Schedule Setup", code: "VACCINE_SCHEDULE_SETUP", description: "define vaccine age time", icon: "FaSyringe", viewOrder: 8, navPath: "vaccines-schedule-setup" },
+        { name: "Checklists", code: "CHECKLISTS", description: "Cheklist", icon: "FaAdn", viewOrder: 5, navPath: "checklists" },
+        { name: "Operation Setup", code: "OPERATION_SETUP", description: "Major Operations", icon: "FaHeadSideMask", viewOrder: 10, navPath: "operation-setup" },
+        { name: "Purchase Approval", code: "PURCHASE_APPROVAL", description: "", icon: "FaBoxOpen", viewOrder: 10, navPath: "purchase-approvals-setup" },
+        { name: "Questionnaire Setup", code: "QUESTIONNAIRE_SETUP", description: "", icon: "FaClipboardQuestion", viewOrder: 5, navPath: "questionnaire-setup" },
+        { name: "Medication Schedule Setup", code: "MEDICATION_SCHEDULE_SETUP", description: "", icon: "FaPlay", viewOrder: 9, navPath: "medication-schedule" },
+        { name: "Visit Duration", code: "VISIT_DURATION", description: "", icon: "FaClock", viewOrder: 9, navPath: "visit-duration-setup" },
+        { name: "Language setup", code: "LANGUAGE_SETUP", description: "", icon: "FaClock", viewOrder: 20, navPath: "language-setup" },
 
-      { name: "Clinical Protocols Setup", code: "CLINICAL_PROTOCOLS_SETUP", description: "where to define clinical protocols dynamically", icon: "FaStethoscope", viewOrder: 1, navPath: "clincal-protocol-setup" },
-      { name: "Shift Setup", code: "SHIFT_SETUP", description: "", icon: "FaClock", viewOrder: 13, navPath: "shift-setup" },
-      { name: "Supplier Setup", code: "SUPPLIER_SETUP", description: "Supplier Setup", icon: "FaRedRiver", viewOrder: 15, navPath: "supplier-setup" },
-      { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
-      { name: "User New", code: "USER_NEW", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
-      { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
-      
+        { name: "Clinical Protocols Setup", code: "CLINICAL_PROTOCOLS_SETUP", description: "where to define clinical protocols dynamically", icon: "FaStethoscope", viewOrder: 1, navPath: "clincal-protocol-setup" },
+        { name: "Shift Setup", code: "SHIFT_SETUP", description: "", icon: "FaClock", viewOrder: 13, navPath: "shift-setup" },
+        { name: "Supplier Setup", code: "SUPPLIER_SETUP", description: "Supplier Setup", icon: "FaRedRiver", viewOrder: 15, navPath: "supplier-setup" },
+        { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
+        { name: "User New", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
+        { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
+        { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
 
-    ],
-  },
-  {name: "Coding Module",
-    description: "Coding Module",
-    icon: "FaCodepen",
-    viewOrder: 1,
-    screens: [
-      { name: "CPT",code:"CPT", description: "", icon: "FaMicroscope", viewOrder: 0, navPath: "cpt-setup" },
-      { name: "ICD 10", code: "ICD_10", description: "list of ICD-10 codes for diagnosis", icon: "FaStethoscope", viewOrder: 0, navPath: "icd10-setup" },
-      { name: "LOINC", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
-      { name: "CDT CODES", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
-      { name: "Enums", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "enums" },
-    ],
-  },
-  {name: "Front Desk Office",
-    description: null,
-    icon: "FaRegIdBadge",
-    viewOrder: 2,
-    screens: [
-  
-      { name: "Patient Registration", code: "PATIENT_REGISTRATION", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "patient-profile" },
-      { name: "Information Desk", code: "INFORMATION_DESK", description: "Search and view registered patients in specific facility", icon: "FaPersonRays", viewOrder: 0, navPath: "information-desk" },
-      { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },
+      ],
+    },
+    {
+      name: "Coding Module",
+      description: "Coding Module",
+      icon: "FaCodepen",
+      viewOrder: 1,
+      screens: [
+        { name: "CPT", code: "CPT", description: "", icon: "FaMicroscope", viewOrder: 0, navPath: "cpt-setup" },
+        { name: "ICD 10", code: "ICD_10", description: "list of ICD-10 codes for diagnosis", icon: "FaStethoscope", viewOrder: 0, navPath: "icd10-setup" },
+        { name: "LOINC", code: "LOINC", description: "", icon: "FaDebian", viewOrder: 0, navPath: "loinc-setup" },
+        { name: "CDT CODES", code: "CDT_CODES", description: "International dental procedures codes", icon: "FaTooth", viewOrder: 1, navPath: "cdt-setup" },
+        { name: "Enums", code: "SNOMED_CT", description: "", icon: "FaDigitalOcean", viewOrder: 0, navPath: "enums" },
+      ],
+    },
+    {
+      name: "Front Desk Office",
+      description: null,
+      icon: "FaRegIdBadge",
+      viewOrder: 2,
+      screens: [
 
-    ],
-  },
-  {name: "Scheduling",
-    description: "",
-    icon: "FaCalendarDay",
-    viewOrder: 3,
-    screens: [
-      {
-        name: "Scheduling Screen",
-        code:"SCHEDULING_SCREEN",
-        description: "",
-        icon: "FaCalendarDays",
-        viewOrder: 0,
-        navPath: "schedual-screen",
-      },
-    ],
-  },
-  {name: "Telemedicine",
-    description: "",
-    icon: "FaVideo",
-    viewOrder: 4,
-    screens: [{ name: "Tele Consultations Requests",
-      code:"TELE_CONSULTATIONS_REQUESTS",
-       description: "", 
-       icon: "FaVideo", 
-       viewOrder: 0, navPath: "tele-consultation-screen" }],
+        { name: "Patient Registration", code: "PATIENT_REGISTRATION", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "patient-profile" },
+        { name: "Information Desk", code: "INFORMATION_DESK", description: "Search and view registered patients in specific facility", icon: "FaPersonRays", viewOrder: 0, navPath: "information-desk" },
+        { name: "Files Merge", code: "FILES_MERGE", description: "", icon: "FaFolderTree", viewOrder: 3, navPath: "merge-patient-files" },
 
-  },
-  {name: "EMR Module",
-    description: null,
-    icon: "FaFileWaveform",
-    viewOrder: 4,
-    screens: [
-      { name: "Electronic Medical Records",
-        code:"ELECTRONIC_MEDICAL_RECORDS",
-         description: "",
-          icon: "FaFileWaveform", viewOrder: 2, navPath: "patient-EMR" },
-     
-    ],
-  },
-   {name: "Clinics Management",
-    description: null,
-    icon: "FaStethoscope",
-    viewOrder: 4,
-    screens: [
-     
-      { name: "Patients Visits List", 
-        code:"PATIENTS_VISITS_LIST",
-        description: "", icon: "FaList",
-         viewOrder: 1, navPath: "encounter-list" },
-      { name: "Review Results", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
-   
-    ],
-  },
-   {name: "Inpatient Care",
-    description: "",
-    icon: "FaBed",
-    viewOrder: 5,
-    screens: [
-      { name: "Inpatient List",
-        code:"INPATIENT_LIST",
-         description: "",
-          icon: "FaBedPulse", 
-          viewOrder: 1, navPath: "inpatient-encounters-list" },
-      { name: "Waiting List", code: "WAITING_LIST", description: "", icon: "FaClock", viewOrder: 0, navPath: "waiting-encounters-list" },
-      
-    ],
-  },
-  {name: "Day Case",
-    description: "",
-    icon: "FaPersonShelter",
-    viewOrder: 6,
-    screens: [{ name: "Day Case Patient List",
-      code:"DAY_CASE_PATIENT_LIST",
-       description: "", 
-       icon: "FaPersonWalkingArrowRight", viewOrder: 0, navPath: "day-case-list" }
-        
-    ],
-  },
-   {name: "Emergency",
-    description: "",
-    icon: "FaExplosion",
-    viewOrder: 6,
-    screens: [
-      { name: "Er Triage",
-        code:"ER_TRIAGE",
-         description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "ER-triage" },
-     
-      { name: "Er Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 3, navPath: "ER-department" },
-      { name: "Er Dashboard", code: "ER_DASHBOARD", description: "", icon: "FaChartBar", viewOrder: 0, navPath: "ER-dashboard" },
-     
-    ],
-  },
-    {name: "Procedures",
-    description: "",
-    icon: "FaSquareParking",
-    viewOrder: 7,
-    screens: [{ name: "Procedure Requests List",
-      code:"PROCEDURE_REQUESTS_LIST",
-       description: "",
-        icon: "FaClipboardUser", viewOrder: 0, navPath: "procedure-module" }],
-  },
-  {name: "Operation Theater",
-    description: "",
-    icon: "FaHeartPulse",
-    viewOrder: 8,
-    screens: [
-      { name: "Operation Requests", 
-        code:"OPERATION_REQUESTS",
+      ],
+    },
+    {
+      name: "Patient Old",
+      description: "Legacy patient screens",
+      icon: "FaUserClock",
+      viewOrder: 2,
+      screens: [
+        {
+          name: "Patient Registration (Old)",
+          code: "PATIENT_REGISTRATION_OLD",
+          description: "",
+          icon: "FaFilePen",
+          viewOrder: 0,
+          navPath: "patient-old/patient-profile"
+        },
+        {
+          name: "Facility Patient List (Old)",
+          code: "FACILITY_PATIENT_LIST_OLD",
+          description: "",
+          icon: "FaPersonRays",
+          viewOrder: 1,
+          navPath: "patient-old/facility-patient-list"
+        },
+        {
+          name: "Patient List (Old)",
+          code: "PATIENT_LIST_OLD",
+          description: "",
+          icon: "FaList",
+          viewOrder: 2,
+          navPath: "patient-old/patient-list"
+        },
+        {
+          name: "Patient Chart (Old)",
+          code: "PATIENT_CHART_OLD",
+          description: "",
+          icon: "FaChartLine",
+          viewOrder: 3,
+          navPath: "patient-old/patient-chart"
+        },
+        {
+          name: "Patient EMR (Old)",
+          code: "PATIENT_EMR_OLD",
+          description: "",
+          icon: "FaFileWaveform",
+          viewOrder: 4,
+          navPath: "patient-old/patient-emr"
+        },
+        {
+          name: "Merge Patient Files (Old)",
+          code: "MERGE_PATIENT_FILES_OLD",
+          description: "",
+          icon: "FaFolderTree",
+          viewOrder: 5,
+          navPath: "patient-old/patient-merge-files"
+        }
+      ]
+    },
+    {
+      name: "Scheduling",
+      description: "",
+      icon: "FaCalendarDay",
+      viewOrder: 3,
+      screens: [
+        {
+          name: "Scheduling Screen",
+          code: "SCHEDULING_SCREEN",
+          description: "",
+          icon: "FaCalendarDays",
+          viewOrder: 0,
+          navPath: "schedual-screen",
+        },
+      ],
+    },
+    {
+      name: "Telemedicine",
+      description: "",
+      icon: "FaVideo",
+      viewOrder: 4,
+      screens: [{
+        name: "Tele Consultations Requests",
+        code: "TELE_CONSULTATIONS_REQUESTS",
         description: "",
-         icon: "FaOutdent", viewOrder: 1, navPath: "operation-module" },
-      { name: "Recovery Room", code: "RECOVERY_ROOM", description: "", icon: "FaClover", viewOrder: 2, navPath: "recovery-module" },
-      { name: "Operation Room Materials", code: "OPERATION_ROOM_MATERIALS", description: "", icon: "FaSyringe", viewOrder: 0, navPath: "operation-room-materials" },
+        icon: "FaVideo",
+        viewOrder: 0, navPath: "tele-consultation-screen"
+      }],
 
-    ],
-  },
-  {name: "Laboratory",
-    description: "",
-    icon: "FaFlask",
-    viewOrder: 9,
-    screens: [{ name: "Clinical Laboratory",
-      code:"Clinical_Laboratory",
-       description: "", icon: "FaFlaskVial",
-        viewOrder: 0, navPath: "lab-module" }],
-  },
-  {name: "Radiology",
-    description: "",
-    icon: "FaXRay",
-    viewOrder: 10,
-    screens: [{ name: "Imaging Radiology",
-      code:"Imaging_Radiology",
-       description: "", 
-       icon: "FaSkull", viewOrder: 0, navPath: "rad-module" }],
-  },
-  {name: "Pharmacy",
-    description: "",
-    icon: "FaPrescriptionBottleMedical",
-    viewOrder: 11,
-    screens: [
-      { name: "Internal Drug Orders",
-        code:"Internal_Drug_Orders",
-         description: "", icon: "FaPills", viewOrder: 0, navPath: "pharmacy-internal-orders" },
-      { name: "ePrescriptions", code: "EPRESCRIPTIONS", description: "", icon: "FaPrescription", viewOrder: 1, navPath: "pharmacy-ePrescriptions" },
-      { name: "Controlled Medications", code: "CONTROLLED_MEDICATIONS", description: "", icon: "FaBiohazard", viewOrder: 2, navPath: "pharmacy-controlled-medications" },
-    ],
-  },
-  {name: "Inventory Management",
-    description: "",
-    icon: "FaBoxesPacking",
-    viewOrder: 12,
-    screens: [
-      {
-        name: "Inventory Transfer",
-        code:"INVENTORY_TRANSFER",
-        description: "",
-        icon: "FaTrowelBricks",
-        viewOrder: 1,
-        navPath: "inventory-transfer",
-      },
-      {
-        name: "Inventory Transactions", 
-        code: "INVENTORY_TRANSACTIONS",
-        description: "",
-        icon: "FaTentArrowLeftRight",
-        viewOrder: 0,
-        navPath: "inventory-transaction",
-      },
-      {
-        name: "Inventory Transfer Approval",
-        code: "INVENTORY_TRANSFER_APPROVAL",
-        icon: "FaBatteryHalf",
-        viewOrder: 2,
-        navPath: "inventory-transfer-approval",
-      },
-      { name: "Department Stock", 
-        code: "DEPARTMENT_STOCK",
-         description: "",
-          icon: "FaPills", 
-          viewOrder: 2, 
-          navPath: "department-stock" },
-      {
-        name: "Products Catalog", 
-        code: "PRODUCTS_CATALOG",
-        description: "",
-        icon: "FaBoxOpen",
-        viewOrder: 3,
-        navPath: "product-catalog",
-      },
-      {
-        name: "Warehouse Setup",
-         code: "WAREHOUSE_SETUP",
-        description: "",
-        icon: "FaBox",
-        viewOrder: 11,
-        navPath: "warehouse-setup",
-      },
-      {
-        name: "Warehouse Items Setup",
-        code: "WAREHOUSE_ITEMS_SETUP",
-        description: "",
-        icon: "FaBoxArchive",
-        viewOrder: 11,
-        navPath: "warehouse-items-setup",
-      },
-            { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-product-setup" },
+    },
+    {
+      name: "EMR Module",
+      description: null,
+      icon: "FaFileWaveform",
+      viewOrder: 4,
+      screens: [
+        {
+          name: "Electronic Medical Records",
+          code: "ELECTRONIC_MEDICAL_RECORDS",
+          description: "",
+          icon: "FaFileWaveform", viewOrder: 2, navPath: "patient-EMR"
+        },
 
-      
-    ],
-  },
-  {name: "Billing & Finance",
-    description: "",
-    icon: "FaMoneyBill1",
-    viewOrder: 12,
-    screens: [
-      {
-        name: "Ledger Account",
-        code:"LEDGER_ACCOUNT",
-        description: "",
-        icon: "FaMobileRetro",
-        viewOrder: 1,
-        navPath: "",
-      },
-      {
-        name: "Price Lists", 
-        code: "PRICE_LISTS",
-        description: "",
-        icon: "FaMoneyBill",
-        viewOrder: 0,
-        navPath: "progress-notes",
-      },
-    ],
-  },
-  {name: "Purchasing",
-    description: "",
-    icon: "FaMobileRetro",
-    viewOrder: 13,
-    screens: [
-      { name: "Supplier Management",code:"Supplier_Management", description: "", icon: "FaBriefcase", viewOrder: 3, navPath: "" },
-      { name: "Quotation Management", code: "QUOTATION_MANAGEMENT", description: "", icon: "FaPenClip", viewOrder: 4, navPath: "" },
-      { name: "Payment Tracking", code: "PAYMENT_TRACKING", description: "", icon: "FaCoins", viewOrder: 7, navPath: "" },
-      { name: "List of Requisition", code: "LIST_OF_REQUISITION", description: "", icon: "FaMoneyBills", viewOrder: 5, navPath: "list-of-requisition" },
-      { name: "Purchase Return", code: "PURCHASE_RETURN", description: "", icon: "FaArrowLeft", viewOrder: 8, navPath: "" },
-      { name: "Purchase Requisition", code: "PURCHASE_REQUISITION", description: "", icon: "FaRegPaperPlane", viewOrder: 0, navPath: "purchasing-requisition" },
-      { name: "Requisition Approval", code: "REQUISITION_APPROVAL", description: "", icon: "FaRegThumbsUp", viewOrder: 1, navPath: "" },
-      { name: "Purchase Orders", code: "PURCHASE_ORDERS", description: "", icon: "FaCubes", viewOrder: 2, navPath: "" },
-      { name: "Goods Receipt Note", code: "GOODS_RECEIPT_NOTE", description: "", icon: "FaBoxTissue", viewOrder: 6, navPath: "reset-password" },
+      ],
+    },
+    {
+      name: "Clinics Management",
+      description: null,
+      icon: "FaStethoscope",
+      viewOrder: 4,
+      screens: [
 
-    ],
-  },
- 
- 
+        {
+          name: "Patients Visits List",
+          code: "PATIENTS_VISITS_LIST",
+          description: "", icon: "FaList",
+          viewOrder: 1, navPath: "encounter-list"
+        },
+        { name: "Review Results", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
 
- 
-  
-  
-];
+      ],
+    },
+    {
+      name: "Inpatient Care",
+      description: "",
+      icon: "FaBed",
+      viewOrder: 5,
+      screens: [
+        {
+          name: "Inpatient List",
+          code: "INPATIENT_LIST",
+          description: "",
+          icon: "FaBedPulse",
+          viewOrder: 1, navPath: "inpatient-encounters-list"
+        },
+        { name: "Waiting List", code: "WAITING_LIST", description: "", icon: "FaClock", viewOrder: 0, navPath: "waiting-encounters-list" },
+
+      ],
+    },
+    {
+      name: "Day Case",
+      description: "",
+      icon: "FaPersonShelter",
+      viewOrder: 6,
+      screens: [{
+        name: "Day Case Patient List",
+        code: "DAY_CASE_PATIENT_LIST",
+        description: "",
+        icon: "FaPersonWalkingArrowRight", viewOrder: 0, navPath: "day-case-list"
+      }
+
+      ],
+    },
+    {
+      name: "Emergency",
+      description: "",
+      icon: "FaExplosion",
+      viewOrder: 6,
+      screens: [
+        {
+          name: "ER Triage",
+          code: "ER_TRIAGE",
+          description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "ER-triage"
+        },
+
+        { name: "Er Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 3, navPath: "ER-department" },
+        { name: "Er Dashboard", code: "ER_DASHBOARD", description: "", icon: "FaChartBar", viewOrder: 0, navPath: "ER-dashboard" },
+
+      ],
+    },
+    {
+      name: "Procedures",
+      description: "",
+      icon: "FaSquareParking",
+      viewOrder: 7,
+      screens: [{
+        name: "Procedure Requests List",
+        code: "PROCEDURE_REQUESTS_LIST",
+        description: "",
+        icon: "FaClipboardUser", viewOrder: 0, navPath: "procedure-module"
+      }],
+    },
+    {
+      name: "Operation Theater",
+      description: "",
+      icon: "FaHeartPulse",
+      viewOrder: 8,
+      screens: [
+        {
+          name: "Operation Requests",
+          code: "OPERATION_REQUESTS",
+          description: "",
+          icon: "FaOutdent", viewOrder: 1, navPath: "operation-module"
+        },
+        { name: "Recovery Room", code: "RECOVERY_ROOM", description: "", icon: "FaClover", viewOrder: 2, navPath: "recovery-module" },
+        { name: "Operation Room Materials", code: "OPERATION_ROOM_MATERIALS", description: "", icon: "FaSyringe", viewOrder: 0, navPath: "operation-room-materials" },
+
+      ],
+    },
+    {
+      name: "Laboratory",
+      description: "",
+      icon: "FaFlask",
+      viewOrder: 9,
+      screens: [{
+        name: "Clinical Laboratory",
+        code: "CLINICAL_LABORATORY",
+        description: "", icon: "FaFlaskVial",
+        viewOrder: 0, navPath: "lab-module"
+      }],
+    },
+    {
+      name: "Radiology",
+      description: "",
+      icon: "FaXRay",
+      viewOrder: 10,
+      screens: [{
+        name: "Imaging Radiology",
+        code: "IMAGING_RADIOLOGY",
+        description: "",
+        icon: "FaSkull", viewOrder: 0, navPath: "rad-module"
+      }],
+    },
+    {
+      name: "Pharmacy",
+      description: "",
+      icon: "FaPrescriptionBottleMedical",
+      viewOrder: 11,
+      screens: [
+        {
+          name: "Internal Drug Orders",
+          code: "INTERNAL_DRUG_ORDERS",
+          description: "", icon: "FaPills", viewOrder: 0, navPath: "pharmacy-internal-orders"
+        },
+        { name: "ePrescriptions", code: "EPRESCRIPTIONS", description: "", icon: "FaPrescription", viewOrder: 1, navPath: "pharmacy-ePrescriptions" },
+        { name: "Controlled Medications", code: "CONTROLLED_MEDICATIONS", description: "", icon: "FaBiohazard", viewOrder: 2, navPath: "pharmacy-controlled-medications" },
+      ],
+    },
+    {
+      name: "Inventory Management",
+      description: "",
+      icon: "FaBoxesPacking",
+      viewOrder: 12,
+      screens: [
+        {
+          name: "Inventory Transfer",
+          code: "INVENTORY_TRANSFER",
+          description: "",
+          icon: "FaTrowelBricks",
+          viewOrder: 1,
+          navPath: "inventory-transfer",
+        },
+        {
+          name: "Inventory Transactions",
+          code: "INVENTORY_TRANSACTIONS",
+          description: "",
+          icon: "FaTentArrowLeftRight",
+          viewOrder: 0,
+          navPath: "inventory-transaction",
+        },
+        {
+          name: "Inventory Transfer Approval",
+          code: "INVENTORY_TRANSFER_APPROVAL",
+          icon: "FaBatteryHalf",
+          viewOrder: 2,
+          navPath: "inventory-transfer-approval",
+        },
+        {
+          name: "Department Stock",
+          code: "DEPARTMENT_STOCK",
+          description: "",
+          icon: "FaPills",
+          viewOrder: 2,
+          navPath: "department-stock"
+        },
+        {
+          name: "Products Catalog",
+          code: "PRODUCTS_CATALOG",
+          description: "",
+          icon: "FaBoxOpen",
+          viewOrder: 3,
+          navPath: "product-catalog",
+        },
+        {
+          name: "Warehouse Setup",
+          code: "WAREHOUSE_SETUP",
+          description: "",
+          icon: "FaBox",
+          viewOrder: 11,
+          navPath: "warehouse-setup",
+        },
+        {
+          name: "Warehouse Items Setup",
+          code: "WAREHOUSE_ITEMS_SETUP",
+          description: "",
+          icon: "FaBoxArchive",
+          viewOrder: 11,
+          navPath: "warehouse-items-setup",
+        },
+        { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-management-product-setup" },
+
+
+      ],
+    },
+    {
+      name: "Inventory Management New",
+      description: "",
+      icon: "FaBoxesPacking",
+      viewOrder: 12,
+      screens: [
+        {
+          name: "Inventory Transfer",
+          code: "INVENTORY_TRANSFER",
+          description: "",
+          icon: "FaTrowelBricks",
+          viewOrder: 1,
+          navPath: "inventory-management-transfer",
+        },
+        {
+          name: "Inventory Transactions",
+          code: "INVENTORY_TRANSACTIONS",
+          description: "",
+          icon: "FaTentArrowLeftRight",
+          viewOrder: 0,
+          navPath: "inventory-management-transaction",
+        },
+        {
+          name: "Inventory Transfer Approval",
+          code: "INVENTORY_TRANSFER_APPROVAL",
+          icon: "FaBatteryHalf",
+          viewOrder: 2,
+          navPath: "inventory-management-transfer-approval",
+        },
+        {
+          name: "Department Stock",
+          code: "DEPARTMENT_STOCK",
+          description: "",
+          icon: "FaPills",
+          viewOrder: 2,
+          navPath: "inventory-management-department-stock"
+        },
+        {
+          name: "Products Catalog",
+          code: "PRODUCTS_CATALOG",
+          description: "",
+          icon: "FaBoxOpen",
+          viewOrder: 3,
+          navPath: "inventory-management-product-catalog",
+        },
+        {
+          name: "Warehouse Setup",
+          code: "WAREHOUSE_SETUP",
+          description: "",
+          icon: "FaBox",
+          viewOrder: 11,
+          navPath: "inventory-management-warehouse-setup",
+        },
+        {
+          name: "Warehouse Items Setup",
+          code: "WAREHOUSE_ITEMS_SETUP",
+          description: "",
+          icon: "FaBoxArchive",
+          viewOrder: 11,
+          navPath: "inventory-management-warehouse-items-setup",
+        },
+        { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-product-setup" },
+
+
+      ],
+    },
+    {
+      name: "Billing & Finance",
+      description: "",
+      icon: "FaMoneyBill1",
+      viewOrder: 12,
+      screens: [
+        {
+          name: "Ledger Account",
+          code: "LEDGER_ACCOUNT",
+          description: "",
+          icon: "FaMobileRetro",
+          viewOrder: 1,
+          navPath: "billing-accounting",
+        },
+        {
+          name: "Price Lists",
+          code: "PRICE_LISTS",
+          description: "",
+          icon: "FaMoneyBill",
+          viewOrder: 0,
+          navPath: "progress-notes",
+        },
+      ],
+    },
+    {
+      name: "Purchasing",
+      description: "",
+      icon: "FaMobileRetro",
+      viewOrder: 13,
+      screens: [
+        { name: "Supplier Management", code: "SUPPLIER_MANAGEMENT", description: "", icon: "FaBriefcase", viewOrder: 3, navPath: "" },
+        { name: "Quotation Management", code: "QUOTATION_MANAGEMENT", description: "", icon: "FaPenClip", viewOrder: 4, navPath: "" },
+        { name: "Payment Tracking", code: "PAYMENT_TRACKING", description: "", icon: "FaCoins", viewOrder: 7, navPath: "" },
+        { name: "List of Requisition", code: "LIST_OF_REQUISITION", description: "", icon: "FaMoneyBills", viewOrder: 5, navPath: "list-of-requisition" },
+        { name: "Purchase Return", code: "PURCHASE_RETURN", description: "", icon: "FaArrowLeft", viewOrder: 8, navPath: "" },
+        { name: "Purchase Requisition", code: "PURCHASE_REQUISITION", description: "", icon: "FaRegPaperPlane", viewOrder: 0, navPath: "purchasing-requisition" },
+        { name: "Requisition Approval", code: "REQUISITION_APPROVAL", description: "", icon: "FaRegThumbsUp", viewOrder: 1, navPath: "" },
+        { name: "Purchase Orders", code: "PURCHASE_ORDERS", description: "", icon: "FaCubes", viewOrder: 2, navPath: "" },
+        { name: "Goods Receipt Note", code: "GOODS_RECEIPT_NOTE", description: "", icon: "FaBoxTissue", viewOrder: 6, navPath: "reset-password" },
+
+      ],
+    },
+
+
+
+
+
+
+  ];
