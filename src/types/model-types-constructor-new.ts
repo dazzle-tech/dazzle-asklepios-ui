@@ -699,3 +699,24 @@ export const  newPatientHIPAA:modelTypes.PatientHIPAA= {
   noticeOfPrivacyPracticeDate:  null,
   privacyAuthorizationDate: null,
 }
+export const newPatientRelation:modelTypes.PatientRelation= {
+  id: undefined,
+  patientId: undefined,
+  relatedPatientId: undefined,
+  relationType: '',
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: '',
+  lastModifiedDate: null
+}
+
+/**
+ * relations_matrix response
+ */
+export const newRelationsMatrix:modelTypes.RelationsMatrix= {
+  id: undefined,
+  firstPatientGender: '',
+  secondPatientGender: '',
+  firstRelationCode: '',
+  secondRelationCode: ''
+}

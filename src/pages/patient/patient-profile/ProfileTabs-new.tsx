@@ -12,7 +12,7 @@ import PatientAttachment from './tabs/Attachment-new/PatientAttachment';
 import DemographicsTab from './tabs/DemographicsTab';
 import SecondaryIDTab from './tabs/ExtraDetails/SecondaryIDTab';
 import ExtraDetailsTab from './tabs/ExtraDetailsTab';
-import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
+import PatientFamilyMembers from './tabs/FamilyMember-new/PatientFamilyMembers';
 import InsuranceTab from './tabs/InsuranceTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';

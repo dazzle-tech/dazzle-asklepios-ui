@@ -77,7 +77,8 @@ import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
 import { vaccineService } from './services/vaccine/vaccineService';
 import callReducer from './store/callSlice';
 import {hipaaService } from '@/services/patients/hipaaService';
-
+import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
+import { PatientRelationService } from './services/patients/PatientRelationService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -230,7 +231,9 @@ export const store = configureStore({
 
     //
     [addressService.reducerPath]: addressService.reducer,
-    [hipaaService.reducerPath]: hipaaService.reducer
+    [hipaaService.reducerPath]: hipaaService.reducer,
+    [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
+    [PatientRelationService.reducerPath]: PatientRelationService.reducer
 
   },
   // @ts-ignore
@@ -308,7 +311,9 @@ export const store = configureStore({
       BrandMedicationActiveIngredientService.middleware,
       newPatientService.middleware,
       addressService.middleware,
-      hipaaService.middleware
+      hipaaService.middleware,
+      RelationsMatrixService.middleware,
+      PatientRelationService.middleware,
     ])
 });
 

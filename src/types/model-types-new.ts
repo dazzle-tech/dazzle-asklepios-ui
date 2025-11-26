@@ -831,3 +831,21 @@ export interface PatientHIPAA {
   noticeOfPrivacyPracticeDate: string | null;
   privacyAuthorizationDate: string | null;
 }
+export interface PatientRelation {
+  patientId: number;
+  relativePatientId: number;
+  relationType: string;
+  categoryType?: string | null;
+  isActive?: boolean;
+}
+
+/**
+ * relations_matrix response
+ */
+export interface RelationsMatrix {
+  id: number;
+  firstPatientGender: string | null;
+  secondPatientGender: string | null;
+  firstRelationCode: string;
+  secondRelationCode: string;
+}
