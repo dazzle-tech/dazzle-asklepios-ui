@@ -89,11 +89,14 @@ const ProductSetup = () => {
 
 const cleanFilter: any = Object.fromEntries(
   Object.entries(filter).filter(([key, value]) => {
+
+    if (key === "uomGroupId") return false;
+
     if (value === "" || value === null) return false;
-    if (key === "uomGroupId" && value === 0) return false;
     return true;
   })
 );
+
 
 
  let productQuery;
@@ -106,7 +109,6 @@ if (
   cleanFilter.dispenseUom ||
   cleanFilter.erpIntegrationId
 ) {
-  // 🔍 Advanced Search
   productQuery = useSearchInventoryProductsQuery({
     criteria: cleanFilter,
     ...paginationParams,
@@ -136,21 +138,15 @@ else if (cleanFilter.inventoryType) {
 
 else if (cleanFilter.baseUom) {
   productQuery = useGetInventoryProductByBaseUomQuery({
-    baseUom: String(cleanFilter.baseUom),
+    baseUom: cleanFilter.baseUom,
     ...paginationParams
   });
 }
 
+
 else {
   productQuery = useGetInventoryProductsQuery(paginationParams);
 }
-
-
-
-
-
-
-
   const {
     data: productListResponse,
     isFetching
@@ -434,7 +430,6 @@ else {
       return;
     }
 
-    // رقم
     if (!isNaN(value) && value !== "" && value !== null) {
       value = Number(value);
     }
@@ -596,7 +591,25 @@ else {
 
       </Form>
 
-      <AdvancedSearchFilters searchFilter={true} content={contents} />
+        <AdvancedSearchFilters
+            searchFilter={true}
+            content={contents}
+            clearOnClick={() => {
+                setFilter({
+                    name: "",
+                    inventoryType: "",
+                    code: "",
+                    barcodeOrQrCode: "",
+                    warrantyStartDate: null,
+                    warrantyEndDate: null,
+                    type: "",
+                    uomGroupId: 0,
+                    baseUom: null,
+                    dispenseUom: null,
+                    erpIntegrationId: ""
+                });
+            }}
+        />
     </>
   );
 
