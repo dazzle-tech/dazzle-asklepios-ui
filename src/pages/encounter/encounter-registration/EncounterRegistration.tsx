@@ -821,7 +821,7 @@ const EncounterRegistration = () => {
                     width={130}
                     column
                     disabled={true}
-                    fieldLabel="Sex at Birth"
+                    fieldLabel="Gender"
                     fieldName={patientSlice.patient.genderLvalue ? 'lovDisplayVale' : 'genderLkey'}
                     record={
                       patientSlice.patient.genderLvalue

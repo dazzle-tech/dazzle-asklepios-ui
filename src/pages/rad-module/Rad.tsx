@@ -278,42 +278,6 @@ const Rad = () => {
         width={'20vw'}
       />
     </div>
-      <div className="count-div-on-top-of-page">
-        <DetailsCard
-          title="Result Ready"
-          number={2}
-          icon={faCircleCheck}
-          color="--green-600"
-          backgroundClassName="result-ready-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="Patient Arrived"
-          number={2}
-          icon={faClock}
-          color="--primary-yellow"
-          backgroundClassName="sample-collected-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="New"
-          number={2}
-          icon={faRectangleList}
-          color="--primary-blue"
-          backgroundClassName="new-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="Total Test"
-          number={2}
-          icon={faTriangleExclamation}
-          color="--gray-dark"
-          backgroundClassName="total-test-section"
-          width={'20vw'}
-        />
-      </div>
-
-
       <div className="container">
         <div className="left-boxs">
           <Row>

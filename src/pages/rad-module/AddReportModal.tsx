@@ -29,7 +29,8 @@ const AddReportModal = ({
   test,
   setTest,
   resultFetch,
-  attachmentRefetch
+  attachmentRefetch,
+  disableEdit
 }) => {
   const dispatch = useAppDispatch();
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
@@ -97,7 +98,8 @@ const AddReportModal = ({
       open={open}
       setOpen={setOpen}
       steps={[{ title: 'Report', icon: <FontAwesomeIcon icon={faFileLines} /> }]}
-      actionButtonFunction={handleSave}
+      actionButtonFunction={disableEdit?()=>{}:handleSave}
+      isDisabledActionBtn={disableEdit?true:false}
       size="40vw"
       bodyheight="65vh"
       content={

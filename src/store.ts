@@ -73,6 +73,7 @@ import { MedicationCategoriesClassService } from '@/services/setup/medication-ca
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
 import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
 import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import {diagnosticTestCodingService} from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
 import {BrandMedicationService} from './services/setup/brandmedication/BrandMedicationService ';
 import {BrandMedicationSubstituteService} from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
@@ -83,6 +84,15 @@ import activeIngredientAdverseEffectService from './services/setup/activeIngredi
 import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
 import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
 import { inventoryProductsService } from './services/inventory/inventory-products/inventoryProductsService';
+import { countryService } from './services/setup/country/countryService';
+import { countryDistrictService } from './services/setup/country/countryDistrictService';
+import { districtCommunityService } from './services/setup/country/districtCommunityService';
+import { communityAreaService } from './services/setup/country/communityAreaService';
+import { dischargePService } from './services/setup/dischargeService';
+import { resultReportApi } from './services/setup/resultReportApi';
+import { invoiceReportApi } from './services/setup/invoiceReportApi';
+import { visitDurationService } from './services/setup/visitDurationService';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -231,18 +241,37 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
+
+    [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     //vaccine
     [vaccineService.reducerPath]: vaccineService.reducer,
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
     [vaccineDosesService.reducerPath]: vaccineDosesService.reducer,
     [vaccineDosesIntervalService.reducerPath]: vaccineDosesIntervalService.reducer,
+
     [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
-    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     [BrandMedicationActiveIngredientService.reducerPath]: BrandMedicationActiveIngredientService.reducer,
     [activeIngredientDrugInteractionService.reducerPath]: activeIngredientDrugInteractionService.reducer,
     [activeIngredientFoodInteractionService.reducerPath]: activeIngredientFoodInteractionService.reducer,
 
+    // country
+    [countryService.reducerPath]: countryService.reducer,
+    [countryDistrictService.reducerPath]: countryDistrictService.reducer,
+    [districtCommunityService.reducerPath]: districtCommunityService.reducer,
+    [communityAreaService.reducerPath]: communityAreaService.reducer, 
+  
+    // discharge
+    [dischargePService.reducerPath]: dischargePService.reducer,
+
+    // result report
+    [resultReportApi.reducerPath]: resultReportApi.reducer,
+
+    // invoice report
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
+   // Visit Duration
+    [visitDurationService.reducerPath]: visitDurationService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -313,6 +342,8 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      diagnosticTestCodingService.middleware,
+      CdtDentalActionService.middleware,
       vaccineService.middleware,
       vaccineBrandsService.middleware,
       vaccineDosesService.middleware,
@@ -325,7 +356,15 @@ export const store = configureStore({
       CdtDentalActionService.middleware,
       uomGroupService.middleware,
       activeIngredientDrugInteractionService.middleware,
-      activeIngredientFoodInteractionService.middleware
+      activeIngredientFoodInteractionService.middleware,
+      countryService.middleware,
+      countryDistrictService.middleware,
+      districtCommunityService.middleware,
+      communityAreaService.middleware,
+      dischargePService.middleware,
+      resultReportApi.middleware,
+      invoiceReportApi.middleware,
+      visitDurationService.middleware,
     ])
 });
 
