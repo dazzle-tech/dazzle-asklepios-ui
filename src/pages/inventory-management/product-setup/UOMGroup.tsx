@@ -1,115 +1,116 @@
-import React, { useEffect, useState } from 'react';
-import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
-import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery, useGetUomGroupsUnitsQuery } from '@/services/setupService';
-import MyButton from '@/components/MyButton/MyButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxesPacking } from '@fortawesome/free-solid-svg-icons';
-const UomGroup = ({ product, setProduct, disabled}) => {
+import React, { useEffect, useState } from "react";
+import { Form } from "rsuite";
+import MyInput from "@/components/MyInput";
+import {
+  useGetAllUOMGroupsQuery,
+  useGetAllUnitsByGroupIdQuery
+} from "@/services/setup/uom-group/uomGroupService";
+import MyButton from "@/components/MyButton/MyButton";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBoxesPacking } from "@fortawesome/free-solid-svg-icons";
+import './styles.less';
+import UomConversionModal from "./UomConversionModal";
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
-    const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
-    const [listRequest, setListRequest] = useState<ListRequest>({ 
-        ...initialListRequest 
+const UomGroup = ({ product, setProduct, disabled }) => {
 
-    });
-    const {
-        data: uomGroupsListResponse,
-        refetch: refetchUomGroups,
-        isFetching
-    } = useGetUomGroupsQuery(listRequest);
-    const [unitListRequest, setUnitListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
+  const [openFullModal, setOpenFullModal] = useState(false);
+  const [selectedUom, setSelectedUom] = useState({});
+  const dispatch = useAppDispatch();
+
+
+
+const { data: uomGroupsListResponse } = useGetAllUOMGroupsQuery({
+  page: 0,
+  size: 200,
+  sort: "id,asc",
+  name: ""
+});
+
+
+
+  const { data: uomUnitsResponse } = useGetAllUnitsByGroupIdQuery(
+    product?.uomGroupId ?? 0,
+    { skip: !product?.uomGroupId }
+  );
+
+
+  return (
+    <>
+      <Form fluid>
+<div className="flex-row-product-set-up-page">
+        <MyInput
+          fieldLabel="UOM Group"
+          fieldName="uomGroupId"
+          fieldType="select"
+          selectData={uomGroupsListResponse?.data ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={product}
+          setRecord={setProduct}
+          disabled={disabled}
+          searchable
+          width={200}
+        />
+
+        <MyInput
+        fieldLabel="Base UOM"
+        fieldName="baseUom"
+        fieldType="select"
+        selectData={uomUnitsResponse ?? []}
+        selectDataLabel="uom"
+        selectDataValue="id"
+        record={{
+            ...product,
+            baseUom: product?.baseUom ? Number(product.baseUom) : null,
+        }}
+        setRecord={setProduct}
+        disabled={disabled || !product?.uomGroupId}
+        required
+        width={200}
+        />
+</div>
+      </Form>
+
+      <Form fluid>
+    <div className="dispense-uom-and-button">
+        <MyInput
+        fieldLabel="Dispense UOM"
+        fieldName="dispenseUom"
+        fieldType="select"
+        selectData={uomUnitsResponse ?? []}
+        selectDataLabel="uom"
+        selectDataValue="id"
+        record={{
+            ...product,
+            dispenseUom: product?.dispenseUom ? Number(product.dispenseUom) : null,
+        }}
+        setRecord={setProduct}
+        disabled={disabled || !product?.uomGroupId}
+        width={300}
+        />
+    <div className="boxing-packaging-uom-button">
+      <MyButton
+        prefixIcon={() => <FontAwesomeIcon icon={faBoxesPacking} />}
+        color="var(--deep-blue)"
+        onClick={() => {
+          if (!product?.uomGroupId) {
+            dispatch(notify({ msg: "Please select a UOM Group first", sev: "error" }));
+            return;
           }
-          ,
-          {
-            fieldName: 'uom_group_key',
-            operator: 'match',
-            value: product?.uomGroupKey
+          setSelectedUom({ id: product?.uomGroupId });
+          setOpenFullModal(true);
+        }}
+        width="50px"
+      />
+      </div>    </div>
+      </Form>
 
-          }
-        ]
-      });
-          useEffect(() => {
-            setUnitListRequest(
-                  {
-                      ...initialListRequest,
-                      filters: [
-                          {
-                              fieldName: 'deleted_at',
-                              operator: 'isNull',
-                              value: undefined
-                          },
-                          {
-                            fieldName: 'uom_group_key',
-                            operator: 'match',
-                            value: product?.uomGroupKey
-                          }
+    <UomConversionModal open={openFullModal} setOpen={setOpenFullModal} uom={selectedUom} />
 
-                      ],
-                  }
-              );
-          }, [product?.uomGroupKey]);
-
-              const {
-        data: uomGroupsUnitsListResponse,
-        refetch: refetchUomGroupsUnit,
-    } = useGetUomGroupsUnitsQuery(unitListRequest);
-    return (
-        <>
-            <Form fluid layout="inline">
-                <MyInput
-                    fieldLabel="UOM Group"
-                    fieldName="uomGroupKey"
-                    fieldType="select"
-                    selectData={uomGroupsListResponse?.object ?? []}
-                    selectDataLabel="name"
-                    selectDataValue="key"
-                    record={product}
-                    setRecord={setProduct}
-                    searchable={true}
-                    disabled={disabled}
-                />
-                <MyInput
-                    fieldLabel="Base UOM"
-                    fieldName="baseUomKey"
-                    fieldType="select"
-                    selectData={uomGroupsUnitsListResponse?.object ?? []}
-                    selectDataLabel="units"
-                    selectDataValue="key"
-                    record={product}
-                    setRecord={setProduct}
-                    searchable={false}
-                    disabled={disabled}
-                />
-                <MyInput
-                    fieldLabel="Dispense UOM"
-                    fieldName="dispenseUomKey"
-                    fieldType="select"
-                    selectData={uomGroupsUnitsListResponse?.object ?? []}
-                    selectDataLabel="units"
-                    selectDataValue="key"
-                    record={product}
-                    setRecord={setProduct}
-                    searchable={false}
-                    disabled={disabled}
-                />
-                <MyButton
-                    prefixIcon={() => <FontAwesomeIcon icon={faBoxesPacking} />}
-                    color="var(--deep-blue)"
-                    //   onClick={handleUomGroupNew}
-                    width="109px"
-                >
-                </MyButton>
-            </Form>
-        </>
-    )
+    </>
+  );
 };
 
 export default UomGroup;

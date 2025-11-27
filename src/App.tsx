@@ -155,7 +155,7 @@ import Checklist from './pages/setup/operations/checklist';
 import Practitioners from './pages/setup/practioners-setup-new';
 import PotintialDuplicate from './pages/setup/potential-duplicate - new';
 import ProcedureSetup from './pages/setup/procedure-setup';
-import ProductSetup from './pages/setup/product-setup';
+import ProductSetup from './pages/inventory-management/product-setup/ProductSetup';
 import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
 import ReportResultTemplate from './pages/setup/report-result-template';
 import ServiceSetup from './pages/setup/service-setup';
@@ -495,8 +495,8 @@ const App = () => {
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
-              <Route path="inventory-product-setup" element={<ProductSetup />} />
-              <Route path="inventory-product-setup" element={<ProductSetup />} />
+              {/* <Route path="inventory-product-setup" element={<ProductSetup />} /> */}
+              {/* <Route path="inventory-product-setup" element={<ProductSetup />} /> */}
               <Route path="warehouse-setup" element={<WarehouseSetup />} />
               <Route path="warehouse-items-setup" element={<WarehouseItemsSetup />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />

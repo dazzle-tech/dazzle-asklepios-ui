@@ -1,37 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
-import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
-const FinancCostInfo = ({ product, setProduct, disabled}) => {
+
+const FinancCostInfo = ({ product, setProduct, disabled, facilityCurrency }) => {
 
 
-    return (
-        <>
-            <Form fluid layout="inline">
+console.log("💰 facilityCurrency inside Financial Tab:", facilityCurrency);
+console.log("💵 product.currency inside Financial Tab:", product.currency);
 
-                <MyInput
-                    fieldLabel="Item Average Cost"
-                    fieldName="avgCost"
-                    fieldType="number"
-                    record={product}
-                    setRecord={setProduct}
-                    disabled={disabled}
-                />
 
-                <MyInput
-                    fieldLabel="Price per Base UOM"
-                    fieldName="priceBaseUom"
-                    fieldType="number"
-                    record={product}
-                    setRecord={setProduct}
-                    disabled={disabled}
-                />
+  useEffect(() => {
+    if (facilityCurrency && !product.currency) {
+      setProduct(prev => ({ ...prev, currency: facilityCurrency }));
+    }
+  }, [facilityCurrency]);
 
-            </Form>
-        </>
-    )
+  return (
+    <Form fluid>
+      <div className='financ-cost-main-input-container'>
+
+        <MyInput
+          fieldLabel="Currency"
+          fieldName="currency"
+          fieldType="text"
+          record={product}
+          setRecord={setProduct}
+          disabled={true}
+          width={150}
+        />
+
+        <MyInput
+          fieldLabel="Price per Base UOM"
+          fieldName="pricePerBaseUom"
+          fieldType="number"
+          record={product}
+          setRecord={setProduct}
+          disabled={disabled}
+        />
+
+      </div>
+    </Form>
+  );
 };
+
+
 
 export default FinancCostInfo;

@@ -1,34 +1,22 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Panel, Tabs } from 'rsuite';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetProductQuery,
-  useGetUomGroupsUnitsQuery,
-  useRemoveProductMutation,
-  useSaveProductMutation
-} from '@/services/setupService';
+import { Form, Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { ApProducts } from '@/types/model-types';
-import { newApProducts } from '@/types/model-types-constructor';
 import { MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
-import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
-import MyTable from '@/components/MyTable';
 import { notify } from '@/utils/uiReducerActions';
+import MyTable from '@/components/MyTable';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
 import AddEditProduct from './AddEditProduct';
-import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds } from '@/utils';
+import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { Box } from '@mui/material';
-import { Tab, TabList, TabPanel } from 'react-tabs';
-import ChartTab from '@/pages/encounter/dental-screen/tabs/DentalChartTab';
+import MyTab from '@/components/MyTab';
 import BasicInf from './BasicInf';
 import MaintenanceInformation from './MaintenanceInformation';
 import UomGroup from './UOMGroup';
@@ -36,151 +24,204 @@ import InventoryAttributes from './InventoryAttributes';
 import RegulSafty from './RegulSafty';
 import FinancCostInfo from './FinancCostInfo';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import MyTab from '@/components/MyTab';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { InventoryProduct } from '@/types/model-types-new';
+import { newInventoryProduct } from '@/types/model-types-constructor-new';
+import {
+  useGetInventoryProductByBaseUomQuery,
+  useGetInventoryProductByInventoryTypeQuery,
+  useGetInventoryProductByTypeQuery,
+  useGetInventoryProductsByNameQuery,
+  useGetInventoryProductsQuery,
+  useToggleInventoryProductActiveMutation,
+} from '@/services/inventory/inventory-products/inventoryProductsService';
+import {
+  useGetUomGroupsUnitsQuery,
+} from '@/services/setupService';
+import { useAppSelector } from "@/hooks";
+import MyInput from '@/components/MyInput';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetAllUnitsByGroupIdQuery, useGetAllUOMGroupsQuery } from '@/services/setup/uom-group/uomGroupService';
 
 const ProductSetup = () => {
   const dispatch = useAppDispatch();
-  const [product, setProduct] = useState<ApProducts>({ ...newApProducts });
+  const facility = useAppSelector((state) => state.auth?.tenant);
+  const [product, setProduct] = useState<InventoryProduct>({ ...newInventoryProduct });
   const [productOpen, setProductOpen] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openConfirmDeleteProductModal, setOpenConfirmDeleteProductModal] =
     useState<boolean>(false);
-  const [stateOfDeleteModal, setStateOfDeleteModal] = useState<string>('delete');
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [UnitListRequest, setUnitListRequest] = useState<ListRequest>({
-    ...initialListRequest
+  const [stateOfDeleteModal, setStateOfDeleteModal] = useState<string>('deactivate');
+  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  const [filter, setFilter] = useState({
+    name: '',
+    type: '',
+    inventoryType: '',
+    baseUom: '',
+    uomGroupId: 0
   });
-  const { data: UnitListResponse, refetch: unitRefetch } = useGetUomGroupsUnitsQuery(listRequest);
-  const [uomListRequest, setUomListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const { data: uomGroupsListResponse } = useGetAllUOMGroupsQuery({
+    page: 0,
+    size: 200,
+    sort: "id,asc",
+    name: ""
+  });
+  const { data: uomUnitsResponse } = useGetAllUnitsByGroupIdQuery(
+    filter?.uomGroupId ?? 0,
+    { skip: !filter?.uomGroupId }
+  );
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 5,
+    sort: 'id,asc',
+  });
 
-  const { data: uomGroupsUnitsListResponse, refetch: refetchUomGroupsUnit } =
-    useGetUomGroupsUnitsQuery(uomListRequest);
-  // Save product
-  const [saveProduct, saveProductMutation] = useSaveProductMutation();
+  let productQuery;
+  if (filter.name) {
+    productQuery = useGetInventoryProductsByNameQuery({
+      name: filter.name,
+      ...paginationParams
+    });
+  } else if (filter.type) {
+    productQuery = useGetInventoryProductByTypeQuery({
+      type: filter.type,
+      ...paginationParams
+    });
+  } else if (filter.inventoryType) {
+    productQuery = useGetInventoryProductByInventoryTypeQuery({
+      inventoryType: filter.inventoryType,
+      ...paginationParams
+    });
+  } else if (filter.baseUom) {
+    productQuery = useGetInventoryProductByBaseUomQuery({
+      baseUom: filter.baseUom,
+      ...paginationParams
+    });
+  } else {
+    productQuery = useGetInventoryProductsQuery(paginationParams);
+  }
 
-  // remove Product
-  const [removeProduct, removeProductMutation] = useRemoveProductMutation();
-  // Fetch products list response
   const {
     data: productListResponse,
-    refetch: refetchProduct,
     isFetching
-  } = useGetProductQuery(listRequest);
-  // Header page setUp
-  const divContent = 'Inventory Products Setup';
-  dispatch(setPageCode('Product'));
-  dispatch(setDivContent(divContent));
-  // Pagination values
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = productListResponse?.extraNumeric ?? 0;
+  } = productQuery;
 
-  const isSelected = rowData => {
-    if (rowData && product && rowData.key === product.key) {
-      return 'selected-row';
-    } else return '';
+  const [toggleInventoryProductActive] = useToggleInventoryProductActiveMutation();
+  const divContent = 'Inventory Products Setup';
+
+  useEffect(() => {
+    dispatch(setPageCode('Product'));
+    dispatch(setDivContent(divContent));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
+  const isSelected = (rowData: InventoryProduct) => {
+    const rowId = rowData?.id ?? rowData?.Id;
+    const selectedId = product?.id ?? product?.Id;
+
+    if (!selectedId) return "";
+
+    return rowId === selectedId ? "selected-row" : "";
+  };
+  const handleNew = () => {
+    setProduct({ ...newInventoryProduct });
+    setProductOpen(true);
+  };
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPaginationParams(prev => ({
+      ...prev,
+      page: newPage,
+    }));
+  };
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newSize = Number(event.target.value);
+    setPaginationParams(prev => ({
+      ...prev,
+      size: newSize,
+      page: 0,
+    }));
+  };
+  const handleDeactiveReactivateProduct = async () => {
+    const currentProduct = {
+      ...product,
+      id: product?.id ?? product?.Id
+    };
+
+    if (!currentProduct.id) return;
+
+    try {
+      await toggleInventoryProductActive({ id: currentProduct.id }).unwrap()
+        .catch(() => console.log("Retry with PUT or PATCH"));
+
+      dispatch(
+        notify({
+          msg:
+            stateOfDeleteModal === "deactivate"
+              ? "The Product was successfully deactivated"
+              : "The Product was successfully reactivated",
+          sev: "success",
+        })
+      );
+
+      setOpenConfirmDeleteProductModal(false);
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: "Failed to " + stateOfDeleteModal + " this Product",
+          sev: "error",
+        })
+      );
+    }
   };
 
-  // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    if (saveProductMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveProductMutation.data]);
+  // ───────────── SORT HANDLER ─────────────
+  const handleSortChange = (column: string, type: 'asc' | 'desc') => {
+    setSortColumn(column);
+    setSortType(type);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
-  // handle click on Add New button
-  const handleNew = () => {
-    setProductOpen(true);
-    setProduct({ ...newApProducts });
+    const sortValue = `${column},${type}`;
+    setPaginationParams(prev => ({
+      ...prev,
+      sort: sortValue,
+      page: 0,
+    }));
   };
-  // Handle page change in navigation
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-  // Handle change rows per page in navigation
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
-  // handle deactivate
-  const handleDeactivate = async data => {
-    setOpenConfirmDeleteProductModal(false);
-    try {
-      await removeProduct({
-        ...product
-      })
-        .unwrap()
-        .then(() => {
-          refetchProduct();
-          dispatch(
-            notify({
-              msg: 'The Product was successfully ' + stateOfDeleteModal,
-              sev: 'success'
-            })
-          );
-        });
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to ' + stateOfDeleteModal + ' this Product',
-          sev: 'error'
-        })
-      );
-    }
-  };
-  //handle Activate
-  const handleActive = () => {
-    setOpenConfirmDeleteProductModal(false);
-    const updatedProduct = { ...product, deletedAt: null };
-    saveProduct(updatedProduct)
-      .unwrap()
-      .then(() => {
-        // display success message
-        dispatch(notify({ msg: 'The Product has been activated successfully', sev: 'success' }));
-      })
-      .catch(() => {
-        // display error message
-        dispatch(notify({ msg: 'Failed to activated this Product', sev: 'error' }));
-      });
-  };
-
-  // Icons column (Edite, reactive/Deactivate)
-  const iconsForActions = (rowData: ApProducts) => (
+  const iconsForActions = (rowData: InventoryProduct) => (
     <div className="container-of-icons">
-      {/* open edit resource when click on this icon */}
+      {/* Edit */}
       <MdModeEdit
         className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        onClick={() => setProductOpen(true)}
-        // onClick={() => setPopupOpen(true)}
+        onClick={() => {
+          setProduct({ ...rowData, id: rowData?.id ?? rowData?.Id });
+          setProductOpen(true);
+        }}
       />
-      {/* deactivate/activate  when click on one of these icon */}
-      {!rowData?.deletedAt ? (
+      {/* Deactivate / Activate based on isActive */}
+      {rowData.isActive ? (
         <MdDelete
           className="icons"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
           onClick={() => {
-            setStateOfDeleteModal('deactivate');
+            setProduct({
+              ...rowData,
+            });
+            setStateOfDeleteModal("deactivate");
             setOpenConfirmDeleteProductModal(true);
           }}
         />
@@ -191,6 +232,7 @@ const ProductSetup = () => {
           size={20}
           fill="var(--primary-gray)"
           onClick={() => {
+            setProduct(rowData);
             setStateOfDeleteModal('reactivate');
             setOpenConfirmDeleteProductModal(true);
           }}
@@ -198,67 +240,57 @@ const ProductSetup = () => {
       )}
     </div>
   );
-  //Table columns
   const tableColumns = [
     {
       key: 'type',
       title: <Translate>Item Type</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.typeLvalue ? rowData.typeLvalue.lovDisplayVale : rowData.typeLkey
+      render: (rowData: InventoryProduct) => formatEnumString(rowData.type ?? ''),
     },
     {
       key: 'code',
       title: <Translate>Item Code</Translate>,
       flexGrow: 4,
-      render: (rowData: any) => rowData.code
+      render: (rowData: InventoryProduct) => rowData.code ?? '',
     },
     {
       key: 'name',
       title: <Translate>Name</Translate>,
       flexGrow: 4,
-      render: (rowData: any) => rowData.name
+      render: (rowData: InventoryProduct) => rowData.name ?? '',
     },
     {
-      key: 'baseUomKey',
+      key: 'baseUom',
       title: <Translate>Base UOM</Translate>,
       flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            uomGroupsUnitsListResponse?.object ?? [],
-            rowData.baseUomKey,
-            'units'
-          )}
-        </span>
-      )
+      render: (rowData: InventoryProduct) => rowData.baseUom ?? '',
     },
     {
-      key: 'inventoryTypeLkey',
+      key: 'inventoryType',
       title: <Translate>Lot Type</Translate>,
       width: 100,
-      render: (rowData, index) => {
-        const status = rowData?.inventoryTypeLkey || 'Unknown';
+      render: (rowData: any) => {
+        const status = rowData?.inventoryType || 'Unknown';
 
-        const getStatusConfig = status => {
-          switch (status) {
-            case '5274928776446580': //Lot
+        const getStatusConfig = (s: string) => {
+          switch (s) {
+            case 'LOT':
               return {
                 backgroundColor: 'var(--light-green)',
                 color: 'var(--primary-green)',
-                contant: 'LOT'
+                contant: 'LOT',
               };
-            case '5274937762090202': //Serial
+            case 'SERIAL':
               return {
                 backgroundColor: 'var(--light-purple)',
                 color: 'var(--primary-purple)',
-                contant: 'Serial'
+                contant: 'Serial',
               };
             default:
               return {
                 backgroundColor: 'var(--background-gray)',
                 color: 'var(--primary-gray)',
-                contant: 'Unknown'
+                contant: s || 'Unknown',
               };
           }
         };
@@ -271,122 +303,215 @@ const ProductSetup = () => {
             contant={config.contant}
           />
         );
-      }
+      },
     },
     {
       key: 'createdBy',
       title: <Translate>Created By</Translate>,
       flexGrow: 4,
-      render: (rowData: any) => {
-        return rowData?.createdBy ?? '';
-      }
+      render: (rowData: any) => rowData?.createdBy ?? '',
     },
     {
-      key: 'createdAt',
+      key: 'createdDate',
       title: <Translate>Created At</Translate>,
       flexGrow: 4,
-      render: (rowData: any) => {
-        return rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : '';
-      }
+      render: (rowData: any) =>
+        rowData.createdDate ? formatDateWithoutSeconds(rowData.createdDate) : '',
     },
     {
-      key: 'updatedBy',
+      key: 'lastModifiedBy',
       title: <Translate>Updated By</Translate>,
       flexGrow: 4,
-      render: (rowData: any) => {
-        return rowData?.updatedBy ?? '';
-      }
+      render: (rowData: any) => rowData?.lastModifiedBy ?? '',
     },
     {
-      key: 'updatedAt',
+      key: 'lastModifiedDate',
       title: <Translate>Updated At</Translate>,
       flexGrow: 4,
-      render: (rowData: any) => {
-        return rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : '';
-      }
+      render: (rowData: any) =>
+        rowData.lastModifiedDate ? formatDateWithoutSeconds(rowData.lastModifiedDate) : '',
     },
     {
       key: 'icons',
-      title: <Translate></Translate>,
+      title: '',
       flexGrow: 3,
-      render: rowData => iconsForActions(rowData)
-    }
+      render: (rowData: InventoryProduct) => iconsForActions(rowData),
+    },
   ];
   const tabData = [
     {
       title: 'Bacis Info',
-      content: <BasicInf product={product} setProduct={setProduct} disabled={true} />
+      content: <BasicInf product={product} setProduct={setProduct} disabled={true} />,
     },
     {
       title: 'Maintenance Information',
-      content: <MaintenanceInformation product={product} setProduct={setProduct} disabled={true} />
+      content: (
+        <MaintenanceInformation product={product} setProduct={setProduct} disabled={true} />
+      ),
     },
     {
       title: 'UOM',
-      content: <UomGroup product={product} setProduct={setProduct} disabled={true} />
+      content: <UomGroup product={product} setProduct={setProduct} disabled={true} />,
     },
     {
       title: 'Inventory Attributes',
-      content: <InventoryAttributes product={product} setProduct={setProduct} disabled={true} />
+      content: (
+        <InventoryAttributes product={product} setProduct={setProduct} disabled={true} />
+      ),
     },
     {
       title: 'Regulatory & Safety',
-      content: <RegulSafty product={product} setProduct={setProduct} disabled={true} />
+      content: <RegulSafty product={product} setProduct={setProduct} disabled={true} />,
     },
     {
       title: 'Financial & Costing Information',
-      content: <FinancCostInfo product={product} setProduct={setProduct} disabled={true} />
-    }
+      content: <FinancCostInfo product={product} setProduct={setProduct} disabled={true} facilityCurrency={facility?.defaultCurrency} />,
+    },
   ];
-  const tabContant = () => {
-    return (
-      <Box>
-        <MyTab data={tabData} />
-      </Box>
-    );
-  };
+  const tabContant = () => (
+    <Box>
+      <MyTab data={tabData} />
+    </Box>
+  );
 
+  const productType = useEnumOptions("ProductTypes");
+  const lotSerial = useEnumOptions("InventoryType");
+  const handleFilterChange = (updatedFilter: any) => {
+    const key = Object.keys(updatedFilter)[0];
+    let value = updatedFilter[key];
+
+    if (!isNaN(value)) {
+      value = Number(value);
+    }
+
+    setFilter(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+  const contents = (
+    <div className="advanced-filters">
+      <Form fluid layout="inline" className="filters-container">
+      </Form>
+    </div>
+  );
   const filters = (
     <>
-      <AdvancedSearchFilters searchFilter={true} />
+
+      <Form fluid layout='inline'>
+        <MyInput
+          column
+          fieldName="name"
+          fieldLabel="Product Name"
+          fieldType="text"
+          record={filter}
+          setRecord={setFilter}
+          width={160}
+        />
+
+        <MyInput
+          column
+          fieldName="type"
+          fieldLabel="Type"
+          fieldType="select"
+          selectData={productType ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={filter}
+          setRecord={setFilter}
+          width={160}
+        />
+
+        <MyInput
+          column
+          fieldName="inventoryType"
+          fieldLabel="Inventory Type"
+          fieldType="select"
+          selectData={lotSerial ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={filter}
+          setRecord={setFilter}
+          width={160}
+        />
+        <MyInput
+          column
+          fieldLabel="UOM Group"
+          fieldName="uomGroupId"
+          fieldType="select"
+          selectData={uomGroupsListResponse?.data ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={filter}
+          setRecord={setFilter}
+          searchable
+          width={200}
+        />
+
+        <MyInput
+          column
+          fieldName="baseUom"
+          fieldLabel="Base UOM"
+          fieldType="select"
+          selectData={(uomUnitsResponse ?? []).map(u => ({
+            label: u.uom,
+            value: u.id
+          }))}
+
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={filter}
+          setRecord={setFilter}
+          width={150}
+          disabled={!filter?.uomGroupId}
+        />
+
+
+
+
+      </Form>
+
+      <AdvancedSearchFilters searchFilter={true} content={contents} />
     </>
   );
   const tablebuttons = (
-    <>
-      {' '}
-      <div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={() => {
-            setProductOpen(true),
-              setProduct({ ...newApProducts })
-          }}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>
-    </>
+    <div className="container-of-add-new-button">
+      <MyButton
+        prefixIcon={() => <AddOutlineIcon />}
+        color="var(--deep-blue)"
+        onClick={handleNew}
+        width="109px"
+      >
+        Add New
+      </MyButton>
+    </div>
   );
+
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
+  const totalCount = productListResponse?.totalCount ?? 0;
+  useEffect(() => {
+    setPaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [filter]);
+
+  useEffect(() => {
+    setFilter(f => ({ ...f, baseUom: '' }));
+  }, [filter.uomGroupId]);
+
   return (
     <Panel>
       <MyTable
         height={450}
-        data={productListResponse?.object ?? []}
+        data={productListResponse?.data ?? []}
         loading={isFetching}
         columns={tableColumns}
-        rowClassName={isSelected}
+        rowClassName={(rowData) => isSelected(rowData)}
         filters={filters}
         tableButtons={tablebuttons}
-        onRowClick={rowData => {
-          setProduct(rowData);
-        }}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-        }}
+        onRowClick={(rowData) => setProduct({ ...rowData, id: rowData?.id ?? rowData?.Id })}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
@@ -399,18 +524,17 @@ const ProductSetup = () => {
         setOpen={setProductOpen}
         product={product}
         setProduct={setProduct}
-        refetch={refetchProduct}
       />
+
       <DeletionConfirmationModal
         open={openConfirmDeleteProductModal}
         setOpen={setOpenConfirmDeleteProductModal}
         itemToDelete="Product"
-        actionButtonFunction={
-          stateOfDeleteModal == 'deactivate' ? () => handleDeactivate(product) : handleActive
-        }
+        actionButtonFunction={handleDeactiveReactivateProduct}
         actionType={stateOfDeleteModal}
       />
-      {product.key && tabContant()}
+
+      {product.id && tabContant()}
     </Panel>
   );
 };
