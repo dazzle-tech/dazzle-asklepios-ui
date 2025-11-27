@@ -594,7 +594,6 @@ else {
 
 
 
-
       </Form>
 
       <AdvancedSearchFilters searchFilter={true} content={contents} />
