@@ -900,7 +900,7 @@ export interface InventoryProduct {
   name: string;
   type: string;
   code?: string | null;
-  barecode?: string | null;
+  barcode?: string | null;
   brandId?: string | null;
   uomGroupId?: string | null;
   baseUom?: string | null;

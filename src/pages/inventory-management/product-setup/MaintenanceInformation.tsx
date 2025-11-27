@@ -1,43 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
-import { Col, Form, Row } from 'rsuite';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
-import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
-import Room from '@/pages/setup/bed-room-setup';
-import MyLabel from '@/components/MyLabel';
+import {Form} from 'rsuite';
+import { useEnumOptions } from '@/services/enumsApi';
 const MaintenanceInformation = ({ product, setProduct, disabled}) => {
 
-    const { data: timeUnitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
+    const timeUnit  = useEnumOptions('TimeUnit');
 
     return (
         <>
-            <Form fluid layout="inline">
+            <Form fluid>
+            <div className="flex-row-product-set-up-page">
                 <MyInput
-                    column
                     width={180}
                     fieldType="date"
                     fieldLabel="Warranty Start Date"
-                    fieldName="startDate"
+                    fieldName="warrantyStartDate"
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
                 />
                 <MyInput
-                    column
                     width={180}
                     fieldType="date"
                     fieldLabel="End Date"
-                    fieldName="endDate"
+                    fieldName="warrantyEndDate"
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
                 />
-                <div>
+            </div>
+            
+            <div className="flex-row-product-set-up-page">
                     <MyInput
                         width='100%'
                         fieldLabel='Maintenance Schedule'
-                        fieldName='maintenanceScheduleTime'
+                        fieldName='maintenanceSchedule'
                         fieldType='number'
                         record={product}
                         setRecord={setProduct}
@@ -45,21 +42,22 @@ const MaintenanceInformation = ({ product, setProduct, disabled}) => {
                     />
                     <MyInput
                         fieldLabel="Type"
-                        fieldName="maintenanceScheduleLkey"
+                        fieldName="maintenanceScheduleType"
                         fieldType="select"
-                        selectData={timeUnitLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
+                        selectData={timeUnit ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
                         record={product}
                         setRecord={setProduct}
                         searchable={false}
                         disabled={disabled}
                     />
-                </div>
+            </div>
 
+            <div className="flex-row-product-set-up-page">
                 <MyInput
                     fieldLabel="Critical Equipment"
-                    fieldName="isCritical"
+                    fieldName="criticalEquipment"
                     width="100%"
                     fieldType='checkbox'
                     record={product}
@@ -68,7 +66,7 @@ const MaintenanceInformation = ({ product, setProduct, disabled}) => {
                 />
                 <MyInput
                     fieldLabel="Calibration Required"
-                    fieldName="isCalibration"
+                    fieldName="calibrationRequired"
                     width="100%"
                     fieldType='checkbox'
                     record={product}
@@ -77,13 +75,14 @@ const MaintenanceInformation = ({ product, setProduct, disabled}) => {
                 />
                 <MyInput
                     fieldLabel="Training Required"
-                    fieldName="isTraining"
+                    fieldName="trainingRequired"
                     width="100%"
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
                 />
+            </div>
             </Form>
         </>
     )

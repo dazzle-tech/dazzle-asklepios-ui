@@ -6,42 +6,38 @@ import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/se
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
 const RegulSafty = ({ product, setProduct, disabled }) => {
 
-    const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
-    const [filteredResourcesList, setFilteredResourcesList] = useState([]);
-
     return (
         <>
-            <Form fluid layout="inline">
+            <Form fluid>
 
-
-                <MyInput
+<div className="flex-row-product-set-up-page">
+                    <MyInput
                     fieldLabel="Controlled Substance"
-                    fieldName="isControlledSubstance"
+                    fieldName="controlledSubstance"
                     width="100%"
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
-                />
-
-                <MyInput
-                    column
+                    />
+                    <MyInput
                     fieldLabel="Hazardous/Biohazardous Tag"
-                    fieldName="hazardousTag"
+                    fieldName="hazardousBiohazardousTag"
+                    fieldType="text"
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
-                />
-
-                <MyInput
+                    />
+                    <MyInput
                     fieldLabel="Allergy Risk"
-                    fieldName="isAllergyRisk"
+                    fieldName="allergyRisk"
                     width="100%"
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
-                />
+                    />
+                </div>
             </Form>
         </>
     )

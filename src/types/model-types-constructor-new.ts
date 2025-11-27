@@ -750,7 +750,7 @@ export const newInventoryProduct: modelTypes.InventoryProduct = {
   name: '',
   type: '',
   code: '',
-  barecode: '',
+  barcode: '',
   brandId: null,
   uomGroupId: null,
   baseUom: null,

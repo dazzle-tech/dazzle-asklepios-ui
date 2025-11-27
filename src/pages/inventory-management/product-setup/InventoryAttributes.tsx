@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
-import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
-import MyLabel from '@/components/MyLabel';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPerson } from '@fortawesome/free-solid-svg-icons';
+import { useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
+
 const InventoryAttributes = ({ product, setProduct , disabled }) => {
 
-    const { data: lotSerialLovQueryResponse } = useGetLovValuesByCodeQuery('LOT_SERIAL');
+    const lotSerial = useEnumOptions("InventoryType");
 
     return (
         <>
-            <Form fluid layout="inline">
+            <Form fluid>
+                <div className="flex-row-product-set-up-page">
                 <MyInput
                     fieldLabel="Batch Managed"
-                    fieldName="isBatchManaged"
+                    fieldName="batchManaged"
                     width="100%"
                     fieldType='checkbox'
                     record={product}
@@ -26,14 +24,14 @@ const InventoryAttributes = ({ product, setProduct , disabled }) => {
 
                 <MyInput
                     fieldLabel="Expiry Date Mandatory"
-                    fieldName="isExpiryDateMandatory"
+                    fieldName="expiryDateMandatory"
                     width="100%"
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
                 />
-                <MyInput
+                {/* <MyInput
                     fieldLabel="Serialized Item"
                     fieldName="isSerialized"
                     width="100%"
@@ -41,23 +39,24 @@ const InventoryAttributes = ({ product, setProduct , disabled }) => {
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
-                />
+                /> */}
                 <MyInput
                     fieldLabel="Reusable"
-                    fieldName="isReusable"
+                    fieldName="reusable"
                     width="100%"
                     fieldType='checkbox'
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
                 />
+            </div>
                 <MyInput
                     fieldLabel="Inventory Type"
-                    fieldName="inventoryTypeLkey"
+                    fieldName="inventoryType"
                     fieldType="select"
-                    selectData={lotSerialLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
+                    selectData={lotSerial ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
                     record={product}
                     setRecord={setProduct}
                     menuMaxHeight={200}
@@ -66,6 +65,7 @@ const InventoryAttributes = ({ product, setProduct , disabled }) => {
                     disabled={disabled}
                 />
                 <Row className="rows-gap">
+                <div className="flex-row-product-set-up-page">
                     <Col md={12}>
                         <MyInput
                             width='100%'
@@ -88,11 +88,11 @@ const InventoryAttributes = ({ product, setProduct , disabled }) => {
                             setRecord={setProduct}
                             disabled={disabled}
                         ></MyInput></Col>
+                </div>
                 </Row>
                 <MyInput
-                    column
                     fieldLabel="ERP Integration ID"
-                    fieldName="erpIntegId"
+                    fieldName="erpIntegrationId"
                     record={product}
                     setRecord={setProduct}
                     disabled={disabled}
