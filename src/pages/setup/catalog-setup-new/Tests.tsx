@@ -21,6 +21,7 @@ import {
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 import { useGetUnselectedTestsForCatalogQuery } from '@/services/setup/catalog/catalogService';
 
+
 const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   const dispatch = useAppDispatch();
 
@@ -34,9 +35,9 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
     sort: 'id,asc',
     timestamp: Date.now()
   });
-
   const [selectedTestOnTable1, setSelectedTestOnTable1] = useState({});
   const [selectedTestOnTable2, setSelectedTestOnTable2] = useState();
+
   const [paginationParamsForAllTests, setPaginationParamsForAllTests] = useState({
     page: 0,
     size: 5,
@@ -55,6 +56,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       skip: !diagnosticsTestCatalogHeader?.id
     }
   );
+
 
   const { data: catalogDiagnosticsTestListResponse } = useGetCatalogTestsQuery(
     {
@@ -206,7 +208,6 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
         dispatch(notify({ msg: 'The Tests have been saved successfully', sev: 'success' }));
       });
   };
-
   // Handle test selection by checking the checkbox
   const handleCheckboxChange = key => {
     setSelectedRows(prev => {

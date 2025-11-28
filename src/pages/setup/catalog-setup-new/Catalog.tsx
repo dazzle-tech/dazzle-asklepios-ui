@@ -221,7 +221,6 @@ const Catalog = () => {
       </MyButton>
     </Form>
   );
-
   // handle click on add new button (open the pop up of add/edit catalog)
   const handleNew = () => {
     setDiagnosticsTestCatalogHeader({ ...newCatalogResponseVM });
