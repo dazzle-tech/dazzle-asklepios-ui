@@ -142,7 +142,7 @@ import AccessRoles from './pages/setup/access-roles';
 import AgeGroupSetup from './pages/setup/age-group';
 import Allergens from './pages/setup/allergens-setup';
 import Room from './pages/setup/bed-room-setup';
-import Catalog from './pages/setup/catalog-setup';
+import Catalog from './pages/setup/catalog-setup-new';
 import CDTSetup from './pages/setup/cdt-setup';
 import CPTSetup from './pages/setup/cpt-setup';
 import DentalActions from './pages/setup/dental-actions-new';
