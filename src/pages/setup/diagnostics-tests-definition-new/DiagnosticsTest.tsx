@@ -6,7 +6,7 @@ import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useCreateDiagnosticTestMutation, useGetAllDiagnosticTestsQuery, useLazyGetDiagnosticTestsByTypeQuery, useToggleDiagnosticTestActiveMutation, useUpdateDiagnosticTestMutation,useLazyGetDiagnosticTestsByNameQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-
+import { MdOutlineDescription } from "react-icons/md";
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
 import { DiagnosticTest } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
@@ -17,7 +17,7 @@ import { FaChartLine, FaUndo } from 'react-icons/fa';
 import { FaNewspaper } from 'react-icons/fa6';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
-import { Form, Panel } from 'rsuite';
+import { Form, Panel, Row } from 'rsuite';
 import AddEditDiagnosticTest from './AddEditDiagnosticTest';
 import Coding from './Coding';
 import NormalRangeSetupModal from './NormalRangeSetUpModal';
@@ -25,6 +25,7 @@ import Profile from './Profile';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
+import DiagnosticTestTemplate from './DiagnosticTestTemplate';
 const DiagnosticsTest = () => {
   const dispatch = useAppDispatch();
   const [diagnosticsTest, setDiagnosticsTest] = useState<DiagnosticTest>({
@@ -35,6 +36,7 @@ const DiagnosticsTest = () => {
   const [openConfirmDiagnosticTest, setOpenConfirmDeleteDiagnosticTest] = useState<boolean>(false);
   const [stateOfDeleteDiagnosticTest, setStateOfDeleteDiagnosticTest] = useState<string>('delete');
   const [openCodingModal, setOpenCodingModal] = useState<boolean>(false);
+  const [openTemplateModal, setOpenTemplateModal] = useState<boolean>(false);
   const [openProfileModal, setOpenProfileModal] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditDiagnosticTestPopup, setOpenAddEditDiagnosticTestPopup] =
@@ -303,83 +305,95 @@ console.log("Selected Test:", diagnosticsTest);
 
 
   // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
-  const iconsForActions = (rowData: any) => (
-    <div className="container-of-icons">
-      {/* Edit */}
-      <MdModeEdit
-        className="icons-style"
-        title="Edit"
+const iconsForActions = (rowData: any) => (
+  <div className="container-of-icons">
+    {/* Edit */}
+    <MdModeEdit
+      className="icons-style"
+      title="Edit"
+      size={24}
+      fill="var(--primary-gray)"
+      onClick={() => {
+        setDiagnosticsTest(rowData);
+        setOpenAddEditDiagnosticTestPopup(true);
+      }}
+    />
+
+    {/* Activate / Deactivate */}
+    {rowData?.isActive ? (
+      <MdDelete
+        title="Deactivate"
         size={24}
-        fill="var(--primary-gray)"
+        fill="var(--primary-pink)"
+        className="icons-style"
         onClick={() => {
           setDiagnosticsTest(rowData);
-          setOpenAddEditDiagnosticTestPopup(true);
+          setOpenConfirmDeleteDiagnosticTest(true);
+          setStateOfDeleteDiagnosticTest("deactivate");
         }}
       />
+    ) : (
+      <FaUndo
+        title="Activate"
+        size={24}
+        fill="var(--primary-gray)"
+        className="icons-style"
+        onClick={() => {
+          setDiagnosticsTest(rowData);
+          setOpenConfirmDeleteDiagnosticTest(true);
+          setStateOfDeleteDiagnosticTest("reactivate");
+        }}
+      />
+    )}
 
-      {/* Activate / Deactivate */}
-      {rowData?.isActive ? (
-        <MdDelete
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
+    {/* Code */}
+    <FaNewspaper
+      className="icons-style"
+      title="Code"
+      size={22}
+      fill="var(--primary-gray)"
+      onClick={() => {
+        setOpenCodingModal(true);
+      }}
+    />
+
+    {/* Template */}
+    <MdOutlineDescription
+      className="icons-style"
+      title="Template"
+      size={22}
+      fill="var(--primary-gray)"
+      onClick={() => {
+        setDiagnosticsTest(rowData);
+        setOpenTemplateModal(true);
+      }}
+    />
+
+    {/* Profile or Normal Range */}
+    {rowData?.type === "LABORATORY" &&
+      (rowData?.isProfile ? (
+        <RiFileList2Fill
           className="icons-style"
+          title="Profile Setup"
+          size={21}
+          fill="var(--primary-gray)"
           onClick={() => {
-            setDiagnosticsTest(rowData);
-            setOpenConfirmDeleteDiagnosticTest(true);
-            setStateOfDeleteDiagnosticTest("deactivate");
+            setOpenProfileModal(true);
           }}
         />
       ) : (
-        <FaUndo
-          title="Activate"
-          size={24}
-          fill="var(--primary-gray)"
+        <FaChartLine
           className="icons-style"
+          title="Normal Range Setup"
+          size={21}
+          fill="var(--primary-gray)"
           onClick={() => {
-            setDiagnosticsTest(rowData);
-            setOpenConfirmDeleteDiagnosticTest(true);
-            setStateOfDeleteDiagnosticTest("reactivate");
+            setNormalRangePopupOpen(true);
           }}
         />
-      )}
-      {/* Code */}
-      <FaNewspaper
-        className="icons-style"
-        title="Code"
-        size={22}
-        fill="var(--primary-gray)"
-        onClick={() => {
-          setOpenCodingModal(true);
-        }}
-      />
-
-      {/* Profile or Normal Range */}
-      {rowData?.type === "LABORATORY" && (
-        rowData?.isProfile ? (
-          <RiFileList2Fill
-            className="icons-style"
-            title="Profile Setup"
-            size={21}
-            fill="var(--primary-gray)"
-            onClick={() => {
-              setOpenProfileModal(true);
-            }}
-          />
-        ) : (
-          <FaChartLine
-            className="icons-style"
-            title="Normal Range Setup"
-            size={21}
-            fill="var(--primary-gray)"
-            onClick={() => {
-              setNormalRangePopupOpen(true);
-            }}
-          />
-        )
-      )}
-
-    </div>);
+      ))}
+  </div>
+);
 
 
   //Table columns
@@ -671,6 +685,16 @@ console.log("Selected Test:", diagnosticsTest);
         setOpen={setOpenProfileModal}
         diagnosticsTest={diagnosticsTest}
       />
+      {openTemplateModal && diagnosticsTest?.id && (
+        <DiagnosticTestTemplate
+          open={openTemplateModal}
+          setOpen={setOpenTemplateModal}
+          testId={diagnosticsTest.id}
+          testName={diagnosticsTest.name}
+        />
+      )}
+
+
     </Panel>
   );
 };

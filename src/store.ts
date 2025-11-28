@@ -91,7 +91,8 @@ import { dischargePService } from './services/setup/dischargeService';
 import { resultReportApi } from './services/setup/resultReportApi';
 import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
-
+import { ReportTemplateService } from "./services/reportTemplateService";
+import { DiagnosticTestTemplateService } from './services/DiagnosticTestTemplate';
 export const store = configureStore({
   reducer: {
     // ui
@@ -271,6 +272,12 @@ export const store = configureStore({
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
    // Visit Duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
+
+   // Templates
+    [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
+    [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -363,6 +370,8 @@ export const store = configureStore({
       resultReportApi.middleware,
       invoiceReportApi.middleware,
       visitDurationService.middleware,
+      ReportTemplateService.middleware,
+      DiagnosticTestTemplateService.middleware,
     ])
 });
 
