@@ -927,36 +927,3 @@ export interface VisitDuration {
 
 }
  
-export interface InventoryProduct {
-  id?: number;
-  name: string;
-  type: string;
-  code?: string | null;
-  barcode?: string | null;
-  brandId?: string | null;
-  uomGroupId?: string | null;
-  baseUom?: number | null;
-  dispenseUom?: string | null;
-  controlledSubstance?: boolean | null;
-  hazardousBiohazardousTag?: string | null;
-  allergyRisk?: boolean | null;
-  itemAverageCost?: number | null;
-  pricePerBaseUom?: string | null;
-  warrantyStartDate?: Date | null;
-  warrantyEndDate?: Date | null;
-  maintenanceSchedule?: number | null;
-  maintenanceScheduleType?: string | null;
-  criticalEquipment?: boolean | null;
-  calibrationRequired?: boolean | null;
-  trainingRequired?: boolean | null;
-  batchManaged?: boolean | null;
-  expiryDateMandatory?: boolean | null;
-  reusable?: boolean | null;
-  inventoryType?: string | null;
-  shelfLife?: number | null;
-  shelfLifeUnit?: string | null;
-  leadTime?: number | null;
-  leadTimeUnit?: string | null;
-  erpIntegrationId?: string | null;
-  isActive?: boolean | null;
-}
