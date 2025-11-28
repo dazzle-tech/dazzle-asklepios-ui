@@ -83,6 +83,7 @@ import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
 import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
+import { inventoryProductsService } from './services/inventory/inventory-products/inventoryProductsService';
 import { countryService } from './services/setup/country/countryService';
 import { countryDistrictService } from './services/setup/country/countryDistrictService';
 import { districtCommunityService } from './services/setup/country/districtCommunityService';
