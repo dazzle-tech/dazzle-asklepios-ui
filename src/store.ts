@@ -94,7 +94,6 @@ import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
-import { inventoryProductsService } from './services/inventory/inventory-products/inventoryProductsService';
 export const store = configureStore({
   reducer: {
     // ui
