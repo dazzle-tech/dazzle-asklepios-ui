@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '@/newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
-import { CatalogCreateVM, CatalogResponseVM, CatalogUpdateVM } from '@/types/model-types-new';
+import { CatalogCreateVM, CatalogResponseVM, CatalogUpdateVM, DiagnosticTest } from '@/types/model-types-new';
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type LinkMap = {
@@ -127,6 +127,25 @@ export const catalogService = createApi({
       }),
       invalidatesTags: ['Catalog'],
     }),
+
+    getUnselectedTestsForCatalog: builder.query<
+  PagedResult<DiagnosticTest>, 
+  { catalogId: number; name: string } & PagedParams
+  >({
+  query: ({ catalogId, name, page, size, sort = 'id,asc' }) => ({
+    url: `/api/setup/catalog/unselected-tests/${catalogId}?name=${encodeURIComponent(name)}`,
+    params: { page, size, sort },
+  }),
+  transformResponse: (response: DiagnosticTest[], meta): PagedResult<DiagnosticTest> => {
+    const headers = meta?.response?.headers;
+    return {
+      data: response,
+      totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+      links: parseLinkHeader(headers?.get('Link')),
+    };
+  },
+}),
+
   }),
 });
 
@@ -141,5 +160,6 @@ export const {
   useLazyGetCatalogByNameQuery,
   useAddCatalogMutation,
   useUpdateCatalogMutation,
-  useDeleteCatalogMutation
+  useDeleteCatalogMutation,
+  useGetUnselectedTestsForCatalogQuery
 } = catalogService;

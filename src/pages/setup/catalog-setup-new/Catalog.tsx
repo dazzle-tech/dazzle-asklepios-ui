@@ -8,9 +8,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { FaListAlt } from 'react-icons/fa';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import {
-  formatEnumString
-} from '@/utils';
+import { formatEnumString } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
@@ -19,7 +17,13 @@ import Tests from './Tests';
 import AddEditCatalog from './AddEditCatalog';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
-import { useDeleteCatalogMutation, useGetCatalogsQuery, useLazyGetCatalogByDepartmentQuery, useLazyGetCatalogByNameQuery, useLazyGetCatalogByTypeQuery } from '@/services/setup/catalog/catalogService';
+import {
+  useDeleteCatalogMutation,
+  useGetCatalogsQuery,
+  useLazyGetCatalogByDepartmentQuery,
+  useLazyGetCatalogByNameQuery,
+  useLazyGetCatalogByTypeQuery
+} from '@/services/setup/catalog/catalogService';
 import { CatalogResponseVM } from '@/types/model-types-new';
 import { newCatalogResponseVM } from '@/types/model-types-constructor-new';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -43,19 +47,23 @@ const Catalog = () => {
     timestamp: Date.now()
   });
   const [filterPagination, setFilterPagination] = useState({
-      page: 0,
-      size: 5,
-      sort: 'id,asc'
-    });
+    page: 0,
+    size: 5,
+    sort: 'id,asc'
+  });
   //Fetch diagnostics test catalog header list Response
   const {
     data: diagnosticsTestCatalogHeaderListResponse,
     refetch,
     isFetching
   } = useGetCatalogsQuery(paginationParams);
-
+  const { data: departmentListResponse } = useGetAllDepartmentsWithoutPaginationQuery({});
+  const [fetchByDepartment] = useLazyGetCatalogByDepartmentQuery();
+  const [fetchByName] = useLazyGetCatalogByNameQuery();
+  const [fetchByType] = useLazyGetCatalogByTypeQuery();
   const [deleteCatalog] = useDeleteCatalogMutation();
- 
+
+  const testTypeEnum = useEnumOptions('TestType');
   // Header page setUp
   const divContent = 'Catalog';
   dispatch(setPageCode('Catalog'));
@@ -63,23 +71,12 @@ const Catalog = () => {
   // Pagination values
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
-
   const [link, setLink] = useState({});
   const totalCount = diagnosticsTestCatalogHeaderListResponse?.totalCount ?? 0;
-
   const [sortColumn, setSortColumn] = useState('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [filteredList, setFilteredList] = useState<CatalogResponseVM[]>([]);
-
-  const [filteredTotal, setFilteredTotal] = useState<number>(0);  
-  const {data: departmentListResponse} = useGetAllDepartmentsWithoutPaginationQuery({});
-
-
-  const testTypeEnum = useEnumOptions('TestType');
-
-  const [fetchByDepartment] = useLazyGetCatalogByDepartmentQuery();
-    const [fetchByName] = useLazyGetCatalogByNameQuery();
-    const [fetchByType] = useLazyGetCatalogByTypeQuery();
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
 
   // Available fields for filtering
   const filterFields = [
@@ -87,6 +84,7 @@ const Catalog = () => {
     { label: 'Type', value: 'type' },
     { label: 'Department', value: 'departmentId' }
   ];
+
   // class name for selected row
   const isSelected = rowData => {
     if (
@@ -98,7 +96,7 @@ const Catalog = () => {
     } else return '';
   };
 
-  // Icons column (Edit ,reactive/Deactivate, Tests)
+  // Icons column (Edit ,delete, Tests)
   const iconsForActions = () => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -181,17 +179,17 @@ const Catalog = () => {
       />
       {recordOfFilter['filter'] == 'departmentId' ? (
         <MyInput
-              fieldName="value"
-              fieldType="select"
-              selectData={departmentListResponse ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={recordOfFilter}
-              setRecord={setRecordOfFilter}
-               menuMaxHeight={150}
-              showLabel={false}
-              searchable={false}
-            />
+          fieldName="value"
+          fieldType="select"
+          selectData={departmentListResponse ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          menuMaxHeight={150}
+          showLabel={false}
+          searchable={false}
+        />
       ) : recordOfFilter['filter'] == 'type' ? (
         <MyInput
           fieldName="value"
@@ -223,34 +221,33 @@ const Catalog = () => {
       </MyButton>
     </Form>
   );
+
   // handle click on add new button (open the pop up of add/edit catalog)
   const handleNew = () => {
     setDiagnosticsTestCatalogHeader({ ...newCatalogResponseVM });
     setPopupOpen(true);
   };
 
-   // ──────────────────────────── PAGINATION ────────────────────────────
-    const handlePageChange = (event, newPage) => {
-      if (isFiltered) {
-        handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
-      } else {
-        PaginationPerPage.handlePageChange(
-          event,
-          newPage,
-          paginationParams,
-          link,
-          setPaginationParams
-        );
-      }
-    };
- 
-    //_________________________SORT LOGIC______________________
+  // ──────────────────────────── PAGINATION ────────────────────────────
+  const handlePageChange = (event, newPage) => {
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+    } else {
+      PaginationPerPage.handlePageChange(
+        event,
+        newPage,
+        paginationParams,
+        link,
+        setPaginationParams
+      );
+    }
+  };
+
+  //_________________________SORT LOGIC______________________
   const handleSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
     setSortColumn(sortColumn);
     setSortType(sortType);
-
     const sortValue = `${sortColumn},${sortType}`;
-
     if (isFiltered) {
       setFilterPagination({ ...filterPagination, sort: sortValue, page: 0 });
       handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
@@ -264,7 +261,7 @@ const Catalog = () => {
     }
   };
 
-  // handle deactivate catalog
+  // handle delete catalog
   const handleDelete = () => {
     setOpenConfirmDeleteCatalog(false);
     deleteCatalog(diagnosticsTestCatalogHeader?.id)
@@ -289,39 +286,40 @@ const Catalog = () => {
   };
 
   // Handle filter change
-    const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
-      try {
-        if (!field || !value) {
-          setIsFiltered(false);
-          setFilteredList([]);
-          return;
-        }
-        const currentSize = size ?? filterPagination.size;
-  
-        let response;
-        const params = {
-          page,
-          size: currentSize,
-          sort: filterPagination.sort
-        };
-  
-        if (field === 'type') {
-          response = await fetchByType({ type: value, ...params }).unwrap();
-        } else if (field === 'departmentId') {
-          response = await fetchByDepartment({ departmentId: value, ...params }).unwrap();
-        } else if (field === 'name') {
-          response = await fetchByName({ name: value, ...params }).unwrap();
-        } 
-  
-        setFilteredList(response.data ?? []);
-        setFilteredTotal(response.totalCount ?? 0);
-        setIsFiltered(true);
-        setFilterPagination({ ...filterPagination, page, size: currentSize });
-      } catch (error) {
-        dispatch(notify({ msg: 'Failed to filter Catalog', sev: 'error' }));
+  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
+    try {
+      if (!field || !value) {
         setIsFiltered(false);
+        setFilteredList([]);
+        return;
       }
-    };
+      const currentSize = size ?? filterPagination.size;
+
+      let response;
+      const params = {
+        page,
+        size: currentSize,
+        sort: filterPagination.sort
+      };
+
+      if (field === 'type') {
+        response = await fetchByType({ type: value, ...params }).unwrap();
+      } else if (field === 'departmentId') {
+        response = await fetchByDepartment({ departmentId: value, ...params }).unwrap();
+      } else if (field === 'name') {
+        response = await fetchByName({ name: value, ...params }).unwrap();
+      }
+
+      setFilteredList(response.data ?? []);
+      setFilteredTotal(response.totalCount ?? 0);
+      setIsFiltered(true);
+      setFilterPagination({ ...filterPagination, page, size: currentSize });
+    } catch (error) {
+      dispatch(notify({ msg: 'Failed to filter Catalog', sev: 'error' }));
+      setIsFiltered(false);
+    }
+  };
+
   // Effects
   // change the width variable when the size of window is changed
   useEffect(() => {
@@ -331,8 +329,8 @@ const Catalog = () => {
   }, []);
 
   useEffect(() => {
-      setLink(diagnosticsTestCatalogHeaderListResponse?.links);
-    }, [diagnosticsTestCatalogHeaderListResponse?.links]);
+    setLink(diagnosticsTestCatalogHeaderListResponse?.links);
+  }, [diagnosticsTestCatalogHeaderListResponse?.links]);
 
   useEffect(() => {
     return () => {
