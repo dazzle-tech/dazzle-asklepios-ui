@@ -34,6 +34,7 @@ import {
   useGetInventoryProductsByNameQuery,
   useGetInventoryProductsQuery,
   useToggleInventoryProductActiveMutation,
+  useSearchInventoryProductsQuery,
 } from '@/services/inventory/inventory-products/inventoryProductsService';
 import {
   useGetUomGroupsUnitsQuery,
@@ -55,12 +56,20 @@ const ProductSetup = () => {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [filter, setFilter] = useState({
-    name: '',
-    type: '',
-    inventoryType: '',
-    baseUom: '',
-    uomGroupId: 0
+    name: "",
+    inventoryType: "",
+    code: "",
+    barcodeOrQrCode: "",
+    warrantyStartDate: null,
+    warrantyEndDate: null,
+    type: "",
+    uomGroupId: 0,
+    baseUom: null,
+    dispenseUom: "",
+    erpIntegrationId: ""
   });
+
+
   const { data: uomGroupsListResponse } = useGetAllUOMGroupsQuery({
     page: 0,
     size: 200,
@@ -77,30 +86,70 @@ const ProductSetup = () => {
     sort: 'id,asc',
   });
 
-  let productQuery;
-  if (filter.name) {
-    productQuery = useGetInventoryProductsByNameQuery({
-      name: filter.name,
-      ...paginationParams
-    });
-  } else if (filter.type) {
-    productQuery = useGetInventoryProductByTypeQuery({
-      type: filter.type,
-      ...paginationParams
-    });
-  } else if (filter.inventoryType) {
-    productQuery = useGetInventoryProductByInventoryTypeQuery({
-      inventoryType: filter.inventoryType,
-      ...paginationParams
-    });
-  } else if (filter.baseUom) {
-    productQuery = useGetInventoryProductByBaseUomQuery({
-      baseUom: filter.baseUom,
-      ...paginationParams
-    });
-  } else {
-    productQuery = useGetInventoryProductsQuery(paginationParams);
-  }
+
+const cleanFilter: any = Object.fromEntries(
+  Object.entries(filter).filter(([key, value]) => {
+    if (value === "" || value === null) return false;
+    if (key === "uomGroupId" && value === 0) return false;
+    return true;
+  })
+);
+
+
+ let productQuery;
+
+if (
+  cleanFilter.code ||
+  cleanFilter.barcodeOrQrCode ||
+  cleanFilter.warrantyStartDate ||
+  cleanFilter.warrantyEndDate ||
+  cleanFilter.dispenseUom ||
+  cleanFilter.erpIntegrationId
+) {
+  // 🔍 Advanced Search
+  productQuery = useSearchInventoryProductsQuery({
+    criteria: cleanFilter,
+    ...paginationParams,
+  });
+}
+
+else if (cleanFilter.name) {
+  productQuery = useGetInventoryProductsByNameQuery({
+    name: cleanFilter.name,
+    ...paginationParams,
+  });
+}
+
+else if (cleanFilter.type) {
+  productQuery = useGetInventoryProductByTypeQuery({
+    type: cleanFilter.type,
+    ...paginationParams,
+  });
+}
+
+else if (cleanFilter.inventoryType) {
+  productQuery = useGetInventoryProductByInventoryTypeQuery({
+    inventoryType: cleanFilter.inventoryType,
+    ...paginationParams,
+  });
+}
+
+else if (cleanFilter.baseUom) {
+  productQuery = useGetInventoryProductByBaseUomQuery({
+    baseUom: String(cleanFilter.baseUom),
+    ...paginationParams
+  });
+}
+
+else {
+  productQuery = useGetInventoryProductsQuery(paginationParams);
+}
+
+
+
+
+
+
 
   const {
     data: productListResponse,
@@ -380,21 +429,98 @@ const ProductSetup = () => {
     const key = Object.keys(updatedFilter)[0];
     let value = updatedFilter[key];
 
-    if (!isNaN(value)) {
+    if (value === "" || value === null) {
+      setFilter(prev => ({ ...prev, [key]: null }));
+      return;
+    }
+
+    // رقم
+    if (!isNaN(value) && value !== "" && value !== null) {
       value = Number(value);
     }
 
-    setFilter(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setFilter(prev => ({ ...prev, [key]: value }));
   };
+
+
   const contents = (
     <div className="advanced-filters">
-      <Form fluid layout="inline" className="filters-container">
+      <Form fluid layout="inline" className="dissss">
+
+        <MyInput
+          column
+          fieldName="code"
+          fieldLabel="Code"
+          fieldType="text"
+          record={filter}
+          setRecord={setFilter}
+          width={160}
+        />
+
+        <MyInput
+          column
+          fieldName="barcodeOrQrCode"
+          fieldLabel="Barcode / QR"
+          fieldType="text"
+          record={filter}
+          setRecord={setFilter}
+          width={180}
+        />
+
+
+        <MyInput
+          column
+          fieldName="warrantyStartDate"
+          fieldLabel="Warranty Start"
+          fieldType="date"
+          record={filter}
+          setRecord={setFilter}
+          width={180}
+        />
+
+        <MyInput
+          column
+          fieldName="warrantyEndDate"
+          fieldLabel="Warranty End"
+          fieldType="date"
+          record={filter}
+          setRecord={setFilter}
+          width={180}
+        />
+
+        <MyInput
+          column
+          fieldName="dispenseUom"
+          fieldLabel="Dispense UOM"
+          fieldType="select"
+          selectData={(uomUnitsResponse ?? []).map(u => ({
+            label: u.uom,
+            value: u.id
+          }))} 
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={filter}
+          setRecord={setFilter}
+          width={180}
+          disabled={!filter?.uomGroupId}
+        />
+
+
+
+        <MyInput
+          column
+          fieldName="erpIntegrationId"
+          fieldLabel="ERP ID"
+          fieldType="text"
+          record={filter}
+          setRecord={setFilter}
+          width={160}
+        />
+
       </Form>
     </div>
   );
+
   const filters = (
     <>
 
@@ -457,7 +583,6 @@ const ProductSetup = () => {
             label: u.uom,
             value: u.id
           }))}
-
           selectDataLabel="label"
           selectDataValue="value"
           record={filter}
@@ -469,11 +594,13 @@ const ProductSetup = () => {
 
 
 
+
       </Form>
 
       <AdvancedSearchFilters searchFilter={true} content={contents} />
     </>
   );
+
   const tablebuttons = (
     <div className="container-of-add-new-button">
       <MyButton
@@ -495,7 +622,7 @@ const ProductSetup = () => {
   }, [filter]);
 
   useEffect(() => {
-    setFilter(f => ({ ...f, baseUom: '' }));
+    setFilter(f => ({ ...f, baseUom: null }));
   }, [filter.uomGroupId]);
 
   return (
