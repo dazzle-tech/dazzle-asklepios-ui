@@ -12,6 +12,8 @@ type LinkMap = {
   last?: string | null;
 };
 
+type InventoryProductsSearchCriteria = Partial<InventoryProduct>;
+
 type PagedResult<T> = {
   data: T[];
   totalCount: number;
@@ -124,6 +126,17 @@ export const inventoryProductsService = createApi({
                 { type: 'InventoryProducts', id: 'LIST' },
             ],
         }),
+        searchInventoryProducts: builder.query<PagedResult<InventoryProduct>, { criteria: InventoryProductsSearchCriteria } & PagedParams>({
+            query: ({ criteria, page, size, sort = 'id,asc', timestamp }) => ({
+                url: '/api/inventory/inventory-products/advance-search',
+                method: 'POST',
+                body: criteria,
+                params: { page, size, sort, timestamp },
+            }),
+            transformResponse: (response: InventoryProduct[], meta) =>
+                mapPaged<InventoryProduct>(response, meta),
+            providesTags: [{ type: 'InventoryProducts', id: 'LIST' }],
+        }),
         
     }),
 });
@@ -137,4 +150,5 @@ export const {
     useCreateInventoryProductMutation,
     useUpdateInventoryProductMutation,
     useToggleInventoryProductActiveMutation,
+    useSearchInventoryProductsQuery,
 } = inventoryProductsService;
