@@ -48,8 +48,7 @@ const AddPrefferdHealthProfessionalModal = ({ open, setOpen, patient, patientHP,
     });
 
     //List Responses
-    // Fetch Facility list
-    const { data: facilityListResponse } = useGetFacilitiesQuery(listRequest);
+
     // Fetch Practitioner list
     const { data: practitionerListResponse } = useGetPractitionersQuery({ ...practitionerListRequest });
     // Fetch and map the practitioner list for select input
@@ -57,12 +56,6 @@ const AddPrefferdHealthProfessionalModal = ({ open, setOpen, patient, patientHP,
         value: item.key,
         label: item.practitionerFullName,
         practitioner: item
-    }));
-    // Fetch and map the facility list for select input
-    const facilityList = (facilityListResponse?.object ?? []).map(item => ({
-        value: item.key,
-        label: item.facilityName,
-
     }));
     // handle Clear Modal
     const handleClearModal = () => {
@@ -120,19 +113,6 @@ const AddPrefferdHealthProfessionalModal = ({ open, setOpen, patient, patientHP,
                 record={practitioner}
                 setRecord={setPractitioner}
             />
-
-            <MyInput
-                column
-                fieldLabel="HP Organization"
-                fieldType="select"
-                fieldName="facilityKey"
-                selectData={facilityList}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={patientHP}
-                setRecord={setPatientHP}
-            />
-
             <MyInput
                 column
                 fieldLabel="Network Affiliation"
