@@ -691,17 +691,6 @@ export interface ApDepartment {
 	encountertypelkey:string;
 } 
 
-export interface ApDepartmentService { 
-	key:string;
-	departmentKey:string;
-	serviceKey:string;
-	isActive:boolean;
-	serviceTypeLkey:string;
-	serviceName:string;
-	servicePrice:number;
-	serviceCurrencyLkey:string;
-} 
-
 export interface ApDiagnosticCoding { 
 	key:string;
 	diagnosticsKey:string;
@@ -722,7 +711,7 @@ export interface ApDiagnosticOrderTests {
 	statusLkey:string;
 	orderKey:string;
 	testKey:string;
-	receivedLabId:number;
+	receivedLabKey:string;
 	reasonLkey:string;
 	priorityLkey:string;
 	notes:string;
@@ -746,9 +735,6 @@ export interface ApDiagnosticOrderTests {
 	readyAt:number;
 	approvedAt:number;
 	cancellationReason:string;
-	fromDepartmentId:number;
-	fromFacilityId:number;
-	toFacilityId:number;
 } 
 
 export interface ApDiagnosticOrderTestsNotes { 
@@ -1471,20 +1457,6 @@ export interface ApEncounterAssignToBed {
 	departmentKey:string;
 } 
 
-export interface ApEncounterService { 
-	key:string;
-	encounterKey:string;
-	patientKey:string;
-	serviceKey:string;
-	serviceTypeLkey:string;
-	serviceName:string;
-	servicePrice:number;
-	serviceCurrencyLkey:string;
-	encounterDate:number;
-	createdBy:string;
-	createdAt:number;
-} 
-
 export interface ApEncounterVaccination { 
 	key:string;
 	patientKey:string;
@@ -2060,7 +2032,6 @@ export interface ApMedicalSheets {
 	medicalCalculators:boolean;
 	cpoeResultsManager:boolean;
 	icu:boolean;
-	triage:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -4630,7 +4601,5 @@ export interface AppUser {
 	phoneNumber:string;
 	birthDate:Date;
 	gender:string;
-	jobRole:string;
-	securityAccessLeve:string;
 } 
 

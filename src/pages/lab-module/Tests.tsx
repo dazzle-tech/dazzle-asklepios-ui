@@ -2,7 +2,7 @@ import CancellationModal from '@/components/CancellationModal';
 import ChatModal from '@/components/ChatModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import {
   useGetDiagnosticOrderTestQuery,
   useGetOrderTestNotesByTestIdQuery,
@@ -54,9 +54,8 @@ const Tests = forwardRef<unknown, Props>(
     useImperativeHandle(ref, () => ({
       fetchTest
     }));
-    const authSlice = useAppSelector(state => state.auth);
-
     const dispatch = useAppDispatch();
+    const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [selectedCatValue, setSelectedCatValue] = useState(null);
     const [showListFilter, setShowListFilter] = useState(false);
     const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
@@ -64,7 +63,6 @@ const Tests = forwardRef<unknown, Props>(
     const [openSampleModal, setOpenSampleModal] = useState(false);
     const [openRejectedModal, setOpenRejectedModal] = useState(false);
     const { data: labCatLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
-    const selectedDepartment = authSlice.selectedDepartment;
     const [listRequest, setListRequest] = useState<ListRequest>({
       ...initialListRequest,
       filters: [
@@ -77,11 +75,6 @@ const Tests = forwardRef<unknown, Props>(
           fieldName: 'order_type_lkey',
           operator: 'match',
           value: '862810597620632'
-        },
-        {
-          fieldName: 'received_lab_id',
-          operator: 'match',
-          value: selectedDepartment?.departmentId || undefined
         },
         {
           fieldName: 'status_lkey',
@@ -155,11 +148,7 @@ const Tests = forwardRef<unknown, Props>(
               operator: 'match',
               value: '862810597620632'
             },
-            {
-              fieldName: 'received_lab_id',
-              operator: 'match',
-              value: selectedDepartment?.departmentId || undefined
-            },
+            ,
             {
               fieldName: 'status_lkey',
               operator: 'match',
@@ -187,11 +176,6 @@ const Tests = forwardRef<unknown, Props>(
           fieldName: 'order_type_lkey',
           operator: 'match',
           value: '862810597620632'
-        },
-         {
-          fieldName: 'received_lab_id',
-          operator: 'match',
-          value: selectedDepartment?.departmentId || undefined
         },
         {
           fieldName: 'status_lkey',
@@ -631,11 +615,6 @@ const Tests = forwardRef<unknown, Props>(
               operator: 'match',
               value: '862810597620632'
             },
-              {
-          fieldName: 'received_lab_id',
-          operator: 'match',
-          value: selectedDepartment?.departmentId || undefined
-        },
             {
               fieldName: 'status_lkey',
               operator: 'match',

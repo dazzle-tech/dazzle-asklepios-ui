@@ -1,7 +1,7 @@
 import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import {
   useGetDiagnosticOrderTestQuery,
   useGetOrderTestNotesByTestIdQuery,
@@ -69,15 +69,13 @@ const Tests = forwardRef<TestsRef, TestsProps>(
     }));
 
 
-      const authSlice = useAppSelector(state => state.auth);
-  
+
     const dispatch = useAppDispatch();
     const [openNoteModal, setOpenNoteModal] = useState(false);
     const [openArrivalModal, setOpenArrivalModal] = useState(false);
     const [manualSearchTriggeredTest, setManualSearchTriggeredTest] = useState(false);
     const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
     const [openRejectedModal, setOpenRejectedModal] = useState(false);
-     const selectedDepartment = authSlice.selectedDepartment;
     const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
       ...initialListRequest,
       filters: [
@@ -90,11 +88,6 @@ const Tests = forwardRef<TestsRef, TestsProps>(
           fieldName: 'order_type_lkey',
           operator: 'match',
           value: '862828331135792'
-        },
-          {
-          fieldName: 'received_lab_id',
-          operator: 'match',
-          value: selectedDepartment?.departmentId || undefined
         },
         {
           fieldName: 'status_lkey',
@@ -143,11 +136,6 @@ const Tests = forwardRef<TestsRef, TestsProps>(
           fieldName: 'order_type_lkey',
           operator: 'match',
           value: '862828331135792'
-        },
-          {
-          fieldName: 'received_lab_id',
-          operator: 'match',
-          value: selectedDepartment?.departmentId || undefined
         },
         {
           fieldName: 'status_lkey',

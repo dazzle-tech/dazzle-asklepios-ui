@@ -9,8 +9,6 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetDepartmentListByTypeQuery } from '@/services/setupService';
 import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
 import clsx from 'clsx';
-import { useGetDepartmentByTypeQuery, useLazyGetDepartmentByTypeQuery } from '@/services/security/departmentService';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 const DetailsModal = ({
   test,
@@ -22,6 +20,7 @@ const DetailsModal = ({
   order,
   edit
 }) => {
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
@@ -29,11 +28,10 @@ const DetailsModal = ({
 
   const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
+  const { data: departmentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
   const { data: timeUnitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-   const [deptPage, setDeptPage] = useState(0);
-  const { data: receivedLabList } = useGetDepartmentByTypeQuery({ type: receivedType ,
-        page: deptPage,
-    size: 3,});
+
+  const { data: receivedLabList } = useGetDepartmentListByTypeQuery(receivedType);
 
   const {
     data: fetchAttachmentByKeyResponce,
@@ -49,24 +47,16 @@ const DetailsModal = ({
 
   useEffect(() => {
     if (test?.testTypeLkey == '862810597620632') {
-      setReceivedType('LABORATORY');
+      setReceivedType('5673990729647007');
     } else if (test?.testTypeLkey == '862828331135792') {
-      setReceivedType('RADIOLOGY');
+      setReceivedType('5673990729647008');
     } else if (test?.testTypeLkey == '862842242812880') {
-      setReceivedType('PATHOLOGY');
+      setReceivedType('5673990729647009');
     } else {
       setReceivedType('');
     }
   }, [test]);
-  const [allDepartments, setAllDepartments] = useState([]);
-  useEffect(() => {
-     if (receivedLabList?.data) {
-       setAllDepartments((prev) =>
-         deptPage === 0 ? receivedLabList.data : [...prev, ...receivedLabList.data]
-       );
-     }
-   }, [receivedLabList]);
- 
+
   useEffect(() => {
     if (isSuccess && fetchAttachmentByKeyResponce) {
       if (actionType === 'download') {
@@ -113,7 +103,10 @@ const DetailsModal = ({
     }
   };
 
- 
+  const handleDownloadSelectedPatientAttachment = attachmentKey => {
+    setRequestedPatientAttacment(attachmentKey);
+    setActionType('download');
+  };
 
   const handleRepeatCheckboxChange = checked => {
     setIsRepeatEnabled(checked);
@@ -187,26 +180,16 @@ const DetailsModal = ({
 
                 </Col>
                 <Col md={8}>
-                
-
                   <MyInput
-                    fieldType="selectPagination"
-                    fieldLabel="Add Department"
-                    fieldName="receivedLabId"
-                    selectData={allDepartments}
+                    width="100%"
+                    fieldType="select"
+                    fieldLabel="Received Lab"
+                    selectData={receivedLabList?.object ?? []}
                     selectDataLabel="name"
-                    selectDataValue="id"
-                   record={orderTest}
+                    selectDataValue="key"
+                    fieldName={'receivedLabKey'}
+                    record={orderTest}
                     setRecord={setOrderTest}
-                    searchable
-                    width={520}
-                    hasMore={receivedLabList?.links?.next ? true : false}
-                    onFetchMore={() => {
-                      if (receivedLabList?.links?.next) {
-                        const { page } = extractPaginationFromLink(receivedLabList.links.next);
-                        setDeptPage(page);
-                      }
-                    }}
                   />
                 </Col>
               </Row>

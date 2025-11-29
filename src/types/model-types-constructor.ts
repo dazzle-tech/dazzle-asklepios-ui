@@ -692,17 +692,6 @@ export const newApDepartment:modelTypes.ApDepartment = {
 	encountertypelkey:undefined,
 } 
 
-export const newApDepartmentService:modelTypes.ApDepartmentService = { 
-	key:undefined,
-	departmentKey:undefined,
-	serviceKey:undefined,
-	isActive:undefined,
-	serviceTypeLkey:undefined,
-	serviceName:'',
-	servicePrice:0,
-	serviceCurrencyLkey:undefined,
-} 
-
 export const newApDiagnosticCoding:modelTypes.ApDiagnosticCoding = { 
 	key:undefined,
 	diagnosticsKey:undefined,
@@ -723,7 +712,7 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	statusLkey:undefined,
 	orderKey:undefined,
 	testKey:undefined,
-	receivedLabId:0,
+	receivedLabKey:undefined,
 	reasonLkey:undefined,
 	priorityLkey:undefined,
 	notes:'',
@@ -747,9 +736,6 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	readyAt:0,
 	approvedAt:0,
 	cancellationReason:'',
-	fromDepartmentId:0,
-	fromFacilityId:0,
-	toFacilityId:0,
 } 
 
 export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
@@ -1472,20 +1458,6 @@ export const newApEncounterAssignToBed:modelTypes.ApEncounterAssignToBed = {
 	departmentKey:undefined,
 } 
 
-export const newApEncounterService:modelTypes.ApEncounterService = { 
-	key:undefined,
-	encounterKey:undefined,
-	patientKey:undefined,
-	serviceKey:undefined,
-	serviceTypeLkey:undefined,
-	serviceName:'',
-	servicePrice:0,
-	serviceCurrencyLkey:undefined,
-	encounterDate:0,
-	createdBy:'',
-	createdAt:undefined,
-} 
-
 export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = { 
 	key:undefined,
 	patientKey:undefined,
@@ -2061,7 +2033,6 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	medicalCalculators:undefined,
 	cpoeResultsManager:undefined,
 	icu:undefined,
-	triage:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
@@ -4473,7 +4444,7 @@ export const newApVaccineDose:modelTypes.ApVaccineDose = {
 	deletedAt:undefined,
 	vaccineKey:undefined,
 	doseNameLkey:undefined,
-	isBooster:undefined,
+	isBooster:false,
 } 
 
 export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = { 
@@ -4631,7 +4602,4 @@ export const newAppUser:modelTypes.AppUser = {
 	phoneNumber:'',
 	birthDate:null,
 	gender:'',
-	jobRole:'',
-	securityAccessLeve:'',
 } 
-

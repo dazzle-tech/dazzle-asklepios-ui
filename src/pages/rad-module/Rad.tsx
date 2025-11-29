@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { useSaveDiagnosticOrderTestRadReportMutation } from '@/services/radService';
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
@@ -50,8 +50,7 @@ const Rad = () => {
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest,
     sortBy: 'isUrgent',
-    sortType: 'desc',
-   
+    sortType: 'desc'
   });
   const ReportRef = useRef(null);
   const refetchReport = () => {
