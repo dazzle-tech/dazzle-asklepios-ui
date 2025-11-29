@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetDiagnosticsTestLaboratoryListQuery } from '@/services/setupService';
 import React from 'react';
@@ -44,7 +44,7 @@ const Lab = () => {
   const dispatch = useAppDispatch();
   const ResultRef = useRef(null);
   const TestRef = useRef(null);
-
+   const authSlice = useAppSelector(state => state.auth);
   const refetchTest = () => {
     TestRef.current?.fetchTest();
   };
@@ -62,10 +62,19 @@ const Lab = () => {
   const [newTestsCount, setNewTestsCount] = useState<number>(0);
   const [sampleCollectedTestsCount, setSampleCollectedTestsCount] = useState<number>(0);
   const [resultApprovedCount, setResultApprovedCount] = useState<number>(0);
+   const selectedDepartment = authSlice.selectedDepartment;
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     pageSize: 1000,
-    ...initialListRequest
+    ...initialListRequest,
+    // filters: [
+    //   {
+    //     fieldName: 'department_id',
+    //     operator: 'match',
+    //     value: selectedDepartment?.departmentId || undefined
+    //   }]
   });
+ 
+  console.log('selectedDepartment', selectedDepartment);
   const [listResultResponse, setListResultResponse] = useState<ListRequest>({
     ...initialListRequest,
     filters: [

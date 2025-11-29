@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { ApDiagnosticOrderTests, ApDiagnosticTest } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -63,6 +63,10 @@ import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment
 
 const DiagnosticsOrder = props => {
   const location = useLocation();
+     const authSlice = useAppSelector(state => state.auth);
+  
+     const selectedDepartment = authSlice.selectedDepartment;
+  
   // Reference to table container
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -353,7 +357,7 @@ const DiagnosticsOrder = props => {
 
   const handleSaveTest = async () => {
     try {
-      await saveOrderTests(orderTest).unwrap();
+      await saveOrderTests({...orderTest,fromFacilityId:selectedDepartment.facilityId ,fromDepartmentId:selectedDepartment.departmentId}).unwrap();
       setOpenDetailsModel(false);
       dispatch(notify({ msg: 'saved Successfully', sev: 'success' }));
 
@@ -497,45 +501,6 @@ const DiagnosticsOrder = props => {
     setOrders({ ...newApDiagnosticOrders });
     handleClearDiagnostics(); // Reset status after sending
   };
-
-  //   const handleSaveOrders = async ({ isDraft = false } = {}) => {
-  //     if (!patient || !encounter) {
-  //       console.warn('Patient or encounter is missing. Cannot save prescription.');
-  //       return;
-  //     }
-
-  //     try {
-  //       const payload = isDraft
-  //         ? { ...orders, saveDraft: true }
-  //         : {
-  //             ...newApDiagnosticOrders,
-  //             patientKey: patient.key,
-  //             visitKey: encounter.key,
-  //             statusLkey: '164797574082125',
-  //             labStatusLkey: '6055029972709625',
-  //             radStatusLkey: '6055029972709625',
-  //             typeKey: selectedType,
-  //             catalogKey: selectedCatalog,
-  //             categoryKey: selectedCategory,
-  //             proposedExecutionDate: proposedExecutionDate?.getTime(),
-  //             executionNumber,
-  //             approvalNumber
-  //           };
-
-  //       const response = await saveOrders(payload).unwrap();
-
-  //       if (isDraft) {
-  //         setIsDraft(true);
-  //         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-  //       } else {
-  //         setOpenTestsModal(true);
-  //         dispatch(notify('Start New Order with ID:' + response?.orderId));
-  //         setOrders(response);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error saving order:', error);
-  //     }
-  //   };
 
   const handleRecall = rowData => {
     const genericMedication = genericMedicationListResponse?.object?.find(
