@@ -93,7 +93,7 @@ import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
-
+import { PriceListService } from './services/billing/PriceListService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -278,6 +278,8 @@ export const store = configureStore({
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
    // Visit Duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
+    // Price List
+    [PriceListService.reducerPath]: PriceListService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -371,7 +373,8 @@ export const store = configureStore({
       invoiceReportApi.middleware,
       visitDurationService.middleware,
       catalogService.middleware,
-      catalogDiagnosticTestService.middleware
+      catalogDiagnosticTestService.middleware,
+      PriceListService.middleware,
     ])
 });
 

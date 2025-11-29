@@ -198,6 +198,7 @@ import InventoryManagementProductSetup from './pages/inventory-management/produc
 import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
 import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
 import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
+import PriceLists from './pages/billing-module/priceList/PriceLists';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -263,7 +264,7 @@ const App = () => {
 
   // ------------------------------ BUILD NAVIGATION ----------------------------
   useEffect(() => {
-    if (!authSlice?.menu ) return;
+    if (!authSlice?.menu) return;
     loadNavs();
   }, [authSlice?.menu]);
 
@@ -296,7 +297,7 @@ const App = () => {
           childrenNavs.push({
             eventKey: `nav:${module.name}:${screen.navPath}:${sIdx}`,
             icon: <Icon as={IconComp} />,
-            title:screen.name,
+            title: screen.name,
             to: `/${screen.navPath}`
           });
         }
@@ -404,6 +405,7 @@ const App = () => {
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="progress-notes" element={<ProgressNotes />} />
+
                 <Route
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
@@ -463,7 +465,9 @@ const App = () => {
                 <Route path="continuous-observation" element={<ContinuousObservations />} />
                 <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
                 <Route path="sliding-scale" element={<SlidingScale />} />
+
               </Route>
+              <Route path="price-list" element={<PriceLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
               <Route path="/recovery-module" element={<Recovery />} />
               <Route path="procedure-module" element={<ProcedureModule />} />
@@ -502,7 +506,7 @@ const App = () => {
               <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
-              <Route path="diagnostics-test-old" element={<Diagnostic/>} />
+              <Route path="diagnostics-test-old" element={<Diagnostic />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
@@ -551,7 +555,7 @@ const App = () => {
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
               <Route path="service-and-products" element={<ServiceAndProducts />} />
-              <Route path='enums' element={<Enums/> }/>
+              <Route path='enums' element={<Enums />} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
               <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />
