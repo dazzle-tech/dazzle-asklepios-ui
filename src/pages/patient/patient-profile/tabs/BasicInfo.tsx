@@ -59,6 +59,7 @@ const BasicInfo = ({
         searchable={false}
       />
       <MyInput
+       required
         vr={validationResult}
         column
         fieldType="date"
