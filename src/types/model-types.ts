@@ -2984,6 +2984,40 @@ export interface ApPatientEncounterOrder {
 	submitDate:number;
 } 
 
+export interface ApPatientFamilyHistory { 
+	key:string;
+	patientKey:string;
+	condition:string;
+	relationLkey:string;
+	inheritedDiseases:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientHospitalization { 
+	key:string;
+	patientKey:string;
+	facility:string;
+	reason:string;
+	admissionTypeLkey:string;
+	dateOfAdmission:number;
+	lengthOfStay:number;
+	outcomes:string;
+	medicalInterventionsPerformed:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPatientIds { 
 	key:string;
 	patientKey:string;
@@ -3190,6 +3224,25 @@ export interface ApPatientProblem {
 	resolvedDate:Date;
 	dateAdded:Date;
 	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientProblems { 
+	key:string;
+	patientKey:string;
+	condition:string;
+	dateOfDiagnosis:number;
+	statusLkey:string;
+	typeLkey:string;
+	dateOfResolution:number;
+	sourceOfInformationLkey:string;
+	byPatient:boolean;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -4371,6 +4424,12 @@ export interface ApUserAccessPrivatePatient {
 	patientKey:string;
 } 
 
+export interface ApUserDashboardComponents { 
+	key:string;
+	userId:number;
+	componentKey:string;
+} 
+
 export interface ApUserFacilities { 
 	key:string;
 	userId:string;
@@ -4609,28 +4668,5 @@ export interface ApWarehouseUser {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
-} 
-
-export interface AppUser { 
-	id:;
-	login:string;
-	passwordHash:string;
-	firstName:string;
-	lastName:string;
-	email:string;
-	imageUrl:string;
-	activated:boolean;
-	langKey:string;
-	resetKey:string;
-	createdBy:string;
-	createdDate:;
-	resetDate:;
-	lastModifiedBy:string;
-	lastModifiedDate:;
-	phoneNumber:string;
-	birthDate:Date;
-	gender:string;
-	jobRole:string;
-	securityAccessLeve:string;
 } 
 
