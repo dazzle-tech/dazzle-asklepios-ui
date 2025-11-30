@@ -2985,6 +2985,40 @@ export const newApPatientEncounterOrder:modelTypes.ApPatientEncounterOrder = {
 	submitDate:0,
 } 
 
+export const newApPatientFamilyHistory:modelTypes.ApPatientFamilyHistory = { 
+	key:undefined,
+	patientKey:undefined,
+	condition:'',
+	relationLkey:undefined,
+	inheritedDiseases:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApPatientHospitalization:modelTypes.ApPatientHospitalization = { 
+	key:undefined,
+	patientKey:undefined,
+	facility:'',
+	reason:'',
+	admissionTypeLkey:undefined,
+	dateOfAdmission:0,
+	lengthOfStay:0,
+	outcomes:'',
+	medicalInterventionsPerformed:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApPatientIds:modelTypes.ApPatientIds = { 
 	key:undefined,
 	patientKey:undefined,
@@ -3191,6 +3225,25 @@ export const newApPatientProblem:modelTypes.ApPatientProblem = {
 	resolvedDate:null,
 	dateAdded:null,
 	notes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApPatientProblems:modelTypes.ApPatientProblems = { 
+	key:undefined,
+	patientKey:undefined,
+	condition:'',
+	dateOfDiagnosis:0,
+	statusLkey:undefined,
+	typeLkey:undefined,
+	dateOfResolution:0,
+	sourceOfInformationLkey:undefined,
+	byPatient:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -4372,6 +4425,12 @@ export const newApUserAccessPrivatePatient:modelTypes.ApUserAccessPrivatePatient
 	patientKey:undefined,
 } 
 
+export const newApUserDashboardComponents:modelTypes.ApUserDashboardComponents = { 
+	key:undefined,
+	userId:0,
+	componentKey:undefined,
+} 
+
 export const newApUserFacilities:modelTypes.ApUserFacilities = { 
 	key:undefined,
 	userId:'',
@@ -4610,28 +4669,5 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isvalid:undefined,
-} 
-
-export const newAppUser:modelTypes.AppUser = { 
-	id:undefined,
-	login:'',
-	passwordHash:'',
-	firstName:'',
-	lastName:'',
-	email:'',
-	imageUrl:'',
-	activated:undefined,
-	langKey:undefined,
-	resetKey:undefined,
-	createdBy:'',
-	createdDate:undefined,
-	resetDate:undefined,
-	lastModifiedBy:'',
-	lastModifiedDate:undefined,
-	phoneNumber:'',
-	birthDate:null,
-	gender:'',
-	jobRole:'',
-	securityAccessLeve:'',
 } 
 
