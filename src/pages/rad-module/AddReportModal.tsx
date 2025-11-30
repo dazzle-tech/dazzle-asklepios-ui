@@ -4,7 +4,7 @@ import htmlToDraft from 'html-to-draftjs';
 import React, { useEffect, useState } from 'react';
 import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
-
+import { useGetAllReportTemplatesQuery } from "@/services/reportTemplateService";
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
@@ -36,6 +36,18 @@ const AddReportModal = ({
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
+  const { data: readyTemplatesResponse } = useGetAllReportTemplatesQuery({
+    page: 0,
+    size: 9999,
+    sort: "name,asc"
+  });
+
+  const templateOptions = readyTemplatesResponse?.data?.map(t => ({
+    label: t.name,
+    value: t.id,
+    full: t
+  })) ?? [];
+
 
   useEffect(() => {
     if (report?.reportValue) {
@@ -90,6 +102,23 @@ const AddReportModal = ({
     }
   };
 
+  const handleChooseTemplate = (id) => {
+    const selected = templateOptions.find(t => t.value === id);
+    if (!selected) return;
+
+    const html = selected.full.templateValue || "<p></p>";
+
+    const blocks = htmlToDraft(html);
+    const content = ContentState.createFromBlockArray(blocks.contentBlocks, blocks.entityMap);
+    setEditorState(EditorState.createWithContent(content));
+
+    setReport(prev => ({
+      ...prev,
+      reportValue: html
+    }));
+  };
+
+
   const isDisabled = report.statusLkey === '265089168359400';
 
   return (
@@ -129,7 +158,27 @@ const AddReportModal = ({
                 color="#969797ff"><FontAwesomeIcon icon={faUpload} /></MyButton>
             </Col>
           </Row>
+          <Row className="mb-2">
+            <Col md={24}>
+            <Form fluid layout='inline'>
+              <MyInput
+                column
+                fieldName="selectReadyTemplate"
+                fieldLabel="Choose Ready Template"
+                fieldType="select"
+                selectData={templateOptions}
+                selectDataLabel="label"
+                selectDataValue="value"
+                width="12vw"
+                record={{ selectReadyTemplate: null }}
+                setRecord={(rec) => handleChooseTemplate(rec.selectReadyTemplate)}
+              />
+              </Form>
+            </Col>
+          </Row>
+
           <Row>
+          <div className="diagnostic-template-label">Add Report Manually</div>
             <Col md={24}>
               <Editor
                 toolbar={{
@@ -151,7 +200,7 @@ const AddReportModal = ({
                     previewImage: true
                   }
                 }}
-                editorStyle={{ height: '60vh', width: '100%', border: '1px solid var(--rs-border-primary)', padding: '8px'}}
+                editorStyle={{minHeight: '60vh', overflow: "auto", width: '100%', border: '1px solid var(--rs-border-primary)', padding: '8px'}}
                 editorState={editorState}
                 onEditorStateChange={setEditorState}
                 placeholder="Write your report here..."

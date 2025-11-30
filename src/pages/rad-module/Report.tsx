@@ -584,6 +584,7 @@ const Report = forwardRef<unknown, props>(
           saveReport={saveReport}
           saveTest={saveTest}
           attachmentRefetch={attachmentRefetch}
+          disableEdit={false}
         />
       </div>
     );

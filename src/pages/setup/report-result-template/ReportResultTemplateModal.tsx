@@ -1,4 +1,3 @@
-// Import necessary libraries and components
 import React, { useState, useEffect } from 'react';
 import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import draftToHtml from 'draftjs-to-html';
@@ -8,19 +7,23 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
+import { useDispatch } from 'react-redux';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import './style.less';
-import { isOverflowing } from 'rsuite/esm/DOMHelper';
 
 interface ReportResultTemplateModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   initialData?: {
-    radiologyTestName: string[];
-    reportTemplate: string;
+    id?: number;
+    name: string;
+    templateValue: string;
   };
-  onSave: (data: { radiologyTestName: string[]; reportTemplate: string }) => void;
+
+  onSave: (data: { id?: number | null; name: string; templateValue: string }) => void;
   readOnly?: boolean;
 }
+
 
 const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
   open,
@@ -29,36 +32,24 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
   onSave,
   readOnly = false
 }) => {
-  // State for form data and editor
+
   const [formData, setFormData] = useState({
-    radiologyTestName: [] as string[],
-    reportTemplate: ''
+    name: '',
+    templateValue: ''
   });
+
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
+  const dispatch = useDispatch();
 
-  // List of available tests
-  const availableTests = [
-    { key: '1', testName: 'Chest X-Ray', type: 'Radiology' },
-    { key: '2', testName: 'CT Scan Abdomen', type: 'Radiology' },
-    { key: '3', testName: 'Blood Test', type: 'Pathology' },
-    { key: '4', testName: 'Urine Test', type: 'Pathology' }
-  ];
-
-  // Filter relevant tests
-  const filteredTests = availableTests.filter(
-    t => t.type === 'Radiology' || t.type === 'Pathology'
-  );
-
-  // Load initial data when modal opens
   useEffect(() => {
     if (initialData) {
-      // Set existing data into form and editor
       setFormData({
-        radiologyTestName: initialData.radiologyTestName || [],
-        reportTemplate: initialData.reportTemplate || ''
+        name: initialData.name,
+        templateValue: initialData.templateValue
       });
-      if (initialData.reportTemplate) {
-        const blocksFromHtml = htmlToDraft(initialData.reportTemplate);
+
+      if (initialData.templateValue) {
+        const blocksFromHtml = htmlToDraft(initialData.templateValue || '');
         const { contentBlocks, entityMap } = blocksFromHtml;
         const contentState = ContentState.createFromBlockArray(contentBlocks, entityMap);
         setEditorState(EditorState.createWithContent(contentState));
@@ -66,39 +57,78 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
         setEditorState(EditorState.createEmpty());
       }
     } else {
-      // Reset form for new template
-      setFormData({ radiologyTestName: [], reportTemplate: '' });
+      setFormData({ name: '', templateValue: '' });
       setEditorState(EditorState.createEmpty());
     }
   }, [initialData, open]);
 
+
   // Save handler
-  const handleSave = () => {
-    if (readOnly) return;
+const handleSave = async () => {
+  if (readOnly) return;
 
-    // Validate test name selection
-    if (formData.radiologyTestName.length === 0) {
-      alert('Please select at least one Radiology Test Name');
-      return;
-    }
+  const htmlContent = draftToHtml(convertToRaw(editorState.getCurrentContent()));
 
-    // Convert editor content to HTML
-    const htmlContent = draftToHtml(convertToRaw(editorState.getCurrentContent()));
+  // 🚨 Check empty Report Name
+  if (!formData?.name?.trim()) {
+    dispatch(
+      notify({
+        msg: "Please Enter Report Name",
+        sev: "error"
+      })
+    );
+    return;
+  }
 
-    // Validate content
-    if (!htmlContent || htmlContent === '<p></p>\n') {
-      alert('Please enter Report Template content');
-      return;
-    }
+  // 🚨 Check empty Template content
+  if (!htmlContent || htmlContent === "<p></p>\n") {
+    dispatch(
+      notify({
+        msg: "Please enter report template content",
+        sev: "error"
+      })
+    );
+    return;
+  }
 
-    // Trigger save with form data
-    onSave({
-      radiologyTestName: formData.radiologyTestName,
-      reportTemplate: htmlContent
+  // 💾 Save Template
+  try {
+    dispatch(showSystemLoader());
+
+    await onSave({
+      id: initialData?.id ?? null,
+      name: formData.name.trim(),
+      templateValue: htmlContent
     });
 
+    dispatch(
+      notify({
+        msg: initialData?.id
+          ? "Report Template updated successfully"
+          : "Report Template created successfully",
+        sev: "success"
+      })
+    );
+
+    console.log("Template Value", htmlContent);
+    setFormData(prev => ({ ...prev, templateValue: htmlContent }));
     setOpen(false);
-  };
+
+  } catch (err) {
+    console.log("Report Template Save Error:", err);
+    dispatch(
+      notify({
+        msg: "Failed to save Report Template",
+        sev: "error"
+      })
+    );
+  } finally {
+    dispatch(hideSystemLoader());
+  }
+};
+
+
+
 
   return (
     <MyModal
@@ -111,60 +141,46 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
       bodyheight="37vw"
       content={
         <Form fluid>
-          {/* Input for selecting test names */}
+          {/* Name Input */}
           <div className="test-name-my-input-handle">
             <MyInput
               width="100%"
-              fieldLabel="Test Name"
-              fieldName="radiologyTestName"
+              fieldLabel="Report Name"
+              fieldName="name"
               record={formData}
               setRecord={setFormData}
-              fieldType="multyPicker"
-              selectData={filteredTests}
-              selectDataLabel="testName"
-              selectDataValue="key"
+              fieldType="text"
               required
               disabled={readOnly}
             />
           </div>
-          {/* Editor label */}
+
+          {/* Editor Label */}
           <div className="report-template-label">Report Template</div>
-          {/* Rich text editor for the template content */}
+
+          {/* Rich Text Editor */}
           <div className="editor-template-label">
             <Editor
-  toolbar={{
-    options: [
-      'inline',
-      'blockType',
-      'fontSize',
-      'fontFamily',
-      'list',
-      'textAlign',
-      'link'
-    ],
-    inline: { inDropdown: true },
-    list: { inDropdown: true },
-    textAlign: { inDropdown: true },
-    link: { inDropdown: true },
-    image: {
-      uploadEnabled: false,
-      previewImage: true
-    }
-  }}
-  editorStyle={{
-    height: '40vh',
-    width: '100%',
-    border: '1px solid #ccc',
-    overflow: 'auto'
-  }}
-  editorState={editorState}
-  onEditorStateChange={readOnly ? () => {} : setEditorState}
-  toolbarHidden={readOnly}
-  readOnly={readOnly}
-  editorClassName="custom-editor"
-  placeholder="Write your report here..."
-/>
-
+              toolbar={{
+                options: ['inline', 'blockType', 'fontSize', 'fontFamily', 'list', 'textAlign', 'link'],
+                inline: { inDropdown: true },
+                list: { inDropdown: true },
+                textAlign: { inDropdown: true },
+                link: { inDropdown: true },
+              }}
+              editorStyle={{
+                height: '40vh',
+                width: '100%',
+                border: '1px solid #ccc',
+                overflow: 'auto'
+              }}
+              editorState={editorState}
+              onEditorStateChange={readOnly ? () => { } : setEditorState}
+              toolbarHidden={readOnly}
+              readOnly={readOnly}
+              editorClassName="custom-editor"
+              placeholder="Write your report here..."
+            />
           </div>
         </Form>
       }
