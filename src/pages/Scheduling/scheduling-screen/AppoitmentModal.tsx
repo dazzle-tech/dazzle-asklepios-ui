@@ -8,10 +8,10 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
 import {
   useGetResourcesAvailabilityQuery,
-  useGetResourcesQuery,
   useGetResourceWithDetailsQuery,
   useSaveAppointmentMutation
 } from '@/services/appointmentService';
+import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPatientsQuery } from '@/services/patientService';
 import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -24,7 +24,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { faBan, faBolt, faListCheck, faUpload, faUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import {
   Avatar,
@@ -46,6 +46,7 @@ import SliceBox from './SliceBox';
 import SectionContainer from '@/components/SectionsoContainer';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import { useEnumOptions } from '@/services/enumsApi';
+import appConfig from '../../../../app-config';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
 const AppointmentModal = ({
@@ -67,6 +68,13 @@ const AppointmentModal = ({
     skip: !selectedSlot?.resourceId
   });
   const mode = useSelector((state: any) => state.ui.mode);
+  
+  const [resourcesPaginationParams] = useState({
+    page: 0,
+    size: 100,
+    sort: 'id,asc'
+  } as { page: number; size: number; sort: string });
+  const { data: resourcesListResponse } = useGetAllResourcesQuery(resourcesPaginationParams);
   const [selectedSlices, setSelectedSlices] = useState([]);
 
   useEffect(() => {
@@ -87,7 +95,7 @@ const AppointmentModal = ({
   useEffect(() => {
     if (selectedSlot?.resourceId) {
       // Find the resource from the resources list
-      const resource = resourcesListResponse?.object?.find(r => r.key === selectedSlot.resourceId);
+      const resource = resourcesListResponse?.data?.find(r => r.key === selectedSlot.resourceId);
       if (resource) {
         setAppointment(prev => ({
           ...prev,
@@ -187,10 +195,6 @@ const AppointmentModal = ({
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
-  const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    pageSize: 100
-  });
   const dispatch = useAppDispatch();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null); // To store selected event details
@@ -223,6 +227,7 @@ const AppointmentModal = ({
   const [filteredDates, setFilteredDates] = useState([]);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [showMore, setShowMore] = useState(false);
+  const [resourceNamesCache, setResourceNamesCache] = useState<Record<string, string>>({});
 
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
@@ -277,16 +282,113 @@ const AppointmentModal = ({
     label: item.day,
     value: item.day
   }));
-  const { data: resourcesListResponse } = useGetResourcesQuery(resourcesListRequest);
 
   useEffect(() => {
     if (appointment?.resourceTypeLkey) {
-      const filtered = resourcesListResponse.object.filter(
+      const filtered = resourcesListResponse?.data?.filter(
         resource => resource.resourceTypeLkey === appointment?.resourceTypeLkey
-      );
+      ) ?? [];
       setFilteredResourcesList(filtered);
     }
   }, [resourcesListResponse, appointment?.resourceTypeLkey]);
+
+  // ──────────────────────────── RESOURCE NAME FETCHING ────────────────────────────
+  // Fetch resource names for all resources in the current page
+  useEffect(() => {
+    const fetchResourceNames = async () => {
+      if (!resourcesListResponse?.data) return;
+
+      const resourcesToFetch = resourcesListResponse.data.filter(
+        (r: any) => {
+          const cacheKey = `${r.resourceType}_${r.key}`;
+          return r.resourceType && r.key && !resourceNamesCache[cacheKey];
+        }
+      );
+
+      if (resourcesToFetch.length === 0) return;
+
+      const newNames: Record<string, string> = {};
+      const baseURL = appConfig.backendBaseURL || 'http://localhost:8080';
+      const jwt = localStorage.getItem('id_token') || localStorage.getItem('token');
+
+      await Promise.all(
+        resourcesToFetch.map(async (r: any) => {
+          try {
+            let endpoint = '';
+            let name = '';
+
+            // Static switch statement - easy to read and edit
+            switch (r.resourceType) {
+              case 'PRACTITIONER':
+                endpoint = `/api/setup/practitioner/${r.key}`;
+                break;
+              case 'MEDICAL_TEST':
+                endpoint = `/api/setup/diagnostic-test/${r.key}`;
+                break;
+              case 'CLINIC':
+                endpoint = `/api/setup/department/${r.key}`;
+                break;
+              default:
+                return; // Skip unknown resource types
+            }
+
+            if (!endpoint) return;
+
+            const response = await fetch(`${baseURL}${endpoint}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(jwt && { Authorization: `Bearer ${jwt}` }),
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              
+              if (r.resourceType === 'PRACTITIONER') {
+                name = `${data.firstName || ''} ${data.lastName || ''}`.trim() || `Practitioner ${r.key}`;
+              } else if (r.resourceType === 'MEDICAL_TEST') {
+                name = data.name || r.key;
+              } else if (r.resourceType === 'CLINIC') {
+                name = data.name || r.key;
+              }
+
+              if (name) {
+                newNames[`${r.resourceType}_${r.key}`] = name;
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching resource name for ${r.resourceType} ${r.key}:`, error);
+          }
+        })
+      );
+
+      if (Object.keys(newNames).length > 0) {
+        setResourceNamesCache((prev) => ({ ...prev, ...newNames }));
+      }
+    };
+
+    fetchResourceNames();
+  }, [resourcesListResponse?.data, resourceNamesCache]);
+
+  const getResourceName = (resourceType: string, resourceKey: string): string => {
+    const cacheKey = `${resourceType}_${resourceKey}`;
+    return resourceNamesCache[cacheKey] || resourceKey;
+  };
+
+  // Map resources with resourceName for select dropdown
+  const resourcesWithNames = useMemo(() => {
+    const resources = filteredResourcesList.length > 0
+      ? filteredResourcesList
+      : !appointment?.resourceTypeLkey
+        ? resourcesListResponse?.data ?? []
+        : [];
+    
+    return resources.map((resource: any) => ({
+      ...resource,
+      resourceName: getResourceName(resource.resourceType, resource.key)
+    }));
+  }, [filteredResourcesList, resourcesListResponse?.data, appointment?.resourceTypeLkey, resourceNamesCache]);
 
   const { Column, HeaderCell, Cell } = Table;
 
@@ -925,13 +1027,7 @@ const AppointmentModal = ({
                                 width={'15vw'}
                                 column
                                 fieldLabel="Resources"
-                                selectData={
-                                  filteredResourcesList.length > 0
-                                    ? filteredResourcesList
-                                    : !appointment?.resourceTypeLkey
-                                      ? resourcesListResponse?.object
-                                      : []
-                                }
+                                selectData={resourcesWithNames}
                                 fieldType="select"
                                 selectDataLabel="resourceName"
                                 selectDataValue="key"
