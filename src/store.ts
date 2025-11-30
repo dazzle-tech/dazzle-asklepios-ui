@@ -83,6 +83,7 @@ import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
 import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
+import { inventoryProductsService } from './services/inventory/inventory-products/inventoryProductsService';
 import { countryService } from './services/setup/country/countryService';
 import { countryDistrictService } from './services/setup/country/countryDistrictService';
 import { districtCommunityService } from './services/setup/country/districtCommunityService';
@@ -93,7 +94,6 @@ import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
-
 export const store = configureStore({
   reducer: {
     // ui
@@ -115,7 +115,7 @@ export const store = configureStore({
 
     //inventory 
     [inventoryService.reducerPath]: inventoryService.reducer,
-
+    [inventoryProductsService.reducerPath]: inventoryProductsService.reducer,
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
@@ -288,6 +288,7 @@ export const store = configureStore({
       accountApi.middleware,
       patientService.middleware,
       inventoryService.middleware,
+      inventoryProductsService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
       activeIngredientSynonymsService.middleware,
