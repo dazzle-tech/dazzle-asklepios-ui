@@ -3282,6 +3282,55 @@ export interface ApPatientSecondaryDocuments {
 	isValid:boolean;
 } 
 
+export interface ApPatientSocialHistory { 
+	key:string;
+	patientKey:string;
+	currentSmoker:boolean;
+	smokeStartDate:number;
+	cigaretteAmount:number;
+	cigaretteType:string;
+	previousSmoker:boolean;
+	smokeQuitDate:number;
+	exposureToSecondHandSmoke:boolean;
+	alcoholConsumption:boolean;
+	typeOfAlcohol:string;
+	alcoholSinceWhen:number;
+	substanceUse:boolean;
+	routeLkey:string;
+	frequencyLkey:string;
+	physicalLimitationLkey:string;
+	diagnosedEatingDisordersLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientSurgicalHistory { 
+	key:string;
+	patientKey:string;
+	surgery:string;
+	dateOfSurgery:number;
+	facility:string;
+	other:boolean;
+	otherDesc:string;
+	anesthesiaTypeLkey:string;
+	complicationsLkey:string;
+	adverseReactionsToAnesthesiaLkey:string;
+	isImplantsOrDevices:boolean;
+	implantsOrDevicesDescription:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPatientTemporaryDischarge { 
 	key:string;
 	encounterKey:string;
@@ -4669,4 +4718,5 @@ export interface ApWarehouseUser {
 	deletedAt:number;
 	isvalid:boolean;
 } 
+
 
