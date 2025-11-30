@@ -93,7 +93,6 @@ import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
-
 import { ReportTemplateService } from "./services/reportTemplateService";
 import { DiagnosticTestTemplateService } from './services/DiagnosticTestTemplate';
 export const store = configureStore({
