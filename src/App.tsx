@@ -198,6 +198,7 @@ import InventoryManagementProductSetup from './pages/inventory-management/produc
 import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
 import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
 import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
+import MyConsultations from './components/MyConsultations/MyConsultations';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -380,6 +381,7 @@ const App = () => {
             <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
+              <Route path="my-consultations" element={<MyConsultations />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
