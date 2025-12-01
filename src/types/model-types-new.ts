@@ -926,3 +926,32 @@ export interface VisitDuration {
   lastModifiedDate?: Date | null;
 
 }
+ export interface PriceList {
+  id?: number;
+  facilityId?: number | null;
+  facilityIds?: number[] | null; // for create/update
+  name: string;
+  type: string; // PriceListTypes enum value
+  currency?: string; // from backend
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  description?: string | null;
+  isActive?: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;}
+  
+export interface ReportTemplate{
+  id?:number;
+  name:string;
+  templateValue:string;
+  isActive:boolean
+}
+
+
+export interface DiagnosticTestReportTemplate{
+  id: number,
+  diagnosticTest: string,
+  name: string,
+  templateValue: string,
+  isActive: boolean,
+}

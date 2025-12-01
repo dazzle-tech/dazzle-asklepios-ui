@@ -47,6 +47,7 @@ import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/setup/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 import { Icd10Service } from './services/setup/icd10service';
+import { ResourceService } from './services/setup/resource/ResourceService';
 import { patientAttachmentService } from './services/patients/attachmentService';
 import { ageGroupService } from './services/setup/ageGroupService';
 import { potintialService } from '@/services/potintialDuplicateService';
@@ -95,6 +96,9 @@ import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
+import { PriceListService } from './services/billing/PriceListService';
+import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
+import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -332,6 +336,7 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+      ResourceService.middleware,
       ageGroupService.middleware,
       Icd10Service.middleware,
       allergensService.middleware,
@@ -376,7 +381,10 @@ export const store = configureStore({
       invoiceReportApi.middleware,
       visitDurationService.middleware,
       catalogService.middleware,
-      catalogDiagnosticTestService.middleware
+      catalogDiagnosticTestService.middleware,
+      PriceListService.middleware,
+      ReportTemplateService.middleware,
+      DiagnosticTestTemplateService.middleware,
     ])
 });
 

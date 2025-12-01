@@ -2207,6 +2207,27 @@ export const newApNurseNotes:modelTypes.ApNurseNotes = {
 	deletedAt:undefined,
 } 
 
+export const newApNurseServiceProduct:modelTypes.ApNurseServiceProduct = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	departmentId:0,
+	categoryLkey:undefined,
+	serviceId:0,
+	warehouseProductId:0,
+	quantity:0,
+	baseUomId:0,
+	unitPrice:0,
+	totalPrice:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 
 	key:undefined,
 	encounterKey:undefined,
@@ -3283,6 +3304,55 @@ export const newApPatientSecondaryDocuments:modelTypes.ApPatientSecondaryDocumen
 	isValid:undefined,
 } 
 
+export const newApPatientSocialHistory:modelTypes.ApPatientSocialHistory = { 
+	key:undefined,
+	patientKey:undefined,
+	currentSmoker:undefined,
+	smokeStartDate:0,
+	cigaretteAmount:0,
+	cigaretteType:'',
+	previousSmoker:undefined,
+	smokeQuitDate:0,
+	exposureToSecondHandSmoke:undefined,
+	alcoholConsumption:undefined,
+	typeOfAlcohol:'',
+	alcoholSinceWhen:0,
+	substanceUse:undefined,
+	routeLkey:undefined,
+	frequencyLkey:undefined,
+	physicalLimitationLkey:undefined,
+	diagnosedEatingDisordersLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApPatientSurgicalHistory:modelTypes.ApPatientSurgicalHistory = { 
+	key:undefined,
+	patientKey:undefined,
+	surgery:'',
+	dateOfSurgery:0,
+	facility:'',
+	other:undefined,
+	otherDesc:'',
+	anesthesiaTypeLkey:undefined,
+	complicationsLkey:undefined,
+	adverseReactionsToAnesthesiaLkey:undefined,
+	isImplantsOrDevices:undefined,
+	implantsOrDevicesDescription:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApPatientTemporaryDischarge:modelTypes.ApPatientTemporaryDischarge = { 
 	key:undefined,
 	encounterKey:undefined,
@@ -4129,8 +4199,8 @@ export const newApSnomedCode:modelTypes.ApSnomedCode = {
 export const newApTeleConsultation:modelTypes.ApTeleConsultation = { 
 	id:'',
 	questionToConsultant:'',
-	consultantFacilityId:'',
-	consultantDepartmentId:'',
+	fromFacilityId:0,
+	fromDepartmentId:0,
 	specialtyLkey:undefined,
 	urgencyLkey:undefined,
 	expectedResponse:'',
@@ -4150,6 +4220,8 @@ export const newApTeleConsultation:modelTypes.ApTeleConsultation = {
 	callStartedBy:'',
 	callColsedAt:0,
 	callColsedBy:'',
+	toDepartmentId:0,
+	toFacilityId:0,
 } 
 
 export const newApTeleConsultationCallLog:modelTypes.ApTeleConsultationCallLog = { 
@@ -4165,6 +4237,25 @@ export const newApTeleConsultationProgressNote:modelTypes.ApTeleConsultationProg
 	createdBy:'',
 	createdDate:0,
 	teleConsultationId:'',
+} 
+
+export const newApTelephonicConsultation:modelTypes.ApTelephonicConsultation = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	physician:0,
+	dateOfCall:0,
+	consultationContent:'',
+	approvalNumber:'',
+	notes:'',
+	extraDocumentation:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApTenant:modelTypes.ApTenant = { 
@@ -4670,4 +4761,5 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	deletedAt:undefined,
 	isvalid:undefined,
 } 
+
 

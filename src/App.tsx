@@ -82,7 +82,7 @@ import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-pr
 import Allergies from './pages/encounter/encounter-pre-observations/AllergiesNurse';
 import EncounterPreObservationsNew from './pages/encounter/encounter-pre-observations-new/EncounterPreObservations';
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
-import Observations from './pages/encounter/encounter-pre-observations/observations/Observations';
+import Observations from './pages/encounter/encounter-pre-observations-new/observations/Observations';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
 import Warning from './pages/encounter/encounter-pre-observations/warning';
@@ -198,6 +198,8 @@ import InventoryManagementProductSetup from './pages/inventory-management/produc
 import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
 import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
 import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
+import PriceLists from './pages/billing-module/priceList/PriceLists';
+import MyConsultations from './components/MyConsultations/MyConsultations';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -263,7 +265,7 @@ const App = () => {
 
   // ------------------------------ BUILD NAVIGATION ----------------------------
   useEffect(() => {
-    if (!authSlice?.menu ) return;
+    if (!authSlice?.menu) return;
     loadNavs();
   }, [authSlice?.menu]);
 
@@ -296,7 +298,7 @@ const App = () => {
           childrenNavs.push({
             eventKey: `nav:${module.name}:${screen.navPath}:${sIdx}`,
             icon: <Icon as={IconComp} />,
-            title:screen.name,
+            title: screen.name,
             to: `/${screen.navPath}`
           });
         }
@@ -380,6 +382,7 @@ const App = () => {
             <Route path="/" element={<Frame navs={navigationMap} mode={mode} />}>
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
+              <Route path="my-consultations" element={<MyConsultations />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
@@ -404,6 +407,7 @@ const App = () => {
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="progress-notes" element={<ProgressNotes />} />
+
                 <Route
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
@@ -415,7 +419,80 @@ const App = () => {
                 <Route path="drug-order" element={<DrugOrderNew />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
-                <Route path="observations" element={<Observations />} />
+                <Route path="observations" element={<Observations hideSaveButton={true}/>} />
+                <Route path="allergies" element={<Allergies />} />
+                <Route path="medical-warnings" element={<Warning />} />
+                <Route path="cardiology" element={<Cardiology />} />
+                <Route path="dental-care" element={<Dental />} />
+                <Route path="optometric-exam" element={<OptometricExam />} />
+                <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
+                <Route path="audiometry" element={<AudiometryPuretone />} />
+                <Route path="psychological-exam" element={<PsychologicalExam />} />
+                <Route path="vaccination" element={<VaccinationTab />} />
+                <Route path="prescription" element={<PrescriptionNew />} />
+                <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
+                <Route path="consultation" element={<ConsultationNew />} />
+                <Route path="procedures" element={<Procedure />} />
+                <Route path="patient-history" element={<PatientHistory />} />
+                <Route path="medications-record" element={<MedicationsRecord />} />
+                <Route path="vaccine-record" element={<VaccineReccord />} />
+                <Route path="diagnostics-result" element={<DiagnosticsResult />} />
+                <Route path="dialysis-request" element={<DialysisRequest />} />
+                <Route path="operation-request" element={<OperationRequestNew />} />
+                <Route path="doctor-round" element={<DoctorRound />} />
+                <Route path="icu" element={<ICU />} />
+                <Route path="pediatric" element={<Pediatric />} />
+                <Route
+                  path="multidisciplinary-team-notes"
+                  element={<MultidisciplinaryTeamNotes />}
+                />
+                <Route path="care-plan-and-goals" element={<CarePlanAndGoals />} />
+                <Route path="discharge-planning" element={<DischargePlanning />} />
+                <Route path="bedside-procedures-requests" element={<BedsideProceduresRequests />} />
+                <Route path="day-case" element={<DayCaseContent />} />
+                <Route path="blood-order" element={<BloodOrder />} />
+                <Route path="intake-output-balance" element={<IntakeOutputBalance />} />
+                <Route path="referral-request" element={<ReferralRequest />} />
+                <Route path="iv-fluid-order" element={<IVFluidOrder />} />
+                <Route path="morse-fall-scale" element={<MorseFallScale />} />
+                <Route path="stratify-scale" element={<StratifyScale />} />
+                <Route path="hendrich-fall-risk" element={<HendrichFallRisk />} />
+                <Route path="nutrition-state-asssessment" element={<NutritionStateAsssessment />} />
+                <Route path="dietary-request" element={<DietaryRequest />} />
+                <Route path="medication-administration-record" element={<MAR />} />
+                <Route path="physiotherapy-plan" element={<PhysiotherapyPlan />} />
+                <Route path="occupational-therapy" element={<OccupationalTherapy />} />
+                <Route path="speech-therapy" element={<SpeechTherapy />} />
+                <Route path="iv-fluid-Administration" element={<IVFluidAdministration />} />
+                <Route path="continuous-observation" element={<ContinuousObservations />} />
+                <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
+                <Route path="sliding-scale" element={<SlidingScale />} />
+
+              </Route>
+              <Route path="price-list" element={<PriceLists />} />
+              <Route path="/doctor-round/round" element={<ViewRound />} />
+              <Route path="/recovery-module" element={<Recovery />} />
+              <Route path="procedure-module" element={<ProcedureModule />} />
+              <Route path="encounter-list" element={<EncounterList />} />
+              <Route path="inpatient-encounters-list" element={<InpatientList />} />
+              <Route path="waiting-encounters-list" element={<InpatientWaitingLists />} />
+              <Route path="day-case-list" element={<DayCaseList />} />
+              <Route path="room" element={<Room />} />
+              <Route path="merge-patient-files" element={<PatientMergeFiles />} />
+              <Route path="nurse-station" element={<EncounterPreObservationsNew />} >
+                 <Route path="progress-notes" element={<ProgressNotes />} />
+                <Route
+                  path="pressure-ulce-risk-assessment"
+                  element={<PressureUlcerRiskAssessment />}
+                />
+                <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
+                <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
+                <Route path="medication-order" element={<DrugOrderNew />} />
+                <Route path="pregnancy-follow-up" element={<PregnancyFollowup />} />
+                <Route path="drug-order" element={<DrugOrderNew />} />
+                <Route index element={<Observations />} />
+                <Route path="clinical-visit" element={<SOAP />} />
+                <Route path="observations" element={<Observations   />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -464,16 +541,6 @@ const App = () => {
                 <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
                 <Route path="sliding-scale" element={<SlidingScale />} />
               </Route>
-              <Route path="/doctor-round/round" element={<ViewRound />} />
-              <Route path="/recovery-module" element={<Recovery />} />
-              <Route path="procedure-module" element={<ProcedureModule />} />
-              <Route path="encounter-list" element={<EncounterList />} />
-              <Route path="inpatient-encounters-list" element={<InpatientList />} />
-              <Route path="waiting-encounters-list" element={<InpatientWaitingLists />} />
-              <Route path="day-case-list" element={<DayCaseList />} />
-              <Route path="room" element={<Room />} />
-              <Route path="merge-patient-files" element={<PatientMergeFiles />} />
-              <Route path="nurse-station" element={<EncounterPreObservationsNew />} />
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
               <Route path="review-results" element={<ReviewResults />} />
               <Route path="facilities" element={<Facilities />} />
@@ -502,7 +569,7 @@ const App = () => {
               <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
-              <Route path="diagnostics-test-old" element={<Diagnostic/>} />
+              <Route path="diagnostics-test-old" element={<Diagnostic />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
@@ -551,7 +618,7 @@ const App = () => {
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
               <Route path="service-and-products" element={<ServiceAndProducts />} />
-              <Route path='enums' element={<Enums/> }/>
+              <Route path='enums' element={<Enums />} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
               <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />

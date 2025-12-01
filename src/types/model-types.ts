@@ -1,4671 +1,4763 @@
-export interface ApAccessRole {
-  key: string;
-  name: string;
-  description: string;
-  accessLevel: number;
-  passwordErrorRetires: number;
-  passwordExpires: boolean;
-  passwordExpiresAfterDays: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApAccessRoleAuthorization {
-  key: string;
-  accessRoleKey: string;
-  authorizationType: string;
-  authorizationObjectKey: string;
-  authorizationLevel: number;
-  accessLevel: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApAccessRoleScreen {
-  key: string;
-  accessRoleKey: string;
-  screenKey: string;
-  canRead: boolean;
-  canWrite: boolean;
-  canDelete: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApAccessToken {
-  key: string;
-  userKey: string;
-  canExpire: boolean;
-  expiresAt: number;
-  accessToken: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApActiveIngredient {
-  key: string;
-  code: string;
-  name: string;
-  hasSalt: boolean;
-  saltLkey: string;
-  medicalCategoryLkey: string;
-  isControlled: boolean;
-  controlledLkey: string;
-  hasSynonyms: boolean;
-  atcCode: string;
-  drugTypeLkey: string;
-  drugClassLkey: string;
-  hasBlackBoxWarning: boolean;
-  blackBoxWarning: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  mechanismOfAction: string;
-  toxicityMaximumDose: string;
-  toxicityMaximumDosePerUnitLkey: string;
-  toxicityDetails: string;
-  pregnancyCategoryLkey: string;
-  pregnancyNotes: string;
-  lactationRiskLkey: string;
-  lactationRiskNotes: string;
-  doseAdjustmentRenal: boolean;
-  doseAdjustmentHepatic: boolean;
-  pharmaAbsorption: string;
-  pharmaRouteOfElimination: string;
-  pharmaVolumeOfDistribution: string;
-  pharmaHalfLife: string;
-  pharmaProteinBinding: string;
-  pharmaClearance: string;
-  pharmaMetabolism: string;
-  doseAdjPugA: string;
-  doseAdjPugB: string;
-  doseAdjPugC: string;
-  doseAdjRenalOne: string;
-  doseAdjRenalTwo: string;
-  doseAdjRenalThree: string;
-  doseAdjRenalFour: string;
-  chemicalFormula: string;
-}
-
-export interface ApActiveIngredientAdverseEffect {
-  key: string;
-  activeIngredientKey: string;
-  adverseEffectLkey: string;
-  isOther: boolean;
-  otherDescription: string;
-  typeLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApActiveIngredientContraindication {
-  key: string;
-  activeIngredientKey: string;
-  contraindication: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  icdCodeKey: string;
-}
-
-export interface ApActiveIngredientDrugInteraction {
-  key: string;
-  activeIngredientKey: string;
-  interactedActiveIngredientKey: string;
-  severityLkey: string;
-  description: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApActiveIngredientFoodInteraction {
-  key: string;
-  activeIngredientKey: string;
-  foodDescription: string;
-  severityLkey: string;
-  description: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApActiveIngredientIndication {
-  key: string;
-  activeIngredientKey: string;
-  indication: string;
-  isOffLabel: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  icdCodeKey: string;
-}
-
-export interface ApActiveIngredientRecommendedDosage {
-  key: string;
-  activeIngredientKey: string;
-  indicationLkey: string;
-  variableLkey: string;
-  dosage: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApActiveIngredientSpecialPopulation {
-  key: string;
-  activeIngredientKey: string;
-  additionalPopulationLkey: string;
-  considerations: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApActiveIngredientSynonym {
-  key: string;
-  activeIngredientKey: string;
-  synonym: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApAddresses {
-  key: string;
-  entityId: string;
-  entityTypeLkey: string;
-  addressTypeLkey: string;
-  streetAddressLine1: string;
-  streetAddressLine2: string;
-  countryLkey: string;
-  stateProvinceRegionLkey: string;
-  cityLkey: string;
-  postalCode: string;
-  additionalInfo: string;
-  latitude: string;
-  longitude: string;
-  isActive: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApAdmitOutpatientInpatient {
-  key: string;
-  toEncounterKey: string;
-  fromEncounterKey: string;
-  inpatientDepartmentKey: string;
-  physicianKey: string;
-  admissionNotes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  admitSourceLkey: string;
-  admissionDepartmentKey: string;
-  roomKey: string;
-  bedKey: string;
-  handoffInformation: string;
-  icd10: string;
-  reasonOfAdmission: string;
-}
-
-export interface ApAgeGroup {
-  key: string;
-  ageGroupLkey: string;
-  fromAge: number;
-  toAge: number;
-  fromAgeUnitLkey: string;
-  toAgeUnitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApAllergens {
-  key: string;
-  allergenCode: string;
-  allergenName: string;
-  allergenTypeLkey: string;
-  description: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApAppointment {
-  key: string;
-  patientKey: string;
-  facilityKey: string;
-  resourceTypeLkey: string;
-  resourceKey: string;
-  visitTypeLkey: string;
-  durationLkey: string;
-  appointmentStart: string;
-  appointmentEnd: string;
-  instructions: string;
-  notes: string;
-  priorityLkey: string;
-  isReminder: string;
-  reminderLkey: string;
-  consentForm: string;
-  referingPhysicianLkey: string;
-  externalPhysician: string;
-  procedureLevelLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  resourceLkey: string;
-  instructionsLkey: string;
-  appointmentStatus: string;
-  reasonLkey: string;
-  reasonValue: string;
-  otherReason: string;
-  noShowReasonLkey: string;
-  noShowReasonValue: string;
-  noShowOtherReason: string;
-}
-
-export interface ApAttachment {
-  key: string;
-  attachmentType: string;
-  referenceObjectKey: string;
-  extraDetails: string;
-  fileName: string;
-  contentType: string;
-  fileContent: uint8array;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  details: string;
-  accessTypeLkey: string;
-  patientKey: string;
-}
-
-export interface ApAudiometryPuretone {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  testEnvironment: string;
-  testReason: string;
-  earExamFindingsLkey: string;
-  airConductionFrequenciesLeft: number;
-  airConductionFrequenciesRight: number;
-  hearingThresholdsLeft: number;
-  hearingThresholdsRight: number;
-  boneConductionFrequenciesLeft: number;
-  boneConductionFrequenciesRight: number;
-  boneConductionThresholdsLeft: number;
-  boneConductionThresholdsRight: number;
-  maskedUsed: boolean;
-  hearingLossTypeLkey: string;
-  hearingLossDegreeLkey: string;
-  recommendations: string;
-  additionalNotes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-}
-
-export interface ApBed {
-  key: string;
-  roomKey: string;
-  name: string;
-  bedTypeLkey: string;
-  locationDetails: string;
-  isValid: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  statusLkey: string;
-}
-
-export interface ApBedTransactions {
-  key: string;
-  encounterKey: string;
-  patientKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  fromRoomKey: string;
-  fromBedKey: string;
-  toRoomKey: string;
-  toBedKey: string;
-  departmentKey: string;
-}
-
-export interface ApBrandMedicationSubstitutes {
-  key: string;
-  brandKey: string;
-  alternativeBrandKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  description: string;
-}
-
-export interface ApCatalogDiagnosticTest {
-  key: string;
-  testKey: string;
-  catalogKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApCdt {
-  key: string;
-  typeLkey: string;
-  cdtCode: string;
-  description: string;
-  classLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApCdtDentalAction {
-  key: string;
-  dentalActionKey: string;
-  cdtKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApClinicalDocumentation {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  docTypeLkey: string;
-  docCategoryLkey: string;
-  docContent: string;
-  userKey: string;
-  userRoleLkey: string;
-  facilityKey: string;
-  docStatusLkey: string;
-  docFormTypeKey: string;
-  docFormKey: string;
-  createdDatetime: Date;
-  approvedDatetime: Date;
-  approvedByUserKey: string;
-  approvedByUserRoleLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApComplaintSymptoms {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  chiefComplaint: string;
-  onsetDate: number;
-  duration: number;
-  unitLkey: string;
-  painCharacteristics: string;
-  painLocationLkey: string;
-  radiation: string;
-  aggravatingFactors: string;
-  relievingFactors: string;
-  associatedSymptoms: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-}
-
-export interface ApConsultationOrder {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  consultantSpecialtyLkey: string;
-  cityLkey: string;
-  preferredConsultantKey: string;
-  consultationMethodLkey: string;
-  consultationTypeLkey: string;
-  consultationContent: string;
-  notes: string;
-  statusLkey: string;
-  viewResponse: string;
-  resposeStatusLkey: string;
-  submissionDate: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  cancellationReason: string;
-}
-
-export interface ApCpt {
-  key: string;
-  categoryLkey: string;
-  cptCode: string;
-  description: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApCustomeInstructions {
-  key: string;
-  prescriptionMedicationsKey: string;
-  dose: number;
-  frequencyLkey: string;
-  unitLkey: string;
-  roaLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDentalAction {
-  key: string;
-  description: string;
-  type: string;
-  imageName: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  favorite: boolean;
-}
-
-export interface ApDentalChart {
-  key: string;
-  encounterKey: string;
-  patientKey: string;
-  chartDate: Date;
-  type: string;
-  chartSequence: number;
-  status: string;
-  treatmentPlan: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDentalChartProgressNote {
-  key: string;
-  chartKey: string;
-  note: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDentalChartTooth {
-  key: string;
-  chartKey: string;
-  toothNumber: string;
-  missing: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  toothNumberNumeric: number;
-}
-
-export interface ApDentalPlannedTreatment {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  type: string;
-  visitNumber: number;
-  cdtKey: string;
-  toothKey: string;
-  note: string;
-  surfaceLkey: string;
-  billingTypeLkey: string;
-  fees: number;
-  insurance: number;
-  discount: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  statusLkey: string;
-  source: string;
-  sourceKey: string;
-}
-
-export interface ApDepartment {
-  key: string;
-  facilityKey: string;
-  name: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  departmentTypeLkey: string;
-  appointable: boolean;
-  hasTriage: boolean;
-  departmentCode: string;
-  phoneNumber: string;
-  email: string;
-  encountertypelkey: string;
-}
-
-export interface ApDepartmentService {
-  key: string;
-  departmentKey: string;
-  serviceKey: string;
-  isActive: boolean;
-  serviceTypeLkey: string;
-  serviceName: string;
-  servicePrice: number;
-  serviceCurrencyLkey: string;
-}
-
-export interface ApDiagnosticCoding {
-  key: string;
-  diagnosticsKey: string;
-  codeTypeLkey: string;
-  internationalCodeKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApDiagnosticOrderTests {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  statusLkey: string;
-  orderKey: string;
-  testKey: string;
-  receivedLabId: number;
-  reasonLkey: string;
-  priorityLkey: string;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  processingStatusLkey: string;
-  submitDate: number;
-  orderTypeLkey: string;
-  acceptedAt: number;
-  acceptedBy: string;
-  rejectedAt: number;
-  rejectedBy: string;
-  rejectedReason: string;
-  patientArrivedAt: number;
-  patientArrivedNoteRad: string;
-  readyAt: number;
-  approvedAt: number;
-  cancellationReason: string;
-  fromDepartmentId: number;
-  fromFacilityId: number;
-  toFacilityId: number;
-}
-
-export interface ApDiagnosticOrderTestsNotes {
-  key: string;
-  orderKey: string;
-  testKey: string;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticOrderTestsRadReport {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  statusLkey: string;
-  orderKey: string;
-  medicalTestKey: string;
-  orderTestKey: string;
-  reportValue: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  orderTypeLkey: string;
-  approvedAt: number;
-  approvedBy: string;
-  rejectedAt: number;
-  rejectedBy: string;
-  rejectedReason: string;
-  reviewAt: number;
-  reviewBy: string;
-  severityLkey: string;
-}
-
-export interface ApDiagnosticOrderTestsReportNotes {
-  key: string;
-  orderKey: string;
-  testKey: string;
-  reportKey: string;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticOrderTestsResult {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  statusLkey: string;
-  orderKey: string;
-  medicalTestKey: string;
-  orderTestKey: string;
-  normalRangeKey: string;
-  resultType: string;
-  resultLkey: string;
-  resultValueNumber: number;
-  marker: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  processingStatusLkey: string;
-  orderTypeLkey: string;
-  approvedAt: number;
-  approvedBy: string;
-  rejectedAt: number;
-  rejectedBy: string;
-  rejectedReason: string;
-  reviewAt: number;
-  reviewBy: string;
-  resultText: string;
-  testProfileKey: string;
-  isProfile: boolean;
-  normalRangeValue: string;
-}
-
-export interface ApDiagnosticOrderTestsResultNotes {
-  key: string;
-  orderKey: string;
-  testKey: string;
-  resultKey: string;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticOrderTestsSamples {
-  key: string;
-  orderKey: string;
-  testKey: string;
-  notes: string;
-  unitLkey: string;
-  quantity: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  sampleCollectedAt: number;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticOrders {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  statusLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  orderId: string;
-  saveDraft: boolean;
-  submittedBy: string;
-  submittedAt: number;
-  isUrgent: boolean;
-  labStatusLkey: string;
-  radStatusLkey: string;
-}
-
-export interface ApDiagnosticTest {
-  key: string;
-  testTypeLkey: string;
-  testName: string;
-  internalCode: string;
-  internationalCodeOne: string;
-  internationalCodeTwo: string;
-  internationalCodeThree: string;
-  ageSpecific: boolean;
-  genderSpecific: boolean;
-  genderLkey: string;
-  specialPopulation: boolean;
-  price: number;
-  currencyLkey: string;
-  specialNotes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  appointable: boolean;
-}
-
-export interface ApDiagnosticTestAgeType {
-  key: string;
-  testKey: string;
-  ageFrom: number;
-  ageTo: number;
-  ageTypeLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticTestCatalogHeader {
-  key: string;
-  description: string;
-  typeLkey: string;
-  departmentKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  testKey: string;
-  catalogKey: string;
-}
-
-export interface ApDiagnosticTestEyeExam {
-  key: string;
-  testKey: string;
-  eyeExamCategoryLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticTestGenetics {
-  key: string;
-  testKey: string;
-  internationalCodingTypeLkey: string;
-  childCodeLkey: string;
-  pathologyCategoryLkey: string;
-  specimenTypeLkey: string;
-  methodologyLkey: string;
-  turnaroundTime: string;
-  timeUnitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticTestLaboratory {
-  key: string;
-  testKey: string;
-  internationalCodingTypeLkey: string;
-  childCodeLkey: string;
-  labCatalogKey: string;
-  propertyLkey: string;
-  systemLkey: string;
-  scaleLkey: string;
-  reagentsLkey: string;
-  methodLkey: string;
-  testDurationTime: number;
-  timeUnitLkey: string;
-  resultType: string;
-  resultUnitLkey: string;
-  isProfile: boolean;
-  sampleContainerLkey: string;
-  sampleVolume: number;
-  sampleVolumeUnitLkey: string;
-  tubeColorLkey: string;
-  testDescription: string;
-  sampleHandling: string;
-  turnaroundTime: number;
-  turnaroundTimeUnitLkey: string;
-  preparationRequirements: string;
-  medicalIndications: string;
-  associatedRisks: string;
-  testInstructions: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  categoryLkey: string;
-  tubeTypeLkey: string;
-}
-
-export interface ApDiagnosticTestNormalRange {
-  key: string;
-  testKey: string;
-  genderLkey: string;
-  ageFrom: number;
-  ageFromUnitLkey: string;
-  ageTo: number;
-  ageToUnitLkey: string;
-  conditionLkey: string;
-  resultTypeLkey: string;
-  resultText: string;
-  resultLovKey: string;
-  normalRangeTypeLkey: string;
-  rangeFrom: number;
-  rangeTo: number;
-  criticalValue: boolean;
-  criticalValueLessThan: number;
-  criticalValueMoreThan: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  profileTestKey: string;
-  isProfile: boolean;
-}
-
-export interface ApDiagnosticTestNormalRangeLov {
-  key: string;
-  testKey: string;
-  normalRangeKey: string;
-  lovLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticTestPathology {
-  key: string;
-  testKey: string;
-  internationalCodingTypeLkey: string;
-  childCodeLkey: string;
-  pathologyCategoryLkey: string;
-  specimenTypeLkey: string;
-  analysisProcedureLkey: string;
-  turnaroundTime: string;
-  timeUnitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  testDescription: string;
-  sampleHandling: string;
-  medicalLndications: string;
-  criticalValues: string;
-  preparationRequirements: string;
-  associatedRisks: string;
-  pathCatalogKey: string;
-}
-
-export interface ApDiagnosticTestProfile {
-  key: string;
-  diagnosticTestKey: string;
-  testName: string;
-  resultUnitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDiagnosticTestRadiology {
-  key: string;
-  testKey: string;
-  internationalCodingTypeLkey: string;
-  childCodeLkey: string;
-  radCategoryLkey: string;
-  imageDuration: string;
-  timeUnitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  testDescription: string;
-  medicalIndications: string;
-  turnaroundTimeUnitLkey: string;
-  turnaroundTime: number;
-  associatedRisks: string;
-  radCatalogKey: string;
-  propertyLkey: string;
-  systemLkey: string;
-  scaleLkey: string;
-  reagentsLkey: string;
-  methodLkey: string;
-  timingLkey: string;
-  resultType: string;
-  resultUnitLkey: string;
-  labCatalogLkey: string;
-}
-
-export interface ApDiagnosticTestSpecialPopulation {
-  key: string;
-  testKey: string;
-  specialPopulationLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApDoctorRound {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  roundStartTime: number;
-  practitionerKey: string;
-  shiftLkey: string;
-  initialNote: string;
-  progressNote: string;
-  specialEventNote: string;
-  primaryDiagnosis: string;
-  major: boolean;
-  suspected: boolean;
-  clinicalImpression: string;
-  secondaryDiagnoses: string;
-  patientStatusLkey: string;
-  complicationsNoted: string;
-  summaryStatement: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  statusLkey: string;
-}
-
-export interface ApDoctorRoundStaff {
-  key: string;
-  doctorRoundKey: string;
-  userKey: string;
-  responsibility: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  encounterKey: string;
-  isPresent: boolean;
-  patientKey: string;
-}
-
-export interface ApDrugOrder {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  statusLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  drugorderId: string;
-  saveDraft: boolean;
-  submittedBy: string;
-  submittedAt: number;
-}
-
-export interface ApDrugOrderMedications {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  drugOrderKey: string;
-  genericMedicationsKey: string;
-  drugOrderTypeLkey: string;
-  doseUnitLkey: string;
-  roaLkey: string;
-  frequency: number;
-  priorityLkey: string;
-  pharmacyDepartmentKey: string;
-  dose: number;
-  notes: string;
-  prnIndication: string;
-  specialInstructions: string;
-  parametersToMonitor: string;
-  startDateTime: number;
-  maximumDose: number;
-  genericSubstitute: boolean;
-  chronicMedication: boolean;
-  patientOwnMedication: boolean;
-  administrationInstructions: string;
-  duration: number;
-  durationTypeLkey: string;
-  statusLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  indicationUseLkey: string;
-  indicationIcd: string;
-  indicationSnomed: string;
-  indicationManually: string;
-}
-
-export interface ApDuplicationCandidateSetup {
-  key: string;
-  role: string;
-  dob: boolean;
-  lastName: boolean;
-  documentNo: boolean;
-  mobileNumber: boolean;
-  gender: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApDvmRule {
-  key: string;
-  screenMetadataKey: string;
-  ruleDescription: string;
-  fieldKey: string;
-  fieldName: string;
-  fieldDataType: string;
-  isFieldLov: boolean;
-  isFieldRef: boolean;
-  ruleType: string;
-  ruleValue: string;
-  ruleValueTwo: string;
-  isDependant: boolean;
-  dependantRuleCheck: string;
-  dependantRuleKey: string;
-  validationType: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApElectrocardiogramEcg {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  indication: string;
-  ecgLeadType: string;
-  heartRate: number;
-  prInterval: number;
-  qrsDuration: number;
-  qtInterval: number;
-  stSegmentChangesLkey: string;
-  waveAbnormalitiesLkey: string;
-  rhythmAnalysis: string;
-  ecgInterpretation: string;
-  cancellationReason: string;
-  statusLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApEmergencyTriage {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  emergencyLevelLkey: string;
-  rightEyeLightResponse: boolean;
-  rightEyePupilSizeLkey: string;
-  leftEyeLightResponse: boolean;
-  leftEyePupilSizeLkey: string;
-  isPregnancy: boolean;
-  historyOfPresentIllness: string;
-  additionalNotes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  lifeSavingLkey: string;
-  unresponsiveLkey: string;
-  highRiskLkey: string;
-  avpuScaleLkey: string;
-  painScoreLkey: string;
-  labsLkey: string;
-  imagingLkey: string;
-  ivFluidsLkey: string;
-  medicationLkey: string;
-  ecgLkey: string;
-  consultationLkey: string;
-  destinationLkey: string;
-}
-
-export interface ApEncounter {
-  key: string;
-  patientKey: string;
-  patientFullName: string;
-  patientAge: string;
-  encounterStatusLkey: string;
-  encounterClassLkey: string;
-  encounterPriorityLkey: string;
-  encounterTypeLkey: string;
-  serviceTypeLkey: string;
-  patientStatusLkey: string;
-  episodeCareKey: string;
-  basedOnLkey: string;
-  basedOnKey: string;
-  partOfEncounterKey: string;
-  attendingPhysicianKey: string;
-  responsiblePhysicianKey: string;
-  facilityKey: string;
-  appointmentKey: string;
-  virtualService: boolean;
-  plannedStartDate: Date;
-  plannedEndDate: Date;
-  actualStartDate: Date;
-  actualEndDate: Date;
-  actualLengthHrs: number;
-  reasonLkey: string;
-  primaryDiagnoseKey: string;
-  dietPreferenceLkey: string;
-  dietPreferenceText: string;
-  valuableItemsText: string;
-  specialArrangementLkey: string;
-  specialArrangementText: string;
-  specialCourtesyLkey: string;
-  originLkey: string;
-  admissionSource: string;
-  readmission: boolean;
-  dischargeDestination: string;
-  dischargeDisposition: string;
-  locationTypeLkey: string;
-  locationKey: string;
-  followUpEncounterKey: string;
-  queueNumber: number;
-  billingAccountKey: string;
-  paymentTypeLkey: string;
-  payerTypeLkey: string;
-  payerKey: string;
-  insurancePlan: string;
-  payerMemberId: string;
-  referralNumber: string;
-  accessLevel: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  departmentKey: string;
-  dischargeTypeLkey: string;
-  actualLengthMinutes: number;
-  chiefComplaint: string;
-  hpiSummery: string;
-  hpiKey: string;
-  pastMedicalHistorySummery: string;
-  pastMedicalHistoryKey: string;
-  rosSummery: string;
-  rosKey: string;
-  assessmentSummery: string;
-  assessmentKey: string;
-  physicalExamSummery: string;
-  physicalExamSummeryKey: string;
-  progressNote: string;
-  dischargeNote: string;
-  dischargeSummery: string;
-  visitId: string;
-  encounterNotes: string;
-  sourceName: string;
-  physicalExamNote: string;
-  planInstructionsLkey: string;
-  visitTypeLkey: string;
-  physicianKey: string;
-  insuranceKey: string;
-  resourceTypeLkey: string;
-  resourceKey: string;
-  planInstructionsNote: string;
-  discharge: boolean;
-  emergencyLevelLkey: string;
-  dischargeAt: number;
-}
-
-export interface ApEncounterAppliedService {
-  key: string;
-  encounterKey: string;
-  serviceKey: string;
-  categoryLkey: string;
-  source: string;
-  sourceKey: string;
-  extraDetails: string;
-  price: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApEncounterAssignToBed {
-  key: string;
-  encounterKey: string;
-  patientKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  roomKey: string;
-  bedKey: string;
-  admissionReason: string;
-  departmentKey: string;
-}
-
-export interface ApEncounterService {
-  key: string;
-  encounterKey: string;
-  patientKey: string;
-  serviceKey: string;
-  serviceTypeLkey: string;
-  serviceName: string;
-  servicePrice: number;
-  serviceCurrencyLkey: string;
-  encounterDate: number;
-  createdBy: string;
-  createdAt: number;
-}
-
-export interface ApEncounterVaccination {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  vaccineKey: string;
-  vaccineBrandKey: string;
-  vaccineDoseKey: string;
-  vaccineLotNumber: string;
-  dateAdministered: number;
-  actualSide: string;
-  administrationReactions: string;
-  externalFacilityName: string;
-  notes: string;
-  reviewedBy: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  reviewedAt: number;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-}
-
-export interface ApEventSlice {
-  key: string;
-  sliceKey: string;
-  eventType: string;
-  linkedEventKey: string;
-  dayOfWeek: string;
-  eventDate: Date;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApFacility {
-  key: string;
-  facilityId: string;
-  facilityName: string;
-  facilityNameOtherLang: string;
-  tenantId: string;
-  facilityRegistrationDate: Date;
-  facilityEmailAddress: string;
-  facilityBriefDesc: string;
-  facilityAddressOtherLang: string;
-  facilityLogoFile: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  facilityPhone1: string;
-  facilityPhone2: string;
-  facilityFax: string;
-  facilityAddressId: string;
-  facilityTypeLkey: string;
-  facilityType: string;
-  facilityAddress: string;
-  roolKey: string;
-  defaultCurrencyLkey: string;
-}
-
-export interface ApFunctionalAssessment {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  mobilityAmbulation: boolean;
-  transferringBedChair: boolean;
-  stairClimbingAbility: boolean;
-  feeding: boolean;
-  toiletingAbility: boolean;
-  bathingAbility: boolean;
-  dressingAbility: boolean;
-  groomingAbility: boolean;
-  walkingDistance: boolean;
-  balance: boolean;
-  urinaryContinence: boolean;
-  bowelContinence: boolean;
-  useOfAssistiveDevices: boolean;
-  needForAssistance: boolean;
-  fallHistory: boolean;
-  painDuringMovement: boolean;
-  needForRehab: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-}
-
-export interface ApGeneralAssessment {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  positionStatusLkey: string;
-  bodyMovementsLkey: string;
-  levelOfConsciousnessLkey: string;
-  facialExpressionLkey: string;
-  speechLkey: string;
-  moodBehaviorLkey: string;
-  memoryRecent: boolean;
-  memoryRemote: boolean;
-  signsOfAgitation: boolean;
-  signsOfDepression: boolean;
-  signsOfSuicidalIdeation: boolean;
-  signsOfSubstanceUse: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-  livingCondition: string;
-  patientNeedHelp: boolean;
-  supportingMembers: string;
-  familyLocationLkey: string;
-}
-
-export interface ApGenericMedication {
-  key: string;
-  genericName: string;
-  manufacturerLkey: string;
-  usageInstructions: string;
-  dosageFormLkey: string;
-  expiresAfterOpening: boolean;
-  expiresAfterOpeningValue: string;
-  singlePatientUse: boolean;
-  price: number;
-  currencyLkey: string;
-  priceListKey: string;
-  cost: number;
-  storageRequirements: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  code: string;
-  roaLkey: string;
-  marketingAuthorizationHolder: string;
-  costCategoryLkey: string;
-  uomGroupKey: string;
-  uomGroupUnitKey: string;
-}
-
-export interface ApGenericMedicationActiveIngredient {
-  key: string;
-  genericMedicationKey: string;
-  activeIngredientKey: string;
-  strength: number;
-  unitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApGenericMedicationRoa {
-  key: string;
-  genericMedicationKey: string;
-  roaLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApGlobalSettings {
-  key: string;
-  facilityKey: string;
-  settingKey: string;
-  settingValue: string;
-  settingCategory: string;
-  requireRestart: boolean;
-  requirePasscode: boolean;
-  fixedValue: boolean;
-  forAdminUse: boolean;
-  hiddenSetting: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApIcdCode {
-  key: string;
-  icdVersion: string;
-  icdCode: string;
-  description: string;
-  chapter: string;
-  block: string;
-  category: string;
-  subcategory: string;
-  fulldescription: string;
-  includes: string;
-  excludes1: string;
-  excludes2: string;
-  useadditionalcode: string;
-  codefirst: string;
-  codingguidelines: string;
-  clinicaldescription: string;
-  severity: string;
-  synonyms: string;
-  abbreviations: string;
-  notes: string;
-  requireSide: string;
-  requireDetails: string;
-  linkedWithAge: string;
-  linkedWithGender: string;
-  linkedWithDisease: string;
-  moreSpecification: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApInpatientChiefComplain {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  chiefComplaint: string;
-  provocation: string;
-  palliation: string;
-  qualityLkey: string;
-  regionLkey: string;
-  onsetDateTime: number;
-  understanding: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-  severityLkey: string;
-}
-
-export interface ApInventoryTransaction {
-  key: string;
-  transTypeLkey: string;
-  warehouseKey: string;
-  transReasonLkey: string;
-  remarks: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  transId: string;
-  docNum: number;
-  vendor: string;
-  serialNum: string;
-  approvedBy: string;
-  invoiceNum: string;
-  approvalStatus: string;
-}
-
-export interface ApInventoryTransactionAttachment {
-  key: string;
-  attachmentType: string;
-  extraDetails: string;
-  fileName: string;
-  contentType: string;
-  fileContent: uint8array;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  details: string;
-  accessTypeLkey: string;
-}
-
-export interface ApInventoryTransactionProduct {
-  key: string;
-  inventoryTransKey: string;
-  productKey: string;
-  newQuentity: number;
-  lotserialnumber: string;
-  newCost: number;
-  currencyLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  isEffectedWarehouse: boolean;
-  expiryDate: Date;
-  notes: string;
-  transUomKey: string;
-  newQuentityBaseUom: number;
-  totalCost: number;
-  newAvgCost: number;
-  oldAvgCost: number;
-  statusLkey: string;
-}
-
-export interface ApInventoryTransfer {
-  key: string;
-  transNo: string;
-  transReason: string;
-  fromWarehouseKey: string;
-  toWarehouseKey: string;
-  note: string;
-  statusLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApInventoryTransferProduct {
-  key: string;
-  transferKey: string;
-  productKey: string;
-  quentityRequested: number;
-  quentityApproved: number;
-  lotserialnumber: string;
-  isEffectedWarehouse: boolean;
-  notes: string;
-  transUomKey: string;
-  quentityRequestedBaseUom: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  quentityApprovedBaseUom: number;
-  statusLkey: string;
-  rejectedReason: string;
-}
-
-export interface ApLabResultLog {
-  key: string;
-  resultKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  resultValue: string;
-}
-
-export interface ApLanguages {
-  key: string;
-  languageCode: string;
-  languageName: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApLicense {
-  key: string;
-  tenantId: string;
-  licenseId: string;
-  licenseKey: string;
-  licenseType: string;
-  startDate: Date;
-  endDate: Date;
-  activestatus: boolean;
-  uuidHwKeys: string;
-  facilityAddress: string;
-  facilityLogoFile: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApLicenseDetails {
-  key: string;
-  tenantId: string;
-  licenseId: string;
-  facilityCount: number;
-  bedCount: number;
-  userCount: number;
-  modules: string;
-  facilityUsageCount: number;
-  bedUsageCount: number;
-  userUsageCount: number;
-  lastUsageDate: Date;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApLoinc {
-  key: string;
-  categoryLkey: string;
-  loincCode: string;
-  name: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApLov {
-  key: string;
-  lovCode: string;
-  lovName: string;
-  lovDescription: string;
-  loveCustomCode: string;
-  parentLov: string;
-  autoSelectDefault: boolean;
-  defaultValueId: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApLovValues {
-  key: string;
-  lovKey: string;
-  lovCode: string;
-  valueCode: string;
-  lovDisplayVale: string;
-  loveCustomCode: string;
-  valueDescription: string;
-  valueColor: string;
-  valueIcon: string;
-  valueOrder: number;
-  isdefault: boolean;
-  seededData: boolean;
-  forInternalUser: boolean;
-  specificForScreenId: string;
-  parentValueId: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  score: number;
-}
-
-export interface ApMedicalSheets {
-  key: string;
-  departmentKey: string;
-  facilityKey: string;
-  patientDashboard: boolean;
-  clinicalVisit: boolean;
-  diagnosticsOrder: boolean;
-  prescription: boolean;
-  drugOrder: boolean;
-  consultation: boolean;
-  procedures: boolean;
-  patientHistory: boolean;
-  allergies: boolean;
-  medicalWarnings: boolean;
-  medicationsRecord: boolean;
-  psychologicalExam: boolean;
-  audiometryPuretone: boolean;
-  optometricExam: boolean;
-  vaccineReccord: boolean;
-  diagnosticsResult: boolean;
-  dentalCare: boolean;
-  cardiology: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  observation: boolean;
-  vaccination: boolean;
-  operationRequests: boolean;
-  doctorRound: boolean;
-  dayCase: boolean;
-  bedsideProceduresRequest: boolean;
-  referralRequest: boolean;
-  bloodOrder: boolean;
-  ivFluidOrder: boolean;
-  intakeOutputBalance: boolean;
-  riskAssessments: boolean;
-  multidisciplinaryTeamNotes: boolean;
-  nutritionStateAssessment: boolean;
-  physicianOrderSummary: boolean;
-  carePlanAndGoals: boolean;
-  dischargePlanning: boolean;
-  pregnancyFollowUp: boolean;
-  morseFallScale: boolean;
-  hendrichFallRisk: boolean;
-  stratifyScale: boolean;
-  johnsHopkinsFallRiskAssessmentTool: boolean;
-  bradenScaleForPressureUlcer: boolean;
-  glasgowComaScale: boolean;
-  vteRiskAssessment: boolean;
-  progressNotes: boolean;
-  ivFluidAdministration: boolean;
-  dietaryRequest: boolean;
-  pediatric: boolean;
-  gynecology: boolean;
-  speechTherapy: boolean;
-  rehabilitationPlan: boolean;
-  occupationalTherapy: boolean;
-  physiotherapyPlan: boolean;
-  medicationAdministrationRecord: boolean;
-  continuousObservations: boolean;
-  dialysisRequest: boolean;
-  slidingScale: boolean;
-  pointOfCareCests: boolean;
-  hospitalCourse: boolean;
-  childGrowth: boolean;
-  flaccNeonatesPainAssessment: boolean;
-  universalPainAssessment: boolean;
-  patientRestraint: boolean;
-  infectionControl: boolean;
-  sofa: boolean;
-  medicalCalculators: boolean;
-  cpoeResultsManager: boolean;
-  icu: boolean;
-  triage: boolean;
-}
-
-export interface ApMedicationCategories {
-  key: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  medCategoriesName: string;
-}
-
-export interface ApMedicationCategoriesActiveIngredient {
-  key: string;
-  medicationClassKey: string;
-  activeIngredientKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApMedicationCategoriesClass {
-  key: string;
-  therapeuticCategoryKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  className: string;
-}
-
-export interface ApMedicationReconciliation {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  activeIngredientKey: string;
-  dosage: number;
-  dosageLkey: string;
-  routeLkey: string;
-  frequencyLkey: string;
-  startDate: number;
-  lastDoseTaken: number;
-  indication: string;
-  sourceOfInfo: string;
-  medicationAvailableWithPatient: boolean;
-  continueInHospital: boolean;
-  discrepancyIdentified: boolean;
-  actionTaken: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  statusLkey: string;
-  frequencyValue: number;
-}
-
-export interface ApMessages {
-  key: string;
-  messageId: string;
-  messageCode: string;
-  messageType: string;
-  messageHeader: string;
-  messageText: string;
-  languageCode: string;
-  isoriginalMessage: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApMetadata {
-  key: string;
-  objectName: string;
-  dbObjectName: string;
-  description: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApMetadataField {
-  key: string;
-  fieldName: string;
-  dbFieldName: string;
-  metadataKey: string;
-  dbObjectName: string;
-  dataType: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApModule {
-  key: string;
-  name: string;
-  description: string;
-  iconImagePath: string;
-  viewOrder: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApNurseNotes {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  shiftLkey: string;
-  noteTypeLkey: string;
-  nurseNote: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApOperationAnesthesiaCarePlan {
-  key: string;
-  encounterKey: string;
-  patientKey: string;
-  anesthesiaConsentSigned: boolean;
-  understandsRisks: boolean;
-  previousAnesthesia: boolean;
-  anesthesiaHistory: string;
-  operationKey: string;
-  mallampatiClassificationLkey: string;
-  airwayGradesLkey: string;
-  plannedAirwayApproachLkey: string;
-  nasalPatencyLkey: string;
-  thyromentalDistance: number;
-  mouthOpening: number;
-  neckMobility: string;
-  facialOrNeckAbnormalities: string;
-  beardOrFacialHair: boolean;
-  anticipatedDifficultAirway: boolean;
-  previousDifficultIntubation: boolean;
-  difficultIntubationNotes: string;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApOperationAnesthesiaInductionMonitoring {
-  key: string;
-  operationRequestKey: string;
-  weight: number;
-  fastingDuration: number;
-  ivLineEstablished: boolean;
-  monitorsConnected: string;
-  intubationDone: boolean;
-  tubeSize: string;
-  tubeType: string;
-  securedBy: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  encounterKey: string;
-  patientKey: string;
-  adverseEventsLkey: string;
-  adverseEventsNote: string;
-  actionsTaken: string;
-  surgeonNotified: boolean;
-  inductionStartTime: number;
-  intubationDoneNote: string;
-}
-
-export interface ApOperationAnesthesiaRecovery {
-  key: string;
-  operationRequestKey: string;
-  airwayTypeOnArrival: string;
-  oxygenGiven: boolean;
-  oxygenFlowLpm: number;
-  extubationTime: number;
-  extubationStatus: string;
-  consciousnessLevelLkey: string;
-  painLevelLkey: string;
-  nauseaVomiting: boolean;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApOperationAntimicrobialProphylaxisGiven {
-  key: string;
-  operationRequestKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-  dose: number;
-  activeIngredientKey: string;
-  unitLkey: string;
-}
-
-export interface ApOperationArrivalToRecoveryRoom {
-  key: string;
-  operationRequestKey: string;
-  arrivalTime: number;
-  accompaniedBy: string;
-  handoverSummary: string;
-  initialAssessmentTime: number;
-  responsibleNurseKey: string;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApOperationCoding {
-  key: string;
-  operationKey: string;
-  codeTypeLkey: string;
-  internationalCodeKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApOperationDischargeReadiness {
-  key: string;
-  operationRequestKey: string;
-  activityLkey: string;
-  respirationLkey: string;
-  circulationLkey: string;
-  consciousnessLkey: string;
-  oxygenSaturationLkey: string;
-  aldreteScore: string;
-  painControlled: boolean;
-  vitalsStable: boolean;
-  fullyAwake: boolean;
-  maintainAirway: boolean;
-  siteDressingIntact: boolean;
-  nauseaControlled: boolean;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApOperationDischargeToWard {
-  key: string;
-  operationRequestKey: string;
-  returnToDifferentWard: boolean;
-  designationLkey: string;
-  transferTime: number;
-  receivingNurseKey: string;
-  finalNotes: string;
-  patientIdBandRechecked: boolean;
-  transportMode: string;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApOperationInduction {
-  key: string;
-  operationRequestKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-  dose: number;
-  unitLkey: string;
-  activeIngredientKey: number;
-}
-
-export interface ApOperationIntraoperativeEvents {
-  key: string;
-  operationRequestKey: string;
-  operationNotes: string;
-  conversionOccurred: boolean;
-  conversionType: boolean;
-  conversionTypeNote: string;
-  incisionType: string;
-  estimatedBloodLossMl: number;
-  surgicalComplicationLkey: string;
-  surgicalComplicationNotes: string;
-  specimensTaken: string;
-  safetyPauseTaken: boolean;
-  firstCountTime: number;
-  firstCountByKey: string;
-  secondCountTime: number;
-  secondCountByKey: string;
-  finalCountVerified: boolean;
-  countDiscrepancy: boolean;
-  countDiscrepancyAction: string;
-  unexpectedEventOccurred: boolean;
-  eventDescription: string;
-  teamResponse: string;
-  eventOutcome: string;
-  complicationSeverityLkey: string;
-  skinClosureTime: number;
-  surgeryEndTime: number;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isvalid: boolean;
-  urineOutput: number;
-  actualOperationPerformed: string;
-}
-
-export interface ApOperationIntraoperativeMonitoring {
-  key: string;
-  operationRequestKey: string;
-  period: number;
-  spo2: number;
-  bpSystolic: number;
-  bpDiastolic: number;
-  respiratoryRate: number;
-  temperature: number;
-  etco2: number;
-  fluidsGiven: number;
-  bloodGiven: number;
-  urineOutput: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  encounterKey: string;
-  patientKey: string;
-  heartRate: number;
-}
-
-export interface ApOperationNameLog {
-  key: string;
-  operationRequestKey: string;
-  operationKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApOperationNursingCareInterventions {
-  key: string;
-  operationRequestKey: string;
-  ivFluidsGiven: string;
-  analgesicsGiven: string;
-  woundDressingStatus: string;
-  drainsTubes: string;
-  complicationsObserved: string;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApOperationPatientArrival {
-  key: string;
-  operationRequestKey: string;
-  consentLkey: string;
-  roomKey: string;
-  departmentKey: string;
-  surgeonKey: string;
-  dateTime: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApOperationPostOpNotesHandover {
-  key: string;
-  operationRequestKey: string;
-  indications: string;
-  operativeFindings: string;
-  operationPerformedSummary: string;
-  variationsFromPlan: string;
-  postOpDestinationKey: string;
-  oxygenRequired: boolean;
-  oxygenFlowRate: number;
-  specialInstructions: string;
-  handoverTime: number;
-  verbalSummaryGiven: boolean;
-  handoverNotes: string;
-  completedAt: number;
-  recoveryConditionLkey: string;
-  surgeryStatusLkey: string;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApOperationPreMedication {
-  key: string;
-  operationRequestKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-  dose: number;
-  activeIngredientKey: string;
-  unitLkey: string;
-}
-
-export interface ApOperationPriceList {
-  key: string;
-  operationKey: string;
-  price: number;
-  currencyLkey: string;
-  priceListKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApOperationRecoveryAntiemeticGiven {
-  key: string;
-  operationRequestKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-  dose: number;
-  activeIngredientKey: string;
-  unitLkey: string;
-}
-
-export interface ApOperationRecoveryVitalsMonitoring {
-  key: string;
-  operationRequestKey: string;
-  recordedTime: number;
-  bloodPressureSystolic: number;
-  bloodPressureDiastolic: number;
-  heartRate: number;
-  temperature: number;
-  oxygenSaturation: number;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApOperationRequests {
-  key: string;
-  facilityKey: string;
-  departmentKey: string;
-  operationKey: string;
-  operationTypeLkey: string;
-  operationLevelLkey: string;
-  priorityLkey: string;
-  diagnosisKey: string;
-  requestStatus: string;
-  bodyPartLkey: string;
-  sideOfProcedureLkey: string;
-  plannedAnesthesiaTypeLkey: string;
-  needBloodProducts: boolean;
-  implantOrDeviceExpected: boolean;
-  notes: string;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  cancelledBy: string;
-  cancelledAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isValid: boolean;
-  operationDateTime: number;
-  statusLkey: string;
-  encounterKey: string;
-  patientKey: string;
-  submitedAt: number;
-  submitedBy: string;
-  operationStatusLkey: string;
-  startedAt: number;
-  startedBy: string;
-  increaseByMinutes: number;
-  monitorSlot: number;
-  recoveryStatusLkey: string;
-  cancellationReason: string;
-}
-
-export interface ApOperationSetup {
-  key: string;
-  name: string;
-  code: string;
-  categoryLkey: string;
-  indications: string;
-  contraindications: string;
-  preparationInstructions: string;
-  recoveryNotes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isAppointable: boolean;
-}
-
-export interface ApOperationStaff {
-  key: string;
-  operationRequestKey: string;
-  userKey: string;
-  responsibility: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  encounterKey: string;
-  isPresent: boolean;
-  patientKey: string;
-}
-
-export interface ApOperationSurgicalPreparationIncision {
-  key: string;
-  operationRequestKey: string;
-  surgicalSitePreppedWith: string;
-  sitePrepCompletedKey: string;
-  siteDriedTime: number;
-  positionLkey: string;
-  paddingSafetyApplied: boolean;
-  instrumentCountStarted: boolean;
-  firstInstrumentCountKey: string;
-  implantsReady: boolean;
-  implantsBarcodeScanned: boolean;
-  sterilityConfirmed: boolean;
-  disposableDevicesReady: boolean;
-  timeOfIncision: number;
-  surgicalStartMarkedKey: string;
-  skinOpenedTime: number;
-  estimatedSurgeryDuration: string;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApOptometricExam {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  medicalHistoryLkey: string;
-  testReason: string;
-  performedWithLkey: string;
-  distanceAcuity: number;
-  rightEyeOd: number;
-  leftEyeOd: number;
-  rightEyeOs: number;
-  leftEyeOs: number;
-  nearAcuity: number;
-  pinholeTestResultLkey: string;
-  numberOfPlatesTested: number;
-  correctAnswersCount: number;
-  deficiencyTypeLkey: string;
-  rightEyeSphere: number;
-  leftEyeSphere: number;
-  rightCylinder: number;
-  leftCylinder: number;
-  rightAxis: number;
-  leftAxis: number;
-  rightEye: number;
-  leftEye: number;
-  measurementMethod: string;
-  timeOfMeasurement: number;
-  cornealThickness: number;
-  glaucomaRiskAssessmentLkey: string;
-  fundoscopySlitlampDone: boolean;
-  examFindings: string;
-  visionDiagnosis: string;
-  colorVisionDiagnosis: string;
-  recommendations: string;
-  additionalNotes: string;
-  followUpRequired: boolean;
-  followUpDate: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-}
-
-export interface ApPainAssessment {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  painDegreeLkey: string;
-  painLocationLkey: string;
-  painPatternLkey: string;
-  onsetLkey: string;
-  painScoreLkey: string;
-  duration: number;
-  durationUnitLkey: string;
-  aggravatingFactors: string;
-  relievingFactors: string;
-  associatedSymptoms: string;
-  painManagementGiven: string;
-  impactOnFunction: boolean;
-  painReassessmentRequired: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  statusLkey: string;
-  cancellationReason: string;
-}
-
-export interface ApPatient {
-  key: string;
-  patientMrn: string;
-  namePrefix: string;
-  nameSuffix: string;
-  patientAlias: string;
-  firstName: string;
-  secondName: string;
-  thirdName: string;
-  lastName: string;
-  fullName: string;
-  secondNameOtherLang: string;
-  firstNameOtherLang: string;
-  thirdNameOtherLang: string;
-  lastNameOtherLang: string;
-  fullNameOtherLang: string;
-  documentCountryLkey: string;
-  documentTypeLkey: string;
-  documentNo: string;
-  noDocument: boolean;
-  specialCourtesyLkey: string;
-  unknown: string;
-  phoneNumber: string;
-  mobileNumber: string;
-  email: string;
-  maritalStatusLkey: string;
-  nationalityLkey: string;
-  primaryLanguageLkey: string;
-  religionLkey: string;
-  ethnicityLkey: string;
-  occupationLkey: string;
-  emergencyContactName: string;
-  emergencyContactRelationLkey: string;
-  emergencyContactPhone: string;
-  streetAddressLine1: string;
-  streetAddressLine2: string;
-  countryLkey: string;
-  stateProvinceRegionLkey: string;
-  cityLkey: string;
-  postalCode: string;
-  additionalInfo: string;
-  longitude: string;
-  isActive: string;
-  deathDatetime: Date;
-  dob: Date;
-  multipleBirth: boolean;
-  birthOrder: number;
-  numSiblings: number;
-  accessLevel: number;
-  facilityKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  patientClassLkey: string;
-  privatePatient: boolean;
-  verificationOtp: string;
-  securityAccessLevelLkey: string;
-  socialSecurityNumber: string;
-  noticeOfPrivacyPractice: boolean;
-  noticeOfPrivacyPracticeDate: Date;
-  privacyAuthorization: boolean;
-  privacyAuthorizationDate: Date;
-  consent: boolean;
-  consentDate: Date;
-  verified: boolean;
-  responsiblePartyLkey: string;
-  educationalLevelLkey: string;
-  previousId: string;
-  archivingNumber: string;
-  receiveSms: boolean;
-  receiveEmail: boolean;
-  homePhone: string;
-  workPhone: string;
-  preferredContactLkey: string;
-  unknownPatient: boolean;
-  incompletePatient: boolean;
-  extraDetails: string;
-  secondaryMobileNumber: string;
-  roleLkey: string;
-  districtLkey: string;
-  countryId: string;
-  bloodGroupLkey: string;
-  genderLkey: string;
-}
-
-export interface ApPatientAddresses {
-  key: string;
-  patientKey: string;
-  addressTypeLkey: string;
-  streetAddressLine1: string;
-  streetAddressLine2: string;
-  countryLkey: string;
-  stateProvinceRegionLkey: string;
-  cityLkey: string;
-  postalCode: string;
-  additionalInfo: string;
-  latitude: number;
-  longitude: string;
-  isActive: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientAdministrativeWarnings {
-  key: string;
-  patientKey: string;
-  warningTypeLkey: string;
-  description: string;
-  resolutionStatusLkey: string;
-  dateResolved: Date;
-  resolvedBy: string;
-  resolutionUndoDate: Date;
-  resolvedUndoBy: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientAlerts {
-  key: string;
-  patientKey: string;
-  alertTypeLkey: string;
-  alertSourceLkey: string;
-  alertDescription: string;
-  alertSeverityLkey: string;
-  isResolved: boolean;
-  alertDate: Date;
-  dateResolved: Date;
-  notes: string;
-  sourceOfInfoLkey: string;
-  sourceKey: string;
-  lifeThreating: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientAllergies {
-  key: string;
-  patientKey: string;
-  allergyKey: string;
-  allergenTypeLkey: string;
-  severityLkey: string;
-  reaction: string;
-  dateDiagnosed: Date;
-  resolutionStatusLkey: string;
-  dateResolved: Date;
-  treatmentPlan: string;
-  notes: string;
-  sourceOfInfoLkey: string;
-  lifeThreating: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  addedByVisitKey: string;
-}
-
-export interface ApPatientDiagnose {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  diagnoseCode: string;
-  description: string;
-  diagnoseCodingLkey: string;
-  dateDiagnosed: Date;
-  onsetDate: Date;
-  diagnoseStatusLkey: string;
-  diagnoseTypeLkey: string;
-  diagnoseSiteLkey: string;
-  providerTypeLkey: string;
-  providerLkey: string;
-  providerUserName: string;
-  providerRoleLkey: string;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  isMajor: boolean;
-  isSuspected: boolean;
-}
-
-export interface ApPatientEncounterOrder {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  testKey: string;
-  statusLkey: string;
-  receivedLabLkey: string;
-  reasonLkey: string;
-  priorityLkey: string;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  submitDate: number;
-}
-
-export interface ApPatientFamilyHistory {
-  key: string;
-  patientKey: string;
-  condition: string;
-  relationLkey: string;
-  inheritedDiseases: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientHospitalization {
-  key: string;
-  patientKey: string;
-  facility: string;
-  reason: string;
-  admissionTypeLkey: string;
-  dateOfAdmission: number;
-  lengthOfStay: number;
-  outcomes: string;
-  medicalInterventionsPerformed: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientIds {
-  key: string;
-  patientKey: string;
-  identifierTypeLovKey: string;
-  identifierCode: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientInsurance {
-  key: string;
-  patientKey: string;
-  insuranceProviderLkey: string;
-  primaryInsurance: boolean;
-  insurancePolicyNumber: string;
-  groupNumber: string;
-  insurancePlanTypeLkey: string;
-  authorizationNumbers: string;
-  expirationDate: Date;
-  coPayment: boolean;
-  coPaymentValue: number;
-  coInsurance: boolean;
-  coInsuranceValue: number;
-  deductibles: boolean;
-  deductiblesValue: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  policyHolder: string;
-}
-
-export interface ApPatientInsuranceCoverage {
-  key: string;
-  patientInsuranceKey: string;
-  typeLkey: string;
-  coverageTypeLkey: string;
-  coveredAmount: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientObservation {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  observationDate: Date;
-  observationTypeLkey: string;
-  value: string;
-  value2: string;
-  unitofMeasureLkey: string;
-  referencerangeLkey: string;
-  statusLkey: string;
-  methodLkey: string;
-  positionLkey: string;
-  siteLkey: string;
-  equipmentUsedLkey: string;
-  comments: string;
-  sourceRecordKey: string;
-  providerKey: string;
-  providerName: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientObservationSummary {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  lastDate: Date;
-  latesttemperature: number;
-  latestbpSystolic: number;
-  latestbpDiastolic: number;
-  latestheartrate: number;
-  latestrespiratoryrate: number;
-  latestoxygensaturation: number;
-  latestglucoselevel: number;
-  latestpainlevelLkey: string;
-  latestweight: number;
-  latestheight: number;
-  latestheadcircumference: number;
-  latestlength: number;
-  latestbmi: number;
-  age: number;
-  prevRecordKey: string;
-  plastDate: Date;
-  platesttemperature: number;
-  platestbpSystolic: number;
-  platestbpDiastolic: number;
-  platestheartrate: number;
-  platestrespiratoryrate: number;
-  platestoxygensaturation: number;
-  platestglucoselevel: number;
-  platestpainlevelLkey: string;
-  platestweight: number;
-  platestheight: number;
-  platestheadcircumference: number;
-  platestlength: number;
-  platestbmi: number;
-  page: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  latestnotes: string;
-  platestnotes: string;
-  latestpaindescription: string;
-  platestpaindescription: string;
-  latestpainlevel: number;
-  platestpainlevel: number;
-  platesthearingtest: string;
-  latesthearingtest: string;
-  latestDehydration: boolean;
-  platestDehydration: boolean;
-  latestNasalFlaring: boolean;
-  platestNasalFlaring: boolean;
-  latestResponseToLight: boolean;
-  platestResponseToLight: boolean;
-  latestPupilResponse: boolean;
-  platestPupilResponse: boolean;
-  latestAbilityToFollowTarget: boolean;
-  platestAbilityToFollowTarget: boolean;
-  latestColorTesting: boolean;
-  platestColorTesting: boolean;
-  latestFallRisk: boolean;
-  platestFallRisk: boolean;
-  latestFallRiskDetails: string;
-  platestFallRiskDetails: string;
-  latestActionToTake: string;
-  platestActionToTake: string;
-  latestFunctionalStatus: string;
-  platestFunctionalStatus: string;
-  latestCognitiveCheck: string;
-  platestCognitiveCheck: string;
-}
-
-export interface ApPatientPlan {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  physicianRecommendations: string;
-  patientEducations: string;
-  lifestyleModifications: string;
-  generalInstructions: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientPreferredHealthProfessional {
-  key: string;
-  practitionerKey: string;
-  facilityKey: string;
-  createdBy: string;
-  networkAffiliation: string;
-  relatedWith: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  patientKey: string;
-}
-
-export interface ApPatientProblem {
-  key: string;
-  patientKey: string;
-  problemCode: string;
-  description: string;
-  problemCodingLkey: string;
-  dateDiagnosed: Date;
-  problemStatusLkey: string;
-  severityLkey: string;
-  onSetDate: Date;
-  providerTypeLkey: string;
-  providerLkey: string;
-  providerUserName: string;
-  providerRoleLkey: string;
-  resolvedDate: Date;
-  dateAdded: Date;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientProblems {
-  key: string;
-  patientKey: string;
-  condition: string;
-  dateOfDiagnosis: number;
-  statusLkey: string;
-  typeLkey: string;
-  dateOfResolution: number;
-  sourceOfInformationLkey: string;
-  byPatient: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientRelation {
-  key: string;
-  patientKey: string;
-  relativePatientKey: string;
-  relationTypeLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  categoryTypeLkey: string;
-}
-
-export interface ApPatientSecondaryDocuments {
-  key: string;
-  documentCountryLkey: string;
-  documentTypeLkey: string;
-  documentNo: string;
-  patientKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPatientTemporaryDischarge {
-  key: string;
-  encounterKey: string;
-  patientKey: string;
-  reasonForTemporaryDischarge: string;
-  typeLkey: string;
-  expectedReturnAt: number;
-  consentTaken: boolean;
-  billingApprovalStatusLkey: string;
-  returnAt: number;
-  bedRetained: boolean;
-  comments: string;
-  roomKey: string;
-  bedKey: string;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  fromRoom: string;
-  fromBed: string;
-}
-
-export interface ApPhysicalExamArea {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  physicalExamAreaLkey: string;
-  physicalExamAreaDetailLkey: string;
-  notes: string;
-  sourceOfAnswerLkey: string;
-  pass: boolean;
-  passReasonLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPostOperationRecovery {
-  key: string;
-  encounterKey: string;
-  patientKey: string;
-  arrivalTime: number;
-  painScoreLkey: string;
-  nausea: boolean;
-  vomiting: boolean;
-  recoveryStatus: string;
-  nursingNotes: string;
-  activityLkey: string;
-  respirationLkey: string;
-  circulationLkey: string;
-  consciousnessLkey: string;
-  oxygenSaturationLkey: string;
-  aldreteScore: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApPostProcedureAnesthesia {
-  key: string;
-  procedureKey: string;
-  activityLkey: string;
-  respirationLkey: string;
-  circulationLkey: string;
-  consciousnessLkey: string;
-  oxygenSaturationLkey: string;
-  aldreteScore: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApPostProcedureCare {
-  key: string;
-  procedureKey: string;
-  diagnoseKey: string;
-  patientCondition: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApPostProcedureChecklist {
-  key: string;
-  procedureKey: string;
-  nauseaVomiting: boolean;
-  awakeAndOriented: boolean;
-  toleratingOralFluids: boolean;
-  ambulatingIndependently: boolean;
-  voidedUrine: boolean;
-  noActiveBleeding: boolean;
-  painScore4: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApPostProcedureVitals {
-  key: string;
-  procedureKey: string;
-  bloodPressureSystolic: number;
-  bloodPressureDiastolic: number;
-  heartRate: number;
-  temperature: number;
-  oxygenSaturation: number;
-  painScoreLkey: string;
-  painDescription: string;
-  recoveryNotes: string;
-  additionalObservations: string;
-  equipmentCountDone: boolean;
-  countStatusLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApPractitioner {
-  key: string;
-  primaryFacilityKey: string;
-  practitionerFullName: string;
-  genderLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  departmentKey: string;
-  practitionerFirstName: string;
-  practitionerLastName: string;
-  practitionerEmail: string;
-  practitionerPhoneNumber: string;
-  specialtyLkey: string;
-  subSpecialtyLkey: string;
-  defaultMedicalLicense: string;
-  secondaryMedicalLicense: string;
-  educationalLevelLkey: string;
-  professionalMembershipAndCertification: string;
-  appointable: boolean;
-  linkedUser: string;
-  defaultLicenseValidUntil: Date;
-  secondaryLicenseValidUntil: Date;
-  dob: Date;
-  jobRoleLkey: string;
-}
-
-export interface ApPreOperationAdministeredMedications {
-  key: string;
-  preOperationKey: string;
-  activeIngredientKey: string;
-  dose: number;
-  unitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApPreOperationAssessment {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  nopStatusConfirmed: boolean;
-  painScoreLkey: string;
-  allergiesReviewed: boolean;
-  consentForProcedureSigned: boolean;
-  consentForAnesthesiaSigned: boolean;
-  ivAccessStatus: boolean;
-  siteMarkedBySurgeon: boolean;
-  labImagingReviewed: boolean;
-  anesthetistAssessmentDone: boolean;
-  asaClassificationLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApPreOperationChecklist {
-  key: string;
-  encounterKey: string;
-  patientKey: string;
-  operationKey: string;
-  patientIdentityVerified: boolean;
-  consentSurgerySigned: boolean;
-  consentAnesthesiaSigned: boolean;
-  surgicalProcedureConfirmed: boolean;
-  siteOfSurgeryMarked: boolean;
-  npoStatusConfirmed: boolean;
-  preOpVitalsRecorded: boolean;
-  patientBathed: boolean;
-  jewelryRemoved: boolean;
-  denturesRemovedOrNoted: boolean;
-  prosthesisNotedOrRemoved: boolean;
-  clothingReplaced: boolean;
-  allergiesReviewed: boolean;
-  preOpMedsGiven: boolean;
-  chronicMedsManaged: boolean;
-  anticoagulantsManaged: boolean;
-  ivAccessSecured: boolean;
-  ivFluidsStarted: boolean;
-  bloodProductsPrepared: boolean;
-  emrUpdated: boolean;
-  labsImagingReviewed: boolean;
-  consentFormsAvailable: boolean;
-  personalBelongingsSecured: boolean;
-  interpreterArranged: boolean;
-  voidedOrCatheterPresent: boolean;
-  bedInLowestPosition: boolean;
-  transferModeArranged: boolean;
-  handoffToOrNursePrepared: boolean;
-  createdBy: string;
-  createdAt: number;
-  updatedBy: string;
-  updatedAt: number;
-  deletedBy: string;
-  deletedAt: number;
-  isValid: boolean;
-  isConfirm: boolean;
-  userKey: string;
-  confirmTime: number;
-}
-
-export interface ApPreOperativeTimeout {
-  key: string;
-  operationRequestKey: string;
-  initiatedBy: string;
-  patientIdentityConfirmed: boolean;
-  surgicalSiteConfirmed: boolean;
-  procedureConfirmed: boolean;
-  consentFormPresent: boolean;
-  anesthesiaMachineChecked: boolean;
-  medicationPrepared: boolean;
-  allergyRiskReviewed: boolean;
-  difficultAirwayRisk: boolean;
-  asaClassification: boolean;
-  bloodLossExpected: boolean;
-  bloodUnitsAvailable: boolean;
-  equipmentAvailable: boolean;
-  imagingDisplayed: boolean;
-  instrumentCountPrepared: boolean;
-  teamIntroductionComplete: boolean;
-  specialConcerns: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  encounterKey: string;
-  patientKey: string;
-  timeoutStartTime: number;
-}
-
-export interface ApPreProcedureAssessment {
-  key: string;
-  procedureKey: string;
-  fastingRequired: boolean;
-  patientPrepared: boolean;
-  specialInstructions: string;
-  bloodPressureSystolic: number;
-  bloodPressureDiastolic: number;
-  heartRate: number;
-  temperature: number;
-  oxygenSaturation: number;
-  patientIdentityVerified: boolean;
-  consentConfirmed: boolean;
-  procedureSiteMarked: boolean;
-  allergiesConfirmed: boolean;
-  patientPremedicated: boolean;
-  equipmentCountingDone: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-  asaScoreLkey: string;
-  airwayGradeLkey: string;
-}
-
-export interface ApPrescription {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  statusLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  prescriptionId: string;
-  saveDraft: boolean;
-  submittedBy: string;
-  submittedAt: number;
-}
-
-export interface ApPrescriptionInstruction {
-  key: string;
-  categoryLkey: string;
-  dose: number;
-  unitLkey: string;
-  routLkey: string;
-  frequencyLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApPrescriptionMedications {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  prescriptionKey: string;
-  genericMedicationsKey: string;
-  numberOfRefills: number;
-  refillInterval: string;
-  instructionsTypeLkey: string;
-  instructions: string;
-  notes: string;
-  parametersToMonitor: string;
-  validUtil: Date;
-  maximumDose: number;
-  genericSubstitute: boolean;
-  chronicMedication: boolean;
-  administrationInstructions: string;
-  duration: number;
-  durationTypeLkey: string;
-  statusLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  refillIntervalValue: number;
-  refillIntervalUnitLkey: string;
-  indicationManually: string;
-  indicationUseLkey: string;
-  indicationIcd: string;
-}
-
-export interface ApProcedure {
-  key: string;
-  procedureNameKey: string;
-  procedureId: string;
-  procedureLevelLkey: string;
-  categoryKey: string;
-  indications: string;
-  priorityLkey: string;
-  statusLkey: string;
-  scheduledDateTime: number;
-  notes: string;
-  departmentKey: string;
-  cancellationReason: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  facilityKey: string;
-  encounterKey: string;
-  bodyPartLkey: string;
-  sideLkey: string;
-  currentDepartment: boolean;
-  patientKey: string;
-}
-
-export interface ApProcedureAdministeredMedications {
-  key: string;
-  procedureKey: string;
-  activeIngredientKey: string;
-  dose: number;
-  unitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApProcedureCoding {
-  key: string;
-  procedureKey: string;
-  codeTypeLkey: string;
-  internationalCodeKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApProcedurePerformance {
-  key: string;
-  actualStartTime: number;
-  anesthesiaUsed: boolean;
-  anesthesiaTypeLkey: string;
-  anesthesiaStartTime: number;
-  anesthesiaEndTime: number;
-  anesthesiaAdministeredKey: string;
-  timeOut: boolean;
-  procedureOutcomeLkey: string;
-  observations: string;
-  complicationTypeLkey: string;
-  complicationSeverityLkey: string;
-  actionsTaken: string;
-  actualEndTime: number;
-  additionalNotes: string;
-  homeInstructionLkey: string;
-  homeInstructionNotes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-  procedureKey: string;
-}
-
-export interface ApProcedurePriceList {
-  key: string;
-  procedureKey: string;
-  price: number;
-  currencyLkey: string;
-  priceListKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApProcedureRegistration {
-  key: string;
-  procedureKey: string;
-  consentFormLkey: string;
-  dateTime: number;
-  practitionersKey: string;
-  departmentKey: string;
-  requestedBy: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  encounterKey: string;
-}
-
-export interface ApProcedureServiceEquipment {
-  key: string;
-  procedureKey: string;
-  serviceKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApProcedureSetup {
-  key: string;
-  name: string;
-  code: string;
-  categoryLkey: string;
-  indications: string;
-  contraindications: string;
-  preparationInstructions: string;
-  recoveryNotes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isAppointable: boolean;
-}
-
-export interface ApProcedureStaff {
-  key: string;
-  procedureKey: string;
-  userKey: string;
-  responsibility: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  encounterKey: string;
-  isPresent: boolean;
-  patientKey: string;
-}
-
-export interface ApProducts {
-  key: string;
-  typeLkey: string;
-  name: string;
-  medicationKey: string;
-  code: string;
-  barecode: string;
-  uomGroupKey: string;
-  baseUomKey: string;
-  dispenseUomKey: string;
-  isBatchManaged: boolean;
-  isExpiryDateMandatory: boolean;
-  isSerialized: boolean;
-  isReusable: boolean;
-  inventoryTypeLkey: string;
-  atcCode: string;
-  shelfLife: number;
-  leadTime: number;
-  erpIntegId: string;
-  startDate: Date;
-  endDate: Date;
-  maintenanceScheduleTime: number;
-  maintenanceScheduleLkey: string;
-  isCritical: boolean;
-  isCalibration: boolean;
-  isTraining: boolean;
-  avgCost: number;
-  priceBaseUom: string;
-  isControlledSubstance: boolean;
-  isAllergyRisk: boolean;
-  hazardousTag: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApProgressNotes {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  jobRoleLkey: string;
-  progressNotes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  statusLkey: string;
-  cancellationReason: string;
-}
-
-export interface ApPsychologicalExam {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  testTypeLkey: string;
-  reason: string;
-  testDuration: number;
-  unitLkey: string;
-  scoreLkey: string;
-  resultInterpretationLkey: string;
-  clinicalObservations: string;
-  treatmentPlan: string;
-  additionalNotes: string;
-  requireFollowUp: boolean;
-  followUpDate: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-}
-
-export interface ApRelationsMatrix {
-  key: string;
-  firstPatientGender: string;
-  secondPatientGender: string;
-  firstRelationCode: string;
-  secondRelationCode: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApRepositioning {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  newPositionLkey: string;
-  positionChangeSuccessful: boolean;
-  notes: string;
-  expectedNextRepositioning: number;
-  timeUnitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  statusLkey: string;
-  cancellationReason: string;
-}
-
-export interface ApResourceAvailabilitySlice {
-  key: string;
-  resourceKey: string;
-  facilityKey: string;
-  departmentKey: string;
-  dayOfWeek: string;
-  startTimeMinutes: string;
-  endTimeMinutes: string;
-  sliceDurationMinutes: string;
-  isbocked: string;
-  isbreak: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApResources {
-  key: string;
-  facilityKey: string;
-  resourceTypeLkey: string;
-  resourceKey: string;
-  isAllowParallel: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApResourcesAvailabilityTime {
-  key: string;
-  resourceKey: string;
-  facilityKey: string;
-  departmentKey: string;
-  dayLkey: string;
-  startTime: number;
-  endTime: number;
-  isHasBreak: boolean;
-  breakFrom: number;
-  breakTo: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApReviewOfSystem {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  systemLkey: string;
-  systemDetailLkey: string;
-  notes: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApRoom {
-  key: string;
-  facilityKey: string;
-  departmentKey: string;
-  name: string;
-  floor: string;
-  locationDetails: string;
-  typeLkey: string;
-  genderLkey: string;
-  isValid: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApRoomServices {
-  key: string;
-  roomKey: string;
-  price: number;
-  bedKey: string;
-  rule: string;
-  isValid: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  currencyLkey: string;
-  serviceKey: string;
-}
-
-export interface ApScreen {
-  key: string;
-  name: string;
-  description: string;
-  moduleKey: string;
-  iconImagePath: string;
-  viewOrder: number;
-  navPath: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApScreenMetadata {
-  key: string;
-  screenKey: string;
-  metadataKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApService {
-  key: string;
-  typeLkey: string;
-  name: string;
-  abbreviation: string;
-  code: string;
-  categoryLkey: string;
-  price: number;
-  currencyLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApServiceCdt {
-  key: string;
-  serviceKey: string;
-  cdtKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  description: string;
-}
-
-export interface ApSnomedCode {
-  key: string;
-  version: string;
-  code: string;
-  description: string;
-  semantictag: string;
-  hyperLink: string;
-  moreSpecification: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApTeleConsultation {
-  id: string;
-  questionToConsultant: string;
-  consultantFacilityId: string;
-  consultantDepartmentId: string;
-  specialtyLkey: string;
-  urgencyLkey: string;
-  expectedResponse: string;
-  notes: string;
-  expectedResponseTime: number;
-  startedAt: number;
-  rejectedAt: number;
-  statusLkey: string;
-  rejectedReason: string;
-  patientId: string;
-  encounterId: string;
-  rejectedBy: string;
-  startedBy: string;
-  requestedAt: number;
-  requestedBy: string;
-  callStartedAt: number;
-  callStartedBy: string;
-  callColsedAt: number;
-  callColsedBy: string;
-}
-
-export interface ApTeleConsultationCallLog {
-  id: string;
-  startedBy: string;
-  startedDate: number;
-  teleConsultationId: string;
-}
-
-export interface ApTeleConsultationProgressNote {
-  id: string;
-  note: string;
-  createdBy: string;
-  createdDate: number;
-  teleConsultationId: string;
-}
-
-export interface ApTenant {
-  key: string;
-  tenantId: string;
-  tenantName: string;
-  tenantType: string;
-  tenantRegistrationDate: Date;
-  tenantExpiryDate: Date;
-  tenantEmailAddress: string;
-  tenantBriefDesc: string;
-  tenantSecurityToken: string;
-  tenantDataGlobal: boolean;
-  tenantSchemaName: string;
-  tenantDbConnstr: string;
-  tenantDbAdminUser: string;
-  tenantLogoPath: string;
-  tenantBackgroundPath: string;
-  tenantSlogan: string;
-  tenantLoginText: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApToothAction {
-  key: string;
-  toothKey: string;
-  actionKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  note: string;
-  surfaceLkey: string;
-  existing: boolean;
-  imageName: string;
-  toothNumber: string;
-}
-
-export interface ApToothActionLog {
-  key: string;
-  toothKey: string;
-  actionKey: string;
-  logType: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  logTime: number;
-  logOwner: string;
-}
-
-export interface ApToothCdt {
-  key: string;
-  toothKey: string;
-  cdtKey: string;
-  source: string;
-  sourceKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  surfaceLkey: string;
-}
-
-export interface ApToothService {
-  key: string;
-  toothKey: string;
-  serviceKey: string;
-  source: string;
-  sourceKey: string;
-  price: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApTransferPatient {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  fromInpatientDepartmentKey: string;
-  toInpatientDepartmentKey: string;
-  reasonForTransfer: string;
-  urgentTransfer: boolean;
-  plannedTransfer: boolean;
-  transferNotes: string;
-  finalVitalsBeforeTransfer: boolean;
-  ivLinesDripsChecked: boolean;
-  medicationAdministeredPreTransfer: boolean;
-  belongingsSentWithPatient: boolean;
-  clinicalHandoverDone: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  statusLkey: string;
-  cancellationReason: string;
-  fromRoom: string;
-  toRoom: string;
-  fromBed: string;
-  toBed: string;
-  confirmedBy: string;
-  confirmedAt: number;
-}
-
-export interface ApTranslation {
-  key: string;
-  languageKey: string;
-  translationFor: string;
-  wordKey: string;
-  originalText: string;
-  translationText: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApTreadmillStress {
-  key: string;
-  patientKey: string;
-  encounterKey: string;
-  indication: string;
-  preTestSystolicBp: number;
-  preTestDiastolicBp: number;
-  baselineEcgFindingsLkey: string;
-  bruceProtocolStageLkey: string;
-  exerciseDuration: number;
-  maximumHeartRateAchieved: number;
-  targetHeartRate: number;
-  segmentChangeLkey: string;
-  arrhythmiaNoted: boolean;
-  typeLkey: string;
-  testOutcomeLkey: string;
-  postTestSystolicBp: number;
-  postTestDiastolicBp: number;
-  recoveryTime: number;
-  createdBy: string;
-  cardiologistNotes: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  cancellationReason: string;
-  statusLkey: string;
-}
-
-export interface ApUomGroups {
-  key: string;
-  description: string;
-  name: string;
-  code: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApUomGroupsRelation {
-  key: string;
-  uomUnitFromKey: string;
-  uomUnitToKey: string;
-  relation: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  uomGroupKey: string;
-}
-
-export interface ApUomGroupsUnits {
-  key: string;
-  uomLkey: string;
-  uomOrder: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  uomGroupKey: string;
-}
-
-export interface ApUser {
-  key: string;
-  username: string;
-  password: string;
-  fullName: string;
-  verified: string;
-  lastGeneratedOtp: string;
-  passcode: string;
-  tenantKey: string;
-  organizationKey: string;
-  accessRoleKey: string;
-  email: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  departmentKey: string;
-  firstName: string;
-  secondName: string;
-  lastName: string;
-  dob: Date;
-  sexAtBirthLkey: string;
-  phoneNumber: number;
-  jobDescription: string;
-  jobRoleLkey: string;
-  jobRoleKey: string;
-  mustChangePassword: boolean;
-}
-
-export interface ApUserAccessPrivatePatient {
-  key: string;
-  userKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  reason: string;
-  patientKey: string;
-}
-
-export interface ApUserDashboardComponents {
-  key: string;
-  userId: number;
-  componentKey: string;
-}
-
-export interface ApUserFacilities {
-  key: string;
-  userId: string;
-  facilityId: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  userKey: string;
-  facilityKey: string;
-  roleInFacility: string;
-  isPrimaryFacility: boolean;
-}
-
-export interface ApUserFacilitiyDepartments {
-  key: string;
-  userKey: string;
-  facilitiyKey: string;
-  departmentKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApUserMedicalLicense {
-  key: string;
-  licenseName: string;
-  licenseNumber: string;
-  validTo: Date;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  userKey: string;
-}
-
-export interface ApVaccine {
-  key: string;
-  vaccineCode: string;
-  vaccineName: string;
-  atcCode: string;
-  typeLkey: string;
-  roaLkey: string;
-  siteOfAdministration: string;
-  postOpeningDuration: string;
-  durationUnitLkey: string;
-  indications: string;
-  possibleReactions: string;
-  contraindicationsAndPrecautions: string;
-  storageAndHandling: string;
-  isValid: boolean;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  numberOfDosesLkey: string;
-}
-
-export interface ApVaccineBrands {
-  key: string;
-  vaccineKey: string;
-  brandName: string;
-  manufacturerLkey: string;
-  volume: number;
-  unitLkey: string;
-  marketingAuthorizationHolder: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-}
-
-export interface ApVaccineDose {
-  key: string;
-  fromAge: number;
-  toAge: number;
-  fromAgeUnitLkey: string;
-  toAgeUnitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  vaccineKey: string;
-  doseNameLkey: string;
-  isBooster: boolean;
-}
-
-export interface ApVaccineDosesInterval {
-  key: string;
-  vaccineKey: string;
-  fromDoseKey: string;
-  toDoseKey: string;
-  intervalBetweenDoses: number;
-  unitLkey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-}
-
-export interface ApVisitAllergies {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  statusLkey: string;
-  allergyTypeLkey: string;
-  allergenKey: string;
-  onsetLkey: string;
-  onsetDate: number;
-  treatmentStrategyLkey: string;
-  sourceOfInformationLkey: string;
-  reactionDescription: string;
-  notes: string;
-  cancellationReason: string;
-  resolvedBy: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  resolvedAt: number;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isValid: boolean;
-  severityLkey: string;
-  typeOfPropensityLkey: string;
-  criticalityLkey: string;
-  certainty: string;
-}
-
-export interface ApVisitWarning {
-  key: string;
-  patientKey: string;
-  visitKey: string;
-  statusLkey: string;
-  warningTypeLkey: string;
-  firstTimeRecorded: number;
-  actionTake: string;
-  sourceOfInformationLkey: string;
-  notes: string;
-  cancellationReason: string;
-  resolvedBy: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  resolvedAt: number;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  severityLkey: string;
-  warning: string;
-}
-
-export interface ApWarehouse {
-  key: string;
-  departmentKey: string;
-  warehouseName: string;
-  warehouseId: string;
-  isdefault: boolean;
-  closeWarehouse: boolean;
-  locationKey: string;
-  capacity: string;
-  workingHoursFromTime: number;
-  workingHoursToTime: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
-
-export interface ApWarehouseProduct {
-  key: string;
-  warehouseKey: string;
-  productKey: string;
-  quantity: number;
-  reOrderQuantity: number;
-  miniOrder: number;
-  maxOrder: number;
-  workingHoursFromTime: number;
-  workingHoursToTime: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-  departmentKey: string;
-  avgCost: number;
-}
-
-export interface ApWarehouseProductDetails {
-  key: string;
-  warehouseProductKey: string;
-  lotSerialNum: string;
-  quantity: number;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-  expiryDate: Date;
-}
-
-export interface ApWarehouseUser {
-  key: string;
-  warehouseKey: string;
-  userKey: string;
-  createdBy: string;
-  updatedBy: string;
-  deletedBy: string;
-  createdAt: number;
-  updatedAt: number;
-  deletedAt: number;
-  isvalid: boolean;
-}
+export interface ApAccessRole { 
+	key:string;
+	name:string;
+	description:string;
+	accessLevel:number;
+	passwordErrorRetires:number;
+	passwordExpires:boolean;
+	passwordExpiresAfterDays:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApAccessRoleAuthorization { 
+	key:string;
+	accessRoleKey:string;
+	authorizationType:string;
+	authorizationObjectKey:string;
+	authorizationLevel:number;
+	accessLevel:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApAccessRoleScreen { 
+	key:string;
+	accessRoleKey:string;
+	screenKey:string;
+	canRead:boolean;
+	canWrite:boolean;
+	canDelete:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApAccessToken { 
+	key:string;
+	userKey:string;
+	canExpire:boolean;
+	expiresAt:number;
+	accessToken:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApActiveIngredient { 
+	key:string;
+	code:string;
+	name:string;
+	hasSalt:boolean;
+	saltLkey:string;
+	medicalCategoryLkey:string;
+	isControlled:boolean;
+	controlledLkey:string;
+	hasSynonyms:boolean;
+	atcCode:string;
+	drugTypeLkey:string;
+	drugClassLkey:string;
+	hasBlackBoxWarning:boolean;
+	blackBoxWarning:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	mechanismOfAction:string;
+	toxicityMaximumDose:string;
+	toxicityMaximumDosePerUnitLkey:string;
+	toxicityDetails:string;
+	pregnancyCategoryLkey:string;
+	pregnancyNotes:string;
+	lactationRiskLkey:string;
+	lactationRiskNotes:string;
+	doseAdjustmentRenal:boolean;
+	doseAdjustmentHepatic:boolean;
+	pharmaAbsorption:string;
+	pharmaRouteOfElimination:string;
+	pharmaVolumeOfDistribution:string;
+	pharmaHalfLife:string;
+	pharmaProteinBinding:string;
+	pharmaClearance:string;
+	pharmaMetabolism:string;
+	doseAdjPugA:string;
+	doseAdjPugB:string;
+	doseAdjPugC:string;
+	doseAdjRenalOne:string;
+	doseAdjRenalTwo:string;
+	doseAdjRenalThree:string;
+	doseAdjRenalFour:string;
+	chemicalFormula:string;
+} 
+
+export interface ApActiveIngredientAdverseEffect { 
+	key:string;
+	activeIngredientKey:string;
+	adverseEffectLkey:string;
+	isOther:boolean;
+	otherDescription:string;
+	typeLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApActiveIngredientContraindication { 
+	key:string;
+	activeIngredientKey:string;
+	contraindication:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	icdCodeKey:string;
+} 
+
+export interface ApActiveIngredientDrugInteraction { 
+	key:string;
+	activeIngredientKey:string;
+	interactedActiveIngredientKey:string;
+	severityLkey:string;
+	description:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApActiveIngredientFoodInteraction { 
+	key:string;
+	activeIngredientKey:string;
+	foodDescription:string;
+	severityLkey:string;
+	description:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApActiveIngredientIndication { 
+	key:string;
+	activeIngredientKey:string;
+	indication:string;
+	isOffLabel:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	icdCodeKey:string;
+} 
+
+export interface ApActiveIngredientRecommendedDosage { 
+	key:string;
+	activeIngredientKey:string;
+	indicationLkey:string;
+	variableLkey:string;
+	dosage:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApActiveIngredientSpecialPopulation { 
+	key:string;
+	activeIngredientKey:string;
+	additionalPopulationLkey:string;
+	considerations:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApActiveIngredientSynonym { 
+	key:string;
+	activeIngredientKey:string;
+	synonym:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApAddresses { 
+	key:string;
+	entityId:string;
+	entityTypeLkey:string;
+	addressTypeLkey:string;
+	streetAddressLine1:string;
+	streetAddressLine2:string;
+	countryLkey:string;
+	stateProvinceRegionLkey:string;
+	cityLkey:string;
+	postalCode:string;
+	additionalInfo:string;
+	latitude:string;
+	longitude:string;
+	isActive:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApAdmitOutpatientInpatient { 
+	key:string;
+	toEncounterKey:string;
+	fromEncounterKey:string;
+	inpatientDepartmentKey:string;
+	physicianKey:string;
+	admissionNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	admitSourceLkey:string;
+	admissionDepartmentKey:string;
+	roomKey:string;
+	bedKey:string;
+	handoffInformation:string;
+	icd10:string;
+	reasonOfAdmission:string;
+} 
+
+export interface ApAgeGroup { 
+	key:string;
+	ageGroupLkey:string;
+	fromAge:number;
+	toAge:number;
+	fromAgeUnitLkey:string;
+	toAgeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApAllergens { 
+	key:string;
+	allergenCode:string;
+	allergenName:string;
+	allergenTypeLkey:string;
+	description:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApAppointment { 
+	key:string;
+	patientKey:string;
+	facilityKey:string;
+	resourceTypeLkey:string;
+	resourceKey:string;
+	visitTypeLkey:string;
+	durationLkey:string;
+	appointmentStart:string;
+	appointmentEnd:string;
+	instructions:string;
+	notes:string;
+	priorityLkey:string;
+	isReminder:string;
+	reminderLkey:string;
+	consentForm:string;
+	referingPhysicianLkey:string;
+	externalPhysician:string;
+	procedureLevelLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	resourceLkey:string;
+	instructionsLkey:string;
+	appointmentStatus:string;
+	reasonLkey:string;
+	reasonValue:string;
+	otherReason:string;
+	noShowReasonLkey:string;
+	noShowReasonValue:string;
+	noShowOtherReason:string;
+} 
+
+export interface ApAttachment { 
+	key:string;
+	attachmentType:string;
+	referenceObjectKey:string;
+	extraDetails:string;
+	fileName:string;
+	contentType:string;
+	fileContent:uint8array;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	details:string;
+	accessTypeLkey:string;
+	patientKey:string;
+} 
+
+export interface ApAudiometryPuretone { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	testEnvironment:string;
+	testReason:string;
+	earExamFindingsLkey:string;
+	airConductionFrequenciesLeft:number;
+	airConductionFrequenciesRight:number;
+	hearingThresholdsLeft:number;
+	hearingThresholdsRight:number;
+	boneConductionFrequenciesLeft:number;
+	boneConductionFrequenciesRight:number;
+	boneConductionThresholdsLeft:number;
+	boneConductionThresholdsRight:number;
+	maskedUsed:boolean;
+	hearingLossTypeLkey:string;
+	hearingLossDegreeLkey:string;
+	recommendations:string;
+	additionalNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
+export interface ApBed { 
+	key:string;
+	roomKey:string;
+	name:string;
+	bedTypeLkey:string;
+	locationDetails:string;
+	isValid:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+} 
+
+export interface ApBedTransactions { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	fromRoomKey:string;
+	fromBedKey:string;
+	toRoomKey:string;
+	toBedKey:string;
+	departmentKey:string;
+} 
+
+export interface ApBrandMedicationSubstitutes { 
+	key:string;
+	brandKey:string;
+	alternativeBrandKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	description:string;
+} 
+
+export interface ApCatalogDiagnosticTest { 
+	key:string;
+	testKey:string;
+	catalogKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApCdt { 
+	key:string;
+	typeLkey:string;
+	cdtCode:string;
+	description:string;
+	classLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApCdtDentalAction { 
+	key:string;
+	dentalActionKey:string;
+	cdtKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApClinicalDocumentation { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	docTypeLkey:string;
+	docCategoryLkey:string;
+	docContent:string;
+	userKey:string;
+	userRoleLkey:string;
+	facilityKey:string;
+	docStatusLkey:string;
+	docFormTypeKey:string;
+	docFormKey:string;
+	createdDatetime:Date;
+	approvedDatetime:Date;
+	approvedByUserKey:string;
+	approvedByUserRoleLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApComplaintSymptoms { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	chiefComplaint:string;
+	onsetDate:number;
+	duration:number;
+	unitLkey:string;
+	painCharacteristics:string;
+	painLocationLkey:string;
+	radiation:string;
+	aggravatingFactors:string;
+	relievingFactors:string;
+	associatedSymptoms:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
+export interface ApConsultationOrder { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	consultantSpecialtyLkey:string;
+	cityLkey:string;
+	preferredConsultantKey:string;
+	consultationMethodLkey:string;
+	consultationTypeLkey:string;
+	consultationContent:string;
+	notes:string;
+	statusLkey:string;
+	viewResponse:string;
+	resposeStatusLkey:string;
+	submissionDate:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	cancellationReason:string;
+} 
+
+export interface ApCpt { 
+	key:string;
+	categoryLkey:string;
+	cptCode:string;
+	description:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApCustomeInstructions { 
+	key:string;
+	prescriptionMedicationsKey:string;
+	dose:number;
+	frequencyLkey:string;
+	unitLkey:string;
+	roaLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDentalAction { 
+	key:string;
+	description:string;
+	type:string;
+	imageName:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	favorite:boolean;
+} 
+
+export interface ApDentalChart { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	chartDate:Date;
+	type:string;
+	chartSequence:number;
+	status:string;
+	treatmentPlan:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDentalChartProgressNote { 
+	key:string;
+	chartKey:string;
+	note:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDentalChartTooth { 
+	key:string;
+	chartKey:string;
+	toothNumber:string;
+	missing:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	toothNumberNumeric:number;
+} 
+
+export interface ApDentalPlannedTreatment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	type:string;
+	visitNumber:number;
+	cdtKey:string;
+	toothKey:string;
+	note:string;
+	surfaceLkey:string;
+	billingTypeLkey:string;
+	fees:number;
+	insurance:number;
+	discount:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	statusLkey:string;
+	source:string;
+	sourceKey:string;
+} 
+
+export interface ApDepartment { 
+	key:string;
+	facilityKey:string;
+	name:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	departmentTypeLkey:string;
+	appointable:boolean;
+	hasTriage:boolean;
+	departmentCode:string;
+	phoneNumber:string;
+	email:string;
+	encountertypelkey:string;
+} 
+
+export interface ApDepartmentService { 
+	key:string;
+	departmentKey:string;
+	serviceKey:string;
+	isActive:boolean;
+	serviceTypeLkey:string;
+	serviceName:string;
+	servicePrice:number;
+	serviceCurrencyLkey:string;
+} 
+
+export interface ApDiagnosticCoding { 
+	key:string;
+	diagnosticsKey:string;
+	codeTypeLkey:string;
+	internationalCodeKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApDiagnosticOrderTests { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	orderKey:string;
+	testKey:string;
+	receivedLabId:number;
+	reasonLkey:string;
+	priorityLkey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	processingStatusLkey:string;
+	submitDate:number;
+	orderTypeLkey:string;
+	acceptedAt:number;
+	acceptedBy:string;
+	rejectedAt:number;
+	rejectedBy:string;
+	rejectedReason:string;
+	patientArrivedAt:number;
+	patientArrivedNoteRad:string;
+	readyAt:number;
+	approvedAt:number;
+	cancellationReason:string;
+	fromDepartmentId:number;
+	fromFacilityId:number;
+	toFacilityId:number;
+} 
+
+export interface ApDiagnosticOrderTestsNotes { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticOrderTestsRadReport { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	orderKey:string;
+	medicalTestKey:string;
+	orderTestKey:string;
+	reportValue:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	orderTypeLkey:string;
+	approvedAt:number;
+	approvedBy:string;
+	rejectedAt:number;
+	rejectedBy:string;
+	rejectedReason:string;
+	reviewAt:number;
+	reviewBy:string;
+	severityLkey:string;
+} 
+
+export interface ApDiagnosticOrderTestsReportNotes { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	reportKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticOrderTestsResult { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	orderKey:string;
+	medicalTestKey:string;
+	orderTestKey:string;
+	normalRangeKey:string;
+	resultType:string;
+	resultLkey:string;
+	resultValueNumber:number;
+	marker:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	processingStatusLkey:string;
+	orderTypeLkey:string;
+	approvedAt:number;
+	approvedBy:string;
+	rejectedAt:number;
+	rejectedBy:string;
+	rejectedReason:string;
+	reviewAt:number;
+	reviewBy:string;
+	resultText:string;
+	testProfileKey:string;
+	isProfile:boolean;
+	normalRangeValue:string;
+} 
+
+export interface ApDiagnosticOrderTestsResultNotes { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	resultKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticOrderTestsSamples { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	notes:string;
+	unitLkey:string;
+	quantity:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	sampleCollectedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticOrders { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	orderId:string;
+	saveDraft:boolean;
+	submittedBy:string;
+	submittedAt:number;
+	isUrgent:boolean;
+	labStatusLkey:string;
+	radStatusLkey:string;
+} 
+
+export interface ApDiagnosticTest { 
+	key:string;
+	testTypeLkey:string;
+	testName:string;
+	internalCode:string;
+	internationalCodeOne:string;
+	internationalCodeTwo:string;
+	internationalCodeThree:string;
+	ageSpecific:boolean;
+	genderSpecific:boolean;
+	genderLkey:string;
+	specialPopulation:boolean;
+	price:number;
+	currencyLkey:string;
+	specialNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	appointable:boolean;
+} 
+
+export interface ApDiagnosticTestAgeType { 
+	key:string;
+	testKey:string;
+	ageFrom:number;
+	ageTo:number;
+	ageTypeLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticTestCatalogHeader { 
+	key:string;
+	description:string;
+	typeLkey:string;
+	departmentKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	testKey:string;
+	catalogKey:string;
+} 
+
+export interface ApDiagnosticTestEyeExam { 
+	key:string;
+	testKey:string;
+	eyeExamCategoryLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticTestGenetics { 
+	key:string;
+	testKey:string;
+	internationalCodingTypeLkey:string;
+	childCodeLkey:string;
+	pathologyCategoryLkey:string;
+	specimenTypeLkey:string;
+	methodologyLkey:string;
+	turnaroundTime:string;
+	timeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticTestLaboratory { 
+	key:string;
+	testKey:string;
+	internationalCodingTypeLkey:string;
+	childCodeLkey:string;
+	labCatalogKey:string;
+	propertyLkey:string;
+	systemLkey:string;
+	scaleLkey:string;
+	reagentsLkey:string;
+	methodLkey:string;
+	testDurationTime:number;
+	timeUnitLkey:string;
+	resultType:string;
+	resultUnitLkey:string;
+	isProfile:boolean;
+	sampleContainerLkey:string;
+	sampleVolume:number;
+	sampleVolumeUnitLkey:string;
+	tubeColorLkey:string;
+	testDescription:string;
+	sampleHandling:string;
+	turnaroundTime:number;
+	turnaroundTimeUnitLkey:string;
+	preparationRequirements:string;
+	medicalIndications:string;
+	associatedRisks:string;
+	testInstructions:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	categoryLkey:string;
+	tubeTypeLkey:string;
+} 
+
+export interface ApDiagnosticTestNormalRange { 
+	key:string;
+	testKey:string;
+	genderLkey:string;
+	ageFrom:number;
+	ageFromUnitLkey:string;
+	ageTo:number;
+	ageToUnitLkey:string;
+	conditionLkey:string;
+	resultTypeLkey:string;
+	resultText:string;
+	resultLovKey:string;
+	normalRangeTypeLkey:string;
+	rangeFrom:number;
+	rangeTo:number;
+	criticalValue:boolean;
+	criticalValueLessThan:number;
+	criticalValueMoreThan:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	profileTestKey:string;
+	isProfile:boolean;
+} 
+
+export interface ApDiagnosticTestNormalRangeLov { 
+	key:string;
+	testKey:string;
+	normalRangeKey:string;
+	lovLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticTestPathology { 
+	key:string;
+	testKey:string;
+	internationalCodingTypeLkey:string;
+	childCodeLkey:string;
+	pathologyCategoryLkey:string;
+	specimenTypeLkey:string;
+	analysisProcedureLkey:string;
+	turnaroundTime:string;
+	timeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	testDescription:string;
+	sampleHandling:string;
+	medicalLndications:string;
+	criticalValues:string;
+	preparationRequirements:string;
+	associatedRisks:string;
+	pathCatalogKey:string;
+} 
+
+export interface ApDiagnosticTestProfile { 
+	key:string;
+	diagnosticTestKey:string;
+	testName:string;
+	resultUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticTestRadiology { 
+	key:string;
+	testKey:string;
+	internationalCodingTypeLkey:string;
+	childCodeLkey:string;
+	radCategoryLkey:string;
+	imageDuration:string;
+	timeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	testDescription:string;
+	medicalIndications:string;
+	turnaroundTimeUnitLkey:string;
+	turnaroundTime:number;
+	associatedRisks:string;
+	radCatalogKey:string;
+	propertyLkey:string;
+	systemLkey:string;
+	scaleLkey:string;
+	reagentsLkey:string;
+	methodLkey:string;
+	timingLkey:string;
+	resultType:string;
+	resultUnitLkey:string;
+	labCatalogLkey:string;
+} 
+
+export interface ApDiagnosticTestSpecialPopulation { 
+	key:string;
+	testKey:string;
+	specialPopulationLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDoctorRound { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	roundStartTime:number;
+	practitionerKey:string;
+	shiftLkey:string;
+	initialNote:string;
+	progressNote:string;
+	specialEventNote:string;
+	primaryDiagnosis:string;
+	major:boolean;
+	suspected:boolean;
+	clinicalImpression:string;
+	secondaryDiagnoses:string;
+	patientStatusLkey:string;
+	complicationsNoted:string;
+	summaryStatement:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+} 
+
+export interface ApDoctorRoundStaff { 
+	key:string;
+	doctorRoundKey:string;
+	userKey:string;
+	responsibility:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+	isPresent:boolean;
+	patientKey:string;
+} 
+
+export interface ApDrugOrder { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	drugorderId:string;
+	saveDraft:boolean;
+	submittedBy:string;
+	submittedAt:number;
+} 
+
+export interface ApDrugOrderMedications { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	drugOrderKey:string;
+	genericMedicationsKey:string;
+	drugOrderTypeLkey:string;
+	doseUnitLkey:string;
+	roaLkey:string;
+	frequency:number;
+	priorityLkey:string;
+	pharmacyDepartmentKey:string;
+	dose:number;
+	notes:string;
+	prnIndication:string;
+	specialInstructions:string;
+	parametersToMonitor:string;
+	startDateTime:number;
+	maximumDose:number;
+	genericSubstitute:boolean;
+	chronicMedication:boolean;
+	patientOwnMedication:boolean;
+	administrationInstructions:string;
+	duration:number;
+	durationTypeLkey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	indicationUseLkey:string;
+	indicationIcd:string;
+	indicationSnomed:string;
+	indicationManually:string;
+} 
+
+export interface ApDuplicationCandidateSetup { 
+	key:string;
+	role:string;
+	dob:boolean;
+	lastName:boolean;
+	documentNo:boolean;
+	mobileNumber:boolean;
+	gender:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApDvmRule { 
+	key:string;
+	screenMetadataKey:string;
+	ruleDescription:string;
+	fieldKey:string;
+	fieldName:string;
+	fieldDataType:string;
+	isFieldLov:boolean;
+	isFieldRef:boolean;
+	ruleType:string;
+	ruleValue:string;
+	ruleValueTwo:string;
+	isDependant:boolean;
+	dependantRuleCheck:string;
+	dependantRuleKey:string;
+	validationType:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApElectrocardiogramEcg { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	indication:string;
+	ecgLeadType:string;
+	heartRate:number;
+	prInterval:number;
+	qrsDuration:number;
+	qtInterval:number;
+	stSegmentChangesLkey:string;
+	waveAbnormalitiesLkey:string;
+	rhythmAnalysis:string;
+	ecgInterpretation:string;
+	cancellationReason:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApEmergencyTriage { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	emergencyLevelLkey:string;
+	rightEyeLightResponse:boolean;
+	rightEyePupilSizeLkey:string;
+	leftEyeLightResponse:boolean;
+	leftEyePupilSizeLkey:string;
+	isPregnancy:boolean;
+	historyOfPresentIllness:string;
+	additionalNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	lifeSavingLkey:string;
+	unresponsiveLkey:string;
+	highRiskLkey:string;
+	avpuScaleLkey:string;
+	painScoreLkey:string;
+	labsLkey:string;
+	imagingLkey:string;
+	ivFluidsLkey:string;
+	medicationLkey:string;
+	ecgLkey:string;
+	consultationLkey:string;
+	destinationLkey:string;
+} 
+
+export interface ApEncounter { 
+	key:string;
+	patientKey:string;
+	patientFullName:string;
+	patientAge:string;
+	encounterStatusLkey:string;
+	encounterClassLkey:string;
+	encounterPriorityLkey:string;
+	encounterTypeLkey:string;
+	serviceTypeLkey:string;
+	patientStatusLkey:string;
+	episodeCareKey:string;
+	basedOnLkey:string;
+	basedOnKey:string;
+	partOfEncounterKey:string;
+	attendingPhysicianKey:string;
+	responsiblePhysicianKey:string;
+	facilityKey:string;
+	appointmentKey:string;
+	virtualService:boolean;
+	plannedStartDate:Date;
+	plannedEndDate:Date;
+	actualStartDate:Date;
+	actualEndDate:Date;
+	actualLengthHrs:number;
+	reasonLkey:string;
+	primaryDiagnoseKey:string;
+	dietPreferenceLkey:string;
+	dietPreferenceText:string;
+	valuableItemsText:string;
+	specialArrangementLkey:string;
+	specialArrangementText:string;
+	specialCourtesyLkey:string;
+	originLkey:string;
+	admissionSource:string;
+	readmission:boolean;
+	dischargeDestination:string;
+	dischargeDisposition:string;
+	locationTypeLkey:string;
+	locationKey:string;
+	followUpEncounterKey:string;
+	queueNumber:number;
+	billingAccountKey:string;
+	paymentTypeLkey:string;
+	payerTypeLkey:string;
+	payerKey:string;
+	insurancePlan:string;
+	payerMemberId:string;
+	referralNumber:string;
+	accessLevel:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	departmentKey:string;
+	dischargeTypeLkey:string;
+	actualLengthMinutes:number;
+	chiefComplaint:string;
+	hpiSummery:string;
+	hpiKey:string;
+	pastMedicalHistorySummery:string;
+	pastMedicalHistoryKey:string;
+	rosSummery:string;
+	rosKey:string;
+	assessmentSummery:string;
+	assessmentKey:string;
+	physicalExamSummery:string;
+	physicalExamSummeryKey:string;
+	progressNote:string;
+	dischargeNote:string;
+	dischargeSummery:string;
+	visitId:string;
+	encounterNotes:string;
+	sourceName:string;
+	physicalExamNote:string;
+	planInstructionsLkey:string;
+	visitTypeLkey:string;
+	physicianKey:string;
+	insuranceKey:string;
+	resourceTypeLkey:string;
+	resourceKey:string;
+	planInstructionsNote:string;
+	discharge:boolean;
+	emergencyLevelLkey:string;
+	dischargeAt:number;
+} 
+
+export interface ApEncounterAppliedService { 
+	key:string;
+	encounterKey:string;
+	serviceKey:string;
+	categoryLkey:string;
+	source:string;
+	sourceKey:string;
+	extraDetails:string;
+	price:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApEncounterAssignToBed { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	roomKey:string;
+	bedKey:string;
+	admissionReason:string;
+	departmentKey:string;
+} 
+
+export interface ApEncounterService { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	serviceKey:string;
+	serviceTypeLkey:string;
+	serviceName:string;
+	servicePrice:number;
+	serviceCurrencyLkey:string;
+	encounterDate:number;
+	createdBy:string;
+	createdAt:number;
+} 
+
+export interface ApEncounterVaccination { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	vaccineKey:string;
+	vaccineBrandKey:string;
+	vaccineDoseKey:string;
+	vaccineLotNumber:string;
+	dateAdministered:number;
+	actualSide:string;
+	administrationReactions:string;
+	externalFacilityName:string;
+	notes:string;
+	reviewedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	reviewedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
+export interface ApEventSlice { 
+	key:string;
+	sliceKey:string;
+	eventType:string;
+	linkedEventKey:string;
+	dayOfWeek:string;
+	eventDate:Date;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApFacility { 
+	key:string;
+	facilityId:string;
+	facilityName:string;
+	facilityNameOtherLang:string;
+	tenantId:string;
+	facilityRegistrationDate:Date;
+	facilityEmailAddress:string;
+	facilityBriefDesc:string;
+	facilityAddressOtherLang:string;
+	facilityLogoFile:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	facilityPhone1:string;
+	facilityPhone2:string;
+	facilityFax:string;
+	facilityAddressId:string;
+	facilityTypeLkey:string;
+	facilityType:string;
+	facilityAddress:string;
+	roolKey:string;
+	defaultCurrencyLkey:string;
+} 
+
+export interface ApFunctionalAssessment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	mobilityAmbulation:boolean;
+	transferringBedChair:boolean;
+	stairClimbingAbility:boolean;
+	feeding:boolean;
+	toiletingAbility:boolean;
+	bathingAbility:boolean;
+	dressingAbility:boolean;
+	groomingAbility:boolean;
+	walkingDistance:boolean;
+	balance:boolean;
+	urinaryContinence:boolean;
+	bowelContinence:boolean;
+	useOfAssistiveDevices:boolean;
+	needForAssistance:boolean;
+	fallHistory:boolean;
+	painDuringMovement:boolean;
+	needForRehab:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
+export interface ApGeneralAssessment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	positionStatusLkey:string;
+	bodyMovementsLkey:string;
+	levelOfConsciousnessLkey:string;
+	facialExpressionLkey:string;
+	speechLkey:string;
+	moodBehaviorLkey:string;
+	memoryRecent:boolean;
+	memoryRemote:boolean;
+	signsOfAgitation:boolean;
+	signsOfDepression:boolean;
+	signsOfSuicidalIdeation:boolean;
+	signsOfSubstanceUse:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+	livingCondition:string;
+	patientNeedHelp:boolean;
+	supportingMembers:string;
+	familyLocationLkey:string;
+} 
+
+export interface ApGenericMedication { 
+	key:string;
+	genericName:string;
+	manufacturerLkey:string;
+	usageInstructions:string;
+	dosageFormLkey:string;
+	expiresAfterOpening:boolean;
+	expiresAfterOpeningValue:string;
+	singlePatientUse:boolean;
+	price:number;
+	currencyLkey:string;
+	priceListKey:string;
+	cost:number;
+	storageRequirements:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	code:string;
+	roaLkey:string;
+	marketingAuthorizationHolder:string;
+	costCategoryLkey:string;
+	uomGroupKey:string;
+	uomGroupUnitKey:string;
+} 
+
+export interface ApGenericMedicationActiveIngredient { 
+	key:string;
+	genericMedicationKey:string;
+	activeIngredientKey:string;
+	strength:number;
+	unitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApGenericMedicationRoa { 
+	key:string;
+	genericMedicationKey:string;
+	roaLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApGlobalSettings { 
+	key:string;
+	facilityKey:string;
+	settingKey:string;
+	settingValue:string;
+	settingCategory:string;
+	requireRestart:boolean;
+	requirePasscode:boolean;
+	fixedValue:boolean;
+	forAdminUse:boolean;
+	hiddenSetting:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApIcdCode { 
+	key:string;
+	icdVersion:string;
+	icdCode:string;
+	description:string;
+	chapter:string;
+	block:string;
+	category:string;
+	subcategory:string;
+	fulldescription:string;
+	includes:string;
+	excludes1:string;
+	excludes2:string;
+	useadditionalcode:string;
+	codefirst:string;
+	codingguidelines:string;
+	clinicaldescription:string;
+	severity:string;
+	synonyms:string;
+	abbreviations:string;
+	notes:string;
+	requireSide:string;
+	requireDetails:string;
+	linkedWithAge:string;
+	linkedWithGender:string;
+	linkedWithDisease:string;
+	moreSpecification:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApInpatientChiefComplain { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	chiefComplaint:string;
+	provocation:string;
+	palliation:string;
+	qualityLkey:string;
+	regionLkey:string;
+	onsetDateTime:number;
+	understanding:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+	severityLkey:string;
+} 
+
+export interface ApInventoryTransaction { 
+	key:string;
+	transTypeLkey:string;
+	warehouseKey:string;
+	transReasonLkey:string;
+	remarks:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	transId:string;
+	docNum:number;
+	vendor:string;
+	serialNum:string;
+	approvedBy:string;
+	invoiceNum:string;
+	approvalStatus:string;
+} 
+
+export interface ApInventoryTransactionAttachment { 
+	key:string;
+	attachmentType:string;
+	extraDetails:string;
+	fileName:string;
+	contentType:string;
+	fileContent:uint8array;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	details:string;
+	accessTypeLkey:string;
+} 
+
+export interface ApInventoryTransactionProduct { 
+	key:string;
+	inventoryTransKey:string;
+	productKey:string;
+	newQuentity:number;
+	lotserialnumber:string;
+	newCost:number;
+	currencyLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	isEffectedWarehouse:boolean;
+	expiryDate:Date;
+	notes:string;
+	transUomKey:string;
+	newQuentityBaseUom:number;
+	totalCost:number;
+	newAvgCost:number;
+	oldAvgCost:number;
+	statusLkey:string;
+} 
+
+export interface ApInventoryTransfer { 
+	key:string;
+	transNo:string;
+	transReason:string;
+	fromWarehouseKey:string;
+	toWarehouseKey:string;
+	note:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApInventoryTransferProduct { 
+	key:string;
+	transferKey:string;
+	productKey:string;
+	quentityRequested:number;
+	quentityApproved:number;
+	lotserialnumber:string;
+	isEffectedWarehouse:boolean;
+	notes:string;
+	transUomKey:string;
+	quentityRequestedBaseUom:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	quentityApprovedBaseUom:number;
+	statusLkey:string;
+	rejectedReason:string;
+} 
+
+export interface ApLabResultLog { 
+	key:string;
+	resultKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	resultValue:string;
+} 
+
+export interface ApLanguages { 
+	key:string;
+	languageCode:string;
+	languageName:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApLicense { 
+	key:string;
+	tenantId:string;
+	licenseId:string;
+	licenseKey:string;
+	licenseType:string;
+	startDate:Date;
+	endDate:Date;
+	activestatus:boolean;
+	uuidHwKeys:string;
+	facilityAddress:string;
+	facilityLogoFile:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApLicenseDetails { 
+	key:string;
+	tenantId:string;
+	licenseId:string;
+	facilityCount:number;
+	bedCount:number;
+	userCount:number;
+	modules:string;
+	facilityUsageCount:number;
+	bedUsageCount:number;
+	userUsageCount:number;
+	lastUsageDate:Date;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApLoinc { 
+	key:string;
+	categoryLkey:string;
+	loincCode:string;
+	name:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApLov { 
+	key:string;
+	lovCode:string;
+	lovName:string;
+	lovDescription:string;
+	loveCustomCode:string;
+	parentLov:string;
+	autoSelectDefault:boolean;
+	defaultValueId:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApLovValues { 
+	key:string;
+	lovKey:string;
+	lovCode:string;
+	valueCode:string;
+	lovDisplayVale:string;
+	loveCustomCode:string;
+	valueDescription:string;
+	valueColor:string;
+	valueIcon:string;
+	valueOrder:number;
+	isdefault:boolean;
+	seededData:boolean;
+	forInternalUser:boolean;
+	specificForScreenId:string;
+	parentValueId:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	score:number;
+} 
+
+export interface ApMedicalSheets { 
+	key:string;
+	departmentKey:string;
+	facilityKey:string;
+	patientDashboard:boolean;
+	clinicalVisit:boolean;
+	diagnosticsOrder:boolean;
+	prescription:boolean;
+	drugOrder:boolean;
+	consultation:boolean;
+	procedures:boolean;
+	patientHistory:boolean;
+	allergies:boolean;
+	medicalWarnings:boolean;
+	medicationsRecord:boolean;
+	psychologicalExam:boolean;
+	audiometryPuretone:boolean;
+	optometricExam:boolean;
+	vaccineReccord:boolean;
+	diagnosticsResult:boolean;
+	dentalCare:boolean;
+	cardiology:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	observation:boolean;
+	vaccination:boolean;
+	operationRequests:boolean;
+	doctorRound:boolean;
+	dayCase:boolean;
+	bedsideProceduresRequest:boolean;
+	referralRequest:boolean;
+	bloodOrder:boolean;
+	ivFluidOrder:boolean;
+	intakeOutputBalance:boolean;
+	riskAssessments:boolean;
+	multidisciplinaryTeamNotes:boolean;
+	nutritionStateAssessment:boolean;
+	physicianOrderSummary:boolean;
+	carePlanAndGoals:boolean;
+	dischargePlanning:boolean;
+	pregnancyFollowUp:boolean;
+	morseFallScale:boolean;
+	hendrichFallRisk:boolean;
+	stratifyScale:boolean;
+	johnsHopkinsFallRiskAssessmentTool:boolean;
+	bradenScaleForPressureUlcer:boolean;
+	glasgowComaScale:boolean;
+	vteRiskAssessment:boolean;
+	progressNotes:boolean;
+	ivFluidAdministration:boolean;
+	dietaryRequest:boolean;
+	pediatric:boolean;
+	gynecology:boolean;
+	speechTherapy:boolean;
+	rehabilitationPlan:boolean;
+	occupationalTherapy:boolean;
+	physiotherapyPlan:boolean;
+	medicationAdministrationRecord:boolean;
+	continuousObservations:boolean;
+	dialysisRequest:boolean;
+	slidingScale:boolean;
+	pointOfCareCests:boolean;
+	hospitalCourse:boolean;
+	childGrowth:boolean;
+	flaccNeonatesPainAssessment:boolean;
+	universalPainAssessment:boolean;
+	patientRestraint:boolean;
+	infectionControl:boolean;
+	sofa:boolean;
+	medicalCalculators:boolean;
+	cpoeResultsManager:boolean;
+	icu:boolean;
+	triage:boolean;
+} 
+
+export interface ApMedicationCategories { 
+	key:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	medCategoriesName:string;
+} 
+
+export interface ApMedicationCategoriesActiveIngredient { 
+	key:string;
+	medicationClassKey:string;
+	activeIngredientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApMedicationCategoriesClass { 
+	key:string;
+	therapeuticCategoryKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	className:string;
+} 
+
+export interface ApMedicationReconciliation { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	activeIngredientKey:string;
+	dosage:number;
+	dosageLkey:string;
+	routeLkey:string;
+	frequencyLkey:string;
+	startDate:number;
+	lastDoseTaken:number;
+	indication:string;
+	sourceOfInfo:string;
+	medicationAvailableWithPatient:boolean;
+	continueInHospital:boolean;
+	discrepancyIdentified:boolean;
+	actionTaken:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+	frequencyValue:number;
+} 
+
+export interface ApMessages { 
+	key:string;
+	messageId:string;
+	messageCode:string;
+	messageType:string;
+	messageHeader:string;
+	messageText:string;
+	languageCode:string;
+	isoriginalMessage:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApMetadata { 
+	key:string;
+	objectName:string;
+	dbObjectName:string;
+	description:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApMetadataField { 
+	key:string;
+	fieldName:string;
+	dbFieldName:string;
+	metadataKey:string;
+	dbObjectName:string;
+	dataType:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApModule { 
+	key:string;
+	name:string;
+	description:string;
+	iconImagePath:string;
+	viewOrder:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApNurseNotes { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	shiftLkey:string;
+	noteTypeLkey:string;
+	nurseNote:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApNurseServiceProduct { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	departmentId:number;
+	categoryLkey:string;
+	serviceId:number;
+	warehouseProductId:number;
+	quantity:number;
+	baseUomId:number;
+	unitPrice:number;
+	totalPrice:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApOperationAnesthesiaCarePlan { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	anesthesiaConsentSigned:boolean;
+	understandsRisks:boolean;
+	previousAnesthesia:boolean;
+	anesthesiaHistory:string;
+	operationKey:string;
+	mallampatiClassificationLkey:string;
+	airwayGradesLkey:string;
+	plannedAirwayApproachLkey:string;
+	nasalPatencyLkey:string;
+	thyromentalDistance:number;
+	mouthOpening:number;
+	neckMobility:string;
+	facialOrNeckAbnormalities:string;
+	beardOrFacialHair:boolean;
+	anticipatedDifficultAirway:boolean;
+	previousDifficultIntubation:boolean;
+	difficultIntubationNotes:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApOperationAnesthesiaInductionMonitoring { 
+	key:string;
+	operationRequestKey:string;
+	weight:number;
+	fastingDuration:number;
+	ivLineEstablished:boolean;
+	monitorsConnected:string;
+	intubationDone:boolean;
+	tubeSize:string;
+	tubeType:string;
+	securedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+	patientKey:string;
+	adverseEventsLkey:string;
+	adverseEventsNote:string;
+	actionsTaken:string;
+	surgeonNotified:boolean;
+	inductionStartTime:number;
+	intubationDoneNote:string;
+} 
+
+export interface ApOperationAnesthesiaRecovery { 
+	key:string;
+	operationRequestKey:string;
+	airwayTypeOnArrival:string;
+	oxygenGiven:boolean;
+	oxygenFlowLpm:number;
+	extubationTime:number;
+	extubationStatus:string;
+	consciousnessLevelLkey:string;
+	painLevelLkey:string;
+	nauseaVomiting:boolean;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApOperationAntimicrobialProphylaxisGiven { 
+	key:string;
+	operationRequestKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	dose:number;
+	activeIngredientKey:string;
+	unitLkey:string;
+} 
+
+export interface ApOperationArrivalToRecoveryRoom { 
+	key:string;
+	operationRequestKey:string;
+	arrivalTime:number;
+	accompaniedBy:string;
+	handoverSummary:string;
+	initialAssessmentTime:number;
+	responsibleNurseKey:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApOperationCoding { 
+	key:string;
+	operationKey:string;
+	codeTypeLkey:string;
+	internationalCodeKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApOperationDischargeReadiness { 
+	key:string;
+	operationRequestKey:string;
+	activityLkey:string;
+	respirationLkey:string;
+	circulationLkey:string;
+	consciousnessLkey:string;
+	oxygenSaturationLkey:string;
+	aldreteScore:string;
+	painControlled:boolean;
+	vitalsStable:boolean;
+	fullyAwake:boolean;
+	maintainAirway:boolean;
+	siteDressingIntact:boolean;
+	nauseaControlled:boolean;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApOperationDischargeToWard { 
+	key:string;
+	operationRequestKey:string;
+	returnToDifferentWard:boolean;
+	designationLkey:string;
+	transferTime:number;
+	receivingNurseKey:string;
+	finalNotes:string;
+	patientIdBandRechecked:boolean;
+	transportMode:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApOperationInduction { 
+	key:string;
+	operationRequestKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	dose:number;
+	unitLkey:string;
+	activeIngredientKey:number;
+} 
+
+export interface ApOperationIntraoperativeEvents { 
+	key:string;
+	operationRequestKey:string;
+	operationNotes:string;
+	conversionOccurred:boolean;
+	conversionType:boolean;
+	conversionTypeNote:string;
+	incisionType:string;
+	estimatedBloodLossMl:number;
+	surgicalComplicationLkey:string;
+	surgicalComplicationNotes:string;
+	specimensTaken:string;
+	safetyPauseTaken:boolean;
+	firstCountTime:number;
+	firstCountByKey:string;
+	secondCountTime:number;
+	secondCountByKey:string;
+	finalCountVerified:boolean;
+	countDiscrepancy:boolean;
+	countDiscrepancyAction:string;
+	unexpectedEventOccurred:boolean;
+	eventDescription:string;
+	teamResponse:string;
+	eventOutcome:string;
+	complicationSeverityLkey:string;
+	skinClosureTime:number;
+	surgeryEndTime:number;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+	urineOutput:number;
+	actualOperationPerformed:string;
+} 
+
+export interface ApOperationIntraoperativeMonitoring { 
+	key:string;
+	operationRequestKey:string;
+	period:number;
+	spo2:number;
+	bpSystolic:number;
+	bpDiastolic:number;
+	respiratoryRate:number;
+	temperature:number;
+	etco2:number;
+	fluidsGiven:number;
+	bloodGiven:number;
+	urineOutput:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+	patientKey:string;
+	heartRate:number;
+} 
+
+export interface ApOperationNameLog { 
+	key:string;
+	operationRequestKey:string;
+	operationKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApOperationNursingCareInterventions { 
+	key:string;
+	operationRequestKey:string;
+	ivFluidsGiven:string;
+	analgesicsGiven:string;
+	woundDressingStatus:string;
+	drainsTubes:string;
+	complicationsObserved:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApOperationPatientArrival { 
+	key:string;
+	operationRequestKey:string;
+	consentLkey:string;
+	roomKey:string;
+	departmentKey:string;
+	surgeonKey:string;
+	dateTime:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApOperationPostOpNotesHandover { 
+	key:string;
+	operationRequestKey:string;
+	indications:string;
+	operativeFindings:string;
+	operationPerformedSummary:string;
+	variationsFromPlan:string;
+	postOpDestinationKey:string;
+	oxygenRequired:boolean;
+	oxygenFlowRate:number;
+	specialInstructions:string;
+	handoverTime:number;
+	verbalSummaryGiven:boolean;
+	handoverNotes:string;
+	completedAt:number;
+	recoveryConditionLkey:string;
+	surgeryStatusLkey:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApOperationPreMedication { 
+	key:string;
+	operationRequestKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	dose:number;
+	activeIngredientKey:string;
+	unitLkey:string;
+} 
+
+export interface ApOperationPriceList { 
+	key:string;
+	operationKey:string;
+	price:number;
+	currencyLkey:string;
+	priceListKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApOperationRecoveryAntiemeticGiven { 
+	key:string;
+	operationRequestKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	dose:number;
+	activeIngredientKey:string;
+	unitLkey:string;
+} 
+
+export interface ApOperationRecoveryVitalsMonitoring { 
+	key:string;
+	operationRequestKey:string;
+	recordedTime:number;
+	bloodPressureSystolic:number;
+	bloodPressureDiastolic:number;
+	heartRate:number;
+	temperature:number;
+	oxygenSaturation:number;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApOperationRequests { 
+	key:string;
+	facilityKey:string;
+	departmentKey:string;
+	operationKey:string;
+	operationTypeLkey:string;
+	operationLevelLkey:string;
+	priorityLkey:string;
+	diagnosisKey:string;
+	requestStatus:string;
+	bodyPartLkey:string;
+	sideOfProcedureLkey:string;
+	plannedAnesthesiaTypeLkey:string;
+	needBloodProducts:boolean;
+	implantOrDeviceExpected:boolean;
+	notes:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	cancelledBy:string;
+	cancelledAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isValid:boolean;
+	operationDateTime:number;
+	statusLkey:string;
+	encounterKey:string;
+	patientKey:string;
+	submitedAt:number;
+	submitedBy:string;
+	operationStatusLkey:string;
+	startedAt:number;
+	startedBy:string;
+	increaseByMinutes:number;
+	monitorSlot:number;
+	recoveryStatusLkey:string;
+	cancellationReason:string;
+} 
+
+export interface ApOperationSetup { 
+	key:string;
+	name:string;
+	code:string;
+	categoryLkey:string;
+	indications:string;
+	contraindications:string;
+	preparationInstructions:string;
+	recoveryNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isAppointable:boolean;
+} 
+
+export interface ApOperationStaff { 
+	key:string;
+	operationRequestKey:string;
+	userKey:string;
+	responsibility:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+	isPresent:boolean;
+	patientKey:string;
+} 
+
+export interface ApOperationSurgicalPreparationIncision { 
+	key:string;
+	operationRequestKey:string;
+	surgicalSitePreppedWith:string;
+	sitePrepCompletedKey:string;
+	siteDriedTime:number;
+	positionLkey:string;
+	paddingSafetyApplied:boolean;
+	instrumentCountStarted:boolean;
+	firstInstrumentCountKey:string;
+	implantsReady:boolean;
+	implantsBarcodeScanned:boolean;
+	sterilityConfirmed:boolean;
+	disposableDevicesReady:boolean;
+	timeOfIncision:number;
+	surgicalStartMarkedKey:string;
+	skinOpenedTime:number;
+	estimatedSurgeryDuration:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApOptometricExam { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	medicalHistoryLkey:string;
+	testReason:string;
+	performedWithLkey:string;
+	distanceAcuity:number;
+	rightEyeOd:number;
+	leftEyeOd:number;
+	rightEyeOs:number;
+	leftEyeOs:number;
+	nearAcuity:number;
+	pinholeTestResultLkey:string;
+	numberOfPlatesTested:number;
+	correctAnswersCount:number;
+	deficiencyTypeLkey:string;
+	rightEyeSphere:number;
+	leftEyeSphere:number;
+	rightCylinder:number;
+	leftCylinder:number;
+	rightAxis:number;
+	leftAxis:number;
+	rightEye:number;
+	leftEye:number;
+	measurementMethod:string;
+	timeOfMeasurement:number;
+	cornealThickness:number;
+	glaucomaRiskAssessmentLkey:string;
+	fundoscopySlitlampDone:boolean;
+	examFindings:string;
+	visionDiagnosis:string;
+	colorVisionDiagnosis:string;
+	recommendations:string;
+	additionalNotes:string;
+	followUpRequired:boolean;
+	followUpDate:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
+export interface ApPainAssessment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	painDegreeLkey:string;
+	painLocationLkey:string;
+	painPatternLkey:string;
+	onsetLkey:string;
+	painScoreLkey:string;
+	duration:number;
+	durationUnitLkey:string;
+	aggravatingFactors:string;
+	relievingFactors:string;
+	associatedSymptoms:string;
+	painManagementGiven:string;
+	impactOnFunction:boolean;
+	painReassessmentRequired:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+	cancellationReason:string;
+} 
+
+export interface ApPatient { 
+	key:string;
+	patientMrn:string;
+	namePrefix:string;
+	nameSuffix:string;
+	patientAlias:string;
+	firstName:string;
+	secondName:string;
+	thirdName:string;
+	lastName:string;
+	fullName:string;
+	secondNameOtherLang:string;
+	firstNameOtherLang:string;
+	thirdNameOtherLang:string;
+	lastNameOtherLang:string;
+	fullNameOtherLang:string;
+	documentCountryLkey:string;
+	documentTypeLkey:string;
+	documentNo:string;
+	noDocument:boolean;
+	specialCourtesyLkey:string;
+	unknown:string;
+	phoneNumber:string;
+	mobileNumber:string;
+	email:string;
+	maritalStatusLkey:string;
+	nationalityLkey:string;
+	primaryLanguageLkey:string;
+	religionLkey:string;
+	ethnicityLkey:string;
+	occupationLkey:string;
+	emergencyContactName:string;
+	emergencyContactRelationLkey:string;
+	emergencyContactPhone:string;
+	streetAddressLine1:string;
+	streetAddressLine2:string;
+	countryLkey:string;
+	stateProvinceRegionLkey:string;
+	cityLkey:string;
+	postalCode:string;
+	additionalInfo:string;
+	longitude:string;
+	isActive:string;
+	deathDatetime:Date;
+	dob:Date;
+	multipleBirth:boolean;
+	birthOrder:number;
+	numSiblings:number;
+	accessLevel:number;
+	facilityKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	patientClassLkey:string;
+	privatePatient:boolean;
+	verificationOtp:string;
+	securityAccessLevelLkey:string;
+	socialSecurityNumber:string;
+	noticeOfPrivacyPractice:boolean;
+	noticeOfPrivacyPracticeDate:Date;
+	privacyAuthorization:boolean;
+	privacyAuthorizationDate:Date;
+	consent:boolean;
+	consentDate:Date;
+	verified:boolean;
+	responsiblePartyLkey:string;
+	educationalLevelLkey:string;
+	previousId:string;
+	archivingNumber:string;
+	receiveSms:boolean;
+	receiveEmail:boolean;
+	homePhone:string;
+	workPhone:string;
+	preferredContactLkey:string;
+	unknownPatient:boolean;
+	incompletePatient:boolean;
+	extraDetails:string;
+	secondaryMobileNumber:string;
+	roleLkey:string;
+	districtLkey:string;
+	countryId:string;
+	bloodGroupLkey:string;
+	genderLkey:string;
+} 
+
+export interface ApPatientAddresses { 
+	key:string;
+	patientKey:string;
+	addressTypeLkey:string;
+	streetAddressLine1:string;
+	streetAddressLine2:string;
+	countryLkey:string;
+	stateProvinceRegionLkey:string;
+	cityLkey:string;
+	postalCode:string;
+	additionalInfo:string;
+	latitude:number;
+	longitude:string;
+	isActive:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientAdministrativeWarnings { 
+	key:string;
+	patientKey:string;
+	warningTypeLkey:string;
+	description:string;
+	resolutionStatusLkey:string;
+	dateResolved:Date;
+	resolvedBy:string;
+	resolutionUndoDate:Date;
+	resolvedUndoBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientAlerts { 
+	key:string;
+	patientKey:string;
+	alertTypeLkey:string;
+	alertSourceLkey:string;
+	alertDescription:string;
+	alertSeverityLkey:string;
+	isResolved:boolean;
+	alertDate:Date;
+	dateResolved:Date;
+	notes:string;
+	sourceOfInfoLkey:string;
+	sourceKey:string;
+	lifeThreating:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientAllergies { 
+	key:string;
+	patientKey:string;
+	allergyKey:string;
+	allergenTypeLkey:string;
+	severityLkey:string;
+	reaction:string;
+	dateDiagnosed:Date;
+	resolutionStatusLkey:string;
+	dateResolved:Date;
+	treatmentPlan:string;
+	notes:string;
+	sourceOfInfoLkey:string;
+	lifeThreating:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	addedByVisitKey:string;
+} 
+
+export interface ApPatientDiagnose { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	diagnoseCode:string;
+	description:string;
+	diagnoseCodingLkey:string;
+	dateDiagnosed:Date;
+	onsetDate:Date;
+	diagnoseStatusLkey:string;
+	diagnoseTypeLkey:string;
+	diagnoseSiteLkey:string;
+	providerTypeLkey:string;
+	providerLkey:string;
+	providerUserName:string;
+	providerRoleLkey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	isMajor:boolean;
+	isSuspected:boolean;
+} 
+
+export interface ApPatientEncounterOrder { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	testKey:string;
+	statusLkey:string;
+	receivedLabLkey:string;
+	reasonLkey:string;
+	priorityLkey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	submitDate:number;
+} 
+
+export interface ApPatientFamilyHistory { 
+	key:string;
+	patientKey:string;
+	condition:string;
+	relationLkey:string;
+	inheritedDiseases:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientHospitalization { 
+	key:string;
+	patientKey:string;
+	facility:string;
+	reason:string;
+	admissionTypeLkey:string;
+	dateOfAdmission:number;
+	lengthOfStay:number;
+	outcomes:string;
+	medicalInterventionsPerformed:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientIds { 
+	key:string;
+	patientKey:string;
+	identifierTypeLovKey:string;
+	identifierCode:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientInsurance { 
+	key:string;
+	patientKey:string;
+	insuranceProviderLkey:string;
+	primaryInsurance:boolean;
+	insurancePolicyNumber:string;
+	groupNumber:string;
+	insurancePlanTypeLkey:string;
+	authorizationNumbers:string;
+	expirationDate:Date;
+	coPayment:boolean;
+	coPaymentValue:number;
+	coInsurance:boolean;
+	coInsuranceValue:number;
+	deductibles:boolean;
+	deductiblesValue:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	policyHolder:string;
+} 
+
+export interface ApPatientInsuranceCoverage { 
+	key:string;
+	patientInsuranceKey:string;
+	typeLkey:string;
+	coverageTypeLkey:string;
+	coveredAmount:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientObservation { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	observationDate:Date;
+	observationTypeLkey:string;
+	value:string;
+	value2:string;
+	unitofMeasureLkey:string;
+	referencerangeLkey:string;
+	statusLkey:string;
+	methodLkey:string;
+	positionLkey:string;
+	siteLkey:string;
+	equipmentUsedLkey:string;
+	comments:string;
+	sourceRecordKey:string;
+	providerKey:string;
+	providerName:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientObservationSummary { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	lastDate:Date;
+	latesttemperature:number;
+	latestbpSystolic:number;
+	latestbpDiastolic:number;
+	latestheartrate:number;
+	latestrespiratoryrate:number;
+	latestoxygensaturation:number;
+	latestglucoselevel:number;
+	latestpainlevelLkey:string;
+	latestweight:number;
+	latestheight:number;
+	latestheadcircumference:number;
+	latestlength:number;
+	latestbmi:number;
+	age:number;
+	prevRecordKey:string;
+	plastDate:Date;
+	platesttemperature:number;
+	platestbpSystolic:number;
+	platestbpDiastolic:number;
+	platestheartrate:number;
+	platestrespiratoryrate:number;
+	platestoxygensaturation:number;
+	platestglucoselevel:number;
+	platestpainlevelLkey:string;
+	platestweight:number;
+	platestheight:number;
+	platestheadcircumference:number;
+	platestlength:number;
+	platestbmi:number;
+	page:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	latestnotes:string;
+	platestnotes:string;
+	latestpaindescription:string;
+	platestpaindescription:string;
+	latestpainlevel:number;
+	platestpainlevel:number;
+	platesthearingtest:string;
+	latesthearingtest:string;
+	latestDehydration:boolean;
+	platestDehydration:boolean;
+	latestNasalFlaring:boolean;
+	platestNasalFlaring:boolean;
+	latestResponseToLight:boolean;
+	platestResponseToLight:boolean;
+	latestPupilResponse:boolean;
+	platestPupilResponse:boolean;
+	latestAbilityToFollowTarget:boolean;
+	platestAbilityToFollowTarget:boolean;
+	latestColorTesting:boolean;
+	platestColorTesting:boolean;
+	latestFallRisk:boolean;
+	platestFallRisk:boolean;
+	latestFallRiskDetails:string;
+	platestFallRiskDetails:string;
+	latestActionToTake:string;
+	platestActionToTake:string;
+	latestFunctionalStatus:string;
+	platestFunctionalStatus:string;
+	latestCognitiveCheck:string;
+	platestCognitiveCheck:string;
+} 
+
+export interface ApPatientPlan { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	physicianRecommendations:string;
+	patientEducations:string;
+	lifestyleModifications:string;
+	generalInstructions:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientPreferredHealthProfessional { 
+	key:string;
+	practitionerKey:string;
+	facilityKey:string;
+	createdBy:string;
+	networkAffiliation:string;
+	relatedWith:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	patientKey:string;
+} 
+
+export interface ApPatientProblem { 
+	key:string;
+	patientKey:string;
+	problemCode:string;
+	description:string;
+	problemCodingLkey:string;
+	dateDiagnosed:Date;
+	problemStatusLkey:string;
+	severityLkey:string;
+	onSetDate:Date;
+	providerTypeLkey:string;
+	providerLkey:string;
+	providerUserName:string;
+	providerRoleLkey:string;
+	resolvedDate:Date;
+	dateAdded:Date;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientProblems { 
+	key:string;
+	patientKey:string;
+	condition:string;
+	dateOfDiagnosis:number;
+	statusLkey:string;
+	typeLkey:string;
+	dateOfResolution:number;
+	sourceOfInformationLkey:string;
+	byPatient:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientRelation { 
+	key:string;
+	patientKey:string;
+	relativePatientKey:string;
+	relationTypeLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	categoryTypeLkey:string;
+} 
+
+export interface ApPatientSecondaryDocuments { 
+	key:string;
+	documentCountryLkey:string;
+	documentTypeLkey:string;
+	documentNo:string;
+	patientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientSocialHistory { 
+	key:string;
+	patientKey:string;
+	currentSmoker:boolean;
+	smokeStartDate:number;
+	cigaretteAmount:number;
+	cigaretteType:string;
+	previousSmoker:boolean;
+	smokeQuitDate:number;
+	exposureToSecondHandSmoke:boolean;
+	alcoholConsumption:boolean;
+	typeOfAlcohol:string;
+	alcoholSinceWhen:number;
+	substanceUse:boolean;
+	routeLkey:string;
+	frequencyLkey:string;
+	physicalLimitationLkey:string;
+	diagnosedEatingDisordersLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientSurgicalHistory { 
+	key:string;
+	patientKey:string;
+	surgery:string;
+	dateOfSurgery:number;
+	facility:string;
+	other:boolean;
+	otherDesc:string;
+	anesthesiaTypeLkey:string;
+	complicationsLkey:string;
+	adverseReactionsToAnesthesiaLkey:string;
+	isImplantsOrDevices:boolean;
+	implantsOrDevicesDescription:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientTemporaryDischarge { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	reasonForTemporaryDischarge:string;
+	typeLkey:string;
+	expectedReturnAt:number;
+	consentTaken:boolean;
+	billingApprovalStatusLkey:string;
+	returnAt:number;
+	bedRetained:boolean;
+	comments:string;
+	roomKey:string;
+	bedKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	fromRoom:string;
+	fromBed:string;
+} 
+
+export interface ApPhysicalExamArea { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	physicalExamAreaLkey:string;
+	physicalExamAreaDetailLkey:string;
+	notes:string;
+	sourceOfAnswerLkey:string;
+	pass:boolean;
+	passReasonLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPostOperationRecovery { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	arrivalTime:number;
+	painScoreLkey:string;
+	nausea:boolean;
+	vomiting:boolean;
+	recoveryStatus:string;
+	nursingNotes:string;
+	activityLkey:string;
+	respirationLkey:string;
+	circulationLkey:string;
+	consciousnessLkey:string;
+	oxygenSaturationLkey:string;
+	aldreteScore:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApPostProcedureAnesthesia { 
+	key:string;
+	procedureKey:string;
+	activityLkey:string;
+	respirationLkey:string;
+	circulationLkey:string;
+	consciousnessLkey:string;
+	oxygenSaturationLkey:string;
+	aldreteScore:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApPostProcedureCare { 
+	key:string;
+	procedureKey:string;
+	diagnoseKey:string;
+	patientCondition:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApPostProcedureChecklist { 
+	key:string;
+	procedureKey:string;
+	nauseaVomiting:boolean;
+	awakeAndOriented:boolean;
+	toleratingOralFluids:boolean;
+	ambulatingIndependently:boolean;
+	voidedUrine:boolean;
+	noActiveBleeding:boolean;
+	painScore4:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApPostProcedureVitals { 
+	key:string;
+	procedureKey:string;
+	bloodPressureSystolic:number;
+	bloodPressureDiastolic:number;
+	heartRate:number;
+	temperature:number;
+	oxygenSaturation:number;
+	painScoreLkey:string;
+	painDescription:string;
+	recoveryNotes:string;
+	additionalObservations:string;
+	equipmentCountDone:boolean;
+	countStatusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApPractitioner { 
+	key:string;
+	primaryFacilityKey:string;
+	practitionerFullName:string;
+	genderLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	departmentKey:string;
+	practitionerFirstName:string;
+	practitionerLastName:string;
+	practitionerEmail:string;
+	practitionerPhoneNumber:string;
+	specialtyLkey:string;
+	subSpecialtyLkey:string;
+	defaultMedicalLicense:string;
+	secondaryMedicalLicense:string;
+	educationalLevelLkey:string;
+	professionalMembershipAndCertification:string;
+	appointable:boolean;
+	linkedUser:string;
+	defaultLicenseValidUntil:Date;
+	secondaryLicenseValidUntil:Date;
+	dob:Date;
+	jobRoleLkey:string;
+} 
+
+export interface ApPreOperationAdministeredMedications { 
+	key:string;
+	preOperationKey:string;
+	activeIngredientKey:string;
+	dose:number;
+	unitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApPreOperationAssessment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	nopStatusConfirmed:boolean;
+	painScoreLkey:string;
+	allergiesReviewed:boolean;
+	consentForProcedureSigned:boolean;
+	consentForAnesthesiaSigned:boolean;
+	ivAccessStatus:boolean;
+	siteMarkedBySurgeon:boolean;
+	labImagingReviewed:boolean;
+	anesthetistAssessmentDone:boolean;
+	asaClassificationLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApPreOperationChecklist { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	operationKey:string;
+	patientIdentityVerified:boolean;
+	consentSurgerySigned:boolean;
+	consentAnesthesiaSigned:boolean;
+	surgicalProcedureConfirmed:boolean;
+	siteOfSurgeryMarked:boolean;
+	npoStatusConfirmed:boolean;
+	preOpVitalsRecorded:boolean;
+	patientBathed:boolean;
+	jewelryRemoved:boolean;
+	denturesRemovedOrNoted:boolean;
+	prosthesisNotedOrRemoved:boolean;
+	clothingReplaced:boolean;
+	allergiesReviewed:boolean;
+	preOpMedsGiven:boolean;
+	chronicMedsManaged:boolean;
+	anticoagulantsManaged:boolean;
+	ivAccessSecured:boolean;
+	ivFluidsStarted:boolean;
+	bloodProductsPrepared:boolean;
+	emrUpdated:boolean;
+	labsImagingReviewed:boolean;
+	consentFormsAvailable:boolean;
+	personalBelongingsSecured:boolean;
+	interpreterArranged:boolean;
+	voidedOrCatheterPresent:boolean;
+	bedInLowestPosition:boolean;
+	transferModeArranged:boolean;
+	handoffToOrNursePrepared:boolean;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isValid:boolean;
+	isConfirm:boolean;
+	userKey:string;
+	confirmTime:number;
+} 
+
+export interface ApPreOperativeTimeout { 
+	key:string;
+	operationRequestKey:string;
+	initiatedBy:string;
+	patientIdentityConfirmed:boolean;
+	surgicalSiteConfirmed:boolean;
+	procedureConfirmed:boolean;
+	consentFormPresent:boolean;
+	anesthesiaMachineChecked:boolean;
+	medicationPrepared:boolean;
+	allergyRiskReviewed:boolean;
+	difficultAirwayRisk:boolean;
+	asaClassification:boolean;
+	bloodLossExpected:boolean;
+	bloodUnitsAvailable:boolean;
+	equipmentAvailable:boolean;
+	imagingDisplayed:boolean;
+	instrumentCountPrepared:boolean;
+	teamIntroductionComplete:boolean;
+	specialConcerns:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+	patientKey:string;
+	timeoutStartTime:number;
+} 
+
+export interface ApPreProcedureAssessment { 
+	key:string;
+	procedureKey:string;
+	fastingRequired:boolean;
+	patientPrepared:boolean;
+	specialInstructions:string;
+	bloodPressureSystolic:number;
+	bloodPressureDiastolic:number;
+	heartRate:number;
+	temperature:number;
+	oxygenSaturation:number;
+	patientIdentityVerified:boolean;
+	consentConfirmed:boolean;
+	procedureSiteMarked:boolean;
+	allergiesConfirmed:boolean;
+	patientPremedicated:boolean;
+	equipmentCountingDone:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	asaScoreLkey:string;
+	airwayGradeLkey:string;
+} 
+
+export interface ApPrescription { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	prescriptionId:string;
+	saveDraft:boolean;
+	submittedBy:string;
+	submittedAt:number;
+} 
+
+export interface ApPrescriptionInstruction { 
+	key:string;
+	categoryLkey:string;
+	dose:number;
+	unitLkey:string;
+	routLkey:string;
+	frequencyLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPrescriptionMedications { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	prescriptionKey:string;
+	genericMedicationsKey:string;
+	numberOfRefills:number;
+	refillInterval:string;
+	instructionsTypeLkey:string;
+	instructions:string;
+	notes:string;
+	parametersToMonitor:string;
+	validUtil:Date;
+	maximumDose:number;
+	genericSubstitute:boolean;
+	chronicMedication:boolean;
+	administrationInstructions:string;
+	duration:number;
+	durationTypeLkey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	refillIntervalValue:number;
+	refillIntervalUnitLkey:string;
+	indicationManually:string;
+	indicationUseLkey:string;
+	indicationIcd:string;
+} 
+
+export interface ApProcedure { 
+	key:string;
+	procedureNameKey:string;
+	procedureId:string;
+	procedureLevelLkey:string;
+	categoryKey:string;
+	indications:string;
+	priorityLkey:string;
+	statusLkey:string;
+	scheduledDateTime:number;
+	notes:string;
+	departmentKey:string;
+	cancellationReason:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	facilityKey:string;
+	encounterKey:string;
+	bodyPartLkey:string;
+	sideLkey:string;
+	currentDepartment:boolean;
+	patientKey:string;
+} 
+
+export interface ApProcedureAdministeredMedications { 
+	key:string;
+	procedureKey:string;
+	activeIngredientKey:string;
+	dose:number;
+	unitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApProcedureCoding { 
+	key:string;
+	procedureKey:string;
+	codeTypeLkey:string;
+	internationalCodeKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApProcedurePerformance { 
+	key:string;
+	actualStartTime:number;
+	anesthesiaUsed:boolean;
+	anesthesiaTypeLkey:string;
+	anesthesiaStartTime:number;
+	anesthesiaEndTime:number;
+	anesthesiaAdministeredKey:string;
+	timeOut:boolean;
+	procedureOutcomeLkey:string;
+	observations:string;
+	complicationTypeLkey:string;
+	complicationSeverityLkey:string;
+	actionsTaken:string;
+	actualEndTime:number;
+	additionalNotes:string;
+	homeInstructionLkey:string;
+	homeInstructionNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	procedureKey:string;
+} 
+
+export interface ApProcedurePriceList { 
+	key:string;
+	procedureKey:string;
+	price:number;
+	currencyLkey:string;
+	priceListKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApProcedureRegistration { 
+	key:string;
+	procedureKey:string;
+	consentFormLkey:string;
+	dateTime:number;
+	practitionersKey:string;
+	departmentKey:string;
+	requestedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+} 
+
+export interface ApProcedureServiceEquipment { 
+	key:string;
+	procedureKey:string;
+	serviceKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApProcedureSetup { 
+	key:string;
+	name:string;
+	code:string;
+	categoryLkey:string;
+	indications:string;
+	contraindications:string;
+	preparationInstructions:string;
+	recoveryNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isAppointable:boolean;
+} 
+
+export interface ApProcedureStaff { 
+	key:string;
+	procedureKey:string;
+	userKey:string;
+	responsibility:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+	isPresent:boolean;
+	patientKey:string;
+} 
+
+export interface ApProducts { 
+	key:string;
+	typeLkey:string;
+	name:string;
+	medicationKey:string;
+	code:string;
+	barecode:string;
+	uomGroupKey:string;
+	baseUomKey:string;
+	dispenseUomKey:string;
+	isBatchManaged:boolean;
+	isExpiryDateMandatory:boolean;
+	isSerialized:boolean;
+	isReusable:boolean;
+	inventoryTypeLkey:string;
+	atcCode:string;
+	shelfLife:number;
+	leadTime:number;
+	erpIntegId:string;
+	startDate:Date;
+	endDate:Date;
+	maintenanceScheduleTime:number;
+	maintenanceScheduleLkey:string;
+	isCritical:boolean;
+	isCalibration:boolean;
+	isTraining:boolean;
+	avgCost:number;
+	priceBaseUom:string;
+	isControlledSubstance:boolean;
+	isAllergyRisk:boolean;
+	hazardousTag:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApProgressNotes { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	jobRoleLkey:string;
+	progressNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+	cancellationReason:string;
+} 
+
+export interface ApPsychologicalExam { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	testTypeLkey:string;
+	reason:string;
+	testDuration:number;
+	unitLkey:string;
+	scoreLkey:string;
+	resultInterpretationLkey:string;
+	clinicalObservations:string;
+	treatmentPlan:string;
+	additionalNotes:string;
+	requireFollowUp:boolean;
+	followUpDate:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
+export interface ApRelationsMatrix { 
+	key:string;
+	firstPatientGender:string;
+	secondPatientGender:string;
+	firstRelationCode:string;
+	secondRelationCode:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApRepositioning { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	newPositionLkey:string;
+	positionChangeSuccessful:boolean;
+	notes:string;
+	expectedNextRepositioning:number;
+	timeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+	cancellationReason:string;
+} 
+
+export interface ApResourceAvailabilitySlice { 
+	key:string;
+	resourceKey:string;
+	facilityKey:string;
+	departmentKey:string;
+	dayOfWeek:string;
+	startTimeMinutes:string;
+	endTimeMinutes:string;
+	sliceDurationMinutes:string;
+	isbocked:string;
+	isbreak:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApResources { 
+	key:string;
+	facilityKey:string;
+	resourceTypeLkey:string;
+	resourceKey:string;
+	isAllowParallel:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApResourcesAvailabilityTime { 
+	key:string;
+	resourceKey:string;
+	facilityKey:string;
+	departmentKey:string;
+	dayLkey:string;
+	startTime:number;
+	endTime:number;
+	isHasBreak:boolean;
+	breakFrom:number;
+	breakTo:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApReviewOfSystem { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	systemLkey:string;
+	systemDetailLkey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApRoom { 
+	key:string;
+	facilityKey:string;
+	departmentKey:string;
+	name:string;
+	floor:string;
+	locationDetails:string;
+	typeLkey:string;
+	genderLkey:string;
+	isValid:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApRoomServices { 
+	key:string;
+	roomKey:string;
+	price:number;
+	bedKey:string;
+	rule:string;
+	isValid:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	currencyLkey:string;
+	serviceKey:string;
+} 
+
+export interface ApScreen { 
+	key:string;
+	name:string;
+	description:string;
+	moduleKey:string;
+	iconImagePath:string;
+	viewOrder:number;
+	navPath:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApScreenMetadata { 
+	key:string;
+	screenKey:string;
+	metadataKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApService { 
+	key:string;
+	typeLkey:string;
+	name:string;
+	abbreviation:string;
+	code:string;
+	categoryLkey:string;
+	price:number;
+	currencyLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApServiceCdt { 
+	key:string;
+	serviceKey:string;
+	cdtKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	description:string;
+} 
+
+export interface ApSnomedCode { 
+	key:string;
+	version:string;
+	code:string;
+	description:string;
+	semantictag:string;
+	hyperLink:string;
+	moreSpecification:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApTeleConsultation { 
+	id:string;
+	questionToConsultant:string;
+	fromFacilityId:number;
+	fromDepartmentId:number;
+	specialtyLkey:string;
+	urgencyLkey:string;
+	expectedResponse:string;
+	notes:string;
+	expectedResponseTime:number;
+	startedAt:number;
+	rejectedAt:number;
+	statusLkey:string;
+	rejectedReason:string;
+	patientId:string;
+	encounterId:string;
+	rejectedBy:string;
+	startedBy:string;
+	requestedAt:number;
+	requestedBy:string;
+	callStartedAt:number;
+	callStartedBy:string;
+	callColsedAt:number;
+	callColsedBy:string;
+	toDepartmentId:number;
+	toFacilityId:number;
+} 
+
+export interface ApTeleConsultationCallLog { 
+	id:string;
+	startedBy:string;
+	startedDate:number;
+	teleConsultationId:string;
+} 
+
+export interface ApTeleConsultationProgressNote { 
+	id:string;
+	note:string;
+	createdBy:string;
+	createdDate:number;
+	teleConsultationId:string;
+} 
+
+export interface ApTelephonicConsultation { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	physician:number;
+	dateOfCall:number;
+	consultationContent:string;
+	approvalNumber:string;
+	notes:string;
+	extraDocumentation:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApTenant { 
+	key:string;
+	tenantId:string;
+	tenantName:string;
+	tenantType:string;
+	tenantRegistrationDate:Date;
+	tenantExpiryDate:Date;
+	tenantEmailAddress:string;
+	tenantBriefDesc:string;
+	tenantSecurityToken:string;
+	tenantDataGlobal:boolean;
+	tenantSchemaName:string;
+	tenantDbConnstr:string;
+	tenantDbAdminUser:string;
+	tenantLogoPath:string;
+	tenantBackgroundPath:string;
+	tenantSlogan:string;
+	tenantLoginText:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApToothAction { 
+	key:string;
+	toothKey:string;
+	actionKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	note:string;
+	surfaceLkey:string;
+	existing:boolean;
+	imageName:string;
+	toothNumber:string;
+} 
+
+export interface ApToothActionLog { 
+	key:string;
+	toothKey:string;
+	actionKey:string;
+	logType:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	logTime:number;
+	logOwner:string;
+} 
+
+export interface ApToothCdt { 
+	key:string;
+	toothKey:string;
+	cdtKey:string;
+	source:string;
+	sourceKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	surfaceLkey:string;
+} 
+
+export interface ApToothService { 
+	key:string;
+	toothKey:string;
+	serviceKey:string;
+	source:string;
+	sourceKey:string;
+	price:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApTransferPatient { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	fromInpatientDepartmentKey:string;
+	toInpatientDepartmentKey:string;
+	reasonForTransfer:string;
+	urgentTransfer:boolean;
+	plannedTransfer:boolean;
+	transferNotes:string;
+	finalVitalsBeforeTransfer:boolean;
+	ivLinesDripsChecked:boolean;
+	medicationAdministeredPreTransfer:boolean;
+	belongingsSentWithPatient:boolean;
+	clinicalHandoverDone:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+	cancellationReason:string;
+	fromRoom:string;
+	toRoom:string;
+	fromBed:string;
+	toBed:string;
+	confirmedBy:string;
+	confirmedAt:number;
+} 
+
+export interface ApTranslation { 
+	key:string;
+	languageKey:string;
+	translationFor:string;
+	wordKey:string;
+	originalText:string;
+	translationText:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApTreadmillStress { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	indication:string;
+	preTestSystolicBp:number;
+	preTestDiastolicBp:number;
+	baselineEcgFindingsLkey:string;
+	bruceProtocolStageLkey:string;
+	exerciseDuration:number;
+	maximumHeartRateAchieved:number;
+	targetHeartRate:number;
+	segmentChangeLkey:string;
+	arrhythmiaNoted:boolean;
+	typeLkey:string;
+	testOutcomeLkey:string;
+	postTestSystolicBp:number;
+	postTestDiastolicBp:number;
+	recoveryTime:number;
+	createdBy:string;
+	cardiologistNotes:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
+export interface ApUomGroups { 
+	key:string;
+	description:string;
+	name:string;
+	code:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApUomGroupsRelation { 
+	key:string;
+	uomUnitFromKey:string;
+	uomUnitToKey:string;
+	relation:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	uomGroupKey:string;
+} 
+
+export interface ApUomGroupsUnits { 
+	key:string;
+	uomLkey:string;
+	uomOrder:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	uomGroupKey:string;
+} 
+
+export interface ApUser { 
+	key:string;
+	username:string;
+	password:string;
+	fullName:string;
+	verified:string;
+	lastGeneratedOtp:string;
+	passcode:string;
+	tenantKey:string;
+	organizationKey:string;
+	accessRoleKey:string;
+	email:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	departmentKey:string;
+	firstName:string;
+	secondName:string;
+	lastName:string;
+	dob:Date;
+	sexAtBirthLkey:string;
+	phoneNumber:number;
+	jobDescription:string;
+	jobRoleLkey:string;
+	jobRoleKey:string;
+	mustChangePassword:boolean;
+} 
+
+export interface ApUserAccessPrivatePatient { 
+	key:string;
+	userKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	reason:string;
+	patientKey:string;
+} 
+
+export interface ApUserDashboardComponents { 
+	key:string;
+	userId:number;
+	componentKey:string;
+} 
+
+export interface ApUserFacilities { 
+	key:string;
+	userId:string;
+	facilityId:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	userKey:string;
+	facilityKey:string;
+	roleInFacility:string;
+	isPrimaryFacility:boolean;
+} 
+
+export interface ApUserFacilitiyDepartments { 
+	key:string;
+	userKey:string;
+	facilitiyKey:string;
+	departmentKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApUserMedicalLicense { 
+	key:string;
+	licenseName:string;
+	licenseNumber:string;
+	validTo:Date;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	userKey:string;
+} 
+
+export interface ApVaccine { 
+	key:string;
+	vaccineCode:string;
+	vaccineName:string;
+	atcCode:string;
+	typeLkey:string;
+	roaLkey:string;
+	siteOfAdministration:string;
+	postOpeningDuration:string;
+	durationUnitLkey:string;
+	indications:string;
+	possibleReactions:string;
+	contraindicationsAndPrecautions:string;
+	storageAndHandling:string;
+	isValid:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	numberOfDosesLkey:string;
+} 
+
+export interface ApVaccineBrands { 
+	key:string;
+	vaccineKey:string;
+	brandName:string;
+	manufacturerLkey:string;
+	volume:number;
+	unitLkey:string;
+	marketingAuthorizationHolder:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApVaccineDose { 
+	key:string;
+	fromAge:number;
+	toAge:number;
+	fromAgeUnitLkey:string;
+	toAgeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	vaccineKey:string;
+	doseNameLkey:string;
+	isBooster:boolean;
+} 
+
+export interface ApVaccineDosesInterval { 
+	key:string;
+	vaccineKey:string;
+	fromDoseKey:string;
+	toDoseKey:string;
+	intervalBetweenDoses:number;
+	unitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApVisitAllergies { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	allergyTypeLkey:string;
+	allergenKey:string;
+	onsetLkey:string;
+	onsetDate:number;
+	treatmentStrategyLkey:string;
+	sourceOfInformationLkey:string;
+	reactionDescription:string;
+	notes:string;
+	cancellationReason:string;
+	resolvedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	resolvedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	severityLkey:string;
+	typeOfPropensityLkey:string;
+	criticalityLkey:string;
+	certainty:string;
+} 
+
+export interface ApVisitWarning { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	warningTypeLkey:string;
+	firstTimeRecorded:number;
+	actionTake:string;
+	sourceOfInformationLkey:string;
+	notes:string;
+	cancellationReason:string;
+	resolvedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	resolvedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	severityLkey:string;
+	warning:string;
+} 
+
+export interface ApWarehouse { 
+	key:string;
+	departmentKey:string;
+	warehouseName:string;
+	warehouseId:string;
+	isdefault:boolean;
+	closeWarehouse:boolean;
+	locationKey:string;
+	capacity:string;
+	workingHoursFromTime:number;
+	workingHoursToTime:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApWarehouseProduct { 
+	key:string;
+	warehouseKey:string;
+	productKey:string;
+	quantity:number;
+	reOrderQuantity:number;
+	miniOrder:number;
+	maxOrder:number;
+	workingHoursFromTime:number;
+	workingHoursToTime:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	departmentKey:string;
+	avgCost:number;
+} 
+
+export interface ApWarehouseProductDetails { 
+	key:string;
+	warehouseProductKey:string;
+	lotSerialNum:string;
+	quantity:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	expiryDate:Date;
+} 
+
+export interface ApWarehouseUser { 
+	key:string;
+	warehouseKey:string;
+	userKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+

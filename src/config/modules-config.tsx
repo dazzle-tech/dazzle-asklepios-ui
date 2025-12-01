@@ -603,7 +603,7 @@ export const MODULES: Module[] =
           description: "",
           icon: "FaMoneyBill",
           viewOrder: 0,
-          navPath: "progress-notes",
+          navPath: "price-list",
         },
       ],
     },

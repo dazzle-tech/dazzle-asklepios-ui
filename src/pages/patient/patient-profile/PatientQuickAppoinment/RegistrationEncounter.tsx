@@ -9,6 +9,7 @@ import {
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import { useGetEncountersQuery } from '@/services/encounterService';
+import { useEnumOptions } from '@/services/enumsApi';
 const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, localPatient }) => {
   const [validationResult] = useState({});
   const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
@@ -38,13 +39,14 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
   // customise item appears on the select visit list
   const modifiedData = (visiterHistoryResponse?.object ?? []).map(item => ({
     ...item,
-    combinedLabel: `${item.visitId} , ${item?.plannedStartDate ?? ''} , ${
-      item?.plannedEndDate ?? ''
-    }`
+    combinedLabel: `${item.visitId} , ${item?.plannedStartDate ?? ''} , ${item?.plannedEndDate ?? ''
+      }`
   }));
 
   // Fetch LOV data for various fields
-  const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+  // const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+
+  const ResourceTypeEnum = useEnumOptions("ResourceType");
   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
   const { data: visitTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
@@ -139,9 +141,9 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         fieldLabel="Resource Type"
         fieldType="select"
         fieldName="resourceTypeLkey"
-        selectData={resourceTypeQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        selectData={ResourceTypeEnum ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
@@ -208,7 +210,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={localEncounter}
-        setRecord={() => {}} // No updates allowed
+        setRecord={() => { }} // No updates allowed
         disabled={isReadOnly}
         searchable={false}
       />
