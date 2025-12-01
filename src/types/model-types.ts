@@ -2206,6 +2206,27 @@ export interface ApNurseNotes {
 	deletedAt:number;
 } 
 
+export interface ApNurseServiceProduct { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	departmentId:number;
+	categoryLkey:string;
+	serviceId:number;
+	warehouseProductId:number;
+	quantity:number;
+	baseUomId:number;
+	unitPrice:number;
+	totalPrice:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApOperationAnesthesiaCarePlan { 
 	key:string;
 	encounterKey:string;
@@ -3282,6 +3303,55 @@ export interface ApPatientSecondaryDocuments {
 	isValid:boolean;
 } 
 
+export interface ApPatientSocialHistory { 
+	key:string;
+	patientKey:string;
+	currentSmoker:boolean;
+	smokeStartDate:number;
+	cigaretteAmount:number;
+	cigaretteType:string;
+	previousSmoker:boolean;
+	smokeQuitDate:number;
+	exposureToSecondHandSmoke:boolean;
+	alcoholConsumption:boolean;
+	typeOfAlcohol:string;
+	alcoholSinceWhen:number;
+	substanceUse:boolean;
+	routeLkey:string;
+	frequencyLkey:string;
+	physicalLimitationLkey:string;
+	diagnosedEatingDisordersLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientSurgicalHistory { 
+	key:string;
+	patientKey:string;
+	surgery:string;
+	dateOfSurgery:number;
+	facility:string;
+	other:boolean;
+	otherDesc:string;
+	anesthesiaTypeLkey:string;
+	complicationsLkey:string;
+	adverseReactionsToAnesthesiaLkey:string;
+	isImplantsOrDevices:boolean;
+	implantsOrDevicesDescription:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPatientTemporaryDischarge { 
 	key:string;
 	encounterKey:string;
@@ -4128,8 +4198,8 @@ export interface ApSnomedCode {
 export interface ApTeleConsultation { 
 	id:string;
 	questionToConsultant:string;
-	consultantFacilityId:string;
-	consultantDepartmentId:string;
+	fromFacilityId:number;
+	fromDepartmentId:number;
 	specialtyLkey:string;
 	urgencyLkey:string;
 	expectedResponse:string;
@@ -4149,6 +4219,8 @@ export interface ApTeleConsultation {
 	callStartedBy:string;
 	callColsedAt:number;
 	callColsedBy:string;
+	toDepartmentId:number;
+	toFacilityId:number;
 } 
 
 export interface ApTeleConsultationCallLog { 
@@ -4668,5 +4740,28 @@ export interface ApWarehouseUser {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
+} 
+
+export interface AppUser { 
+	id:;
+	login:string;
+	passwordHash:string;
+	firstName:string;
+	lastName:string;
+	email:string;
+	imageUrl:string;
+	activated:boolean;
+	langKey:string;
+	resetKey:string;
+	createdBy:string;
+	createdDate:;
+	resetDate:;
+	lastModifiedBy:string;
+	lastModifiedDate:;
+	phoneNumber:string;
+	birthDate:Date;
+	gender:string;
+	jobRole:string;
+	securityAccessLeve:string;
 } 
 
