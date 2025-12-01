@@ -926,3 +926,19 @@ export interface VisitDuration {
   lastModifiedDate?: Date | null;
 
 }
+  
+export interface ReportTemplate{
+  id?:number;
+  name:string;
+  templateValue:string;
+  isActive:boolean
+}
+
+
+export interface DiagnosticTestReportTemplate{
+  id: number,
+  diagnosticTest: string,
+  name: string,
+  templateValue: string,
+  isActive: boolean,
+}
