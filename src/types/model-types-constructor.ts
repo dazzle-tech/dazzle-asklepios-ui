@@ -2207,6 +2207,27 @@ export const newApNurseNotes:modelTypes.ApNurseNotes = {
 	deletedAt:undefined,
 } 
 
+export const newApNurseServiceProduct:modelTypes.ApNurseServiceProduct = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	departmentId:0,
+	categoryLkey:undefined,
+	serviceId:0,
+	warehouseProductId:0,
+	quantity:0,
+	baseUomId:0,
+	unitPrice:0,
+	totalPrice:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 
 	key:undefined,
 	encounterKey:undefined,
@@ -4178,8 +4199,8 @@ export const newApSnomedCode:modelTypes.ApSnomedCode = {
 export const newApTeleConsultation:modelTypes.ApTeleConsultation = { 
 	id:'',
 	questionToConsultant:'',
-	consultantFacilityId:'',
-	consultantDepartmentId:'',
+	fromFacilityId:0,
+	fromDepartmentId:0,
 	specialtyLkey:undefined,
 	urgencyLkey:undefined,
 	expectedResponse:'',
@@ -4199,6 +4220,8 @@ export const newApTeleConsultation:modelTypes.ApTeleConsultation = {
 	callStartedBy:'',
 	callColsedAt:0,
 	callColsedBy:'',
+	toDepartmentId:0,
+	toFacilityId:0,
 } 
 
 export const newApTeleConsultationCallLog:modelTypes.ApTeleConsultationCallLog = { 
@@ -4718,5 +4741,28 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isvalid:undefined,
+} 
+
+export const newAppUser:modelTypes.AppUser = { 
+	id:undefined,
+	login:'',
+	passwordHash:'',
+	firstName:'',
+	lastName:'',
+	email:'',
+	imageUrl:'',
+	activated:undefined,
+	langKey:undefined,
+	resetKey:undefined,
+	createdBy:'',
+	createdDate:undefined,
+	resetDate:undefined,
+	lastModifiedBy:'',
+	lastModifiedDate:undefined,
+	phoneNumber:'',
+	birthDate:null,
+	gender:'',
+	jobRole:'',
+	securityAccessLeve:'',
 } 
 

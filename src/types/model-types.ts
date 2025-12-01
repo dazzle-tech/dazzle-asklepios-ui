@@ -2206,6 +2206,27 @@ export interface ApNurseNotes {
 	deletedAt:number;
 } 
 
+export interface ApNurseServiceProduct { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	departmentId:number;
+	categoryLkey:string;
+	serviceId:number;
+	warehouseProductId:number;
+	quantity:number;
+	baseUomId:number;
+	unitPrice:number;
+	totalPrice:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApOperationAnesthesiaCarePlan { 
 	key:string;
 	encounterKey:string;
@@ -4177,8 +4198,8 @@ export interface ApSnomedCode {
 export interface ApTeleConsultation { 
 	id:string;
 	questionToConsultant:string;
-	consultantFacilityId:string;
-	consultantDepartmentId:string;
+	fromFacilityId:number;
+	fromDepartmentId:number;
 	specialtyLkey:string;
 	urgencyLkey:string;
 	expectedResponse:string;
@@ -4198,6 +4219,8 @@ export interface ApTeleConsultation {
 	callStartedBy:string;
 	callColsedAt:number;
 	callColsedBy:string;
+	toDepartmentId:number;
+	toFacilityId:number;
 } 
 
 export interface ApTeleConsultationCallLog { 
