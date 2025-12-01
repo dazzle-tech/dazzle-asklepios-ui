@@ -49,6 +49,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
         fieldName="condition"
         record={formData}
         setRecord={setFormData}
+        required
       />
 
       <MyInput
@@ -63,6 +64,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
         searchable={false}
+        required
       />
 
       <MyInput

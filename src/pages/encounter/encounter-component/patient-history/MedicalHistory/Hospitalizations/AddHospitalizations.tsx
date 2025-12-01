@@ -57,6 +57,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         fieldName="facility"
         record={formData}
         setRecord={setFormData}
+        required
       />
 
       <MyInput
@@ -66,6 +67,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         fieldName="reason"
         record={formData}
         setRecord={setFormData}
+        required
       />
 
       <MyInput
@@ -90,6 +92,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         fieldName="dateOfAdmission"
         record={formData}
         setRecord={setFormData}
+        required
       />
 
       <MyInput
