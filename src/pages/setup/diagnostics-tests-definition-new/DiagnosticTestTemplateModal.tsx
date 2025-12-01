@@ -1,3 +1,4 @@
+// DiagnosticTestTemplateModal.tsx
 import React, { useState, useEffect } from "react";
 import { ContentState, convertToRaw, EditorState } from "draft-js";
 import draftToHtml from "draftjs-to-html";
@@ -13,15 +14,18 @@ import {
   notify,
   showSystemLoader,
 } from "@/utils/uiReducerActions";
-import { useSaveDiagnosticTestTemplateMutation } from "@/services/DiagnosticTestTemplate";
-import { useGetAllReportTemplatesQuery } from "@/services/reportTemplateService";
-import './styles.less';
+import {
+  useCreateDiagnosticTestTemplateMutation,
+  useUpdateDiagnosticTestTemplateMutation,
+} from "@/services/setup/report-template/DiagnosticTestTemplate";
+import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
+import "./styles.less";
 
 interface DiagnosticTestTemplateModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 
-  testId: number; // required
+  testId: number;
   initialData?: {
     id?: number;
     name: string;
@@ -29,12 +33,17 @@ interface DiagnosticTestTemplateModalProps {
   };
 
   readOnly?: boolean;
-  onSaved?: () => void; // callback after save
+  onSaved?: () => void;
 }
 
-const DiagnosticTestTemplateModal: React.FC<
-  DiagnosticTestTemplateModalProps
-> = ({ open, setOpen, testId, initialData, readOnly = false, onSaved }) => {
+const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = ({
+  open,
+  setOpen,
+  testId,
+  initialData,
+  readOnly = false,
+  onSaved,
+}) => {
   const dispatch = useDispatch();
 
   const [formData, setFormData] = useState({
@@ -42,41 +51,49 @@ const DiagnosticTestTemplateModal: React.FC<
     templateValue: "",
   });
 
-    const { data: reportTemplates } = useGetAllReportTemplatesQuery({
+  const [selectedReadyTemplateId, setSelectedReadyTemplateId] =
+    useState<number | null>(null);
+
+  const { data: reportTemplates } = useGetAllReportTemplatesQuery({
     page: 0,
     size: 9999,
     sort: "name,asc",
   });
 
-  const templateOptions = reportTemplates?.data?.map(t => ({
-    label: t.name,
-    value: t.id,
-    full: t
-  })) ?? [];
+  const templateOptions =
+    reportTemplates?.data?.map((t) => ({
+      label: t.name,
+      value: t.id,
+      full: t,
+    })) ?? [];
 
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
 
-  const [saveTemplate] = useSaveDiagnosticTestTemplateMutation();
+  // ✅ split create/update hooks
+  const [createTemplate] = useCreateDiagnosticTestTemplateMutation();
+  const [updateTemplate] = useUpdateDiagnosticTestTemplateMutation();
 
+  const handleChooseTemplate = (id: number) => {
+    setSelectedReadyTemplateId(id);
+    const selected = templateOptions.find((t) => t.value === id);
+    if (!selected) return;
 
-  const handleChooseTemplate = (id) => {
-  const selected = templateOptions.find(t => t.value === id);
-  if (!selected) return;
+    const html = selected.full.templateValue || "<p></p>";
 
-  // load template value into editor
-  const html = selected.full.templateValue || "<p></p>";
+    const blocks = htmlToDraft(html);
+    const content = ContentState.createFromBlockArray(
+      blocks.contentBlocks,
+      blocks.entityMap
+    );
+    setEditorState(EditorState.createWithContent(content));
 
-  const blocks = htmlToDraft(html);
-  const content = ContentState.createFromBlockArray(blocks.contentBlocks, blocks.entityMap);
-  setEditorState(EditorState.createWithContent(content));
-
-  // also update formData
-  setFormData(prev => ({
-    ...prev,
-    templateValue: html
-  }));
-};
-
+    // also update formData
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name?.trim() ? prev.name : selected.full.name, // optional autofill
+      templateValue: html,
+    }));
+  };
 
   // Load initial data
   useEffect(() => {
@@ -93,14 +110,17 @@ const DiagnosticTestTemplateModal: React.FC<
           blocks.entityMap
         );
         setEditorState(EditorState.createWithContent(content));
+      } else {
+        setEditorState(EditorState.createEmpty());
       }
     } else {
       setFormData({ name: "", templateValue: "" });
       setEditorState(EditorState.createEmpty());
     }
+
+    setSelectedReadyTemplateId(null);
   }, [initialData, open]);
 
-  // Save
   const handleSave = async () => {
     if (readOnly) return;
 
@@ -108,37 +128,35 @@ const DiagnosticTestTemplateModal: React.FC<
       convertToRaw(editorState.getCurrentContent())
     );
 
-    // Validate name
     if (!formData.name.trim()) {
-      dispatch(
-        notify({
-          msg: "Please enter Template Name",
-          sev: "error",
-        })
-      );
+      dispatch(notify({ msg: "Please enter Template Name", sev: "error" }));
       return;
     }
 
-    // Validate content
     if (!htmlContent || htmlContent === "<p></p>\n") {
-      dispatch(
-        notify({
-          msg: "Please enter Template Content",
-          sev: "error",
-        })
-      );
+      dispatch(notify({ msg: "Please enter Template Content", sev: "error" }));
       return;
     }
 
     try {
       dispatch(showSystemLoader());
 
-      await saveTemplate({
-        diagnosticTestId: testId,
-        name: formData.name.trim(),
-        templateValue: htmlContent,
-      }).unwrap();
-
+      if (initialData?.id) {
+        await updateTemplate({
+          id: initialData.id,
+          diagnosticTestId: testId,
+          name: formData.name.trim(),
+          templateValue: htmlContent,
+          isActive: true,
+        }).unwrap();
+      } else {
+        await createTemplate({
+          diagnosticTestId: testId,
+          name: formData.name.trim(),
+          templateValue: htmlContent,
+          isActive: true,
+        }).unwrap();
+      }
 
       dispatch(
         notify({
@@ -193,53 +211,58 @@ const DiagnosticTestTemplateModal: React.FC<
             disabled={readOnly}
           />
 
-
           <div className="diagnostic-test-template-modal-editor-contant-container">
-          <MyInput
-            column
-            fieldName="selectReadyTemplate"
-            fieldLabel="Choose Definition Template"
-            fieldType="select"
-            selectData={templateOptions}
-            selectDataLabel="label"
-            selectDataValue="value"
-            width="12vw"
-            record={{ selectReadyTemplate: null }}
-            setRecord={(rec) => handleChooseTemplate(rec.selectReadyTemplate)}
-          />
-          <div className="diagnostic-template-label">Add Template Manually</div>
-          {/* Editor */}
+            <MyInput
+              column
+              fieldName="selectReadyTemplate"
+              fieldLabel="Choose Definition Template"
+              fieldType="select"
+              selectData={templateOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
+              width="12vw"
+              searchable
+              record={{ selectReadyTemplate: selectedReadyTemplateId }}
+              setRecord={(rec) =>
+                handleChooseTemplate(rec.selectReadyTemplate)
+              }
+              disabled={readOnly}
+            />
 
+            <div className="diagnostic-template-label">
+              Add Template Manually
+            </div>
 
-          <Editor
-            toolbar={{
-              options: [
-                "inline",
-                "blockType",
-                "fontSize",
-                "fontFamily",
-                "list",
-                "textAlign",
-                "link",
-              ],
-              inline: { inDropdown: true },
-              list: { inDropdown: true },
-              textAlign: { inDropdown: true },
-              link: { inDropdown: true },
-            }}
-            editorStyle={{
-              height: "40vh",
-              width: "100%",
-              border: "1px solid #ccc",
-              overflow: "auto",
-            }}
-            editorState={editorState}
-            onEditorStateChange={readOnly ? () => {} : setEditorState}
-            toolbarHidden={readOnly}
-            readOnly={readOnly}
-            editorClassName="custom-editor"
-            placeholder="Write your template here..."
-          /></div>
+            <Editor
+              toolbar={{
+                options: [
+                  "inline",
+                  "blockType",
+                  "fontSize",
+                  "fontFamily",
+                  "list",
+                  "textAlign",
+                  "link",
+                ],
+                inline: { inDropdown: true },
+                list: { inDropdown: true },
+                textAlign: { inDropdown: true },
+                link: { inDropdown: true },
+              }}
+              editorStyle={{
+                height: "40vh",
+                width: "100%",
+                border: "1px solid #ccc",
+                overflow: "auto",
+              }}
+              editorState={editorState}
+              onEditorStateChange={readOnly ? () => {} : setEditorState}
+              toolbarHidden={readOnly}
+              readOnly={readOnly}
+              editorClassName="custom-editor"
+              placeholder="Write your template here..."
+            />
+          </div>
         </Form>
       }
     />

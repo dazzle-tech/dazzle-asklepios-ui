@@ -2,7 +2,7 @@
 import { BaseQuery } from "@/newApi";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
 
-// --------- Types (adjust to your model) ----------
+// --------- Types ----------
 export type DiagnosticTestTemplate = {
   id?: number;
   diagnosticTestId: number;
@@ -13,8 +13,15 @@ export type DiagnosticTestTemplate = {
   lastModifiedDate?: string;
 };
 
-export type DiagnosticTestTemplateSaveVM = {
+export type DiagnosticTestTemplateCreateVM = {
   diagnosticTestId: number;
+  name: string;
+  templateValue: string;
+  isActive?: boolean;
+};
+
+export type DiagnosticTestTemplateUpdateVM = {
+  diagnosticTestId: number; // testId is the identifier for update
   name: string;
   templateValue: string;
   isActive?: boolean;
@@ -26,7 +33,7 @@ export const DiagnosticTestTemplateService = createApi({
   tagTypes: ["DiagnosticTestTemplate"],
   endpoints: (builder) => ({
 
-    // 🔹 Assign library template to test
+    // 🔹 Assign library template to test (copy)
     assignLibraryTemplateToTest: builder.mutation<
       DiagnosticTestTemplate,
       { testId: number; templateId: number }
@@ -41,14 +48,30 @@ export const DiagnosticTestTemplateService = createApi({
       ],
     }),
 
-    // 🔹 Save test template (manual create/update)
-    saveDiagnosticTestTemplate: builder.mutation<
+    // 🔹 Create test template (manual)
+    createDiagnosticTestTemplate: builder.mutation<
       DiagnosticTestTemplate,
-      DiagnosticTestTemplateSaveVM
+      DiagnosticTestTemplateCreateVM
     >({
       query: (body) => ({
         url: "/api/setup/diagnostic-test/template",
         method: "POST",
+        body,
+      }),
+      invalidatesTags: (r, e, body) => [
+        { type: "DiagnosticTestTemplate", id: body.diagnosticTestId },
+        "DiagnosticTestTemplate",
+      ],
+    }),
+
+    // 🔹 Update test template by testId
+    updateDiagnosticTestTemplate: builder.mutation<
+      DiagnosticTestTemplate,
+      DiagnosticTestTemplateUpdateVM
+    >({
+      query: (body) => ({
+        url: `/api/setup/diagnostic-test/${body.diagnosticTestId}/template`,
+        method: "PUT",
         body,
       }),
       invalidatesTags: (r, e, body) => [
@@ -66,12 +89,12 @@ export const DiagnosticTestTemplateService = createApi({
         url: `/api/setup/diagnostic-test/${testId}/template`,
         method: "GET",
       }),
-      // backend returns 204 noContent if none, RTK will treat as error unless handled by BaseQuery
-      // if BaseQuery already maps 204 to null you're good. otherwise keep as-is.
-      providesTags: (r, e, testId) => [{ type: "DiagnosticTestTemplate", id: testId }],
+      providesTags: (r, e, testId) => [
+        { type: "DiagnosticTestTemplate", id: testId },
+      ],
     }),
 
-    // 🔹 Delete test template (optional)
+    // 🔹 Delete test template (by template record id)
     deleteDiagnosticTestTemplate: builder.mutation<void, number>({
       query: (id) => ({
         url: `/api/setup/diagnostic-test/template/${id}`,
@@ -84,7 +107,8 @@ export const DiagnosticTestTemplateService = createApi({
 
 export const {
   useAssignLibraryTemplateToTestMutation,
-  useSaveDiagnosticTestTemplateMutation,
+  useCreateDiagnosticTestTemplateMutation,
+  useUpdateDiagnosticTestTemplateMutation,
   useGetDiagnosticTestTemplateByTestIdQuery,
   useLazyGetDiagnosticTestTemplateByTestIdQuery,
   useDeleteDiagnosticTestTemplateMutation,

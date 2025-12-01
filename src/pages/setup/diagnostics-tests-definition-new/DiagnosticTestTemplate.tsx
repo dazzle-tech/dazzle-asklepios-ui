@@ -1,40 +1,41 @@
 // DiagnosticTestTemplate.tsx
 import React, { useEffect, useState } from "react";
 import MyModal from "@/components/MyModal/MyModal";
-import { useDispatch } from "react-redux";
 import {
   useGetDiagnosticTestTemplateByTestIdQuery,
-  useSaveDiagnosticTestTemplateMutation,
-} from "@/services/DiagnosticTestTemplate";
+} from "@/services/setup/report-template/DiagnosticTestTemplate";
 import DiagnosticTestTemplateModal from "./DiagnosticTestTemplateModal";
 
 const DiagnosticTestTemplate = ({ open, setOpen, testId, testName }) => {
-  const dispatch = useDispatch();
-
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<{
+    id?: number;
+    name: string;
+    templateValue: string;
+  } | null>(null);
 
-  const { data, isLoading, refetch } =
-    useGetDiagnosticTestTemplateByTestIdQuery(testId);
+  const { data, refetch } =
+    useGetDiagnosticTestTemplateByTestIdQuery(testId, { skip: !testId });
 
   useEffect(() => {
-    if (open) {
-      if (data && data.id) {
-        setSelectedTemplate({
-          id: data.id,
-          name: data.name,
-          templateValue: data.templateValue,
-        });
-      } else {
-        setSelectedTemplate(null);
-      }
+    if (!open) return;
 
-      setModalOpen(true);
+    if (data && data.id) {
+      setSelectedTemplate({
+        id: data.id,
+        name: data.name,
+        templateValue: data.templateValue,
+      });
+    } else {
+      setSelectedTemplate(null);
     }
+
+    setModalOpen(true);
   }, [open, data]);
 
   return (
     <>
+      {/* just a wrapper title modal (as you had) */}
       <MyModal
         open={open}
         setOpen={setOpen}
@@ -54,7 +55,7 @@ const DiagnosticTestTemplate = ({ open, setOpen, testId, testName }) => {
             if (!val) setOpen(false);
           }}
           testId={testId}
-          initialData={selectedTemplate}
+          initialData={selectedTemplate ?? undefined}
           readOnly={false}
           onSaved={() => {
             refetch();

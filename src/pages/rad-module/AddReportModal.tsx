@@ -4,7 +4,7 @@ import htmlToDraft from 'html-to-draftjs';
 import React, { useEffect, useState } from 'react';
 import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
-import { useGetAllReportTemplatesQuery } from "@/services/reportTemplateService";
+import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';

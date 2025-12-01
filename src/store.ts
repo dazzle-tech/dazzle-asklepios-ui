@@ -93,8 +93,8 @@ import { invoiceReportApi } from './services/setup/invoiceReportApi';
 import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
-import { ReportTemplateService } from "./services/reportTemplateService";
-import { DiagnosticTestTemplateService } from './services/DiagnosticTestTemplate';
+import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
+import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
 export const store = configureStore({
   reducer: {
     // ui

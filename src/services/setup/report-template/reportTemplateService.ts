@@ -16,7 +16,7 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
-// --------- Types (adjust to your model) ----------
+// --------- Types ----------
 export type ReportTemplate = {
   id?: number;
   name: string;
@@ -26,8 +26,14 @@ export type ReportTemplate = {
   lastModifiedDate?: string;
 };
 
-export type ReportTemplateSaveVM = {
-  id?: number | null;      // null/undefined => create, number => update
+export type ReportTemplateCreateVM = {
+  name: string;
+  templateValue: string;
+  isActive?: boolean;
+};
+
+export type ReportTemplateUpdateVM = {
+  id: number;
   name: string;
   templateValue: string;
   isActive?: boolean;
@@ -84,17 +90,27 @@ export const ReportTemplateService = createApi({
       providesTags: (r, e, id) => [{ type: "ReportTemplate", id }],
     }),
 
-    // 🔹 Create/Update (same endpoint in backend)
-    saveReportTemplate: builder.mutation<ReportTemplate, ReportTemplateSaveVM>({
+    // 🔹 CREATE
+    createReportTemplate: builder.mutation<ReportTemplate, ReportTemplateCreateVM>({
       query: (body) => ({
         url: "/api/setup/report-template",
         method: "POST",
         body,
       }),
-      invalidatesTags: (result) =>
-        result?.id
-          ? [{ type: "ReportTemplate", id: result.id }, "ReportTemplate"]
-          : ["ReportTemplate"],
+      invalidatesTags: ["ReportTemplate"],
+    }),
+
+    // 🔹 UPDATE
+    updateReportTemplate: builder.mutation<ReportTemplate, ReportTemplateUpdateVM>({
+      query: ({ id, ...body }) => ({
+        url: `/api/setup/report-template/${id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (r, e, { id }) => [
+        { type: "ReportTemplate", id },
+        "ReportTemplate",
+      ],
     }),
 
     // 🔹 Toggle Active
@@ -148,7 +164,8 @@ export const {
   useLazyGetActiveReportTemplatesQuery,
   useGetReportTemplateByIdQuery,
   useLazyGetReportTemplateByIdQuery,
-  useSaveReportTemplateMutation,
+  useCreateReportTemplateMutation,
+  useUpdateReportTemplateMutation,
   useToggleReportTemplateActiveMutation,
   useDeleteReportTemplateMutation,
   useGetReportTemplatesByNameQuery,
