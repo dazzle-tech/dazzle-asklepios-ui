@@ -217,7 +217,6 @@ console.log('inside patient profile copy new');
       dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
-
   return (
     <>
       <div className="patient-profile-container">
