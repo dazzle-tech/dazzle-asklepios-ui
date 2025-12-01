@@ -3,7 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApPatient, ApPatientAllergies, ApUser, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings, ApPatientPreferredHealthProfessional, ApPatientProblems, ApPatientFamilyHistory, ApPatientHospitalization } from '@/types/model-types';
+import { ApPatient, ApPatientAllergies, ApUser, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings, ApPatientPreferredHealthProfessional, ApPatientProblems, ApPatientFamilyHistory, ApPatientHospitalization, ApPatientSurgicalHistory, ApPatientSocialHistory } from '@/types/model-types';
 
 export const patientService = createApi({
   reducerPath: 'patientApi',
@@ -445,6 +445,64 @@ export const patientService = createApi({
         return response.object;
       }
     }),
+    savePatientSurgicalHistory: builder.mutation({
+      query: (patientSurgicalHistory: ApPatientSurgicalHistory) => ({
+        url: `/pas/save-patient-surgical-history`,
+        method: 'POST',
+        body: patientSurgicalHistory
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getPatientSurgicalHistory: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/pas/patient-surgical-history-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removePatientSurgicalHistory: builder.mutation({
+      query: (patientSurgicalHistory: ApPatientSurgicalHistory) => ({
+        url: `/pas/remove-patient-surgical-history`,
+        method: 'POST',
+        body: patientSurgicalHistory
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    savePatientSocialHistory: builder.mutation({
+      query: (patientSocialHistory: ApPatientSocialHistory) => ({
+        url: `/pas/save-patient-social-history`,
+        method: 'POST',
+        body: patientSocialHistory
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getPatientSocialHistory: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/pas/patient-social-history-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removePatientSocialHistory: builder.mutation({
+      query: (patientSocialHistory: ApPatientSocialHistory) => ({
+        url: `/pas/remove-patient-social-history`,
+        method: 'POST',
+        body: patientSocialHistory
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   }),
 
 });
@@ -490,5 +548,11 @@ export const {
   useRemovePatientFamilyHistoryMutation,
   useSavePatientHospitalizationMutation,
   useGetPatientHospitalizationQuery,
-  useRemovePatientHospitalizationMutation
+  useRemovePatientHospitalizationMutation,
+  useSavePatientSurgicalHistoryMutation,
+  useGetPatientSurgicalHistoryQuery,
+  useRemovePatientSurgicalHistoryMutation,
+  useSavePatientSocialHistoryMutation,
+  useGetPatientSocialHistoryQuery,
+  useRemovePatientSocialHistoryMutation
 } = patientService;
