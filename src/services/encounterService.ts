@@ -12,7 +12,7 @@ import {
   ApEncounter, ApPatientDiagnose,
   ApPatientEncounterOrder,
   ApPatientPlan, ApPrescription,
-  ApPrescriptionMedications, ApProcedure, ApPatientTemporaryDischarge, ApReviewOfSystem, ApVisitAllergies, ApPsychologicalExam, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsSamples
+  ApPrescriptionMedications, ApProcedure, ApPatientTemporaryDischarge, ApReviewOfSystem, ApVisitAllergies, ApPsychologicalExam, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsSamples, ApTelephonicConsultation
 } from '@/types/model-types';
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -993,8 +993,7 @@ export const encounterService = createApi({
       },
       keepUnusedDataFor: 5,
     }),
-
-      saveTeleConsultationCallLog: builder.mutation({
+    saveTeleConsultationCallLog: builder.mutation({
       query: (log: ApTeleConsultationCallLog) => ({
         url: `/encounter/save-tele-consultation-call-log`,
         method: 'POST',
@@ -1015,6 +1014,32 @@ export const encounterService = createApi({
       },
       keepUnusedDataFor: 5,
     }),
+    saveTelephonicConsultationOrder: builder.mutation({
+      query: (request: ApTelephonicConsultation) => ({
+        url: `/encounter/save-telephonic-consultation-order`,
+        method: 'POST',
+        body: request
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getTelephonicConsultationOrdersList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/telephonic-consultation-orders-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+       getUserDashboardComponents: builder.query({
+                  query: userId => ({
+                    url: `/encounter/user-dashboard-components-list/${userId}`
+                  }),
+            
+                        onQueryStarted: onQueryStarted,
+                        keepUnusedDataFor: 5
+                }),
 
        getNurseServiceProductList: builder.query({
       query: (listRequest: ListRequest) => ({
@@ -1045,6 +1070,22 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    addUserDashboardComponents: builder.mutation({
+      query: UserDashboardComponents => ({
+        url: `/encounter/add-user-dashboard-components`,
+        method: 'POST',
+        body: UserDashboardComponents
+      }),
+    }),
+
+    deleteUserDashboardComponents: builder.mutation({
+      query: UserDashboardComponents => ({
+        url: `/encounter/delete-user-dashboard-components`,
+        method: 'DELETE',
+         body: UserDashboardComponents
+      }),
+    }),
+
 
   }),
 });
@@ -1158,5 +1199,9 @@ export const {
   useGetNurseServiceProductListQuery,
   useSaveNurseServiceProductMutation,
   useRemoveNurseServiceProductMutation, 
-
+  useSaveTelephonicConsultationOrderMutation,
+  useGetTelephonicConsultationOrdersListQuery,
+ useGetUserDashboardComponentsQuery,
+ useAddUserDashboardComponentsMutation,
+ useDeleteUserDashboardComponentsMutation
 } = encounterService;

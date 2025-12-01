@@ -231,63 +231,41 @@
   border-color: #3a3a3a !important;
 }
 
-/* dark mode control  */
-.dark {
-  --background: 220 13% 5%;       
-  --foreground: 0 0% 98%; 
+/* 🌑 FULL DARK SUPPORT INSIDE ADD/EDIT PRODUCT MODAL */
 
-  --card: 220 13% 10%;
-  --card-foreground: 0 0% 98%;
-
-  --popover: 220 13% 12%;
-  --popover-foreground: 0 0% 98%;
-
-  --primary: 211 100% 60%;
-  --primary-foreground: 0 0% 98%;
-
-  --secondary: 220 8% 15%;
-  --secondary-foreground: 0 0% 98%;
-
-  --muted: 220 8% 12%;
-  --muted-foreground: 0 0% 70%;
-
-  --destructive: 0 85% 60%;
-  --warning: 38 92% 60%;
-  --success: 151 61% 40%;
-
-  --border: 220 8% 25%;
-  --input: 220 8% 25%;
-  --ring: 211 100% 60%;
-
-  --radius: 0.75rem;
-}
-
-.dark body {
-  background-color: hsl(var(--background)) !important;
+/* ====== CONTAINER BACKGROUND ====== */
+.dark .container-form {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  padding: 12px;
+  border-radius: 8px;
   color: hsl(var(--foreground)) !important;
 }
-.dark .card,
-.dark [class*="bg-[hsl(var(--card"],
-.dark [class*="bg-[var(--card"] {
-  background-color: hsl(var(--card)) !important;
-  color: hsl(var(--card-foreground)) !important;
+
+/* ====== SECTION TITLE ====== */
+.dark .container-form .title-div,
+.dark .container-form .title-div *,
+.dark .container-form .rs-text,
+.dark .container-form label {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600;
+}
+
+/* ====== DIVIDER ====== */
+.dark .container-form .rs-divider {
   border-color: hsl(var(--border)) !important;
+  opacity: 0.6;
 }
-.dark p,
-.dark span,
-.dark h1,
-.dark h2,
-.dark h3,
-.dark [class*="text-[hsl(var(--muted-foreground"] {
-  color: hsl(var(--muted-foreground)) !important;
+
+/* ====== ROW + COL BACKGROUND ====== */
+.dark .rs-row,
+.dark .rs-col,
+.dark .rs-form {
+  background-color: transparent !important;
+  color: hsl(var(--foreground)) !important;
 }
-.dark .border,
-.dark [class*="border-"] {
-  border-color: hsl(var(--border)) !important;
-}
-.dark .hover-bg {
-  transition: background-color 0.2s ease;
-}
-.dark .hover-bg:hover {
-  background-color: hsl(var(--popover)) !important;
+
+/* ====== MODAL BODY EXTRA FIX ====== */
+.dark .rs-modal-body {
+  background-color: hsl(var(--background)) !important;
 }

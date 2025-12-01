@@ -96,7 +96,46 @@ const PatientProfile = () => {
   //     console.log(error);
   //   }
   // };
-  const handleSave = async () => {
+// Add this validation function before handleSave in PatientProfile component
+
+const validateRequiredFields = () => {
+  const errors = [];
+  
+  // Check required fields
+  if (!localPatient.firstName) {
+    errors.push('First Name');
+  }
+  if (!localPatient.lastName) {
+    errors.push('Last Name');
+  }
+  if (!localPatient.genderLkey) {
+    errors.push('Gender');
+  }
+  if (!localPatient.dob) {
+    errors.push('DOB');
+  }
+  if (!localPatient.phoneNumber) {
+    errors.push('Primary Mobile Number');
+  }
+  
+  return errors;
+};
+
+// Update handleSave function to include validation
+const handleSave = async () => {
+  // Validate required fields
+  const missingFields = validateRequiredFields();
+  
+  if (missingFields.length > 0) {
+    dispatch(
+      notify({
+        msg: `Please fill the following required fields: ${missingFields.join(', ')}`,
+        sev: 'error'
+      })
+    );
+    return;
+  }
+
   try {
     await savePatient({
       ...localPatient,

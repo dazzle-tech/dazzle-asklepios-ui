@@ -1,95 +1,143 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { faHospitalUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHospitalUser } from '@fortawesome/free-solid-svg-icons';
+import { newApPatientHospitalization } from '@/types/model-types-constructor';
+import { useSavePatientHospitalizationMutation } from '@/services/patientService';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 
-const AddHospitalizations = ({ open, setOpen }) => {
+const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
 
-    // Fetch LOV data for various fields
-    const { data: admissionTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ADMISSION_TYPE');
+  const dispatch = useAppDispatch();
+  const [formData, setFormData] = useState(newApPatientHospitalization);
 
-    // Modal Content 
-    const content = (
-        <Form fluid layout='inline' className='fields-container'>
-            <MyInput
-                width={200}
-                column
-                fieldLabel="Facility"
-                fieldName=""
-                record={""}
-                setRecord={""}
-            />
-            <MyInput
-                width={200}
-                column
-                fieldLabel="Reason"
-                fieldName=""
-                record={""}
-                setRecord={""}
-            />
-            <MyInput
-                column
-                width={200}
-                fieldLabel="Admission Type"
-                fieldType="select"
-                fieldName=""
-                selectData={admissionTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={""}
-                setRecord={""}
-                searchable={false}
-            />
-            <MyInput
-                width={200}
-                column
-                fieldLabel="Date of admission"
-                fieldType='date'
-                fieldName=""
-                record={""}
-                setRecord={""}
-            />
-            <MyInput
-                width={200}
-                column
-                fieldLabel="Length of stay"
-                fieldName=""
-                record={""}
-                setRecord={""}
-            />
-            <MyInput
-                width={200}
-                column
-                fieldLabel="Outcomes"
-                fieldName=""
-                record={""}
-                setRecord={""}
-            />
-            <MyInput
-                width={200}
-                column
-                fieldLabel="Medical Interventions Performed"
-                fieldType='textarea'
-                fieldName=""
-                record={""}
-                setRecord={""}
-            />
-        </Form>
-    )
-    return (
-        <MyModal
-            open={open}
-            setOpen={setOpen}
-            title="Add/Edit Hospitalizations"
-            steps={[{title: "Hospitalizations",icon:<FontAwesomeIcon icon={ faHospitalUser}/>}]}
-            actionButtonFunction={""}
-            position='right'
-            size='33vw'
-            content={content}
-        ></MyModal>
-    );
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    } else {
+      setFormData({ ...newApPatientHospitalization, patientKey: patient?.key });
+    }
+  }, [initialData, open]);
+
+  const { data: admissionTypeLov } = useGetLovValuesByCodeQuery('ADMISSION_TYPE');
+
+  const [saveHospitalization] = useSavePatientHospitalizationMutation();
+
+  const normalizePayload = (data) => ({
+    ...data,
+    dateOfAdmission:
+      data.dateOfAdmission ? new Date(data.dateOfAdmission).getTime() : null
+  });
+
+  const save = () => {
+    const payload = normalizePayload(formData);
+
+    saveHospitalization(payload)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: "Saved successfully", sev: "success" }));
+        setOpen(false);
+      })
+      .catch(() =>
+        dispatch(notify({ msg: "Saving failed", sev: "error" }))
+      );
+  };
+
+  const content = (
+    <Form fluid layout="inline" className="fields-container">
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Facility"
+        fieldName="facility"
+        record={formData}
+        setRecord={setFormData}
+        required
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Reason"
+        fieldName="reason"
+        record={formData}
+        setRecord={setFormData}
+        required
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Admission Type"
+        fieldType="select"
+        fieldName="admissionTypeLkey"
+        selectData={admissionTypeLov?.object ?? []}
+        selectDataValue="key"
+        selectDataLabel="lovDisplayVale"
+        record={formData}
+        setRecord={setFormData}
+        searchable={false}
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Date of admission"
+        fieldType="date"
+        fieldName="dateOfAdmission"
+        record={formData}
+        setRecord={setFormData}
+        required
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Length of stay"
+        fieldName="lengthOfStay"
+        record={formData}
+        setRecord={setFormData}
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Outcomes"
+        fieldName="outcomes"
+        record={formData}
+        setRecord={setFormData}
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Medical Interventions Performed"
+        fieldType="textarea"
+        fieldName="medicalInterventionsPerformed"
+        record={formData}
+        setRecord={setFormData}
+      />
+
+    </Form>
+  );
+
+  return (
+    <MyModal
+      open={open}
+      setOpen={setOpen}
+      title="Add/Edit Hospitalizations"
+      steps={[{ title: "Hospitalizations", icon: <FontAwesomeIcon icon={faHospitalUser} /> }]}
+      actionButtonFunction={save}
+      position="right"
+      size="33vw"
+      content={content}
+    />
+  );
 };
+
 export default AddHospitalizations;

@@ -4239,6 +4239,25 @@ export const newApTeleConsultationProgressNote:modelTypes.ApTeleConsultationProg
 	teleConsultationId:'',
 } 
 
+export const newApTelephonicConsultation:modelTypes.ApTelephonicConsultation = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	physician:0,
+	dateOfCall:0,
+	consultationContent:'',
+	approvalNumber:'',
+	notes:'',
+	extraDocumentation:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApTenant:modelTypes.ApTenant = { 
 	key:undefined,
 	tenantId:'',

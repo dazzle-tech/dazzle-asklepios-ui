@@ -11,7 +11,7 @@ const MedicalHistory = ({ patient, encounter, edit }) => {
       <PatientProblems patient={patient} encounter={encounter} edit={edit} />
       <FamilyHistory patient={patient} encounter={encounter} edit={edit} />
       <Hospitalizations patient={patient} encounter={encounter} edit={edit} />
-      <BloodTransfusion patient={patient} encounter={encounter} edit={edit} />
+      {/* <BloodTransfusion patient={patient} encounter={encounter} edit={edit} /> */}
     </div>
   );
 };

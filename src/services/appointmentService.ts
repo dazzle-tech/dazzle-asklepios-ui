@@ -14,7 +14,7 @@ export const appointmentService = createApi({
   endpoints: builder => ({
     getResources: builder.query({
       query: (listRequest: ListRequest) => ({
-        url: `/appointment/resources-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/setup/resources-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5

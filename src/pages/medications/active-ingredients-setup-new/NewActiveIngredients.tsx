@@ -229,57 +229,25 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
       },
       {
         title: 'Advers Effects & Toxicity',
-        content: (
-          <Section
-            title="Advers Effects & Toxicity"
-            content={<AdversEffectsAndToxicity activeIngredient={activeIngredient} />}
-            setOpen={() => {}}
-            rightLink=""
-            openedContent={null}
-            disabled={!isExisting}
-          />
+        content: (<AdversEffectsAndToxicity activeIngredient={activeIngredient} />
         ),
         disabled: !isExisting
       },
       {
         title: 'MOA & Pharmacokinetics',
-        content: (
-          <Section
-            title="MOA & Pharmacokinetics"
-            content={<MOAAndPharmacokinetics activeIngredient={activeIngredient} />}
-            setOpen={() => {}}
-            rightLink=""
-            openedContent={null}
-            disabled={!isExisting}
-          />
+        content: (<MOAAndPharmacokinetics activeIngredient={activeIngredient} />
         ),
         disabled: !isExisting
       },
       {
         title: 'Drug & Food Interactions',
-        content: (
-          <Section
-            title="Drug & Food Interactions"
-            content={<DrugDrugAndFoodInteractions activeIngredient={activeIngredient} />}
-            setOpen={() => {}}
-            rightLink=""
-            openedContent={null}
-            disabled={!isExisting}
-          />
+        content: (<DrugDrugAndFoodInteractions activeIngredient={activeIngredient} />
         ),
         disabled: !isExisting
       },
       {
         title: 'Special Population',
-        content: (
-          <Section
-            title="Special Population"
-            content={<PregnancyLactationAndSpecialPopulation activeIngredient={activeIngredient} />}
-            setOpen={() => {}}
-            rightLink=""
-            openedContent={null}
-            disabled={!isExisting}
-          />
+        content: (<PregnancyLactationAndSpecialPopulation activeIngredient={activeIngredient} />
         ),
         disabled: !isExisting
       },

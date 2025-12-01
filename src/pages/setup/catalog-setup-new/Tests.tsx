@@ -46,7 +46,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   });
   const [sortColumnForAllTests, setSortColumnForAllTests] = useState('id');
   const [sortTypeForAllTests, setSortTypeForAllTests] = useState<'asc' | 'desc'>('asc');
-  const { data: unselectedTestsForCatalog } = useGetUnselectedTestsForCatalogQuery(
+  const { data: unselectedTestsForCatalog, refetch, isFetching } = useGetUnselectedTestsForCatalogQuery(
     {
       catalogId: diagnosticsTestCatalogHeader?.id,
       name: record['value'],
@@ -179,6 +179,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
     })
       .unwrap()
       .then(() => {
+        refetch();
         dispatch(
           notify({
             msg: 'The Test was successfully Deleted',
@@ -205,6 +206,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       .unwrap()
       .then(() => {
         setSelectedRows([]);
+        refetch();
         dispatch(notify({ msg: 'The Tests have been saved successfully', sev: 'success' }));
       });
   };
@@ -288,6 +290,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
             </Form>
             <MyTable
               height={350}
+              loading={isFetching}
               data={unselectedTestsForCatalog?.data ?? []}
               totalCount={totalCountForUnselectedCatalogTests}
               rowClassName={isSelectedOnTable2}

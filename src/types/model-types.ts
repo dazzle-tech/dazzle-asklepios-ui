@@ -4238,6 +4238,25 @@ export interface ApTeleConsultationProgressNote {
 	teleConsultationId:string;
 } 
 
+export interface ApTelephonicConsultation { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	physician:number;
+	dateOfCall:number;
+	consultationContent:string;
+	approvalNumber:string;
+	notes:string;
+	extraDocumentation:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApTenant { 
 	key:string;
 	tenantId:string;
@@ -4741,7 +4760,6 @@ export interface ApWarehouseUser {
 	deletedAt:number;
 	isvalid:boolean;
 } 
-
 export interface AppUser { 
 	id:;
 	login:string;

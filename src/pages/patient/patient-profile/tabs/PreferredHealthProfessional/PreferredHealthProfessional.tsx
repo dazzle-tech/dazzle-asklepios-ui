@@ -53,12 +53,6 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             render: (rowData: any) => rowData?.practitioner?.practitionerEmail || ' ',
         },
         {
-            key: 'hpOrganization',
-            title: <Translate>HP Organization</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.facility?.facilityName || ' ',
-        },
-        {
             key: 'networkAffiliation',
             title: <Translate>Network Affiliation</Translate>,
             flexGrow: 4,
