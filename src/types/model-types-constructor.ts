@@ -4239,6 +4239,25 @@ export const newApTeleConsultationProgressNote:modelTypes.ApTeleConsultationProg
 	teleConsultationId:'',
 } 
 
+export const newApTelephonicConsultation:modelTypes.ApTelephonicConsultation = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	physician:0,
+	dateOfCall:0,
+	consultationContent:'',
+	approvalNumber:'',
+	notes:'',
+	extraDocumentation:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApTenant:modelTypes.ApTenant = { 
 	key:undefined,
 	tenantId:'',
@@ -4743,26 +4762,4 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	isvalid:undefined,
 } 
 
-export const newAppUser:modelTypes.AppUser = { 
-	id:undefined,
-	login:'',
-	passwordHash:'',
-	firstName:'',
-	lastName:'',
-	email:'',
-	imageUrl:'',
-	activated:undefined,
-	langKey:undefined,
-	resetKey:undefined,
-	createdBy:'',
-	createdDate:undefined,
-	resetDate:undefined,
-	lastModifiedBy:'',
-	lastModifiedDate:undefined,
-	phoneNumber:'',
-	birthDate:null,
-	gender:'',
-	jobRole:'',
-	securityAccessLeve:'',
-} 
 
