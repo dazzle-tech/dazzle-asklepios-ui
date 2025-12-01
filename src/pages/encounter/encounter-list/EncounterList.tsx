@@ -278,13 +278,13 @@ const EncounterList = () => {
   const tableColumns = [
     {
       key: 'queueNumber',
-      title: <Translate>#</Translate>,
+      title: '#',
       dataKey: 'queueNumber',
       render: rowData => rowData?.patientObject?.patientMrn
     },
     {
       key: 'patientFullName',
-      title: <Translate>PATIENT NAME</Translate>,
+      title: 'PATIENT NAME',
       fullText: true,
       render: rowData => {
         const tooltipSpeaker = (
@@ -322,23 +322,23 @@ const EncounterList = () => {
     },
     {
       key: 'visitType',
-      title: <Translate>VISIT TYPE</Translate>,
+      title: 'VISIT TYPE',
       render: rowData =>
         rowData.visitTypeLvalue ? rowData?.visitTypeLvalue?.lovDisplayVale : rowData?.visitTypeLkey
     },
     {
       key: 'chiefComplaint',
-      title: <Translate>CHIEF COMPLAIN</Translate>,
+      title: 'CHIEF COMPLAIN',
       render: rowData => rowData?.chiefComplaint
     },
     {
       key: 'diagnosis',
-      title: <Translate>DIAGNOSIS</Translate>,
+      title: 'DIAGNOSIS',
       render: rowData => rowData?.diagnosis
     },
     {
       key: 'hasPrescription',
-      title: <Translate>PRESCRIPTION</Translate>,
+      title: 'PRESCRIPTION',
       render: rowData =>
         rowData.hasPrescription ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -348,7 +348,7 @@ const EncounterList = () => {
     },
     {
       key: 'hasOrder',
-      title: <Translate>HAS ORDER</Translate>,
+      title: 'HAS ORDER',
       render: rowData =>
         rowData.hasOrder ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -358,7 +358,7 @@ const EncounterList = () => {
     },
     {
       key: 'encounterPriority',
-      title: <Translate>PRIORITY</Translate>,
+      title: 'PRIORITY',
       render: rowData =>
         rowData?.encounterPriorityLvalue
           ? rowData?.encounterPriorityLvalue?.lovDisplayVale
@@ -366,12 +366,12 @@ const EncounterList = () => {
     },
     {
       key: 'plannedStartDate',
-      title: <Translate>DATE</Translate>,
+      title: 'DATE',
       dataKey: 'plannedStartDate'
     },
     {
       key: 'status',
-      title: <Translate>STATUS</Translate>,
+      title: 'STATUS',
       render: rowData => (
         <MyBadgeStatus
           color={rowData?.encounterStatusLvalue?.valueColor}
@@ -385,7 +385,7 @@ const EncounterList = () => {
     },
     {
       key: 'hasObservation',
-      title: <Translate>IS OBSERVED</Translate>,
+      title: 'IS OBSERVED',
       render: rowData =>
         rowData.hasObservation ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -395,7 +395,7 @@ const EncounterList = () => {
     },
     {
       key: 'actions',
-      title: <Translate> </Translate>,
+      title: ' ',
       render: rowData => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;

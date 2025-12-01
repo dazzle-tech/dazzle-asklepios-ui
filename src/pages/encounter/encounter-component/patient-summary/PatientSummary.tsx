@@ -19,25 +19,26 @@ import ChiefComplainSummary from '../nursing-reports-summary/ChiefComplainSummar
 import PainAssessmentSummary from '../nursing-reports-summary/PainAssessmentSummary';
 import GeneralAssessmentSummary from '../nursing-reports-summary/GeneralAssessmentSummary';
 import FunctionalAssessmentSummary from '../nursing-reports-summary/FunctionalAssessmentSummary';
-import MedicalTimeline from '../../encounter-screen/MedicalTimeLine';
+import { useGetUserDashboardComponentsQuery } from '@/services/encounterService';
 
 const PatientSummary = () => {
   const location = useLocation();
   const { patient, encounter } = location.state || {};
-
   const { setAction } = useContext(ActionContext);
   const [openChooseScreen, setOpenChooseScreen] = useState<boolean>(false);
-
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userDashboardComponents = useGetUserDashboardComponentsQuery(user?.id);
+  const [arrOfComponentKeys,setArrOfComponentKeys] = useState([]);
   const [displays, setDisplays] = useState({
-    c1: true,
+    c1: false,
     c2: false,
     c3: true,
     c4: true,
-    c5: true,
-    c6: true,
+    c5: false,
+    c6: false,
     c7: true,
     c8: true,
-    c9: true,
+    c9: false,
     c10: false,
     c11: false,
     c12: false,
@@ -48,7 +49,7 @@ const PatientSummary = () => {
 
   const [columns, setColumns] = useState({
     col1: [
-      { id: 'c1', content: <BodyDiagram patient={patient} />, display: true },
+      { id: 'c1', content: <BodyDiagram patient={patient} />, display: false },
       {
         id: 'c2',
         content: <PreviuosVisitData patient={patient} encounter={encounter} />,
@@ -56,7 +57,7 @@ const PatientSummary = () => {
       },
       { id: 'c3', content: <PatientMajorProblemTable patient={patient} />, display: true },
       { id: 'c4', content: <PatientChronicMedicationTable patient={patient} />, display: true },
-      { id: 'c5', content: <PreObservation patient={patient} />, display: true },
+      { id: 'c5', content: <PreObservation patient={patient} />, display: false },
       {
         id: 'c6',
         content: <FunctionalAssessmentSummary patient={patient} encounter={encounter} />,
@@ -78,8 +79,8 @@ const PatientSummary = () => {
       }
     ],
     col3: [
-      { id: 'c11', content: <Procedures patient={patient} />, display: true },
-      { id: 'c12', content: <RecentTestResults patient={patient} />, display: true },
+      { id: 'c11', content: <Procedures patient={patient} />, display: false },
+      { id: 'c12', content: <RecentTestResults patient={patient} />, display: false },
       { id: 'c13', content: <Last24HMedications patient={patient} />, display: false },
       { id: 'c14', content: <IntakeOutputs patient={patient} />, display: false },
       {
@@ -90,10 +91,42 @@ const PatientSummary = () => {
     ]
   });
 
+useEffect(() => {
+  const arr = userDashboardComponents?.data?.object ?? [];
+  const newArr = arr.map(item => item.component_key);
+  if(newArr.length > 0){
+  setArrOfComponentKeys(newArr);
+
+  const updatedColumns = Object.fromEntries(
+    Object.entries(columns).map(([colKey, colItems]) => [
+      colKey,
+      colItems.map(item => ({
+        ...item,
+        display: newArr.includes(item.id) 
+      }))
+    ])
+  );
+
+  setColumns(updatedColumns);
+}
+}, [userDashboardComponents?.data]);
+
+
   useEffect(() => {
     setAction(() => () => setOpenChooseScreen(true));
     return () => setAction(() => () => {});
   }, [setAction]);
+  useEffect(() => {
+  const arr = userDashboardComponents?.data?.object ?? [];
+  const newArr = arr.map(item => item.component_key);
+  if(newArr.length > 0){
+  setArrOfComponentKeys(newArr);
+  const updated = Object.fromEntries(
+    Object.keys(displays).map(key => [key, newArr.includes(key)])
+  );
+  setDisplays(updated);
+}
+}, [userDashboardComponents?.data]);
 
   // Function triggered after drag ends
   const handleDragEnd = (result: any) => {
@@ -182,6 +215,8 @@ const PatientSummary = () => {
         displays={displays}
         setColumns={setColumns}
         setDisplays={setDisplays}
+        arrOfComponentKeys={arrOfComponentKeys}
+        userId={user?.id}
       />
     </>
   );

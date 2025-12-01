@@ -5,7 +5,21 @@ import { Form } from 'rsuite';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine } from '@fortawesome/free-solid-svg-icons';
-const ChooseDashboardSections = ({ open, setOpen, displays, setDisplays, setColumns }) => {
+import {
+  useAddUserDashboardComponentsMutation,
+  useDeleteUserDashboardComponentsMutation
+} from '@/services/encounterService';
+const ChooseDashboardSections = ({
+  open,
+  setOpen,
+  displays,
+  setDisplays,
+  setColumns,
+  arrOfComponentKeys,
+  userId
+}) => {
+  const [saveComponent] = useAddUserDashboardComponentsMutation();
+  const [deleteComponent] = useDeleteUserDashboardComponentsMutation();
   // Handle save when choose sections
   const handleSave = () => {
     setColumns(prev => {
@@ -19,6 +33,21 @@ const ChooseDashboardSections = ({ open, setOpen, displays, setDisplays, setColu
       return updated;
     });
     setOpen(false);
+
+    Object.entries(displays).forEach(([key, value]) => {
+      if (!arrOfComponentKeys.includes(key) && value) {
+        saveComponent({ user_id: userId, component_key: key })
+          .unwrap()
+          .then(() => {})
+          .catch(() => {});
+      }
+      if (arrOfComponentKeys.includes(key) && !value) {
+        deleteComponent({ user_id: userId, component_key: key })
+          .unwrap()
+          .then(() => {})
+          .catch(() => {});
+      }
+    });
   };
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
