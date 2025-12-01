@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+// AddEditPriceList.tsx
+import React, { useEffect } from "react";
 import MyInput from "@/components/MyInput";
 import { Form } from "rsuite";
-import ChildModal from "@/components/ChildModal";
 import Translate from "@/components/Translate";
-import MyButton from "@/components/MyButton/MyButton";
 import clsx from "clsx";
 import SectionContainer from "@/components/SectionsoContainer";
 import { useAppDispatch } from "@/hooks";
@@ -26,25 +25,31 @@ const AddEditPriceList = ({
   const [savePriceList] = useSavePriceListMutation();
   const priceListTypes = useEnumOptions("PriceListTypes");
   const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
-useEffect(() => {
-  const fid = priceList?.facilityId;
-  if (!fid) return;
 
-  setPriceList(prev => {
-    const existing = prev.facilityIds ?? [];
-   
-    if (existing.includes(fid)) return prev;
+  useEffect(() => {
+    const fid = priceList?.facilityId;
+    if (!fid) return;
 
-    return {
-      ...prev,
-      facilityIds: [...existing, fid],
-    };
-  });
-}, [priceList?.facilityId, setPriceList]);
+    setPriceList(prev => {
+      const existing = prev.facilityIds ?? [];
+      if (existing.includes(fid)) return prev;
+
+      return {
+        ...prev,
+        facilityIds: [...existing, fid],
+      };
+    });
+  }, [priceList?.facilityId, setPriceList]);
 
   const validateRequiredFields = () => {
     const required = ["name", "type", "effectiveFrom"];
-    const missing = required.filter((k) => !priceList[k]);
+    const missing = required.filter((k) => !priceList?.[k]);
+
+    const facilityMissing =
+      !priceList?.facilityIds || priceList.facilityIds.length === 0;
+
+    if (facilityMissing) missing.push("facilityIds");
+
     if (missing.length) {
       dispatch(
         notify({
@@ -69,14 +74,13 @@ useEffect(() => {
         effectiveFrom: priceList.effectiveFrom,
         effectiveTo: priceList.effectiveTo || null,
         description: priceList.description || null,
-       
+        isActive: priceList.isActive ?? true,
       };
 
       const res = await savePriceList(payload).unwrap();
 
       dispatch(notify({ msg: "Saved successfully", sev: "success" }));
 
-      // backend returns list
       if (Array.isArray(res) && res.length === 1) {
         setPriceList(res[0]);
       }
@@ -140,14 +144,14 @@ useEffect(() => {
               selectDataLabel="name"
               selectDataValue="id"
               record={priceList}
-                setRecord={setPriceList}
+              setRecord={setPriceList}
               searchable
               width={520}
-            //   multiple
-              placeholder="Leave empty for Global"
+              placeholder="Select at least one facility"
+              required
             />
             <small style={{ opacity: 0.7 }}>
-              <Translate>Empty = Global for all facilities</Translate>
+              <Translate>At least one facility is required</Translate>
             </small>
           </>
         }
@@ -196,8 +200,6 @@ useEffect(() => {
           />
         }
       />
-
-   
     </Form>
   );
 
@@ -208,13 +210,11 @@ useEffect(() => {
       setOpen={setOpen}
       title={priceList?.id ? "Edit Price List" : "New Price List"}
       actionButtonFunction={handleSave}
-      
       content={() => conjureFormContent()}
       steps={[
         {
           title: "Price List Details",
           icon: <Translate>PL</Translate>,
-        
         },
       ]}
       size="sm"

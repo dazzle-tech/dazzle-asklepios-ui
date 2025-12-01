@@ -1,3 +1,4 @@
+// PriceLists.tsx
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
@@ -13,7 +14,7 @@ import {
   useLazyGetPriceListsByTypeAndNameQuery,
   useTogglePriceListActiveMutation
 } from "@/services/billing/PriceListService";
-import { newPriceList} from "@/types/model-types-constructor-new";
+import { newPriceList } from "@/types/model-types-constructor-new";
 import { conjureValueBasedOnIDFromList, formatEnumString } from "@/utils";
 import { PaginationPerPage } from "@/utils/paginationPerPage";
 import { notify } from "@/utils/uiReducerActions";
@@ -30,7 +31,6 @@ import AddEditPriceList from "./AddEditPriceList";
 const PriceLists = () => {
   const dispatch = useDispatch();
 
-  // ───────────── STATE ─────────────
   const [priceList, setPriceList] = useState<PriceList>({ ...newPriceList });
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -60,7 +60,6 @@ const PriceLists = () => {
   const [sortType, setSortType] = useState<"asc" | "desc">("asc");
   const [link, setLink] = useState({});
 
-  // ───────────── DATA ─────────────
   const { data: priceListResponse, isFetching } =
     useGetAllPriceListsQuery(paginationParams);
 
@@ -69,7 +68,7 @@ const PriceLists = () => {
   const [getByName] = useLazyGetPriceListsByNameQuery();
   const [getByType] = useLazyGetPriceListsByTypeQuery();
   const [getByTypeAndName] = useLazyGetPriceListsByTypeAndNameQuery();
- 
+
   const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
   const priceListTypes = useEnumOptions("PriceListTypes");
 
@@ -77,7 +76,6 @@ const PriceLists = () => {
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
-  // ───────────── EFFECTS ─────────────
   useEffect(() => {
     dispatch(setPageCode("PriceLists"));
     dispatch(setDivContent("Price Lists"));
@@ -95,7 +93,6 @@ const PriceLists = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ───────────── FILTER LOGIC ─────────────
   const filterFields = [
     { label: "Type", value: "type" },
     { label: "Facility", value: "facility" },
@@ -120,7 +117,7 @@ const PriceLists = () => {
       } else if (field === "name") {
         response = await getByName({ name: value, ...params }).unwrap();
       } else if (field === "facility") {
-        dispatch(notify({ msg: "Filter by Facility not implemented on backend yet", sev: "warnning" }));
+        dispatch(notify({ msg: "Filter by Facility not implemented on backend yet", sev: "warning" }));
         return;
       }
 
@@ -135,7 +132,6 @@ const PriceLists = () => {
     }
   };
 
-  // ───────────── SORT LOGIC ─────────────
   const handleSortChange = (sortCol: string, sortT: "asc" | "desc") => {
     setSortColumn(sortCol);
     setSortType(sortT);
@@ -150,7 +146,6 @@ const PriceLists = () => {
     }
   };
 
-  // ───────────── TOGGLE ACTIVE ─────────────
   const handleToggleActive = async (id?: number) => {
     if (!id) return;
     try {
@@ -167,7 +162,6 @@ const PriceLists = () => {
     setOpenConfirmModal(false);
   };
 
-  // ───────────── TABLE ─────────────
   const isSelected = (rowData: PriceList) =>
     rowData?.id === priceList?.id ? "selected-row" : "";
 
@@ -217,13 +211,11 @@ const PriceLists = () => {
       title: <Translate>Facility</Translate>,
       flexGrow: 3,
       render: (rowData: any) =>
-        rowData?.facilityId
-          ? conjureValueBasedOnIDFromList(
-              allFacilities,
-              rowData?.facilityId,
-                "name"
-            )
-          : <p>Global</p>
+        conjureValueBasedOnIDFromList(
+          allFacilities,
+          rowData?.facilityId,
+          "name"
+        )
     },
     { key: "name", title: <Translate>Name</Translate>, flexGrow: 4 },
     {
@@ -259,7 +251,6 @@ const PriceLists = () => {
     }
   ];
 
-  // ───────────── PAGINATION ─────────────
   const handlePageChange = (event, newPage) => {
     if (isFiltered) {
       handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
@@ -274,7 +265,6 @@ const PriceLists = () => {
     }
   };
 
-  // ───────────── FILTER UI ─────────────
   const filters = () => (
     <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
       <MyInput
