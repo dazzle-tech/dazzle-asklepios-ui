@@ -45,6 +45,7 @@ import { languageService } from './services/setup/languageService';
 import { translationService } from './services/setup/translationService';
 import { PractitionerService } from './services/setup/practitioner/PractitionerService';
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
+import { ResourceService } from './services/setup/resource/ResourceService';
 import {Icd10Service} from './services/setup/icd10service';
 import { patientAttachmentService } from './services/patients/attachmentService';
 import { ageGroupService } from './services/setup/ageGroupService';
@@ -83,6 +84,7 @@ import { uomGroupService } from './services/setup/uom-group/uomGroupService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
 import { activeIngredientDrugInteractionService } from "@/services/setup/activeIngredients/activeIngredientDrugInteractionService";
 import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
+import { inventoryProductsService } from './services/inventory/inventory-products/inventoryProductsService';
 import { countryService } from './services/setup/country/countryService';
 import { countryDistrictService } from './services/setup/country/countryDistrictService';
 import { districtCommunityService } from './services/setup/country/districtCommunityService';
@@ -94,6 +96,8 @@ import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 import { PriceListService } from './services/billing/PriceListService';
+import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
+import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
 export const store = configureStore({
   reducer: {
     // ui
@@ -115,7 +119,7 @@ export const store = configureStore({
 
     //inventory 
     [inventoryService.reducerPath]: inventoryService.reducer,
-
+    [inventoryProductsService.reducerPath]: inventoryProductsService.reducer,
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
     [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
@@ -198,6 +202,7 @@ export const store = configureStore({
     [userDepartmentService.reducerPath]:userDepartmentService.reducer,
     [PractitionerService.reducerPath]:PractitionerService.reducer,
     [PractitionerDepartmentService.reducerPath]:PractitionerDepartmentService.reducer,
+    [ResourceService.reducerPath]:ResourceService.reducer,
 
     //Categories setup
     [MedicationCategoriesService.reducerPath]: MedicationCategoriesService.reducer,
@@ -280,6 +285,12 @@ export const store = configureStore({
     [visitDurationService.reducerPath]: visitDurationService.reducer,
     // Price List
     [PriceListService.reducerPath]: PriceListService.reducer,
+
+   // Templates
+    [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
+    [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -290,6 +301,7 @@ export const store = configureStore({
       accountApi.middleware,
       patientService.middleware,
       inventoryService.middleware,
+      inventoryProductsService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
       activeIngredientSynonymsService.middleware,
@@ -329,6 +341,7 @@ export const store = configureStore({
       translationService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+      ResourceService.middleware,
       ageGroupService.middleware,
       Icd10Service.middleware,
       allergensService.middleware,
@@ -375,6 +388,8 @@ export const store = configureStore({
       catalogService.middleware,
       catalogDiagnosticTestService.middleware,
       PriceListService.middleware,
+      ReportTemplateService.middleware,
+      DiagnosticTestTemplateService.middleware,
     ])
 });
 

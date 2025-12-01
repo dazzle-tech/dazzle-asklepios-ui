@@ -58,7 +58,7 @@ const StartTeleConsultation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   const { state } = useLocation();
   const { patient, encounter, fromPage, consultaition, notelist } = state || {};
-
+  console.log("consultaition", state.consultaition);
   const sliceauth = useSelector((state: any) => state.auth);
 
   const [showProcedureDetails, setShowProcedureDetails] = useState(false);
@@ -136,14 +136,11 @@ const StartTeleConsultation = () => {
               <BackButton onClick={() => navigate(-1)} />
               <MyButton
                 onClick={async () => {
-                  const payload = {
-                    ...consultaition,
+
+                  await save({   ...state.consultaition,
                     statusLkey: '13828778108999715', // ORD_ON_CALL
                     callStartedAt: Date.now(),
-                    callStartedBy: sliceauth.user?.login
-                  };
-
-                  await save({ payload }).unwrap();
+                    callStartedBy: sliceauth.user?.login }).unwrap();
                   dispatch(startCall({ roomName, displayName, email }));
                 }}
                 prefixIcon={() => <FontAwesomeIcon icon={faVideo} />}

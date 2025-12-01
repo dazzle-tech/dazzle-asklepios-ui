@@ -5,7 +5,8 @@ import {
   faCommentDots,
   faHeadset,
   faNoteSticky,
-  faRepeat
+  faRepeat,
+  faStethoscope
 } from '@fortawesome/free-solid-svg-icons';
 import { faSun } from '@fortawesome/free-solid-svg-icons';
 import { faMoon } from '@fortawesome/free-solid-svg-icons';
@@ -539,6 +540,14 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faCalendarDays}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="My Consultations">
+              <IconButton size="small" onClick={() => {navigate('/my-consultations');}}>
+                <FontAwesomeIcon
+                  className="header-screen-bar-icon-size-handle"
+                  icon={faStethoscope}
                 />
               </IconButton>
             </Tooltip>
