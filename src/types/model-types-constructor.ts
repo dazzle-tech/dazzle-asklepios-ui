@@ -2207,6 +2207,27 @@ export const newApNurseNotes:modelTypes.ApNurseNotes = {
 	deletedAt:undefined,
 } 
 
+export const newApNurseServiceProduct:modelTypes.ApNurseServiceProduct = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	departmentId:0,
+	categoryLkey:undefined,
+	serviceId:0,
+	warehouseProductId:0,
+	quantity:0,
+	baseUomId:0,
+	unitPrice:0,
+	totalPrice:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 
 	key:undefined,
 	encounterKey:undefined,
@@ -2985,6 +3006,40 @@ export const newApPatientEncounterOrder:modelTypes.ApPatientEncounterOrder = {
 	submitDate:0,
 } 
 
+export const newApPatientFamilyHistory:modelTypes.ApPatientFamilyHistory = { 
+	key:undefined,
+	patientKey:undefined,
+	condition:'',
+	relationLkey:undefined,
+	inheritedDiseases:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApPatientHospitalization:modelTypes.ApPatientHospitalization = { 
+	key:undefined,
+	patientKey:undefined,
+	facility:'',
+	reason:'',
+	admissionTypeLkey:undefined,
+	dateOfAdmission:0,
+	lengthOfStay:0,
+	outcomes:'',
+	medicalInterventionsPerformed:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApPatientIds:modelTypes.ApPatientIds = { 
 	key:undefined,
 	patientKey:undefined,
@@ -3200,6 +3255,25 @@ export const newApPatientProblem:modelTypes.ApPatientProblem = {
 	isValid:undefined,
 } 
 
+export const newApPatientProblems:modelTypes.ApPatientProblems = { 
+	key:undefined,
+	patientKey:undefined,
+	condition:'',
+	dateOfDiagnosis:0,
+	statusLkey:undefined,
+	typeLkey:undefined,
+	dateOfResolution:0,
+	sourceOfInformationLkey:undefined,
+	byPatient:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApPatientRelation:modelTypes.ApPatientRelation = { 
 	key:undefined,
 	patientKey:undefined,
@@ -3221,6 +3295,55 @@ export const newApPatientSecondaryDocuments:modelTypes.ApPatientSecondaryDocumen
 	documentTypeLkey:undefined,
 	documentNo:'',
 	patientKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApPatientSocialHistory:modelTypes.ApPatientSocialHistory = { 
+	key:undefined,
+	patientKey:undefined,
+	currentSmoker:undefined,
+	smokeStartDate:0,
+	cigaretteAmount:0,
+	cigaretteType:'',
+	previousSmoker:undefined,
+	smokeQuitDate:0,
+	exposureToSecondHandSmoke:undefined,
+	alcoholConsumption:undefined,
+	typeOfAlcohol:'',
+	alcoholSinceWhen:0,
+	substanceUse:undefined,
+	routeLkey:undefined,
+	frequencyLkey:undefined,
+	physicalLimitationLkey:undefined,
+	diagnosedEatingDisordersLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApPatientSurgicalHistory:modelTypes.ApPatientSurgicalHistory = { 
+	key:undefined,
+	patientKey:undefined,
+	surgery:'',
+	dateOfSurgery:0,
+	facility:'',
+	other:undefined,
+	otherDesc:'',
+	anesthesiaTypeLkey:undefined,
+	complicationsLkey:undefined,
+	adverseReactionsToAnesthesiaLkey:undefined,
+	isImplantsOrDevices:undefined,
+	implantsOrDevicesDescription:'',
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -4076,8 +4199,8 @@ export const newApSnomedCode:modelTypes.ApSnomedCode = {
 export const newApTeleConsultation:modelTypes.ApTeleConsultation = { 
 	id:'',
 	questionToConsultant:'',
-	consultantFacilityId:'',
-	consultantDepartmentId:'',
+	fromFacilityId:0,
+	fromDepartmentId:0,
 	specialtyLkey:undefined,
 	urgencyLkey:undefined,
 	expectedResponse:'',
@@ -4097,6 +4220,8 @@ export const newApTeleConsultation:modelTypes.ApTeleConsultation = {
 	callStartedBy:'',
 	callColsedAt:0,
 	callColsedBy:'',
+	toDepartmentId:0,
+	toFacilityId:0,
 } 
 
 export const newApTeleConsultationCallLog:modelTypes.ApTeleConsultationCallLog = { 
@@ -4370,6 +4495,12 @@ export const newApUserAccessPrivatePatient:modelTypes.ApUserAccessPrivatePatient
 	deletedAt:undefined,
 	reason:'',
 	patientKey:undefined,
+} 
+
+export const newApUserDashboardComponents:modelTypes.ApUserDashboardComponents = { 
+	key:undefined,
+	userId:0,
+	componentKey:undefined,
 } 
 
 export const newApUserFacilities:modelTypes.ApUserFacilities = { 

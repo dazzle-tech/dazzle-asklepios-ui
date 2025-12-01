@@ -45,6 +45,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
 import MyModal from '@/components/MyModal/MyModal';
 import ViewAppointmentRequests from './ViewAppointmentRequests';
+import { useEnumOptions } from '@/services/enumsApi';
 
 
 const ScheduleScreen = () => {
@@ -75,7 +76,8 @@ const ScheduleScreen = () => {
   const [calendarDate, setCalendarDate] = useState<Date>(null);
   const [finalAppointments, setFinalAppointments] = useState();
 
-  const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+  const ResourceTypeEnum = useEnumOptions("ResourceType");
+
   const { data: resourcesWithAvailabilityResponse } =
     useGetResourcesWithAvailabilityQuery(listRequest);
 
@@ -122,13 +124,11 @@ const ScheduleScreen = () => {
         const isHidden = appointment?.appointmentStatus === 'Canceled';
         return {
           id: appointment?.key,
-          title: ` ${appointment?.patient?.fullName}, ${
-            isNaN(dob) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
-          }Y  ${
-            !(currentView === 'day' || currentView === 'week')
+          title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
+            }Y  ${!(currentView === 'day' || currentView === 'week')
               ? ', ' + (resource?.resourceName || 'Unknown Resource')
               : ''
-          }
+            }
  `, // Customize title as needed
           start: convertDate(appointment.appointmentStart),
           end: convertDate(appointment.appointmentEnd),
@@ -378,7 +378,7 @@ const ScheduleScreen = () => {
               <CalenderSimpleIcon style={{ fontSize: '17px' }} />
             </div>
 
-            <strong style={{ fontSize: '19px', marginInline: '8px', color: mode === 'light' ? '#2D3B4C' : 'var(--white)'}}>
+            <strong style={{ fontSize: '19px', marginInline: '8px', color: mode === 'light' ? '#2D3B4C' : 'var(--white)' }}>
               {localVisibleAppointments.length}
             </strong>
             <span style={{ fontSize: '14px', color: '#969FB0' }}>{totalAppointmentsText}</span>
@@ -391,10 +391,10 @@ const ScheduleScreen = () => {
             onClick={() => onNavigate('TODAY')}
             className='btn-scheduling'
           >
-           Today
+            Today
           </button>
 
-          <button className='btn-scheduling' style={{ margin: '7px', height: '35px',color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('PREV')}>
+          <button className='btn-scheduling' style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('PREV')}>
             <ArrowLeftLineIcon />
           </button>
           <Button
@@ -404,7 +404,7 @@ const ScheduleScreen = () => {
               display: showDatePicker ? 'none' : 'inline-block',
               border: 'none',
               height: '35px',
-              color: mode === 'light' ? 'black' : 'var(--white)' 
+              color: mode === 'light' ? 'black' : 'var(--white)'
             }}
           >
             <strong>{label}</strong>
@@ -433,9 +433,9 @@ const ScheduleScreen = () => {
           </button>
         </div>
 
-        <ButtonGroup style={{ borderRadius: '5px', backgroundColor:  'var(--rs-border-primary)' }} size="md">
+        <ButtonGroup style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }} size="md">
           <Button
-          className='btn-scheduling'
+            className='btn-scheduling'
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.MONTH), onView(Views.MONTH);
@@ -444,7 +444,7 @@ const ScheduleScreen = () => {
             <Text>Month</Text>
           </Button>
           <Button
-          className='btn-scheduling'
+            className='btn-scheduling'
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.WEEK), onView(Views.WEEK);
@@ -453,7 +453,7 @@ const ScheduleScreen = () => {
             <Text>Week</Text>
           </Button>
           <Button
-          className='btn-scheduling'
+            className='btn-scheduling'
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.DAY), onView(Views.DAY);
@@ -462,13 +462,13 @@ const ScheduleScreen = () => {
             <Text>Day</Text>
           </Button>
           <Button
-          className='btn-scheduling'
+            className='btn-scheduling'
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.AGENDA), onView(Views.AGENDA);
             }}
           >
-           <Text>Agenda</Text>
+            <Text>Agenda</Text>
           </Button>
         </ButtonGroup>
       </div>
@@ -565,8 +565,8 @@ const ScheduleScreen = () => {
   ]);
 
   useEffect(() => {
-    console.log(resourceTypeQueryResponse?.object ?? []);
-  }, [resourceTypeQueryResponse]);
+    console.log(ResourceTypeEnum ?? []);
+  }, [ResourceTypeEnum]);
 
   const hexToRgba = (hex, alpha = 0.1) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -695,110 +695,110 @@ const ScheduleScreen = () => {
         }}
         className="inline-two-four-container"
       >
-<div className='schedual-screen-filters-waiting-list-position'>
-<SectionContainer title={"Filters"}
-content={
-        <Panel className="left-section" bordered>
-          <div>
-            <Form fluid layout="inline">
-              <MyInput
-                disabled
-                height={'35px'}
-                width={'11.5vw'}
-                vr={validationResult}
-                column
-                fieldLabel="City"
-                fieldType="select"
-                fieldName="durationLkey"
-                selectData={[]}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={undefined}
-                // record={appointment}
-                // setRecord={setAppoitment}
-              />
-            </Form>
+        <div className='schedual-screen-filters-waiting-list-position'>
+          <SectionContainer title={"Filters"}
+            content={
+              <Panel className="left-section" bordered>
+                <div>
+                  <Form fluid layout="inline">
+                    <MyInput
+                      disabled
+                      height={'35px'}
+                      width={'11.5vw'}
+                      vr={validationResult}
+                      column
+                      fieldLabel="City"
+                      fieldType="select"
+                      fieldName="durationLkey"
+                      selectData={[]}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={undefined}
+                    // record={appointment}
+                    // setRecord={setAppoitment}
+                    />
+                  </Form>
 
-            <Form fluid layout="inline">
-              <MyInput
-                height={'35px'}
-                width={'11.5vw'}
-                column
-                fieldLabel="Facility"
-                selectData={facilityListResponse?.object ?? []}
-                fieldType="select"
-                selectDataLabel="facilityName"
-                selectDataValue="key"
-                fieldName="facilityKey"
-                record={selectedFacility}
-                setRecord={setSelectedFacility}
-                searchable={false}
-              />
-            </Form>
-            <Form fluid layout="inline">
-              <MyInput
-                height={'35px'}
-                width={'11.5vw'}
-                vr={validationResult}
-                column
-                fieldLabel="Resources Type"
-                fieldType="multyPicker"
-                fieldName="resourcesType"
-                selectData={resourceTypeQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={selectedResourceType}
-                setRecord={setSelectedResourceType}
-                searchable={false}
-              />
-            </Form>
+                  <Form fluid layout="inline">
+                    <MyInput
+                      height={'35px'}
+                      width={'11.5vw'}
+                      column
+                      fieldLabel="Facility"
+                      selectData={facilityListResponse?.object ?? []}
+                      fieldType="select"
+                      selectDataLabel="facilityName"
+                      selectDataValue="key"
+                      fieldName="facilityKey"
+                      record={selectedFacility}
+                      setRecord={setSelectedFacility}
+                      searchable={false}
+                    />
+                  </Form>
+                  <Form fluid layout="inline">
+                    <MyInput
+                      height={'35px'}
+                      width={'11.5vw'}
+                      vr={validationResult}
+                      column
+                      fieldLabel="Resources Type"
+                      fieldType="multyPicker"
+                      fieldName="resourcesType"
+                      selectData={ResourceTypeEnum ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={selectedResourceType}
+                      setRecord={setSelectedResourceType}
+                      searchable={false}
+                    />
+                  </Form>
 
-            <Form fluid layout="inline">
-              <MyInput
-                height={'35px'}
-                width={'11.5vw'}
-                column
-                fieldLabel="Resources"
-                selectData={
-                  filteredResourcesList.length > 0
-                    ? filteredResourcesList
-                    : (!selectedResourceType?.resourcesType || selectedResourceType?.resourcesType.length == 0)
-                    ? resourcesWithAvailabilityResponse?.object
-                    : []
-                }
-                fieldType="multyPicker"
-                selectDataLabel="resourceName"
-                selectDataValue="key"
-                fieldName="resourceKey"
-                record={selectedResources}
-                setRecord={setSelectedResources}
-              />
-            </Form>
-            <div></div>
-            <Checkbox onChange={() => setShowCanceled(!showCanceled)}>Show Canceled</Checkbox>
-          </div>
-
-
+                  <Form fluid layout="inline">
+                    <MyInput
+                      height={'35px'}
+                      width={'11.5vw'}
+                      column
+                      fieldLabel="Resources"
+                      selectData={
+                        filteredResourcesList.length > 0
+                          ? filteredResourcesList
+                          : (!selectedResourceType?.resourcesType || selectedResourceType?.resourcesType.length == 0)
+                            ? resourcesWithAvailabilityResponse?.object
+                            : []
+                      }
+                      fieldType="multyPicker"
+                      selectDataLabel="resourceName"
+                      selectDataValue="key"
+                      fieldName="resourceKey"
+                      record={selectedResources}
+                      setRecord={setSelectedResources}
+                    />
+                  </Form>
+                  <div></div>
+                  <Checkbox onChange={() => setShowCanceled(!showCanceled)}>Show Canceled</Checkbox>
+                </div>
 
 
-        </Panel>}/>
 
-<SectionContainer title={"WAITING LIST"}
-content={
-          <div style={{ width: '100%', height: 300, marginTop: 18, overflow: 'auto' }}>
-            {data.map(item => (
-              <Panel key={item.id} style={{ height: '37', marginBottom: 10 }}>
-                <Stack direction="row" spacing={10}>
-                  <Avatar style={{ fontSize: '37px' }} circle src={item.avatar} alt="Avatar" />
-                  <div>
-                    <p style={{ fontSize: '14px', margin: 0 }}>{item.name}</p>
-                    <p style={{ fontSize: '12px', margin: 0 }}>{item.date}</p>
-                  </div>
-                </Stack>
-              </Panel>
-            ))}
-          </div>}/>
-</div>
+
+              </Panel>} />
+
+          <SectionContainer title={"WAITING LIST"}
+            content={
+              <div style={{ width: '100%', height: 300, marginTop: 18, overflow: 'auto' }}>
+                {data.map(item => (
+                  <Panel key={item.id} style={{ height: '37', marginBottom: 10 }}>
+                    <Stack direction="row" spacing={10}>
+                      <Avatar style={{ fontSize: '37px' }} circle src={item.avatar} alt="Avatar" />
+                      <div>
+                        <p style={{ fontSize: '14px', margin: 0 }}>{item.name}</p>
+                        <p style={{ fontSize: '12px', margin: 0 }}>{item.date}</p>
+                      </div>
+                    </Stack>
+                  </Panel>
+                ))}
+              </div>} />
+        </div>
         {/* =================== Right Side ============= */}
 
         <Panel bordered className="right-section">
@@ -844,15 +844,15 @@ content={
             {/* Right  */}
             <div>
               {/* <ButtonToolbar> */}
-              <div style={{display: 'flex', gap: '5px'}}>
+              <div style={{ display: 'flex', gap: '5px' }}>
 
-              <MyButton
-                appearance="ghost"
-                onClick={() => setAppRequestModalOpen(true)}
-                prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
-              >
-                View App Requests
-              </MyButton>
+                <MyButton
+                  appearance="ghost"
+                  onClick={() => setAppRequestModalOpen(true)}
+                  prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
+                >
+                  View App Requests
+                </MyButton>
 
                 <MyButton
                   // color="blue"
@@ -889,7 +889,7 @@ content={
                 >
                   <Translate>Add New Appointments</Translate>
                 </MyButton>
-                </div>
+              </div>
               {/* </ButtonToolbar> */}
             </div>
           </div>
@@ -1061,20 +1061,20 @@ content={
         </Modal.Body>
       </Modal>
 
-        <MyModal
-          open={appRequestModalOpen}
-          setOpen={setAppRequestModalOpen}
-          title={"View Appoimtment Request"}
-          bodyheight="80vh"
-          size="70vw"
-          actionButtonLabel="Confirm"
-          actionButtonFunction={() => {
-            console.log('Action confirmed!');
-            setModalOpen(false);
-          }}
-          content={<ViewAppointmentRequests></ViewAppointmentRequests>}
-          >
-        </MyModal>
+      <MyModal
+        open={appRequestModalOpen}
+        setOpen={setAppRequestModalOpen}
+        title={"View Appoimtment Request"}
+        bodyheight="80vh"
+        size="70vw"
+        actionButtonLabel="Confirm"
+        actionButtonFunction={() => {
+          console.log('Action confirmed!');
+          setModalOpen(false);
+        }}
+        content={<ViewAppointmentRequests></ViewAppointmentRequests>}
+      >
+      </MyModal>
 
     </div>
   );

@@ -1,155 +1,102 @@
-import React, { useEffect, useState } from 'react';
-import MyInput from '@/components/MyInput';
-import { Col, Dropdown, Form, Input, InputGroup, Row } from 'rsuite';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
-import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
-import SearchIcon from '@rsuite/icons/Search';
-import { useGetActiveIngredientQuery, useGetGenericMedicationQuery } from '@/services/medicationsSetupService';
+import React, { useEffect } from "react";
+import { Form } from "rsuite";
+import MyInput from "@/components/MyInput";
+import { useEnumOptions } from "@/services/enumsApi";
+import { useGetAllBrandMedicationsQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
+
 const BasicInf = ({ product, setProduct, disabled }) => {
+  const productType = useEnumOptions("ProductTypes");
 
-    const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
-    const [listRequest, setListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-        ],
-    });
-    const { data: brandMedicationListResponseLoading } = useGetGenericMedicationQuery(listRequest);
-    const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery(listRequest);
+const { data: brandMedicationList } = useGetAllBrandMedicationsQuery({
+  page: 0,
+  size: 500,
+  sort: "id,asc",
+});
+
+console.log("Brand Medication:", brandMedicationList);
+console.log("Brand Medication Sample:", brandMedicationList?.data?.[0]);
 
 
-    useEffect(() => {
-        const medCode = brandMedicationListResponseLoading?.object?.find(item => item.key === product?.medicationKey)?.code || "";
-        const medName = brandMedicationListResponseLoading?.object?.find(item => item.key === product?.medicationKey)?.genericName || "";
-        // const medActive = brandMedicationListResponseLoading?.object?.find(item => item.key === product?.medicationKey)?.activeIngredientKey || "";
-        // const medATC = activeIngredientListResponseData?.object?.find(item => item.key === medActive)?.atcCode || "";
+useEffect(() => {
+  if (product?.type !== "MEDICATION") return;
 
-        setProduct(prev => ({
-            ...prev,
-            code: medCode,
-            name: medName
-        }));
-    }, [
-        product.medicationKey 
+  const med = brandMedicationList?.data?.find(
+    item => item.id === product?.brandId
+  );
 
-    ]);
+  setProduct(prev => ({
+    ...prev,
+    code: med?.code ?? prev.code,
+    name: med?.name ?? prev.name,
+  }));
+}, [product.type, product.brandId, brandMedicationList]);
 
+  return (
+    <>
+      <Form fluid>
+        <MyInput
+          fieldLabel="Type"
+          fieldName="type"
+          fieldType="select"
+          selectData={productType ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={product}
+          setRecord={setProduct}
+          menuMaxHeight={200}
+          width={400}
+          searchable={false}
+          disabled={disabled}
+          required
+        />
+      </Form>
 
-    useEffect(() => {
-        setListRequest(
-            {
-                ...initialListRequest,
-                filters: [
-                    {
-                        fieldName: 'deleted_at',
-                        operator: 'isNull',
-                        value: undefined
-                    }
-                ],
-            }
-        );
-    }, [product]);
-    return (
-        <>
-            <Form fluid layout="inline">
-                <MyInput
-                    fieldLabel="Type"
-                    fieldName="typeLkey"
-                    fieldType="select"
-                    selectData={productTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={product}
-                    setRecord={setProduct}
-                    menuMaxHeight={200}
-                    width={400}
-                    searchable={false}
-                    disabled={disabled}
-                />
-            </Form>
-            {product.typeLkey === '5274597115605262' &&
-                
-               <Form >
-                    <MyInput
-                        fieldLabel="Brand Medication"
-                        fieldName="medicationKey"
-                        fieldType="select"
-                        selectData={brandMedicationListResponseLoading?.object ?? []}
-                        selectDataLabel="genericName"
-                        selectDataValue="key"
-                        record={product}
-                        setRecord={setProduct}
-                        menuMaxHeight={200}
-                        width={480}
-                        searchable={true}
-                        disabled={disabled}
-                    />
-
-                    <MyInput
-                        column
-                        fieldLabel="Name"
-                        fieldName="name"
-                        record={product}
-                        setRecord={setProduct}
-                        disabled={true}
-                    />
-                    <MyInput
-                        fieldLabel="Medication Code"
-                        fieldName="code"
-                        record={product}
-                        setRecord={setProduct}
-                        disabled={true}
-                    />
-                    <MyInput
-                        fieldLabel="ATC code"
-                        fieldName='medATC'
-                        record={product}
-                        setRecord={setProduct}
-                        disabled={true}
-                    />
-               </Form>
-            }
-            {product.typeLkey !== '5274597115605262' &&
-           (
-                <Form fluid layout="inline">
-                    <MyInput
-                        fieldLabel="Name"
-                        fieldName="name"
-                        record={product}
-                        setRecord={setProduct}
-                        disabled={disabled}
-                    />
-
-                    <MyInput
-                        fieldLabel="Code"
-                        fieldName="code"
-                        record={product}
-                        setRecord={setProduct}
-                        disabled={disabled}
-                    />
-                </Form>
-           )
-
-            }
+      {product.type === "MEDICATION" ? (
+        <Form fluid>
+          <MyInput
+            fieldLabel="Brand Medication"
+            fieldName="brandId"
+            fieldType="select"
+            selectData={brandMedicationList?.data ?? []}
+            selectDataLabel="name"
+            selectDataValue="id"
+            record={product}
+            setRecord={setProduct}
+            menuMaxHeight={200}
+            width={400}
+            searchable={true}
+            disabled={disabled}
+            required
+          />
 
 
-            <Form fluid layout="inline">
-                <MyInput
-                    column
-                    fieldLabel="Barcode / QR code"
-                    fieldName="barecode"
-                    record={product}
-                    setRecord={setProduct}
-                    disabled={disabled}
-                />
-            </Form>
-        </>
-    )
+
+
+<div className="flex-row-product-set-up-page">
+          <MyInput fieldLabel="Name" fieldName="name"   disabled record={product} setRecord={setProduct}/>
+          <MyInput fieldLabel="Code" fieldName="code"   disabled record={product} setRecord={setProduct}/> </div>
+          {/* <MyInput fieldLabel="ATC Code" fieldName="medATC" disabled record={product} setRecord={setProduct}/> */}
+        </Form>
+      ) : (
+        <Form fluid>
+          <div className="flex-row-product-set-up-page">
+          <MyInput fieldLabel="Name" fieldName="name" record={product} setRecord={setProduct} disabled={disabled} required/>
+          <MyInput fieldLabel="Code" fieldName="code" record={product} setRecord={setProduct} disabled={disabled}/></div>
+        </Form>
+      )}
+
+      {/* 🧾 Barcode */}
+      <Form fluid>
+        <MyInput
+          fieldLabel="Barcode / QR Code"
+          fieldName="barcode"
+          record={product}
+          setRecord={setProduct}
+          disabled={disabled}
+        />
+      </Form>
+    </>
+  );
 };
 
 export default BasicInf;
