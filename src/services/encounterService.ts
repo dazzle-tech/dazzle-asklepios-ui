@@ -1032,7 +1032,30 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+       getUserDashboardComponents: builder.query({
+                  query: userId => ({
+                    url: `/encounter/user-dashboard-components-list/${userId}`
+                  }),
+            
+                        onQueryStarted: onQueryStarted,
+                        keepUnusedDataFor: 5
+                }),
 
+    addUserDashboardComponents: builder.mutation({
+      query: UserDashboardComponents => ({
+        url: `/encounter/add-user-dashboard-components`,
+        method: 'POST',
+        body: UserDashboardComponents
+      }),
+    }),
+
+    deleteUserDashboardComponents: builder.mutation({
+      query: UserDashboardComponents => ({
+        url: `/encounter/delete-user-dashboard-components`,
+        method: 'DELETE',
+         body: UserDashboardComponents
+      }),
+    }),
 
 
   }),
@@ -1146,5 +1169,7 @@ export const {
   useGetTeleConsultationCallLogListQuery,
   useSaveTelephonicConsultationOrderMutation,
   useGetTelephonicConsultationOrdersListQuery,
-
+ useGetUserDashboardComponentsQuery,
+ useAddUserDashboardComponentsMutation,
+ useDeleteUserDashboardComponentsMutation
 } = encounterService;
