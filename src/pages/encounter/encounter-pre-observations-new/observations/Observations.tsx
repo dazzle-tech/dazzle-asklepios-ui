@@ -30,12 +30,14 @@ type ObservationsProps = {
   patient?: any;
   encounter?: any;
   edit?: boolean;
+ 
 }; //edit
 const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
   useImperativeHandle(ref, () => ({
     handleSave,
     handleClear
   }));
+  
   const location = useLocation();
   const state = location.state || {};
   const patient = props.patient || state.patient;
@@ -252,14 +254,14 @@ const [painLevel, setPainLevel] = useState(0);
   return (
     <div ref={ref} className={clsx('basuc-div', { 'disabled-panel': edit })}>
       <Form fluid>
-        {!(location.pathname == '/nurse-station') && (
+     
           <Row>
             <Col md={23}></Col>
             <Col md={1}>
               <MyButton onClick={handleSave}>Save</MyButton>
             </Col>
           </Row>
-        )}
+        
         <Row>
           <Col md={12}>
             <Row>
