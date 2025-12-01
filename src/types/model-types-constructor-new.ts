@@ -778,6 +778,17 @@ export const newVisitDuration: modelTypes.VisitDuration = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
+export const newPriceList: modelTypes.PriceList = {
+  id: undefined,
+  facilityId: null,
+  facilityIds: [],
+  name: "",
+  type: "",
+  effectiveFrom: "",
+  effectiveTo: null,
+  description: "",
+  isActive: true,
+};
 
 export const newReportTemplate: modelTypes.ReportTemplate={
   id: 0,
