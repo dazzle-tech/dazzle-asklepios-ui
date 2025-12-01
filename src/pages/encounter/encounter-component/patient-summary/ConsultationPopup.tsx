@@ -73,6 +73,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
   const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
   const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
 
+
   const tableColumns = [
     {
       key: 'consultantFacilityId',
