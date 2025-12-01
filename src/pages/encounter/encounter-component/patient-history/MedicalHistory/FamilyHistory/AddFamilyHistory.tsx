@@ -1,62 +1,97 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { faPeopleRoof } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPeopleRoof } from '@fortawesome/free-solid-svg-icons';
+import { newApPatientFamilyHistory } from '@/types/model-types-constructor';
+import { useSavePatientFamilyHistoryMutation } from '@/services/patientService';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 
-const AddFamilyHistory = ({ open, setOpen }) => {
+const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
 
-    // Fetch LOV data for various fields
-     const { data: relationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
+  const dispatch = useAppDispatch();
+  const [formData, setFormData] = useState(newApPatientFamilyHistory);
 
-    // Modal Content 
-    const content = (
-        <Form fluid layout='inline' className='fields-container'>
-            <MyInput
-                width={200}
-                column
-                fieldLabel="Condition"
-                fieldName=""
-                record={""}
-                setRecord={""}
-            />
-           <MyInput
-                width={200}
-                column
-                fieldLabel="Realation"
-                fieldType="select"
-                fieldName=""
-                selectData={relationLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={""}
-                setRecord={""}
-                searchable={false}
-            />
-               <MyInput
-                width={200}
-                column
-                fieldLabel="Inherited Diseases"
-                fieldType="checkbox"
-                fieldName=""
-                record={""}
-                setRecord={""}
-            />
-        </Form>
-    )
-    return (
-        <MyModal
-            open={open}
-            setOpen={setOpen}
-            title="Add/Edit Family History"
-            steps={[{title: "Family History",icon: <FontAwesomeIcon icon={faPeopleRoof}/>}]}
-            actionButtonFunction={""}
-            position='right'
-            size='33vw'
-            content={content}
-        ></MyModal>
-    );
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    } else {
+      setFormData({ ...newApPatientFamilyHistory, patientKey: patient?.key });
+    }
+  }, [initialData, open]);
+
+  const { data: relationLov } = useGetLovValuesByCodeQuery('RELATION');
+
+  const [saveFamily] = useSavePatientFamilyHistoryMutation();
+
+  const save = () => {
+    saveFamily(formData)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: "Saved successfully", sev: "success" }));
+        setOpen(false);
+      })
+      .catch(() =>
+        dispatch(notify({ msg: "Saving failed", sev: "error" }))
+      );
+  };
+
+  const content = (
+    <Form fluid layout="inline" className="fields-container">
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Condition"
+        fieldName="condition"
+        record={formData}
+        setRecord={setFormData}
+        required
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Relation"
+        fieldType="select"
+        selectData={relationLov?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        fieldName="relationLkey"
+        record={formData}
+        setRecord={setFormData}
+        searchable={false}
+        required
+      />
+
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Inherited Diseases"
+        fieldType="checkbox"
+        fieldName="inheritedDiseases"
+        record={formData}
+        setRecord={setFormData}
+      />
+
+    </Form>
+  );
+
+  return (
+    <MyModal
+      open={open}
+      setOpen={setOpen}
+      title="Add/Edit Family History"
+      steps={[{ title: "Family History", icon: <FontAwesomeIcon icon={faPeopleRoof} /> }]}
+      actionButtonFunction={save}
+      position="right"
+      size="33vw"
+      content={content}
+    />
+  );
 };
+
 export default AddFamilyHistory;
