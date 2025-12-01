@@ -195,7 +195,7 @@ const EncounterPreObservations = ({}) => {
                   />
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="8" title="Service & Products">
-                  <ServiceAndProductsTab edit={propsData.edit} />
+                  <ServiceAndProductsTab edit={propsData.edit} patient={propsData.patient} encounter={propsData.encounter} />
                 </Tabs.Tab>
               </Tabs>
             </Panel>

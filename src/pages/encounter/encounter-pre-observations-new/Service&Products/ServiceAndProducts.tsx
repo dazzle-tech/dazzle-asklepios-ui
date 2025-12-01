@@ -9,9 +9,14 @@ import { faStar } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { useGetProductQuery, useGetServicesQuery } from '@/services/setupService';
+import { useGetProductQuery } from '@/services/setupService';
+import { useGetServicesQuery } from '@/services/setup/serviceService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import authSlice from '@/reducers/authSlice';
+import { useAppSelector } from '@/hooks';
+import { ApNurseServiceProduct } from '@/types/model-types';
+import { newApNurseServiceProduct } from '@/types/model-types-constructor';
 
 // Local fallback service list
 const servicesList = [
@@ -33,16 +38,23 @@ const initialTableData = [
   { id: 3, category: 'Service', name: 'Vital Signs',   type: 'Service', quantity: 1 }
 ];
 
-const ServiceAndProductsTab = ({ edit: propEdit }) => {
+const ServiceAndProductsTab = ({ edit: propEdit,  patient, encounter }) => {
   // List request params for API
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 100
   });
 
+   const authSlice = useAppSelector(state => state.auth);
+
+  const page = 0;
+  const size = 100;
+  const sort = 'id,asc';
+
   // Fetch products & services from API
   const { data: productListResponse } = useGetProductQuery(listRequest);
-  const { data: serviceListResponse } = useGetServicesQuery(listRequest);
+  const { data: serviceListResponse } = useGetServicesQuery({ facilityId: authSlice.user?.tenant, page, size, sort });
+
 
   // Table data
   const [data, setData] = useState(initialTableData);
@@ -66,12 +78,15 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     serviceKey: ''
   });
 
+  const [nurseServiceAndProduct, setNurseServiceAndProduct] = useState<ApNurseServiceProduct>({...newApNurseServiceProduct});
+
   // Base unit of measurement for selected item
   const [baseUOM, setBaseUOM] = useState('');
 
   // Open modal for adding new entry
   const handleAddNewService = () => {
     setFormData({ category: '', itemId: '', quantity: '' });
+    setNurseServiceAndProduct({...newApNurseServiceProduct});
     setBaseUOM('');
     setPopupOpen(true);
   };
