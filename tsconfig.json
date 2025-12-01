@@ -21,5 +21,11 @@
     }
   },
   "exclude": ["node_modules"],
-  "include": ["./src/**/*.ts", "./src/**/*.tsx", "src/components/MyToast/MyToast.tsc", "src/StimulsoftReportViewer.tsx"]
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "src/components/MyToast/MyToast.tsc",
+    "src/StimulsoftReportViewer.tsx",
+    "tailwind.config.js"
+  ]
 }
