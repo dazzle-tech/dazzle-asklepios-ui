@@ -293,8 +293,6 @@ export const store = configureStore({
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
     // Price List Item
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
-
-
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>

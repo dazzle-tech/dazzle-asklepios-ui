@@ -2225,6 +2225,7 @@ export interface ApNurseServiceProduct {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	brandId:number;
 } 
 
 export interface ApOperationAnesthesiaCarePlan { 
@@ -3194,6 +3195,7 @@ export interface ApPatientObservationSummary {
 	platestFunctionalStatus:string;
 	latestCognitiveCheck:string;
 	platestCognitiveCheck:string;
+	reasonOfVisit:string;
 } 
 
 export interface ApPatientPlan { 
@@ -4760,5 +4762,27 @@ export interface ApWarehouseUser {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
+} 
+export interface AppUser { 
+	id:;
+	login:string;
+	passwordHash:string;
+	firstName:string;
+	lastName:string;
+	email:string;
+	imageUrl:string;
+	activated:boolean;
+	langKey:string;
+	resetKey:string;
+	createdBy:string;
+	createdDate:;
+	resetDate:;
+	lastModifiedBy:string;
+	lastModifiedDate:;
+	phoneNumber:string;
+	birthDate:Date;
+	gender:string;
+	jobRole:string;
+	securityAccessLeve:string;
 } 
 

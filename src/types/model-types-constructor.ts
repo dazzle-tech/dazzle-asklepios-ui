@@ -2226,6 +2226,7 @@ export const newApNurseServiceProduct:modelTypes.ApNurseServiceProduct = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	brandId:0,
 } 
 
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 
@@ -4764,4 +4765,26 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	isvalid:undefined,
 } 
 
+export const newAppUser:modelTypes.AppUser = { 
+	id:undefined,
+	login:'',
+	passwordHash:'',
+	firstName:'',
+	lastName:'',
+	email:'',
+	imageUrl:'',
+	activated:undefined,
+	langKey:undefined,
+	resetKey:undefined,
+	createdBy:'',
+	createdDate:undefined,
+	resetDate:undefined,
+	lastModifiedBy:'',
+	lastModifiedDate:undefined,
+	phoneNumber:'',
+	birthDate:null,
+	gender:'',
+	jobRole:'',
+	securityAccessLeve:'',
+} 
 

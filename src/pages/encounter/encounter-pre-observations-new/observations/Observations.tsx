@@ -274,11 +274,11 @@ const [painLevel, setPainLevel] = useState(0);
                         <Col md={24}>
                           <MyInput
                             width="100%"
-                            fieldName="ReasonOfVisit"
+                            fieldName="reasonOfVisit"
                             disabled={isEncounterStatusClosed || readOnly}
                             fieldType="textarea"
-                            record={localEncounter}
-                            setRecord={setLocalEncounter}
+                            record={patientObservationSummary}
+                            setRecord={setPatientObservationSummary}
                           />
                         </Col>
                       </Row>
