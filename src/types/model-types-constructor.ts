@@ -4257,6 +4257,8 @@ export const newApTelephonicConsultation:modelTypes.ApTelephonicConsultation = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	cancellationReason: "",
+
 } 
 
 export const newApTenant:modelTypes.ApTenant = { 
