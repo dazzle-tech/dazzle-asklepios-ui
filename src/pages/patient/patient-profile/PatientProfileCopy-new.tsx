@@ -1,32 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { type ApPatient } from '@/types/model-types';
-import { notify } from '@/utils/uiReducerActions';
-import { useLocation } from 'react-router-dom';
-import ReactDOMServer from 'react-dom/server';
-import { Col, DOMHelper, Panel, Row, Text } from 'rsuite';
-import ProfileHeader from './ProfileHeader-new';
-import ProfileSidebar from './ProfileSidebar-new';
-import ProfileTabs from './ProfileTabs-new';
-import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
-import PatientVisitHistory from './PatientVisitHistory';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import {
   usePatientListByRoleCandidateMutation,
   useSavePatientMutation
 } from '@/services/patientService';
-import clsx from 'clsx';
 import { useLazyGetCandidatesByDepartmentKeyQuery } from '@/services/setupService';
-import PatientDuplicate from './patientsDuplicate';
-import SectionContainer from '@/components/SectionsoContainer';
-import PatientVisitHistoryTable from './PatientVisitHistoryTable';
-import PatientAppointments from './PatientAppointments';
+import { type ApPatient } from '@/types/model-types';
+import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import { notify } from '@/utils/uiReducerActions';
+import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Col, DOMHelper, Panel, Row } from 'rsuite';
 import BedsideRegistrationsModal from './BedsideRegistrations';
-import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import BulkRegistration from './BulkRegistration';
-import Translate from '@/components/Translate';
+import PatientAppointments from './PatientAppointments';
+import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
+import PatientDuplicate from './patientsDuplicate';
+import PatientVisitHistory from './PatientVisitHistory';
+import PatientVisitHistoryTable from './PatientVisitHistoryTable';
+import ProfileHeader from './ProfileHeader-new';
+import ProfileSidebar from './ProfileSidebar-new';
+import ProfileTabs from './ProfileTabs-new';
+import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 
 const { getHeight } = DOMHelper;
 
@@ -218,7 +217,6 @@ console.log('inside patient profile copy new');
       dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
-
   return (
     <>
       <div className="patient-profile-container">
@@ -239,7 +237,7 @@ console.log('inside patient profile copy new');
             setOpenBedsideRegistrations={setOpenBedsideRegistrations}
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
-            
+            setLocalPatient={setLocalPatient}
           />
 
           <div className="container-of-tabs-reg">

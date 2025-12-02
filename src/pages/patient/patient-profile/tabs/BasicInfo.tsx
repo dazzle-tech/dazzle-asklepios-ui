@@ -3,13 +3,13 @@ import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 
 const BasicInfo = ({
- validationResult,
- localPatient,
- setLocalPatient,
- genderLovQueryResponse,
- ageFormatType,
- ageGroupValue,
- patientClassLovQueryResponse
+  validationResult,
+  localPatient,
+  setLocalPatient,
+  genderLovQueryResponse,
+  ageFormatType,
+  ageGroupValue,
+  patientClassLovQueryResponse
 }) => {
   return (
     <Form layout="inline">
@@ -59,7 +59,7 @@ const BasicInfo = ({
         searchable={false}
       />
       <MyInput
-       required
+        required
         vr={validationResult}
         column
         fieldType="date"
