@@ -227,6 +227,7 @@ export const store = configureStore({
     [ageGroupService.reducerPath]: ageGroupService.reducer,
 
     [Icd10Service.reducerPath]: Icd10Service.reducer,
+    [ResourceService.reducerPath]: ResourceService.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
