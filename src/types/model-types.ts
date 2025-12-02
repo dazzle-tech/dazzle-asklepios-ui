@@ -3195,6 +3195,7 @@ export interface ApPatientObservationSummary {
 	platestFunctionalStatus:string;
 	latestCognitiveCheck:string;
 	platestCognitiveCheck:string;
+	reasonOfVisit:string;
 } 
 
 export interface ApPatientPlan { 
