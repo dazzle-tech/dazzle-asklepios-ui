@@ -23,10 +23,14 @@ import React, { useEffect, useState } from "react";
 import { FaUndo } from "react-icons/fa";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { useDispatch } from "react-redux";
-import { Form, Panel } from "rsuite";
+import { Form, Panel, Tooltip, Whisper } from "rsuite";
 import "./styles.less";
 import { PriceList } from "@/types/model-types-new";
 import AddEditPriceList from "./AddEditPriceList";
+
+// ✅ new imports
+import { MdPlaylistAdd } from "react-icons/md";
+import AddEditPriceListItem from "./AddEditPriceListItem";
 
 const PriceLists = () => {
   const dispatch = useDispatch();
@@ -37,6 +41,11 @@ const PriceLists = () => {
   const [openAddEdit, setOpenAddEdit] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [stateOfDeleteModal, setStateOfDeleteModal] = useState("deactivate");
+
+  // ✅ state for items modal
+  const [openItemsModal, setOpenItemsModal] = useState(false);
+  const [selectedPriceListForItems, setSelectedPriceListForItems] =
+    useState<PriceList | null>(null);
 
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: "", value: "" });
   const [isFiltered, setIsFiltered] = useState(false);
@@ -205,17 +214,32 @@ const PriceLists = () => {
     </div>
   );
 
+  // ✅ new icon column renderer
+  const itemsIcon = (rowData: PriceList) => (
+    <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Items</Tooltip>}>
+      <span
+        className="icons-style"
+        style={{ cursor: "pointer", display: "inline-flex" }}
+        onClick={(e) => {
+          e.stopPropagation();
+            setPriceList(rowData);
+          setSelectedPriceListForItems(rowData);
+          setOpenItemsModal(true);
+        
+        }}
+      >
+        <MdPlaylistAdd size={22} />
+      </span>
+    </Whisper>
+  );
+
   const tableColumns = [
     {
       key: "facilityId",
       title: <Translate>Facility</Translate>,
       flexGrow: 3,
       render: (rowData: any) =>
-        conjureValueBasedOnIDFromList(
-          allFacilities,
-          rowData?.facilityId,
-          "name"
-        )
+        conjureValueBasedOnIDFromList(allFacilities, rowData?.facilityId, "name")
     },
     { key: "name", title: <Translate>Name</Translate>, flexGrow: 4 },
     {
@@ -243,6 +267,15 @@ const PriceLists = () => {
         <p>{rowData.isActive ? "Active" : "Inactive"}</p>
       )
     },
+
+    // ✅ add items icon column BEFORE actions (or where you want)
+    {
+      key: "items",
+      title: <Translate>Items</Translate>,
+      flexGrow: 1,
+      render: (rowData: PriceList) => itemsIcon(rowData)
+    },
+
     {
       key: "icons",
       title: "",
@@ -383,6 +416,14 @@ const PriceLists = () => {
         setPriceList={setPriceList}
         width={width}
         onSaved={() => setPaginationParams({ ...paginationParams, timestamp: Date.now() })}
+      />
+
+      {/* ✅ Items modal */}
+      <AddEditPriceListItem
+        open={openItemsModal}
+        setOpen={setOpenItemsModal}
+        priceList={priceList}
+        
       />
 
       <DeletionConfirmationModal

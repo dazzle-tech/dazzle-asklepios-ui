@@ -787,7 +787,7 @@ export const newPriceList: modelTypes.PriceList = {
   effectiveFrom: "",
   effectiveTo: null,
   description: "",
-  isActive: true,
+  isActive: false,
 };
 
 export const newReportTemplate: modelTypes.ReportTemplate={
@@ -802,5 +802,16 @@ export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTem
   diagnosticTest: null,
   name: null,
   templateValue: null,
+  isActive: true,
+};
+export const newPriceListItem: modelTypes.PriceListItem = {
+  id: undefined,
+  priceListId: 0,
+  itemType: null,
+  productType: null,
+  serviceId: null,
+  productId: null,
+  price: 0,
+  discountAllowed: false,
   isActive: true,
 };
