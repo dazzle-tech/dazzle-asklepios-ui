@@ -5,7 +5,7 @@ FROM node:18 AS build
 WORKDIR /app
 
 # Increase Node/V8 heap for build tools (documented via NODE_OPTIONS / --max-old-space-size)
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_OPTIONS="--max-old-space-size=6096"
 
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
@@ -17,7 +17,7 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 # Build the application
-RUN NODE_OPTIONS="--max-old-space-size=8192" npm run build
+RUN npm run build
 
 # Use Nginx to serve the application
 FROM nginx:alpine
