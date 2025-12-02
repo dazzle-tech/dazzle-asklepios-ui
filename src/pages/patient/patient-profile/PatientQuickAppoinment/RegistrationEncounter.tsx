@@ -101,16 +101,22 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
 
   // Initialize List Request Filters
   const { data: departmentListResponse } = useGetAppointableDepartmentsQuery({
+    facilityId: localEncounter?.facilityKey,
     page: 0,
     size: 1000,
     sort: 'id,asc'
+  }, {
+    skip: !localEncounter?.facilityKey
   });
   const [resourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
   const { data: dayCaseDepartmentListResponse } = useGetAppointableDepartmentByTypeQuery({
     type: 'DAY_CASE',
+    facilityId: localEncounter?.facilityKey,
     page: 0,
     size: 1000,
     sort: 'id,asc'
+  }, {
+    skip: !localEncounter?.facilityKey
   });
   // Fetches the list of resource availability times.
   const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
@@ -207,7 +213,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
           value: localEncounter.facilityKey || undefined
         },
         {
-          fieldName: 'status_lkey',
+          fieldName: 'encounter_status_lkey',
           operator: 'not_match',
           value: '91098528988200' // Exclude cancelled encounters
         }

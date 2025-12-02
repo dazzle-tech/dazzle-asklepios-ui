@@ -79,10 +79,10 @@ export const departmentService = createApi({
       providesTags: ['Department'],
     }),
 
-    // GET /api/setup/department/appointable?page=&size=&sort=
-    getAppointableDepartments: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc', timestamp }) => ({
-        url: '/api/setup/department/appointable',
+    // GET /api/setup/department/appointable/{facilityId}?page=&size=&sort=
+    getAppointableDepartments: builder.query<PagedResult<any>, { facilityId: number | string } & PagedParams>({
+      query: ({ facilityId, page, size, sort = 'id,asc', timestamp }) => ({
+        url: `/api/setup/department/appointable/${facilityId}`,
         params: { page, size, sort },
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
@@ -96,10 +96,10 @@ export const departmentService = createApi({
       providesTags: ['Department'],
     }),
 
-    // GET /api/setup/department/appointable/by-type/{type}?page=&size=&sort=
-    getAppointableDepartmentByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
-      query: ({ type, page, size, sort = 'id,asc' }) => ({
-        url: `/api/setup/department/appointable/by-type/${type}`,
+    // GET /api/setup/department/appointable/by-type/{type}/{facilityId}?page=&size=&sort=
+    getAppointableDepartmentByType: builder.query<PagedResult<any>, { type: string; facilityId: number | string } & PagedParams>({
+      query: ({ type, facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/department/appointable/by-type/${type}/${facilityId}`,
         params: { page, size, sort },
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
