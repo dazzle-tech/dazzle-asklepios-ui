@@ -21,49 +21,17 @@ import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 
-const Textarea = React.forwardRef<any, any>((props, ref) => (
+const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
 
-const SafeDatePicker = React.forwardRef<any, any>((props, ref) => {
-  // Create a completely clean props object with ONLY what DatePicker needs
-  const cleanProps: any = {
-    value: props.value || null,
-    onChange: props.onChange,
-    disabled: props.disabled || false,
-    placeholder: props.placeholder || '',
-    open: props.open,
-    onOpen: props.onOpen,
-    onClose: props.onClose,
-    placement: props.placement || 'bottomStart',
-    preventOverflow: props.preventOverflow || false,
-    onKeyDown: props.onKeyDown,
-    format: props.format,
-    oneTap: props.oneTap !== undefined ? props.oneTap : true,
-    cleanable: props.cleanable !== undefined ? props.cleanable : false,
-    block: props.block !== undefined ? props.block : true,
-    className: props.className
-  };
+const CustomDatePicker = React.forwardRef((props, ref: any) => (
+  <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
+));
 
-  // Only add container if it's a function or HTMLElement
-  if (typeof props.container === 'function' || props.container instanceof HTMLElement) {
-    cleanProps.container = props.container;
-  }
-
-  // Only add style if it exists and has valid properties
-  if (props.style && typeof props.style === 'object') {
-    const cleanStyle: any = {};
-    if (props.style.width !== undefined) cleanStyle.width = props.style.width;
-    if (props.style.height !== undefined) cleanStyle.height = props.style.height;
-    if (Object.keys(cleanStyle).length > 0) {
-      cleanProps.style = cleanStyle;
-    }
-  }
-
-  return <DatePicker ref={ref} {...cleanProps} />;
-});
-
-// Remove this component, not needed anymore
+const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
+  <DatePicker {...props} oneTap format="dd-MM-yyyy HH:mm" cleanable={false} block ref={ref} />
+));
 
 const focusNextField = (e: any) => {
   if (e.key === 'Enter') {
@@ -80,18 +48,18 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check';
+  | 'text'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -175,8 +143,9 @@ const MyInput = ({
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
+
   useEffect(() => {
-    const handleScroll = (event: any) => {
+    const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
 
       const menuClassList = [
@@ -188,7 +157,7 @@ const MyInput = ({
         'rs-picker-tag-menu'
       ];
 
-      if (path.some((el: any) => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
+      if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
         return;
       }
 
@@ -203,6 +172,7 @@ const MyInput = ({
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
   }, []);
+
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -240,9 +210,9 @@ const MyInput = ({
       return props.menuMaxHeight as number;
     }
     const itemsCount = dataList?.length ?? 0;
-    const estimatedItemHeight = 38;
-    const headerAllowance = 24;
-    const capHeight = 240;
+    const estimatedItemHeight = 38; // approx item row height for rsuite pickers
+    const headerAllowance = 24; // search header/padding allowance
+    const capHeight = 240; // sensible default cap
     return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
   };
 
@@ -274,7 +244,6 @@ const MyInput = ({
     recognition.start();
     recognitionRef.current = recognition;
   };
-
   // stop speech recognition
   const stopListening = () => {
     recognitionRef.current?.stop();
@@ -294,11 +263,9 @@ const MyInput = ({
   };
 
   // Resolve a good container for popups (modal-aware), with user override
-  const resolveContainer = () => {
-    if (props.container) return props.container;
-
-    // Return the container getter function itself, not the result
-    return () => {
+  const resolveContainer = () =>
+    props.container ??
+    (() => {
       const subChildModal = document.querySelector(
         '.sub-child-right-modal .rs-modal-body'
       ) as HTMLElement;
@@ -312,27 +279,9 @@ const MyInput = ({
         return allModalBodies[allModalBodies.length - 1] as HTMLElement;
       }
       return document.body;
-    };
-  };
-
-  // Helper function to safely convert value to Date
-  const getDateValue = (value: any): Date | null => {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    try {
-      const date = new Date(value);
-      return isNaN(date.getTime()) ? null : date;
-    } catch {
-      return null;
-    }
-  };
+    });
 
   const conjureFormControl = () => {
-    if (fieldType === 'date') {
-      console.log('Date field - record keys:', record ? Object.keys(record) : 'no record');
-      console.log('Date field - record[fieldName]:', record?.[fieldName]);
-    }
-
     switch (fieldType) {
       case 'textarea':
         return (
@@ -349,7 +298,7 @@ const MyInput = ({
             />
             {!props.disabled && (
               <div
-                className={clsx('container-of-search-icon-textarea', { recording })}
+                className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
                 onClick={changeRecordingState}
                 style={{ position: 'relative' }}
               >
@@ -377,31 +326,42 @@ const MyInput = ({
           />
         );
 
-      case 'datetime': {
+      case 'datetime':
         return (
-          <div style={{ width: props?.width ?? 145 }}>
-            <DatePicker
-              value={getDateValue(record?.[fieldName])}
-              onChange={handleValueChange}
-              disabled={props.disabled}
-              placeholder={props.placeholder}
-              format="dd-MM-yyyy HH:mm"
-              oneTap
-              cleanable={false}
-              block
-            />
-          </div>
+          <Form.Control
+            className="custom-date-input"
+            style={
+              {
+                width: props?.width ?? 145,
+                '--input-height': `${props?.height ?? 30}px`
+              } as React.CSSProperties
+            }
+            disabled={props.disabled}
+            name={fieldName}
+            value={record[fieldName] ? new Date(record[fieldName]) : null}
+            accepter={CustomDateTimePicker}
+            onChange={handleValueChange}
+            placeholder={props.placeholder}
+            onKeyDown={focusNextField}
+            open={isDateTimeOpen}
+            onOpen={() => setIsDateTimeOpen(true)}
+            onClose={() => setIsDateTimeOpen(false)}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
+            container={resolveContainer()}
+          />
         );
-      }
 
       case 'time':
         return (
           <Form.Control
             className="custom-time-input"
-            style={{
-              width: props?.width ?? 145,
-              height: props?.height ?? 30
-            }}
+            style={
+              {
+                width: props?.width ?? 145,
+                '--custom-time-input': `${props?.height ?? 30}px`
+              } as React.CSSProperties
+            }
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? record[fieldName] : null}
@@ -425,11 +385,7 @@ const MyInput = ({
         return (
           <Form.Control
             style={{ width: styleWidth, height: props?.height ?? 30 }}
-            className={clsx(
-              'arrow-number-style',
-              'my-input',
-              inputColor && `input-${inputColor}`
-            )}
+            className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -467,28 +423,26 @@ const MyInput = ({
           <Form.Control
             name={fieldName}
             style={{ width: styleWidth, height: props?.height ?? 30 }}
-            className={clsx(
-              'arrow-number-style',
-              'my-input',
-              inputColor && `input-${inputColor}`
-            )}
+            className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
             searchKeyWard={props?.searchKeyWard}
-            onSearch={searchText => {
+            // setSearchKeyWard={props?.setSearchKeyWard}
+            onSearch={(searchText) => {
+             
               props.setSearchKeyWard?.(searchText);
             }}
             data={[
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                    {
-                      [valueKey]: '_load_more_',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
+                  {
+                    [valueKey]: '__load_more__',
+                    [labelKey]: 'Load more...',
+                    isLoadMore: true
+                  }
+                ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -553,12 +507,12 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : []}
-            onChange={handleValueChange}
+            value={record ? record[fieldName] : []} // Multiple values as array
+            onChange={handleValueChange} // Pass handler for multiple value selection
             placeholder={props.placeholder ?? 'Select...'}
-            creatable={props.creatable ?? false}
-            groupBy={props.groupBy ?? null}
-            searchBy={props.searchBy}
+            creatable={props.creatable ?? false} // Optional: Allow users to create new tags
+            groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
+            searchBy={props.searchBy} // Optional: Search function for TagPicker
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isMultyPickerOpen}
@@ -581,11 +535,11 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : []}
-            onChange={handleValueChange}
+            value={record ? record[fieldName] : []} // Multiple values as array
+            onChange={handleValueChange} // Pass handler for multiple value selection
             placeholder={props.placeholder ?? 'Select...'}
-            groupBy={props.groupBy ?? null}
-            searchBy={props.searchBy}
+            groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
+            searchBy={props.searchBy} // Optional: Search function for checkPicker
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isCheckPickerOpen}
@@ -594,41 +548,31 @@ const MyInput = ({
           />
         );
 
-      case 'date': {
-        // Workaround for rsuite bug - use native HTML5 date input
-        const dateValue = record?.[fieldName]
-          ? new Date(record[fieldName]).toISOString().split('T')[0]
-          : '';
-
-        const handleNativeDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const dateString = e.target.value;
-          if (dateString) {
-            const date = new Date(dateString);
-            handleValueChange(date);
-          } else {
-            handleValueChange(null);
-          }
-        };
-
+      case 'date':
         return (
-          <input
-            type="date"
-            value={dateValue}
-            onChange={handleNativeDateChange}
+          <Form.Control
+            className="custom-date-input"
+            style={
+              {
+                width: props?.width ?? 145,
+                '--input-height': `${props?.height ?? 30}px`
+              } as React.CSSProperties
+            }
             disabled={props.disabled}
+            name={fieldName}
+            value={record[fieldName] ? new Date(record[fieldName]) : null}
+            accepter={CustomDatePicker}
+            onChange={handleValueChange}
             placeholder={props.placeholder}
-            style={{
-              width: props?.width ?? 145,
-              height: props?.height ?? 30,
-              padding: '5px 10px',
-              border: '1px solid #e5e5ea',
-              borderRadius: '6px',
-              fontSize: '14px'
-            }}
             onKeyDown={focusNextField}
+            open={isDateOpen}
+            onOpen={() => setIsDateOpen(true)}
+            onClose={() => setIsDateOpen(false)}
+            placement={pickerPlacement}
+            preventOverflow={pickerPreventOverflow}
+            container={resolveContainer()}
           />
         );
-      }
 
       case 'number': {
         const numInputWidth = props?.width ?? 145;
@@ -655,7 +599,7 @@ const MyInput = ({
 
         const inputControl = (
           <Form.Control
-            className={clsx('arrow-number-style', inputColor && `input-${inputColor}`)}
+            className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
             style={{
               width: numInputWidth,
               height: props?.height ?? 30,
@@ -741,9 +685,7 @@ const MyInput = ({
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
         const inputControl = (
-          <div
-            style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}
-          >
+          <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
             <Form.Control
               labelKey={props?.selectDataLabel ?? ''}
               style={{
@@ -769,7 +711,7 @@ const MyInput = ({
             />
             {!props.disabled && (
               <div
-                className={clsx('container-of-search-icon', { recording })}
+                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
                 onClick={changeRecordingState}
               >
                 <FontAwesomeIcon
@@ -818,8 +760,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
+                  ? 'orange'
+                  : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
@@ -831,11 +773,7 @@ const MyInput = ({
 
   return (
     <Form.Group
-      className={clsx(
-        'my-input-container',
-        className,
-        mode === 'light' ? 'light' : 'dark'
-      )}
+      className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
     >
       <Form.ControlLabel>
         {showLabel && (
