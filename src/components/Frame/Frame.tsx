@@ -47,10 +47,7 @@ import MyButton from '../MyButton/MyButton';
 import { setSelectedDepartment } from '@/reducers/authSlice';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import {
-  useGetActiveUserDepartmentsByUserQuery,
-  useGetDefaultUserDepartmentByUserQuery
-} from '@/services/security/userDepartmentsService';
+import { useGetActiveUserDepartmentsByUserQuery } from '@/services/security/userDepartmentsService';
 import { conjureValueBasedOnIDFromList } from '@/utils';
 import { UserDepartment } from '@/types/model-types-new';
 
@@ -115,15 +112,8 @@ const Frame = (props: FrameProps) => {
   });
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
   const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
-  const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
-  const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
-    userId as number,
-    {
-      skip: !shouldFetchDefault
-    }
-  );
-  const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
-  const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
+  // Temporarily avoid extra default-department RTK Query call to reduce recursion risk
+  const defaultDepartmentEntity = defaultDepartmentLocal ?? null;
 
   const resolveFacilityName = useCallback(
     (facilityId?: string | number | null) => {

@@ -283,7 +283,15 @@ export const store = configureStore({
     // invoice report
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
     // Visit Duration
-    [visitDurationService.reducerPath]: visitDurationService.reducer
+    [visitDurationService.reducerPath]: visitDurationService.reducer,
+
+    // billing / templates
+    [PriceListService.reducerPath]: PriceListService.reducer,
+    [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
+    [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+
+    // resource setup
+    [ResourceService.reducerPath]: ResourceService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
