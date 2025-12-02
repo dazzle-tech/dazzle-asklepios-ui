@@ -79,6 +79,40 @@ export const departmentService = createApi({
       providesTags: ['Department'],
     }),
 
+    // GET /api/setup/department/appointable?page=&size=&sort=
+    getAppointableDepartments: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc', timestamp }) => ({
+        url: '/api/setup/department/appointable',
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: ['Department'],
+    }),
+
+    // GET /api/setup/department/appointable/by-type/{type}?page=&size=&sort=
+    getAppointableDepartmentByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
+      query: ({ type, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/department/appointable/by-type/${type}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: ['Department'],
+    }),
+
     // GET /api/setup/department/by-name/{name}?page=&size=&sort=
     getDepartmentByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
@@ -142,12 +176,15 @@ export const departmentService = createApi({
 
 export const {
   useGetDepartmentsQuery,
-
   useGetDepartmentByIdQuery,
   useGetDepartmentByFacilityQuery,
   useLazyGetDepartmentByFacilityQuery,
   useGetDepartmentByTypeQuery,
   useLazyGetDepartmentByTypeQuery,
+  useGetAppointableDepartmentsQuery,
+  useLazyGetAppointableDepartmentsQuery,
+  useGetAppointableDepartmentByTypeQuery,
+  useLazyGetAppointableDepartmentByTypeQuery,
   useGetDepartmentByNameQuery,
   useLazyGetDepartmentByNameQuery,
   useAddDepartmentMutation,

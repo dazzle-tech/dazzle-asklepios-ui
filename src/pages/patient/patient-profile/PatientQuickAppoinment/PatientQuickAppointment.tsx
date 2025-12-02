@@ -27,16 +27,46 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
     const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
 
+    const validateRequiredFields = () => {
+        const missingFields: string[] = [];
+        if (!localEncounter?.facilityKey) {
+            missingFields.push('Facility');
+        }
+        if (!localEncounter?.resourceTypeLkey) {
+            missingFields.push('Resource Type');
+        }
+        if (!localEncounter?.resourceKey) {
+            missingFields.push('Resource');
+        }
+        if (!localEncounter?.visitTypeLkey) {
+            missingFields.push('Visit Type');
+        }
+        if (missingFields.length > 0) {
+            const lines = missingFields.map(field => `• ${field}: is required`);
+            dispatch(
+                notify({
+                    msg: `Please fix the following fields:\n${lines.join('\n')}`,
+                    sev: 'error'
+                })
+            );
+            return false;
+        }
+        return true;
+    };
+
     // Handle Save Encounter
     const handleSave = () => {
+        if (!validateRequiredFields()) {
+            return;
+        }
         if (localEncounter && localEncounter.patientKey) {
             saveEncounter({
                 ...localEncounter,
                 patientKey: localPatient.key,
                 plannedStartDate: new Date(),
-                encounterStatusLkey: ["4217389643435490", "5433343011954425", "2039548173192779"].includes(localEncounter?.resourceTypeLkey) ? "5256965920133084" : localEncounter?.resourceTypeLkey === "6743167799449277" ? "8890456518264959" : encounterStatusNew,
+                encounterStatusLkey: ["4217389643435490", "5433343011954425", "2039548173192779",'INPATIENT_ADMISSION','DAY_CASE','PROCEDURE'].includes(localEncounter?.resourceTypeLkey) ? "5256965920133084" : localEncounter?.resourceTypeLkey === "EMERGENCY" ? "8890456518264959" : encounterStatusNew,
                 patientAge: calculateAgeFormat(localPatient.dob),
-                visitTypeLkey: ['2039534205961578', '2039516279378421'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null
+                visitTypeLkey: ['2039534205961578', '2039516279378421','CLINIC','PRACTITIONER'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null
             }).unwrap().then(() => {
             }).catch((e) => {
 
@@ -111,7 +141,6 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 );
         };
     };
-
     return (
         <MyModal
             open={quickAppointmentModel}
