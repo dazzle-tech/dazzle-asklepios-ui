@@ -102,9 +102,19 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         dept?.facilityId === selectedDepartment.facilityId
     );
   const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
-  // Temporarily rely only on activeDepartments to resolve default department
-  // to avoid extra RTK Query traffic that was contributing to recursion issues.
-  const defaultDepartmentEntity = defaultDepartmentLocal ?? null;
+  const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
+
+  const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
+    userId as number,
+    {
+      skip: !shouldFetchDefault
+    }
+  );
+
+  const defaultDepartment = (defaultDepartmentResponse ?? null) as
+    | UserDepartmentWithNames
+    | null;
+  const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
   const selectedDepartmentEffective =
     storedDepartmentMatch ??
     defaultDepartmentEntity ??

@@ -1,7 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { useEffect } from 'react';
 import { Panel, FlexboxGrid, Col } from 'rsuite';
-import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import DynamicBarChart from '@/components/Charts/DynamicBarChart/DynamicBarChart';
@@ -10,24 +9,27 @@ import { TitleWithIcon } from '@/components/Charts/DynamicTableChart/TitleWithIc
 import DynamicMainTableChart from '@/components/Charts/DynamicTableChart/DynamicMainTableChart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icons';
-//kkk
 const Dashboard = () => {
   const dispatch = useAppDispatch();
-  const divContent = (
-        "Dashboard"
-  );
-  dispatch(setPageCode('Dashboard'));
-  dispatch(setDivContent(divContent));
+
   useEffect(() => {
+    const divContent = "Dashboard";
+    dispatch(setPageCode('Dashboard'));
+    dispatch(setDivContent(divContent));
+
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch]);
+  }, [dispatch]);
+
+  console.log("Dashboard Rendered");
 
   return (
     <Panel>
       <FlexboxGrid>
+
+        {/* Bar Chart */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
           <Panel
             bordered
@@ -52,6 +54,8 @@ const Dashboard = () => {
             />
           </Panel>
         </FlexboxGrid.Item>
+
+        {/* Pie Chart */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
           <Panel
             bordered
@@ -76,6 +80,8 @@ const Dashboard = () => {
             />
           </Panel>
         </FlexboxGrid.Item>
+
+        {/* Diagnoses Table */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel>
             <DynamicMainTableChart
@@ -103,6 +109,8 @@ const Dashboard = () => {
             />
           </Panel>
         </FlexboxGrid.Item>
+
+        {/* Medications Table */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel>
             <DynamicMainTableChart
@@ -132,6 +140,7 @@ const Dashboard = () => {
           </Panel>
         </FlexboxGrid.Item>
 
+        {/* Lab Findings */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel>
             <DynamicMainTableChart
@@ -158,6 +167,7 @@ const Dashboard = () => {
             />
           </Panel>
         </FlexboxGrid.Item>
+
       </FlexboxGrid>
     </Panel>
   );
