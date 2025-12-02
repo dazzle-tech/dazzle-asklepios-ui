@@ -2225,6 +2225,7 @@ export interface ApNurseServiceProduct {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	brandId:number;
 } 
 
 export interface ApOperationAnesthesiaCarePlan { 

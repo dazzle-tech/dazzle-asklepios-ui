@@ -2226,6 +2226,7 @@ export const newApNurseServiceProduct:modelTypes.ApNurseServiceProduct = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	brandId:0,
 } 
 
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 

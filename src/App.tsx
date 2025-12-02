@@ -84,6 +84,7 @@ import EncounterPreObservationsNew from './pages/encounter/encounter-pre-observa
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import Observations from './pages/encounter/encounter-pre-observations-new/observations/Observations';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
+import ServiceAndProductsNew from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
 import Warning from './pages/encounter/encounter-pre-observations/warning';
 import EncounterRegistration from './pages/encounter/encounter-registration';
@@ -481,6 +482,7 @@ const App = () => {
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
+                 <Route path="service-and-products" element={<ServiceAndProductsNew />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
@@ -613,7 +615,7 @@ const App = () => {
               <Route path="physician-order-summary" element={<PhysicianOrderSummary />} />
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
-              <Route path="service-and-products" element={<ServiceAndProducts />} />
+              {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums/> }/>
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
