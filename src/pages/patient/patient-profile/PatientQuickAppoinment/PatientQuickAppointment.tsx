@@ -41,6 +41,10 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
         if (!localEncounter?.visitTypeLkey) {
             missingFields.push('Visit Type');
         }
+        // Validate department for PRACTITIONER resource type
+        if ((localEncounter?.resourceTypeLkey === '2039534205961578' || localEncounter?.resourceTypeLkey === 'PRACTITIONER') && !localEncounter?.departmentKey) {
+            missingFields.push('Department');
+        }
         if (missingFields.length > 0) {
             const lines = missingFields.map(field => `• ${field}: is required`);
             dispatch(
