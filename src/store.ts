@@ -98,6 +98,7 @@ import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTe
 import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
+import { PriceListItemService } from './services/billing/PriceListItemService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -289,6 +290,8 @@ export const store = configureStore({
    // Templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+    // Price List Item
+    [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
 
   },
@@ -390,6 +393,7 @@ export const store = configureStore({
       PriceListService.middleware,
       ReportTemplateService.middleware,
       DiagnosticTestTemplateService.middleware,
+      PriceListItemService.middleware,
     ])
 });
 
