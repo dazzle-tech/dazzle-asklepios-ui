@@ -202,6 +202,7 @@ import InventoryManagementWarehouseItemsSetup from './pages/inventory-management
 import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
 import PriceLists from './pages/billing-module/priceList/PriceLists';
 import MyConsultations from './components/MyConsultations/MyConsultations';
+import { any } from 'prop-types';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -489,7 +490,7 @@ const App = () => {
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
-                 <Route path="service-and-products" element={<ServiceAndProductsNew />} />
+                 <Route path="service-and-products" element={<ServiceAndProductsNew edit={any} />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
@@ -624,7 +625,7 @@ const App = () => {
               <Route path="language-setup" element={<LanguagesSetup />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums/> }/>
-              <Route path="service-and-products" element={<ServiceAndProducts />} />
+              {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums />} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
