@@ -479,20 +479,17 @@ const DiagnosticsOrder = props => {
 
 const handleSubmitPres = async () => {
 
-  // 1) فحص الـ tests بدون Department
   const missingTests =
     orderTestList?.object
       ?.filter(item => !item.receivedLabId)
       ?.map(item => item.test?.testName || 'Unnamed Test') || [];
 
-  // 2) إذا في ناقص → افتح المودال وارجع
   if (missingTests.length > 0) {
-    setMissingDeptList(missingTests);      // خزن القائمة
-    setMissingDeptModalOpen(true);         // افتح المودال
-    return;                                // لا تكمل
+    setMissingDeptList(missingTests);
+    setMissingDeptModalOpen(true);         
+    return;                         
   }
 
-  // تابع باقي submit كما هو
   try {
     await saveOrders({
       ...orders,
