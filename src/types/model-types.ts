@@ -4255,6 +4255,7 @@ export interface ApTelephonicConsultation {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+  	cancellationReason: string,
 } 
 
 export interface ApTenant { 
