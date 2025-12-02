@@ -9,6 +9,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
+import '@/patches/prototypeShield';
 import {
   useGetPatientProfilePictureQuery,
   useUploadAttachmentsMutation

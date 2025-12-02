@@ -60,6 +60,7 @@ import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/med
 import { newApDrugOrderMedications } from '@/types/model-types-constructor';
 import SampleModal from '@/pages/lab-module/SampleModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 const DiagnosticsOrder = props => {
   const location = useLocation();
@@ -124,6 +125,8 @@ const DiagnosticsOrder = props => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [drugKey, setDrugKey] = useState(null);
   const [openToAdd, setOpenToAdd] = useState(true);
+  const [missingDeptModalOpen, setMissingDeptModalOpen] = useState(false);
+  const [missingDeptList, setMissingDeptList] = useState([]); 
   const [openSampleModal, setOpenSampleModal] = useState(false);
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
@@ -474,33 +477,49 @@ const DiagnosticsOrder = props => {
     }
   };
 
-  const handleSubmitPres = async () => {
-    try {
-      await saveOrders({
-        ...orders,
-        statusLkey: '1804482322306061',
-        saveDraft: false,
-        submittedAt: Date.now()
-      }).unwrap();
-      dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
-      ordersRefetch();
-      orderTestRefetch();
-    } catch (error) {
-      console.error('Error saving :', error);
-    }
+const handleSubmitPres = async () => {
 
-    orderTestList?.object?.map(item => {
-      if (item.statusLkey !== '1804447528780744') {
-        saveOrderTests({ ...item, statusLkey: '1804482322306061', submitDate: Date.now() });
-      }
-    });
-    setIsDraft(false);
-    setFlag(true);
-    await ordersRefetch();
-    orderTestRefetch().then(() => '');
-    setOrders({ ...newApDiagnosticOrders });
-    handleClearDiagnostics(); // Reset status after sending
-  };
+  const missingTests =
+    orderTestList?.object
+      ?.filter(item => !item.receivedLabId)
+      ?.map(item => item.test?.testName || 'Unnamed Test') || [];
+
+  if (missingTests.length > 0) {
+    setMissingDeptList(missingTests);
+    setMissingDeptModalOpen(true);         
+    return;                         
+  }
+
+  try {
+    await saveOrders({
+      ...orders,
+      statusLkey: '1804482322306061',
+      saveDraft: false,
+      submittedAt: Date.now()
+    }).unwrap();
+
+    dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
+    ordersRefetch();
+    orderTestRefetch();
+  } catch (error) {
+    console.error('Error saving :', error);
+  }
+
+  orderTestList?.object?.map(item => {
+    if (item.statusLkey !== '1804447528780744') {
+      saveOrderTests({ ...item, statusLkey: '1804482322306061', submitDate: Date.now() });
+    }
+  });
+
+  setIsDraft(false);
+  setFlag(true);
+  await ordersRefetch();
+  orderTestRefetch().then(() => '');
+  setOrders({ ...newApDiagnosticOrders });
+  handleClearDiagnostics();
+};
+
+
 
   const handleRecall = rowData => {
     const genericMedication = genericMedicationListResponse?.object?.find(
@@ -588,6 +607,7 @@ const DiagnosticsOrder = props => {
   const joinValuesFromArray = values => {
     return values.filter(Boolean).join(', ');
   };
+
   const tableColumns = [
     {
       key: 'check',
@@ -1309,6 +1329,37 @@ const DiagnosticsOrder = props => {
         edit={edit}
         onSave={handleSaveTest}
       />
+
+      <MyModal
+        open={missingDeptModalOpen}
+        setOpen={setMissingDeptModalOpen}
+        title="Missing Receiving Department"
+        modalColor="var(--primary-orange)"
+        steps={[
+          {
+            title: "Warning",
+            icon: <FontAwesomeIcon icon={faTriangleExclamation} />
+          }
+        ]}
+        actionButtonLabel="OK"
+        hideCancel={true}
+        content={
+          <div style={{ padding: '10px' }}>
+            <p style={{ fontWeight: 'bold', color: 'var(--primary-orange)' }}>
+              Please select a receiving department for the following tests:
+            </p>
+            <ul>
+              {missingDeptList.map((name, idx) => (
+                <li key={idx} style={{ marginBottom: '6px' }}>
+                  • {name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        }
+      />
+
+
     </>
   );
 };

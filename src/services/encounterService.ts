@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes, ApPatient, ApTeleConsultationProgressNote, ApTeleConsultationCallLog } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes, ApPatient, ApTeleConsultationProgressNote, ApTeleConsultationCallLog, ApNurseServiceProduct } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -1041,6 +1041,35 @@ export const encounterService = createApi({
                         keepUnusedDataFor: 5
                 }),
 
+       getNurseServiceProductList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/nurse-service-product-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveNurseServiceProduct: builder.mutation({
+      query: (apNurseServiceProduct: ApNurseServiceProduct) => ({
+        url: `/encounter/save-nurse-service-product`,
+        method: 'POST',
+        body: apNurseServiceProduct
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+        removeNurseServiceProduct: builder.mutation({
+      query: (apNurseServiceProduct: ApNurseServiceProduct) => ({
+        url: `/encounter/remove-nurse-service-product`,
+        method: 'POST',
+        body: apNurseServiceProduct,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
     addUserDashboardComponents: builder.mutation({
       query: UserDashboardComponents => ({
         url: `/encounter/add-user-dashboard-components`,
@@ -1167,6 +1196,9 @@ export const {
   useGetTeleConsultationProgressNotesListQuery,
   useSaveTeleConsultationCallLogMutation,
   useGetTeleConsultationCallLogListQuery,
+  useGetNurseServiceProductListQuery,
+  useSaveNurseServiceProductMutation,
+  useRemoveNurseServiceProductMutation, 
   useSaveTelephonicConsultationOrderMutation,
   useGetTelephonicConsultationOrdersListQuery,
  useGetUserDashboardComponentsQuery,

@@ -748,14 +748,14 @@ const EncounterList = () => {
       <Panel>
         <MyTable
           filters={filters()}
-          tableButtons={
-            <div className="out-patient-list-table-buttons-position-handle">
-              <MyButton onClick={() => setOpenRefillModal(true)}>
-                <FontAwesomeIcon icon={faBoxOpen} />
-                Refill Stock
-              </MyButton>
-            </div>
-          }
+          // tableButtons={
+          //   <div className="out-patient-list-table-buttons-position-handle">
+          //     <MyButton onClick={() => setOpenRefillModal(true)}>
+          //       <FontAwesomeIcon icon={faBoxOpen} />
+          //       Refill Stock
+          //     </MyButton>
+          //   </div>
+          // }
           height={600}
           data={encounterListResponse?.object ?? []}
           columns={tableColumns}
