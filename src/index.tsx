@@ -10,6 +10,15 @@ import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
+// Global safety patch for libraries that accidentally call `.startsWith` on non-string keys
+// (e.g. rsuite's `omitHideDisabledProps` when symbol keys are present).
+// This keeps normal String.startsWith behavior, but for other types coerces `this` to string.
+if (typeof Object.prototype.startsWith !== 'function') {
+  // eslint-disable-next-line no-extend-native
+  (Object.prototype as any).startsWith = function (search: any, position?: number) {
+    return String(this).startsWith(String(search), position);
+  };
+}
 
 // Only in development; avoid in production if you can.
 if (typeof window !== 'undefined') {
