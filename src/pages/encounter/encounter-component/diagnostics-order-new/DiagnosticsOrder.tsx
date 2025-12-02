@@ -475,20 +475,26 @@ const DiagnosticsOrder = props => {
   };
 
   const handleSubmitPres = async () => {
-    try {
-      await saveOrders({
-        ...orders,
-        statusLkey: '1804482322306061',
-        saveDraft: false,
-        submittedAt: Date.now()
-      }).unwrap();
-      dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
-      ordersRefetch();
-      orderTestRefetch();
-    } catch (error) {
-      console.error('Error saving :', error);
-    }
 
+  if (!orderTest?.receivedLabId) {
+    dispatch(notify({ msg: 'Please select a receiving department', sev: 'error' }));
+    return;
+  }
+
+  try {
+    await saveOrders({
+      ...orders,
+      statusLkey: '1804482322306061',
+      saveDraft: false,
+      submittedAt: Date.now()
+    }).unwrap();
+
+    dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
+    ordersRefetch();
+    orderTestRefetch();
+  } catch (error) {
+    console.error('Error saving :', error);
+  }
     orderTestList?.object?.map(item => {
       if (item.statusLkey !== '1804447528780744') {
         saveOrderTests({ ...item, statusLkey: '1804482322306061', submitDate: Date.now() });
@@ -499,7 +505,7 @@ const DiagnosticsOrder = props => {
     await ordersRefetch();
     orderTestRefetch().then(() => '');
     setOrders({ ...newApDiagnosticOrders });
-    handleClearDiagnostics(); // Reset status after sending
+    handleClearDiagnostics();
   };
 
   const handleRecall = rowData => {
@@ -588,6 +594,7 @@ const DiagnosticsOrder = props => {
   const joinValuesFromArray = values => {
     return values.filter(Boolean).join(', ');
   };
+
   const tableColumns = [
     {
       key: 'check',
