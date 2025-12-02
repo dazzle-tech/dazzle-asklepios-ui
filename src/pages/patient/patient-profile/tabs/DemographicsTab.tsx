@@ -32,6 +32,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   ageFormatType,
   ageGroupValue
 }) => {
+
   return (
     <Stack>
       <Stack.Item grow={1}></Stack.Item>
