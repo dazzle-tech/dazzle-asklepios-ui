@@ -4,9 +4,14 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
 
+// Check environment variable to determine if source maps should be generated
+// In Docker, we set this to 'false' to save memory.
+const generateSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
+
 module.exports = {
   entry: './src/index.tsx',
-  devtool: 'source-map',
+  // FIXED: Only generate source maps if the environment variable allows it
+  devtool: generateSourceMap ? 'source-map' : false,
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.json'],
   },
@@ -87,7 +92,8 @@ module.exports = {
           {
             loader: 'less-loader',
             options: {
-              sourceMap: true,
+              // FIXED: Also disable source maps for LESS if needed
+              sourceMap: generateSourceMap,
               lessOptions: { javascriptEnabled: true },
             },
           },

@@ -4,8 +4,13 @@ FROM node:18 AS build
 # Set the working directory
 WORKDIR /app
 
-# Increase Node/V8 heap for build tools (documented via NODE_OPTIONS / --max-old-space-size)
+# FIXED: Set max memory to 4GB (4096). 
+# GitHub Actions runners have 7GB total. Setting this to 8192 (8GB) causes an immediate OOM crash.
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# OPTIONAL: Disable source maps to save massive amounts of memory during build.
+# If your build still fails with 4GB RAM, this is the best fix.
+ENV GENERATE_SOURCEMAP=false
 
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
