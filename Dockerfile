@@ -7,6 +7,11 @@ WORKDIR /app
 # Increase Node/V8 heap for build tools (documented via NODE_OPTIONS / --max-old-space-size)
 ENV NODE_OPTIONS="--max-old-space-size=6096"
 
+
+# OPTIONAL: Disable source maps to save massive amounts of memory during build.
+# If your build still fails with 4GB RAM, this is the best fix.
+ENV GENERATE_SOURCEMAP=false
+
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
 
