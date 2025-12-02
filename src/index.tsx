@@ -10,6 +10,15 @@ import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
+// Patch ONLY Symbol.prototype.startsWith to avoid rsuite calling `.startsWith` on symbol keys.
+// This does not affect plain objects, so it won't confuse Redux immutability checks.
+if (typeof (Symbol.prototype as any).startsWith !== 'function') {
+  // eslint-disable-next-line no-extend-native
+  (Symbol.prototype as any).startsWith = function (search: any, position?: number) {
+    const base = this.description ?? this.toString();
+    return String(base).startsWith(String(search), position);
+  };
+}
 
 // Only in development; avoid in production if you can.
 if (typeof window !== 'undefined') {
@@ -53,9 +62,7 @@ const RootWrapper = () => {
       <RSuiteProvider theme={mode === 'dark' ? 'dark' : 'light'}>
         <StyledThemeProvider theme={styledTheme}>
           <div className={`${mode === 'light' ? 'light' : 'dark'}`}>
-            <Provider store={store}>
-              <App />
-            </Provider>
+            <App />
           </div>
         </StyledThemeProvider>
       </RSuiteProvider>

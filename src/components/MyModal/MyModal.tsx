@@ -26,8 +26,10 @@ const MyModal = ({
   actionButtonFunction = ()=>{},
   customClassName = '',
   cancelButtonLabel = 'Cancel',
-  handleCancelFunction=()=>{}
+  handleCancelFunction=()=>{},
+  modalColor = 'var(--primary-blue)'
 }) => {
+
   const [internalStep, setInternalStep] = useState(0);
   const activeStep = internalStep;
   const updateStep = setInternalStep;
@@ -65,16 +67,19 @@ const MyModal = ({
       <Divider className="divider-line" />
       <Modal.Body style={{ height: bodyheight }}>
 
-        <MyStepper
-          activeStep={activeStep}
-          stepsList={steps.map((step, index) => ({
-            key: index,
-            value:<Translate>{step.title}</Translate>,
-            description: step.description || '',
-            customIcon: step.icon ? step.icon : null,
-            isError: step.isError || false
-          }))}
-        />
+      <MyStepper
+        activeStep={activeStep}
+        stepsList={steps.map((step, index) => ({
+          key: index,
+          value:<Translate>{step.title}</Translate>,
+          description: step.description || '',
+          customIcon: step.icon ? step.icon : null,
+          isError: step.isError || false
+        }))}
+
+        modalColor={modalColor}
+      />
+
         <br />
 
         {typeof content === 'function' ? content(activeStep) : activeStep === 0 && content}

@@ -99,6 +99,7 @@ import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTe
 import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
+import { PriceListItemService } from './services/billing/PriceListItemService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -281,9 +282,17 @@ export const store = configureStore({
     [resultReportApi.reducerPath]: resultReportApi.reducer,
 
     // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
-    // Visit Duration
-    [visitDurationService.reducerPath]: visitDurationService.reducer
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
+   // Visit Duration
+    [visitDurationService.reducerPath]: visitDurationService.reducer,
+    // Price List
+    [PriceListService.reducerPath]: PriceListService.reducer,
+
+   // Templates
+    [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
+    [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+    // Price List Item
+    [PriceListItemService.reducerPath]: PriceListItemService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -385,6 +394,7 @@ export const store = configureStore({
       PriceListService.middleware,
       ReportTemplateService.middleware,
       DiagnosticTestTemplateService.middleware,
+      PriceListItemService.middleware,
     ])
 });
 
