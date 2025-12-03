@@ -204,6 +204,7 @@ import PriceLists from './pages/billing-module/priceList/PriceLists';
 import MyConsultations from './components/MyConsultations/MyConsultations';
 import PreviousMeasurements from './pages/encounter/encounter-pre-observations-new/previous-measurements';
 import { any } from 'prop-types';
+import PayerSetup from './pages/setup/payer-setup/PayerSetup';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -636,6 +637,8 @@ const App = () => {
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums/> }/>
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
+              <Route path="payer-setup" element={<PayerSetup />} />
+              <Route path="service-and-products" element={<ServiceAndProducts />} />
               <Route path='enums' element={<Enums />} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />

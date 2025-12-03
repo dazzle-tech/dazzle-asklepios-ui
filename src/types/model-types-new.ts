@@ -998,3 +998,28 @@ export interface PriceListItem {
   createdDate?: Date | null;
   lastModifiedDate?: Date | null;
 }
+
+
+export interface Payor {
+  id?: number;
+  code: string;
+  name: string;
+  category: string | null;
+  address?: string;
+  phone?: string;
+  email?: string;
+  contractManagerContact?: string;
+  startDate?: Date | string | null;
+  expiryDate?: Date | string | null;
+  renewable: boolean;
+  allowPartialCoverage: boolean;
+  acceptCopay: boolean;
+  acceptDeductibles: boolean;
+  allowPackagePricing: boolean;
+  allowDrgBilling: boolean;
+  forcePreApproval: boolean;
+  isActive: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}
+

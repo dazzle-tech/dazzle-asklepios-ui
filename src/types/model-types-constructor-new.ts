@@ -836,3 +836,24 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   discountAllowed: false,
   isActive: true,
 };
+
+export const newPayor: modelTypes.Payor = {
+  id: undefined,
+  code: "",
+  name: "",
+  category: null,
+  address: "",
+  phone: "",
+  email: "",
+  contractManagerContact: "",
+  startDate: null,
+  expiryDate: null,
+  renewable: false,
+  allowPartialCoverage: false,
+  acceptCopay: false,
+  acceptDeductibles: false,
+  allowPackagePricing: false,
+  allowDrgBilling: false,
+  forcePreApproval: false,
+  isActive: true,
+};
