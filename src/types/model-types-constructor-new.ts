@@ -790,12 +790,12 @@ export const newPriceList: modelTypes.PriceList = {
   isActive: false,
 };
 
-export const newReportTemplate: modelTypes.ReportTemplate={
+export const newReportTemplate: modelTypes.ReportTemplate = {
   id: 0,
   name: null,
   templateValue: null,
   isActive: true,
-}
+};
 
 export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTemplate = {
   id: 0,
@@ -804,6 +804,27 @@ export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTem
   templateValue: null,
   isActive: true,
 };
+
+export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM = {
+    id: undefined,
+    userId: undefined,
+    note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'',
+    createdBy: '',
+    createdDate: null,
+    lastModifiedBy: '',
+    lastModifiedDate: null
+};
+
+export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
+    userId: undefined,
+     note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'--note-purple'
+}
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,

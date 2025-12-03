@@ -160,6 +160,21 @@ export const conjureValueBasedOnKeyFromListOfValues = (
   return displayValue;
 };
 
+export const conjureOrderBasedOnKeyFromListOfValues = (
+  list: [],
+  currentKey: string,
+  preferredField: 'valueOrder'
+) => {
+  let displayValue = currentKey;
+  list.map(record => {
+
+    if (record['key'] === currentKey) {
+      displayValue = record[preferredField];
+    }
+  });
+  return displayValue;
+};
+
 export const conjureValuesFromKeys = (
   list: any[],
   keys: string[],

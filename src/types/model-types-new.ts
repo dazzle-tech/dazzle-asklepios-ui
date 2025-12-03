@@ -955,6 +955,28 @@ export interface DiagnosticTestReportTemplate{
   templateValue: string,
   isActive: boolean,
 }
+
+export interface UserStickyNotesResponseVM{
+    id: number
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+    createdBy: string
+    createdDate: Date,
+    lastModifiedBy: string,
+    lastModifiedDate: Date
+}
+
+export interface UserStickyNotesCreateVM{
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+}
+
 export interface PriceListItem {
   id?: number;
   priceListId: number;
