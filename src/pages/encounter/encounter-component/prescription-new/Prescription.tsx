@@ -5,6 +5,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import {
   useGetCustomeInstructionsQuery,
   useGetPrescriptionMedicationsQuery,
@@ -12,10 +13,8 @@ import {
   useSavePrescriptionMedicationMutation,
   useSavePrescriptionMutation
 } from '@/services/encounterService';
-import {
-  useGetGenericMedicationWithActiveIngredientQuery,
-  useGetPrescriptionInstructionQuery
-} from '@/services/medicationsSetupService';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { ApPrescriptionMedications } from '@/types/model-types';
 import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -25,22 +24,18 @@ import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
-import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import clsx from 'clsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaFilePrescription } from 'react-icons/fa6';
-import { MdModeEdit, MdAttachFile } from 'react-icons/md';
+import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 import { Checkbox, Divider, Form } from 'rsuite';
 import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNurse/AllergyFloatingButton';
 import UrgencyButton from '../drug-order/UrgencyButton';
 import DetailsModal from './DetailsModal';
 import PrescriptionPreview from './PrescriptionPreview';
-import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import './styles.less';
-import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 
 const Prescription = props => {
   const location = useLocation();
@@ -143,8 +138,8 @@ const Prescription = props => {
   };
 
   const handleRecall = async (rowData: any) => {
-    const genericMedication = genericMedicationListResponse?.object?.find(
-      item => item.key === rowData.genericMedicationsId
+    const genericMedication = genericMedicationListResponse?.data?.find(
+      item => item.id === rowData.genericMedicationsId
     );
     await Promise.resolve();
 
@@ -505,8 +500,7 @@ const Prescription = props => {
           const generic = predefinedInstructionsListResponse?.data?.find(
             item => item.id === Number(rowData.instructions)
           );
-          console.log('Generic found:', generic);
-          console.log("generic:", generic?.rout, generic?.unit, generic?.frequency,  generic?.dose);
+       
 
           if (generic) {
           } else {
@@ -746,7 +740,7 @@ const Prescription = props => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={''}
+              setRecord={() => { }}
               width={110}
             />
           </Form>
@@ -819,7 +813,7 @@ const Prescription = props => {
         <div className="mt-4">
           <PrescriptionPreview
             orderMedication={selectedPreviewMedication}
-            fluidOrder={selectedPreviewMedication?.fluidOrder ?? {}}
+            // fluidOrder={selectedPreviewMedication?.fluidOrder ?? {}}
             genericMedicationListResponse={genericMedicationListResponse}
             orderTypeLovQueryResponse={{ object: [] }}
             unitLovQueryResponse={{ object: [] }}
@@ -875,8 +869,8 @@ const Prescription = props => {
                   title: 'Medication Name',
                   render: (rowData: any) => {
                     return (
-                      genericMedicationListResponse?.object?.find(
-                        item => item.key === rowData.genericMedicationsId
+                      genericMedicationListResponse?.data?.find(
+                        item => item.id === rowData.genericMedicationsId
                       )?.name || 'Unknown Medication'
                     );
                   }
@@ -906,8 +900,8 @@ const Prescription = props => {
                     if (rowData.administrationInstructions?.lovDisplayVale) {
                       return rowData.administrationInstructions.lovDisplayVale;
                     } else if (rowData.administrationInstructions) {
-                      const instruction = predefinedInstructionsListResponse?.object?.find(
-                        item => item.key === rowData.administrationInstructions
+                      const instruction = predefinedInstructionsListResponse?.data?.find(
+                        item => item.id === rowData.administrationInstructions
                       );
                       return instruction?.lovDisplayVale || rowData.administrationInstructions;
                     }

@@ -33,6 +33,7 @@ export const onQueryStarted = async (body: any, { dispatch, queryFulfilled }: an
       dispatch(notify(data._responseMsg));
     }
   } catch (err: any) {
+    console.error('API Error:', err);
     // Handle errors
     if (err?.error?.status == 422) {
       // Validation error (Unprocessable Entity)

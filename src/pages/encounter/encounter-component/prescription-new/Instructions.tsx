@@ -22,12 +22,9 @@ const Instructions = ({
   const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({page:0, size:1000, sort:'id,asc'});
   const [filteredList, setFilteredList] = useState([]);
   const [selectedPreDefine, setSelectedPreDefine] = useState(null);
-  console.log("Selected PreDefine:", selectedPreDefine);
+ 
   const [munial, setMunial] = useState(null);
-  const {data:getPreDefinedInstructionById}= useGetPrescriptionInstructionQuery(prescriptionMedication?.instructions ?? '',{
-    skip: !prescriptionMedication?.instructions || selectedOption !== '3010591042600262',
-  });
-  console.log("getPreDefinedInstructionById:", getPreDefinedInstructionById);
+
 useEffect(() => {
   if (!selectedGeneric?.roa || !roaLovQueryResponse?.object) {
     setFilteredList([]);
