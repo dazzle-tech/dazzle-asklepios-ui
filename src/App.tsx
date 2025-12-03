@@ -492,7 +492,7 @@ const App = () => {
                   element={<PressureUlcerRiskAssessment />}
                 />
                     <Route path="previous-measurements" element={<PreviousMeasurements />} />
-                 <Route path="service-and-products" element={<ServiceAndProductsNew edit={any} />} />
+                 <Route path="service-and-products" element={<ServiceAndProductsNew />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
