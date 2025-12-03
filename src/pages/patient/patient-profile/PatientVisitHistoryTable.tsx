@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Tooltip, Form, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import {
@@ -19,7 +19,11 @@ import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { faPowerOff } from '@fortawesome/free-solid-svg-icons';
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 const PatientVisitHistoryTable = ({
   quickAppointmentModel,
@@ -54,6 +58,74 @@ const PatientVisitHistoryTable = ({
     refetch: refetchEncounter,
     isFetching
   } = useGetEncountersQuery(visitHistoryListRequest);
+
+  // Fetch all departments for lookup
+  const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
+
+  // Fetch all practitioners for lookup
+  const { data: practitionersResponse } = useGetAllPractitionersQuery({
+    page: 0,
+    size: 1000, // Fetch a large number to get all practitioners
+    sort: 'id,asc'
+  });
+
+  // Fetch all resources for lookup
+  const { data: resourcesResponse } = useGetAllResourcesQuery({
+    page: 0,
+    size: 1000, // Fetch a large number to get all resources
+    sort: 'id,asc'
+  });
+
+  // Fetch all diagnostic tests for lookup
+  const { data: diagnosticTestsResponse } = useGetAllDiagnosticTestsQuery({
+    page: 0,
+    size: 1000, // Fetch a large number to get all diagnostic tests
+    sort: 'id,asc'
+  });
+
+  // Create a department lookup map by key
+  const departmentMap = useMemo(() => {
+    if (!allDepartments) return {};
+    const map = {};
+    allDepartments.forEach(dept => {
+      if (dept.key) map[dept.key] = dept;
+      if (dept.id) map[dept.id] = dept;
+    });
+    return map;
+  }, [allDepartments]);
+
+  // Create a practitioner lookup map by key
+  const practitionerMap = useMemo(() => {
+    if (!practitionersResponse?.data) return {};
+    const map = {};
+    practitionersResponse.data.forEach(practitioner => {
+      if (practitioner.key) map[practitioner.key] = practitioner;
+      if (practitioner.id) map[practitioner.id] = practitioner;
+    });
+    return map;
+  }, [practitionersResponse]);
+
+  // Create a resource lookup map by key
+  const resourceMap = useMemo(() => {
+    if (!resourcesResponse?.data) return {};
+    const map = {};
+    resourcesResponse.data.forEach(resource => {
+      if (resource.key) map[resource.key] = resource;
+      if (resource.id) map[resource.id] = resource;
+    });
+    return map;
+  }, [resourcesResponse]);
+
+  // Create a diagnostic test lookup map by key
+  const diagnosticTestMap = useMemo(() => {
+    if (!diagnosticTestsResponse?.data) return {};
+    const map = {};
+    diagnosticTestsResponse.data.forEach(test => {
+      if (test.key) map[test.key] = test;
+      if (test.id) map[test.id] = test;
+    });
+    return map;
+  }, [diagnosticTestsResponse]);
 
  
   // Cancel encounter handler
@@ -111,28 +183,94 @@ const PatientVisitHistoryTable = ({
       title: <Translate>Department</Translate>,
       flexGrow: 4,
       dataKey: 'departmentName',
-      render: (rowData: any) =>
-        rowData?.resourceTypeLkey === '2039534205961578'
+      render: (rowData: any) => {
+        // Try to get department from the map using department_key or resource_key
+        const departmentKey = rowData?.departmentKey ;
+        const department = departmentKey ? departmentMap[departmentKey] : null;
+        
+        if (department) {
+          return department.name;
+        }
+        
+        // Fallback to original logic if department not found in map
+        return rowData?.resourceTypeLkey === '2039534205961578' || 'PRACTITIONER'
           ? rowData?.departmentName
-          : rowData.resourceObject?.name
+          : rowData.resourceObject?.name;
+      }
     },
     {
       key: 'encountertype',
       title: <Translate>Encounter Type</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.resourceObject?.departmentTypeLkey
+      render: (rowData: any) => {
+        // Try to get department from the map using department_key or resource_key
+        const departmentKey = rowData?.departmentKey;
+        const department = departmentKey ? departmentMap[departmentKey] : null;
+        
+        if (department?.encounterType) {
+          return formatEnumString(department.encounterType);
+        }
+        
+        // Fallback to original logic if department not found in map
+        return rowData.resourceObject?.departmentTypeLkey
           ? rowData.resourceObject?.departmentTypeLvalue?.lovDisplayVale
-          : rowData.resourceObject?.departmentTypeLkey
+          : rowData.resourceObject?.departmentTypeLkey;
+      }
     },
     {
       key: 'physician',
       title: <Translate>Physician</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData?.resourceTypeLkey === '2039534205961578'
-          ? rowData?.resourceObject?.practitionerFullName
-          : ''
+      render: (rowData: any) => {
+        // Get resource from resource map
+        const resourceKey = rowData?.resourceKey || rowData?.resource_key;
+        const resource = resourceKey ? resourceMap[resourceKey] : null;
+        
+        if (!resource) {
+          // Fallback to original logic if resource not found
+          return rowData?.resourceObject?.practitionerFullName || 
+                 rowData?.resourceObject?.name || '';
+        }
+        
+        // Get resource type
+        const resourceType = resource.resourceType || resource.resourceTypeLkey || resource.resourceTypeLvalue?.valueCode;
+        
+        // Based on resource type, look up the appropriate name
+        if (resourceType === 'PRACTITIONER' || resourceType === '2039534205961578') {
+          // Look up practitioner
+          const practitionerKey = resource.practitionerKey || resource.practitioner_key;
+          const practitioner = practitionerKey ? practitionerMap[practitionerKey] : null;
+          
+          if (practitioner) {
+            return practitioner.practitionerFullName || 
+                   `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
+          }
+          return resource.name || '';
+        } 
+        else if (['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)) {
+          // Look up department
+          const departmentKey = resource.departmentKey || resource.department_key;
+          const department = departmentKey ? departmentMap[departmentKey] : null;
+          
+          if (department) {
+            return department.name || department.departmentName;
+          }
+          return resource.resourceKey || '';
+        }
+        else if (['MEDICAL_TEST'].includes(resourceType)) {
+          // Look up diagnostic test
+          const diagnosticTestKey = resource.diagnosticTestKey || resource.diagnostic_test_key;
+          const diagnosticTest = diagnosticTestKey ? diagnosticTestMap[diagnosticTestKey] : null;
+          
+          if (diagnosticTest) {
+            return diagnosticTest.name || diagnosticTest.testName;
+          }
+          return resource.resourceKey || '';
+        }
+        
+        // Default: return resource name
+        return resource.resourceKey || '';
+      }
     },
     {
       key: 'priority',
@@ -288,6 +426,18 @@ const PatientVisitHistoryTable = ({
       ]
     });
   }, [localPatient]);
+
+  // Log visits list for debugging
+  useEffect(() => {
+    if (visiterHistoryResponse?.object) {
+      console.log('List of Visits:', visiterHistoryResponse.object);
+      console.log('Total Visits Count:', visiterHistoryResponse.object.length);
+      console.log('Department Map:', departmentMap);
+      console.log('Practitioner Map:', practitionerMap);
+      console.log('Resource Map:', resourceMap);
+      console.log('Diagnostic Test Map:', diagnosticTestMap);
+    }
+  }, [visiterHistoryResponse, departmentMap, practitionerMap, resourceMap, diagnosticTestMap]);
 
   return (
     <>
