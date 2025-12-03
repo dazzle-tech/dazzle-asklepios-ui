@@ -213,6 +213,12 @@ const App = () => {
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
 
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
+  useEffect(() => {
+    console.log("navigationMap");
+  console.log(navigationMap);
+  },[navigationMap]);
+  
+
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
@@ -319,6 +325,8 @@ const App = () => {
           children: childrenNavs
         });
       }
+      console.log("childrenNavs");
+      console.log(childrenNavs);
     });
 
     setNavigationMap(navsTemp);
