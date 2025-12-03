@@ -19,7 +19,7 @@ import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo from './PatientPaymentInfo';
 import AddPayment from './AddPayment';
 
-const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit, isDisabeld = false }) => {
+const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit, isDisabeld = false, onEncounterSaved }) => {
     const dispatch = useAppDispatch();
     const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
     const [validationResult, setValidationResult] = useState({});
@@ -112,12 +112,16 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     // Effects
     useEffect(() => {
         if (saveEncounterMutation && saveEncounterMutation.status === 'fulfilled') {
-            setLocalEncounter(saveEncounterMutation.data);;
+            setLocalEncounter(saveEncounterMutation.data);
             dispatch(notify({ msg: 'Encounter Saved Successfuly', sev: "success" }));
+            // Notify parent component to refresh the encounter list
+            if (onEncounterSaved) {
+                onEncounterSaved();
+            }
         } else if (saveEncounterMutation && saveEncounterMutation.status === 'rejected') {
             setValidationResult(saveEncounterMutation.error);
         }
-    }, [saveEncounterMutation]);
+    }, [saveEncounterMutation, onEncounterSaved]);
     useEffect(() => {
         if (localVisit?.key != undefined) {
             setLocalEncounter({ ...localVisit });

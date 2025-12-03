@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -9,8 +9,10 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
-import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
+import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery, useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, localPatient }) => {
   const [validationResult] = useState({});
   const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
@@ -124,8 +126,8 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
     pageSize: 10000
   });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
-  // Fetches the list of resources based on the selected resource type from the new ResourceService
-  const { data: resourcesByTypeResponse } = useGetResourcesByTypeQuery(
+  // Fetches the list of active resources based on the selected resource type from the new ResourceService
+  const { data: resourcesByTypeResponse } = useGetActiveResourcesByTypeQuery(
     {
       resourceType: localEncounter?.resourceTypeLkey,
       page: 0,
@@ -135,6 +137,106 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
       skip: !localEncounter?.resourceTypeLkey
     }
   );
+
+  // Fetch all practitioners for lookup
+  const { data: practitionersResponse } = useGetAllPractitionersQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+  // Fetch all departments for lookup
+  const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
+
+  // Fetch all diagnostic tests for lookup
+  const { data: diagnosticTestsResponse } = useGetAllDiagnosticTestsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+  // Create lookup maps
+  const practitionerMap = useMemo(() => {
+    if (!practitionersResponse?.data) return {};
+    const map = {};
+    practitionersResponse.data.forEach(practitioner => {
+      if (practitioner.key) map[practitioner.key] = practitioner;
+      if (practitioner.id) map[practitioner.id] = practitioner;
+    });
+    return map;
+  }, [practitionersResponse]);
+
+  const departmentMap = useMemo(() => {
+    if (!allDepartments) return {};
+    const map = {};
+    allDepartments.forEach(dept => {
+      if (dept.key) map[dept.key] = dept;
+      if (dept.id) map[dept.id] = dept;
+    });
+    return map;
+  }, [allDepartments]);
+
+  const diagnosticTestMap = useMemo(() => {
+    if (!diagnosticTestsResponse?.data) return {};
+    const map = {};
+    diagnosticTestsResponse.data.forEach(test => {
+      if (test.key) map[test.key] = test;
+      if (test.id) map[test.id] = test;
+    });
+    return map;
+  }, [diagnosticTestsResponse]);
+
+  // Transform resources to add display names based on resource type
+  const transformedResources = useMemo(() => {
+    if (!resourcesByTypeResponse?.data) return [];
+    
+    return resourcesByTypeResponse.data.map(resource => {
+      let displayName = resource.resourceKey || '';
+      const resourceType = resource.resourceType;
+      const lookupKey = resource.resourceKey ;
+      // Based on resource type, look up the appropriate name
+      if (resourceType === 'PRACTITIONER') {
+        // For PRACTITIONER resources, look up in practitioner map
+        // Try multiple possible key fields - resourceKey is the reference to the practitioner ID
+       
+        const practitioner = lookupKey ? practitionerMap[lookupKey] : null;
+        
+        if (practitioner) {
+          displayName = practitioner.practitionerFullName || 
+                       `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
+        }
+      } 
+      else if (['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)) {
+        // For department-based resources, look up in department map
+        // resourceKey contains the reference to the department ID
+       
+        const department = lookupKey ? departmentMap[lookupKey] : null;
+        
+        if (department) {
+          displayName = department.name ;
+        } 
+      }
+      else if (['MEDICAL_TEST'].includes(resourceType)) {
+        // For diagnostic test resources, look up in diagnostic test map
+        // resourceKey contains the reference to the diagnostic test ID
+        const diagnosticTest = lookupKey ? diagnosticTestMap[lookupKey] : null;
+        
+        if (diagnosticTest) {
+          displayName = diagnosticTest.name;
+        } 
+      }
+      
+      // Final fallback - only use if absolutely no display name found
+      if (!displayName) {
+        displayName = resource.resourceKey || 'Unknown Resource';
+      }
+      
+      return {
+        ...resource,
+        displayName
+      };
+    });
+  }, [resourcesByTypeResponse, practitionerMap, departmentMap, diagnosticTestMap]);
 
   // Effects
   useEffect(() => {
@@ -287,11 +389,11 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         fieldLabel="Resources"
         selectData={
           localEncounter?.resourceTypeLkey
-            ? resourcesByTypeResponse?.data ?? []
+            ? transformedResources
             : []
         }
         fieldType="select"
-        selectDataLabel="resourceKey"
+        selectDataLabel="displayName"
         selectDataValue="id"
         fieldName="resourceKey"
         record={localEncounter}
