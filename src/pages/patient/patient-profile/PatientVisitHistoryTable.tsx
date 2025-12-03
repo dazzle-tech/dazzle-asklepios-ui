@@ -279,9 +279,9 @@ const PatientVisitHistoryTable = ({
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         const tooltipComplete = <Tooltip>Complete Visit</Tooltip>;
         const tooltipDischarge = <Tooltip>Discharge Visit</Tooltip>;
-        const dischargeResources = ['BRT_INPATIENT', 'BRT_DAYCASE', 'BRT_PROC', 'BRT_EMERGENCY'];
+        const dischargeResources = ['INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'];
         const isDischargeResource = dischargeResources.includes(
-          rowData?.resourceTypeLvalue?.valueCode
+          rowData?.resourceTypeLKey
         );
 
         return (
