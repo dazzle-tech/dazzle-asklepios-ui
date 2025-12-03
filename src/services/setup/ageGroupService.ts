@@ -116,11 +116,17 @@ export const ageGroupService = createApi({
       }),
       invalidatesTags: ['AgeGroup'],
     }),
+    getAgeGroupByBirthDate: builder.query<any, { birthDate: string }>({
+      query: ({ birthDate }) => ({
+        url: '/api/setup/age-group/by-birthdate',
+        params: { birthDate }
+      }),
+      providesTags: ['AgeGroup']
+    })
   }),
 });
 
 export const {
-  // QUERIES
   useGetAgeGroupsQuery,
   useGetAgeGroupsByFacilityQuery,
   useLazyGetAgeGroupsByFacilityQuery,
@@ -130,9 +136,9 @@ export const {
   useLazyGetAgeGroupsByFromAgeQuery,
   useGetAgeGroupsByToAgeQuery,
   useLazyGetAgeGroupsByToAgeQuery,
-
-  // MUTATIONS
   useAddAgeGroupMutation,
   useUpdateAgeGroupMutation,
   useDeleteAgeGroupMutation,
+  useGetAgeGroupByBirthDateQuery,
+  useLazyGetAgeGroupByBirthDateQuery,
 } = ageGroupService;

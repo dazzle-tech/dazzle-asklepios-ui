@@ -76,7 +76,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
 
-  const [painLevel, setPainLevel] = useState(0);
+  const [painLevel, setPainLevel] = useState({latestpainlevel : 0});
 
   const [isGeneratingReport, setIsGeneratingReport] = useState(false); // <== ADDED
 
@@ -236,7 +236,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         platestpainlevelLkey:
           lastObservationSummary?.latestpainlevelLkey || '',
         platestbmi: lastObservationSummary?.latestbmi,
-        page: lastObservationSummary?.age
+        page: lastObservationSummary?.age,
+        latestpainlevel: painLevel.latestpainlevel as any
       }).unwrap();
 
       if (encounter.chiefComplaint !== localEncounter.chiefComplaint) {
@@ -299,7 +300,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     handleClear,
     handleGenerateReport
   }));
-
+ useEffect(() => {
+    if (patientObservationSummary?.latestpainlevel != null) {
+      setPainLevel({
+        latestpainlevel: patientObservationSummary.latestpainlevel as number
+      });
+    }
+  }, [patientObservationSummary]);
   return (
     <div ref={ref as any} className={clsx('basuc-div', { 'disabled-panel': edit })}>
       <Form fluid>
@@ -513,11 +520,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
                       <Col md={12}>
                         <div className="pain-level-container">
-                          <MyLabel label={`Pain Level (${painLevel}-10)`} />
+                          <MyLabel label={`Pain Level (${painLevel.latestpainlevel}-10)`} />
                           <div className="slider-class" style={{ position: 'relative' }}>
                             <Slider
-                              value={painLevel}
-                              onChange={value => setPainLevel(value as number)}
+                              value={painLevel.latestpainlevel}
+                              onChange={value => setPainLevel({latestpainlevel: value as number})}
                               min={0}
                               max={10}
                               step={1}
@@ -530,8 +537,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                                 top: '52%',
                                 left: 0,
                                 height: '7px',
-                                width: `${(painLevel / 10) * 100}%`,
-                                backgroundColor: getTrackColor(painLevel),
+                                width: `${(painLevel.latestpainlevel / 10) * 100}%`,
+                                backgroundColor: getTrackColor(painLevel.latestpainlevel),
                                 transform: 'translateY(-50%)',
                                 zIndex: 1,
                                 transition: 'background-color 0.2s ease',

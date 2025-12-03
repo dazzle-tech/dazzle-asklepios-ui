@@ -955,6 +955,28 @@ export interface DiagnosticTestReportTemplate{
   templateValue: string,
   isActive: boolean,
 }
+
+export interface UserStickyNotesResponseVM{
+    id: number
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+    createdBy: string
+    createdDate: Date,
+    lastModifiedBy: string,
+    lastModifiedDate: Date
+}
+
+export interface UserStickyNotesCreateVM{
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+}
+
 export interface PriceListItem {
   id?: number;
   priceListId: number;
@@ -990,5 +1012,28 @@ export interface ReferralRequest {
   createdDate?: string | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+}
+
+export interface Payor {
+  id?: number;
+  code: string;
+  name: string;
+  category: string | null;
+  address?: string;
+  phone?: string;
+  email?: string;
+  contractManagerContact?: string;
+  startDate?: Date | string | null;
+  expiryDate?: Date | string | null;
+  renewable: boolean;
+  allowPartialCoverage: boolean;
+  acceptCopay: boolean;
+  acceptDeductibles: boolean;
+  allowPackagePricing: boolean;
+  allowDrgBilling: boolean;
+  forcePreApproval: boolean;
+  isActive: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
 }
 
