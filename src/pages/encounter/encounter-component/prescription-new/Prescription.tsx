@@ -19,7 +19,7 @@ import {
 import { ApPrescriptionMedications } from '@/types/model-types';
 import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -39,6 +39,9 @@ import DetailsModal from './DetailsModal';
 import PrescriptionPreview from './PrescriptionPreview';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import './styles.less';
+import { isDraft } from '@reduxjs/toolkit';
+import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 
 const Prescription = props => {
   const location = useLocation();
@@ -52,9 +55,8 @@ const Prescription = props => {
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
   const [showCanceled, setShowCanceled] = useState(true);
-  const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({
-    ...initialListRequest
-  });
+  const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+
   const [customeinst, setCustomeinst] = useState({
     dose: null,
     unit: null,
@@ -65,7 +67,8 @@ const Prescription = props => {
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const { data: genericMedicationListResponse } =
-    useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
+    useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+
 
   const {
     data: prescriptions,
@@ -109,47 +112,47 @@ const Prescription = props => {
   };
   const addToFavorites = rowData => {
     const alreadyExists = favoriteMedications.some(
-      item => item.genericMedicationsKey === rowData.genericMedicationsKey
+      item => item.genericMedicationsId === rowData.genericMedicationsId
     );
 
     if (alreadyExists) {
       setFavoriteMedications(prev =>
-        prev.filter(item => item.genericMedicationsKey !== rowData.genericMedicationsKey)
+        prev.filter(item => item.genericMedicationsId !== rowData.genericMedicationsId)
       );
-      const genericMedication = genericMedicationListResponse?.object?.find(
-        item => item.key === rowData.genericMedicationsKey
+      const genericMedication = genericMedicationListResponse?.data?.find(
+        item => item.id === rowData.genericMedicationsId
       );
-      const medicationName = genericMedication ? genericMedication.genericName : 'Medication';
+      const medicationName = genericMedication ? genericMedication.name : 'Medication';
       dispatch(notify({ msg: `${medicationName} removed from favorites`, type: 'info' }));
     } else {
-      const genericMedication = genericMedicationListResponse?.object?.find(
-        item => item.key === rowData.genericMedicationsKey
+      const genericMedication = genericMedicationListResponse?.data?.find(
+        item => item.id === rowData.genericMedicationsId
       );
 
       const medicationToAdd = {
         ...rowData,
-        genericName: genericMedication ? genericMedication.genericName : 'Unnamed Medication',
+        name: genericMedication ? genericMedication.name : 'Unnamed Medication',
         administrationInstructions: rowData.administrationInstructions || null,
         parametersToMonitor: rowData.parametersToMonitor || ''
       };
 
       setFavoriteMedications(prev => [...prev, medicationToAdd]);
       dispatch(
-        notify({ msg: `${medicationToAdd.genericName} added to favorites`, type: 'success' })
+        notify({ msg: `${medicationToAdd.name} added to favorites`, type: 'success' })
       );
     }
   };
 
   const handleRecall = async (rowData: any) => {
     const genericMedication = genericMedicationListResponse?.object?.find(
-      item => item.key === rowData.genericMedicationsKey
+      item => item.key === rowData.genericMedicationsId
     );
     await Promise.resolve();
 
     setPrescriptionMedications({
       ...rowData,
       prescriptionKey: preKeyRecord['preKey'],
-      genericName: genericMedication?.genericName || ''
+      name: genericMedication?.name || ''
     });
 
     setOpenDetailsModal(true);
@@ -340,12 +343,12 @@ const Prescription = props => {
       dispatch(notify({ msg: 'All Medication Deleted Successfully', sev: 'success' }));
       setOpenCancellation(false);
       medicRefetch()
-        .then(() => {})
-        .catch(error => {});
+        .then(() => { })
+        .catch(error => { });
 
       medicRefetch()
-        .then(() => {})
-        .catch(error => {});
+        .then(() => { })
+        .catch(error => { });
 
       setSelectedRows([]);
     } catch (error) {
@@ -401,7 +404,7 @@ const Prescription = props => {
         dispatch(notify({ msg: 'Saved Draft successfully', sev: 'success' }));
         setIsDraft(true);
       });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const cancleDraft = async () => {
@@ -413,7 +416,7 @@ const Prescription = props => {
         dispatch(notify({ msg: 'Draft Cancelled', sev: 'success' }));
         setIsDraft(false);
       });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const handleSavePrescription = async () => {
@@ -426,7 +429,8 @@ const Prescription = props => {
           ...newApPrescription,
           patientKey: patient.key,
           visitKey: encounter.key,
-          statusLkey: '164797574082125'
+          statusLkey: '164797574082125',
+          isDraft: true
         });
 
         dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
@@ -483,13 +487,13 @@ const Prescription = props => {
 
     {
       key: 'medicationName',
-      dataKey: 'genericMedicationsKey',
+      dataKey: 'genericMedicationsId',
       title: <Translate> Medication Name</Translate>,
       flexGrow: 2,
       render: (rowData: any) => {
-        return genericMedicationListResponse?.object?.find(
-          item => item.key === rowData.genericMedicationsKey
-        )?.genericName;
+        return genericMedicationListResponse?.data?.find(
+          item => item.id === rowData.genericMedicationsId
+        )?.name;
       }
     },
     {
@@ -499,21 +503,23 @@ const Prescription = props => {
       flexGrow: 3,
       render: (rowData: any) => {
         if (rowData.instructionsTypeLkey === '3010591042600262') {
-          const generic = predefinedInstructionsListResponse?.object?.find(
-            item => item.key === rowData.instructions
+          const generic = predefinedInstructionsListResponse?.data?.find(
+            item => item.id === Number(rowData.instructions)
           );
+          console.log('Generic found:', generic);
+          console.log("generic:", generic?.rout, generic?.unit, generic?.frequency,  generic?.dose);
 
           if (generic) {
           } else {
             console.warn('No matching generic found for key:', rowData.instructions);
           }
           return [
-            generic?.dose,
-            generic?.unitLvalue?.lovDisplayVale,
-            generic?.routLvalue?.lovDisplayVale,
-            generic?.frequencyLvalue?.lovDisplayVale
+            generic?.dose ?? '',
+            formatEnumString(generic?.unit) ?? '',
+            formatEnumString(generic?.rout) ?? '',   // ✅ route
+            formatEnumString(generic?.frequency) ?? '',
           ]
-            .filter(Boolean)
+            .filter(v => v != null && String(v).trim() !== '')
             .join(', ');
         }
         if (rowData.instructionsTypeLkey === '3010573499898196') {
@@ -580,7 +586,7 @@ const Prescription = props => {
       flexGrow: 1.5,
       render: rowData => {
         const isInFavorites = favoriteMedications.some(
-          item => item.genericMedicationsKey === rowData.genericMedicationsKey
+          item => item.genericMedicationsId === rowData.genericMedicationsId
         );
         return (
           <div className="flex-c8">
@@ -760,8 +766,8 @@ const Prescription = props => {
             disabled={
               preKeyRecord['preKey']
                 ? prescriptions?.object?.find(
-                    prescription => prescription.key === preKeyRecord['preKey']
-                  )?.statusLkey === '1804482322306061'
+                  prescription => prescription.key === preKeyRecord['preKey']
+                )?.statusLkey === '1804482322306061'
                 : true
             }
             prefixIcon={() => <CheckIcon />}
@@ -776,8 +782,8 @@ const Prescription = props => {
               disabled={
                 preKeyRecord['preKey']
                   ? prescriptions?.object?.find(
-                      prescription => prescription.key === preKeyRecord['preKey']
-                    )?.statusLkey === '1804482322306061'
+                    prescription => prescription.key === preKeyRecord['preKey']
+                  )?.statusLkey === '1804482322306061'
                   : true
               }
             >
@@ -854,7 +860,7 @@ const Prescription = props => {
         preKey={preKeyRecord['preKey']}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => {}}
+        setOrderMedication={() => { }}
         drugKey={null}
         editing={false}
       />
@@ -879,13 +885,13 @@ const Prescription = props => {
               columns={[
                 {
                   key: 'medicationName',
-                  dataKey: 'genericMedicationsKey',
+                  dataKey: 'genericMedicationsId',
                   title: 'Medication Name',
                   render: (rowData: any) => {
                     return (
                       genericMedicationListResponse?.object?.find(
-                        item => item.key === rowData.genericMedicationsKey
-                      )?.genericName || 'Unknown Medication'
+                        item => item.key === rowData.genericMedicationsId
+                      )?.name || 'Unknown Medication'
                     );
                   }
                 },
@@ -976,8 +982,8 @@ const Prescription = props => {
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
         title={`Attachments - ${selectedMedicationForAttachments ? genericMedicationListResponse?.object?.find(
-          item => item.key === selectedMedicationForAttachments.genericMedicationsKey
-        )?.genericName || 'Medication' : 'Medication'}`}
+          item => item.key === selectedMedicationForAttachments.genericMedicationsId
+        )?.name || 'Medication' : 'Medication'}`}
         size="lg"
         hideActionBtn={true}
         content={
@@ -986,11 +992,11 @@ const Prescription = props => {
             source="PRESCRIPTION_ORDER_ATTACHMENT"
             sourceId={selectedMedicationForAttachments?.key ? Number(selectedMedicationForAttachments.key) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />
-      
+
       <AllergyFloatingButton patientKey={patient.key} />
     </>
   );

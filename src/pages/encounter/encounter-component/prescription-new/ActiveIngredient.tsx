@@ -1,89 +1,69 @@
 import InfoCardList from "@/components/InfoCardList";
-import { useGetActiveIngredientQuery, useGetGenericMedicationActiveIngredientQuery } from "@/services/medicationsSetupService";
-import { initialListRequest } from "@/types/types";
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useGetActiveIngredientsByBrandQuery } from "@/services/setup/brandmedication/BrandMedicationActiveIngredientService";
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { conjureValueBasedOnKeyFromList } from "@/utils";
+
 const ActiveIngredient = ({ selectedGeneric }) => {
+  const brandId = selectedGeneric?.id;
+ const { data: unitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
+ 
+  const {
+    data: brandActives = [],
+    isFetching,
+    isError,
+  } = useGetActiveIngredientsByBrandQuery(brandId, {
+    skip: !brandId,
+  });
+ 
+  
 
-    const [listGinricRequest, setListGinricRequest] = useState({
-        ...initialListRequest,
-        sortType: 'desc'
-        ,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-            ,
-            {
-                fieldName: 'generic_medication_key',
-                operator: 'match',
-                value: selectedGeneric?.key
+  const listForUI = (brandActives ?? []).map((rel) => {
+    const ai = rel.activeIngredient ?? {}; // defensive
+    console.log('rel', rel);
+    return {
+      relationId: rel.id,
+      activeIngredientName: ai.name ?? "",
+      activeIngredientATCCode: ai.atcCode ?? "",
+      strengthDisplay:
+        (rel.strength ?? "") + (rel.unit ? ` ${conjureValueBasedOnKeyFromList(unitLov?.object,rel?.unit,"lovDisplayVale")}` : ""),
+      isControlledDisplay: ai.isControlled ? "Yes" : "No",
+      controlledDisplay: ai.controlled ?? "",
+    };
+  });
 
-            }
-        ]
-    });
-    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({ ...listGinricRequest });
-    const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
-       useEffect(() => {
-   
-           const updatedFilters = [
-               {
-                   fieldName: 'deleted_at',
-                   operator: 'isNull',
-                   value: undefined
-               }
-               ,
-   
-               {
-                   fieldName: 'generic_medication_key',
-                   operator: 'match',
-                   value: selectedGeneric?.key || null
-               }
-           ];
-       
-           setListGinricRequest((prevRequest) => ({
-   
-               ...prevRequest,
-               filters: updatedFilters,
-   
-           }));
-       }, [selectedGeneric]);
-   
+  if (!brandId) {
+    return <div style={{ padding: 12 }}>Select a brand to see active ingredients</div>;
+  }
 
-    return (<>
-        <InfoCardList
-            list={genericMedicationActiveIngredientListResponseData?.object || []}
-            fields={[
-                'activeIngredientName',
-                'activeIngredientATCCode',
-                'strengthDisplay',
-                'isControlledDisplay',
-                'controlledDisplay',
-            ]}
-            titleField="activeIngredientName"
-            fieldLabels={{
-                activeIngredientName: 'Active Ingredient',
-                activeIngredientATCCode: 'ATC Code',
-                strengthDisplay: 'Strength',
-                isControlledDisplay: 'Is Controlled',
-                controlledDisplay: 'Controlled',
-            }}
-            computedFields={{
-                activeIngredientName: (item) =>
-                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.name || " ",
-                activeIngredientATCCode: (item) =>
-                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.atcCode || " ",
-                strengthDisplay: (item) =>
-                    (item?.strength || '') + (item?.unitLvalue?.lovDisplayVale || ''),
-                isControlledDisplay: (item) => {
-                    const isControlled = activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.isControlled;
-                    return isControlled ? "Yes" : "No";
-                },
-                controlledDisplay: (item) =>
-                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ",
-            }}
-         
-        /></>)
-}
+  if (isFetching) {
+    return <div style={{ padding: 12 }}>Loading active ingredients...</div>;
+  }
+
+  if (isError) {
+    return <div style={{ padding: 12 }}>Failed to load active ingredients</div>;
+  }
+
+  return (
+    <InfoCardList
+      list={listForUI}
+      fields={[
+        "activeIngredientName",
+        "activeIngredientATCCode",
+        "strengthDisplay",
+        "isControlledDisplay",
+        "controlledDisplay",
+      ]}
+      titleField="activeIngredientName"
+      fieldLabels={{
+        activeIngredientName: "Active Ingredient",
+        activeIngredientATCCode: "ATC Code",
+        strengthDisplay: "Strength",
+        isControlledDisplay: "Is Controlled",
+        controlledDisplay: "Controlled",
+      }}
+    />
+  );
+};
+
 export default ActiveIngredient;
