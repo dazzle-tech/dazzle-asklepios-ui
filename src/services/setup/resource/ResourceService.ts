@@ -58,6 +58,23 @@ export const ResourceService = createApi({
       providesTags: ["Resource"],
     }),
 
+    getActiveResourcesByType: builder.query({
+      query: ({ resourceType, ...params }) => ({
+        url: `/api/setup/resource/active/by-type/${resourceType}`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["Resource"],
+    }),
+
     getResourceById: builder.query({
       query: (id) => ({
         url: `/api/setup/resource/${id}`,
@@ -101,6 +118,8 @@ export const {
   useGetAllResourcesQuery,
   useLazyGetResourcesByTypeQuery,
   useGetResourcesByTypeQuery,
+  useGetActiveResourcesByTypeQuery,
+  useLazyGetActiveResourcesByTypeQuery,
   useGetResourceByIdQuery,
   useCreateResourceMutation,
   useUpdateResourceMutation,

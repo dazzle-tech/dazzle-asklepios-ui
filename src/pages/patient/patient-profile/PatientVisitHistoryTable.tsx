@@ -57,7 +57,10 @@ const PatientVisitHistoryTable = ({
     data: visiterHistoryResponse,
     refetch: refetchEncounter,
     isFetching
-  } = useGetEncountersQuery(visitHistoryListRequest);
+  } = useGetEncountersQuery(visitHistoryListRequest, {
+    refetchOnMountOrArgChange: true, // Refetch when component mounts or arguments change
+    refetchOnFocus: true // Refetch when window regains focus
+  });
 
   // Fetch all departments for lookup
   const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
@@ -427,18 +430,6 @@ const PatientVisitHistoryTable = ({
     });
   }, [localPatient]);
 
-  // Log visits list for debugging
-  useEffect(() => {
-    if (visiterHistoryResponse?.object) {
-      console.log('List of Visits:', visiterHistoryResponse.object);
-      console.log('Total Visits Count:', visiterHistoryResponse.object.length);
-      console.log('Department Map:', departmentMap);
-      console.log('Practitioner Map:', practitionerMap);
-      console.log('Resource Map:', resourceMap);
-      console.log('Diagnostic Test Map:', diagnosticTestMap);
-    }
-  }, [visiterHistoryResponse, departmentMap, practitionerMap, resourceMap, diagnosticTestMap]);
-
   return (
     <>
       <MyTable
@@ -468,6 +459,7 @@ const PatientVisitHistoryTable = ({
           setQuickAppointmentModel={setQuickAppointmentModel}
           localVisit={selectedVisit}
           isDisabeld={true}
+          onEncounterSaved={refetchEncounter}
         />
       ) : (
         <></>
