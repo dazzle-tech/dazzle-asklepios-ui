@@ -31,8 +31,8 @@ const AddEditResources = ({
   width: number;
   resource: Resource;
   setResource: (resource: Resource) => void;
-  handleAddNew: () => void;
-  handleUpdate: () => void;
+  handleAddNew: (resourceName?: string) => void;
+  handleUpdate: (resourceName?: string) => void;
 }) => {
   const ResourceTypeEnum = useEnumOptions("ResourceType");
   const [resourceOptions, setResourceOptions] = useState<any[]>([]);
@@ -243,10 +243,18 @@ const AddEditResources = ({
   };
 
   const handleSave = () => {
+    // Get resource name from resourceOptions based on resourceKey
+    const selectedResource = resourceOptions.find((opt: any) => 
+      String(opt.id) === String(resource.resourceKey)
+    );
+    const resourceName = selectedResource 
+      ? (selectedResource[resourceLabelField] || selectedResource.name || selectedResource.id || resource.resourceKey)
+      : resource.resourceKey;
+
     if (resource?.id) {
-      handleUpdate();
+      handleUpdate(resourceName);
     } else {
-      handleAddNew();
+      handleAddNew(resourceName);
     }
   };
 

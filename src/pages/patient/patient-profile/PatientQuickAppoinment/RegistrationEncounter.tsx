@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Form, Tag } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
   useGetResourcesAvailabilityTimeQuery
@@ -13,7 +13,10 @@ import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/Reso
 import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery, useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useSelector } from 'react-redux';
+
 const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, localPatient }) => {
+  const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult] = useState({});
   const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
   const [newOrFollowup, setNewOrFollowup] = useState({ state: true });
@@ -238,6 +241,51 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
     });
   }, [resourcesByTypeResponse, practitionerMap, departmentMap, diagnosticTestMap]);
 
+  // Get active filter tags
+  const activeFilters = useMemo(() => {
+    const filters = [];
+    
+    if (localEncounter?.resourceTypeLkey) {
+      const resourceTypeLabel = ResourceTypeEnum?.find(rt => rt.value === localEncounter.resourceTypeLkey)?.label || localEncounter.resourceTypeLkey;
+      filters.push({
+        type: 'resourceType',
+        label: 'Resource Type',
+        value: resourceTypeLabel,
+        valueKey: localEncounter.resourceTypeLkey
+      });
+    }
+    
+    if (localEncounter?.resourceKey && resourcesByTypeResponse?.data) {
+      const selectedResource = resourcesByTypeResponse.data.find(r => r.id === localEncounter.resourceKey);
+      if (selectedResource) {
+        filters.push({
+          type: 'resource',
+          label: 'Resource',
+          value: selectedResource.resourceKey || localEncounter.resourceKey,
+          valueKey: localEncounter.resourceKey
+        });
+      }
+    }
+    
+    return filters;
+  }, [localEncounter?.resourceTypeLkey, localEncounter?.resourceKey, ResourceTypeEnum, resourcesByTypeResponse]);
+
+  // Handle removing filter
+  const handleRemoveFilter = (filterType: string) => {
+    if (filterType === 'resourceType') {
+      setLocalEncounter(prev => ({
+        ...prev,
+        resourceTypeLkey: null,
+        resourceKey: null // Also clear resource when resource type is removed
+      }));
+    } else if (filterType === 'resource') {
+      setLocalEncounter(prev => ({
+        ...prev,
+        resourceKey: null
+      }));
+    }
+  };
+
   // Effects
   useEffect(() => {
     setVisitHistoryListRequest({
@@ -342,6 +390,39 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
 
   return (
     <Form fluid layout="inline" className="fields-container">
+      {/* Active Filters Tags */}
+      {activeFilters.length > 0 && (
+        <div style={{ 
+          width: '100%', 
+          marginBottom: '16px',
+          display: 'flex',
+          gap: '10px',
+          flexWrap: 'wrap',
+          padding: '8px',
+          backgroundColor: mode === 'light' ? '#f8f9fa' : '#434343ff',
+          borderRadius: '12px',
+          border: '1px solid var(--rs-border-primary)'
+        }}>
+          {activeFilters.map((filter, index) => (
+            <Tag
+              key={`${filter.type}-${index}`}
+              closable
+              onClose={() => handleRemoveFilter(filter.type)}
+              style={{
+                padding: '6px 12px',
+                fontSize: '13px',
+                backgroundColor: mode === 'light' ? '#e9ecef' : '#5a5a5a',
+                color: mode === 'light' ? '#495057' : '#ffffff',
+                border: '1px solid var(--rs-border-primary)',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              <strong>{filter.label}:</strong> {filter.value}
+            </Tag>
+          ))}
+        </div>
+      )}
 
       <MyInput
         vr={validationResult}
