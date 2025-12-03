@@ -97,6 +97,7 @@ import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
+import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
 export const store = configureStore({
   reducer: {
     // ui
@@ -224,7 +225,8 @@ export const store = configureStore({
     //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
 
-
+    // user Sticky Notes Service
+    [userStickyNotesService.reducerPath]: userStickyNotesService.reducer,
 
     [Icd10Service.reducerPath]: Icd10Service.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
@@ -386,6 +388,7 @@ export const store = configureStore({
       catalogDiagnosticTestService.middleware,
       ReportTemplateService.middleware,
       DiagnosticTestTemplateService.middleware,
+      userStickyNotesService.middleware,
     ])
 });
 

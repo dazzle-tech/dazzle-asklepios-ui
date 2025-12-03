@@ -707,7 +707,6 @@ const Frame = (props: FrameProps) => {
                   <UserStickyNotes
                     expand={expandNotes}
                     setExpand={setExpandNotes}
-                    windowHeight={windowHeight}
                   />
                 </div>
               )}
