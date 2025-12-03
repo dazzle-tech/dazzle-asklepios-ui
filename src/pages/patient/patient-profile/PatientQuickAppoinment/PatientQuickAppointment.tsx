@@ -10,6 +10,7 @@ import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
+import { useGetResourceByIdQuery } from '@/services/setup/resource/ResourceService';
 import { notify } from '@/utils/uiReducerActions';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { calculateAgeFormat } from '@/utils';
@@ -27,6 +28,11 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
     const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
 
+    // Fetch the selected resource to get its resourceKey
+    const { data: selectedResource } = useGetResourceByIdQuery(localEncounter.resourceKey, {
+        skip: !localEncounter.resourceKey
+    });
+
     const validateRequiredFields = () => {
         const missingFields: string[] = [];
         if (!localEncounter?.facilityKey) {
@@ -41,8 +47,8 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
         if (!localEncounter?.visitTypeLkey) {
             missingFields.push('Visit Type');
         }
-        // Validate department for PRACTITIONER resource type
-        if ((localEncounter?.resourceTypeLkey === '2039534205961578' || localEncounter?.resourceTypeLkey === 'PRACTITIONER') && !localEncounter?.departmentKey) {
+        // Validate department for PRACTITIONER and PROCEDURE resource types
+        if ((localEncounter?.resourceTypeLkey === '2039534205961578' || localEncounter?.resourceTypeLkey === 'PRACTITIONER' || localEncounter?.resourceTypeLkey === 'PROCEDURE') && !localEncounter?.departmentKey) {
             missingFields.push('Department');
         }
         if (missingFields.length > 0) {
@@ -64,10 +70,20 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             return;
         }
         if (localEncounter && localEncounter.patientKey) {
+            // For department-based resources (CLINIC, INPATIENT_ADMISSION, DAY_CASE, EMERGENCY),
+            // use the resourceKey from the selected resource as departmentKey
+            // For other resources, use the departmentKey as is
+            const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(localEncounter?.resourceTypeLkey);
+            const departmentKeyToSave = isDepartmentBasedResource 
+                ? selectedResource?.resourceKey 
+                : localEncounter.departmentKey;
+            
+
             saveEncounter({
                 ...localEncounter,
                 patientKey: localPatient.key,
                 plannedStartDate: new Date(),
+                departmentKey: departmentKeyToSave,
                 encounterStatusLkey: ["4217389643435490", "5433343011954425", "2039548173192779",'INPATIENT_ADMISSION','DAY_CASE','PROCEDURE'].includes(localEncounter?.resourceTypeLkey) ? "5256965920133084" : localEncounter?.resourceTypeLkey === "EMERGENCY" ? "8890456518264959" : encounterStatusNew,
                 patientAge: calculateAgeFormat(localPatient.dob),
                 visitTypeLkey: ['2039534205961578', '2039516279378421','CLINIC','PRACTITIONER'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null

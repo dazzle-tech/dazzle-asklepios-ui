@@ -419,7 +419,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
           required
         />
       ) : null}
-      {localEncounter?.resourceTypeLkey == '2039548173192779' || localEncounter?.resourceTypeLkey == 'PROCEDURCE' ? (
+      {localEncounter?.resourceTypeLkey == '2039548173192779' || localEncounter?.resourceTypeLkey == 'PROCEDURE' ? (
         <MyInput
           vr={validationResult}
           column
@@ -431,6 +431,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
           record={localEncounter}
           setRecord={setLocalEncounter}
           disabled={isReadOnly}
+          required
         />
       ) : null}
       <MyInput
