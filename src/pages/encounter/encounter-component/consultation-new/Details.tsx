@@ -10,7 +10,10 @@ import { useSaveConsultationOrdersMutation } from '@/services/encounterService';
 import { newApConsultationOrder } from '@/types/model-types-constructor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom, faFile, faPaperclip } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery, useGetPractitionersQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useLazyGetActivePractitionersBySubSpecialtyQuery } from '@/services/setup/practitioner/PractitionerService';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
 import { initialListRequest, ListRequest } from '@/types/types';
 import clsx from 'clsx';
@@ -31,16 +34,24 @@ const Details = ({
   const [saveconsultationOrders, saveConsultationOrdersMutation] =
     useSaveConsultationOrdersMutation();
 
-  const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
   const { data: consultantSpecialtyLovQueryResponse } =
     useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY ');
-  const { data: cityLovQueryResponse } = useGetLovValuesByCodeQuery('CITY');
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
+  const [getDepartmentsByFacility, { data: departmentListResponse }] = 
+    useLazyGetActiveDepartmentByFacilityListQuery();
+  const [getPractitionersBySpecialty, { data: practitionerListResponse }] = 
+    useLazyGetActivePractitionersBySubSpecialtyQuery();
   const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
   const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
   const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
 
+  // Transform practitioner data to show firstName + lastName
+  const practitionerList = (practitionerListResponse?.data ?? []).map(practitioner => ({
+    ...practitioner,
+    fullName: `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim()
+  }));
+
   const handleOpenAttachmentModal = () => {
-    console.log('Consultation order for attachment:', consultationOrders);
     setShowAttachmentModal(true);
   };
 
@@ -49,12 +60,73 @@ const Details = ({
       ...newApConsultationOrder,
       consultationMethodLkey: null,
       consultationTypeLkey: null,
-      cityLkey: null,
+      facilityKey: null,
+      departmentKey: null,
       consultantSpecialtyLkey: null,
       preferredConsultantKey: null
     });
   };
+
+  const validateRequiredFields = () => {
+    const missingFields: string[] = [];
+    
+    if (!consultationOrders?.facilityKey) {
+      missingFields.push('Facility');
+    }
+    if (!consultationOrders?.consultationMethodLkey) {
+      missingFields.push('Consultation Method');
+    }
+    if (!consultationOrders?.consultationTypeLkey) {
+      missingFields.push('Consultation Type');
+    }
+    if (!consultationOrders?.priorityLkey) {
+      missingFields.push('Priority Level');
+    }
+    if (!consultationOrders?.consultationContent) {
+      missingFields.push('Question to Consultant');
+    }
+
+    if (missingFields.length > 0) {
+      const lines = missingFields.map(field => `• ${field}: is required`);
+      dispatch(
+        notify({
+          msg: `Please fill the following required fields:\n${lines.join('\n')}`,
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+
+    // Check that at least one of Department or Consultant is filled
+    if (!consultationOrders?.departmentKey && !consultationOrders?.preferredConsultantKey) {
+      dispatch(
+        notify({
+          msg: 'Please select at least Department or Consultant',
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+
+    // Check if Consultant Specialty is filled, then Consultant must be filled
+    if (consultationOrders?.consultantSpecialtyLkey && !consultationOrders?.preferredConsultantKey) {
+      dispatch(
+        notify({
+          msg: 'Please select a Consultant when Consultant Specialty is filled',
+          sev: 'error'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     try {
       await saveconsultationOrders({
         ...consultationOrders,
@@ -78,6 +150,24 @@ const Details = ({
   };
 
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+
+  // Load departments when facilityKey exists (for edit mode)
+  useEffect(() => {
+    if (consultationOrders?.facilityKey && open) {
+      getDepartmentsByFacility({ facilityId: consultationOrders.facilityKey });
+    }
+  }, [consultationOrders?.facilityKey, open, getDepartmentsByFacility]);
+
+  // Load practitioners when consultantSpecialtyLkey exists (for edit mode)
+  useEffect(() => {
+    if (consultationOrders?.consultantSpecialtyLkey && open) {
+      getPractitionersBySpecialty({ 
+        specialty: consultationOrders.consultantSpecialtyLkey,
+        page: 0,
+        size: 100
+      });
+    }
+  }, [consultationOrders?.consultantSpecialtyLkey, open, getPractitionersBySpecialty]);
 
   return (
     <>
@@ -125,12 +215,37 @@ const Details = ({
                       width={'12vw'}
                       disabled={editing}
                       fieldType="select"
-                      fieldLabel="City"
-                      selectData={cityLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      fieldName={'cityLkey'}
-                      record={consultationOrders}
+                      fieldLabel="Facility"
+                      selectData={Array.isArray(facilityListResponse) ? facilityListResponse : []}
+                      selectDataLabel="name"
+                      selectDataValue="id"
+                      fieldName={'facilityKey'}
+                      record={{
+                        ...consultationOrders,
+                        facilityKey: consultationOrders?.facilityKey ? Number(consultationOrders.facilityKey) : undefined
+                      }}
+                      setRecord={(value) => {
+                        setConsultationOrder({ ...value, departmentKey: null });
+                        if (value.facilityKey) {
+                          getDepartmentsByFacility({ facilityId: value.facilityKey });
+                        }
+                      }}
+                      required
+                    />
+
+                    <MyInput
+                      width={'12vw'}
+                      disabled={editing || !consultationOrders?.facilityKey}
+                      fieldType="select"
+                      fieldLabel="Department"
+                      selectData={Array.isArray(departmentListResponse) ? departmentListResponse : []}
+                      selectDataLabel="name"
+                      selectDataValue="id"
+                      fieldName={'departmentKey'}
+                      record={{
+                        ...consultationOrders,
+                        departmentKey: consultationOrders?.departmentKey ? Number(consultationOrders.departmentKey) : undefined
+                      }}
                       setRecord={setConsultationOrder}
                     />
 
@@ -144,18 +259,30 @@ const Details = ({
                       selectDataValue="key"
                       fieldName={'consultantSpecialtyLkey'}
                       record={consultationOrders}
-                      setRecord={setConsultationOrder}
+                      setRecord={(value) => {
+                        setConsultationOrder({ ...value, preferredConsultantKey: null });
+                        if (value.consultantSpecialtyLkey) {
+                          getPractitionersBySpecialty({ 
+                            specialty: value.consultantSpecialtyLkey,
+                            page: 0,
+                            size: 100
+                          });
+                        }
+                      }}
                     />
                     <MyInput
                       width={'12vw'}
-                      disabled={editing}
+                      disabled={editing || !consultationOrders?.consultantSpecialtyLkey}
                       fieldType="select"
-                      fieldLabel="Preferred Consultant"
+                      fieldLabel="Consultant"
                       fieldName={'preferredConsultantKey'}
-                      selectData={practitionerListResponse?.object ?? []}
-                      selectDataLabel="practitionerFullName"
-                      selectDataValue="key"
-                      record={consultationOrders}
+                      selectData={practitionerList}
+                      selectDataLabel="fullName"
+                      selectDataValue="id"
+                      record={{
+                        ...consultationOrders,
+                        preferredConsultantKey: consultationOrders?.preferredConsultantKey ? Number(consultationOrders.preferredConsultantKey) : undefined
+                      }}
                       setRecord={setConsultationOrder}
                     />
                   </div>
@@ -177,6 +304,7 @@ const Details = ({
                       record={consultationOrders}
                       setRecord={setConsultationOrder}
                       searchable={false}
+                      required
                     />
                     <MyInput
                       width={'12vw'}
@@ -190,6 +318,7 @@ const Details = ({
                       record={consultationOrders}
                       setRecord={setConsultationOrder}
                       searchable={false}
+                      required
                     />
                     <MyInput
                       width={'12vw'}
@@ -202,6 +331,7 @@ const Details = ({
                       selectDataValue="key"
                       record={consultationOrders}
                       setRecord={setConsultationOrder}
+                      required
                     />
                   </div>
                 }
@@ -218,6 +348,7 @@ const Details = ({
                       fieldType="textarea"
                       record={consultationOrders}
                       setRecord={setConsultationOrder}
+                      required
                     />
                   </div>
                 }
