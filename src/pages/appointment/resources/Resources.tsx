@@ -26,7 +26,6 @@ import { formatEnumString } from "@/utils";
 import { PaginationPerPage } from "@/utils/paginationPerPage";
 import { useEnumOptions } from "@/services/enumsApi";
 import { useState, useEffect } from "react";
-import appConfig from "../../../../app-config";
 
 // Resource type definition
 type Resource = {
@@ -35,6 +34,7 @@ type Resource = {
   resourceKey: string;
   isAllowParallel?: boolean;
   isActive?: boolean;
+  resourceName?: string;
 };
 
 const newResource: Resource = {
@@ -76,12 +76,12 @@ const Resources = () => {
   // ──────────────────────────── DATA ────────────────────────────
   const { data: resourceListResponse, isFetching } =
     useGetAllResourcesQuery(paginationParams);
+
   const [createResource] = useCreateResourceMutation();
   const [updateResource] = useUpdateResourceMutation();
   const [toggleResourceActive] = useToggleResourceActiveMutation();
   const [getResourcesByType] = useLazyGetResourcesByTypeQuery();
   const resourceTypeEnum = useEnumOptions("ResourceType");
-  const [resourceNamesCache, setResourceNamesCache] = useState<Record<string, string>>({});
 
   const totalCount = resourceListResponse?.totalCount ?? 0;
   const links = resourceListResponse?.links || {};
@@ -137,10 +137,11 @@ const Resources = () => {
         const searchTerm = value.toLowerCase().trim();
         
         const filtered = allResources.filter((r: Resource) => {
-          const resourceName = getResourceName(r.resourceType, r.resourceKey).toLowerCase();
+          const resourceName = (r.resourceName || r.resourceKey || '').toLowerCase();
           return resourceName.includes(searchTerm);
         });
-        
+
+         
         setFilteredList(filtered);
         setFilteredTotal(filtered.length);
         setIsFiltered(true);
@@ -149,7 +150,6 @@ const Resources = () => {
         return;
       }
     } catch (error) {
-      console.error("Error filtering resources:", error);
         dispatch(
           notify({
           msg: "Failed to filter resources",
@@ -161,24 +161,27 @@ const Resources = () => {
   };
 
   // ──────────────────────────── CRUD HANDLERS ────────────────────────────
-  const handleAddNew = async () => {
+  const handleAddNew = async (resourceNameParam?: string) => {
     try {
+      // Get resourceName from parameter (passed from AddEditResources) or from state or use resourceKey as fallback
+      const resourceName = resourceNameParam || resource.resourceName || resource.resourceKey;
+      
       const payload = {
         resourceType: resource.resourceType,
         resourceKey: resource.resourceKey,
         isAllowParallel: resource.isAllowParallel ?? true,
         isActive: resource.isActive ?? true,
+        resourceName: resourceName
       };
 
       const Response = await createResource(payload).unwrap();
-        dispatch(
+      dispatch(
         notify({ msg: "Resource added successfully", sev: "success" })
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
       setResource({ ...Response });
       setOpenAddEditResource(false);
     } catch (error) {
-      console.error("Error creating resource:", error);
 
       if (error?.data?.fieldErrors?.length) {
         const messages = error.data.fieldErrors
@@ -193,13 +196,17 @@ const Resources = () => {
     }
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (resourceNameParam?: string) => {
     try {
+      // Get resourceName from parameter (passed from AddEditResources) or from state or use resourceKey as fallback
+      const resourceName = resourceNameParam || resource.resourceName || resource.resourceKey;
+      
       const payload = {
         resourceType: resource.resourceType,
         resourceKey: resource.resourceKey,
         isAllowParallel: resource.isAllowParallel ?? true,
         isActive: resource.isActive ?? true,
+        resourceName: resourceName
       };
 
       await updateResource({ id: resource.id!, ...payload }).unwrap();
@@ -240,104 +247,6 @@ const Resources = () => {
     setOpenConfirmDeleteResourceModal(false);
   };
 
-  // ──────────────────────────── RESOURCE NAME FETCHING ────────────────────────────
-  // Fetch resource names for all resources in the current page - Static implementation
-  useEffect(() => {
-    const fetchResourceNames = async () => {
-      if (!resourceListResponse?.data) return;
-
-      const resourcesToFetch = resourceListResponse.data.filter(
-        (r: Resource) => {
-          const cacheKey = `${r.resourceType}_${r.resourceKey}`;
-          return r.resourceType && r.resourceKey && !resourceNamesCache[cacheKey];
-        }
-      );
-
-      if (resourcesToFetch.length === 0) return;
-
-      const newNames: Record<string, string> = {};
-      const baseURL = appConfig.backendBaseURL || 'http://localhost:8080';
-      const jwt = localStorage.getItem('id_token') || localStorage.getItem('token');
-
-      await Promise.all(
-        resourcesToFetch.map(async (r: Resource) => {
-          try {
-            let endpoint = '';
-            let name = '';
-
-            // Static switch statement - easy to read and edit
-            switch (r.resourceType) {
-              case 'PRACTITIONER':
-                endpoint = `/api/setup/practitioner/${r.resourceKey}`;
-                break;
-              case 'MEDICAL_TEST':
-                endpoint = `/api/setup/diagnostic-test/${r.resourceKey}`;
-                break;
-              case 'CLINIC':
-                endpoint = `/api/setup/department/${r.resourceKey}`;
-                break;
-              // case 'INPATIENT_ADMISSION':
-              //   endpoint = `/api/setup/inpatient-admission/${r.resourceKey}`;
-              //   break;
-              // case 'DAY_CASE':
-              //   endpoint = `/api/setup/day-case/${r.resourceKey}`;
-              //   break;
-              // case 'EMERGENCY':
-              //   endpoint = `/api/setup/emergency/${r.resourceKey}`;
-              //   break;
-              // case 'OPERATION':
-              //   endpoint = `/api/setup/operation/${r.resourceKey}`;
-              //   break;
-              default:
-                return; // Skip unknown resource types
-            }
-
-            if (!endpoint) return;
-
-            const response = await fetch(`${baseURL}${endpoint}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(jwt && { Authorization: `Bearer ${jwt}` }),
-              },
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              
-              if (r.resourceType === 'PRACTITIONER') {
-                name = `${data.firstName || ''} ${data.lastName || ''}`.trim() || `Practitioner ${r.resourceKey}`;
-              } else if (r.resourceType === 'MEDICAL_TEST') {
-                name = data.name || r.resourceKey;
-              } else if (r.resourceType === 'CLINIC') {
-                name = data.name || r.resourceKey;
-              }
-              // else if (r.resourceType === 'INPATIENT_ADMISSION') {
-              //   name = data.name || r.resourceKey;
-              // }
-
-              if (name) {
-                newNames[`${r.resourceType}_${r.resourceKey}`] = name;
-              }
-            }
-          } catch (error) {
-            console.error(`Error fetching resource name for ${r.resourceType} ${r.resourceKey}:`, error);
-          }
-        })
-      );
-
-      if (Object.keys(newNames).length > 0) {
-        setResourceNamesCache((prev) => ({ ...prev, ...newNames }));
-      }
-    };
-
-    fetchResourceNames();
-  }, [resourceListResponse?.data]);
-
-  const getResourceName = (resourceType: string, resourceKey: string): string => {
-    const cacheKey = `${resourceType}_${resourceKey}`;
-    return resourceNamesCache[cacheKey] || resourceKey;
-  };
 
   // ──────────────────────────── TABLE LOGIC ────────────────────────────
   const isSelected = (rowData: Resource) =>
@@ -409,9 +318,10 @@ const Resources = () => {
       key: "resourceKey",
       title: <Translate>Resource</Translate>,
       flexGrow: 3,
-      render: (rowData: Resource) => (
-        <p>{getResourceName(rowData.resourceType, rowData.resourceKey)}</p>
-      ),
+      render: (rowData: Resource) => {
+        const displayName = rowData?.resourceName || rowData?.resourceKey || '-';
+        return <p>{displayName}</p>;
+      },
     },
     {
       key: "isAllowParallel",
