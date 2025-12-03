@@ -202,6 +202,7 @@ import InventoryManagementWarehouseItemsSetup from './pages/inventory-management
 import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
 import PriceLists from './pages/billing-module/priceList/PriceLists';
 import MyConsultations from './components/MyConsultations/MyConsultations';
+import PreviousMeasurements from './pages/encounter/encounter-pre-observations-new/previous-measurements';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -489,6 +490,7 @@ const App = () => {
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
+                    <Route path="previous-measurements" element={<PreviousMeasurements />} />
                  <Route path="service-and-products" element={<ServiceAndProductsNew />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
