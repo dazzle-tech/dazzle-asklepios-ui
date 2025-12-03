@@ -211,7 +211,7 @@ const PatientVisitHistoryTable = ({
       flexGrow: 4,
       render: (rowData: any) => {
         // Get resource from resource map
-        const resourceKey = rowData?.resourceKey || rowData?.resource_key;
+        const resourceKey = rowData?.resourceKey ;
         const resource = resourceKey ? resourceMap[resourceKey] : null;
         
         if (!resource) {
