@@ -71,11 +71,16 @@ import SideSummaryScreen from './SideSummaryScreen';
 import { useSelector } from 'react-redux';
 import ConsultationPopup from '../encounter-component/patient-summary/ConsultationPopup';
 import { faDesktop } from '@fortawesome/free-solid-svg-icons';
+import {
+
+  useGetMedicalSheetsByDepartmentQuery,
+} from '@/services/MedicalSheetsService';
+import { MedicalSheets } from '@/config/modules-config';
 
 const Encounter = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   // create the action for the Customize Dashboard that we defined it in Patient summary page
-  const [action, setAction] = useState(() => () => {});
+  const [action, setAction] = useState(() => () => { });
 
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -127,7 +132,7 @@ const Encounter = () => {
     if (!hasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (buttonPosition.x + dragOffset.x), 2) +
-          Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
+        Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
       );
 
       if (movedDistance > 5) {
@@ -170,26 +175,16 @@ const Encounter = () => {
     }
   }, [isDragging, dragOffset, hasMoved]);
 
-  const {
-    data: appointments,
-    refetch: refitchAppointments,
-    error,
-    isLoading
-  } = useGetAppointmentsQuery({
-    resource_type: selectedResourceType?.resourcesType || null,
-    facility_id: selectedFacility?.facilityKey || null,
-    resources: selectedResources ? selectedResources.resourceKey : []
-  });
 
+  const { data: departmentSheets = [] } =
+    useGetMedicalSheetsByDepartmentQuery(5001);
+  console.log('departmentSheets', departmentSheets);
   // Step 2: Fetch the resource if needed "IF Clinic"
   const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(medicalSheetRowSourceKey!, {
     skip: !medicalSheetRowSourceKey
   });
 
-  // Step 4:get medical sheet with final departmentKey.
-  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(medicalSheetSourceKey!, {
-    skip: !medicalSheetSourceKey
-  });
+
 
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -276,387 +271,50 @@ const Encounter = () => {
     }
   };
 
-  const headersMap = {
-    '/encounter/doctor-round': 'Doctor Round',
-    '/encounter/clinical-visit': 'Clinical Visit',
-    '/encounter/observations': 'Observation',
-    '/encounter/allergies': 'Allergies',
-    '/encounter/medical-warnings': 'Medical Warnings',
-    '/encounter/cardiology': 'Cardiology',
-    '/encounter/dental-care': 'Dental Care ',
-    '/encounter/optometric-exam': 'Optometric Exam',
-    '/encounter/audiometry': 'Audiometry Puretone',
-    '/encounter/psychological-exam': 'Psychological Exam',
-    '/encounter/vaccination': 'Vaccination',
-    '/encounter/prescription': 'Prescription ',
-    '/encounter/diagnostics-order': 'Diagnostics Order ',
-    '/encounter/consultation': 'Consultation',
-    '/encounter/medication-order': 'Medication Order',
-    '/encounter/procedures': 'Procedures',
-    '/encounter/patient-history': 'Patient History',
-    '/encounter/medications-record': 'Medications Record',
-    '/encounter/vaccine-record': 'Vaccine Record',
-    '/encounter/diagnostics-result': 'Diagnostics Result',
-    '/encounter/dialysis-request': 'Dialysis Request ',
-    '/encounter/operation-request': 'Operation Requests',
-    '/encounter/multidisciplinary-team-notes': 'Multidisciplinary Team Notes',
-    '/encounter/care-plan-and-goals': 'Care Plan & Goals',
-    '/encounter/discharge-planning': 'Discharge Planning',
-    '/encounter/bedside-procedures-requests': 'Bedside Procedures',
-    '/encounter/day-case': 'DayCase',
-    '/encounter/blood-order': 'Blood Order',
-    '/encounter/intake-output-balance': 'Intake Output Balance',
-    '/encounter/referral-request': 'Referral Request',
-    '/encounter/iv-fluid-order': 'IV Fluid Order',
-    '/encounter/morse-fall-scale': 'Morse Fall Scale (MFS)',
-    '/encounter/stratify-scale': 'STRATIFY Scale',
-    '/encounter/hendrich-fall-risk': 'Hendrich II Fall Risk Model',
-    '/encounter/progress-notes': 'Progress Notes',
-    '/encounter/glasgow-coma-scale': 'Glasgow Coma Scale (GCS)',
-    '/encounter/pressure-ulce-risk-assessment': 'Pressure Ulcer Risk Assessment',
-    '/encounter/vte-risk-assessment': 'VTE Risk Assessment',
-    '/encounter/johns-hopkins-tool': 'Johns Hopkins Tool',
-    '/encounter/pregnancy-follow-up': 'Pregnancy Follow Up',
-    '/encounter/nutrition-state-asssessment': 'Nutrition State',
-    '/encounter/dietary-request': 'Dietary Request',
-    '/encounter/medication-administration-record': 'MAR',
-    '/encounter/physiotherapy-plan': 'Physiotherapy Plan',
-    '/encounter/occupational-therapy': 'Occupational Therapy',
-    '/encounter/speech-therapy': 'Speech Therapy',
-    '/encounter/iv-fluid-administration': 'IV Fluid Administration',
-    '/encounter/continuous-observation': 'Continuous Observation',
-    '/encounter/FLACC-neonates-pain-assessment': 'Neonates Pain Assessment',
-    '/encounter/sliding-scale ': 'Sliding Scale',
-    '/encounter/icu': 'ICU',
-    '/encounter/pediatric': 'Pediatric'
-  };
+  const allowedSheetCodes = React.useMemo(
+    () => new Set((departmentSheets ?? []).map((s: any) => s.medicalSheet)),
+    [departmentSheets]
+  );
 
-  const menuItems = [
-    {
-      key: 'pediatric',
-      label: 'Pediatric',
-      icon: <FontAwesomeIcon icon={faBaby} className="icon" />,
-      path: 'pediatric'
-    },
-    {
-      key: 'icu',
-      label: 'ICU',
-      icon: <FontAwesomeIcon icon={faBed} className="icon" />,
-      path: 'icu'
-    },
-    {
-      key: 'pregnancyFollowUp',
-      label: 'Pregnancy Follow-up',
-      icon: <FontAwesomeIcon icon={faBed} className="icon" />,
-      path: 'pregnancy-follow-up'
-    },
-    {
-      key: 'vteRiskAssessment',
-      label: 'VTE Risk Assessment',
-      icon: <FontAwesomeIcon icon={faBraille} className="icon" />,
-      path: 'vte-risk-assessment'
-    },
-    {
-      key: 'bradenScaleForPressureUlcer',
-      label: 'Pressure Ulcer Risk Assessment',
-      icon: <FontAwesomeIcon icon={faBed} className="icon" />,
-      path: 'pressure-ulce-risk-assessment'
-    },
-    {
-      key: 'glasgowComaScale',
-      label: 'Glasgow Coma Scale',
-      icon: <FontAwesomeIcon icon={faG} className="icon" />,
-      path: 'glasgow-coma-scale'
-    },
-    {
-      key: 'clinicalVisit',
-      label: 'Clinical Visit',
-      icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
-      path: 'clinical-visit'
-    },
-    {
-      key: 'observation',
-      label: 'Observation',
-      icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />,
-      path: 'observations'
-    },
-    {
-      key: 'allergies',
-      label: 'Allergies',
-      icon: <FontAwesomeIcon icon={faPersonDotsFromLine} className="icon" />,
-      path: 'allergies'
-    },
-    {
-      key: 'medicalWarnings',
-      label: 'Medical Warnings',
-      icon: <FontAwesomeIcon icon={faTriangleExclamation} className="icon" />,
-      path: 'medical-warnings'
-    },
-    {
-      key: 'diagnosticsResult',
-      label: 'Diagnostics Test Result',
-      icon: <FontAwesomeIcon icon={faFileWaveform} className="icon" />,
-      path: 'diagnostics-result'
-    },
-    {
-      key: 'dialysisRequest',
-      label: 'Dialysis Request',
-      icon: <GiKidneys />,
-      path: 'dialysis-request'
-    },
-    {
-      key: 'vaccination',
-      label: 'Vaccination',
-      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
-      path: 'vaccination'
-    },
-    {
-      key: 'prescription',
-      label: 'Prescription',
-      icon: <FontAwesomeIcon icon={faFilePrescription} className="icon" />,
-      path: 'prescription'
-    },
-    {
-      key: 'drugOrder',
-      label: 'Medication Order',
-      icon: <FontAwesomeIcon icon={faPills} className="icon" />,
-      path: 'medication-order'
-    },
-    {
-      key: 'diagnosticsOrder',
-      label: 'Diagnostics Order',
-      icon: <FontAwesomeIcon icon={faVials} className="icon" />,
-      path: 'diagnostics-order'
-    },
-    {
-      key: 'consultation',
-      label: 'Consultation',
-      icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />,
-      path: 'consultation'
-    },
-    {
-      key: 'operationRequests',
-      label: 'Operation Requests',
-      icon: <FontAwesomeIcon icon={faBedPulse} className="icon" />,
-      path: 'operation-request'
-    },
-    {
-      key: 'procedures',
-      label: 'Procedures',
-      icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
-      path: 'procedures'
-    },
-    {
-      key: 'patientHistory',
-      label: 'Patient History',
-      icon: <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />,
-      path: 'patient-history'
-    },
-    {
-      key: 'referralRequest',
-      label: 'Referral Request',
-      icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
-      path: 'referral-request'
-    },
-    {
-      key: 'multidisciplinaryTeamNotes',
-      label: 'Multidisciplinary Team Notes',
-      icon: <FontAwesomeIcon icon={faComment} className="icon" />,
-      path: 'multidisciplinary-team-notes'
-    },
-    {
-      key: 'dischargePlanning',
-      label: 'Discharge Planning',
-      icon: <FontAwesomeIcon icon={faRightFromBracket} className="icon" />,
-      path: 'discharge-planning'
-    },
-    {
-      key: 'bedsideProceduresRequest',
-      label: 'Bedside Procedures',
-      icon: <FontAwesomeIcon icon={faSuitcaseMedical} className="icon" />,
-      path: 'bedside-procedures-requests'
-    },
-    {
-      key: 'bloodOrder',
-      label: 'Blood Order',
-      icon: <FontAwesomeIcon icon={faDroplet} className="icon" />,
-      path: 'blood-order'
-    },
-    {
-      key: 'intakeOutputBalance',
-      label: 'Intake Output Balance',
-      icon: <FontAwesomeIcon icon={faSquarePollHorizontal} className="icon" />,
-      path: 'intake-output-balance'
-    },
-    {
-      key: 'carePlanAndGoals',
-      label: 'Care Plan & Goals',
-      icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
-      path: 'care-plan-and-goals'
-    },
-    {
-      key: 'johnsHopkinsFallRiskAssessmentTool',
-      label: 'Johns Hopkins Tool',
-      icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
-      path: 'johns-hopkins-tool'
-    },
-    {
-      key: 'medicationsRecord',
-      label: 'Medications Record',
-      icon: <FontAwesomeIcon icon={faPills} className="icon" />,
-      path: 'medications-record'
-    },
-    {
-      key: 'vaccineReccord',
-      label: 'Vaccine Record',
-      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
-      path: 'vaccine-record'
-    },
-    {
-      key: 'cardiology',
-      label: 'Cardiology',
-      icon: <FontAwesomeIcon icon={faHeartPulse} className="icon" />,
-      path: 'cardiology'
-    },
-    {
-      key: 'dentalCare',
-      label: 'Dental Care',
-      icon: <FontAwesomeIcon icon={faTooth} className="icon" />,
-      path: 'dental-care'
-    },
-    {
-      key: 'optometricExam',
-      label: 'Optometric Exam',
-      icon: <FontAwesomeIcon icon={faEye} className="icon" />,
-      path: 'optometric-exam'
-    },
-    {
-      key: 'audiometryPuretone',
-      label: 'Audiometry Puretone',
-      icon: <FontAwesomeIcon icon={faEarListen} className="icon" />,
-      path: 'audiometry'
-    },
-    {
-      key: 'progressNotes',
-      label: 'Progress Notes',
-      icon: <FontAwesomeIcon icon={faFileLines} className="icon" />,
-      path: 'progress-notes'
-    },
-    {
-      key: 'psychologicalExam',
-      label: 'Psychological Exam',
-      icon: <FontAwesomeIcon icon={faBrain} className="icon" />,
-      path: 'psychological-exam'
-    },
-    {
-      key: 'dayCase',
-      label: 'DayCase',
-      icon: <FontAwesomeIcon icon={faBed} className="icon" />,
-      path: 'day-case'
-    },
-    {
-      key: 'ivFluidOrder',
-      label: 'IV Fluid Order',
-      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
-      path: 'iv-fluid-order'
-    },
-    {
-      key: 'morseFallScale',
-      label: 'Morse Fall Scale (MFS)',
-      icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
-      path: 'morse-fall-scale'
-    },
-    {
-      key: 'stratifyScale',
-      label: 'STRATIFY Scale',
-      icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
-      path: 'stratify-scale'
-    },
-    {
-      key: 'hendrichFallRisk',
-      label: 'Hendrich II Fall Risk Model',
-      icon: <FontAwesomeIcon icon={faPersonFallingBurst} className="icon" />,
-      path: 'hendrich-fall-risk'
-    },
-    {
-      key: 'doctorRound',
-      label: 'Doctor Round',
-      icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
-      path: 'doctor-round'
-    },
-    {
-      key: 'nutritionStateAssessment',
-      label: 'Nutrition State',
-      icon: <FontAwesomeIcon icon={faLeaf} className="icon" />,
-      path: 'nutrition-state-asssessment'
-    },
-    {
-      key: 'dietaryRequest',
-      label: 'Dietary Request',
-      icon: <FontAwesomeIcon icon={faLeaf} className="icon" />,
-      path: 'dietary-request'
-    },
-    {
-      key: 'medicationAdministrationRecord',
-      label: 'MAR',
-      icon: <FontAwesomeIcon icon={faCapsules} className="icon" />,
-      path: 'medication-administration-record'
-    },
-    {
-      key: 'physiotherapyPlan',
-      label: 'Physiotherapy Plan',
-      icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />,
-      path: 'physiotherapy-plan'
-    },
-    {
-      key: 'occupationalTherapy',
-      label: 'Occupational Therapy',
-      icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />,
-      path: 'occupational-therapy'
-    },
-    {
-      key: 'speechTherapy',
-      label: 'Speech Therapy',
-      icon: <FontAwesomeIcon icon={faPersonWalking} className="icon" />,
-      path: 'speech-therapy'
-    },
-    {
-      key: 'ivFluidAdministration',
-      label: 'IV Fluid Administration',
-      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
-      path: 'iv-fluid-administration'
-    },
-    {
-      key: 'continuousObservations',
-      label: 'Continuous Observation',
-      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
-      path: 'continuous-observation'
-    },
-    {
-      key: 'flaccNeonatesPainAssessment',
-      label: 'FLACC Neonates Pain Assessment',
-      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
-      path: 'FLACC-neonates-pain-assessment'
-    },
-    {
-      key: 'slidingScale',
-      label: 'Sliding Scale',
-      icon: <FontAwesomeIcon icon={faSyringe} className="icon" />,
-      path: 'sliding-scale'
-    }
-  ];
 
-  const [currentHeader, setCurrentHeader] = useState();
+  const visibleSheets = React.useMemo(() => {
+    return MedicalSheets
+      .filter(ms => allowedSheetCodes.has(ms.code))
+      .filter(ms =>
+        ms.name.toLowerCase().includes(searchTerm.term.toLowerCase())
+      );
+  }, [allowedSheetCodes, searchTerm.term]);
+
+
+  const headersMap = React.useMemo(() => {
+  const map: Record<string, string> = {};
+
+  MedicalSheets.forEach(ms => {
+    const fullPath = ms.path.startsWith('/encounter')
+      ? ms.path
+      : `/encounter${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
+
+    map[fullPath] = ms.name;
+  });
+
+  return map;
+}, []);
+
+
+
+const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
+
   const divContent = (
-      `Patient Visit > ${currentHeader}`
+    `Patient Visit > ${currentHeader}`
   );
   useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContent));
   }, [currentHeader, dispatch]);
-  useEffect(() => {
-    setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
-  }, [location.pathname, dispatch]);
+ useEffect(() => {
+  setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
+}, [location.pathname, headersMap]);
+
 
   const [expand, setExpand] = useState(false);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
@@ -748,9 +406,9 @@ const Encounter = () => {
                     prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                     onClick={() =>
                       propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
                         ? setOpenDischargeModal(true)
                         : handleCompleteEncounter()
                     }
@@ -758,9 +416,9 @@ const Encounter = () => {
                   >
                     <Translate>
                       {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
                         ? 'Discharge'
                         : 'Complete Visit'}
                     </Translate>
@@ -838,44 +496,43 @@ const Encounter = () => {
                     <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
                     <Translate>Dashboard</Translate>
                   </List.Item>
+                  {visibleSheets.map(({ code, name, icon, path }) => {
+                    const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
 
-                  {menuItems
-                    .filter(({ label }) =>
-                      label.toLowerCase().includes(searchTerm.term.toLowerCase())
-                    )
-                    .map(({ key, label, icon, path }) =>
-                      medicalSheet?.object?.[key] ? (
-                        <List.Item
-                          key={key}
-                          className="drawer-item"
-                          onClick={() => {
-                            setIsDrawerOpen(false);
-                            navigate(path, {
-                              state: {
-                                patient: propsData.patient,
-                                encounter: propsData.encounter,
-                                edit
-                              }
-                            });
-                          }}
-                        >
-                          <Link
-                            to={path}
-                            state={{
+                    return (
+                      <List.Item
+                        key={code}
+                        className="drawer-item"
+                        onClick={() => {
+                          setIsDrawerOpen(false);
+                          navigate(fullPath, {
+                            state: {
                               patient: propsData.patient,
                               encounter: propsData.encounter,
                               edit
-                            }}
-                            className="inherit-link"
-                          >
-                            {icon}
-                            <span className="margin-left-10">
-                              <Translate>{label}</Translate>
-                            </span>
-                          </Link>
-                        </List.Item>
-                      ) : null
-                    )}
+                            }
+                          });
+                        }}
+                      >
+                        <Link
+                          to={fullPath}
+                          state={{
+                            patient: propsData.patient,
+                            encounter: propsData.encounter,
+                            edit
+                          }}
+                          className="inherit-link"
+                        >
+                          {icon}
+                          <span className="margin-left-10">
+                            <Translate>{name}</Translate>
+                          </span>
+                        </Link>
+                      </List.Item>
+                    );
+                  })}
+
+
                 </List>
               </Drawer.Body>
             </Drawer>
@@ -941,7 +598,7 @@ const Encounter = () => {
         appointmentData={selectedEvent?.appointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
-        onSave={refitchAppointments}
+        onSave={() => {}}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
       />

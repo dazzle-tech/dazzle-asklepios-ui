@@ -84,7 +84,7 @@ const EncounterList = () => {
       {
         fieldName: 'resource_type_lkey',
         operator: 'in',
-        value: ['2039534205961578', '2039620472612029', '2039516279378421']
+        value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
           .map(key => `(${key})`)
           .join(' ')
       },
@@ -110,7 +110,7 @@ const EncounterList = () => {
       {
         fieldName: 'resource_type_lkey',
         operator: 'in',
-        value: ['2039534205961578', '2039620472612029', '2039516279378421']
+        value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
           .map(key => `(${key})`)
           .join(' ')
       }
@@ -176,7 +176,7 @@ const EncounterList = () => {
           {
             fieldName: 'resource_type_lkey',
             operator: 'in',
-            value: ['2039534205961578', '2039620472612029', '2039516279378421']
+            value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
               .map(key => `(${key})`)
               .join(' ')
           },
@@ -748,14 +748,14 @@ const EncounterList = () => {
       <Panel>
         <MyTable
           filters={filters()}
-          tableButtons={
-            <div className="out-patient-list-table-buttons-position-handle">
-              <MyButton onClick={() => setOpenRefillModal(true)}>
-                <FontAwesomeIcon icon={faBoxOpen} />
-                Refill Stock
-              </MyButton>
-            </div>
-          }
+          // tableButtons={
+          //   <div className="out-patient-list-table-buttons-position-handle">
+          //     <MyButton onClick={() => setOpenRefillModal(true)}>
+          //       <FontAwesomeIcon icon={faBoxOpen} />
+          //       Refill Stock
+          //     </MyButton>
+          //   </div>
+          // }
           height={600}
           data={encounterListResponse?.object ?? []}
           columns={tableColumns}

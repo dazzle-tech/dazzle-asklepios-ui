@@ -138,7 +138,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         record={localPatient}
         setRecord={setLocalPatient}
         disabled={isUnknown}
-        allowNull
       />
       <div>
         Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />

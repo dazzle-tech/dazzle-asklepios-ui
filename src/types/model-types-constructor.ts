@@ -2226,6 +2226,7 @@ export const newApNurseServiceProduct:modelTypes.ApNurseServiceProduct = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	brandId:0,
 } 
 
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 
@@ -3707,7 +3708,7 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	patientKey:undefined,
 	visitKey:undefined,
 	prescriptionKey:undefined,
-	genericMedicationsKey:undefined,
+	genericMedicationsId:undefined,
 	numberOfRefills:0,
 	refillInterval:'',
 	instructionsTypeLkey:undefined,
@@ -4237,6 +4238,27 @@ export const newApTeleConsultationProgressNote:modelTypes.ApTeleConsultationProg
 	createdBy:'',
 	createdDate:0,
 	teleConsultationId:'',
+} 
+
+export const newApTelephonicConsultation:modelTypes.ApTelephonicConsultation = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	physician:0,
+	dateOfCall:0,
+	consultationContent:'',
+	approvalNumber:'',
+	notes:'',
+	extraDocumentation:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	cancellationReason: "",
+
 } 
 
 export const newApTenant:modelTypes.ApTenant = { 

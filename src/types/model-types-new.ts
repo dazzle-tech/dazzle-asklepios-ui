@@ -926,6 +926,19 @@ export interface VisitDuration {
   lastModifiedDate?: Date | null;
 
 }
+ export interface PriceList {
+  id?: number;
+  facilityId?: number | null;
+  facilityIds?: number[] | null; // for create/update
+  name: string;
+  type: string; // PriceListTypes enum value
+  currency?: string; // from backend
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  description?: string | null;
+  isActive?: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;}
   
 export interface ReportTemplate{
   id?:number;
@@ -964,3 +977,24 @@ export interface UserStickyNotesCreateVM{
     color:string
 }
 
+export interface PriceListItem {
+  id?: number;
+  priceListId: number;
+
+  itemType: string;
+
+  // only if itemType = PRODUCT (enum ProductTypes on backend)
+  productType?: string | null; // MEDICATION | CONSUMABLE | ... (string enum)
+
+  // polymorphic target
+  serviceId?: number | null;
+  productId?: number | null;
+
+  price: number | string; // BigDecimal -> number/string on FE
+
+  discountAllowed: boolean;
+  isActive: boolean;
+
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}

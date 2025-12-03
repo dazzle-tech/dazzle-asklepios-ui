@@ -21,12 +21,15 @@ interface MyStepperProps {
   activeStep: number;
   stepsList: any[];
   orientation?: OrientationType;
+  modalColor?: string;
 }
+
 
 const MyStepper: React.FC<MyStepperProps> = ({
   activeStep,
   stepsList,
   orientation = 'horizontal',
+  modalColor = 'var(--primary-blue)',
 }) => {
     const [width, setWidth] = useState(40);
     const [height, setHeight] = useState(40);
@@ -69,27 +72,32 @@ useEffect(() => {
   return () => window.removeEventListener("resize", handleResize);
 }, []);
     function CustomStepIcon(props) {
-        const { active, completed, icon, error, iconsMap } = props;
+          const { active, completed, icon, error, iconsMap, modalColor } = props;
     
         const stepData = iconsMap[icon]; // icon is 1-based index
         const customIcon = stepData?.customIcon;
     
         const isInactiveAndIncomplete = !active && !completed && !error;
     
-        const backgroundColor = error
-            ? 'error.main'
-            : completed
-                ? '#45B887'
-                : active
-                    ? 'var(--primary-blue)'
-                    : '#fff'; // white background for inactive/incomplete
-    
+      const backgroundColor = error
+        ? 'error.main'
+        : completed
+            ? '#45B887'
+            : active
+                ? modalColor
+                : '#fff';
+
         const iconColor = error || completed || active ? '#fff' : '#888'; // gray text for inactive/incomplete
     
         return (
-            <Box
-             className={active?error?"border-style-error":"border-style-active":"border-style"}
-            >
+              <Box
+                sx={{
+                  border: `2px dashed ${modalColor}`,
+                  padding: "4px",
+                  borderRadius: "50%",
+                  display: "inline-flex"
+                }}
+              >
                 <Box
                 
                     sx={{
@@ -161,9 +169,9 @@ useEffect(() => {
                     return (
                         <Step key={step.key}>
                             <StepLabel
-                                StepIconComponent={(props) => (
-                                    <CustomStepIcon {...props} iconsMap={iconsMap} />
-                                )}
+                              StepIconComponent={(props) => (
+                                  <CustomStepIcon {...props} iconsMap={iconsMap} modalColor={modalColor} />
+                              )}
                                 error={isErrorStep}
                                 optional={
                                     <Typography variant="caption" color="text.secondary">

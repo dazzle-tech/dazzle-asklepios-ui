@@ -1,8 +1,16 @@
+// src/services/observationService.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApPatientObservationSummary, ApVisitAllergies, ApVisitWarning, ApEncounterVaccination } from '@/types/model-types';
+import {
+  ApEncounterVaccination,
+  ApPatientObservationSummary,
+  ApVisitAllergies,
+  ApVisitWarning,
+  ApPatient,
+  ApEncounter
+} from '@/types/model-types';
 
 export const observationService = createApi({
   reducerPath: 'observationApi',
@@ -15,17 +23,19 @@ export const observationService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 0
     }),
+
     saveObservationSummary: builder.mutation({
-      query: (observation :ApPatientObservationSummary ) => ({
+      query: (observation: ApPatientObservationSummary) => ({
         url: `/observation/save-observation-summary`,
         method: 'POST',
-        body: observation,
+        body: observation
       }),
       onQueryStarted: onQueryStarted,
-      transformResponse: (response : any) => {
+      transformResponse: (response: any) => {
         return response.object;
-      },
+      }
     }),
+
     removeObservationSummary: builder.mutation({
       query: (observation: ApPatientObservationSummary) => ({
         url: `/observation/remove-observation-summary`,
@@ -36,8 +46,8 @@ export const observationService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    })
-    ,
+    }),
+
     getAllergies: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/observation/allergies-list?${fromListRequestToQueryParams(listRequest)}`
@@ -45,6 +55,7 @@ export const observationService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     saveAllergies: builder.mutation({
       query: (allergies: ApVisitAllergies) => ({
         url: `/observation/save-allergies`,
@@ -56,6 +67,7 @@ export const observationService = createApi({
         return response.object;
       }
     }),
+
     getWarnings: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/observation/warnings-list?${fromListRequestToQueryParams(listRequest)}`
@@ -63,6 +75,7 @@ export const observationService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     saveWarnings: builder.mutation({
       query: (allergies: ApVisitWarning) => ({
         url: `/observation/save-warnings`,
@@ -74,6 +87,7 @@ export const observationService = createApi({
         return response.object;
       }
     }),
+
     saveEncounterVaccine: builder.mutation({
       query: (encounterVaccination: ApEncounterVaccination) => ({
         url: `/observation/save-encounter-vaccine`,
@@ -84,25 +98,40 @@ export const observationService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
+    }),
 
-    }), getEncounterVaccine: builder.query({
+    getEncounterVaccine: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/observation/encounter-vaccine-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     getPatientVaccinationRecord: builder.query({
-      query: (data: { key: string, isCanelled: string }) => ({
+      query: (data: { key: string; isCanelled: string }) => ({
         url: `/observation/patient-vaccination-record`,
         headers: {
-          "patient-key": data.key,
-          "is-cancelled": data.isCanelled
+          'patient-key': data.key,
+          'is-cancelled': data.isCanelled
         }
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
+    generateNurseSummaryReport: builder.mutation<
+      Blob,
+      { patient: ApPatient; encounter: ApEncounter }
+    >({
+      query: payload => ({
+        url: `/observation/nurse-summary`,
+        method: 'POST',
+        body: payload,
+        responseHandler: (response: Response) => response.blob()
+      }),
+      onQueryStarted: onQueryStarted
+    })
   })
 });
 
@@ -116,5 +145,6 @@ export const {
   useSaveWarningsMutation,
   useSaveEncounterVaccineMutation,
   useGetEncounterVaccineQuery,
-  useGetPatientVaccinationRecordQuery
+  useGetPatientVaccinationRecordQuery,
+  useGenerateNurseSummaryReportMutation
 } = observationService;

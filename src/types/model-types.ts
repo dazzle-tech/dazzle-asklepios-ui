@@ -2225,6 +2225,7 @@ export interface ApNurseServiceProduct {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	brandId:number;
 } 
 
 export interface ApOperationAnesthesiaCarePlan { 
@@ -3194,6 +3195,7 @@ export interface ApPatientObservationSummary {
 	platestFunctionalStatus:string;
 	latestCognitiveCheck:string;
 	platestCognitiveCheck:string;
+	reasonOfVisit:string;
 } 
 
 export interface ApPatientPlan { 
@@ -3706,7 +3708,7 @@ export interface ApPrescriptionMedications {
 	patientKey:string;
 	visitKey:string;
 	prescriptionKey:string;
-	genericMedicationsKey:string;
+	genericMedicationsId:number;
 	numberOfRefills:number;
 	refillInterval:string;
 	instructionsTypeLkey:string;
@@ -4238,6 +4240,26 @@ export interface ApTeleConsultationProgressNote {
 	teleConsultationId:string;
 } 
 
+export interface ApTelephonicConsultation { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	physician:number;
+	dateOfCall:number;
+	consultationContent:string;
+	approvalNumber:string;
+	notes:string;
+	extraDocumentation:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+  	cancellationReason: string,
+} 
+
 export interface ApTenant { 
 	key:string;
 	tenantId:string;
@@ -4741,5 +4763,26 @@ export interface ApWarehouseUser {
 	deletedAt:number;
 	isvalid:boolean;
 } 
-
+export interface AppUser { 
+	id:;
+	login:string;
+	passwordHash:string;
+	firstName:string;
+	lastName:string;
+	email:string;
+	imageUrl:string;
+	activated:boolean;
+	langKey:string;
+	resetKey:string;
+	createdBy:string;
+	createdDate:;
+	resetDate:;
+	lastModifiedBy:string;
+	lastModifiedDate:;
+	phoneNumber:string;
+	birthDate:Date;
+	gender:string;
+	jobRole:string;
+	securityAccessLeve:string;
+} 
 

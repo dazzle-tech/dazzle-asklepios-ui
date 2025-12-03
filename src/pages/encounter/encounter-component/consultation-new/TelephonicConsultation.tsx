@@ -1,278 +1,378 @@
-// TelephonicConsultationUI.tsx
-import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
-import { faPrint } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import BlockIcon from '@rsuite/icons/Block';
-import React, { useEffect, useRef, useState } from 'react';
-import { MdModeEdit } from 'react-icons/md';
-import { Checkbox } from 'rsuite';
-import DetailsTele from './DetailsTele';
-import './styles.less';
-import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
-import MyModal from '@/components/MyModal/MyModal';
-import { MdAttachFile } from 'react-icons/md';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import MyButton from "@/components/MyButton/MyButton";
+import MyTable from "@/components/MyTable";
+import { MdModeEdit, MdAttachFile } from "react-icons/md";
+import { Checkbox } from "rsuite";
+import {
+  useGetTelephonicConsultationOrdersListQuery,
+} from "@/services/encounterService";
+import { initialListRequest } from "@/types/types";
+import DetailsTele from "./DetailsTele";
+import MyModal from "@/components/MyModal/MyModal";
+import EncounterAttachment from "@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment";
+import clsx from "clsx";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPrint, faPlus } from "@fortawesome/free-solid-svg-icons";
+import BlockIcon from "@rsuite/icons/Block";
+import CheckIcon from "@rsuite/icons/Check";
+import { newApTelephonicConsultation } from "@/types/model-types-constructor";
+import { useLocation } from "react-router-dom";
+import CancellationModal from "@/components/CancellationModal";
+import { useSaveTelephonicConsultationOrderMutation } from "@/services/encounterService";
+import { notify } from "@/utils/uiReducerActions";
+import { useAppDispatch } from "@/hooks";
 
-const TelephonicConsultation = () => {
-  // Container that wraps ONLY the table; used to detect inside/outside clicks
+const TelephonicConsultation = (props) => {
+  const location = useLocation();
+  const patient = props.patient || location.state?.patient;
+  const encounter = props.encounter || location.state?.encounter;
+  const edit = props.edit ?? location.state?.edit ?? false;
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const [openDetailsModal, setOpenDetailsModal] = useState(false);
-  const [consultationOrders, setConsultationOrder] = useState<any>({});
-  const [selectedRow, setSelectedRow] = useState<any | null>(null);
+  const dispatch = useAppDispatch();
+  const [saveTeleOrder] = useSaveTelephonicConsultationOrderMutation();
+
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const [showCanceled, setShowCanceled] = useState(false);
+
+  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [openModal, setOpenModal] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
 
-  const handleOpenAttachmentModal = () => {
-    console.log('Tele-consultation order for attachment (from table):', consultationOrders);
-    setAttachmentsModalOpen(true);
-  };
+  const [consultationOrder, setConsultationOrder] = useState({
+    ...newApTelephonicConsultation,
+  });
 
-  // Utility: is the event target within form-ish/editable elements?
+  const [listRequest, setListRequest] = useState({
+    ...initialListRequest,
+    pageSize: 20,
+    filters: [
+      { fieldName: "deleted_at", operator: "isNull", value: undefined },
+      { fieldName: "patient_key", operator: "match", value: patient?.key },
+      { fieldName: "encounter_key", operator: "match", value: encounter?.key }
+    ]
+  });
+
+  const { data, isLoading } = useGetTelephonicConsultationOrdersListQuery(listRequest);
+
+  const totalCount = data?.extraNumeric ?? 0;
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
     return (
       node.closest(`
-      input, textarea, select, button, [contenteditable="true"],
-      .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-datepicker,
-      .rs-picker-toggle, .rs-calendar, .rs-dropdown, .rs-auto-complete,
-      .rs-input-group, .rs-select, .rs-slider
-    `) !== null
+        input, textarea, select, button,
+        .rs-input, .rs-picker, .rs-checkbox, .rs-btn,
+        .rs-picker-toggle, .rs-calendar, .rs-dropdown
+      `) !== null
     );
   };
 
-  // Utility: ignore clicks inside modals/popups/menus
   const isInsideModalOrPopup = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
+    return node.closest(".rs-modal, .rs-picker-popup, .my-modal") !== null;
+  };
+
+  const isDataRow = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
     return (
-      node.closest(`
-      .rs-modal, .rs-drawer, .rs-picker-select-menu, .rs-picker-popup,
-      .my-modal, .my-popup
-    `) !== null
+      node.closest(".rs-table-row") &&
+      !node.closest(".rs-table-row-header")
     );
   };
 
-  // Global listeners: click outside (or inside table but not on row) clears selection; ESC clears as well
+  const handleClearSelection = useCallback(() => {
+    setSelectedRow(null);
+    setSelectedRows([]);
+  }, []);
+
   useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent | TouchEvent) => {
-      const target = e.target as Node | null;
+    const handlePointer = (e: PointerEvent) => {
+      const target = e.target;
 
-      // If click is inside table container, we DON'T immediately clear here.
-      // onRowClick will set selection when a real row is clicked.
-      if (tableContainerRef.current?.contains(target as Node)) return;
+      if (isFormField(target) || isInsideModalOrPopup(target)) return;
 
-      // Ignore clicks on inputs/modals/menus
-      if (isFormField(e.target) || isInsideModalOrPopup(e.target)) return;
+      const insideTable = tableContainerRef.current?.contains(target as Node);
+      const rowClick = isDataRow(target);
 
-      // Click is outside table and not on form/popup → clear selection
-      setSelectedRow(null);
+      if (!insideTable) return handleClearSelection();
+      if (insideTable && !rowClick) return handleClearSelection();
     };
 
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedRow(null);
+      if (e.key === "Escape") handleClearSelection();
     };
 
-    document.addEventListener('mousedown', handleGlobalClick);
-    document.addEventListener('touchstart', handleGlobalClick);
-    document.addEventListener('keydown', handleEsc);
+    document.addEventListener("pointerdown", handlePointer, true);
+    document.addEventListener("keydown", handleEsc);
 
     return () => {
-      document.removeEventListener('mousedown', handleGlobalClick);
-      document.removeEventListener('touchstart', handleGlobalClick);
-      document.removeEventListener('keydown', handleEsc);
+      document.removeEventListener("pointerdown", handlePointer, true);
+      document.removeEventListener("keydown", handleEsc);
     };
-  }, []);
+  }, [handleClearSelection]);
 
-  // Dummy patient/encounter for demo—replace with real props/state in your app
-  const patient = { key: 'patient1', name: 'John Doe' };
-  const encounter = { key: 'encounter1', date: '2025-09-15' };
+  const handleOpenAttachments = (row) => {
+    setConsultationOrder(row);
+    setAttachmentsModalOpen(true);
+  };
 
-  // Sample data
-  const tableData = [
-    {
-      id: 1,
-      physician: 'Dr. John Doe',
-      result: 'Normal',
-      callDateTime: '2025-09-15 10:30',
-      cancellationReason: '',
-      cancelledBy: 'Nurse Admin',
-      cancelledAt: '2025-09-15 11:00',
-      createdBy: 'Dr. Smith',
-      createdAt: '2025-09-15 10:00'
-    },
-    {
-      id: 2,
-      physician: 'Dr. Jane Smith',
-      result: 'Follow-up Needed',
-      callDateTime: '2025-09-14 14:00',
-      cancellationReason: 'Patient unavailable',
-      cancelledBy: 'Nurse Admin',
-      cancelledAt: '2025-09-14 14:30',
-      createdBy: 'Dr. Brown',
-      createdAt: '2025-09-14 13:50'
-    }
-  ];
+  const isSelected = (r) =>
+    selectedRow?.key === r?.key ? "selected-row" : "";
 
-  // Row highlighter: return "selected-row" CSS class for the selected row
-  const isSelected = (rowData: any) =>
-    selectedRow && rowData?.id === selectedRow?.id ? 'selected-row' : '';
 
-  const tableColumns = [
+  const handleCheckboxChange = (rowData: any) => {
+    setSelectedRows(prev => {
+      if (prev.includes(rowData)) {
+        return prev.filter(item => item !== rowData);
+      }
+      return [...prev, rowData];
+    });
+  };
+
+  const columns = [
     {
       key: 'select',
       title: '#',
-      render: () => <Checkbox />
-    },
-    { key: 'physician', title: 'Physician', render: (row: any) => row.physician },
-    { key: 'result', title: 'Result', render: (row: any) => row.result },
-    {
-      key: 'callDateTime',
-      title: 'Call Date/Time',
-      dataKey: 'callDateTime',
-      width: 220,
-      render: (row: any) => (
-        <>
-          {row.physician}
-          <br />
-          <span className="date-table-style">{row.callDateTime}</span>
-        </>
-      )
-    },
-    {
-      key: 'cancellationReason',
-      title: 'Cancellation Reason',
-      render: (row: any) => row.cancellationReason
-    },
-    {
-      key: 'cancelledAtBy',
-      title: 'Cancelled At/By',
-      dataKey: 'cancelledAtBy',
-      width: 220,
-      render: (row: any) => (
-        <>
-          {row.cancelledBy}
-          <br />
-          <span className="date-table-style">{row.cancelledAt}</span>
-        </>
-      )
-    },
-    {
-      key: 'createdByAt',
-      title: 'Created By/At',
-      dataKey: 'createdByAt',
-      width: 220,
-      render: (row: any) => (
-        <>
-          {row.createdBy}
-          <br />
-          <span className="date-table-style">{row.createdAt}</span>
-        </>
-      )
-    },
-    {
-      key: 'attachments',
-      title: 'Attachments',
+      flexGrow: 1,
       render: (rowData: any) => (
+        <Checkbox
+          checked={selectedRows.includes(rowData)}
+          onChange={() => handleCheckboxChange(rowData)}
+          disabled={rowData.isValid === false}
+        />
+      )
+    },
+
+    {
+      key: "physician",
+      title: "Physician",
+      flexGrow: 2,
+      render: (row) => row.physicianName || row.physician
+    },
+    {
+      key: "dateOfCall",
+      title: "Date Of Call",
+      flexGrow: 2,
+      render: (row) => row.dateOfCall ? new Date(row.dateOfCall).toLocaleString() : ""
+    },
+    {
+      key: "consultationContent",
+      title: "Consultation Content",
+      flexGrow: 4,
+      render: (row) => row.consultationContent
+    },
+    {
+      key: "attachments",
+      title: "Attachments",
+      flexGrow: 1,
+      render: (row) => (
         <MdAttachFile
           size={20}
-          fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
-          onClick={() => {
-            if (rowData?.key) {
-              setConsultationOrder(rowData);
-              handleOpenAttachmentModal();
-            }
+          fill={row?.key ? "var(--primary-gray)" : "#ccc"}
+          onClick={() => row?.key && handleOpenAttachments(row)}
+          style={{
+            cursor: row?.key ? "pointer" : "not-allowed",
           }}
-          style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
         />
       )
     },
     {
-      key: 'actions',
-      title: 'Actions',
-      render: () => (
-        <div className="icons-consultation-main-container">
-          <MdModeEdit size={24} fill="var(--primary-gray)" />
-        </div>
+      key: "edit",
+      title: "",
+      flexGrow: 1,
+      render: (row) => (
+        <MdModeEdit
+          size={22}
+          fill="var(--primary-gray)"
+          style={{ cursor: "pointer" }}
+          onClick={() => {
+            setSelectedRow(row);
+            setConsultationOrder(row);
+            setOpenModal(true);
+          }}
+        />
       )
     }
   ];
 
-  const tablebuttons = (
-    <>
-      <div className="table-buttons-left-part-handle-positions">
-        <MyButton prefixIcon={() => <BlockIcon />}>Cancel</MyButton>
-        <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}>
-          Print
+  const handleCancel = async () => {
+    try {
+      await Promise.all(
+        selectedRows.map(item =>
+          saveTeleOrder({
+            ...item,
+            isValid: false,
+            deletedAt: Date.now(),
+            cancellationReason: consultationOrder?.cancellationReason,
+          }).unwrap()
+        )
+      );
+
+
+      dispatch(notify("All consultations cancelled"));
+      setSelectedRows([]);
+      setOpenCancelModal(false);
+
+      setListRequest(prev => ({ ...prev, timestamp: Date.now() }));
+    } catch {
+      dispatch(notify("Cancel failed"));
+    }
+  };
+
+
+
+
+  const handlePageChange = (_: any, newPage: number) => {
+    setListRequest({
+      ...listRequest,
+      pageNumber: newPage + 1,
+    });
+  };
+
+  const handleRowsPerPageChange = (e) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: Number(e.target.value),
+      pageNumber: 1,
+    });
+  };
+
+  const tableButtons = (
+    <div className="bt-div-2">
+
+      <div className="bt-left-2">
+        <MyButton
+          prefixIcon={() => <BlockIcon />}
+          onClick={() => setOpenCancelModal(true)}
+          disabled={selectedRows.length === 0}
+        >
+          Cancel
         </MyButton>
-        <Checkbox>Show Cancelled</Checkbox>
+
+        <Checkbox
+          checked={showCanceled}
+          onChange={() => setShowCanceled(prev => !prev)}
+        >
+          Show Cancelled
+        </Checkbox>
+
+
+
       </div>
-      <div className="bt-right">
-        <MyButton onClick={() => setOpenDetailsModal(true)}>Add Consultation</MyButton>
+
+      <div className={clsx("bt-right-2", { "disabled-panel": edit })}>
+        <MyButton
+          prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+          onClick={() => {
+            setSelectedRow(null);
+            setConsultationOrder({
+              ...newApTelephonicConsultation,
+              patientKey: patient?.key,
+              encounterKey: encounter?.key,
+              createdBy: "Admin",
+            });
+            setOpenModal(true);
+          }}
+        >
+          Add Consultation
+        </MyButton>
+
       </div>
-    </>
+    </div>
   );
+
+
+
+  useEffect(() => {
+    setListRequest(prev => ({
+      ...prev,
+      filters: [
+        ...(showCanceled
+          ? []
+          : [
+            {
+              fieldName: "is_valid",
+              operator: "equal",
+              value: true
+            }
+          ]),
+
+        { fieldName: "patient_key", operator: "match", value: patient?.key },
+
+      ]
+    }));
+  }, [showCanceled, patient?.key, encounter?.key]);
+
 
   return (
     <div>
-      <div>
-        <div ref={tableContainerRef}>
-          <MyTable
-            columns={tableColumns}
-            data={tableData}
-            loading={false}
-            tableButtons={tablebuttons}
-            page={0}
-            rowsPerPage={5}
-            totalCount={tableData.length}
-            onRowClick={row => setSelectedRow(row)} // set current selection
-            rowClassName={isSelected} // highlight the selected row
-          />
-        </div>
+      <div ref={tableContainerRef}>
+        <MyTable
+          height={450}
+          loading={isLoading}
+          data={data?.object || []}
+          columns={columns}
+          rowClassName={isSelected}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          onRowClick={(row) => setSelectedRow(row)}
+          tableButtons={tableButtons}
+        />
       </div>
-
-      {/* {selectedRow && (
-        <div className="under-table-preview">
-          <div className="preview-card">
-            <div>
-              <b>Physician:</b> {selectedRow.physician}
-            </div>
-            <div>
-              <b>Result:</b> {selectedRow.result}
-            </div>
-            <div>
-              <b>Call:</b> {selectedRow.callDateTime}
-            </div>
-          </div>
-        </div>
-      )} */}
-
       <DetailsTele
         patient={patient}
         encounter={encounter}
-        consultationOrders={consultationOrders}
+        consultationOrders={consultationOrder}
         setConsultationOrder={setConsultationOrder}
-        open={openDetailsModal}
-        setOpen={setOpenDetailsModal}
-        refetchCon={() => console.log('refetch called')}
+        open={openModal}
+        setOpen={(v) => {
+          setOpenModal(v);
+          setListRequest({ ...listRequest, timestamp: Date.now() });
+        }}
         editing={false}
         edit={false}
+        refetchCon={() =>
+          setListRequest({ ...listRequest, timestamp: Date.now() })
+        }
       />
 
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - Tele-Consultation`}
+        title="Attachments - Telephonic Consultation"
         size="lg"
         hideActionBtn={true}
         content={
           <EncounterAttachment
             localEncounter={encounter}
             source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
-            sourceId={consultationOrders?.key ? Number(consultationOrders.key) : undefined}
+            sourceId={consultationOrder?.key ? Number(consultationOrder.key) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />
+
+      <CancellationModal
+        title="Cancel Telephonic Consultation"
+        fieldLabel="Cancellation Reason"
+        open={openCancelModal}
+        setOpen={setOpenCancelModal}
+        object={consultationOrder}
+        setObject={setConsultationOrder}
+        handleCancle={handleCancel}
+        fieldName="cancellationReason"
+        required={true}
+      />
+
+
     </div>
   );
 };

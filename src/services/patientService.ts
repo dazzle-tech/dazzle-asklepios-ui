@@ -465,7 +465,7 @@ export const patientService = createApi({
     }),
     removePatientSurgicalHistory: builder.mutation({
       query: (patientSurgicalHistory: ApPatientSurgicalHistory) => ({
-        url: `/pas/remove-patient-surgical-history`,
+        url: `/pas/remove-patient--surgical-history`,
         method: 'POST',
         body: patientSurgicalHistory
       }),

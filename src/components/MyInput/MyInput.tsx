@@ -687,7 +687,6 @@ const MyInput = ({
         const inputControl = (
           <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
             <Form.Control
-              labelKey={props?.selectDataLabel ?? ''}
               style={{
                 width: '100%',
                 height: props?.height ?? 30,

@@ -1,6 +1,5 @@
 import AdvancedModal from '@/components/AdvancedModal';
 import { useAppDispatch } from '@/hooks';
-import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
@@ -21,7 +20,7 @@ import {
 import { newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { faRightLeft, faPills } from '@fortawesome/free-solid-svg-icons';
 import Instructions from './Instructions';
-import Substitues from '../drug-order/Substitutes';
+import Substitues from '../drug-order/SubstitutesNew';
 import clsx from 'clsx';
 import DiagnosticsOrder from '../diagnostics-order';
 import CheckIcon from '@rsuite/icons/Check';
@@ -32,7 +31,7 @@ import { newApDrugOrderMedications } from '@/types/model-types-constructor';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { FaDownload } from 'react-icons/fa';
 import { PlusRound } from '@rsuite/icons';
-
+import { useGetBrandMedicationByIdQuery, useSearchBrandMedicationsByNameOrActiveQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
@@ -69,18 +68,18 @@ const DetailsModal = ({
   const [selectedOption, setSelectedOption] = useState(null);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
   const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
-  const { data: parametersToMonitorQueryResponse } = useGetLovValuesByCodeQuery('PARAMETERS_TO_MONITOR');
   const { data: administrationInstructionsLovQueryResponse } =
     useGetLovValuesByCodeQuery('PRESC_INSTRUCTIONS');
-  const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
   const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
   const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
   const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
   const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
 
   const { data: genericMedicationListResponse } =
-    useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
-
+    useSearchBrandMedicationsByNameOrActiveQuery({ keyword: searchKeyword });
+  const {data:Brand}=useGetBrandMedicationByIdQuery(prescriptionMedication?.genericMedicationsId, {
+    skip: !prescriptionMedication?.genericMedicationsId,
+  });
   const [instr, setInstruc] = useState(null);
   const [editDuration, setEditDuration] = useState(false);
   const [favoriteMedications, setFavoriteMedications] = useState([]);
@@ -116,9 +115,7 @@ const DetailsModal = ({
   useEffect(() => {
     if (prescriptionMedication.key != null) {
       setSelectedGeneric(
-        genericMedicationListResponse?.object?.find(
-          item => item.key === prescriptionMedication.genericMedicationsKey
-        )
+        Brand
       );
       setSelectedOption(prescriptionMedication?.instructionsTypeLkey);
 
@@ -191,7 +188,7 @@ const DetailsModal = ({
   }, [selectedOption]);
 
   useEffect(() => {
-    console.log(open);
+  
     setSearchKeyword('');
     if (open == false) {
       handleCleare();
@@ -221,7 +218,7 @@ const DetailsModal = ({
               patientKey: patient.key,
               visitKey: encounter.key,
               prescriptionKey: preKey,
-              genericMedicationsKey: selectedGeneric?.key,
+              genericMedicationsId: selectedGeneric?.id,
               parametersToMonitor: tagcompine,
               statusLkey: '164797574082125',
               instructions: inst,
@@ -277,7 +274,6 @@ const DetailsModal = ({
   const handleItemClick = Generic => {
     setSelectedGeneric(Generic);
     setSearchKeyword('');
-    const newList = roaLovQueryResponse.object.filter(item => Generic.roaList?.includes(item.key));
   };
   const handleSearchIcd = value => {
     setSearchKeywordicd(value);
@@ -286,15 +282,15 @@ const DetailsModal = ({
     setSearchKeyword(value);
   };
   const handleRecall = rowData => {
-    const genericMedication = genericMedicationListResponse?.object?.find(
-      item => item.key === rowData.genericMedicationsKey
+    const genericMedication = genericMedicationListResponse?.find(
+      item => item.id === rowData.genericMedicationsId
     );
 
     setOrderMedication({
-      ...newApDrugOrderMedications,
+      ...newApPrescriptionMedications,
       ...rowData,
-      drugOrderKey: drugKey,
-      genericName: genericMedication?.genericName || '',
+      prescriptionKey: drugKey,
+      genericName: genericMedication?.name || '',
       dose: rowData.dose || null,
       doseUnitLkey: rowData.doseUnitLkey || null,
       frequency: rowData.frequency || null,
@@ -320,10 +316,10 @@ const DetailsModal = ({
       setFavoriteMedications(prev =>
         prev.filter(item => item.genericMedicationsKey !== rowData.genericMedicationsKey)
       );
-      const genericMedication = genericMedicationListResponse?.object?.find(
-        item => item.key === rowData.genericMedicationsKey
+      const genericMedication = genericMedicationListResponse?.find(
+        item => item.id === rowData.genericMedicationsKey
       );
-      const medicationName = genericMedication ? genericMedication.genericName : 'Medication';
+      const medicationName = genericMedication ? genericMedication.name : 'Medication';
       dispatch(
         notify({
           msg: `${medicationName} removed from favorites`,
@@ -331,13 +327,13 @@ const DetailsModal = ({
         })
       );
     } else {
-      const genericMedication = genericMedicationListResponse?.object?.find(
-        item => item.key === rowData.genericMedicationsKey
+      const genericMedication = genericMedicationListResponse?.find(
+        item => item.id === rowData.genericMedicationsKey
       );
 
       const medicationToAdd = {
         ...rowData,
-        genericName: genericMedication ? genericMedication.genericName : 'Unnamed Medication',
+        genericName: genericMedication ? genericMedication.name : 'Unnamed Medication',
         administrationInstructions: rowData.administrationInstructions,
         parametersToMonitor: rowData.parametersToMonitor || rowData.parametersToMonitorKey
       };
@@ -379,7 +375,7 @@ const DetailsModal = ({
           </span>
         }
         size="70vw"
-        leftTitle={selectedGeneric ? selectedGeneric.genericName : 'Select Generic'}
+        leftTitle={selectedGeneric ? selectedGeneric.name : 'Select Generic'}
         rightTitle="Medication Order Details"
         leftContent={
           <>
@@ -439,25 +435,38 @@ const DetailsModal = ({
                           </div>
                           {searchKeyword && (
                             <Dropdown.Menu className="prescription-dropdown-menuresult">
-                              {genericMedicationListResponse?.object?.map(Generic => (
+                              {genericMedicationListResponse?.map(Generic => (
                                 <Dropdown.Item
-                                  key={Generic.key}
-                                  eventKey={Generic.key}
+                                  key={Generic.id}
+                                  eventKey={Generic.id}
                                   onClick={() => handleItemClick(Generic)}
                                 >
                                   <div className="prescription-dropdown-item-content">
                                     <div className="prescription-dropdown-item-title">
-                                      {Generic.genericName}{' '}
-                                      {Generic.dosageFormLvalue?.lovDisplayVale &&
-                                        `(${Generic.dosageFormLvalue?.lovDisplayVale})`}
+                                      {Generic.name}{' '}
+                                      {/* {Generic.dosageFormLvalue?.lovDisplayVale &&
+                                        `(${Generic.dosageFormLvalue?.lovDisplayVale})`} */}
                                     </div>
-                                    <div className="prescription-dropdown-item-sub">
+                                    {/* <div className="prescription-dropdown-item-sub">
                                       {Generic.manufacturerLvalue?.lovDisplayVale}{' '}
                                       {Generic.roaLvalue?.lovDisplayVale &&
                                         `| ${Generic.roaLvalue?.lovDisplayVale}`}
-                                    </div>
+                                    </div> */}
                                     <div className="prescription-dropdown-item-extra">
-                                      {Generic.activeIngredients}
+                                      {Generic.activeIngredients?.length ? (
+                                        <ul>
+                                          {Generic.activeIngredients.map((ai) => (
+                                            <li key={ai.id}>
+                                              {ai.name}
+                                              {ai.atcCode ? ` (${ai.atcCode})` : ""}
+                                              {ai.strength != null ? ` - ${ai.strength} ` : ""}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      ) : (
+                                        <div>No active ingredients</div>
+                                      )}
+
                                     </div>
                                   </div>
                                 </Dropdown.Item>
@@ -584,7 +593,7 @@ const DetailsModal = ({
 
 
 
-              <SectionContainer
+              {/* <SectionContainer
                 title={<Text className="font-style">Pharmacy Use Only</Text>}
                 content={
                   <Form>
@@ -632,7 +641,7 @@ const DetailsModal = ({
                     </div>
                   </Form>
                 }
-              />
+              /> */}
 
 
             </div>
@@ -826,8 +835,8 @@ const DetailsModal = ({
                     />
 
                     <div className="prescription-notes-actions">
-                      <MyButton 
-                        onClick={handleAddNewAttachment} 
+                      <MyButton
+                        onClick={handleAddNewAttachment}
                         prefixIcon={() => <PlusRound />}
                         disabled={!prescriptionMedication?.key}
                       >
@@ -861,8 +870,8 @@ const DetailsModal = ({
                             dataKey: 'genericMedicationsKey',
                             title: 'Medication Name',
                             render: (rowData: any) => {
-                              const med = genericMedicationListResponse?.object?.find(
-                                item => item.key === rowData.genericMedicationsKey
+                              const med = genericMedicationListResponse?.find(
+                                item => item.id === rowData.genericMedicationsId
                               );
                               return (
                                 <div
@@ -881,7 +890,7 @@ const DetailsModal = ({
                                 >
                                   <FontAwesomeIcon icon={faPills} color="#800080" />
                                   <span style={{ fontWeight: 500 }}>
-                                    {med?.genericName || 'Unknown Medication'}
+                                    {med?.name || 'Unknown Medication'}
                                   </span>
                                 </div>
                               );
@@ -983,7 +992,7 @@ const DetailsModal = ({
         isOpen={attachmentsModalOpen}
         setIsOpen={setAttachmentsModalOpen}
         encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}}
+        refetchData={() => { }}
         source="PRESCRIPTION_ORDER_ATTACHMENT"
         sourceId={capturedSourceId}
       />
