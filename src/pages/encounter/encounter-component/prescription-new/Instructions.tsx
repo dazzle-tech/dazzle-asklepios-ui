@@ -5,6 +5,7 @@ import { initialListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Col, Dropdown, Form, Row } from 'rsuite';
 import './styles.less';
+import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 
 
 const Instructions = ({
@@ -18,28 +19,43 @@ const Instructions = ({
   const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
   const { data: FrequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
   const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-  const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({
-    ...initialListRequest
-  });
+  const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({page:0, size:1000, sort:'id,asc'});
   const [filteredList, setFilteredList] = useState([]);
   const [selectedPreDefine, setSelectedPreDefine] = useState(null);
+  console.log("Selected PreDefine:", selectedPreDefine);
   const [munial, setMunial] = useState(null);
+  const {data:getPreDefinedInstructionById}= useGetPrescriptionInstructionQuery(prescriptionMedication?.instructions ?? '',{
+    skip: !prescriptionMedication?.instructions || selectedOption !== '3010591042600262',
+  });
+  console.log("getPreDefinedInstructionById:", getPreDefinedInstructionById);
+useEffect(() => {
+  if (!selectedGeneric?.roa || !roaLovQueryResponse?.object) {
+    setFilteredList([]);
+    return;
+  }
 
-  useEffect(() => {
-    const newList = roaLovQueryResponse?.object?.filter(item =>
-      selectedGeneric?.roaList?.includes(item.key)
-    );
-    setFilteredList(newList);
-  }, [selectedGeneric]);
+ 
+  const roaKeys = selectedGeneric.roa
+    .split(',')
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  const newList = roaLovQueryResponse.object.filter(item =>
+    roaKeys.includes(String(item.key))
+  );
+
+  setFilteredList(newList);
+}, [selectedGeneric?.roa, roaLovQueryResponse?.object]);
+
   useEffect(() => {
     if (selectedOption === '3010606785535008') {
       //Custome  Instruction
     } else if (selectedOption === '3010591042600262') {
       // Pre defined Instruction
-      const t = predefinedInstructionsListResponse?.object?.find(
-        item => item.key === prescriptionMedication.instructions
+      const t = predefinedInstructionsListResponse?.data?.find(
+        item => item.id === Number(prescriptionMedication.instructions)
       );
-
+      console.log("Predefined Instruction Selected:", t);
       setSelectedPreDefine(t);
     } else if (selectedOption === '3010573499898196') {
       //Mnuil  Instruction
@@ -50,7 +66,7 @@ const Instructions = ({
     setInst(munial);
   }, [munial]);
   useEffect(() => {
-    setInst(selectedPreDefine?.key);
+    setInst(selectedPreDefine?.id);
   }, [selectedPreDefine]);
   return (
     <>
@@ -119,23 +135,23 @@ const Instructions = ({
                 : [
                     selectedPreDefine.dose,
 
-                    selectedPreDefine.unitLvalue?.lovDisplayVale,
-                    selectedPreDefine.routLvalue?.lovDisplayVale,
-                    selectedPreDefine.frequencyLvalue?.lovDisplayVale
+                    selectedPreDefine.unit,
+                    selectedPreDefine.rout,
+                    selectedPreDefine.frequency
                   ]
                     .filter(Boolean)
                     .join(', ')
             }
           >
             {predefinedInstructionsListResponse &&
-              predefinedInstructionsListResponse?.object?.map((item, index) => (
+              predefinedInstructionsListResponse?.data?.map((item, index) => (
                 <Dropdown.Item key={index} onClick={() => setSelectedPreDefine(item)}>
                   {[
                     item.dose,
 
-                    item.unitLvalue?.lovDisplayVale,
-                    item.routLvalue?.lovDisplayVale,
-                    item.frequencyLvalue?.lovDisplayVale
+                    item.unit,
+                    item.rout,
+                    item.frequency
                   ]
                     .filter(Boolean)
                     .join(', ')}

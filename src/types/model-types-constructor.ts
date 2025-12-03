@@ -3708,7 +3708,7 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	patientKey:undefined,
 	visitKey:undefined,
 	prescriptionKey:undefined,
-	genericMedicationsKey:undefined,
+	genericMedicationsId:undefined,
 	numberOfRefills:0,
 	refillInterval:'',
 	instructionsTypeLkey:undefined,

@@ -3708,7 +3708,7 @@ export interface ApPrescriptionMedications {
 	patientKey:string;
 	visitKey:string;
 	prescriptionKey:string;
-	genericMedicationsKey:string;
+	genericMedicationsId:number;
 	numberOfRefills:number;
 	refillInterval:string;
 	instructionsTypeLkey:string;
