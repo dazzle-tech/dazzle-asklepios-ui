@@ -9,19 +9,22 @@ import SearchIcon from '@rsuite/icons/Search';
 import { RootState } from '@/store';
 import { IoMdClose } from 'react-icons/io';
 import Translate from '../Translate';
-
+import { useNavigate } from 'react-router-dom';
+import { setScreenKey } from '@/utils/uiReducerActions';
 type MainScreenBarFiltersProps = {
   displaySearch: boolean;
   setDisplaySearch: React.Dispatch<React.SetStateAction<boolean>>;
+  childrenNavs: any[]
 };
 
 const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
   displaySearch,
   setDisplaySearch,
+  childrenNavs
 }) => {
   const dispatch = useAppDispatch();
-
-  const [record, setRecord] = useState<Record<string, any>>({});
+  const navigate = useNavigate();
+  const [record, setRecord] = useState<Record<string, any>>({eventKey: ""});
 
 
   const [width, setWidth] = useState<number>(window.innerWidth);
@@ -43,6 +46,15 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
       setDisplaySearch(false);
     }
   }, [width, setDisplaySearch]);
+
+  useEffect(() => {
+  if (!record.eventKey) return;
+  dispatch(setScreenKey(record.eventKey));
+  const item = childrenNavs.find(c => c.eventKey === record.eventKey);
+  if (item?.to) navigate(item?.to);
+
+}, [record.eventKey]);
+
 
   const handleThemeToggle = (newRecord: { state: boolean }) => {
     const nextMode = newRecord.state ? 'light' : 'dark';
@@ -69,8 +81,11 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
             {width > 800 || displaySearch ? (
               <>
                 <MyInput
-                  fieldName=""
-                  fieldType="text"
+                  fieldName="eventKey"
+                  selectData={childrenNavs}
+                  selectDataLabel='title'
+                  selectDataValue='eventKey'
+                  fieldType="select"
                   placeholder="Search"
                   width={
                     width < 800 && width > 500 && displaySearch
@@ -81,6 +96,7 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
                   }
                   record={record}
                   setRecord={setRecord}
+                  showLabel={false}
                 />
                 <IoMdClose
                   size={24}
