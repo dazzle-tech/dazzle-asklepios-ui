@@ -408,7 +408,7 @@ const iconsForActions = (rowData: any) => (
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      render: (rowData) => <p>{formatEnumString(rowData?.name)}</p>,
+      render: (rowData) => <p>{rowData?.name}</p>,
 
     },
     {
