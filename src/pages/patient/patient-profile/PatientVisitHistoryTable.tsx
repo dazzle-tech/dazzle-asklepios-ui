@@ -187,42 +187,27 @@ const PatientVisitHistoryTable = ({
       flexGrow: 4,
       dataKey: 'departmentName',
       render: (rowData: any) => {
-        // Try to get department from the map using department_key or resource_key
-        const departmentKey = rowData?.departmentKey ;
+        const departmentKey = rowData?.departmentKey;
         const department = departmentKey ? departmentMap[departmentKey] : null;
         
         if (department) {
           return department.name;
         }
         
-        // Fallback to original logic if department not found in map
-        return rowData?.resourceTypeLkey === '2039534205961578' || 'PRACTITIONER'
-          ? rowData?.departmentName
-          : rowData.resourceObject?.name;
+        return '';
       }
     },
     {
-      key: 'encountertype',
-      title: <Translate>Encounter Type</Translate>,
+      key: 'resourceType',
+      title: <Translate>Resource Type</Translate>,
       flexGrow: 4,
       render: (rowData: any) => {
-        // Try to get department from the map using department_key or resource_key
-        const departmentKey = rowData?.departmentKey;
-        const department = departmentKey ? departmentMap[departmentKey] : null;
-        
-        if (department?.encounterType) {
-          return formatEnumString(department.encounterType);
-        }
-        
-        // Fallback to original logic if department not found in map
-        return rowData.resourceObject?.departmentTypeLkey
-          ? rowData.resourceObject?.departmentTypeLvalue?.lovDisplayVale
-          : rowData.resourceObject?.departmentTypeLkey;
+        return formatEnumString(rowData?.resourceTypeLkey);
       }
     },
     {
-      key: 'physician',
-      title: <Translate>Physician</Translate>,
+      key: 'resource',
+      title: <Translate>Resource</Translate>,
       flexGrow: 4,
       render: (rowData: any) => {
         // Get resource from resource map
@@ -230,49 +215,43 @@ const PatientVisitHistoryTable = ({
         const resource = resourceKey ? resourceMap[resourceKey] : null;
         
         if (!resource) {
-          // Fallback to original logic if resource not found
-          return rowData?.resourceObject?.practitionerFullName || 
-                 rowData?.resourceObject?.name || '';
+          return '';
         }
         
-        // Get resource type
-        const resourceType = resource.resourceType || resource.resourceTypeLkey || resource.resourceTypeLvalue?.valueCode;
+        let displayName = resource.resourceKey || '';
+        const resourceType = resource.resourceType;
+        const lookupKey = resource.resourceKey;
         
         // Based on resource type, look up the appropriate name
-        if (resourceType === 'PRACTITIONER' || resourceType === '2039534205961578') {
-          // Look up practitioner
-          const practitionerKey = resource.practitionerKey || resource.practitioner_key;
-          const practitioner = practitionerKey ? practitionerMap[practitionerKey] : null;
+        if (resourceType === 'PRACTITIONER') {
+          const practitioner = lookupKey ? practitionerMap[lookupKey] : null;
           
           if (practitioner) {
-            return practitioner.practitionerFullName || 
-                   `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
+            displayName = practitioner.practitionerFullName || 
+                         `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
           }
-          return resource.name || '';
         } 
         else if (['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)) {
-          // Look up department
-          const departmentKey = resource.departmentKey || resource.department_key;
-          const department = departmentKey ? departmentMap[departmentKey] : null;
+          const department = lookupKey ? departmentMap[lookupKey] : null;
           
           if (department) {
-            return department.name || department.departmentName;
+            displayName = department.name;
           }
-          return resource.resourceKey || '';
         }
         else if (['MEDICAL_TEST'].includes(resourceType)) {
-          // Look up diagnostic test
-          const diagnosticTestKey = resource.diagnosticTestKey || resource.diagnostic_test_key;
-          const diagnosticTest = diagnosticTestKey ? diagnosticTestMap[diagnosticTestKey] : null;
+          const diagnosticTest = lookupKey ? diagnosticTestMap[lookupKey] : null;
           
           if (diagnosticTest) {
-            return diagnosticTest.name || diagnosticTest.testName;
+            displayName = diagnosticTest.name;
           }
-          return resource.resourceKey || '';
         }
         
-        // Default: return resource name
-        return resource.resourceKey || '';
+        // Final fallback
+        if (!displayName) {
+          displayName = resource.resourceKey || 'Unknown Resource';
+        }
+        
+        return displayName;
       }
     },
     {
