@@ -837,6 +837,22 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   isActive: true,
 };
 
+export const newReferralRequest: modelTypes.ReferralRequest = {
+  id: null,
+  patientId: null,
+  encounterId: null,
+  referralType: "INTERNAL",
+  facilityId: null,
+  departmentId: null,
+  referralReason: "",
+  priority: null,
+  isActive: true,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+}
+
 export const newPayor: modelTypes.Payor = {
   id: undefined,
   code: "",

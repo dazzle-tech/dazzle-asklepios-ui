@@ -58,6 +58,10 @@ const Rad = () => {
     ReportRef.current?.reportFetch();
   };
 
+const OrdersRef = useRef<any>(null);
+
+
+
   const TestsRef = useRef(null);
   const refetchTests = () => {
     TestsRef.current?.fetchTest();
@@ -284,11 +288,13 @@ const Rad = () => {
           <Row>
             <Col xs={14}>
               <Orders
+                ref={OrdersRef}
                 order={order}
                 setOrder={setOrder}
                 listOrdersResponse={listOrdersResponse}
                 setListOrdersResponse={setListOrdersResponse}
               />
+
             </Col>
             <Col xs={10}>
               <Row>
