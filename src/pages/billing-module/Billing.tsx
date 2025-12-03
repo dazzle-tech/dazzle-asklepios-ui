@@ -239,6 +239,7 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
     { key: 'price', title: 'Price' },
     { key: 'currency', title: 'Currency' },
     { key: 'quantity', title: 'Quantity' }, // <-- العمود اللي كان في الكود الأول
+    { key: 'totalPrice', title: 'Total Price' }, 
     { key: 'discount', title: 'Discount' },
     { key: 'priceList', title: 'Price List' },
     {
