@@ -2,8 +2,9 @@ import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
-import {Form} from 'rsuite';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";;
+import { Form } from 'rsuite';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 const CancellationModal = ({
     open,
     setOpen,
@@ -12,11 +13,15 @@ const CancellationModal = ({
     setObject,
     fieldLabel = null,
     title,
-    fieldName="",
-    statusField="statusLkey",
-    statusKey="3196709905099521" ,
-    withReason=true // TODO update status to be a LOV value
+    fieldName = "",
+    statusField = "statusLkey",
+    statusKey = "3196709905099521",
+    withReason = true,
+    required = false,
 }) => {
+
+    const isEmpty = required && !object?.[fieldName];
+
     return (
         <MyModal
             open={open}
@@ -24,28 +29,45 @@ const CancellationModal = ({
             title={`Confirm ${title}`}
             actionButtonLabel="Confirm"
             actionButtonFunction={handleCancle}
-            isDisabledActionBtn={object?.[statusField] === statusKey}
+            isDisabledActionBtn={
+                object?.[statusField] === statusKey ||
+                (required && !object?.[fieldName])
+            }
+
             steps={[
-                {title:title,icon: <FontAwesomeIcon icon={faBan }/>},
+                { title, icon: <FontAwesomeIcon icon={faBan} /> },
             ]}
-            content={(step) => withReason?
-            <Form layout="inline" fluid>
-                <MyInput
-                    width={"400px"}
-                    column
-                    fieldType="textarea"
-                    fieldLabel={fieldLabel}
-                    fieldName={fieldName}
-                    height={120}
-                    record={object}
-                    setRecord={setObject}
-                    disabled={object?.statusLkey === statusKey}
-                />
-            </Form>:<></>}
+
+            content={() =>
+                withReason ? (
+                    <Form layout="inline" fluid>
+                        <Form.Group style={{ width: "100%" }}>
+
+                            <MyInput
+                                width={"400px"}
+                                column
+                                fieldType="textarea"
+                                fieldLabel={fieldLabel}
+                                fieldName={fieldName}
+                                height={120}
+                                record={object}
+                                setRecord={setObject}
+                                disabled={object?.[statusField] === statusKey}
+                                required={required}
+                            />
+
+                        </Form.Group>
+                    </Form>
+                ) : (
+                    <></>
+                )
+            }
+
             size="30vw"
             bodyheight="55vh"
-            cancelButtonLabel='Close'
+            cancelButtonLabel="Close"
         />
     );
 };
+
 export default CancellationModal;

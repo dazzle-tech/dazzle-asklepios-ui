@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { Viewer, Stimulsoft } from 'stimulsoft-reports-js-react/viewer';
-import { useLocation, useNavigate } from 'react-router-dom';
 import type { ApPatient } from '@/types/model-types';
+import React, { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Stimulsoft } from 'stimulsoft-reports-js-react/viewer';
+import BackButton from './components/BackButton/BackButton';
 
 type PatientWithImage = ApPatient & {
   profilePictureUrl?: string;
@@ -43,7 +44,6 @@ const StimulsoftReportViewer: React.FC = () => {
         console.log('Could not set page background color:', error);
       }
 
-      // Patient main data
       const patientData = {
         PatientData: [
           {
@@ -54,27 +54,22 @@ const StimulsoftReportViewer: React.FC = () => {
             thirdName: (patient as any).thirdName || '',
             lastName: patient.lastName || '',
             dob: patient.dob || '',
-            'genderLvalue.lovDisplayVale':
-              (patient as any).genderLvalue?.lovDisplayVale || '',
+            'genderLvalue.lovDisplayVale': (patient as any).genderLvalue?.lovDisplayVale || '',
             'patientClassLvalue.lovDisplayVale':
               (patient as any).patientClassLvalue?.lovDisplayVale || '',
             phoneNumber: (patient as any).phoneNumber || '',
             mobileNumber:
-              (patient as any).mobileNumber ||
-              (patient as any).secondaryMobileNumber ||
-              '',
+              (patient as any).mobileNumber || (patient as any).secondaryMobileNumber || '',
             secondaryMobileNumber: (patient as any).secondaryMobileNumber || '',
             homePhone: (patient as any).homePhone || '',
             workPhone: (patient as any).workPhone || '',
             email: (patient as any).email || '',
             streetAddressLine1: (patient as any).streetAddressLine1 || '',
             streetAddressLine2: (patient as any).streetAddressLine2 || '',
-            'cityLvalue.lovDisplayVale':
-              (patient as any).cityLvalue?.lovDisplayVale || '',
+            'cityLvalue.lovDisplayVale': (patient as any).cityLvalue?.lovDisplayVale || '',
             'stateProvinceRegionLvalue.lovDisplayVale':
               (patient as any).stateProvinceRegionLvalue?.lovDisplayVale || '',
-            'countryLvalue.lovDisplayVale':
-              (patient as any).countryLvalue?.lovDisplayVale || '',
+            'countryLvalue.lovDisplayVale': (patient as any).countryLvalue?.lovDisplayVale || '',
             postalCode: (patient as any).postalCode || '',
             'documentTypeLvalue.lovDisplayVale':
               (patient as any).documentTypeLvalue?.lovDisplayVale || '',
@@ -89,13 +84,11 @@ const StimulsoftReportViewer: React.FC = () => {
         ]
       };
 
-      // Secondary documents array from patient
       const secondaryDocumentsArray =
         patient?.secondaryDocuments && Array.isArray(patient.secondaryDocuments)
           ? patient.secondaryDocuments
           : [];
 
-      // Combine both PatientData + SecondaryDocuments في نفس الـ DataSet
       const reportData = {
         ...patientData,
         SecondaryDocuments: secondaryDocumentsArray.map((doc: any) => ({
@@ -114,7 +107,6 @@ const StimulsoftReportViewer: React.FC = () => {
       console.log('SecondaryDocuments for report = ', reportData.SecondaryDocuments);
 
       const dataSet = new Stimulsoft.System.Data.DataSet('DataSet');
-      // نقرأ JSON مرة واحدة يحوي PatientData و SecondaryDocuments
       dataSet.readJson(reportData);
 
       report.regData('DataSet', 'DataSet', dataSet);
@@ -131,15 +123,35 @@ const StimulsoftReportViewer: React.FC = () => {
     viewerOptions.appearance.theme = Stimulsoft.Viewer.StiViewerTheme.Office2022LightGrayBlue;
     viewerOptions.exports.showExportDialog = true;
     viewerOptions.appearance.backgroundColor = Stimulsoft.System.Drawing.Color.white;
-    viewerOptions.appearance.pageBorderColor =
-      Stimulsoft.System.Drawing.Color.fromArgb(204, 204, 204);
+    viewerOptions.appearance.pageBorderColor = Stimulsoft.System.Drawing.Color.fromArgb(
+      204,
+      204,
+      204
+    );
 
     const viewer = new Stimulsoft.Viewer.StiViewer(viewerOptions, 'StiViewer', false);
     viewer.report = report;
     viewer.renderHtml('viewerContent');
   }, [patient, navigate]);
 
-  return <div id="viewerContent" style={{ width: '100%', height: '140vh' }} />;
+  const goBack = () => {
+    navigate(-1);
+  };
+  return (
+    <>
+      <div
+        style={{
+          margin: '6px',
+          marginTop: '2px',
+          cursor: 'pointer'
+        }}
+      >
+        <BackButton onClick={goBack} appearance="ghost" />
+      </div>
+
+      <div id="viewerContent" style={{ width: '100%', height: '140vh' }} />
+    </>
+  );
 };
 
 export default StimulsoftReportViewer;

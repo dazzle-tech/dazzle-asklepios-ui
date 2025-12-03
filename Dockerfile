@@ -4,7 +4,6 @@ FROM node:18 AS build
 # Set the working directory
 WORKDIR /app
 
-
 # FIXED: Set max memory to 4GB (4096). 
 # GitHub Actions runners have 7GB total. Setting this to 8192 (8GB) causes an immediate OOM crash.
 ENV NODE_OPTIONS="--max-old-space-size=4096"

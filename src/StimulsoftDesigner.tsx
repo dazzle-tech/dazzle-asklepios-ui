@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { Viewer, Stimulsoft } from 'stimulsoft-reports-js-react/viewer';
-import { useLocation, useNavigate } from 'react-router-dom';
 import type { ApPatient } from '@/types/model-types';
+import React, { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Stimulsoft } from 'stimulsoft-reports-js-react/viewer';
 
 type PatientWithImage = ApPatient & {
   profilePictureUrl?: string;
