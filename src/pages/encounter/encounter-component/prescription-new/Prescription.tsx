@@ -39,7 +39,6 @@ import DetailsModal from './DetailsModal';
 import PrescriptionPreview from './PrescriptionPreview';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import './styles.less';
-import { isDraft } from '@reduxjs/toolkit';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 
@@ -430,7 +429,7 @@ const Prescription = props => {
           patientKey: patient.key,
           visitKey: encounter.key,
           statusLkey: '164797574082125',
-          isDraft: true
+          saveDraft: true
         });
 
         dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
@@ -701,6 +700,9 @@ const Prescription = props => {
     });
   };
 
+
+
+  
   return (
     <>
       <div className="bt-div">
@@ -774,22 +776,6 @@ const Prescription = props => {
           >
             Sign & Submit Order
           </MyButton>
-          {isdraft && (
-            <MyButton
-              appearance="ghost"
-              onClick={cancleDraft}
-              prefixIcon={() => <DocPassIcon />}
-              disabled={
-                preKeyRecord['preKey']
-                  ? prescriptions?.object?.find(
-                    prescription => prescription.key === preKeyRecord['preKey']
-                  )?.statusLkey === '1804482322306061'
-                  : true
-              }
-            >
-              Cancel draft
-            </MyButton>
-          )}
         </div>
       </div>
       <Divider />
