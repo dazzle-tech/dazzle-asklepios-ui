@@ -303,13 +303,12 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   return (
     <div ref={ref as any} className={clsx('basuc-div', { 'disabled-panel': edit })}>
       <Form fluid>
-        <Row>
-          <Col md={17}></Col>
-          <Col md={2}>
+        <Row className="action-row" >
+          <Col>
             <MyButton onClick={handleSave}>Save</MyButton>
           </Col>
-          <Col md={1}></Col>
-          <Col md={2}>
+
+          <Col>
             <MyButton
               onClick={handleGenerateReport}
               loading={isGeneratingReport}
