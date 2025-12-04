@@ -103,6 +103,7 @@ import { userStickyNotesService } from './services/setup/userStickyNotes/userSti
 import { PriceListItemService } from './services/billing/PriceListItemService';
 import { referralRequestService } from "@/services/encounters/referralRequestService";
 import { PayorService } from './services/setup/payer/PayorService';
+import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
 
 export const store = configureStore({
   reducer: {
@@ -303,6 +304,8 @@ export const store = configureStore({
     [referralRequestService.reducerPath]: referralRequestService.reducer,
 
     [PayorService.reducerPath]: PayorService.reducer,
+    [PayorPlanService.reducerPath]: PayorPlanService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -407,9 +410,8 @@ export const store = configureStore({
       userStickyNotesService.middleware,
       PriceListItemService.middleware,
       referralRequestService.middleware,
-      
       PayorService.middleware,
-
+      PayorPlanService.middleware,
     ])
 });
 

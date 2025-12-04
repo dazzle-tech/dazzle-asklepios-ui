@@ -873,3 +873,16 @@ export const newPayor: modelTypes.Payor = {
   forcePreApproval: false,
   isActive: true,
 };
+
+export const newPayorPlan: modelTypes.PayorPlan = {
+  id: undefined,
+  payorId: 0,
+  name: '',
+  planType: null,
+  itemType: null,
+  amount: null,
+  coverageType: null,
+  isActive: true,
+  createdDate: null,
+  lastModifiedDate: null,
+};
