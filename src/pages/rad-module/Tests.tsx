@@ -200,14 +200,15 @@ const Tests = forwardRef<TestsRef, TestsProps>(
         try {
           const Response = await saveTest({
             ...rowData,
+            
             processingStatusLkey: '6055074111734636',
             acceptedAt: Date.now()
           }).unwrap();
           await saveReport({
             ...newApDiagnosticOrderTestsRadReport,
             orderKey: order?.key,
-            orderTestKey: test?.key,
-            medicalTestKey: test?.testKey,
+            orderTestKey: rowData?.key,
+            medicalTestKey: rowData?.testKey,
             patientKey: patient?.key,
             visitKey: encounter?.key,
             statusLkey: '6055029972709625'
