@@ -814,4 +814,213 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   price: 0,
   discountAllowed: false,
   isActive: true,
+
+};
+
+
+export const newReferralRequest: modelTypes.ReferralRequest = {
+  id: null,
+  patientId: null,
+  encounterId: null,
+  referralType: "INTERNAL",
+  facilityId: null,
+  departmentId: null,
+  referralReason: "",
+  priority: null,
+  isActive: true,
+};
+// Billing Invoice
+
+export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
+  facilityId: 0,
+  patientKey: null,
+  encounterKey: null,
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: null,
+};
+
+export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
+  id: 0,
+  facilityId: 0,
+  patientKey: null,
+  encounterKey: null,
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: null,
+};
+
+export const newBillingInvoiceResponse: modelTypes.BillingInvoiceResponseVM = {
+  id: 0,
+  invoiceNumber: "",
+  facilityId: 0,
+  patientKey: null,
+  encounterKey: null,
+  status: "",
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+}
+
+export const newPayor: modelTypes.Payor = {
+  id: undefined,
+  code: "",
+  name: "",
+  category: null,
+  address: "",
+  phone: "",
+  email: "",
+  contractManagerContact: "",
+  startDate: null,
+  expiryDate: null,
+  renewable: false,
+  allowPartialCoverage: false,
+  acceptCopay: false,
+  acceptDeductibles: false,
+  allowPackagePricing: false,
+  allowDrgBilling: false,
+  forcePreApproval: false,
+  isActive: true,
+};
+
+export const newPayorPlan: modelTypes.PayorPlan = {
+  id: undefined,
+  payorId: 0,
+  name: '',
+  planType: null,
+  itemType: null,
+  amount: null,
+  coverageType: null,
+  isActive: true,
+  createdDate: null,
+  lastModifiedDate: null,
+
+};
+
+// Billing Invoice Item
+
+export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
+  invoiceId: 0,
+  nurseServiceProductKey: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: null,
+};
+
+export const newBillingInvoiceItemUpdate: modelTypes.BillingInvoiceItemUpdateVM = {
+  id: 0,
+  invoiceId: 0,
+  nurseServiceProductKey: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: null,
+};
+
+export const newBillingInvoiceItemResponse: modelTypes.BillingInvoiceItemResponseVM = {
+  id: 0,
+  invoiceId: 0,
+  nurseServiceProductKey: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+// Patient Payment
+
+export const newPatientPayment: modelTypes.PatientPaymentCreateVM = {
+  patientKey: null,
+  facilityId: 0,
+  paymentType: null,
+  paymentMethod: null,
+  paymentDate: "",
+  amount: 0,
+  currency: null,
+  reference: null,
+  notes: null,
+};
+
+export const newPatientPaymentUpdate: modelTypes.PatientPaymentUpdateVM = {
+  id: 0,
+  patientKey: null,
+  facilityId: 0,
+  paymentType: null,
+  paymentMethod: null,
+  paymentDate: "",
+  amount: 0,
+  currency: null,
+  reference: null,
+  notes: null,
+};
+
+export const newPatientPaymentResponse: modelTypes.PatientPaymentResponseVM = {
+  id: 0,
+  patientKey: null,
+  facilityId: 0,
+  paymentType: null,
+  paymentMethod: null,
+  paymentDate: "",
+  amount: 0,
+  currency: null,
+  reference: null,
+  notes: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+// Payment Allocation
+
+export const newPaymentAllocation: modelTypes.PaymentAllocationCreateVM = {
+  paymentId: 0,
+  invoiceId: 0,
+  allocatedAmount: 0,
+  invoiceItemId: null,
+};
+
+export const newPaymentAllocationUpdate: modelTypes.PaymentAllocationUpdateVM = {
+  id: 0,
+  paymentId: 0,
+  invoiceId: 0,
+  allocatedAmount: 0,
+  invoiceItemId: null,
+};
+
+export const newPaymentAllocationResponse: modelTypes.PaymentAllocationResponseVM = {
+  id: 0,
+  paymentId: 0,
+  invoiceId: 0,
+  allocatedAmount: 0,
+  invoiceItemId: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+// Patient Account Summary
+
+export const newPatientAccountSummary: modelTypes.PatientAccountSummaryVM = {
+  patientKey: "",
+  freeBalance: 0,
+  outstandingBalance: 0,
+  totalInvoiced: 0,
+  totalPaid: 0,
 };

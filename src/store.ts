@@ -100,6 +100,7 @@ import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
 import { PriceListItemService } from './services/billing/PriceListItemService';
+import { BillingService } from './services/billing/BillingService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -253,6 +254,9 @@ export const store = configureStore({
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
 
+    // billing
+    [BillingService.reducerPath]: BillingService.reducer, 
+
     [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     //vaccine
@@ -367,6 +371,7 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      BillingService.middleware,
       diagnosticTestCodingService.middleware,
       CdtDentalActionService.middleware,
       vaccineService.middleware,
