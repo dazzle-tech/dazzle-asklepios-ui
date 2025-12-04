@@ -20,25 +20,27 @@ import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useLocation } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
-
 import {
   useUpsertDischargePlanningMutation,
   useUpdateDischargePlanningMutation,
   useGetDischargePlanningByEncounterQuery
 } from '@/services/setup/DischargePlanningService';
-
 import {
   useGetEncounterReviewOfSystemsQuery,
   useGetPatientDiagnosisQuery,
   useGetPrescriptionMedicationsQuery,
   useGetDiagnosticOrderTestQuery
 } from '@/services/encounterService';
-
 import { useGetProceduresQuery } from '@/services/procedureService';
-
 import { calculateAgeFormat } from '@/utils';
 import { newDischargePlanning } from '@/types/model-types-constructor-new';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useAppDispatch } from '@/hooks';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import Prescription from '../prescription';
+import MyModal from '@/components/MyModal/MyModal';
+import PrescriptionNew from '@/pages/encounter/encounter-component/prescription-new';
 
 // Helper to join values
 const joinValuesFromArray = (values: any[]) => {
@@ -46,12 +48,17 @@ const joinValuesFromArray = (values: any[]) => {
 };
 
 const DischargePlanning = () => {
+  const dispatch = useAppDispatch();
+
+
   const location = useLocation();
   const state = location.state || {};
   const patient = state.patient;
   const encounter = state.encounter;
   console.log('DischargePlanning - patient', patient);
   console.log('DischargePlanning - encounter', encounter);
+
+const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
 
   // Local
   const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -64,13 +71,14 @@ const DischargePlanning = () => {
   const {
     data: existingData,
     isFetching: loadingExisting
-  } = useGetDischargePlanningByEncounterQuery(encounter.key);
+  } = useGetDischargePlanningByEncounterQuery(Number(encounter.key));
+  console.log("E",existingData)
 
   // ------------------ STATE ------------------
   const [object, setObject] = useState({
     ...newDischargePlanning,
-    patientId:Number(patient.key),
-    encounterId:Number(encounter.key)
+    patientId: Number(patient.key),
+    encounterId: Number(encounter.key)
   });
 
   // tags
@@ -85,15 +93,22 @@ const DischargePlanning = () => {
 
       setMedicalEquipmentTags(
         existingData.medicalEquipment
-          ? existingData.medicalEquipment.split(',').map(x => x.trim())
+          ? existingData.medicalEquipment
+            .split(",")
+            .map(v => v.trim())
+            .filter(v => v.length > 0)
           : []
       );
 
       setTopicsCoveredTags(
         existingData.topicsCovered
-          ? existingData.topicsCovered.split(',').map(x => x.trim())
+          ? existingData.topicsCovered
+            .split(",")
+            .map(v => v.trim())
+            .filter(v => v.length > 0)
           : []
       );
+
     }
   }, [existingData]);
 
@@ -177,10 +192,8 @@ const DischargePlanning = () => {
     isFetching: isDiagnosticTestsFetching
   } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
 
-  const {
-    data: readinessStatusLovQueryResponse,
-    isFetching: isReadinessStatusLoading
-  } = useGetLovValuesByCodeQuery('READINESS_STATUS');
+  const readinessStatus = useEnumOptions("ReadinessStatus");
+
 
   const [generateDischargePdf, { isLoading: isGeneratingPdf }] =
     useGenerateDischargePdfMutation();
@@ -194,7 +207,6 @@ const DischargePlanning = () => {
     isPrescriptionsFetching ||
     isGenericMedicationsFetching ||
     isDiagnosticTestsFetching ||
-    isReadinessStatusLoading ||
     loadingExisting;
 
   // ------------------ UPSERT / UPDATE ------------------
@@ -210,59 +222,91 @@ const DischargePlanning = () => {
     topicsCovered: topicsCoveredTags.join(', ')
   });
 
+
+
   const handleSave = async () => {
-    try {
-      const payload = buildPayload();
-      await upsertDischargePlanning(payload).unwrap();
+        const requiredFields = [
+      { field: "expectedDischargeDate", label: "Expected discharge date" },
+      { field: "readinessStatus", label: "Readiness status" },
+      { field: "diagnosisCode", label: "Diagnosis" }
+    ];
 
-      toaster.push(
-        <Message type="success" showIcon>
-          Discharge Planning Saved!
-        </Message>,
-        { placement: 'topEnd' }
-      );
-    } catch (err) {
-      toaster.push(
-        <Message type="error" showIcon>
-          Failed to save
-        </Message>,
-        { placement: 'topEnd' }
-      );
-    }
-  };
-
-  const handleSubmit = async () => {
-    try {
-      if (!object.id) {
-        toaster.push(
-          <Message type="error" showIcon>
-            Record must be saved before submitting
-          </Message>,
-          { placement: 'topEnd' }
+    for (const item of requiredFields) {
+      if (
+        object[item.field] === null ||
+        object[item.field] === undefined ||
+        object[item.field] === "" ||
+        object[item.field]?.toString().trim() === ""
+      ) {
+        dispatch(
+          notify({
+            msg: `${item.label} cannot be empty.`,
+            sev: "error",
+          })
         );
         return;
       }
+    }
 
-      const payload = buildPayload();
-      await updateDischargePlanning(payload).unwrap();
+    try {
+      dispatch(showSystemLoader());
 
-      toaster.push(
-        <Message type="success" showIcon>
-          Submitted!
-        </Message>,
-        { placement: 'topEnd' }
+      // Base payload
+      const basePayload: any = {
+        ...object,
+        medicalEquipment: medicalEquipmentTags.join(", "),
+        topicsCovered: topicsCoveredTags.join(", "),
+        patientId: Number(patient.key),
+        encounterId: Number(encounter.key),
+      };
+
+
+      // Remove audit fields ALWAYS before sending
+      delete basePayload.createdDate;
+      delete basePayload.lastModifiedDate;
+      delete basePayload.createdBy;
+      delete basePayload.lastModifiedBy;
+
+      if (object.id) {
+        // ========== UPDATE ==========
+        const payload = { ...basePayload, id: object.id };
+
+        await updateDischargePlanning(payload).unwrap();
+
+        dispatch(
+          notify({
+            msg: "Discharge Planning updated successfully",
+            sev: "success",
+          })
+        );
+      } else {
+        // ========== CREATE ==========
+        delete basePayload.id;
+
+        await upsertDischargePlanning(basePayload).unwrap();
+
+        dispatch(
+          notify({
+            msg: "Discharge Planning saved successfully",
+            sev: "success",
+          })
+        );
+      }
+    } catch (err: any) {
+      console.log("DischargePlanning Save Error:", err);
+      dispatch(
+        notify({
+          msg: "Failed to save Discharge Planning",
+          sev: "error",
+        })
       );
-    } catch (err) {
-      toaster.push(
-        <Message type="error" showIcon>
-          Submit failed
-        </Message>,
-        { placement: 'topEnd' }
-      );
+    } finally {
+      dispatch(hideSystemLoader());
     }
   };
 
-  // ------------------ PDF HANDLERS (unchanged) ------------------
+
+
   const formatDate = (timestamp: number) => {
     if (!timestamp) return '';
     return new Date(timestamp).toLocaleDateString('en-GB');
@@ -463,6 +507,7 @@ const DischargePlanning = () => {
                         fieldLabel="Expected Discharge Date"
                         record={object}
                         setRecord={setObject}
+                        required
                       />
                     </Col>
 
@@ -480,13 +525,14 @@ const DischargePlanning = () => {
                     <Col md={8}>
                       <MyInput
                         width="100%"
-                        selectData={readinessStatusLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
+                        selectData={readinessStatus ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
                         fieldType="select"
                         fieldName="readinessStatus"
                         record={object}
                         setRecord={setObject}
+                        required
                       />
                     </Col>
                   </Row>
@@ -550,6 +596,7 @@ const DischargePlanning = () => {
                       <Col md={24}>
                         <div className="container-ofiicd10-search-discharge-planning">
                           <Icd10Search
+                          
                             object={object}
                             setOpject={setObject}
                             fieldName="diagnosisCode"
@@ -649,9 +696,13 @@ const DischargePlanning = () => {
                         <Text>Medications to Continue</Text>
                       </Col>
                       <Col md={12}>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPills} />}>
+                        <MyButton
+                          prefixIcon={() => <FontAwesomeIcon icon={faPills} />}
+                          onClick={() => setPrescriptionModalOpen(true)}
+                        >
                           Prescription
                         </MyButton>
+
                       </Col>
                     </Row>
 
@@ -680,7 +731,7 @@ const DischargePlanning = () => {
                         <Col md={12}>
                           <MyTagInput
                             tags={homeCareNeedsTags}
-                            setTags={() => {}}
+                            setTags={() => { }}
                             labelText="Home Care Needs"
                           />
                         </Col>
@@ -862,19 +913,30 @@ const DischargePlanning = () => {
         >
           Save
         </MyButton>
-
-        <MyButton
-          onClick={handleSubmit}
-          color="var(--deep-blue)"
-          width="119px"
-          height="32px"
-          loading={isSubmitting}
-          disabled={isSubmitting}
-          prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-        >
-          Sign & Submit
-        </MyButton>
       </div>
+
+        <MyModal
+          open={prescriptionModalOpen}
+          setOpen={setPrescriptionModalOpen}
+          title="Prescription"
+          size="70vw"
+          hideBack={true}
+          steps={[{ title: 'Prescription', icon: <FontAwesomeIcon icon={faPills} /> }]}
+
+          content={
+            <PrescriptionNew
+              patient={patient}
+              encounter={encounter}
+              closeModal={() => setPrescriptionModalOpen(false)}
+            />
+          }
+
+          actionButtonLabel="Save"
+          hideActionBtn={true}
+        />
+
+
+
     </>
   );
 };
