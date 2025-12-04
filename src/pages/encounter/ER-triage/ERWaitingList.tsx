@@ -17,7 +17,6 @@ import { useGetEREncountersQuery, useCancelEncounterMutation } from '@/services/
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
-import ReactDOMServer from 'react-dom/server';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
@@ -28,24 +27,36 @@ import BedAssignmentModal from '../day-case/DayCaseList/BedAssignmentModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
+import MyModal from '@/components/MyModal/MyModal';
 
 const ERWaitingList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const [open, setOpen] = useState(false);
   const [cancelEncounter] = useCancelEncounterMutation();
   const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
-  const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
+
+  const [encounter, setLocalEncounter] = useState<any>({
+    ...newApEncounter,
+    discharge: false
+  });
+
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [record, setRecord] = useState({});
 
+  const [openEMRModal, setOpenEMRModal] = useState(false);
+  const [localPatient, setLocalPatient] = useState<any>(null);
+
   // header setup
   const divContent = 'ER Wating List';
-  const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
-  const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
   dispatch(setPageCode('ER_Waiting_List'));
   dispatch(setDivContent(divContent));
+
+  const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+  const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -76,73 +87,41 @@ const ERWaitingList = () => {
     toDate: new Date()
   });
 
-  //Functions
   const isSelected = rowData => {
-    if (rowData && encounter && rowData.key === encounter.key) {
-      return 'selected-row';
-    } else return '';
+    if (rowData && encounter && rowData.key === encounter.key) return 'selected-row';
+    return '';
   };
 
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
     if (dateFilter.fromDate && dateFilter.toDate) {
-      const formattedFromDate = formatDate(dateFilter.fromDate);
-      const formattedToDate = formatDate(dateFilter.toDate);
+      const from = formatDate(dateFilter.fromDate);
+      const to = formatDate(dateFilter.toDate);
       setListRequest(
-        addFilterToListRequest(
-          'planned_start_date',
-          'between',
-          formattedFromDate + '_' + formattedToDate,
-          listRequest
-        )
+        addFilterToListRequest('planned_start_date', 'between', from + '_' + to, listRequest)
       );
     } else if (dateFilter.fromDate) {
-      const formattedFromDate = formatDate(dateFilter.fromDate);
-      setListRequest(
-        addFilterToListRequest('planned_start_date', 'gte', formattedFromDate, listRequest)
-      );
+      const formatted = formatDate(dateFilter.fromDate);
+      setListRequest(addFilterToListRequest('planned_start_date', 'gte', formatted, listRequest));
     } else if (dateFilter.toDate) {
-      const formattedToDate = formatDate(dateFilter.toDate);
-      setListRequest(
-        addFilterToListRequest('planned_start_date', 'lte', formattedToDate, listRequest)
-      );
-    } else {
-      setListRequest({
-        ...listRequest,
-        filters: [
-          {
-            fieldName: 'encounter_status_lkey',
-            operator: 'match',
-            value: '6742317684600328'
-          },
-          {
-            fieldName: 'resource_type_lkey',
-            operator: 'match',
-            value: 'EMERGENCY'
-          }
-        ]
-      });
+      const formatted = formatDate(dateFilter.toDate);
+      setListRequest(addFilterToListRequest('planned_start_date', 'lte', formatted, listRequest));
     }
   };
 
-  // handle cancel encounter function
   const handleCancelEncounter = async () => {
     try {
-      if (encounter) {
-        await cancelEncounter(encounter).unwrap();
-        refetchEncounter();
-        dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-        setOpen(false);
-      }
-    } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+      await cancelEncounter(encounter).unwrap();
+      refetchEncounter();
+      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+      setOpen(false);
+    } catch {
+      dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
     }
   };
 
-  const handleGoToQuickVisit = async (encounterData, patientData) => {
-    const targetPath = '/quick-visit';
-    navigate(targetPath, {
+  const handleGoToQuickVisit = (encounterData, patientData) => {
+    navigate('/quick-visit', {
       state: {
         info: 'toQuickVisit',
         fromPage: 'ERWaitingList',
@@ -152,22 +131,11 @@ const ERWaitingList = () => {
     });
   };
 
-  const handleGoToViewTriage = async (encounterData, patientData) => {
-    const targetPath = '/view-triage';
-    navigate(targetPath, {
+  const handleGoToViewTriage = (encounterData, patientData) => {
+    navigate('/view-triage', {
       state: {
         from: 'ER_Waiting_List',
         info: 'toViewTriage',
-        patient: patientData,
-        encounter: encounterData
-      }
-    });
-  };
-
-  const handleGoToEMR = (encounterData, patientData) => {
-    navigate('/patient-emr', {
-      state: {
-        fromPage: 'ERWaitingList',
         patient: patientData,
         encounter: encounterData
       }
@@ -181,31 +149,18 @@ const ERWaitingList = () => {
   }, [location.pathname, dispatch, isLoading]);
 
   useEffect(() => {
-    if (!isFetching && manualSearchTriggered) {
-      setManualSearchTriggered(false);
-    }
+    if (!isFetching && manualSearchTriggered) setManualSearchTriggered(false);
   }, [isFetching, manualSearchTriggered]);
 
-  useEffect(() => {
-    // init list
-    handleManualSearch();
-  }, []);
+  useEffect(() => handleManualSearch(), []);
 
   useEffect(() => {
-    if (isLoading || (manualSearchTriggered && isFetching)) {
-      dispatch(showSystemLoader());
-    } else if (isFetching && isLoading) {
-      dispatch(hideSystemLoader());
-    }
-
-    return () => {
-      dispatch(hideSystemLoader());
-    };
+    if (isLoading || (manualSearchTriggered && isFetching)) dispatch(showSystemLoader());
+    else if (isFetching && isLoading) dispatch(hideSystemLoader());
+    return () => dispatch(hideSystemLoader());
   }, [isLoading, isFetching, dispatch]);
 
-  useEffect(() => {
-    handleManualSearch();
-  }, [dateFilter.fromDate, dateFilter.toDate]);
+  useEffect(() => handleManualSearch(), [dateFilter.fromDate, dateFilter.toDate]);
 
   const tableColumns = [
     {
@@ -234,9 +189,7 @@ const ERWaitingList = () => {
       key: 'genderLkey',
       title: <Translate>Gender</Translate>,
       render: rowData =>
-        rowData?.patientObject?.genderLvalue
-          ? rowData?.patientObject?.genderLvalue?.lovDisplayVale
-          : rowData?.patientObject?.genderLkey
+        rowData?.patientObject?.genderLvalue?.lovDisplayVale ?? rowData?.patientObject?.genderLkey
     },
     {
       key: 'emergencyLevelLkey',
@@ -245,11 +198,7 @@ const ERWaitingList = () => {
         rowData?.emergencyLevelLkey ? (
           <MyBadgeStatus
             color={rowData?.emergencyLevelLvalue?.valueColor}
-            contant={
-              rowData?.emergencyLevelLvalue
-                ? rowData?.emergencyLevelLvalue?.lovDisplayVale
-                : rowData?.emergencyLevelLkey
-            }
+            contant={rowData?.emergencyLevelLvalue?.lovDisplayVale}
           />
         ) : (
           ''
@@ -268,7 +217,7 @@ const ERWaitingList = () => {
     {
       key: 'triageAt',
       title: 'TRIAGE AT/BY',
-      render: (row: any) =>
+      render: row =>
         row?.emergencyTriage ? (
           <>
             {row?.emergencyTriage?.createdByUser?.fullName}
@@ -287,11 +236,7 @@ const ERWaitingList = () => {
       render: rowData => (
         <MyBadgeStatus
           color={rowData?.encounterStatusLvalue?.valueColor}
-          contant={
-            rowData.encounterStatusLvalue
-              ? rowData?.encounterStatusLvalue?.lovDisplayVale
-              : rowData?.encounterStatusLkey
-          }
+          contant={rowData?.encounterStatusLvalue?.lovDisplayVale}
         />
       )
     },
@@ -301,11 +246,7 @@ const ERWaitingList = () => {
       render: rowData => (
         <MyBadgeStatus
           color={rowData?.visitTypeLvalue?.valueColor}
-          contant={
-            rowData?.visitTypeLvalue
-              ? rowData?.visitTypeLvalue?.lovDisplayVale
-              : rowData?.visitTypeLkey
-          }
+          contant={rowData?.visitTypeLvalue?.lovDisplayVale}
         />
       )
     },
@@ -321,14 +262,15 @@ const ERWaitingList = () => {
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
+            {/* TRIAGE */}
             <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
               <div>
                 <MyButton
                   size="small"
                   onClick={() => {
-                    const patientData = rowData?.patientObject;
+                    const patient = rowData?.patientObject;
                     setLocalEncounter(rowData);
-                    handleGoToViewTriage(rowData, patientData);
+                    handleGoToViewTriage(rowData, patient);
                   }}
                 >
                   <FontAwesomeIcon icon={faCommentMedical} />
@@ -336,13 +278,13 @@ const ERWaitingList = () => {
               </div>
             </Whisper>
 
+            {/* Assign Bed */}
             <Whisper trigger="hover" placement="top" speaker={tooltipAssignBed}>
               <div>
                 <MyButton
                   size="small"
                   backgroundColor="black"
                   onClick={() => {
-                    const patientData = rowData?.patientObject;
                     setLocalEncounter(rowData);
                     setOpenBedAssigment(true);
                   }}
@@ -352,14 +294,15 @@ const ERWaitingList = () => {
               </div>
             </Whisper>
 
+            {/* Quick Visit */}
             <Whisper trigger="hover" placement="top" speaker={tooltipQuickVisit}>
               <div>
                 <MyButton
                   size="small"
                   onClick={() => {
-                    const patientData = rowData?.patientObject;
+                    const patient = rowData?.patientObject;
                     setLocalEncounter(rowData);
-                    handleGoToQuickVisit(rowData, patientData);
+                    handleGoToQuickVisit(rowData, patient);
                   }}
                 >
                   <FontAwesomeIcon icon={faUserDoctor} />
@@ -367,15 +310,17 @@ const ERWaitingList = () => {
               </div>
             </Whisper>
 
+            {/* EMR modal فتح */}
             <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
               <div>
                 <MyButton
                   size="small"
                   backgroundColor="violet"
                   onClick={() => {
-                    const patientData = rowData?.patientObject;
+                    const patient = rowData?.patientObject;
                     setLocalEncounter(rowData);
-                    handleGoToEMR(rowData, patientData);
+                    setLocalPatient(patient);
+                    setOpenEMRModal(true);
                   }}
                 >
                   <FontAwesomeIcon icon={faFileWaveform} />
@@ -383,6 +328,7 @@ const ERWaitingList = () => {
               </div>
             </Whisper>
 
+            {/* Cancel */}
             <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
               <div>
                 <MyButton
@@ -398,8 +344,7 @@ const ERWaitingList = () => {
             </Whisper>
           </Form>
         );
-      },
-      expandable: false
+      }
     }
   ];
 
@@ -407,12 +352,12 @@ const ERWaitingList = () => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = encounterListResponse?.extraNumeric ?? 0;
 
-  const handlePageChange = (_: unknown, newPage: number) => {
+  const handlePageChange = (_, newPage) => {
     setManualSearchTriggered(true);
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
 
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRowsPerPageChange = event => {
     setManualSearchTriggered(true);
     setListRequest({
       ...listRequest,
@@ -421,100 +366,102 @@ const ERWaitingList = () => {
     });
   };
 
-  const filters = () => {
-    return (
-      <>
-        <Form layout="inline" fluid className="date-filter-form">
-          <MyInput
-            column
-            width={180}
-            fieldType="date"
-            fieldLabel="From Date"
-            fieldName="fromDate"
-            record={dateFilter}
-            setRecord={setDateFilter}
-          />
-          <MyInput
-            width={180}
-            column
-            fieldType="date"
-            fieldLabel="To Date"
-            fieldName="toDate"
-            record={dateFilter}
-            setRecord={setDateFilter}
-          />
-        </Form>
-        <AdvancedSearchFilters
-          searchFilter={true}
-          content={
-            <div className="advanced-filters">
-              <Form fluid className="dissss">
-                <MyInput
-                  fieldName="accessTypeLkey"
-                  fieldType="select"
-                  selectData={bookVisitLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  fieldLabel="Visit Type"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                  searchable={false}
-                  width={150}
-                />
-                <MyInput
-                  width={150}
-                  fieldName="chiefComplain"
-                  fieldType="text"
-                  record={record}
-                  setRecord={setRecord}
-                  fieldLabel="Chief Complain"
-                />
-                <MyInput
-                  width={110}
-                  fieldName="withPrescription"
-                  fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
-                  label="With Prescription"
-                />
-                <MyInput
-                  width={80}
-                  fieldName="hasOrders"
-                  fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
-                  label="Has Orders"
-                />
-                <MyInput
-                  width={80}
-                  fieldName="isObserved"
-                  fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
-                  label="Is Observed"
-                />
-                <MyInput
-                  width={150}
-                  fieldName="priority"
-                  fieldType="select"
-                  record={record}
-                  setRecord={setRecord}
-                  selectData={EncPriorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  placeholder="Select Priority"
-                  fieldLabel="Priority"
-                  searchable={false}
-                />
-              </Form>
-            </div>
-          }
-        />{' '}
-      </>
-    );
-  };
+  const filtersUI = (
+    <>
+      <Form layout="inline" fluid className="date-filter-form">
+        <MyInput
+          column
+          width={180}
+          fieldType="date"
+          fieldLabel="From Date"
+          fieldName="fromDate"
+          record={dateFilter}
+          setRecord={setDateFilter}
+        />
+        <MyInput
+          width={180}
+          column
+          fieldType="date"
+          fieldLabel="To Date"
+          fieldName="toDate"
+          record={dateFilter}
+          setRecord={setDateFilter}
+        />
+      </Form>
+
+      <AdvancedSearchFilters
+        searchFilter={true}
+        content={
+          <div className="advanced-filters">
+            <Form fluid>
+              <MyInput
+                fieldName="accessTypeLkey"
+                fieldType="select"
+                selectData={bookVisitLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                fieldLabel="Visit Type"
+                selectDataValue="key"
+                record={record}
+                setRecord={setRecord}
+                searchable={false}
+                width={150}
+              />
+              <MyInput
+                width={150}
+                fieldName="chiefComplain"
+                fieldType="text"
+                record={record}
+                setRecord={setRecord}
+                fieldLabel="Chief Complain"
+              />
+              <MyInput
+                width={110}
+                fieldName="withPrescription"
+                fieldType="checkbox"
+                record={record}
+                setRecord={setRecord}
+                label="With Prescription"
+              />
+              <MyInput
+                width={80}
+                fieldName="hasOrders"
+                fieldType="checkbox"
+                record={record}
+                setRecord={setRecord}
+                label="Has Orders"
+              />
+              <MyInput
+                width={80}
+                fieldName="isObserved"
+                fieldType="checkbox"
+                record={record}
+                setRecord={setRecord}
+                label="Is Observed"
+              />
+
+              <MyInput
+                width={150}
+                fieldName="priority"
+                fieldType="select"
+                record={record}
+                setRecord={setRecord}
+                selectData={EncPriorityLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                placeholder="Select Priority"
+                fieldLabel="Priority"
+                searchable={false}
+              />
+            </Form>
+          </div>
+        }
+      />
+    </>
+  );
+
   return (
     <Panel>
+      {/* Assign Bed Modal */}
       <BedAssignmentModal
         refetchEncounter={refetchEncounter}
         open={openBedAssigmentModal}
@@ -524,27 +471,25 @@ const ERWaitingList = () => {
           encounter?.resourceTypeLkey === 'EMERGENCY' ? '5006' : encounter?.departmentKey
         }
       />
+
       <MyTable
-        filters={filters()}
+        filters={filtersUI}
         height={600}
         data={encounterListResponse?.object ?? []}
         columns={tableColumns}
         rowClassName={isSelected}
         loading={isLoading || (manualSearchTriggered && isFetching)}
-        onRowClick={rowData => {
-          setLocalEncounter(rowData);
-        }}
+        onRowClick={rowData => setLocalEncounter(rowData)}
         sortColumn={listRequest.sortBy}
         sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          setListRequest({ ...listRequest, sortBy, sortType });
-        }}
+        onSortChange={(sortBy, sortType) => setListRequest({ ...listRequest, sortBy, sortType })}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+
       <DeletionConfirmationModal
         open={open}
         setOpen={setOpen}
@@ -553,6 +498,18 @@ const ERWaitingList = () => {
         confirmationQuestion="Do you want to cancel this Encounter ?"
         actionButtonLabel="Cancel"
         cancelButtonLabel="Close"
+      />
+
+      {/* *** EMR MODAL *** */}
+      <MyModal
+        open={openEMRModal}
+        setOpen={setOpenEMRModal}
+        title="Patient EMR"
+        size="95vw"
+        content={<PatientEMRModal inModal={true} patient={localPatient} encounter={encounter} />}
+        cancelButtonLabel="Close"
+        actionButtonLabel="Close"
+        actionButtonFunction={() => setOpenEMRModal(false)}
       />
     </Panel>
   );
