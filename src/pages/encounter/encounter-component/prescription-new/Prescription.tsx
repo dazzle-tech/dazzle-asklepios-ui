@@ -199,14 +199,15 @@ const Prescription = props => {
   );
 
   // Effects
-  useEffect(() => {
-    const foundPrescription = prescriptions?.object?.find(
-      prescription => prescription.key === preKeyRecord['preKey']
-    );
-    if (foundPrescription?.saveDraft !== isdraft) {
-      setIsDraft(foundPrescription?.saveDraft);
-    }
-  }, [prescriptions, preKeyRecord['preKey']]);
+    useEffect(() => {
+      if (preKeyRecord.preKey !== null) return;
+
+      const foundDraft = prescriptions?.object?.find(p => p.saveDraft === true);
+
+      if (foundDraft?.key) {
+        setPreKeyRecord({ preKey: foundDraft.key });
+      }
+    }, [prescriptions]);
 
   useEffect(() => {
     setListRequest(prev => ({
@@ -225,18 +226,6 @@ const Prescription = props => {
       ]
     }));
   }, [preKeyRecord['preKey'], showCanceled]);
-
-  useEffect(() => {
-    if (prescriptions?.object) {
-      const foundPrescription = prescriptions.object.find(
-        prescription => prescription.saveDraft === true
-      );
-
-      if (foundPrescription?.key != null) {
-        setPreKeyRecord({ preKey: foundPrescription?.key });
-      }
-    }
-  }, [prescriptions]);
 
   useEffect(() => {
     refetchCo();

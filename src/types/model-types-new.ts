@@ -1014,26 +1014,86 @@ export interface ReferralRequest {
   lastModifiedDate?: string | null;
 }
 
-export interface Payor {
+  export interface Payor {
+    id?: number;
+    code: string;
+    name: string;
+    category: string | null;
+    address?: string;
+    phone?: string;
+    email?: string;
+    contractManagerContact?: string;
+    startDate?: Date | string | null;
+    expiryDate?: Date | string | null;
+    renewable: boolean;
+    allowPartialCoverage: boolean;
+    acceptCopay: boolean;
+    acceptDeductibles: boolean;
+    allowPackagePricing: boolean;
+    allowDrgBilling: boolean;
+    forcePreApproval: boolean;
+    isActive: boolean;
+    createdDate?: Date | null;
+    lastModifiedDate?: Date | null;
+  }
+
+  export interface PayorPlan {
   id?: number;
-  code: string;
+  payorId: number;
   name: string;
-  category: string | null;
-  address?: string;
-  phone?: string;
-  email?: string;
-  contractManagerContact?: string;
-  startDate?: Date | string | null;
-  expiryDate?: Date | string | null;
-  renewable: boolean;
-  allowPartialCoverage: boolean;
-  acceptCopay: boolean;
-  acceptDeductibles: boolean;
-  allowPackagePricing: boolean;
-  allowDrgBilling: boolean;
-  forcePreApproval: boolean;
+  planType: string;
+  itemType: string;
+  amount?: number | null;
+  coverageType: string;
   isActive: boolean;
-  createdDate?: Date | null;
-  lastModifiedDate?: Date | null;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
 }
 
+
+export interface DischargePlanning {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  expectedDischargeDate: string | Date | null; // mandatory
+  estimatedLos?: string | null;
+  readinessStatus: string | null; // mandatory
+
+  medicalConditionStable: boolean;
+  vitalsStable: boolean;
+  pendingInvestigations: boolean;
+  mobilityAdlStatus: boolean; // toggle
+
+  diagnosisCode: string; // mandatory
+  diagnosisName?: string | null;
+
+  finalMedReconciliationCompleted: boolean;
+  dischargeSummaryPrepared: boolean;
+  dischargeOrdersSigned: boolean;
+  nursingDischargeReportDone: boolean;
+  patientFamilyInformed: boolean;
+  transportArranged: boolean;
+
+  medicalEquipment?: string | null;
+  homeCareNeeded: boolean;
+  postDischargeDietaryPlan?: string | null;
+  postDischargeSocialNeeds?: string | null;
+
+  topicsCovered?: string | null; // tags -> string
+  educationDietaryPlan?: string | null;
+  educationSocialNeeds?: string | null;
+
+  materialLeaflet: boolean;
+  materialVerbal: boolean;
+  materialVideo: boolean;
+
+  educationProvided: boolean;
+  patientUnderstanding: boolean;
+
+  isActive: boolean;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}

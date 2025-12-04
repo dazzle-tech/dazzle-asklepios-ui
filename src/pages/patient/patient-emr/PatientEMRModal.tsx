@@ -647,7 +647,7 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
 
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
-        {activeCard === 'clinicvisits' && <ClinicVisitsTable />}
+        {activeCard === 'clinicvisits' && <ClinicVisitsTable patient={patient} />}
         {activeCard === 'inpatient' && <InpatientTable />}
         {activeCard === 'daycase' && <DayCaseTable />}
         {activeCard === 'emergency' && <EmergencyTable />}
@@ -655,8 +655,8 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
         {activeCard === 'procedures' && <ProceduresTable />}
         {activeCard === 'operations' && <OperationsTable />}
         {activeCard === 'consultations' && <ConsultationsTable />}
-        {activeCard === 'laboratory' && <LaboratoryTable />}
-        {activeCard === 'radiology' && <RadiologyTable />}
+        {activeCard === 'laboratory' && <LaboratoryTable patient={patient} />}
+        {activeCard === 'radiology' && <RadiologyTable patient={patient}  />}
         {activeCard === 'pathology' && <PathologyTable />}
         {activeCard === 'medications' && <CurrentMedicationsTable />}
         {activeCard === 'vaccines' && <VaccinationTable />}

@@ -94,8 +94,9 @@ const NurseStation = () => {
   const [edit, setEdit] = useState(false);
 
   // Nurse sheets from backend (different hook than encounter)
+   const departmentKeyToUse = localEncounter?.departmentKey || '5001';
   const { data: nurseSheets = [] } =
-    useGetNurseMedicalSheetsByDepartmentQuery(5001);
+    useGetNurseMedicalSheetsByDepartmentQuery(departmentKeyToUse);
  console.log("Nurse Sheets from backend:", nurseSheets);
   // allowed codes from backend
   const allowedSheetCodes = useMemo(

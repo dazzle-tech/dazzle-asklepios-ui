@@ -10,6 +10,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
   const record = orderMedication ?? {};
   const noop = () => {};
 
+  
   // FETCH ALL LOV HERE (same as DetailsModal)
   const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery("MED_DURATION");
   const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery("MED_INDICATION_USE");
