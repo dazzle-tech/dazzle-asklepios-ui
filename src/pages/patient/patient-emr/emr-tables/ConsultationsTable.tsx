@@ -1,104 +1,78 @@
-import React, { useState } from 'react';
-import MyTable from '@/components/MyTable';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
-import Translate from '@/components/Translate';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import React, { useMemo, useState, useEffect } from "react";
+import MyTable from "@/components/MyTable";
+import Translate from "@/components/Translate";
+import { useGetConsultationOrdersQuery } from "@/services/encounterService";
+import { initialListRequest, ListRequest } from "@/types/types";
+import { formatDateWithoutSeconds } from "@/utils";
 
-const sampleConsultationsData = [];
 
-const columns: ColumnConfig[] = [
-  {
-    key: 'date',
-    title: <Translate>Date</Translate>,
-    dataKey: 'date',
-    render: (row: any) =>
-      row?.date ? (
-        <span className="date-table-style">{formatDateWithoutSeconds(row.date)}</span>
-      ) : (
-        '-'
-      )
-  },
-  {
-    key: 'consultant',
-    title: <Translate>Consultant</Translate>,
-    dataKey: 'consultant'
-  },
-  {
-    key: 'specialty',
-    title: <Translate>Specialty</Translate>,
-    dataKey: 'specialty'
-  },
-  {
-    key: 'reason',
-    title: <Translate>Reason</Translate>,
-    dataKey: 'reason'
-  },
-  {
-    key: 'recommendations',
-    title: <Translate>Recommendations</Translate>,
-    dataKey: 'recommendations'
-  },
-  {
-    key: 'status',
-    title: <Translate>Status</Translate>,
-    dataKey: 'status',
-    width: 120,
-    render: (row: any) => {
-      const bgColor =
-        row.status === 'Completed'
-          ? 'var(--light-green)'
-          : row.status === 'Scheduled'
-          ? 'var(--light-pink)'
-          : 'var(--primary-pink)';
+const ConsultationsTable = ({ patient }) => {
+ 
 
-      const color =
-        row.status === 'Completed'
-          ? 'var(--primary-green)'
-          : row.status === 'Scheduled'
-          ? 'var(--primary-pink)'
-          : 'var(--primary-pink)';
+  
+  const [listRequest, setListRequest] = useState<ListRequest | null>({
+        ...initialListRequest,
+        filters: [
+          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+        ]
+});
+  
 
-      return <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.status} />;
-    }
-  }
-];
+  const { data: consultationOrderListResponse, isLoading ,refetch:refConsult } =
+    useGetConsultationOrdersQuery(listRequest!, {
+      skip: !listRequest,
+    });
+    useEffect(()=>{
+      refConsult()
+    },[patient])
 
-const ConsultationsTable = () => {
-  const [sortColumn, setSortColumn] = useState('date');
-  const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [tableData, setTableData] = useState(sampleConsultationsData);
-
-  const sortedData = [...tableData].sort((a, b) => {
-    const aValue = a[sortColumn];
-    const bValue = b[sortColumn];
-    if (aValue === bValue) return 0;
-    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
-  });
-
-  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  const tableColumns = useMemo(
+    () => [
+      {
+        key: "createdAt",
+        title: <Translate>CONSULTATION DATE</Translate>,
+        flexGrow: 1,
+        render: (row) =>
+          row.createdAt ? formatDateWithoutSeconds(row.createdAt) : "",
+      },
+      {
+        key: "consultantSpecialtyLkey",
+        title: <Translate>CONSULTANT SPECIALTY</Translate>,
+        flexGrow: 1,
+        render: (row) => row.consultantSpecialtyLvalue?.lovDisplayVale,
+      },
+      {
+        key: "statusLkey",
+        title: <Translate>STATUS</Translate>,
+        flexGrow: 1,
+        render: (row) => row.statusLvalue?.lovDisplayVale,
+      },
+      {
+        key: "resposeStatusLkey",
+        title: <Translate>RESPONSE STATUS</Translate>,
+        flexGrow: 1,
+        render: (row) => row.resposeStatusLvalue?.lovDisplayVale,
+      },
+    ],
+    []
+  );
 
   return (
     <MyTable
-      data={paginatedData}
-      columns={columns}
-      loading={false}
-      sortColumn={sortColumn}
-      sortType={sortType}
-      onSortChange={(col, type) => {
-        setSortColumn(col);
-        setSortType(type);
-      }}
-      page={page}
-      rowsPerPage={rowsPerPage}
-      totalCount={tableData.length}
-      onPageChange={(_, newPage) => setPage(newPage)}
-      onRowsPerPageChange={e => {
-        setRowsPerPage(parseInt(e.target.value, 10));
-        setPage(0);
-      }}
+      columns={tableColumns}
+      data={consultationOrderListResponse?.object ?? []}
+      loading={isLoading}
+      sortColumn={listRequest?.sortBy}
+      sortType={listRequest?.sortType}
+      onSortChange={(sortBy, sortType) =>
+        setListRequest({ ...listRequest, sortBy, sortType })
+      }
+      page={(listRequest?.pageNumber ?? 1) - 1}
+      rowsPerPage={listRequest?.pageSize}
+      totalCount={consultationOrderListResponse?.extraNumeric ?? 0}
+      onPageChange={(_, newPage) =>
+        setListRequest({ ...listRequest, pageNumber: newPage + 1 })
+      }
     />
   );
 };
