@@ -42,27 +42,29 @@ type TestsProps = {
   saveReport: any;
   saveReportMutation: any;
   reportFetch: () => void;
+  fetchAllTests: () => void;
 };
+
 
 type TestsRef = {
   fetchTest: () => void;
 };
 
 const Tests = forwardRef<TestsRef, TestsProps>(
-  (
-    {
-      test,
-      setTest,
-      order,
-      patient,
-      encounter,
-      saveTest,
-      saveReport,
-      saveReportMutation,
-      reportFetch
-    },
-    ref
-  ) => {
+  ({
+    test,
+    setTest,
+    order,
+    patient,
+    encounter,
+    saveTest,
+    saveReport,
+    saveReportMutation,
+    reportFetch,
+    fetchAllTests
+  },
+  ref) => {
+
 
     useImperativeHandle(ref, () => ({
       fetchTest

@@ -347,14 +347,12 @@
     };
     const handleAddNewAttachment = () => {
       const sourceIdValue = prescriptionMedication?.key ? Number(prescriptionMedication.key) : 0;
-      console.log('Capturing sourceId for prescription attachment:', sourceIdValue);
       setCapturedSourceId(sourceIdValue);
       setAttachmentsModalOpen(true);
     };
 
     useEffect(() => {
       if (attachmentsModalOpen) {
-        console.log('Modal is now open - capturedSourceId:', capturedSourceId);
       } else {
         // Reset captured sourceId when modal closes
         setCapturedSourceId(0);

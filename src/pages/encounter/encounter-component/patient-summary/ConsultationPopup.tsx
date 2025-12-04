@@ -1,26 +1,26 @@
 // ConsultationPopup.tsx
-import React, { useEffect, useState } from 'react';
-import MyModal from '@/components/MyModal/MyModal';
-import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
-import { Form } from 'rsuite';
-import SectionContainer from '@/components/SectionsoContainer';
-import { useGetDepartmentsQuery, useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
-import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
-import { initialListRequest, initialListRequestId } from '@/types/types';
-import { newApTeleConsultation } from '@/types/model-types-constructor';
-import { useGetTeleConsultationListQuery, useSaveTeleConsultationMutation } from '@/services/encounterService';
-import { notify } from '@/utils/uiReducerActions';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
+import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
-import { useGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { useGetTeleConsultationListQuery, useSaveTeleConsultationMutation } from '@/services/encounterService';
+import { useGetDepartmentByFacilityQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { fr } from 'date-fns/locale';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newApTeleConsultation } from '@/types/model-types-constructor';
+import { initialListRequestId } from '@/types/types';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { notify } from '@/utils/uiReducerActions';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
+import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
+import { de } from 'date-fns/locale';
 
 
 interface ConsultationPopupProps {
@@ -56,19 +56,27 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
 
   const [deptPage, setDeptPage] = useState(0);
 
-  const {data:departments}=useGetDepartmentByFacilityQuery({
-    facilityId: consultationData.toFacilityId || '',
-    page: deptPage,
-    size: 5,
+const [getDepartments, { data, isFetching, error }] =
+  useLazyGetActiveDepartmentByFacilityListQuery();
+
+const [allDepartments, setAllDepartments] = useState<any[]>([]);
+
+useEffect(() => {
+  if (!consultationData?.toFacilityId) return;
+
+  getDepartments({
+    facilityId: consultationData.toFacilityId,
   });
-   const [allDepartments, setAllDepartments] = useState([]);
-   useEffect(() => {
-      if (departments?.data) {
-        setAllDepartments((prev) =>
-          deptPage === 0 ? departments.data : [...prev, ...departments.data]
-        );
-      }
-    }, [departments]);
+}, [consultationData?.toFacilityId, getDepartments]);
+
+useEffect(() => {
+  if (!data) return;
+ 
+  setAllDepartments( data?? []); 
+}, [data]);
+
+
+
   // Fetch Sub Specialty Lov list response
   const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
   const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
@@ -240,13 +248,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
                   setRecord={setConsultationData}
                   searchable
                   width={150}
-                  hasMore={departments?.links?.next ? true : false}
-                  onFetchMore={() => {
-                    if (departments?.links?.next) {
-                      const { page } = extractPaginationFromLink(departments.links.next);
-                      setDeptPage(page);
-                    }
-                  }}
+                  
                 />
               </div>
               <div className="flex-20">

@@ -303,7 +303,7 @@ const MyConsultations = () => {
               <MyButton
                 size="small"
                 radius="6px"
-                backgroundColor="#36a55bff"
+                backgroundColor="darkblue"
                 onClick={() => {
                   setSelectedRow(row);
                   setSelectedAction("accept");
@@ -319,7 +319,7 @@ const MyConsultations = () => {
               <MyButton
                 size="small"
                 radius="6px"
-                backgroundColor="#D64545"
+                backgroundColor="gray"
                 onClick={() => {
                   setSelectedRow(row);
                   setSelectedAction("reject");

@@ -71,6 +71,7 @@ import PrescriptionNew from './pages/encounter/encounter-component/prescription-
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
 import Procedure from './pages/encounter/encounter-component/procedure';
 import ProcedureNew from './pages/encounter/encounter-component/procedure-new/Procedure';
+
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
 import SOAP from './pages/encounter/encounter-component/s.o.a.p';
@@ -426,7 +427,7 @@ const App = () => {
                 <Route path="drug-order" element={<DrugOrderNew />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
-                <Route path="observations" element={<Observations hideSaveButton={true}/>} />
+                <Route path="observations" element={<Observations />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -439,7 +440,7 @@ const App = () => {
                 <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
-                <Route path="procedures" element={<Procedure />} />
+                <Route path="procedures" element={<ProcedureNew />} />
                 <Route path="patient-history" element={<PatientHistory />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
@@ -514,7 +515,7 @@ const App = () => {
                 <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
-                <Route path="procedures" element={<Procedure />} />
+                <Route path="procedures" element={<ProcedureNew />} />
                 <Route path="patient-history" element={<PatientHistory />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />

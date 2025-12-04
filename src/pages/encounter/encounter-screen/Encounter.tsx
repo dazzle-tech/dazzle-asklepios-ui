@@ -177,7 +177,7 @@ const Encounter = () => {
 
 
   const { data: departmentSheets = [] } =
-    useGetMedicalSheetsByDepartmentQuery(5000);
+    useGetMedicalSheetsByDepartmentQuery(5001);
   console.log('departmentSheets', departmentSheets);
   // Step 2: Fetch the resource if needed "IF Clinic"
   const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(medicalSheetRowSourceKey!, {

@@ -998,7 +998,21 @@ export interface PriceListItem {
   createdDate?: Date | null;
   lastModifiedDate?: Date | null;
 }
-
+export interface ReferralRequest {
+  id: number | null;
+  patientId: number;
+  encounterId: number | null;
+  referralType: string;
+  facilityId: number | null;
+  departmentId: number;
+  referralReason: string;
+  priority: string;
+  isActive: boolean;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
 
 export interface Payor {
   id?: number;
