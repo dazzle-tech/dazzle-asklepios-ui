@@ -29,7 +29,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 
 
 
-const PayorSetup: React.FC = () => {
+const PayorSetup = () => {
   const dispatch = useAppDispatch();
 
   const [payor, setPayor] = useState<Payor>({ ...newPayor });
