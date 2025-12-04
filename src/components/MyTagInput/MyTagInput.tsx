@@ -17,9 +17,14 @@ const MyTagInput = ({ tags = [], setTags, labelText = '', width = '100%', fontSi
         fullWidth
         options={[]}
         value={tags || []}
-        onChange={(event, newValue) => {
-          setTags(newValue);
-        }}
+          onChange={(event, newValue) => {
+            const cleaned = newValue
+              .map(v => (typeof v === "string" ? v.trim() : v))
+              .filter(v => v && v.length > 0);
+
+            setTags(cleaned);
+          }}
+
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
             <Chip
