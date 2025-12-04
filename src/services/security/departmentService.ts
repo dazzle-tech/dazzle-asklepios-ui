@@ -16,7 +16,6 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
-
 export const departmentService = createApi({
   reducerPath: 'newDepartmentApi',
   baseQuery: BaseQuery,
@@ -79,6 +78,26 @@ export const departmentService = createApi({
       providesTags: ['Department'],
     }),
 
+    // GET /api/setup/department/by-type-and-facility/{type}/{facilityId}?page=&size=&sort=
+    getDepartmentByTypeAndFacility: builder.query<
+      PagedResult<any>,
+      { type: string; facilityId: number | string } & PagedParams
+    >({
+      query: ({ type, facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/department/by-type-and-facility/${type}/${facilityId}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: ['Department'],
+    }),
+
     // GET /api/setup/department/appointable/{facilityId}?page=&size=&sort=
     getAppointableDepartments: builder.query<PagedResult<any>, { facilityId: number | string } & PagedParams>({
       query: ({ facilityId, page, size, sort = 'id,asc', timestamp }) => ({
@@ -97,7 +116,10 @@ export const departmentService = createApi({
     }),
 
     // GET /api/setup/department/appointable/by-type/{type}/{facilityId}?page=&size=&sort=
-    getAppointableDepartmentByType: builder.query<PagedResult<any>, { type: string; facilityId: number | string } & PagedParams>({
+    getAppointableDepartmentByType: builder.query<
+      PagedResult<any>,
+      { type: string; facilityId: number | string } & PagedParams
+    >({
       query: ({ type, facilityId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/department/appointable/by-type/${type}/${facilityId}`,
         params: { page, size, sort },
@@ -164,14 +186,11 @@ export const departmentService = createApi({
       query: ({ facilityId }) => `/api/setup/department/facility/${facilityId}/active/list`,
     }),
 
+    // GET /api/setup/department/all
     getAllDepartmentsWithoutPagination: builder.query({
       query: () => `/api/setup/department/all`,
     }),
-
   }),
-
-   
-
 });
 
 export const {
@@ -181,6 +200,8 @@ export const {
   useLazyGetDepartmentByFacilityQuery,
   useGetDepartmentByTypeQuery,
   useLazyGetDepartmentByTypeQuery,
+  useGetDepartmentByTypeAndFacilityQuery,
+  useLazyGetDepartmentByTypeAndFacilityQuery,
   useGetAppointableDepartmentsQuery,
   useLazyGetAppointableDepartmentsQuery,
   useGetAppointableDepartmentByTypeQuery,
@@ -192,5 +213,5 @@ export const {
   useToggleDepartmentIsActiveMutation,
   useGetActiveDepartmentByFacilityListQuery,
   useLazyGetActiveDepartmentByFacilityListQuery,
-  useGetAllDepartmentsWithoutPaginationQuery
+  useGetAllDepartmentsWithoutPaginationQuery,
 } = departmentService;

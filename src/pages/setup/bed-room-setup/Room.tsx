@@ -11,7 +11,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { ApRoom } from '@/types/model-types';
 import { newApRoom } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import { addFilterToListRequest, conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import { useGetRoomListQuery, useDeactiveActivRoomMutation } from '@/services/setupService';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -24,6 +24,7 @@ import { FaConciergeBell } from 'react-icons/fa';
 import './styles.less';
 import AddBed from './AddBed';
 import AddService from './AddService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 const Room = () => {
     const dispatch = useAppDispatch();
     const [room, setRoom] = useState<ApRoom>({ ...newApRoom });
@@ -44,6 +45,7 @@ const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequ
     } = useGetRoomListQuery(listRequest);
     // deactivate/reactivate Room
     const [deactiveActiveRoom] = useDeactiveActivRoomMutation();
+   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
  
     // Pagination values
     const pageIndex = listRequest.pageNumber - 1;
@@ -201,6 +203,7 @@ const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequ
             )}
         </div>
     );
+    console.log("facilityListResponse", facilityListResponse);
     //Table columns
     const tableColumns = [
         {
@@ -212,13 +215,15 @@ const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequ
             key: 'facilityKey',
             title: <Translate>Facility</Translate>,
             flexGrow: 4,
-            render: rowData => rowData?.facility?.facilityName
-        },
-        {
-            key: 'departmentKey',
-            title: <Translate>Department</Translate>,
-            flexGrow: 4,
-            render: rowData => rowData?.department?.name
+            render: rowData => (
+                    <span>
+                      {conjureValueBasedOnIDFromList(
+                        facilityListResponse ?? [],
+                        rowData.facilityKey,
+                        'name'
+                      )}
+                    </span>
+                  )
         },
         {
             key: 'floor',
