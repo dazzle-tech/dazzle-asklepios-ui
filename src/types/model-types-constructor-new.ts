@@ -886,3 +886,46 @@ export const newPayorPlan: modelTypes.PayorPlan = {
   createdDate: null,
   lastModifiedDate: null,
 };
+export const newDischargePlanning: modelTypes.DischargePlanning = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  expectedDischargeDate: null,
+  estimatedLos: "",
+  readinessStatus: "",
+
+  medicalConditionStable: false,
+  vitalsStable: false,
+  pendingInvestigations: false,
+  mobilityAdlStatus: false,
+
+  diagnosisCode: "",
+  diagnosisName: "",
+
+  finalMedReconciliationCompleted: false,
+  dischargeSummaryPrepared: false,
+  dischargeOrdersSigned: false,
+  nursingDischargeReportDone: false,
+  patientFamilyInformed: false,
+  transportArranged: false,
+
+  medicalEquipment: "",
+  homeCareNeeded: false,
+  postDischargeDietaryPlan: "",
+  postDischargeSocialNeeds: "",
+
+  topicsCovered: "",
+  educationDietaryPlan: "",
+  educationSocialNeeds: "",
+
+  materialLeaflet: false,
+  materialVerbal: false,
+  materialVideo: false,
+
+  educationProvided: false,
+  patientUnderstanding: false,
+
+  isActive: true,
+};
