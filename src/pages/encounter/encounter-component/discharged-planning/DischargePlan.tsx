@@ -20,18 +20,22 @@ import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useLocation } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
+
 import {
   useUpsertDischargePlanningMutation,
   useUpdateDischargePlanningMutation,
   useGetDischargePlanningByEncounterQuery
 } from '@/services/setup/DischargePlanningService';
+
 import {
   useGetEncounterReviewOfSystemsQuery,
   useGetPatientDiagnosisQuery,
   useGetPrescriptionMedicationsQuery,
   useGetDiagnosticOrderTestQuery
 } from '@/services/encounterService';
+
 import { useGetProceduresQuery } from '@/services/procedureService';
+
 import { calculateAgeFormat } from '@/utils';
 import { newDischargePlanning } from '@/types/model-types-constructor-new';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
