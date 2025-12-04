@@ -108,6 +108,30 @@ const MyConsultations = () => {
   );
   const practitionerId = loggedInPractitioner?.id?.toString() || '';
   
+  // Update listRequest when practitionerId changes
+  useEffect(() => {
+    if (practitionerId) {
+      setListRequest(prev => {
+        // Remove existing preferred_consultant_key filter if present
+        const filtersWithoutPractitioner = prev.filters.filter(
+          f => f.fieldName !== 'preferred_consultant_key'
+        );
+        
+        return {
+          ...prev,
+          filters: [
+            ...filtersWithoutPractitioner,
+            {
+              fieldName: 'preferred_consultant_key',
+              operator: 'match',
+              value: practitionerId
+            }
+          ]
+        };
+      });
+    }
+  }, [practitionerId]);
+  
   // Fetch consultation orders by department
   const { data: consultationResponse, isLoading: consultationsLoading, refetch: refetchConsultations } = useGetConsultationOrdersByDepartmentQuery(
     {
@@ -161,6 +185,15 @@ const MyConsultations = () => {
       ]
     };
 
+    // Add preferred_consultant_key filter
+    if (practitionerId) {
+      updatedRequest.filters.push({
+        fieldName: 'preferred_consultant_key',
+        operator: 'match',
+        value: practitionerId
+      });
+    }
+
     // Add date filters if provided (convert to timestamps)
     if (record.requestDateFrom && record.requestDateTo) {
       const fromTimestamp = new Date(record.requestDateFrom).setHours(0, 0, 0, 0);
@@ -195,17 +228,29 @@ const MyConsultations = () => {
   const handleClearFilters = () => {
     setRecord({});
     setStatusFilter({ statuses: [] });
+    
+    const baseFilters: any[] = [
+      {
+        fieldName: 'status_lkey',
+        operator: 'in' as const,
+        value: getStatusFilter()
+      }
+    ];
+    
+    // Add preferred_consultant_key filter
+    if (practitionerId) {
+      baseFilters.push({
+        fieldName: 'preferred_consultant_key',
+        operator: 'match',
+        value: practitionerId
+      });
+    }
+    
     setListRequest({
       ...listRequest,
       pageNumber: 1,
       timestamp: Date.now(), // Force refetch
-      filters: [
-        {
-          fieldName: 'status_lkey',
-          operator: 'in' as const,
-          value: getStatusFilter()
-        }
-      ]
+      filters: baseFilters
     });
   };
 

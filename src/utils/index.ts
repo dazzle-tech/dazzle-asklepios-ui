@@ -7,7 +7,7 @@ export { default as formatValue } from './formatValue';
 export const fromCamelCaseToDBName = word => {
   let final = '';
   for (const char of word) {
-    if (char === char.toUpperCase()) {
+    if (char === char.toUpperCase() && char !== char.toLowerCase()) {
       final += '_' + char.toLowerCase();
     } else {
       final += char;
