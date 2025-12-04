@@ -70,7 +70,8 @@ import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-f
 import PrescriptionNew from './pages/encounter/encounter-component/prescription-new';
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
 import Procedure from './pages/encounter/encounter-component/procedure';
-import ProcedureNew from './pages/encounter/encounter-component/procedure-new/index';
+import ProcedureNew from './pages/encounter/encounter-component/procedure-new/Procedure';
+
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
 import SOAP from './pages/encounter/encounter-component/s.o.a.p';
@@ -205,7 +206,6 @@ import PriceLists from './pages/billing-module/priceList/PriceLists';
 import MyConsultations from './components/MyConsultations/MyConsultations';
 import PreviousMeasurements from './pages/encounter/encounter-pre-observations-new/previous-measurements';
 import { any } from 'prop-types';
-import PayerSetup from './pages/setup/payer-setup/PayerSetup';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -215,12 +215,6 @@ const App = () => {
   const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
 
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
-  useEffect(() => {
-    console.log("navigationMap");
-  console.log(navigationMap);
-  },[navigationMap]);
-  
-
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
@@ -327,8 +321,6 @@ const App = () => {
           children: childrenNavs
         });
       }
-      console.log("childrenNavs");
-      console.log(childrenNavs);
     });
 
     setNavigationMap(navsTemp);
@@ -448,7 +440,7 @@ const App = () => {
                 <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
-                <Route path="procedures" element={<ProcedureNew/>} />
+                <Route path="procedures" element={<ProcedureNew />} />
                 <Route path="patient-history" element={<PatientHistory />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
@@ -458,6 +450,7 @@ const App = () => {
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
                 <Route path="pediatric" element={<Pediatric />} />
+                
                 <Route
                   path="multidisciplinary-team-notes"
                   element={<MultidisciplinaryTeamNotes />}
@@ -523,7 +516,7 @@ const App = () => {
                 <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
-                <Route path="procedures" element={<ProcedureNew/>} />
+                <Route path="procedures" element={<ProcedureNew />} />
                 <Route path="patient-history" element={<PatientHistory />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
@@ -638,8 +631,6 @@ const App = () => {
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums/> }/>
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
-              <Route path="payer-setup" element={<PayerSetup />} />
-              <Route path="service-and-products" element={<ServiceAndProducts />} />
               <Route path='enums' element={<Enums />} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
