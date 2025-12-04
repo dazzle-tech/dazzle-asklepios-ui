@@ -26,6 +26,8 @@ import { formatDateWithoutSeconds } from '@/utils';
 import PayorModal from './PayorModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useEnumOptions } from '@/services/enumsApi';
+import { FaRegListAlt } from "react-icons/fa";
+import PayorPlanModal from './PayorPlanModal';
 
 
 
@@ -46,6 +48,11 @@ const PayorSetup = () => {
 
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+
+  const [openPayorPlanModal, setOpenPayorPlanModal] = useState(false);
+  const [selectedPayorForPlans, setSelectedPayorForPlans] = useState<any>(null);
+  const [payorPlans, setPayorPlans] = useState([]);
+
 
   const payorCategories = useEnumOptions('PayorCategory');  
 
@@ -229,6 +236,21 @@ const PayorSetup = () => {
   // Icons column
   const iconsForActions = (rowData: Payor) => (
     <div className="container-of-icons">
+      <FaRegListAlt
+        className="icons-style"
+        title="Payor Plan"
+        size={22}
+        fill="var(--primary-gray)"
+        style={{ cursor: "pointer", marginLeft: "8px" }}
+        onClick={() => {
+          setSelectedPayorForPlans(rowData);
+          setPayorPlans([]);
+
+          setOpenPayorPlanModal(true);
+        }}
+      />
+
+
       <MdModeEdit
         className="icons-style"
         title="Edit"
@@ -445,6 +467,15 @@ useEffect(() => {
         setPayor={setPayor}
         onSave={handleSave}
       />
+
+
+      <PayorPlanModal
+        open={openPayorPlanModal}
+        setOpen={setOpenPayorPlanModal}
+        payor={selectedPayorForPlans}
+      />
+
+
 
     </Panel>
   );
