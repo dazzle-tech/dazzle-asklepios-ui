@@ -46,6 +46,7 @@ const Icd10Search = ({ object, setOpject, fieldName, ...props }) => {
           <div style={{ position: 'relative' }}>
             <InputGroup style={{ height: '32px' }} inside>
               <Input
+                required
                 placeholder="Search ICD-10"
                 value={searchKeyword}
                 onChange={handleSearch}
