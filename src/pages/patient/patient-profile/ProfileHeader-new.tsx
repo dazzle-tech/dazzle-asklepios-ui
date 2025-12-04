@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/hooks';
 import type { ApAttachment, ApPatient } from '@/types/model-types';
@@ -171,8 +171,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
     const secondaryDocumentsArray =
       patientSecondaryDocumentsResponse &&
-      (patientSecondaryDocumentsResponse as any).object &&
-      Array.isArray((patientSecondaryDocumentsResponse as any).object)
+        (patientSecondaryDocumentsResponse as any).object &&
+        Array.isArray((patientSecondaryDocumentsResponse as any).object)
         ? (patientSecondaryDocumentsResponse as any).object
         : [];
 
@@ -185,7 +185,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (!localPatient) return;
     if (!localPatient.key) return;
 
-    setLocalPatient( prev => {
+    setLocalPatient(prev => {
       if (JSON.stringify(prev) === JSON.stringify(localPatient)) return prev;
       return { ...localPatient };
     });
@@ -444,19 +444,19 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
                 {/* More Menu */}
                 <Whisper
-                  open={openMoreMenu}
-                  onClose={() => setOpenMoreMenu(false)}
+                  trigger="click"
                   placement="bottom"
                   speaker={
                     <Popover full>
                       <Dropdown.Menu>
+
                         <Dropdown.Item
                           disabled={localPatient.key === undefined}
                           onClick={() => {
-                            setOpenMoreMenu(false);
                             if (!(localPatient.key === undefined)) {
                               setVisitHistoryModel(true);
                             }
+                            setOpenMoreMenu(false);
                           }}
                         >
                           <div className="container-of-icon-and-key1">
@@ -464,28 +464,32 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                             <Translate>Visit History</Translate>
                           </div>
                         </Dropdown.Item>
+
                         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
                           <div className="container-of-icon-and-key1">
                             <FontAwesomeIcon icon={faThumbsUp} />
                             <Translate>Approvals</Translate>
                           </div>
                         </Dropdown.Item>
+
                         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
                           <div className="container-of-icon-and-key1">
                             <FontAwesomeIcon icon={faCalendarDay} />
                             <Translate>Appointments</Translate>
                           </div>
                         </Dropdown.Item>
+
                         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
                           <div className="container-of-icon-and-key1">
                             <FontAwesomeIcon icon={faHandHoldingDollar} />
                             <Translate>View Price List</Translate>
                           </div>
                         </Dropdown.Item>
+
                         <Dropdown.Item
                           onClick={() => {
-                            setOpenMoreMenu(false);
                             setOpenRegistrationWarningsSummary(true);
+                            setOpenMoreMenu(false);
                           }}
                         >
                           <div className="container-of-icon-and-key1">
@@ -493,10 +497,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                             <Translate>Warnings Summary</Translate>
                           </div>
                         </Dropdown.Item>
+
                         <Dropdown.Item
                           onClick={() => {
-                            setOpenMoreMenu(false);
                             setOpenBedsideRegistrations(true);
+                            setOpenMoreMenu(false);
                           }}
                         >
                           <div className="container-of-icon-and-key1">
@@ -504,10 +509,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                             <Translate>Bedside Registration</Translate>
                           </div>
                         </Dropdown.Item>
+
                         <Dropdown.Item
                           onClick={() => {
-                            setOpenMoreMenu(false);
                             setOpenBulkRegistrationModal(true);
+                            setOpenMoreMenu(false);
                           }}
                         >
                           <div className="container-of-icon-and-key1">
@@ -515,47 +521,40 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                             <Translate>Bulk Registration</Translate>
                           </div>
                         </Dropdown.Item>
+
                         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
                           <div className="container-of-icon-and-key1">
                             <FontAwesomeIcon icon={faBars} />
                             <Translate>Encounter Transactions</Translate>
                           </div>
                         </Dropdown.Item>
+
                       </Dropdown.Menu>
                     </Popover>
                   }
                 >
                   <span>
-                    <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
+                    <MyButton size="small">
                       <FontAwesomeIcon icon={faEllipsisVertical} />
                     </MyButton>
                   </span>
                 </Whisper>
 
+
                 {/* Print menu */}
                 <Whisper
-                  open={openPrintMenu}
-                  onClose={() => setOpenPrintMenu(false)}
+                  trigger="click"
                   placement="bottom"
                   speaker={
                     <Popover full>
                       <Dropdown.Menu>
-                        <Dropdown.Item
-                          onClick={() => {
-                            setOpenPrintMenu(false);
-                            handlePrintInformation();
-                          }}
-                        >
+                        <Dropdown.Item onClick={handlePrintInformation}>
                           <div className="container-of-icon-and-key1">
                             <Translate>Print Information</Translate>
                           </div>
                         </Dropdown.Item>
-                        <Dropdown.Item
-                          onClick={() => {
-                            setOpenPrintMenu(false);
-                            handlePrintPatientLabel();
-                          }}
-                        >
+
+                        <Dropdown.Item onClick={handlePrintPatientLabel}>
                           <div className="container-of-icon-and-key1">
                             <Translate>Print Patient Label</Translate>
                           </div>
@@ -565,11 +564,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   }
                 >
                   <span>
-                    <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
+                    <MyButton size="small">
                       <FontAwesomeIcon icon={faPrint} />
                     </MyButton>
                   </span>
                 </Whisper>
+
+
+
+
               </Form>
             </div>
           </Form>
