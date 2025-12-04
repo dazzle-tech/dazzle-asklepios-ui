@@ -134,16 +134,16 @@ export const conjureValueBasedOnKeyFromList = (
 export const conjureValueBasedOnIDFromList = (
   list: any[],
   currentKey: string | number | null | undefined,
-  preferredField: any
+  preferredField: string
 ) => {
-  let displayValue: any = currentKey;
-  list?.map(record => {
-    if (record?.id === currentKey) {
-      displayValue = record?.[preferredField];
-    }
-  });
-  return displayValue;
+  if (currentKey == null) return '';
+
+  const current = String(currentKey);
+
+  const record = list?.find(r => String(r.id) === current);
+  return record?.[preferredField] ?? currentKey;
 };
+
 
 export const conjureValueBasedOnKeyFromListOfValues = (
   list: [],

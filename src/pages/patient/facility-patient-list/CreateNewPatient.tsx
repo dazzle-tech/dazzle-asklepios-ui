@@ -44,6 +44,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const { data: isnuranceProviderTypeResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
     const { data: isnurancePlanTypeResponse } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
 
+    const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+    const selectedFacility = tenant?.selectedFacility || null;
     // Handle Save Patient
     const handleSave = () => {
         savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
@@ -72,10 +74,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     encounterStatusLkey: "8890456518264959",
                     patientAge: calculateAgeFormat(savedPatient.dob),
                     visitTypeLkey: '2041082245699228',
-                    resourceTypeLkey: '6743167799449277',
-                    resourceKey: '7101086042442391',
+                    resourceTypeLkey: 'EMERGENCY',
+                    facilityKey: selectedFacility?.id,
+                    resourceKey: '5006'
                 });
-                dispatch(setRefetchEncounter(true));    
+                dispatch(setRefetchEncounter(true));
             }
 
             // 3. Update state and navigate
@@ -419,13 +422,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
             }
         }
     }, [savePatientMutation]);
-     useEffect(() => {
-      if(!open){
-        setLocalPatient({ ...newApPatient });
-        setPatientInsurance({ ...newApPatientInsurance });
-        setOpenNextDocument(false);
-        setLocalEncounter({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
-      }
+    useEffect(() => {
+        if (!open) {
+            setLocalPatient({ ...newApPatient });
+            setPatientInsurance({ ...newApPatientInsurance });
+            setOpenNextDocument(false);
+            setLocalEncounter({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
+        }
     }, [open]);
     return (
         <MyModal

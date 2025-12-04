@@ -110,7 +110,7 @@ const ERTriage = () => {
       {
         fieldName: 'resource_type_lkey',
         operator: 'match',
-        value: '6743167799449277'
+        value: 'EMERGENCY'
       }
     ]
   });
@@ -186,7 +186,7 @@ const ERTriage = () => {
           {
             fieldName: 'resource_type_lkey',
             operator: 'match',
-            value: '6743167799449277'
+            value: 'EMERGENCY'
           }
         ]
       });
@@ -281,7 +281,7 @@ const ERTriage = () => {
       {
         fieldName: 'resource_type_lkey',
         operator: 'match',
-        value: '6743167799449277'
+        value: 'EMERGENCY'
       }
     ];
 

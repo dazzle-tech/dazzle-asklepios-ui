@@ -11,7 +11,6 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
-// import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEREncountersQuery, useCancelEncounterMutation } from '@/services/encounterService';
@@ -42,9 +41,7 @@ const ERWaitingList = () => {
   const [record, setRecord] = useState({});
 
   // header setup
-  const divContent = (
-      "ER Wating List"
-  );
+  const divContent = 'ER Wating List';
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
   dispatch(setPageCode('ER_Waiting_List'));
@@ -62,26 +59,30 @@ const ERWaitingList = () => {
       {
         fieldName: 'resource_type_lkey',
         operator: 'match',
-        value: '6743167799449277'
+        value: 'EMERGENCY'
       }
     ]
   });
+
   const {
     data: encounterListResponse,
     isFetching,
     refetch: refetchEncounter,
     isLoading
   } = useGetEREncountersQuery(listRequest);
+
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: new Date()
   });
+
   //Functions
   const isSelected = rowData => {
     if (rowData && encounter && rowData.key === encounter.key) {
       return 'selected-row';
     } else return '';
   };
+
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
     if (dateFilter.fromDate && dateFilter.toDate) {
@@ -117,12 +118,13 @@ const ERWaitingList = () => {
           {
             fieldName: 'resource_type_lkey',
             operator: 'match',
-            value: '6743167799449277'
+            value: 'EMERGENCY'
           }
         ]
       });
     }
   };
+
   // handle cancel encounter function
   const handleCancelEncounter = async () => {
     try {
@@ -137,6 +139,7 @@ const ERWaitingList = () => {
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
+
   const handleGoToQuickVisit = async (encounterData, patientData) => {
     const targetPath = '/quick-visit';
     navigate(targetPath, {
@@ -148,6 +151,7 @@ const ERWaitingList = () => {
       }
     });
   };
+
   const handleGoToViewTriage = async (encounterData, patientData) => {
     const targetPath = '/view-triage';
     navigate(targetPath, {
@@ -160,16 +164,28 @@ const ERWaitingList = () => {
     });
   };
 
+  const handleGoToEMR = (encounterData, patientData) => {
+    navigate('/patient-emr', {
+      state: {
+        fromPage: 'ERWaitingList',
+        patient: patientData,
+        encounter: encounterData
+      }
+    });
+  };
+
   //useEffect
   useEffect(() => {
     dispatch(setPageCode(''));
     dispatch(setDivContent(' '));
   }, [location.pathname, dispatch, isLoading]);
+
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
       setManualSearchTriggered(false);
     }
   }, [isFetching, manualSearchTriggered]);
+
   useEffect(() => {
     // init list
     handleManualSearch();
@@ -255,12 +271,11 @@ const ERWaitingList = () => {
       render: (row: any) =>
         row?.emergencyTriage ? (
           <>
-            {' '}
             {row?.emergencyTriage?.createdByUser?.fullName}
             <br />
             <span className="date-table-style">
               {formatDateWithoutSeconds(row?.emergencyTriage?.createdAt)}
-            </span>{' '}
+            </span>
           </>
         ) : (
           ' '
@@ -280,7 +295,6 @@ const ERWaitingList = () => {
         />
       )
     },
-    //Need Edit (visitTypeLvalue)
     {
       key: 'priority',
       title: <Translate>PRIORITY</Translate>,
@@ -321,6 +335,7 @@ const ERWaitingList = () => {
                 </MyButton>
               </div>
             </Whisper>
+
             <Whisper trigger="hover" placement="top" speaker={tooltipAssignBed}>
               <div>
                 <MyButton
@@ -336,6 +351,7 @@ const ERWaitingList = () => {
                 </MyButton>
               </div>
             </Whisper>
+
             <Whisper trigger="hover" placement="top" speaker={tooltipQuickVisit}>
               <div>
                 <MyButton
@@ -350,13 +366,23 @@ const ERWaitingList = () => {
                 </MyButton>
               </div>
             </Whisper>
+
             <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
               <div>
-                <MyButton size="small" backgroundColor="violet">
+                <MyButton
+                  size="small"
+                  backgroundColor="violet"
+                  onClick={() => {
+                    const patientData = rowData?.patientObject;
+                    setLocalEncounter(rowData);
+                    handleGoToEMR(rowData, patientData);
+                  }}
+                >
                   <FontAwesomeIcon icon={faFileWaveform} />
                 </MyButton>
               </div>
             </Whisper>
+
             <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
               <div>
                 <MyButton
@@ -378,27 +404,20 @@ const ERWaitingList = () => {
   ];
 
   const pageIndex = listRequest.pageNumber - 1;
-
-  // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
   const totalCount = encounterListResponse?.extraNumeric ?? 0;
 
-  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
     setManualSearchTriggered(true);
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualSearchTriggered(true);
     setListRequest({
       ...listRequest,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
+      pageNumber: 1
     });
   };
 
@@ -430,7 +449,6 @@ const ERWaitingList = () => {
           content={
             <div className="advanced-filters">
               <Form fluid className="dissss">
-                {/* Visit Type LOV */}
                 <MyInput
                   fieldName="accessTypeLkey"
                   fieldType="select"
@@ -443,7 +461,6 @@ const ERWaitingList = () => {
                   searchable={false}
                   width={150}
                 />
-                {/* Chief Complain Text */}
                 <MyInput
                   width={150}
                   fieldName="chiefComplain"
@@ -452,7 +469,6 @@ const ERWaitingList = () => {
                   setRecord={setRecord}
                   fieldLabel="Chief Complain"
                 />
-                {/* Checkboxes*/}
                 <MyInput
                   width={110}
                   fieldName="withPrescription"
@@ -477,7 +493,6 @@ const ERWaitingList = () => {
                   setRecord={setRecord}
                   label="Is Observed"
                 />
-                {/* Priority LOV */}
                 <MyInput
                   width={150}
                   fieldName="priority"
@@ -506,9 +521,7 @@ const ERWaitingList = () => {
         setOpen={setOpenBedAssigment}
         encounter={encounter}
         departmentKey={
-          encounter?.resourceTypeLkey === '6743167799449277'
-            ? encounter?.resourceObject?.key
-            : encounter?.departmentKey
+          encounter?.resourceTypeLkey === 'EMERGENCY' ? '5006' : encounter?.departmentKey
         }
       />
       <MyTable

@@ -24,10 +24,17 @@ import { initialListRequest, ListRequest } from '@/types/types';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
-const PreviousMeasurements = () => {
+interface PreviousMeasurementsProps {
+  patient?: {
+    key?: string;
+  };
+}
 
+const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: patientProp }) => {
   const location = useLocation();
-  const patient = location.state?.patient;
+  const patientFromLocation = (location.state as any)?.patient;
+
+  const patient = patientProp ?? patientFromLocation;
 
   // ---------- date filter: default = last 1 month ----------
   const [dateFilter, setDateFilter] = useState(() => {
@@ -36,7 +43,6 @@ const PreviousMeasurements = () => {
     fromDate.setMonth(toDate.getMonth() - 1);
     return { fromDate, toDate };
   });
-
 
   // ---------- ListRequest (same pattern as EncounterList) ----------
   const [listRequest, setListRequest] = useState<ListRequest>(() => {
@@ -65,6 +71,7 @@ const PreviousMeasurements = () => {
       ]
     };
   });
+
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
   const {
@@ -74,7 +81,6 @@ const PreviousMeasurements = () => {
   } = useGetObservationSummariesQuery(listRequest, {
     skip: !patient?.key
   });
-
 
   const dataRows: ApPatientObservationSummary[] = observationListResponse?.object ?? [];
 
@@ -186,7 +192,7 @@ const PreviousMeasurements = () => {
     </span>
   );
 
-  // ---------- table columns (same order as screenshot) ----------
+  // ---------- table columns ----------
   const columns = [
     {
       key: 'lastDate',
@@ -298,7 +304,6 @@ const PreviousMeasurements = () => {
   };
 
   // ---------- effects ----------
-  // search when date filter or patient changes (like EncounterList)
   useEffect(() => {
     if (patient?.key) {
       handleManualSearch();
@@ -335,7 +340,9 @@ const PreviousMeasurements = () => {
       {selectedMetric && chartData && (
         <div className="margin-top-100">
           <h4 className="font-size-14">
-            {selectedMetric === 'bloodPressure' ? 'Blood Pressure Trend' : `${selectedMetric} Trend`}
+            {selectedMetric === 'bloodPressure'
+              ? 'Blood Pressure Trend'
+              : `${selectedMetric} Trend`}
           </h4>
           <Line
             data={chartData}

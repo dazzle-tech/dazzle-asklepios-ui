@@ -72,6 +72,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
+
   const propsData = patient || enc ? undefined : (location.state as any);
 
   const [encounter, setLocalEncounter] = useState<any>(
@@ -81,7 +82,11 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
   const [localPatient, setLocalPatient] = useState<ApPatient>(
     patient
       ? patient
-      : propsData?.patient ?? { ...newApPatient }
+      : propsData?.patient
+      ? propsData.patient
+      : propsData?.fromPage === 'clinicalVisit'
+      ? propsData?.localPatient
+      : { ...newApPatient }
   );
 
   const [refetchData, setRefetchData] = useState(false);
@@ -95,7 +100,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         operator: 'match',
         value: localPatient?.key || undefined
       }
-   
     ]
   });
 
@@ -120,6 +124,15 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
       }
     };
   }, [inModal, dispatch]);
+
+  useEffect(() => {
+    if (localPatient) {
+      dispatch(setPatient(localPatient));
+    }
+    if (encounter) {
+      dispatch(setEncounter(encounter));
+    }
+  }, [localPatient, encounter, dispatch]);
 
   const columns = [
     {
@@ -182,14 +195,12 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
     });
   };
 
-  // Function to check if the current row is the selected one
   const isSelected = (rowData: any) => {
     if (rowData && encounter && rowData.key === encounter.key) {
       return 'selected-row';
     } else return '';
   };
 
-  // Handle Go to Visit Function
   const goToVisit = async (rowData: any) => {
     setLocalEncounter(rowData);
     dispatch(setEncounter(rowData));
@@ -211,7 +222,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
     navigate(targetPath, { state: stateData });
   };
 
-  // Effects
   useEffect(() => {
     if (!localPatient) {
       dispatch(setPatient({ ...newApPatient }));
@@ -348,7 +358,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         <div className="emr-main-row-handle">
           {activeSectionCard === 'history' && (
             <div className="emr-main-row-handle">
-              {/* <div className="animation-emr-card-patient-emr">
+              <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={10}
                   footerText="60s"
@@ -358,7 +368,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   height={100}
                   onClick={() => alert('Clicked')}
                 />
-              </div> */}
+              </div>
               <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={4}
@@ -368,7 +378,9 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() =>
-                    setActiveCard(activeCard === 'pastmedicalhistory' ? null : 'pastmedicalhistory')
+                    setActiveCard(
+                      activeCard === 'pastmedicalhistory' ? null : 'pastmedicalhistory'
+                    )
                   }
                 />
               </div>
@@ -644,43 +656,25 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
 
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
-        {activeCard === 'clinicvisits' && <ClinicVisitsTable  patient={localPatient}/>}
-        {/* {activeCard === 'inpatient' && <InpatientTable />} */}
-        {/* {activeCard === 'daycase' && <DayCaseTable />} */}
-        {activeCard === 'emergency' && <EmergencyTable  patient={localPatient}/>}
-        {/* {activeCard === 'nurseassessments' && <NurseAssessmentsTable />} */}
+        {activeCard === 'clinicvisits' && <ClinicVisitsTable patient={localPatient} />}
+        {activeCard === 'inpatient' && <InpatientTable />}
+        {activeCard === 'daycase' && <DayCaseTable />}
+        {activeCard === 'emergency' && <EmergencyTable />}
+        {activeCard === 'nurseassessments' && <NurseAssessmentsTable />}
         {activeCard === 'procedures' && <ProceduresTable />}
         {activeCard === 'operations' && <OperationsTable />}
-        {activeCard === 'consultations' && <ConsultationsTable patient={localPatient}/>}
-        {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient}  />}
-        {activeCard === 'radiology' && <RadiologyTable patient={localPatient}/>}
-        {/* {activeCard === 'pathology' && <PathologyTable />} */}
+        {activeCard === 'consultations' && <ConsultationsTable />}
+        {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient} />}
+        {activeCard === 'radiology' && <RadiologyTable />}
+        {activeCard === 'pathology' && <PathologyTable />}
         {activeCard === 'medications' && <CurrentMedicationsTable />}
         {activeCard === 'vaccines' && <VaccinationTable />}
         {activeCard === 'reports' && <ClinicalReportsTable />}
         {activeCard === 'attachments' && <AttachmentsTable />}
         {activeCard === 'appliedservices' && <AppliedServicesTable />}
-        {/* {activeCard === 'dentalcharts' && <DentalChartsTable />} */}
-        {/* {activeCard === 'ledgeraccount' && <LedgerAccountTable />} */}
+        {activeCard === 'dentalcharts' && <DentalChartsTable />}
+        {activeCard === 'ledgeraccount' && <LedgerAccountTable />}
         {activeCard === 'pastmedicalhistory' && <PastMedicalHistoryTable />}
-
-        {/* 
-        <MyTable
-          data={encounterListResponse?.object ?? []}
-          columns={columns}
-          height={580}
-          loading={isFetching}
-          onRowClick={rowData => {
-            setLocalPatient(rowData.patientObject);
-          }}
-          rowClassName={isSelected}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        /> 
-        */}
       </div>
 
       <div className="emr-right">
