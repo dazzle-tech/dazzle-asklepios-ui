@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MyTable from '@/components/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import Translate from '@/components/Translate';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 const ClinicVisitsTable = ({ patient }) => {
    const [sortColumn, setSortColumn] = useState('dateTime');
