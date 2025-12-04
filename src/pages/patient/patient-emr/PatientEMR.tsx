@@ -656,12 +656,13 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
 
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
-        {activeCard === 'clinicvisits' && <ClinicVisitsTable patient={localPatient} />}
-        {activeCard === 'inpatient' && <InpatientTable />}
-        {activeCard === 'daycase' && <DayCaseTable />}
-        {activeCard === 'emergency' && <EmergencyTable />}
-        {activeCard === 'nurseassessments' && <NurseAssessmentsTable />}
-        {activeCard === 'procedures' && <ProceduresTable />}
+
+        {activeCard === 'clinicvisits' && <ClinicVisitsTable  patient={localPatient}/>}
+        {/* {activeCard === 'inpatient' && <InpatientTable />} */}
+        {/* {activeCard === 'daycase' && <DayCaseTable />} */}
+        {activeCard === 'emergency' && <EmergencyTable  patient={localPatient}/>}
+        {/* {activeCard === 'nurseassessments' && <NurseAssessmentsTable />} */}
+        {activeCard === 'procedures' && <ProceduresTable patient={localPatient}/>}
         {activeCard === 'operations' && <OperationsTable />}
         {activeCard === 'consultations' && <ConsultationsTable patient={localPatient}/>}
         {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient}  />}
