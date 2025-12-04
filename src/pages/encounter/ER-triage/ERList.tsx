@@ -5,7 +5,7 @@ import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faFile, faListCheck, faRepeat } from '@fortawesome/free-solid-svg-icons';
+import { faRepeat } from '@fortawesome/free-solid-svg-icons';
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
@@ -28,20 +28,18 @@ import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
 import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import './styles.less';
 import MyInput from '@/components/MyInput';
 import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
-import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import MyLabel from '@/components/MyLabel';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import MyModal from '@/components/MyModal/MyModal';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
+import { useGetDepartmentsByResourceTypeQuery } from '@/services/security/departmentService';
 
 const ERList = () => {
   const location = useLocation();
@@ -49,7 +47,7 @@ const ERList = () => {
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
   const divContent = (
-      "ER Department"
+    "ER Department"
   );
   dispatch(setPageCode('ER_Patient_Encounters'));
   dispatch(setDivContent(divContent));
@@ -74,7 +72,7 @@ const ERList = () => {
       {
         fieldName: 'resource_type_lkey',
         operator: 'match',
-        value: '6743167799449277'
+        value: 'EMERGENCY'
       },
       {
         fieldName: 'encounter_status_lkey',
@@ -105,7 +103,9 @@ const ERList = () => {
   });
 
   // Fetch department list response
-  const departmentListResponse = useGetResourceTypeQuery('6743167799449277');
+  const { data: departmentListResponse } = useGetDepartmentsByResourceTypeQuery({
+    resourceType: 'EMERGENCY',
+  });
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
@@ -167,13 +167,13 @@ const ERList = () => {
       <Form fluid>
         <div className="er-department-table-filters-position">
           <MyInput
-            require
+            required
             fieldLabel="Select Department"
             fieldType="select"
             fieldName="key"
-            selectData={departmentListResponse?.data?.object ?? []}
+            selectData={departmentListResponse ?? []}
             selectDataLabel="name"
-            selectDataValue="key"
+            selectDataValue="id"
             record={departmentFilter}
             setRecord={value => {
               setDepartmentFilter(value);
@@ -182,6 +182,7 @@ const ERList = () => {
             searchable={false}
             width={200}
           />
+
           <div className="switch-department-er-department-position">
             <MyButton
               size="small"
@@ -488,6 +489,7 @@ const ERList = () => {
                 </MyButton>
               </div>
             </Whisper>
+
             <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
               <div>
                 <MyButton
@@ -501,13 +503,35 @@ const ERList = () => {
                 </MyButton>
               </div>
             </Whisper>
+
             <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
               <div>
-                <MyButton size="small" backgroundColor="violet">
+                <MyButton
+                  size="small"
+                  backgroundColor="violet"
+                  onClick={() => {
+                    const patientData = rowData.patientObject;
+
+                    setLocalEncounter(rowData);
+                    setLocalPatient(patientData);
+
+                    dispatch(setEncounter(rowData));
+                    dispatch(setPatient(patientData));
+
+                    navigate('/patient-emr', {
+                      state: {
+                        fromPage: 'ER_Department',
+                        patient: patientData,
+                        encounter: rowData
+                      }
+                    });
+                  }}
+                >
                   <FontAwesomeIcon icon={faFileWaveform} />
                 </MyButton>
               </div>
             </Whisper>
+
             {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
@@ -528,6 +552,7 @@ const ERList = () => {
       },
       expandable: false
     }
+
   ];
 
   const pageIndex = listRequest.pageNumber - 1;
@@ -556,7 +581,7 @@ const ERList = () => {
   };
   const tablebuttons = (
     <div className="er-list-table-buttons-position-handle">
-      <MyButton
+      {/* <MyButton
         onClick={() => setOpenRefillModal(true)}
         prefixIcon={() => <FontAwesomeIcon icon={faBoxOpen} />}
       >
@@ -573,10 +598,9 @@ const ERList = () => {
         prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
       >
         Encounter Logs
-      </MyButton>
+      </MyButton> */}
     </div>
   );
-
   return (
     <Panel>
       <div className="inpatient-list-btns">

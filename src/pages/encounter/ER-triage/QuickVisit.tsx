@@ -16,16 +16,16 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import BackButton from '@/components/BackButton/BackButton';
 import { notify } from '@/utils/uiReducerActions';
 import SOAP from '../encounter-component/s.o.a.p';
-import Prescription from '../encounter-component/prescription';
-import DiagnosticsOrder from '../encounter-component/diagnostics-order';
+import PrescriptionNew from '../encounter-component/prescription-new';
+import DiagnosticsOrderNew from '../encounter-component/diagnostics-order-new';
 import BedsideProceduresRequests from '../encounter-component/bedside-procedures-requests';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
-import Observations from '../encounter-pre-observations/observations/Observations';
+import Observations from '../encounter-pre-observations-new/observations/Observations';
 import Allergies from '../encounter-pre-observations/AllergiesNurse';
 import Warning from '../encounter-pre-observations/warning';
 import PatientHistory from '../encounter-component/patient-history';
-import PreviousMeasurements from '../encounter-pre-observations/previous-measurements';
-import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
+import PreviousMeasurements from '../encounter-pre-observations-new/previous-measurements';
+import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/PatientAttachment';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 
 const QuickVisit = ({ }) => {
@@ -90,8 +90,8 @@ const QuickVisit = ({ }) => {
                             <div className="left-buttons-container">
                                 <BackButton
                                     onClick={() => {
-                                        if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_EMERGENCY") {
-                                            navigate('/ER-waiting-list')
+                                        if (localEncounter?.resourceTypeLkey == "EMERGENCY") {
+                                            navigate(-1)
                                         } else {
                                             navigate('/encounter-list');
                                         }
@@ -101,11 +101,11 @@ const QuickVisit = ({ }) => {
                                     {/* TODO update status to be a LOV value */}
                                     {!localEncounter.discharge && localEncounter.encounterStatusLkey !== "91109811181900" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                                        onClick={()=>localEncounter?.resourceTypeLvalue?.valueCode == "BRT_EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
+                                        onClick={()=>localEncounter?.resourceTypeLkey == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
 
                                         appearance="ghost"
                                     >
-                                        <Translate>{localEncounter?.resourceTypeLvalue?.valueCode == "BRT_EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
+                                        <Translate>{localEncounter?.resourceTypeLkey == "EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
                                     </MyButton>)}
                                     <Divider vertical />
                                     <MyButton
@@ -124,23 +124,23 @@ const QuickVisit = ({ }) => {
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="2" title="Prescription">
-                                    <Prescription
+                                    <PrescriptionNew
                                         edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter}
                                     />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="3" title="Diagnostics Order">
-                                    <DiagnosticsOrder
+                                    <DiagnosticsOrderNew
                                         edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter}
                                     />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="4" title="Bedside Procedures">
+                                {/* <Tabs.Tab eventKey="4" title="Bedside Procedures">
                                     <BedsideProceduresRequests />
-                                </Tabs.Tab>
-                                <Tabs.Tab eventKey="5" title="Observations">
+                                </Tabs.Tab> */}
+                                <Tabs.Tab eventKey="4" title="Observations">
                                     <Observations
                                         edit={propsData.edit}
                                         ref={obsRef}
@@ -148,29 +148,29 @@ const QuickVisit = ({ }) => {
                                         encounter={propsData.encounter}
                                     />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="6" title="Allergies">
+                                <Tabs.Tab eventKey="5" title="Allergies">
                                     <Allergies
                                         edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter}
                                     />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="7" title="Medical Warnings">
+                                <Tabs.Tab eventKey="6" title="Medical Warnings">
                                     <Warning
                                         edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter}
                                     />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="8" title="Patient History">
+                                <Tabs.Tab eventKey="7" title="Patient History">
                                     <PatientHistory />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="9" title="Previous Measurements">
+                                <Tabs.Tab eventKey="8" title="Previous Measurements">
                                     <PreviousMeasurements
                                         patient={propsData.patient}
                                     />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="10" title="Attachments">
+                                <Tabs.Tab eventKey="9" title="Attachments">
                                     <PatientAttachment
                                         localPatient={propsData?.patient}
                                         setRefetchAttachmentList={setRefetchAttachmentList}

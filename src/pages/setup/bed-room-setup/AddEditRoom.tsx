@@ -14,7 +14,12 @@ import {
   useSaveRoomMutation
 } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetDepartmentByTypeAndFacilityQuery } from '@/services/security/departmentService';
+import {
+  useGetAllDepartmentsWithoutPaginationQuery,
+  useGetDepartmentByTypeAndFacilityQuery
+} from '@/services/security/departmentService';
+import { Department } from '@/types/model-types-new';
+import { newDepartment } from '@/types/model-types-constructor-new';
 
 const PAGE_SIZE = 20;
 
@@ -50,7 +55,8 @@ const AddEditRoom = ({
 
   const { data: roomTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ROOM_TYPES');
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-
+  const [department, setDepartment] = useState<Department>({ ...newDepartment });
+  const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
   const [saveRoom] = useSaveRoomMutation();
   const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
 
@@ -58,7 +64,6 @@ const AddEditRoom = ({
   const [departmentType, setDepartmentType] = useState<{ value?: string } | null>({
     value: ''
   });
-
   const [deptPage, setDeptPage] = useState(0);
   const [departmentOptions, setDepartmentOptions] = useState<any[]>([]);
 
@@ -72,26 +77,40 @@ const AddEditRoom = ({
   useEffect(() => {
     if (!room) return;
 
+    const facilityNeedsNormalization =
+      room.facilityKey !== undefined &&
+      room.facilityKey !== null &&
+      room.facilityKey !== '' &&
+      typeof room.facilityKey !== 'string';
+
+    const departmentNeedsNormalization =
+      room.departmentKey !== undefined &&
+      room.departmentKey !== null &&
+      room.departmentKey !== '' &&
+      typeof room.departmentKey !== 'string';
+
+    if (!facilityNeedsNormalization && !departmentNeedsNormalization) return;
+
     setRoom((prev: any) => {
       if (!prev) return prev;
       return {
         ...prev,
         facilityKey:
           prev.facilityKey !== undefined &&
-          prev.facilityKey !== null &&
-          prev.facilityKey !== ''
+            prev.facilityKey !== null &&
+            prev.facilityKey !== ''
             ? String(prev.facilityKey)
             : '',
         departmentKey:
           prev.departmentKey !== undefined &&
-          prev.departmentKey !== null &&
-          prev.departmentKey !== ''
+            prev.departmentKey !== null &&
+            prev.departmentKey !== ''
             ? String(prev.departmentKey)
             : ''
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room?.id]);
+  }, [room?.id, room?.key]);
 
   // Fetch departments whenever there is a facilityKey (optionally filtered by DepartmentType)
   const shouldFetchDepartments = Boolean(room?.facilityKey);
@@ -102,12 +121,12 @@ const AddEditRoom = ({
   } = useGetDepartmentByTypeAndFacilityQuery(
     shouldFetchDepartments
       ? {
-          type: departmentType?.value || '',
-          facilityId: Number(room.facilityKey),
-          page: deptPage,
-          size: PAGE_SIZE,
-          sort: 'name,asc'
-        }
+        type: departmentType?.value || '',
+        facilityId: Number(room.facilityKey),
+        page: deptPage,
+        size: PAGE_SIZE,
+        sort: 'name,asc'
+      }
       : { type: '', facilityId: '', page: 0, size: PAGE_SIZE },
     {
       skip: !shouldFetchDepartments
@@ -127,9 +146,9 @@ const AddEditRoom = ({
         deptPage === 0
           ? departmentsPage.data
           : [
-              ...prev,
-              ...departmentsPage.data.filter(d => !prev.some(p => p.id === d.id))
-            ]
+            ...prev,
+            ...departmentsPage.data.filter(d => !prev.some(p => p.id === d.id))
+          ]
       );
     }
   }, [departmentsPage, deptPage]);
@@ -165,6 +184,43 @@ const AddEditRoom = ({
     isFetchingDepartments
   ]);
 
+  useEffect(() => {
+    if (open && room && (room.id || room.key)) {
+      const allDepts = [
+        ...(allDepartments ?? []),
+        ...(departmentOptions ?? [])
+      ];
+
+      if (room.departmentKey) {
+        const found = allDepts.find(
+          (d: any) => String(d.id) === String(room.departmentKey)
+        );
+
+        if (found) {
+          if (department.id !== found.id) {
+            setDepartment(found as Department);
+          }
+
+          const typeFromDept =
+            (found as any).type ||
+            (found as any).departmentType ||
+            (found as any).departmentTypeKey ||
+            '';
+
+          if (typeFromDept && departmentType?.value !== typeFromDept) {
+            setDepartmentType({ value: typeFromDept });
+          }
+        }
+      }
+
+      const shouldBeChecked = !!room.genderLkey;
+      if (isGenderSpecific.genderSpecific !== shouldBeChecked) {
+        setGenderSpecific({ genderSpecific: shouldBeChecked });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, room?.id, room?.key, room?.departmentKey, room?.genderLkey]);
+
   // CLEAR
   const handleClearField = () => {
     setRoom({
@@ -172,13 +228,16 @@ const AddEditRoom = ({
       typeLkey: null,
       genderLkey: null,
       facilityKey: '',
-      departmentKey: ''
+      departmentKey: 0
     });
+    setDepartment({ ...newDepartment });
     setDepartmentType({ value: '' });
     setDeptPage(0);
     setDepartmentOptions([]);
     setGenderSpecific({ genderSpecific: false });
   };
+
+  console.log("room:", room);
 
   // SAVE
   const handleSave = () => {
@@ -203,10 +262,13 @@ const AddEditRoom = ({
       });
   };
 
-  // genderSpecific derived from room.genderLkey
   useEffect(() => {
-    setGenderSpecific({ genderSpecific: !!room?.genderLkey });
-  }, [room]);
+    const shouldBeChecked = !!room?.genderLkey;
+    if (isGenderSpecific.genderSpecific !== shouldBeChecked) {
+      setGenderSpecific({ genderSpecific: shouldBeChecked });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room?.genderLkey]);
 
   // Normalize IDs to string for facility / department select
   const normalizedFacilities = useMemo(
@@ -227,38 +289,83 @@ const AddEditRoom = ({
     [departmentOptions]
   );
 
-  // Selected department based on departmentKey
-  const selectedDepartment = useMemo(
-    () =>
-      normalizedDepartments.find(
-        d => d.id === (room?.departmentKey != null ? String(room.departmentKey) : '')
-      ),
-    [normalizedDepartments, room?.departmentKey]
-  );
 
-  // Infer DepartmentType from department when editing and DepartmentType not manually set
   useEffect(() => {
-    if (!selectedDepartment) return;
-    if (departmentType?.value) return;
+    if (!room?.departmentKey) {
+      if (department.id) {
+        setDepartment({ ...newDepartment });
+      }
+      return;
+    }
+
+    const allDepts = [
+      ...(allDepartments ?? []),
+      ...(departmentOptions ?? [])
+    ];
+
+    const found = allDepts.find(
+      (d: any) => String(d.id) === String(room.departmentKey)
+    );
+
+    if (found) {
+      if (department.id !== found.id) {
+        setDepartment(found as Department);
+      }
+    } else {
+      if (department.id) {
+        setDepartment({ ...newDepartment });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room?.departmentKey]);
+
+  useEffect(() => {
+    if (!department) return;
 
     const typeFromDept =
-      selectedDepartment.departmentType ||
-      selectedDepartment.type ||
-      selectedDepartment.departmentTypeKey ||
+      (department as any).type ||
+      (department as any).departmentType ||
+      (department as any).departmentTypeKey ||
       '';
 
     if (typeFromDept) {
-      setDepartmentType({ value: typeFromDept });
+      if (departmentType?.value !== typeFromDept) {
+        setDepartmentType({ value: typeFromDept });
+      }
+    } else {
+      if (departmentType?.value !== '') {
+        setDepartmentType({ value: '' });
+      }
     }
-  }, [selectedDepartment, departmentType?.value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [department?.id]);
 
-  // Displayable department type name from department object
-  const selectedDepartmentTypeName =
-    selectedDepartment?.departmentTypeName ||
-    selectedDepartment?.typeName ||
-    selectedDepartment?.departmentType ||
-    selectedDepartment?.type ||
-    '';
+  const handleRoomChangeAndDepartment = (updater: any) => {
+    setRoom((prev: any) => {
+      const next =
+        typeof updater === 'function' ? updater(prev) : updater;
+
+      const allDepts = [
+        ...(allDepartments ?? []),
+        ...(departmentOptions ?? [])
+      ];
+
+      if (next?.departmentKey) {
+        const found = allDepts.find(
+          (d: any) => String(d.id) === String(next.departmentKey)
+        );
+        if (found) {
+          setDepartment(found as Department);
+        } else {
+          setDepartment({ ...newDepartment });
+        }
+      } else {
+        setDepartment({ ...newDepartment });
+      }
+
+      return next;
+    });
+  };
 
   const content = (
     <Form fluid layout="inline">
@@ -294,35 +401,66 @@ const AddEditRoom = ({
         searchable={false}
       />
 
-      {/* Department with pagination */}
-      <MyInput
-        width={250}
-        column
-        fieldType="selectPagination"
-        fieldLabel="Department"
-        fieldName="departmentKey"
-        selectData={normalizedDepartments}
-        selectDataLabel="name"
-        selectDataValue="id"
-        record={room}
-        setRecord={setRoom}
-        loading={isFetchingDepartments}
-        hasMore={hasMoreDepartments}
-        onFetchMore={handleFetchMoreDepartments}
-        menuMaxHeight={240}
-      />
-
-      {/* Department type from department object (display only) */}
-      <MyInput
-        width={250}
-        column
-        fieldLabel="Department Type (from Department)"
-        fieldName="departmentTypeName"
-        fieldType="text"
-        record={{ departmentTypeName: selectedDepartmentTypeName }}
-        setRecord={() => {}}
-        disabled
-      />
+      {
+        !isEdit ? (
+          <MyInput
+            width={250}
+            column
+            fieldType="selectPagination"
+            fieldLabel="Department"
+            fieldName="departmentKey"
+            selectData={normalizedDepartments}
+            selectDataLabel="name"
+            selectDataValue="id"
+            record={room}
+            setRecord={handleRoomChangeAndDepartment}
+            loading={isFetchingDepartments}
+            hasMore={hasMoreDepartments}
+            onFetchMore={handleFetchMoreDepartments}
+            menuMaxHeight={240}
+          />
+        ) : (
+          normalizedDepartments === undefined ? (
+            <MyInput
+              width={250}
+              column
+              fieldType="selectPagination"
+              fieldLabel="Department"
+              fieldName="departmentKey"
+              selectData={normalizedDepartments}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={room}
+              setRecord={handleRoomChangeAndDepartment}
+              loading={isFetchingDepartments}
+              hasMore={hasMoreDepartments}
+              onFetchMore={handleFetchMoreDepartments}
+              menuMaxHeight={240}
+            />
+          ) : (
+            <MyInput
+              width={250}
+              column
+              fieldType="select"
+              fieldLabel="Department"
+              fieldName="departmentKey"
+              selectData={
+                departmentType?.value && normalizedDepartments.length > 0
+                  ? normalizedDepartments
+                  : allDepartments
+              }
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={room}
+              setRecord={handleRoomChangeAndDepartment}
+              loading={isFetchingDepartments}
+              hasMore={hasMoreDepartments}
+              onFetchMore={handleFetchMoreDepartments}
+              menuMaxHeight={240}
+            />
+          )
+        )
+      }
 
       <MyInput
         width={250}

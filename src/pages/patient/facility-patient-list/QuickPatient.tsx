@@ -31,7 +31,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
     patientAge: calculateAgeFormat(localPatient.dob),
     discharge: false
   });
-
+ const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+  const selectedFacility = tenant?.selectedFacility || null;
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
 
   // Fetch LOV data for various fields
@@ -58,12 +59,12 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
           encounterStatusLkey: '8890456518264959',
           patientAge: calculateAgeFormat(savedPatient.dob),
           visitTypeLkey: '2041082245699228',
-          resourceTypeLkey: '6743167799449277',
-          resourceKey: '7101086042442391'
+          resourceTypeLkey: 'EMERGENCY',
+          facilityKey: selectedFacility?.id,
+          resourceKey: '5006'
         });
         dispatch(setRefetchEncounter(true));
       }
-
       // 3. Update state and navigate
       setLocalPatient(savedPatient);
       if (setPatient != null) {

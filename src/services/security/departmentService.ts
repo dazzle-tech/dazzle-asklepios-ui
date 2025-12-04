@@ -190,6 +190,14 @@ export const departmentService = createApi({
     getAllDepartmentsWithoutPagination: builder.query({
       query: () => `/api/setup/department/all`,
     }),
+
+    getDepartmentsByResourceType: builder.query<any[], { resourceType: string }>({
+      query: ({ resourceType }) => ({
+        url: `/api/setup/department/by-resource-type/${resourceType}`,
+      }),
+      providesTags: ['Department'],
+    }),
+
   }),
 });
 
@@ -214,4 +222,6 @@ export const {
   useGetActiveDepartmentByFacilityListQuery,
   useLazyGetActiveDepartmentByFacilityListQuery,
   useGetAllDepartmentsWithoutPaginationQuery,
+  useGetDepartmentsByResourceTypeQuery,
+  useLazyGetDepartmentsByResourceTypeQuery,
 } = departmentService;

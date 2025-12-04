@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import { useLocation } from 'react-router-dom';
@@ -21,6 +20,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
 import { ApEncounter } from '@/types/model-types';
+
 const ViewTriage = () => {
     const location = useLocation();
     const propsData = location.state;
@@ -34,7 +34,7 @@ const ViewTriage = () => {
     const YES_KEY = '1476229927081534';
     const NO_KEY = '1476240934233400';
 
-    // Initialize list request with default filters
+    // Initialize list request with default filters
     const [triageListRequest, setTriageListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -42,8 +42,8 @@ const ViewTriage = () => {
                 fieldName: 'deleted_at',
                 operator: 'isNull',
                 value: undefined
-            }
-            , {
+            },
+            {
                 fieldName: 'patient_key',
                 operator: 'match',
                 value: propsData.patient?.key
@@ -55,79 +55,60 @@ const ViewTriage = () => {
             }
         ],
     });
+
     // Fetch the list of Chief Complain based on the provided request, and provide a refetch function
     const { data: triageResponse, refetch, isLoading } = useGetEmergencyTriagesListQuery(triageListRequest);
+    
     // Fetch LOV data for various fields
     const { data: sizeLovQueryResponse } = useGetLovValuesByCodeQuery('SIZE');
     const { data: booleanLovQuery } = useGetLovValuesByCodeQuery('BOOLEAN');
     const { data: painScoreLovQuery } = useGetLovValuesByCodeQuery('NUMBERS');
     const { data: levelOfConscLovQuery } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
     const { data: emergencyLevelLovQuery } = useGetLovValuesByCodeQuery('EMERGENCY_LEVEL');
+    
     // Find the selected emergency level object from the list based on the selected key
     const selectedEmergencyLevel = (emergencyLevelLovQuery?.object ?? []).find(
         (item) => item.key === emergencyTriage?.emergencyLevelLkey
     );
 
     // Header setup
-    const divContent = (
-            "ER View Triage"
-    );
-    dispatch(setPageCode('ER_View_Triage'));
-    dispatch(setDivContent(divContent));
-
-
-    // handle Go Back Button
-    const handleGoBack = () => {
-        if (propsData?.from === 'ER_Triage') {
-            navigate('/ER-triage');
-        } else if (propsData?.from === 'ER_Waiting_List') {
-            navigate('/ER-waiting-list');
-        }
-    }
-    // Effects
+    const divContent = "ER View Triage";
+    
     useEffect(() => {
-        if (saveTriageMutation && saveTriageMutation.status === 'fulfilled') {
-            setEmergencyTriage(saveTriageMutation.data);;
-            setEncounter({ ...encounter, emergencyLevelLkey: emergencyTriage?.emergencyLevelLkey })
-        }
-    }, [saveTriageMutation]);
-    useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent('  '));
-        };
-    }, [location.pathname, dispatch]);
-    useEffect(() => {
-        if (triageResponse?.object?.length === 1) {
-            setEmergencyTriage(triageResponse.object[0]);
+        if (triageResponse?.object && triageResponse.object.length > 0) {
+            const triageData = triageResponse.object.length === 1 
+                ? triageResponse.object[0]
+                : triageResponse.object.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+            
+            setEmergencyTriage(triageData);
+            console.log("تم تحميل بيانات Triage:", triageData);
         }
     }, [triageResponse]);
+
     useEffect(() => {
-        let newLevel = null;
-        const YES_KEY = '1476229927081534';
         const criticalPainKeys = ['3108900351014435', '3108904932420860', '3108911826984089', '3108917698391821'];
+        let newLevel = null;
 
         if (emergencyTriage.lifeSavingLkey === YES_KEY || emergencyTriage.unresponsiveLkey === YES_KEY) {
             newLevel = '6859764100147954'; // critical
+            setIsHiddenFields(false);
         } else if (
             emergencyTriage.highRiskLkey === YES_KEY ||
             emergencyTriage.avpuScaleLkey === '6044173055578557' ||
             (emergencyTriage.painScoreLkey && criticalPainKeys.includes(emergencyTriage.painScoreLkey))
         ) {
             newLevel = '6859787815891749'; // serious
+            setIsHiddenFields(false);
         } else if (
             emergencyTriage.highRiskLkey != null &&
             emergencyTriage.avpuScaleLkey != null &&
             emergencyTriage.painScoreLkey != null &&
-            (
-                emergencyTriage.highRiskLkey !== YES_KEY &&
-                emergencyTriage.avpuScaleLkey !== '6044173055578557' &&
-                !['3108900351014435', '3108904932420860', '3108911826984089', '3108917698391821'].includes(emergencyTriage.painScoreLkey)
-            )
+            emergencyTriage.highRiskLkey !== YES_KEY &&
+            emergencyTriage.avpuScaleLkey !== '6044173055578557' &&
+            !criticalPainKeys.includes(emergencyTriage.painScoreLkey)
         ) {
             setIsHiddenFields(true);
-            const YES_KEY = '1476229927081534';
-
+            
             const selectedServices = [
                 emergencyTriage.labsLkey,
                 emergencyTriage.imagingLkey,
@@ -138,6 +119,7 @@ const ViewTriage = () => {
             ];
 
             const count = selectedServices.filter(value => value === YES_KEY).length;
+            
             if (count >= 2) {
                 newLevel = '6859815212595414'; // high
             } else if (count === 1) {
@@ -150,7 +132,6 @@ const ViewTriage = () => {
         if (newLevel && newLevel !== emergencyTriage.emergencyLevelLkey) {
             setEmergencyTriage(prev => ({ ...prev, emergencyLevelLkey: newLevel }));
         }
-
     }, [
         emergencyTriage.lifeSavingLkey,
         emergencyTriage.unresponsiveLkey,
@@ -162,18 +143,49 @@ const ViewTriage = () => {
         emergencyTriage.ivFluidsLkey,
         emergencyTriage.medicationLkey,
         emergencyTriage.ecgLkey,
-        emergencyTriage.consultationLkey
+        emergencyTriage.consultationLkey,
+        YES_KEY
     ]);
+
     useEffect(() => {
-        setEncounter({ ...propsData?.encounter });
-    }, [propsData]);
+        if (saveTriageMutation && saveTriageMutation.status === 'fulfilled') {
+            setEmergencyTriage(saveTriageMutation.data);
+            setEncounter({ ...encounter, emergencyLevelLkey: saveTriageMutation.data?.emergencyLevelLkey });
+        }
+    }, [saveTriageMutation]);
+
+    useEffect(() => {
+        if (propsData?.encounter) {
+            setEncounter({ ...propsData.encounter });
+        }
+    }, [propsData?.encounter]);
+
+    useEffect(() => {
+        dispatch(setPageCode('ER_View_Triage'));
+        dispatch(setDivContent(divContent));
+
+        return () => {
+            dispatch(setPageCode(''));
+            dispatch(setDivContent('  '));
+        };
+    }, [dispatch]);
+
+      const handleGoBack = () => {
+        if (propsData?.from === 'ER_Triage') {
+            navigate('/ER-triage');
+        } else if (propsData?.from === 'ER_Waiting_List') {
+            navigate(-1); 
+        } else {
+            navigate(-1);
+        }
+    };
+
+
     return (
         <div className="er-main-container">
             <div className="left-box">
                 <div className='bt-field-div'>
-                    <BackButton
-                        onClick={handleGoBack}
-                    />
+                    <BackButton onClick={handleGoBack} />
                     <div className='bt-right'>
                         <Form fluid layout="inline">
                             <MyLabel label="Emergency Level" />
@@ -184,8 +196,11 @@ const ViewTriage = () => {
                                 />
                             )}
                         </Form>
-                    </div> </div>
+                    </div>
+                </div>
+                
                 <Row gutter={30}><Divider /></Row>
+                
                 <Row gutter={30}>
                     <Panel header="Emergency Level Assessment">
                         <Form fluid layout="inline">
@@ -204,174 +219,190 @@ const ViewTriage = () => {
                                 disabled={true}
                             />
                         </Form>
-                        <Form fluid layout="inline">
-                            {emergencyTriage.lifeSavingLkey === NO_KEY && (
-                                <Form fluid layout="inline">
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="Is the patient unresponsive or acutely mentally altered?"
-                                        fieldType="select"
-                                        fieldName="unresponsiveLkey"
-                                        selectData={booleanLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                </Form>
-                            )}
-                            {emergencyTriage.lifeSavingLkey === NO_KEY && emergencyTriage.unresponsiveLkey === NO_KEY && (
-                                <Form fluid layout="inline">
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="High-risk situation?"
-                                        fieldType="select"
-                                        fieldName="highRiskLkey"
-                                        selectData={booleanLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="AVPU Scale"
-                                        fieldType="select"
-                                        fieldName="avpuScaleLkey"
-                                        selectData={levelOfConscLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
+                        
+                        {emergencyTriage.lifeSavingLkey === NO_KEY && (
+                            <Form fluid layout="inline">
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="Is the patient unresponsive or acutely mentally altered?"
+                                    fieldType="select"
+                                    fieldName="unresponsiveLkey"
+                                    selectData={booleanLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                            </Form>
+                        )}
+                        
+                        {emergencyTriage.lifeSavingLkey === NO_KEY && emergencyTriage.unresponsiveLkey === NO_KEY && (
+                            <Form fluid layout="inline">
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="High-risk situation?"
+                                    fieldType="select"
+                                    fieldName="highRiskLkey"
+                                    selectData={booleanLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="AVPU Scale"
+                                    fieldType="select"
+                                    fieldName="avpuScaleLkey"
+                                    selectData={levelOfConscLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="Pain Score"
+                                    fieldType="select"
+                                    fieldName="painScoreLkey"
+                                    selectData={painScoreLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                            </Form>
+                        )}
 
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="Pain Score"
-                                        fieldType="select"
-                                        fieldName="painScoreLkey"
-                                        selectData={painScoreLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                </Form>
-                            )}
-
-                            {emergencyTriage.lifeSavingLkey === NO_KEY && emergencyTriage.unresponsiveLkey === NO_KEY && isHiddenFields && (
-                                <Form fluid layout="inline">
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="Labs Required"
-                                        fieldType="select"
-                                        fieldName="labsLkey"
-                                        selectData={booleanLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="Imaging Required"
-                                        fieldType="select"
-                                        fieldName="imagingLkey"
-                                        selectData={booleanLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="IV Fluids Required"
-                                        fieldType="select"
-                                        fieldName="ivFluidsLkey"
-                                        selectData={booleanLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="Medication Required"
-                                        fieldType="select"
-                                        fieldName="medicationLkey"
-                                        selectData={booleanLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="ECG Required"
-                                        fieldType="select"
-                                        fieldName="ecgLkey"
-                                        selectData={booleanLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                    <MyInput
-                                        column
-                                        width={200}
-                                        fieldLabel="Consultation Required"
-                                        fieldType="select"
-                                        fieldName="consultationLkey"
-                                        selectData={booleanLovQuery?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={emergencyTriage}
-                                        setRecord={setEmergencyTriage}
-                                        searchable={false}
-                                        disabled={true}
-                                    />
-                                </Form>
-                            )}
-                        </Form>
+                        {emergencyTriage.lifeSavingLkey === NO_KEY && 
+                         emergencyTriage.unresponsiveLkey === NO_KEY && 
+                         isHiddenFields && (
+                            <Form fluid layout="inline">
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="Labs Required"
+                                    fieldType="select"
+                                    fieldName="labsLkey"
+                                    selectData={booleanLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="Imaging Required"
+                                    fieldType="select"
+                                    fieldName="imagingLkey"
+                                    selectData={booleanLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="IV Fluids Required"
+                                    fieldType="select"
+                                    fieldName="ivFluidsLkey"
+                                    selectData={booleanLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="Medication Required"
+                                    fieldType="select"
+                                    fieldName="medicationLkey"
+                                    selectData={booleanLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="ECG Required"
+                                    fieldType="select"
+                                    fieldName="ecgLkey"
+                                    selectData={booleanLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldLabel="Consultation Required"
+                                    fieldType="select"
+                                    fieldName="consultationLkey"
+                                    selectData={booleanLovQuery?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={emergencyTriage}
+                                    setRecord={setEmergencyTriage}
+                                    searchable={false}
+                                    disabled={true}
+                                />
+                            </Form>
+                        )}
                     </Panel>
                 </Row>
+                
                 <Row gutter={30}>
-                    <VitalSignsTriage patient={propsData.patient} encounter={propsData.encounter} setRefetchPatientObservations={setRefetchPatientObservations} readOnly={true} />
+                    <VitalSignsTriage 
+                        patient={propsData.patient} 
+                        encounter={propsData.encounter} 
+                        setRefetchPatientObservations={setRefetchPatientObservations} 
+                        readOnly={true} 
+                    />
                 </Row>
+                
                 <Row gutter={30}>
-                    <GeneralAssessmentTriage patient={propsData.patient} encounter={propsData.encounter} readOnly={true} />
+                    <GeneralAssessmentTriage 
+                        patient={propsData.patient} 
+                        encounter={propsData.encounter} 
+                        readOnly={true} 
+                    />
                 </Row>
+                
                 <Row gutter={30}><Divider /></Row>
+                
                 <Row gutter={30}>
                     <Col md={12}>
-                        <Row gutter={30}><Translate><h6>Right Eye</h6></Translate></Row>
+                        <Row gutter={30}>
+                            <Translate><h6>Right Eye</h6></Translate>
+                        </Row>
                         <Row gutter={30}>
                             <Form fluid layout='inline'>
                                 <MyInput
@@ -402,7 +433,9 @@ const ViewTriage = () => {
                         </Row>
                     </Col>
                     <Col md={12}>
-                        <Row gutter={30}><Translate><h6>Left Eye</h6></Translate></Row>
+                        <Row gutter={30}>
+                            <Translate><h6>Left Eye</h6></Translate>
+                        </Row>
                         <Row gutter={30}>
                             <Form fluid layout='inline'>
                                 <MyInput
@@ -433,11 +466,19 @@ const ViewTriage = () => {
                         </Row>
                     </Col>
                 </Row>
+                
                 <Row gutter={30}><Divider /></Row>
+                
                 <Row gutter={30}>
-                    <ChiefComplainTriage patient={propsData.patient} encounter={propsData.encounter} readOnly={true} />
+                    <ChiefComplainTriage 
+                        patient={propsData.patient} 
+                        encounter={propsData.encounter} 
+                        readOnly={true} 
+                    />
                 </Row>
+                
                 <Row gutter={30}><Divider /></Row>
+                
                 <Row gutter={30}>
                     <Form fluid layout='inline' className='form-inline-wrap bt-div'>
                         <MyInput
@@ -460,7 +501,7 @@ const ViewTriage = () => {
                             width={400}
                             disabled={true}
                         />
-                        {propsData?.patient?.genderLvalue?.valueCode === "F" &&
+                        {propsData?.patient?.genderLvalue?.valueCode === "F" && (
                             <MyInput
                                 width={150}
                                 column
@@ -471,12 +512,17 @@ const ViewTriage = () => {
                                 setRecord={setEmergencyTriage}
                                 disabled={true}
                             />
-                        }
+                        )}
                     </Form>
                 </Row>
             </div>
+            
             <div className="right-box">
-                <PatientSide patient={propsData.patient} encounter={propsData.encounter} refetchList={refetchPatientObservations} />
+                <PatientSide 
+                    patient={propsData.patient} 
+                    encounter={propsData.encounter} 
+                    refetchList={refetchPatientObservations} 
+                />
             </div>
         </div>
     );
