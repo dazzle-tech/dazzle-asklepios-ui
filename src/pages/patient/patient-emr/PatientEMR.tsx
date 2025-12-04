@@ -75,15 +75,13 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
   const propsData = patient || enc ? undefined : (location.state as any);
 
   const [encounter, setLocalEncounter] = useState<any>(
-    enc ?? { ...newApEncounter, discharge: false }
+    enc ?? propsData?.encounter ?? { ...newApEncounter, discharge: false }
   );
 
   const [localPatient, setLocalPatient] = useState<ApPatient>(
     patient
       ? patient
-      : propsData?.fromPage === 'clinicalVisit'
-      ? propsData?.localPatient
-      : { ...newApPatient }
+      : propsData?.patient ?? { ...newApPatient }
   );
 
   const [refetchData, setRefetchData] = useState(false);
