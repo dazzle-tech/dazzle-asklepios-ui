@@ -96,28 +96,21 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
         }
     }, [resourcesWithAvailabilityResponse, resourceKey, facilityListResponse, facility]);
 
-    // Load data from API response
     useEffect(() => {
         if (resourcesWithAvailabilityResponse?.object?.length > 0 && facilityListResponse) {
             const loadedSlices: Record<string, any[]> = {};
             const loadedDays: DayValue[] = [];
             let loadedFacility = null;
-            let loadedFromTime = null;
-            let loadedToTime = null;
+
+            let globalStartMinutes: number | null = null;
+            let globalEndMinutes: number | null = null;
 
             resourcesWithAvailabilityResponse.object.forEach(objItem => {
                 if (objItem.key === resourceKey && objItem.availabilitySlices?.length > 0) {
-     
-                    
-                    // Get facilityKey from objItem (backend should populate it from slices)
+
                     if (!loadedFacility && objItem.facilityKey) {
-                        // Find facility from facilityListResponse by id
                         const facilityFromList = facilityListResponse.find(f => f.id?.toString() === objItem.facilityKey);
-                        if (facilityFromList) {
-                            loadedFacility = facilityFromList;
-                        } else {
-                            loadedFacility = { id: objItem.facilityKey };
-                        }
+                        loadedFacility = facilityFromList || { id: objItem.facilityKey };
                     }
                     
                     objItem.availabilitySlices.forEach(slice => {
@@ -132,16 +125,24 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
                             loadedDays.push(day as DayValue);
                         }
 
-                        const fromDate = minutesToDisplayDate(slice.startHour);
-                        const toDate = minutesToDisplayDate(slice.endHour);
+                        // Backend sends startHour/startMinute and endHour/endMinute as separate fields
+                        const fromMinutes =
+                            (typeof slice.startHour === 'number' ? slice.startHour : 0) * 60 +
+                            (typeof slice.startMinute === 'number' ? slice.startMinute : 0);
+                        const toMinutes =
+                            (typeof slice.endHour === 'number' ? slice.endHour : 0) * 60 +
+                            (typeof slice.endMinute === 'number' ? slice.endMinute : 0);
 
-                        // Set fromTime and toTime from first slice if not set
-                        if (!loadedFromTime && fromDate) {
-                            loadedFromTime = fromDate;
+                        // Track global min/max across all slices (earliest start, latest end)
+                        if (globalStartMinutes === null || fromMinutes < globalStartMinutes) {
+                            globalStartMinutes = fromMinutes;
                         }
-                        if (!loadedToTime && toDate) {
-                            loadedToTime = toDate;
+                        if (globalEndMinutes === null || toMinutes > globalEndMinutes) {
+                            globalEndMinutes = toMinutes;
                         }
+
+                        const fromDate = minutesToDisplayDate(fromMinutes);
+                        const toDate = minutesToDisplayDate(toMinutes);
 
                         loadedSlices[day].push({
                             from: fromDate,
@@ -156,10 +157,10 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
                 setFacility(loadedFacility);
             }
 
-            // Set time range if found
-            if (loadedFromTime && loadedToTime) {
-                setFromTime(loadedFromTime);
-                setToTime(loadedToTime);
+            // Every time we open the modal, derive Time Range from the widest slice range
+            if (globalStartMinutes !== null && globalEndMinutes !== null) {
+                setFromTime(minutesToDisplayDate(globalStartMinutes));
+                setToTime(minutesToDisplayDate(globalEndMinutes));
             }
 
             // Set slices and days
@@ -452,31 +453,18 @@ const handleAddSliceRight = (day) => {
 };
 
     const handleCancel = () => {
+        // Reset local UI state so closing the modal clears the view.
         setFacility(null);
-        setResource(null);
         setFromTime(null);
         setToTime(null);
         setSliceDuration(SLICE_DURATION_MINUTES);
         setSelectedDays([]);
         setTimeSlices({});
-        // setOpen(false); 
+        setOpen(false);
     };
 
-
-    // Reset form when modal closes
-    useEffect(() => {
-        if (!open) {
-            setFacility(null);
-            setFromTime(null);
-            setToTime(null);
-            setSliceDuration(SLICE_DURATION_MINUTES);
-            setSelectedDays([]);
-            setTimeSlices({});
-        }
-    }, [open]);
-
     return (
-        <Modal open={open} onClose={() => setOpen(false)} size="lg">
+        <Modal open={open} onClose={handleCancel} size="lg">
             <Modal.Header>
                 <Modal.Title>New Availability Time</Modal.Title>
             </Modal.Header>
@@ -698,7 +686,7 @@ const handleAddSliceRight = (day) => {
             </Modal.Body >
             <Modal.Footer>
                 <Button onClick={handleSave} appearance="primary">Save</Button>
-                <Button onClick={() => { handleCancel() }} appearance="subtle">Cancel</Button>
+                <Button onClick={handleCancel} appearance="subtle">Cancel</Button>
             </Modal.Footer>
         </Modal >
     );

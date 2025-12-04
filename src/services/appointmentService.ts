@@ -143,11 +143,10 @@ export const appointmentService = createApi({
         url: '/appointment/save',
         method: 'POST',
         body: requestData,
+        responseHandler: (response: Response) => response.text(),
       }),
       onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
+      transformResponse: (response: any) => response,
     }),
   }),
 
