@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useState } from 'react';
-import { Form, Panel, Tooltip, Whisper, Modal } from 'rsuite';
+import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,6 +11,7 @@ import MyInput from '../MyInput';
 import AdvancedSearchFilters from '../AdvancedSearchFilters';
 import { FaCheck } from 'react-icons/fa6';
 import DeletionConfirmationModal from '../DeletionConfirmationModal';
+import ConsultationResponseModal from '../ConsultationResponseModal';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetConsultationOrdersByDepartmentQuery, useSaveConsultationOrdersMutation, useGetEncountersQuery, useGetPatientDiagnosisQuery } from '@/services/encounterService';
@@ -42,7 +43,6 @@ const MyConsultations = () => {
   
   // Response modal states
   const [openResponseModal, setOpenResponseModal] = useState(false);
-  const [responseText, setResponseText] = useState('');
   const [selectedConsultation, setSelectedConsultation] = useState<any>(null);
   
   const [saveConsultationOrder] = useSaveConsultationOrdersMutation();
@@ -444,11 +444,15 @@ const MyConsultations = () => {
 
   const handleOpenResponseModal = (consultation: any) => {
     setSelectedConsultation(consultation);
-    setResponseText(consultation.viewResponse || '');
     setOpenResponseModal(true);
   };
 
-  const handleSaveResponse = async () => {
+  const handleCloseResponseModal = () => {
+    setOpenResponseModal(false);
+    setSelectedConsultation(null);
+  };
+
+  const handleSaveResponse = async (responseText: string) => {
     if (!selectedConsultation) return;
 
     try {
@@ -464,9 +468,7 @@ const MyConsultations = () => {
       }));
       
       refetchConsultations();
-      setOpenResponseModal(false);
-      setResponseText('');
-      setSelectedConsultation(null);
+      handleCloseResponseModal();
     } catch (error) {
       dispatch(notify({ 
         msg: 'Failed to save response', 
@@ -866,58 +868,13 @@ const MyConsultations = () => {
         }
       />
 
-      <Modal 
-        open={openResponseModal} 
-        onClose={() => {
-          setOpenResponseModal(false);
-          setResponseText('');
-          setSelectedConsultation(null);
-        }}
-        size="md"
-      >
-        <Modal.Header>
-          <Modal.Title>
-            {selectedConsultation?.statusLkey === '1804482322306061' 
-              ? 'View Response' 
-              : 'Add Response'}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form fluid>
-            <MyInput
-              fieldLabel="Response"
-              fieldName="response"
-              fieldType="textarea"
-              rows={6}
-              record={{ response: responseText }}
-              setRecord={(value) => setResponseText(value.response)}
-              disabled={selectedConsultation?.statusLkey === '1804482322306061'}
-              placeholder="Enter your response here..."
-            />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <MyButton
-            onClick={() => {
-              setOpenResponseModal(false);
-              setResponseText('');
-              setSelectedConsultation(null);
-            }}
-            appearance="subtle"
-          >
-            Cancel
-          </MyButton>
-          {selectedConsultation?.statusLkey !== '1804482322306061' && (
-            <MyButton
-              onClick={handleSaveResponse}
-              backgroundColor="var(--deep-blue)"
-              disabled={!responseText.trim()}
-            >
-              Save Response
-            </MyButton>
-          )}
-        </Modal.Footer>
-      </Modal>
+      <ConsultationResponseModal
+        open={openResponseModal}
+        consultation={selectedConsultation}
+        readonly={false}
+        onClose={handleCloseResponseModal}
+        onSave={handleSaveResponse}
+      />
 
     </Panel>
   );
