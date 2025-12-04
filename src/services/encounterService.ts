@@ -289,6 +289,20 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getConsultationOrdersByDepartment: builder.query({
+      query: ({ listRequest, department_key, preferred_consultant_key }: { listRequest: ListRequest, department_key: string, preferred_consultant_key?: string }) => {
+        const params = new URLSearchParams(fromListRequestToQueryParams(listRequest));
+        params.append('department_key', department_key);
+        if (preferred_consultant_key) {
+          params.append('preferred_consultant_key', preferred_consultant_key);
+        }
+        return {
+          url: `/encounter/consultation-orders-by-department?${params.toString()}`
+        };
+      },
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
     saveConsultationOrders: builder.mutation({
       query: (consultation: ApConsultationOrder) => ({
         url: `/encounter/save-consultation-orders`,
@@ -1119,6 +1133,7 @@ export const {
   useGetCustomeInstructionsQuery,
   useSaveCustomeInstructionsMutation,
   useGetConsultationOrdersQuery,
+  useGetConsultationOrdersByDepartmentQuery,
   useSaveConsultationOrdersMutation,
   useGetDrugOrderQuery,
   useSaveDrugOrderMutation,

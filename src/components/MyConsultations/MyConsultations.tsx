@@ -13,19 +13,34 @@ import { FaCheck } from 'react-icons/fa6';
 import DeletionConfirmationModal from '../DeletionConfirmationModal';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetConsultationOrdersByDepartmentQuery, useSaveConsultationOrdersMutation } from '@/services/encounterService';
+import { useAppSelector } from '@/hooks';
 import { useDispatch } from 'react-redux';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { initialListRequest } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
 
 const MyConsultations = () => {
   const dispatch = useDispatch();
+  const authSlice = useAppSelector(state => state.auth);
+  const selectedDepartment = authSlice.selectedDepartment;
+  const loggedInUser = authSlice.user;
+  
   const [record, setRecord] = useState({});
   const [openActionModal, setOpenActionModal] = useState(false);
-  const [selectedAction, setSelectedAction] = useState(null);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<'accept' | 'reject' | null>(null);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  
+  const [saveConsultationOrder] = useSaveConsultationOrdersMutation();
+  
+  const [listRequest, setListRequest] = useState({
+    ...initialListRequest,
+    pageNumber: 1,
+    pageSize: 10,
+    ignore: false
+  });
 
   // Header setup
   useEffect(() => {
@@ -53,8 +68,19 @@ const MyConsultations = () => {
     sort: 'id,asc'
   });
 
-
   const { data: departmentListResponse, isFetching } = useGetDepartmentsQuery(paginationParams);
+  
+  // Fetch consultation orders by department
+  const { data: consultationResponse, isLoading: consultationsLoading, refetch: refetchConsultations } = useGetConsultationOrdersByDepartmentQuery(
+    {
+      listRequest: listRequest,
+      department_key: selectedDepartment?.departmentId?.toString() || '',
+      preferred_consultant_key: loggedInUser?.practitionerKey || loggedInUser?.id?.toString()
+    },
+    {
+      skip: !selectedDepartment?.departmentId
+    }
+  );
 
 
 
@@ -62,6 +88,24 @@ const MyConsultations = () => {
     label: dep.name,
     value: dep.id
   })) ?? [];
+
+  const pageIndex = (listRequest.pageNumber ?? 1) - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = consultationResponse?.extraNumeric || 0;
+
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setManualSearchTriggered(true);
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setManualSearchTriggered(true);
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
 
 
 
@@ -77,66 +121,39 @@ const MyConsultations = () => {
       label: `${p.firstName} ${p.lastName}`
     })) ?? [];
 
+  // Extract consultation data from API response
+  // API now returns a flat list of all visible consultations
+  const allConsultations = consultationResponse?.object || [];
 
-
-  const staticData = [
-    {
-      id: 1,
-      priority: "High",
-      patientName: "John Smith",
-      gender: "Male",
-      age: 54,
-      diagnosis: "Acute Appendicitis",
-      findings: "Severe abdominal pain at RLQ, elevated WBC",
-      questionToConsultant: "Is surgical intervention recommended?Is surgical intervention recommended?Is surgical intervention recommended?",
-      departmentName: "General Surgery",
-      createdBy: "Dr. Adam",
-      createdAt: "2025-01-22 10:34",
-      status: "Pending"
-    },
-    {
-      id: 2,
-      priority: "Medium",
-      patientName: "Sarah Johnson",
-      gender: "Female",
-      age: 29,
-      diagnosis: "Migraine Headache",
-      findings: "MRI normal, persistent dizziness",
-      questionToConsultant: "Recommend alternative medication?",
-      departmentName: "Neurology",
-      createdBy: "Dr. Lina",
-      createdAt: "2025-01-22 09:15",
-      status: "Pending"
-    },
-    {
-      id: 3,
-      priority: "Low",
-      patientName: "Ahmed Ali",
-      gender: "Male",
-      age: 41,
-      diagnosis: "Mild COVID-19",
-      findings: "O2 98%, mild cough, stable vitals",
-      questionToConsultant: "Isolation period recommendation?",
-      departmentName: "Internal Medicine",
-      createdBy: "Dr. Khaled",
-      createdAt: "2025-01-20 14:50",
-      status: "Pending"
-    }
-  ];
-
-  const [data, setData] = useState(staticData);
-
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (!selectedRow) return;
 
-    const updatedData = data.map(item =>
-      item.id === selectedRow.id
-        ? { ...item, status: selectedAction === "accept" ? "Accepted" : "Rejected" }
-        : item
-    );
+    try {
+      const statusKey = selectedAction === "accept" 
+        ? '1804566422622516'  // Accepted status
+        : '1804533730103990'; // Rejected status
 
-    setData(updatedData);
-    setOpenActionModal(false);
+      await saveConsultationOrder({
+        ...selectedRow,
+        statusLkey: statusKey,
+        updatedBy: loggedInUser?.login || 'Admin'
+      }).unwrap();
+
+      dispatch(notify({ 
+        msg: `Consultation ${selectedAction === 'accept' ? 'confirmed' : 'rejected'} successfully`, 
+        sev: 'success' 
+      }));
+      
+      refetchConsultations();
+      setOpenActionModal(false);
+      setSelectedRow(null);
+      setSelectedAction(null);
+    } catch (error) {
+      dispatch(notify({ 
+        msg: 'Failed to update consultation status', 
+        sev: 'error' 
+      }));
+    }
   };
 
   const toggleRowSelection = (id) => {
@@ -298,7 +315,7 @@ const MyConsultations = () => {
               </MyButton>
             </div>
           </Whisper>
-          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Accept</Tooltip>}>
+          <Whisper trigger="hover" placement="top" speaker={<Tooltip>Confirm</Tooltip>}>
             <div>
               <MyButton
                 size="small"
@@ -336,6 +353,7 @@ const MyConsultations = () => {
                 size="small"
                 radius="6px"
                 backgroundColor="light-blue"
+                disabled={row.statusLkey !== '1804566422622516'}
                 onClick={() => console.log("Add Response", row)}
               >
                 <FontAwesomeIcon icon={faFilePen} color="white" />
@@ -359,9 +377,6 @@ const MyConsultations = () => {
       )
     }
   ];
-
-  console.log("department list response", departmentListResponse);
-  console.log("departmentoptions", departmentOptions);
 
   const filters = (<>
     <Form fluid>
@@ -425,19 +440,36 @@ const MyConsultations = () => {
         Submit
       </MyButton>
     </div>);
+
+  // Show message if no department selected
+  if (!selectedDepartment?.departmentId) {
+    return (
+      <Panel>
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <p>Please select a department to view consultations.</p>
+        </div>
+      </Panel>
+    );
+  }
+
   return (
     <Panel>
       <MyTable
-        data={data}
+        data={allConsultations}
         columns={tableColumns}
-        page={page}
+        page={pageIndex}
         rowsPerPage={rowsPerPage}
-        totalCount={staticData.length}
+        totalCount={totalCount}
         filters={filters}
-        loading={loading}
+        loading={consultationsLoading || (manualSearchTriggered && consultationsLoading)}
         tableButtons={tablebuttons}
-        onPageChange={(page) => setPage(page)}
-        onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value))}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
 
 
@@ -449,7 +481,7 @@ const MyConsultations = () => {
         actionButtonFunction={handleConfirmAction}
         confirmationQuestion={
           selectedAction === "accept"
-            ? "Are you sure you want to accept this consultation?"
+            ? "Are you sure you want to confirm this consultation?"
             : "Are you sure you want to reject this consultation?"
         }
       />
