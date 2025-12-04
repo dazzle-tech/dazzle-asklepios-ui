@@ -8,7 +8,9 @@ import MyModal from "../MyModal/MyModal";
 import "./styles.less";
 import { formatDateWithoutSeconds } from "@/utils";
 import { useSelector } from "react-redux";
-const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowName }) => {
+const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowName,
+    disabled = false
+ }) => {
     const [newMessage, setNewMessage] = useState({ message: "" });
     const endOfMessagesRef = useRef(null);
     const mode = useSelector((state: any) => state.ui.mode);
@@ -70,7 +72,10 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                                     }}
                                 ></MyInput></Form>
 
-                            <MyButton appearance="primary" onClick={() => {
+                            <MyButton appearance="primary"
+                            disabled={disabled || newMessage.message.trim() === ""}
+                             onClick={() => {
+                                if(disabled) return;
                                 handleSendMessage(newMessage.message);
                                 setNewMessage({ message: "" })
                             }

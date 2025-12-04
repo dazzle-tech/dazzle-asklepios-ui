@@ -348,7 +348,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         <div className="emr-main-row-handle">
           {activeSectionCard === 'history' && (
             <div className="emr-main-row-handle">
-              <div className="animation-emr-card-patient-emr">
+              {/* <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={10}
                   footerText="60s"
@@ -358,7 +358,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   height={100}
                   onClick={() => alert('Clicked')}
                 />
-              </div>
+              </div> */}
               <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={4}
@@ -645,23 +645,23 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
         {activeCard === 'clinicvisits' && <ClinicVisitsTable  patient={localPatient}/>}
-        {activeCard === 'inpatient' && <InpatientTable />}
-        {activeCard === 'daycase' && <DayCaseTable />}
+        {/* {activeCard === 'inpatient' && <InpatientTable />} */}
+        {/* {activeCard === 'daycase' && <DayCaseTable />} */}
         {activeCard === 'emergency' && <EmergencyTable />}
-        {activeCard === 'nurseassessments' && <NurseAssessmentsTable />}
+        {/* {activeCard === 'nurseassessments' && <NurseAssessmentsTable />} */}
         {activeCard === 'procedures' && <ProceduresTable />}
-        {activeCard === 'operations' && <OperationsTable />}
+        {/* {activeCard === 'operations' && <OperationsTable />} */}
         {activeCard === 'consultations' && <ConsultationsTable />}
         {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient}  />}
-        {activeCard === 'radiology' && <RadiologyTable />}
-        {activeCard === 'pathology' && <PathologyTable />}
+        {activeCard === 'radiology' && <RadiologyTable patient={localPatient}/>}
+        {/* {activeCard === 'pathology' && <PathologyTable />} */}
         {activeCard === 'medications' && <CurrentMedicationsTable />}
         {activeCard === 'vaccines' && <VaccinationTable />}
         {activeCard === 'reports' && <ClinicalReportsTable />}
         {activeCard === 'attachments' && <AttachmentsTable />}
         {activeCard === 'appliedservices' && <AppliedServicesTable />}
-        {activeCard === 'dentalcharts' && <DentalChartsTable />}
-        {activeCard === 'ledgeraccount' && <LedgerAccountTable />}
+        {/* {activeCard === 'dentalcharts' && <DentalChartsTable />} */}
+        {/* {activeCard === 'ledgeraccount' && <LedgerAccountTable />} */}
         {activeCard === 'pastmedicalhistory' && <PastMedicalHistoryTable />}
 
         {/* 
