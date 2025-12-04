@@ -113,27 +113,31 @@
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] =
       useSavePrescriptionMedicationMutation();
       
-    useEffect(() => {
-      if (prescriptionMedication.key != null && Brand) {
-        setSelectedGeneric(Brand);
-        setSelectedOption(prescriptionMedication?.instructionsTypeLkey);
-        setInstruc(prescriptionMedication.administrationInstructions);
-        setTags(prescriptionMedication?.parametersToMonitor?.split(',') ?? []);
+      useEffect(() => {
+        if (prescriptionMedication.key != null && Brand) {
 
-        if (prescriptionMedication?.instructionsTypeLkey === '3010606785535008') {
-          const instruc = customeInstructions?.object?.find(
-            item => item.prescriptionMedicationsKey === prescriptionMedication.key
-          );
+          setSelectedGeneric(Brand);
+          setSelectedOption(prescriptionMedication?.instructionsTypeLkey);
+          setInstruc(prescriptionMedication.administrationInstructions);
+          setTags(prescriptionMedication?.parametersToMonitor?.split(',') ?? []);
 
-          setCustomeinst({
-            dose: instruc?.dose,
-            unit: instruc?.unitLkey,
-            frequency: instruc?.frequencyLkey,
-            roa: instruc?.roaLkey
-          });
+          // FIX: reload ICD saved from backend
+          setindicationsDescription(prescriptionMedication.indicationIcd ?? "");
+
+          if (prescriptionMedication?.instructionsTypeLkey === '3010606785535008') {
+            const instruc = customeInstructions?.object?.find(
+              item => item.prescriptionMedicationsKey === prescriptionMedication.key
+            );
+
+            setCustomeinst({
+              dose: instruc?.dose,
+              unit: instruc?.unitLkey,
+              frequency: instruc?.frequencyLkey,
+              roa: instruc?.roaLkey
+            });
+          }
         }
-      }
-    }, [prescriptionMedication, Brand, customeInstructions]);
+      }, [prescriptionMedication, Brand, customeInstructions]);
 
     useEffect(() => {
       if (searchKeywordicd.trim() !== '') {
@@ -166,7 +170,7 @@
     }, [prescriptionMedication.chronicMedication]);
 
     useEffect(() => {
-      if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != '') {
+        if (indicationsIcd.indicationIcd) {
         setindicationsDescription(prevadminInstructions => {
           const currentIcd = icdListResponseLoading?.object?.find(
             item => item.key === indicationsIcd.indicationIcd
