@@ -111,6 +111,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       )
     }
   ];
+
   // Update age format when DOB changes
   useEffect(() => {
     if (localPatient?.dob) {
