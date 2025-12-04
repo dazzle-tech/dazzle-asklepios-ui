@@ -1,89 +1,165 @@
-import React, { useState } from 'react';
-import MyTable from '@/components/MyTable';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
+import React, { useMemo, useState, useEffect } from "react";
+import MyTable from "@/components/MyTable";
+import { initialListRequest, ListRequest } from "@/types/types";
+import { formatDateWithoutSeconds, formatEnumString } from "@/utils";
+import { useGetCustomeInstructionsQuery, useGetPrescriptionMedicationsQuery } from "@/services/encounterService";
+import { useGetAllBrandMedicationsQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
+import { useGetAllPrescriptionInstructionsQuery } from "@/services/setup/prescription-instruction/prescriptionInstructionService";
 import Translate from '@/components/Translate';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const sampleMedicationsData = [];
 
-const columns: ColumnConfig[] = [
-  {
-    key: 'medication',
-    title: <Translate>Medication</Translate>,
-    dataKey: 'medication'
-  },
-  {
-    key: 'frequency',
-    title: <Translate>Frequency</Translate>,
-    dataKey: 'frequency'
-  },
-  {
-    key: 'prescriber',
-    title: <Translate>Prescriber</Translate>,
-    dataKey: 'prescriber'
-  },
-  {
-    key: 'startDate',
-    title: <Translate>Start Date</Translate>,
-    dataKey: 'startDate',
-    render: (row: any) =>
-      row?.startDate ? (
-        <span className="date-table-style">{formatDateWithoutSeconds(row.startDate)}</span>
-      ) : (
-        '-'
-      )
-  },
-  {
-    key: 'status',
-    title: <Translate>Status</Translate>,
-    dataKey: 'status',
-    width: 100,
-    render: (row: any) => (
-      <MyBadgeStatus
-        backgroundColor="var(--light-green)"
-        color="var(--primary-green)"
-        contant={row.status}
-      />
-    )
-  }
-];
-
-const CurrentMedicationsTable = () => {
-  const [sortColumn, setSortColumn] = useState('startDate');
-  const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [tableData, setTableData] = useState(sampleMedicationsData);
-
-  const sortedData = [...tableData].sort((a, b) => {
-    const aValue = a[sortColumn];
-    const bValue = b[sortColumn];
-    if (aValue === bValue) return 0;
-    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
+const CurrentMedicationsTable = ({ patient }) => {
+  const [listRequest, setListRequest] = useState({
+    ...initialListRequest,
+    filters: [
+      { fieldName: "patient_key", operator: "match", value: patient?.key },
+    ]
   });
 
-  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  const {
+    data: prescriptionMedications,
+    isLoading: isLoadingPrescriptionMedications,
+    refetch: medicRefetch
+  } = useGetPrescriptionMedicationsQuery(listRequest);
+
+    const { data: genericMedicationListResponse } =
+      useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+   
+      const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+  
+        const {
+          data: customeInstructions,
+          isLoading: isLoadingCustomeInstructions,
+          refetch: refetchCo
+        } = useGetCustomeInstructionsQuery({
+          ...initialListRequest
+        });
+
+  
+  const tableColumns = [
+    {
+      key: 'medicationName',
+      dataKey: 'genericMedicationsId',
+      title: <Translate> Medication Name</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => {
+        return genericMedicationListResponse?.data?.find(
+          item => item.id === rowData.genericMedicationsId
+        )?.name;
+      }
+    },
+    {
+      key: 'instructions',
+      dataKey: '',
+      title: 'Instructions',
+      flexGrow: 3,
+      render: (rowData: any) => {
+        if (rowData.instructionsTypeLkey === '3010591042600262') {
+          const generic = predefinedInstructionsListResponse?.data?.find(
+            item => item.id === Number(rowData.instructions)
+          );
+       
+
+          if (generic) {
+          } else {
+            console.warn('No matching generic found for key:', rowData.instructions);
+          }
+          return [
+            generic?.dose ?? '',
+            formatEnumString(generic?.unit) ?? '',
+            formatEnumString(generic?.rout) ?? '',   // ✅ route
+            formatEnumString(generic?.frequency) ?? '',
+          ]
+            .filter(v => v != null && String(v).trim() !== '')
+            .join(', ');
+        }
+        if (rowData.instructionsTypeLkey === '3010573499898196') {
+          return rowData.instructions;
+        }
+        if (rowData.instructionsTypeLkey === '3010606785535008') {
+          return (
+            customeInstructions?.object?.find(
+              item => item.prescriptionMedicationsKey === rowData.key
+            )?.dose +
+            ',' +
+            customeInstructions?.object?.find(
+              item => item.prescriptionMedicationsKey === rowData.key
+            )?.unitLvalue.lovDisplayVale +
+            ',' +
+            customeInstructions?.object?.find(
+              item => item.prescriptionMedicationsKey === rowData.key
+            )?.frequencyLvalue.lovDisplayVale
+          );
+        }
+
+        return 'no';
+      }
+    },
+    {
+      key: 'instructionsType',
+      dataKey: 'instructionsTypeLkey',
+      title: 'Instructions Type',
+      flexGrow: 2,
+      render: (rowData: any) => {
+        return rowData.instructionsTypeLvalue
+          ? rowData.instructionsTypeLvalue.lovDisplayVale
+          : rowData.instructionsTypeLkey;
+      }
+    },
+    {
+      key: 'validUtil',
+      dataKey: 'validUtil',
+      title: 'Valid Util',
+      flexGrow: 2
+    },
+    {
+      key: 'isChronic',
+      dataKey: 'chronicMedication',
+      title: 'Is Chronic',
+      flexGrow: 2,
+      render: (rowData: any) => {
+        return rowData.chronicMedication ? 'Yes' : 'No';
+      }
+    },
+    {
+      key: 'status',
+      dataKey: 'statusLkey',
+      title: 'Status',
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
+      }
+    },
+  ];
+
+useEffect(() => {
+  setListRequest(prev => ({
+    ...prev!,
+    filters: [
+      { fieldName: "patient_key", operator: "match", value: patient?.key }
+    ],
+    pageNumber: 1,
+  }));
+}, [patient?.key]);
 
   return (
     <MyTable
-      data={paginatedData}
-      columns={columns}
-      loading={false}
-      sortColumn={sortColumn}
-      sortType={sortType}
-      onSortChange={(col, type) => {
-        setSortColumn(col);
-        setSortType(type);
-      }}
-      page={page}
-      rowsPerPage={rowsPerPage}
-      totalCount={tableData.length}
-      onPageChange={(_, newPage) => setPage(newPage)}
-      onRowsPerPageChange={e => {
-        setRowsPerPage(parseInt(e.target.value, 10));
-        setPage(0);
-      }}
+      columns={tableColumns}
+      data={prescriptionMedications?.object ?? []}
+      loading={isLoadingPrescriptionMedications}
+      page={(listRequest.pageNumber ?? 1) - 1}
+      rowsPerPage={listRequest.pageSize}
+      totalCount={prescriptionMedications?.extraNumeric ?? 0}
+      onPageChange={(_, newPage) =>
+        setListRequest(prev => ({ ...prev, pageNumber: newPage + 1 }))
+      }
+      onRowsPerPageChange={e =>
+        setListRequest(prev => ({
+          ...prev,
+          pageSize: Number(e.target.value),
+          pageNumber: 1
+        }))
+      }
     />
   );
 };
