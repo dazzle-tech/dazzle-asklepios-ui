@@ -63,7 +63,6 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
         }
         return true;
     };
-
     // Handle Save Encounter
     const handleSave = () => {
         if (!validateRequiredFields()) {
