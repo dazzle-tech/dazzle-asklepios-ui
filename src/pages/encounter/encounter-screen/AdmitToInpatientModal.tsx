@@ -8,13 +8,18 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import { newApAdmitOutpatientInpatient } from '@/types/model-types-constructor';
 import { useGetPractitionersQuery } from '@/services/setupService';
 import { useAdmitToInpatientEncounterMutation } from '@/services/encounterService';
 const AdmitToInpatientModal = ({ open, setOpen, encounter }) => {
   const [admitToInpatient, setAdmitToInpatient] = useState({ ...newApAdmitOutpatientInpatient });
-  const inpatientDepartmentListResponse = useGetResourceTypeQuery('4217389643435490');
+  const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
+    resourceType: 'INPATIENT_ADMISSION',
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
 
   const dispatch = useAppDispatch();
   const [saveAdmitToInpatient, saveAdmitToInpatientMutation] =
@@ -59,7 +64,7 @@ const AdmitToInpatientModal = ({ open, setOpen, encounter }) => {
         fieldLabel="Select Department"
         fieldType="select"
         fieldName="inpatientDepartmentKey"
-        selectData={inpatientDepartmentListResponse?.data?.object ?? []}
+        selectData={inpatientDepartmentListResponse?.data ?? []}
         selectDataLabel="name"
         selectDataValue="key"
         record={admitToInpatient}
