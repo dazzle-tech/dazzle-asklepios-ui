@@ -1493,9 +1493,9 @@ export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = {
 	key:undefined,
 	patientKey:undefined,
 	encounterKey:undefined,
-	vaccineKey:undefined,
-	vaccineBrandKey:undefined,
-	vaccineDoseKey:undefined,
+	vaccineId:undefined,
+	vaccineBrandId:undefined,
+	vaccineDoseId:undefined,
 	vaccineLotNumber:'',
 	dateAdministered:0,
 	actualSide:'',
@@ -3199,6 +3199,7 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	platestFunctionalStatus:'',
 	latestCognitiveCheck:'',
 	platestCognitiveCheck:'',
+	reasonOfVisit:'',
 } 
 
 export const newApPatientPlan:modelTypes.ApPatientPlan = { 

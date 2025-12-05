@@ -87,7 +87,7 @@ import InpatientNurseStation from './pages/encounter/encounter-pre-observations/
 import Observations from './pages/encounter/encounter-pre-observations-new/observations/Observations';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
 import ServiceAndProductsNew from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
-import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
+import VaccinationTab from './pages/encounter/encounter-pre-observations-new/vaccination-tab';
 import Warning from './pages/encounter/encounter-pre-observations/warning';
 import EncounterRegistration from './pages/encounter/encounter-registration';
 import Encounter from './pages/encounter/encounter-screen';

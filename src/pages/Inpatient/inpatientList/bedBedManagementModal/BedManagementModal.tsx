@@ -6,19 +6,16 @@ import BedManagmentFirstTab from './BedManagmentFirstTab';
 import BedTransactionsSecondTab from './BedTransactionsSecondTab';
 import MyTab from '@/components/MyTab';
 const BedManagementModal = ({ open, setOpen, departmentKey }) => {
-
   const tabData = [
-    {title: "Bed Management", content: <BedManagmentFirstTab departmentKey={departmentKey} />},
-    {title: "Bed Transactions", content: <BedTransactionsSecondTab departmentKey={departmentKey} />}
+    { title: 'Bed Management', content: <BedManagmentFirstTab departmentKey={departmentKey} /> },
+    {
+      title: 'Bed Transactions',
+      content: <BedTransactionsSecondTab departmentKey={departmentKey} />
+    }
   ];
 
   // modal content
-  const modalContent = (
-    <MyTab 
-     data={tabData}
-     className="tab-container"
-    />
-  );
+  const modalContent = <MyTab data={tabData} className="tab-container" />;
 
   return (
     <MyModal

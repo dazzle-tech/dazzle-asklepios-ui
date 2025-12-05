@@ -1492,9 +1492,9 @@ export interface ApEncounterVaccination {
 	key:string;
 	patientKey:string;
 	encounterKey:string;
-	vaccineKey:string;
-	vaccineBrandKey:string;
-	vaccineDoseKey:string;
+	vaccineId:number;
+	vaccineBrandId:number;
+	vaccineDoseId:number;
 	vaccineLotNumber:string;
 	dateAdministered:number;
 	actualSide:string;
