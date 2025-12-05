@@ -127,6 +127,8 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
   const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
     ...resourcesAvailabilityTimeListRequest,
     pageSize: 10000
+  }, {
+    skip: !localEncounter?.resourceKey
   });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   // Fetches the list of active resources based on the selected resource type from the new ResourceService
