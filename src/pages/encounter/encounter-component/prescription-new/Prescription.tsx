@@ -735,7 +735,7 @@ const Prescription = props => {
           </Form>
           <UrgencyButton />
           <MyButton>Validate With</MyButton>
-          <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton>
+          {/* <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton> */}
           <MyButton onClick={handleNewPrescriptionAndAddMedication} prefixIcon={() => <PlusIcon />}>
             Add Medication
           </MyButton>
@@ -950,8 +950,8 @@ const Prescription = props => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${selectedMedicationForAttachments ? genericMedicationListResponse?.object?.find(
-          item => item.key === selectedMedicationForAttachments.genericMedicationsId
+        title={`Attachments - ${selectedMedicationForAttachments ? genericMedicationListResponse?.data?.find(
+          item => item.id === selectedMedicationForAttachments.genericMedicationsId
         )?.name || 'Medication' : 'Medication'}`}
         size="lg"
         hideActionBtn={true}
