@@ -158,6 +158,7 @@ const ChangePriceListModal = ({
     ...record,
     totalPrice:
           (itemsRes?.data.find((item) => item.id === record?.priceListItemId)?.price || record?.priceListItemPrice) *
+
             (record.quantity || 1),
   };
 
