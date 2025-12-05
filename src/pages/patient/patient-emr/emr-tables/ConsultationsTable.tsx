@@ -12,6 +12,10 @@ const ConsultationsTable = ({ patient }) => {
   
   const [listRequest, setListRequest] = useState<ListRequest | null>({
         ...initialListRequest,
+        pageNumber: 1,
+        pageSize: 15,
+        sortBy: "createdAt",
+        sortType: "desc",
         filters: [
           { fieldName: 'patient_key', operator: 'match', value: patient?.key },
         ]
@@ -57,6 +61,32 @@ const ConsultationsTable = ({ patient }) => {
     []
   );
   
+const handlePageChange = (_ , newPage) => {
+  setListRequest(prev => ({
+    ...prev,
+    pageNumber: newPage + 1
+  }));
+};
+
+const handleRowsPerPageChange = (e) => {
+  setListRequest(prev => ({
+    ...prev,
+    pageSize: Number(e.target.value),
+    pageNumber: 1
+  }));
+};
+
+const handleSortChange = (sortBy, sortType) => {
+  setListRequest(prev => ({
+    ...prev,
+    sortBy,
+    sortType,
+    pageNumber: 1
+  }));
+};
+
+
+
 useEffect(() => {
   setListRequest(prev => ({
     ...prev!,
@@ -74,15 +104,12 @@ useEffect(() => {
       loading={isLoading}
       sortColumn={listRequest?.sortBy}
       sortType={listRequest?.sortType}
-      onSortChange={(sortBy, sortType) =>
-        setListRequest({ ...listRequest, sortBy, sortType })
-      }
+      onSortChange={handleSortChange}
       page={(listRequest?.pageNumber ?? 1) - 1}
       rowsPerPage={listRequest?.pageSize}
       totalCount={consultationOrderListResponse?.extraNumeric ?? 0}
-      onPageChange={(_, newPage) =>
-        setListRequest({ ...listRequest, pageNumber: newPage + 1 })
-      }
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
     />
   );
 };
