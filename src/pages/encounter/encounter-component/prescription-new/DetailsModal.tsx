@@ -240,7 +240,7 @@
                 ]);
 
               handleCleare();
-              setOpen(false);
+              // setOpen(false);
             } catch (error) {
               console.error('Save failed:', error);
               dispatch(notify('Save failed'));
@@ -371,7 +371,7 @@
           actionButtonFunction={handleSaveMedication}
           actionButtonLabel={
             <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <CheckIcon /> Save & Close
+              <CheckIcon /> Save 
             </span>
           }
           size="70vw"
@@ -393,11 +393,7 @@
               >
                 Order Related Tests
               </MyButton>
-              <MyButton
-                prefixIcon={() => <PlusIcon />}
-              >
-                Add Medication
-              </MyButton>
+           
             </div>
           }
           rightContent={
