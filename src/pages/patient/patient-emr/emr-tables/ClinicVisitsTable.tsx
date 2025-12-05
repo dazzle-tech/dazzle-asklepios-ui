@@ -298,6 +298,18 @@ const ClinicVisitsTable = ({ patient }) => {
        }
      }
    ];
+
+useEffect(() => {
+  setVisitHistoryListRequest(prev => ({
+    ...prev!,
+    filters: [
+      { fieldName: "patient_key", operator: "match", value: patient?.key }
+    ],
+    pageNumber: 1,
+  }));
+}, [patient?.key]);
+
+
    return (
      <MyTable
              data={paginatedData?? []}

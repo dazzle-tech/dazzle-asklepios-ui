@@ -158,6 +158,18 @@ const authSlice = useAppSelector((state) => state.auth);
   });
       const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
+
+useEffect(() => {
+  setNurseServiceProductListRequest(prev => ({
+    ...prev!,
+    filters: [
+      { fieldName: "patient_key", operator: "match", value: patient?.key }
+    ],
+    pageNumber: 1,
+  }));
+}, [patient?.key]);
+
+
   return (
     
       <MyTable

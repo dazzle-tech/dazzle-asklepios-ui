@@ -656,7 +656,6 @@ const ERList = () => {
         cancelButtonLabel="Cancel"
       />
 
-      {/* مودال EMR الجديد */}
       <MyModal
         open={openEMRModal}
         setOpen={setOpenEMRModal}

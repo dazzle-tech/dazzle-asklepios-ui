@@ -281,6 +281,18 @@ const RadiologyTable = ({ patient }) => {
       pageNumber: 1 // reset to first page
     });
   };
+
+useEffect(() => {
+  setListPrevResultResponse(prev => ({
+    ...prev!,
+    filters: [
+      { fieldName: "patient_key", operator: "match", value: patient?.key }
+    ],
+    pageNumber: 1,
+  }));
+}, [patient?.key]);
+
+  
   return (
     <>
       <MyTable
