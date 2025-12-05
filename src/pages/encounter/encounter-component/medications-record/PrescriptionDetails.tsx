@@ -12,7 +12,6 @@ const PrescriptionDetails=({customeInstructions ,prescription})=>{
    
     const { data: genericMedicationListResponse } =
         useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
-         console.log("PrescriptionDetails", genericMedicationListResponse);
      const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery
      ({page:1,size:1000});
      const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
