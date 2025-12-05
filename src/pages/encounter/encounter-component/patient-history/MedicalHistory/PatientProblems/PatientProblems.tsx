@@ -63,7 +63,7 @@ const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => 
 
   // LOVs
   const { data: statusLov } = useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
-  const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_STATUS');
+  const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: sourceLov } = useGetLovValuesByCodeQuery('RELATION');
 
   // DELETE MUTATION
