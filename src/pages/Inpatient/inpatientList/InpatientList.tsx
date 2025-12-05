@@ -38,7 +38,7 @@ import BedManagementModal from './bedBedManagementModal/BedManagementModal';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import ChangeBedModal from './changeBedModal/ChangeBedModal';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import './styles.less';
 import MyInput from '@/components/MyInput';
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -122,7 +122,12 @@ const InpatientList = () => {
   });
 
   // Fetch department list response
-  const departmentListResponse = useGetResourceTypeQuery('4217389643435490');
+  const { data: departmentListResponse } = useGetActiveResourcesByTypeQuery({
+    resourceType: 'INPATIENT_ADMISSION',
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
@@ -209,7 +214,7 @@ const InpatientList = () => {
             fieldLabel="Select Department"
             fieldType="select"
             fieldName="key"
-            selectData={departmentListResponse?.data?.object ?? []}
+            selectData={departmentListResponse?.data ?? []}
             selectDataLabel="name"
             selectDataValue="key"
             record={departmentFilter}
