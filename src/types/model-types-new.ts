@@ -955,6 +955,28 @@ export interface DiagnosticTestReportTemplate{
   templateValue: string,
   isActive: boolean,
 }
+
+export interface UserStickyNotesResponseVM{
+    id: number
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+    createdBy: string
+    createdDate: Date,
+    lastModifiedBy: string,
+    lastModifiedDate: Date
+}
+
+export interface UserStickyNotesCreateVM{
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+}
+
 export interface PriceListItem {
   id?: number;
   priceListId: number;
@@ -1206,4 +1228,50 @@ export interface BillingItem {
   priceList: string;
   patientKey: string;
   quantity: number;
+=======
+export interface DischargePlanning {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  expectedDischargeDate: string | Date | null; // mandatory
+  estimatedLos?: string | null;
+  readinessStatus: string | null; // mandatory
+
+  medicalConditionStable: boolean;
+  vitalsStable: boolean;
+  pendingInvestigations: boolean;
+  mobilityAdlStatus: boolean; // toggle
+
+  diagnosisCode: string; // mandatory
+  diagnosisName?: string | null;
+
+  finalMedReconciliationCompleted: boolean;
+  dischargeSummaryPrepared: boolean;
+  dischargeOrdersSigned: boolean;
+  nursingDischargeReportDone: boolean;
+  patientFamilyInformed: boolean;
+  transportArranged: boolean;
+
+  medicalEquipment?: string | null;
+  homeCareNeeded: boolean;
+  postDischargeDietaryPlan?: string | null;
+  postDischargeSocialNeeds?: string | null;
+
+  topicsCovered?: string | null; // tags -> string
+  educationDietaryPlan?: string | null;
+  educationSocialNeeds?: string | null;
+
+  materialLeaflet: boolean;
+  materialVerbal: boolean;
+  materialVideo: boolean;
+
+  educationProvided: boolean;
+  patientUnderstanding: boolean;
+
+  isActive: boolean;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
 }

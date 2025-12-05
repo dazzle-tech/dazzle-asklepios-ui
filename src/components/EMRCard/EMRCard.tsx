@@ -50,7 +50,7 @@ const EMRCard: React.FC<EMRCardProps> = ({
     >
       <div className="emr-card-header">
         {icon && <FontAwesomeIcon icon={icon} className="emr-card-icon" />}
-        <span className="emr-card-number">{number}</span>
+        {/* <span className="emr-card-number">{number}</span> */}
       </div>
       <div
         className="emr-card-footer"

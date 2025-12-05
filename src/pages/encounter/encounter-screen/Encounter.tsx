@@ -175,10 +175,12 @@ const Encounter = () => {
     }
   }, [isDragging, dragOffset, hasMoved]);
 
+  // Use departmentKey from encounter, fallback to 5001 if not available
+  const departmentKeyToUse = localEncounter?.departmentKey || '5001';
 
   const { data: departmentSheets = [] } =
-    useGetMedicalSheetsByDepartmentQuery(5001);
-  console.log('departmentSheets', departmentSheets);
+    useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
+  
   // Step 2: Fetch the resource if needed "IF Clinic"
   const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(medicalSheetRowSourceKey!, {
     skip: !medicalSheetRowSourceKey

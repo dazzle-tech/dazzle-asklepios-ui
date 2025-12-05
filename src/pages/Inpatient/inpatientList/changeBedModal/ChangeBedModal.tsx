@@ -23,7 +23,8 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
             {
                 fieldName: 'department_key',
                 operator: 'match',
-                value: encounter?.resourceObject?.key
+                value: encounter?.resourceKey
+
             }],
         pageSize: 100,
     });
@@ -49,7 +50,9 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
     // Fetch Bed list response
     const { data: fetchBedsListQueryResponce } = useGetBedListQuery(bedListRequest, { skip: !newLocation?.toRoomKey });
     // Fetch Room list response
-    const { data: roomListResponseLoading } = useGetRoomListQuery(listRequest, { skip: !encounter?.resourceObject?.key });
+    const { data: roomListResponseLoading } = useGetRoomListQuery(listRequest, {
+        skip: !encounter?.resourceKey
+    });
     // handle Save To Change Bed Function
     const handleSave = async () => {
         try {
@@ -59,7 +62,7 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
                 patientKey: encounter?.patientKey,
                 fromRoomKey: encounter?.apRoom?.key,
                 fromBedKey: encounter?.apBed?.key,
-                departmentKey: encounter?.resourceObject?.key
+                departmentKey: encounter?.resourceKey
             }).unwrap();
             dispatch(notify({ msg: 'Change Bed Successfully', sev: 'success' }));
             setOpen(false);
@@ -68,6 +71,7 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
         } catch (error) {
         }
     };
+
     // use Effect
     useEffect(() => {
         setEncounter({ ...localEncounter });
@@ -76,11 +80,13 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
         setListRequest((prev) => {
             let updatedFilters = [...(prev.filters || [])];
             updatedFilters = updatedFilters.filter(f => f.fieldName !== 'department_key');
-            if (encounter?.resourceObject?.key) {
+            if (encounter?.resourceKey
+            ) {
                 updatedFilters.push({
                     fieldName: 'department_key',
                     operator: 'match',
-                    value: encounter?.resourceObject?.key
+                    value: encounter?.resourceKey
+
                 });
             }
 
@@ -89,7 +95,8 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
                 filters: updatedFilters,
             };
         });
-    }, [encounter?.resourceObject?.key]);
+    }, [encounter?.resourceKey
+    ]);
     useEffect(() => {
         setBedListRequest((prev) => {
             let updatedFilters = [...(prev.filters || [])];
@@ -113,7 +120,7 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
     const modalContent = (
         <Form fluid layout="inline" className='fields-container'>
             <MyInput
-                require
+                required
                 column
                 fieldLabel="Select Room"
                 fieldType="select"
@@ -127,7 +134,7 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
                 searchable={false}
             />
             <MyInput
-                require
+                required
                 column
                 fieldLabel="Select Bed"
                 fieldType="select"

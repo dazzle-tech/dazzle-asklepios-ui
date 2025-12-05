@@ -535,9 +535,12 @@ export interface ApConsultationOrder {
 	visitKey:string;
 	consultantSpecialtyLkey:string;
 	cityLkey:string;
+	facilityKey:string;
+	departmentKey:string;
 	preferredConsultantKey:string;
 	consultationMethodLkey:string;
 	consultationTypeLkey:string;
+	priorityLkey:string;
 	consultationContent:string;
 	notes:string;
 	statusLkey:string;

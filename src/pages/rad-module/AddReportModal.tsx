@@ -16,7 +16,6 @@ import { notify } from '@/utils/uiReducerActions';
 import { faFileLines, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Col, Form, Row } from 'rsuite'
-import { at } from 'lodash';
 
 
 const AddReportModal = ({
@@ -119,7 +118,7 @@ const AddReportModal = ({
   };
 
 
-  const isDisabled = report.statusLkey === '265089168359400';
+  const isDisabled = report?.statusLkey === '265089168359400';
 
   return (
     <MyModal
@@ -158,7 +157,7 @@ const AddReportModal = ({
                 color="#969797ff"><FontAwesomeIcon icon={faUpload} /></MyButton>
             </Col>
           </Row>
-          <Row className="mb-2">
+       { !disableEdit&& <Row className="mb-2">
             <Col md={24}>
             <Form fluid layout='inline'>
               <MyInput
@@ -175,7 +174,7 @@ const AddReportModal = ({
               />
               </Form>
             </Col>
-          </Row>
+          </Row>}
 
           <Row>
           <div className="diagnostic-template-label">Add Report Manually</div>

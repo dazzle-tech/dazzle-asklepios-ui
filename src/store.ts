@@ -99,8 +99,14 @@ import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTe
 import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
+import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
 import { PriceListItemService } from './services/billing/PriceListItemService';
 import { BillingService } from './services/billing/BillingService';
+import { referralRequestService } from "@/services/encounters/referralRequestService";
+import { PayorService } from './services/setup/payer/PayorService';
+import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
+
+import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -227,6 +233,8 @@ export const store = configureStore({
     //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
 
+    // user Sticky Notes Service
+    [userStickyNotesService.reducerPath]: userStickyNotesService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
     [ResourceService.reducerPath]: ResourceService.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
@@ -298,6 +306,12 @@ export const store = configureStore({
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
     // Price List Item
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
+    [referralRequestService.reducerPath]: referralRequestService.reducer,
+
+    [PayorService.reducerPath]: PayorService.reducer,
+    [PayorPlanService.reducerPath]: PayorPlanService.reducer,
+
+    [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -400,7 +414,13 @@ export const store = configureStore({
       PriceListService.middleware,
       ReportTemplateService.middleware,
       DiagnosticTestTemplateService.middleware,
+      userStickyNotesService.middleware,
       PriceListItemService.middleware,
+      referralRequestService.middleware,
+      PayorService.middleware,
+      PayorPlanService.middleware,
+      DischargePlanningService.middleware,
+
     ])
 });
 

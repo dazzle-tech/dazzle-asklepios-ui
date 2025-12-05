@@ -1,58 +1,56 @@
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
+import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
+import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
+import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
+import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
+import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import {
+  useCancelEncounterMutation,
+  useGetEmergencyEncountersQuery,
+  useStartEncounterMutation
+} from '@/services/encounterService';
+import { useGetDepartmentsByResourceTypeQuery } from '@/services/security/departmentService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApPatient } from '@/types/model-types';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import React, { useEffect, useState } from 'react';
-import MyButton from '@/components/MyButton/MyButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faFile, faListCheck, faRepeat } from '@fortawesome/free-solid-svg-icons';
-import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
-import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
-import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
-import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import {
-  useGetEmergencyEncountersQuery,
-  useStartEncounterMutation,
-  useCancelEncounterMutation
-} from '@/services/encounterService';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
+  faBed,
+  faBedPulse,
+  faFileWaveform,
+  faRectangleXmark,
+  faRepeat,
+  faUserDoctor
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import ReactDOMServer from 'react-dom/server';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
-import MyTable from '@/components/MyTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
-import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
-import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
-import { faBed } from '@fortawesome/free-solid-svg-icons';
-import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import { useLocation } from 'react-router-dom';
+import 'react-tabs/style/react-tabs.css';
+import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
-import MyInput from '@/components/MyInput';
-import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { notify } from '@/utils/uiReducerActions';
-import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import MyLabel from '@/components/MyLabel';
-import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
-import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
-import MyModal from '@/components/MyModal/MyModal';
-import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
-
+import { useNavigate } from 'react-router-dom';
 const ERList = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const [open, setOpen] = useState(false);
-  const divContent = (
-      "ER Department"
-  );
+  const divContent = 'ER Department';
   dispatch(setPageCode('ER_Patient_Encounters'));
   dispatch(setDivContent(divContent));
+  const navigate = useNavigate();
   const [cancelEncounter] = useCancelEncounterMutation();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
@@ -68,13 +66,17 @@ const ERList = () => {
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
+
+  // *** تمت إضافته لفتح مودال EMR ***
+  const [openEMRModal, setOpenEMRModal] = useState(false);
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
         fieldName: 'resource_type_lkey',
         operator: 'match',
-        value: '6743167799449277'
+        value: 'EMERGENCY'
       },
       {
         fieldName: 'encounter_status_lkey',
@@ -89,7 +91,6 @@ const ERList = () => {
     ]
   });
 
-  // Fetch encounter list response based on the list request and department filter
   const {
     data: encounterListResponse,
     isFetching,
@@ -104,26 +105,25 @@ const ERList = () => {
       : ''
   });
 
-  // Fetch department list response
-  const departmentListResponse = useGetResourceTypeQuery('6743167799449277');
+  const { data: departmentListResponse } = useGetDepartmentsByResourceTypeQuery({
+    resourceType: 'EMERGENCY'
+  });
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
-  //Functions
+
   const isSelected = rowData => {
-    if (rowData && encounter && rowData.key === encounter.key) {
-      return 'selected-row';
-    } else return '';
+    if (rowData && encounter && rowData.key === encounter.key) return 'selected-row';
+    return '';
   };
 
-  // handle go to visit (medical sheets) function
   const handleGoToVisit = async (encounterData, patientData) => {
     await startEncounter(encounterData).unwrap();
     if (encounterData && encounterData.key) {
       dispatch(setEncounter(encounterData));
       dispatch(setPatient(encounterData['patientObject']));
     }
-    const privatePatientPath = '/user-access-patient-private';
+      const privatePatientPath = '/user-access-patient-private';
     const encounterPath = '/encounter';
     const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
     if (patientData.privatePatient) {
@@ -147,7 +147,7 @@ const ERList = () => {
     }
     sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
-  // handle cancel encounter function
+
   const handleCancelEncounter = async () => {
     try {
       if (encounter) {
@@ -156,24 +156,23 @@ const ERList = () => {
         dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
         setOpen(false);
       }
-    } catch (error) {
-      console.error('Encounter completion error:', error);
+    } catch {
       dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
     }
   };
-  // Function to search for patients based on the search keyword
+
   const filters = () => (
     <>
       <Form fluid>
         <div className="er-department-table-filters-position">
           <MyInput
-            require
+            required
             fieldLabel="Select Department"
             fieldType="select"
             fieldName="key"
-            selectData={departmentListResponse?.data?.object ?? []}
+            selectData={departmentListResponse ?? []}
             selectDataLabel="name"
-            selectDataValue="key"
+            selectDataValue="id"
             record={departmentFilter}
             setRecord={value => {
               setDepartmentFilter(value);
@@ -182,13 +181,12 @@ const ERList = () => {
             searchable={false}
             width={200}
           />
+
           <div className="switch-department-er-department-position">
             <MyButton
               size="small"
               backgroundColor="gray"
-              onClick={() => {
-                setSwitchDepartment(true);
-              }}
+              onClick={() => setSwitchDepartment(true)}
               prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />}
             >
               Switch Department
@@ -213,6 +211,7 @@ const ERList = () => {
             record={record}
             setRecord={setRecord}
           />
+
           <MyInput
             fieldLabel="Search by"
             fieldName="searchCriteria"
@@ -222,6 +221,7 @@ const ERList = () => {
             record={record}
             setRecord={setRecord}
           />
+
           <MyInput
             width={200}
             fieldType="select"
@@ -235,12 +235,12 @@ const ERList = () => {
           />
         </div>
       </Form>
+
       <AdvancedSearchFilters
         searchFilter={true}
         content={
           <div className="advanced-filters">
-            <Form fluid className="dissss">
-              {/* Visit Type LOV */}
+            <Form fluid>
               <MyInput
                 fieldName="accessTypeLkey"
                 fieldType="select"
@@ -253,7 +253,6 @@ const ERList = () => {
                 searchable={false}
                 width={150}
               />
-              {/* Chief Complain Text */}
               <MyInput
                 width={150}
                 fieldName="chiefComplain"
@@ -262,7 +261,6 @@ const ERList = () => {
                 setRecord={setRecord}
                 fieldLabel="Chief Complain"
               />
-              {/* Checkboxes*/}
               <MyInput
                 width={110}
                 fieldName="withPrescription"
@@ -287,7 +285,6 @@ const ERList = () => {
                 setRecord={setRecord}
                 label="Is Observed"
               />
-              {/* Priority LOV */}
               <MyInput
                 width={150}
                 fieldName="priority"
@@ -304,47 +301,43 @@ const ERList = () => {
             </Form>
           </div>
         }
-      />{' '}
+      />
     </>
   );
 
-  //useEffect
   useEffect(() => {
     dispatch(setPageCode(''));
     dispatch(setDivContent(' '));
   }, [location.pathname, dispatch, isLoading]);
+
   useEffect(() => {
     refetchEncounter();
   }, []);
+
   useEffect(() => {
-    if (!isFetching && manualSearchTriggered) {
-      setManualSearchTriggered(false);
-    }
+    if (!isFetching && manualSearchTriggered) setManualSearchTriggered(false);
   }, [isFetching, manualSearchTriggered]);
+
   useEffect(() => {
-    if (isLoading || (manualSearchTriggered && isFetching)) {
-      dispatch(showSystemLoader());
-    } else if (isFetching && isLoading) {
-      dispatch(hideSystemLoader());
-    }
+    if (isLoading || (manualSearchTriggered && isFetching)) dispatch(showSystemLoader());
+    else if (isFetching && isLoading) dispatch(hideSystemLoader());
+
     return () => {
       dispatch(hideSystemLoader());
     };
   }, [isLoading, isFetching, dispatch]);
+
   useEffect(() => {
-    if (isFetching) {
-      refetchEncounter();
-    }
+    if (isFetching) refetchEncounter();
   }, [departmentFilter, isFetching]);
 
-  // table columns
   const tableColumns = [
     {
       key: 'visitId',
       title: <Translate>#</Translate>,
-      dataKey: 'visitId',
-      render: rowData => rowData?.visitId
+      dataKey: 'visitId'
     },
+
     {
       key: 'patientFullName',
       title: <Translate>PATIENT NAME</Translate>,
@@ -354,12 +347,7 @@ const ERList = () => {
           <Tooltip>
             <div>MRN : {rowData?.patientObject?.patientMrn}</div>
             <div>Age : {rowData?.patientAge}</div>
-            <div>
-              Gender :{' '}
-              {rowData?.patientObject?.genderLvalue
-                ? rowData?.patientObject?.genderLvalue?.lovDisplayVale
-                : rowData?.patientObject?.genderLkey}
-            </div>
+            <div>Gender : {rowData?.patientObject?.genderLvalue?.lovDisplayVale}</div>
             <div>Visit ID : {rowData?.visitId}</div>
           </Tooltip>
         );
@@ -374,19 +362,18 @@ const ERList = () => {
                   </p>
                 </Badge>
               ) : (
-                <>
-                  <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
-                </>
+                <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
               )}
             </div>
           </Whisper>
         );
       }
     },
+
     {
       key: 'location',
       title: <Translate>LOCATION</Translate>,
-      render: (row: any) => (
+      render: row => (
         <span className="location-table-style ">
           {row?.apRoom?.name}
           <br />
@@ -394,16 +381,19 @@ const ERList = () => {
         </span>
       )
     },
+
     {
       key: 'chiefComplaint',
       title: <Translate>CHIEF COMPLAIN</Translate>,
       render: rowData => rowData.chiefComplaint
     },
+
     {
       key: 'diagnosis',
       title: <Translate>DIAGNOSIS</Translate>,
       render: rowData => rowData.diagnosis
     },
+
     {
       key: 'hasPrescription',
       title: <Translate>PRESCRIPTION</Translate>,
@@ -414,6 +404,7 @@ const ERList = () => {
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
+
     {
       key: 'hasOrder',
       title: <Translate>HAS ORDER</Translate>,
@@ -424,19 +415,20 @@ const ERList = () => {
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
+
     {
       key: 'encounterPriority',
       title: <Translate>PRIORITY</Translate>,
       render: rowData =>
-        rowData.encounterPriorityLvalue
-          ? rowData.encounterPriorityLvalue.lovDisplayVale
-          : rowData.encounterPriorityLkey
+        rowData.encounterPriorityLvalue?.lovDisplayVale || rowData.encounterPriorityLkey
     },
+
     {
       key: 'plannedStartDate',
       title: <Translate>ADMISSION DATE</Translate>,
       dataKey: 'plannedStartDate'
     },
+
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
@@ -444,14 +436,11 @@ const ERList = () => {
         !rowData.discharge && rowData.encounterStatusLkey !== '91109811181900' ? (
           <MyBadgeStatus
             color={rowData?.encounterStatusLvalue?.valueColor}
-            contant={
-              rowData.encounterStatusLvalue
-                ? rowData.encounterStatusLvalue.lovDisplayVale
-                : rowData.encounterStatusLkey
-            }
+            contant={rowData.encounterStatusLvalue?.lovDisplayVale}
           />
         ) : null
     },
+
     {
       key: 'hasObservation',
       title: <Translate>IS OBSERVED</Translate>,
@@ -462,6 +451,7 @@ const ERList = () => {
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
+
     {
       key: 'actions',
       title: <Translate> </Translate>,
@@ -473,6 +463,7 @@ const ERList = () => {
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
+            {/* Go to Visit */}
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
               <div>
                 <MyButton
@@ -488,26 +479,45 @@ const ERList = () => {
                 </MyButton>
               </div>
             </Whisper>
+
+            {/* Change Bed */}
             <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
               <div>
                 <MyButton
                   size="small"
                   backgroundColor="gray"
-                  onClick={() => {
-                    setOpenChangeBedModal(true);
-                  }}
+                  onClick={() => setOpenChangeBedModal(true)}
                 >
                   <FontAwesomeIcon icon={faBed} />
                 </MyButton>
               </div>
             </Whisper>
+
+            {/* Go to EMR — الآن يفتح مودال فقط */}
             <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
               <div>
-                <MyButton size="small" backgroundColor="violet">
+                <MyButton
+                  size="small"
+                  backgroundColor="violet"
+                  onClick={() => {
+                    const patientData = rowData.patientObject;
+
+                    setLocalEncounter(rowData);
+                    setLocalPatient(patientData);
+
+                    dispatch(setEncounter(rowData));
+                    dispatch(setPatient(patientData));
+
+                    // فتح مودال EMR بدل التنقل لصفحة أخرى
+                    setOpenEMRModal(true);
+                  }}
+                >
                   <FontAwesomeIcon icon={faFileWaveform} />
                 </MyButton>
               </div>
             </Whisper>
+
+            {/* Cancel Encounter */}
             {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
@@ -531,51 +541,22 @@ const ERList = () => {
   ];
 
   const pageIndex = listRequest.pageNumber - 1;
-
-  // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
   const totalCount = encounterListResponse?.extraNumeric ?? 0;
 
-  // handler when the user clicks a new page number:
-  const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
+  const handlePageChange = (_, newPage) => {
     setManualSearchTriggered(true);
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
 
-  // handler when the user chooses a different rows-per-page:
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRowsPerPageChange = event => {
     setManualSearchTriggered(true);
     setListRequest({
       ...listRequest,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
+      pageNumber: 1
     });
   };
-  const tablebuttons = (
-    <div className="er-list-table-buttons-position-handle">
-      <MyButton
-        onClick={() => setOpenRefillModal(true)}
-        prefixIcon={() => <FontAwesomeIcon icon={faBoxOpen} />}
-      >
-        Refill Stock
-      </MyButton>
-      <MyButton
-        onClick={() => setOpenPhysicianOrderSummaryModal(true)}
-        prefixIcon={() => <FontAwesomeIcon icon={faListCheck} />}
-      >
-        Task Management
-      </MyButton>
-      <MyButton
-        onClick={() => setOpenEncounterLogsModal(true)}
-        prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
-      >
-        Encounter Logs
-      </MyButton>
-    </div>
-  );
 
   return (
     <Panel>
@@ -588,13 +569,13 @@ const ERList = () => {
           Bed Management
         </MyButton>
       </div>
+
       <MyTable
         height={600}
         filters={filters()}
         data={encounterListResponse?.object ?? []}
         columns={tableColumns}
         rowClassName={isSelected}
-        tableButtons={tablebuttons}
         loading={isLoading || (manualSearchTriggered && isFetching) || isFetching}
         onRowClick={rowData => {
           setLocalEncounter(rowData);
@@ -611,23 +592,27 @@ const ERList = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+
       <ChangeBedModal
         open={openChangeBedModal}
         setOpen={setOpenChangeBedModal}
         localEncounter={encounter}
         refetchInpatientList={refetchEncounter}
       />
+
       <BedManagementModal
         open={openBedManagementModal}
         setOpen={setOpenBedManagementModal}
         departmentKey={departmentFilter?.key}
       />
+
       <TransferPatientModal
         open={openTransferPatientModal}
         setOpen={setOpenTransferPatientModal}
         localEncounter={encounter}
         refetchInpatientList={refetchEncounter}
       />
+
       <DeletionConfirmationModal
         open={open}
         setOpen={setOpen}
@@ -637,20 +622,15 @@ const ERList = () => {
         actionButtonLabel="Cancel"
         cancelButtonLabel="Close"
       />
+
       <MyModal
         open={openRefillModal}
         setOpen={setOpenRefillModal}
         title="Refill"
         size="90vw"
-        content={
-          <>
-            <RefillModalComponent></RefillModalComponent>
-          </>
-        }
+        content={<RefillModalComponent />}
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
+        actionButtonFunction={() => console.log('Save refill clicked')}
         cancelButtonLabel="Close"
       />
 
@@ -659,15 +639,9 @@ const ERList = () => {
         setOpen={setOpenPhysicianOrderSummaryModal}
         title="Task Management"
         size="90vw"
-        content={
-          <>
-            <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
-          </>
-        }
+        content={<PhysicianOrderSummaryModal />}
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
+        actionButtonFunction={() => console.log('Save refill clicked')}
         cancelButtonLabel="Close"
       />
 
@@ -680,6 +654,19 @@ const ERList = () => {
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEncounterLogsModal(false)}
         cancelButtonLabel="Cancel"
+      />
+
+      <MyModal
+        open={openEMRModal}
+        setOpen={setOpenEMRModal}
+        title="Patient EMR"
+        size="95vw"
+        content={
+          <PatientEMRModal inModal={true} patient={localPatient} encounter={setLocalEncounter} />
+        }
+        cancelButtonLabel="Close"
+        actionButtonLabel="Close"
+        actionButtonFunction={() => setOpenEMRModal(false)}
       />
     </Panel>
   );

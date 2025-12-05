@@ -790,12 +790,12 @@ export const newPriceList: modelTypes.PriceList = {
   isActive: false,
 };
 
-export const newReportTemplate: modelTypes.ReportTemplate={
+export const newReportTemplate: modelTypes.ReportTemplate = {
   id: 0,
   name: null,
   templateValue: null,
   isActive: true,
-}
+};
 
 export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTemplate = {
   id: 0,
@@ -804,6 +804,27 @@ export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTem
   templateValue: null,
   isActive: true,
 };
+
+export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM = {
+    id: undefined,
+    userId: undefined,
+    note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'',
+    createdBy: '',
+    createdDate: null,
+    lastModifiedBy: '',
+    lastModifiedDate: null
+};
+
+export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
+    userId: undefined,
+     note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'--note-purple'
+}
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,
@@ -816,7 +837,6 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   isActive: true,
 
 };
-
 
 export const newReferralRequest: modelTypes.ReferralRequest = {
   id: null,
@@ -1023,4 +1043,48 @@ export const newPatientAccountSummary: modelTypes.PatientAccountSummaryVM = {
   outstandingBalance: 0,
   totalInvoiced: 0,
   totalPaid: 0,
+=======
+};
+export const newDischargePlanning: modelTypes.DischargePlanning = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  expectedDischargeDate: null,
+  estimatedLos: "",
+  readinessStatus: "",
+
+  medicalConditionStable: false,
+  vitalsStable: false,
+  pendingInvestigations: false,
+  mobilityAdlStatus: false,
+
+  diagnosisCode: "",
+  diagnosisName: "",
+
+  finalMedReconciliationCompleted: false,
+  dischargeSummaryPrepared: false,
+  dischargeOrdersSigned: false,
+  nursingDischargeReportDone: false,
+  patientFamilyInformed: false,
+  transportArranged: false,
+
+  medicalEquipment: "",
+  homeCareNeeded: false,
+  postDischargeDietaryPlan: "",
+  postDischargeSocialNeeds: "",
+
+  topicsCovered: "",
+  educationDietaryPlan: "",
+  educationSocialNeeds: "",
+
+  materialLeaflet: false,
+  materialVerbal: false,
+  materialVideo: false,
+
+  educationProvided: false,
+  patientUnderstanding: false,
+
+  isActive: true,
 };

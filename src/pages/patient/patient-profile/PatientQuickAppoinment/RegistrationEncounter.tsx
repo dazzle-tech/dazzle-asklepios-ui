@@ -1,19 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Form, Tag } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
-import {
-  useGetResourcesAvailabilityTimeQuery
-} from '@/services/appointmentService';
+// import {
+//   useGetResourcesAvailabilityTimeQuery
+// } from '@/services/appointmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
-import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
+import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery, useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useSelector } from 'react-redux';
+
 const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, localPatient }) => {
+  const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult] = useState({});
-  const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
+  // const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
   const [newOrFollowup, setNewOrFollowup] = useState({ state: true });
   const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -108,7 +113,14 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
   }, {
     skip: !localEncounter?.facilityKey
   });
-  const [resourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // const [resourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // // Fetches the list of resource availability times.
+  // const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
+  //   ...resourcesAvailabilityTimeListRequest,
+  //   pageSize: 10000
+  // }, {
+  //   skip: !localEncounter?.resourceKey
+  // });
   const { data: dayCaseDepartmentListResponse } = useGetAppointableDepartmentByTypeQuery({
     type: 'DAY_CASE',
     facilityId: localEncounter?.facilityKey,
@@ -119,13 +131,15 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
     skip: !localEncounter?.facilityKey
   });
   // Fetches the list of resource availability times.
-  const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
-    ...resourcesAvailabilityTimeListRequest,
-    pageSize: 10000
-  });
+  // const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
+  //   ...resourcesAvailabilityTimeListRequest,
+  //   pageSize: 10000
+  // }, {
+  //   skip: !localEncounter?.resourceKey
+  // });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
-  // Fetches the list of resources based on the selected resource type from the new ResourceService
-  const { data: resourcesByTypeResponse } = useGetResourcesByTypeQuery(
+  // Fetches the list of active resources based on the selected resource type from the new ResourceService
+  const { data: resourcesByTypeResponse } = useGetActiveResourcesByTypeQuery(
     {
       resourceType: localEncounter?.resourceTypeLkey,
       page: 0,
@@ -135,6 +149,151 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
       skip: !localEncounter?.resourceTypeLkey
     }
   );
+
+  // Fetch all practitioners for lookup
+  const { data: practitionersResponse } = useGetAllPractitionersQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+  // Fetch all departments for lookup
+  const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
+
+  // Fetch all diagnostic tests for lookup
+  const { data: diagnosticTestsResponse } = useGetAllDiagnosticTestsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+  // Create lookup maps
+  const practitionerMap = useMemo(() => {
+    if (!practitionersResponse?.data) return {};
+    const map = {};
+    practitionersResponse.data.forEach(practitioner => {
+      if (practitioner.key) map[practitioner.key] = practitioner;
+      if (practitioner.id) map[practitioner.id] = practitioner;
+    });
+    return map;
+  }, [practitionersResponse]);
+
+  const departmentMap = useMemo(() => {
+    if (!allDepartments) return {};
+    const map = {};
+    allDepartments.forEach(dept => {
+      if (dept.key) map[dept.key] = dept;
+      if (dept.id) map[dept.id] = dept;
+    });
+    return map;
+  }, [allDepartments]);
+
+  const diagnosticTestMap = useMemo(() => {
+    if (!diagnosticTestsResponse?.data) return {};
+    const map = {};
+    diagnosticTestsResponse.data.forEach(test => {
+      if (test.key) map[test.key] = test;
+      if (test.id) map[test.id] = test;
+    });
+    return map;
+  }, [diagnosticTestsResponse]);
+
+  // Transform resources to add display names based on resource type
+  const transformedResources = useMemo(() => {
+    if (!resourcesByTypeResponse?.data) return [];
+    
+    return resourcesByTypeResponse.data.map(resource => {
+      let displayName = resource.resourceKey || '';
+      const resourceType = resource.resourceType;
+      const lookupKey = resource.resourceKey ;
+      // Based on resource type, look up the appropriate name
+      if (resourceType === 'PRACTITIONER') {
+        // For PRACTITIONER resources, look up in practitioner map
+        // Try multiple possible key fields - resourceKey is the reference to the practitioner ID
+       
+        const practitioner = lookupKey ? practitionerMap[lookupKey] : null;
+        
+        if (practitioner) {
+          displayName = practitioner.practitionerFullName || 
+                       `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
+        }
+      } 
+      else if (['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)) {
+        // For department-based resources, look up in department map
+        // resourceKey contains the reference to the department ID
+       
+        const department = lookupKey ? departmentMap[lookupKey] : null;
+        
+        if (department) {
+          displayName = department.name ;
+        } 
+      }
+      else if (['MEDICAL_TEST'].includes(resourceType)) {
+        // For diagnostic test resources, look up in diagnostic test map
+        // resourceKey contains the reference to the diagnostic test ID
+        const diagnosticTest = lookupKey ? diagnosticTestMap[lookupKey] : null;
+        
+        if (diagnosticTest) {
+          displayName = diagnosticTest.name;
+        } 
+      }
+      
+      // Final fallback - only use if absolutely no display name found
+      if (!displayName) {
+        displayName = resource.resourceKey || 'Unknown Resource';
+      }
+      
+      return {
+        ...resource,
+        displayName
+      };
+    });
+  }, [resourcesByTypeResponse, practitionerMap, departmentMap, diagnosticTestMap]);
+
+  // Get active filter tags
+  const activeFilters = useMemo(() => {
+    const filters = [];
+    
+    if (localEncounter?.resourceTypeLkey) {
+      const resourceTypeLabel = ResourceTypeEnum?.find(rt => rt.value === localEncounter.resourceTypeLkey)?.label || localEncounter.resourceTypeLkey;
+      filters.push({
+        type: 'resourceType',
+        label: 'Resource Type',
+        value: resourceTypeLabel,
+        valueKey: localEncounter.resourceTypeLkey
+      });
+    }
+    
+    if (localEncounter?.resourceKey && resourcesByTypeResponse?.data) {
+      const selectedResource = resourcesByTypeResponse.data.find(r => r.id === localEncounter.resourceKey);
+      if (selectedResource) {
+        filters.push({
+          type: 'resource',
+          label: 'Resource',
+          value: selectedResource.resourceKey || localEncounter.resourceKey,
+          valueKey: localEncounter.resourceKey
+        });
+      }
+    }
+    
+    return filters;
+  }, [localEncounter?.resourceTypeLkey, localEncounter?.resourceKey, ResourceTypeEnum, resourcesByTypeResponse]);
+
+  // Handle removing filter
+  const handleRemoveFilter = (filterType: string) => {
+    if (filterType === 'resourceType') {
+      setLocalEncounter(prev => ({
+        ...prev,
+        resourceTypeLkey: null,
+        resourceKey: null // Also clear resource when resource type is removed
+      }));
+    } else if (filterType === 'resource') {
+      setLocalEncounter(prev => ({
+        ...prev,
+        resourceKey: null
+      }));
+    }
+  };
 
   // Effects
   useEffect(() => {
@@ -157,19 +316,19 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
     });
   }, [localPatient, localEncounter]);
 
-  useEffect(() => {
-    if (!localEncounter?.resourceKey || !resourceAvailabilityTimeListResponse) return;
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    const filteredList = resourceAvailabilityTimeListResponse.object.filter(
-      item =>
-        item.resourceKey === localEncounter.resourceKey &&
-        item.departmentKey &&
-        item.dayLvalue?.lovDisplayVale === today //Day match
-    );
-    const departmentKeys = filteredList.map(item => item.departmentKey?.toString().trim());
-    const uniqueDepartmentKeys = Array.from(new Set(departmentKeys));
-    setUniqueDepartmentKeys(uniqueDepartmentKeys);
-  }, [localEncounter, resourceAvailabilityTimeListResponse]);
+  // useEffect(() => {
+  //   if (!localEncounter?.resourceKey || !resourceAvailabilityTimeListResponse) return;
+  //   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  //   const filteredList = resourceAvailabilityTimeListResponse.object.filter(
+  //     item =>
+  //       item.resourceKey === localEncounter.resourceKey &&
+  //       item.departmentKey &&
+  //       item.dayLvalue?.lovDisplayVale === today //Day match
+  //   );
+  //   const departmentKeys = filteredList.map(item => item.departmentKey?.toString().trim());
+  //   const uniqueDepartmentKeys = Array.from(new Set(departmentKeys));
+  //   setUniqueDepartmentKeys(uniqueDepartmentKeys);
+  // }, [localEncounter, resourceAvailabilityTimeListResponse]);
 
   // Calculate and set sequence daily number based on today's encounter count
   useEffect(() => {
@@ -240,6 +399,39 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
 
   return (
     <Form fluid layout="inline" className="fields-container">
+      {/* Active Filters Tags */}
+      {activeFilters.length > 0 && (
+        <div style={{ 
+          width: '100%', 
+          marginBottom: '16px',
+          display: 'flex',
+          gap: '10px',
+          flexWrap: 'wrap',
+          padding: '8px',
+          backgroundColor: mode === 'light' ? '#f8f9fa' : '#434343ff',
+          borderRadius: '12px',
+          border: '1px solid var(--rs-border-primary)'
+        }}>
+          {activeFilters.map((filter, index) => (
+            <Tag
+              key={`${filter.type}-${index}`}
+              closable
+              onClose={() => handleRemoveFilter(filter.type)}
+              style={{
+                padding: '6px 12px',
+                fontSize: '13px',
+                backgroundColor: mode === 'light' ? '#e9ecef' : '#5a5a5a',
+                color: mode === 'light' ? '#495057' : '#ffffff',
+                border: '1px solid var(--rs-border-primary)',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              <strong>{filter.label}:</strong> {filter.value}
+            </Tag>
+          ))}
+        </div>
+      )}
 
       <MyInput
         vr={validationResult}
@@ -287,11 +479,11 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         fieldLabel="Resources"
         selectData={
           localEncounter?.resourceTypeLkey
-            ? resourcesByTypeResponse?.data ?? []
+            ? transformedResources
             : []
         }
         fieldType="select"
-        selectDataLabel="resourceKey"
+        selectDataLabel="displayName"
         selectDataValue="id"
         fieldName="resourceKey"
         record={localEncounter}
@@ -317,7 +509,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
           required
         />
       ) : null}
-      {localEncounter?.resourceTypeLkey == '2039548173192779' || localEncounter?.resourceTypeLkey == 'PROCEDURCE' ? (
+      {localEncounter?.resourceTypeLkey == '2039548173192779' || localEncounter?.resourceTypeLkey == 'PROCEDURE' ? (
         <MyInput
           vr={validationResult}
           column
@@ -329,6 +521,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
           record={localEncounter}
           setRecord={setLocalEncounter}
           disabled={isReadOnly}
+          required
         />
       ) : null}
       <MyInput

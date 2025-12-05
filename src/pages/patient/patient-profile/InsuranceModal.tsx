@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import './styles.less';
-import { useAppDispatch} from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
+import { useGetPayorPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
 import { ApPatientInsurance } from '@/types/model-types';
 import { faShieldHeart } from '@fortawesome/free-solid-svg-icons';
@@ -10,43 +12,132 @@ import { useSavePatientInsuranceMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import { newApPatientInsurance } from '@/types/model-types-constructor';
 import MyModal from '@/components/MyModal/MyModal';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-const InsuranceModal = ({ 
-  open, 
-  setOpen, 
-  onClose, 
-  patientKey, 
-  refetchInsurance, 
-  editing, 
-  insuranceBrowsing, 
-  relations, 
-  hideSaveBtn = false
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { formatEnumString } from '@/utils';
+import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+
+const InsuranceModal = ({
+  open,
+  setOpen,
+  onClose,
+  patientKey,
+  refetchInsurance,
+  editing,
+  insuranceBrowsing,
+  relations,
+  hideSaveBtn = false,
 }) => {
-  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
+  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({
+    ...newApPatientInsurance,
+  });
   const [savePatientInsurance] = useSavePatientInsuranceMutation();
-  const [relationsList, setRelationsList] = useState();
+  const [relationsList, setRelationsList] = useState<any[]>();
   const dispatch = useAppDispatch();
 
-  // Fetch LOV data for various fields
-  const { data: isnurancePlanTypeResponse } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
-  const { data: isnuranceProviderTypeResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
+  // لتفادي مسح الـ plan عند أول تحميل edit
+  const [prevPayorId, setPrevPayorId] = useState<number | undefined>(undefined);
 
-  // MyModal content
+  // Payor pagination state
+  const [payorPage, setPayorPage] = useState(0);
+  const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
+
+  // Payor Plans state
+  const [planPage, setPlanPage] = useState(0);
+
+  // Fetch Payors with pagination
+  const {
+    data: payorResponse,
+    isLoading: payorLoading,
+    isFetching: payorFetching,
+  } = useGetAllPayorsQuery({
+    page: payorPage,
+    size: 20,
+    sort: 'name,asc',
+    ...(payorSearchKeyword && { name: payorSearchKeyword }),
+  });
+
+  // Fetch Payor Plans based on selected Payor
+  const {
+    data: plansResponse,
+    isLoading: plansLoading,
+    isFetching: plansFetching,
+  } = useGetPayorPlansByPayorQuery(
+    {
+      payorId: Number(patientInsurance?.insuranceProviderLkey) || 0,
+      page: planPage,
+      size: 20,
+      sort: 'name,asc',
+    },
+    {
+      skip: !patientInsurance?.insuranceProviderLkey,
+    }
+  );
+
+
+
+  // Reset payors when search keyword changes
+  useEffect(() => {
+    setPayorPage(0);
+  }, [payorSearchKeyword]);
+
+  // عند تغيير الـ Payor:
+  useEffect(() => {
+    const currentPayorId = patientInsurance?.insuranceProviderLkey
+      ? Number(patientInsurance.insuranceProviderLkey)
+      : undefined;
+
+    if (currentPayorId === prevPayorId) return;
+
+    // reset plans list
+    setPlanPage(0);
+
+    // لو فيه payor سابق نمسح الـ plan
+    if (prevPayorId !== undefined) {
+      setPatientInsurance(prev => ({
+        ...prev,
+        insurancePlanTypeLkey: undefined,
+      }));
+    }
+
+    setPrevPayorId(currentPayorId);
+  }, [patientInsurance?.insuranceProviderLkey, prevPayorId]);
+
+  const hasMorePayors = payorResponse?.links?.next != null;
+  const hasMorePlans = plansResponse?.links?.next != null;
+
+  const handleLoadMorePayors = () => {
+    if (hasMorePayors && !payorFetching) {
+      setPayorPage(prev => prev + 1);
+    }
+  };
+
+  const handleLoadMorePlans = () => {
+    if (hasMorePlans && !plansFetching) {
+      setPlanPage(prev => prev + 1);
+    }
+  };
+
   const renderContent = () => (
     <div>
       <Form layout="inline" fluid>
         <MyInput
           column
-          fieldLabel="Insurance Provider"
-          fieldType="select"
+          fieldLabel="Payor"
+          fieldType="selectPagination"
           fieldName="insuranceProviderLkey"
-          selectData={isnuranceProviderTypeResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={payorResponse?.data ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
-          searchable={false}
+          searchable={true}
+          loading={payorLoading || payorFetching}
+          hasMore={hasMorePayors}
+          onFetchMore={handleLoadMorePayors}
+          searchKeyWard={payorSearchKeyword}
+          setSearchKeyWard={setPayorSearchKeyword}
+          placeholder="Select Payor..."
         />
         <MyInput
           column
@@ -66,16 +157,55 @@ const InsuranceModal = ({
         />
         <MyInput
           column
-          fieldLabel="Insurance Plan Type"
-          fieldType="select"
+          fieldLabel="Plan"
+          fieldType="selectPagination"
           fieldName="insurancePlanTypeLkey"
-          selectData={isnurancePlanTypeResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={plansResponse?.data ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
           record={patientInsurance}
           setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-          searchable={false}
+          disabled={
+            insuranceBrowsing || !patientInsurance?.insuranceProviderLkey
+          }
+          searchable={true}
+          loading={plansLoading || plansFetching}
+          hasMore={hasMorePlans}
+          onFetchMore={handleLoadMorePlans}
+          placeholder={
+            !patientInsurance?.insuranceProviderLkey
+              ? 'Select Payor first...'
+              : 'Select Plan...'
+          }
+          renderMenuItem={(label, item) => {
+            if (item?.isLoadMore) {
+              return (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Load more...
+                </div>
+              );
+            }
+            return (
+              <div>
+                <div style={{ fontWeight: 500 }}>{item.name}</div>
+                <div
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--primary-gray)',
+                  }}
+                >
+                  {formatEnumString(item.planType)} •{' '}
+                  {formatEnumString(item.coverageType)} • ${item.amount}
+                </div>
+              </div>
+            );
+          }}
         />
         <MyInput
           column
@@ -123,7 +253,7 @@ const InsuranceModal = ({
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
           searchable={false}
-          />
+        />
         <MyInput
           column
           fieldLabel="Primary Insurance"
@@ -134,8 +264,8 @@ const InsuranceModal = ({
           disabled={insuranceBrowsing}
         />
       </Form>
-      <div className='clickedInputs'>
-        <Form layout="inline" fluid >
+      <div className="clickedInputs">
+        <Form layout="inline" fluid>
           <MyInput
             column
             fieldLabel="Co Payment"
@@ -145,7 +275,10 @@ const InsuranceModal = ({
             fieldType="checkbox"
             disabled={insuranceBrowsing}
           />
-          <div className={`input-container ${patientInsurance?.coPayment ? 'show' : 'hide'}`}>
+          <div
+            className={`input-container ${patientInsurance?.coPayment ? 'show' : 'hide'
+              }`}
+          >
             <MyInput
               column
               fieldLabel="Co Payment Value"
@@ -156,7 +289,7 @@ const InsuranceModal = ({
             />
           </div>
         </Form>
-        <Form layout="inline" fluid >
+        <Form layout="inline" fluid>
           <MyInput
             column
             fieldLabel="Co Insurance"
@@ -166,7 +299,10 @@ const InsuranceModal = ({
             fieldType="checkbox"
             disabled={insuranceBrowsing}
           />
-          <div className={`input-container ${patientInsurance?.coInsurance ? 'show' : 'hide'}`}>
+          <div
+            className={`input-container ${patientInsurance?.coInsurance ? 'show' : 'hide'
+              }`}
+          >
             <MyInput
               column
               fieldLabel="Co Insurance Value"
@@ -187,7 +323,10 @@ const InsuranceModal = ({
             fieldType="checkbox"
             disabled={insuranceBrowsing}
           />
-          <div className={`input-container ${patientInsurance?.deductibles ? 'show' : 'hide'}`}>
+          <div
+            className={`input-container ${patientInsurance?.deductibles ? 'show' : 'hide'
+              }`}
+          >
             <MyInput
               column
               fieldLabel="Deductibles Value"
@@ -202,58 +341,92 @@ const InsuranceModal = ({
     </div>
   );
 
-  //handle save insurance
   const handleSave = async () => {
-    savePatientInsurance({ ...patientInsurance, patientKey: patientKey.key }).unwrap().then(() => {
-      refetchInsurance();
-      handleClearModal();
-      dispatch(notify({ msg: 'Insurance Saved Successfully', sev: "success" }));
-    }).catch(() => {
-      setPatientInsurance({ ...patientInsurance, primaryInsurance: false });
-    });
-
+    savePatientInsurance({
+      ...patientInsurance,
+      patientKey: patientKey.key,
+    })
+      .unwrap()
+      .then(() => {
+        refetchInsurance();
+        handleClearModal();
+        dispatch(
+          notify({ msg: 'Insurance Saved Successfully', sev: 'success' })
+        );
+      })
+      .catch(() => {
+        setPatientInsurance({
+          ...patientInsurance,
+          primaryInsurance: false,
+        });
+      });
   };
 
-  //handle Clear Modal
   const handleClearModal = () => {
-    setPatientInsurance(newApPatientInsurance);
+    setPatientInsurance({ ...newApPatientInsurance });
+    setPrevPayorId(undefined);
+    setPayorPage(0);
+    setPayorSearchKeyword('');
+    setPlanPage(0);
     onClose();
   };
 
-  //Effects
   useEffect(() => {
-    const namesAndIds = relations.map(relation => {
-      const relativePatient = relation.relativePatientObject;
-      return {
-        name: `${relativePatient.firstName} ${relativePatient.lastName}`,
-        id: relation.key
-      };
-    });
+    const namesAndIds =
+      relations?.map(relation => {
+        const relativePatient = relation.relativePatientObject;
+        return {
+          name: `${relativePatient.firstName} ${relativePatient.lastName}`,
+          id: relation.key,
+        };
+      }) || [];
     setRelationsList(namesAndIds);
   }, [relations]);
- 
+
   useEffect(() => {
     if (open === false) {
       handleClearModal();
     }
   }, [open]);
- 
+
   useEffect(() => {
     if (editing) {
-      setPatientInsurance(editing);
+      const payorId = editing.insuranceProviderLkey
+        ? Number(editing.insuranceProviderLkey)
+        : undefined;
+      const planId = editing.insurancePlanTypeLkey
+        ? Number(editing.insurancePlanTypeLkey)
+        : undefined;
+
+      setPatientInsurance({
+        ...editing,
+        insuranceProviderLkey: payorId,
+        insurancePlanTypeLkey: planId,
+      });
+
+      setPrevPayorId(payorId);
+
+    } else {
+      // حالة الإضافة: بدون كاستينج، نرجع newApPatientInsurance
+      setPatientInsurance({ ...newApPatientInsurance });
+      setPrevPayorId(undefined);
     }
   }, [editing]);
+
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Patient Insurance"
-      bodyheight='70vh'
+      bodyheight="70vh"
       content={renderContent}
       size="lg"
       steps={[
         {
-          title: "Insurance", icon: <FontAwesomeIcon icon={faShieldHeart}/>,
+          title: 'Insurance',
+          icon: <FontAwesomeIcon icon={faShieldHeart} />,
         },
       ]}
       actionButtonLabel="Save"
@@ -262,4 +435,5 @@ const InsuranceModal = ({
     />
   );
 };
+
 export default InsuranceModal;

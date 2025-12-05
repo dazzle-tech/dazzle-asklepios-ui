@@ -2,7 +2,7 @@ import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import { useAppDispatch } from "@/hooks";
 import StaffAssignment from "@/pages/encounter/encounter-component/procedure/StaffMember";
-import { useGetResourceTypeQuery } from "@/services/appointmentService";
+import { useGetActiveResourcesByTypeQuery } from "@/services/setup/resource/ResourceService";
 import { useDeleteOperationStaffMutation, useGetIntraoperativeEventsByOperationKeyQuery, useGetLatestSurgicalPreparationByOperationKeyQuery, useGetOperationListQuery, useGetOperationStaffListQuery, useGetPostOpHandoverByOperationQuery, useSaveOperationRequestsMutation, useSaveOperationStaffMutation, useSavePostOpNotesHandoverMutation } from "@/services/operationService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApOperationIntraoperativeEvents, newApOperationPostOpNotesHandover, newApOperationStaff, newApOperationSurgicalPreparationIncision } from "@/types/model-types-constructor";
@@ -18,7 +18,12 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
         skip: !operation?.key
     });
     const [save] = useSavePostOpNotesHandoverMutation();
-    const { data: inpatientDepartmentListResponse } = useGetResourceTypeQuery("4217389643435490");
+    const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
+      resourceType: 'INPATIENT_ADMISSION',
+      page: 0,
+      size: 1000,
+      sort: 'id,asc'
+    });
     const { data: outcomelovqueryresponse } = useGetLovValuesByCodeQuery('PROC_OUTCOMES');
     const { data: statuslovqueryresponse } = useGetLovValuesByCodeQuery('PATIENT_STATUS');
     const { data: event, refetch: eventFetch } = useGetIntraoperativeEventsByOperationKeyQuery(operation?.key);
@@ -202,7 +207,7 @@ const PostOperativeNote = ({ operation, editable, refetch }) => {
                                         fieldLabel="Post-op Destination"
                                         fieldType="select"
                                         fieldName="postOpDestinationKey"
-                                        selectData={inpatientDepartmentListResponse?.object ?? []}
+                                        selectData={inpatientDepartmentListResponse?.data ?? []}
                                         selectDataLabel="name"
                                         selectDataValue="key"
                                         record={operativeNote}

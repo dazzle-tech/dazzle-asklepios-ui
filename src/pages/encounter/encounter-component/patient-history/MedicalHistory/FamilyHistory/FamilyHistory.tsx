@@ -15,7 +15,9 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
-const FamilyHistory = ({ patient, encounter, edit }) => {
+const FamilyHistory = ({ patient, encounter, edit,
+  toShowData=false
+ }) => {
   const dispatch = useAppDispatch();
 
   const [open, setOpen] = useState(false);
@@ -96,7 +98,7 @@ const handleDelete = (row) => {
       flexGrow: 3,
       render: row => (row.inheritedDiseases ? 'Yes' : 'No')
     },
-    {
+   ...(!toShowData ? [{
     key: 'actions',
     title: '',
     flexGrow: 1,
@@ -122,7 +124,7 @@ const handleDelete = (row) => {
         />
         </div>
     )
-    }
+    }] : [])
 
   ];
 
@@ -149,8 +151,6 @@ const handleDelete = (row) => {
   const rowsPerPageFamilyHistory = listRequestFamilyHistory.pageSize;
   const totalCountFamilyHistory = familyHistoryData?.extraNumeric ?? 0;
 
-console.log("TotalCount", totalCountFamilyHistory)
-console.log("familyHistoryData", familyHistoryData);
 
   return (
     <div className="medical-container-div">
@@ -158,9 +158,10 @@ console.log("familyHistoryData", familyHistoryData);
         title={
           <>
             Family History
-            <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+         {! toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
               Add
             </MyButton>
+        }
           </>
         }
         content={

@@ -70,6 +70,8 @@ import PregnancyFollowup from './pages/encounter/encounter-component/pregnancy-f
 import PrescriptionNew from './pages/encounter/encounter-component/prescription-new';
 import PressureUlcerRiskAssessment from './pages/encounter/encounter-component/pressure-ulce-risk-assessment';
 import Procedure from './pages/encounter/encounter-component/procedure';
+import ProcedureNew from './pages/encounter/encounter-component/procedure-new/Procedure';
+
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
 import SOAP from './pages/encounter/encounter-component/s.o.a.p';
@@ -85,7 +87,7 @@ import InpatientNurseStation from './pages/encounter/encounter-pre-observations/
 import Observations from './pages/encounter/encounter-pre-observations-new/observations/Observations';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
 import ServiceAndProductsNew from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
-import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
+import VaccinationTab from './pages/encounter/encounter-pre-observations-new/vaccination-tab';
 import Warning from './pages/encounter/encounter-pre-observations/warning';
 import EncounterRegistration from './pages/encounter/encounter-registration';
 import Encounter from './pages/encounter/encounter-screen';
@@ -202,7 +204,8 @@ import InventoryManagementWarehouseItemsSetup from './pages/inventory-management
 import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
 import PriceLists from './pages/billing-module/priceList/PriceLists';
 import MyConsultations from './components/MyConsultations/MyConsultations';
-import { any } from 'prop-types';
+import PreviousMeasurements from './pages/encounter/encounter-pre-observations-new/previous-measurements';
+import PayerSetup from './pages/setup/payer-setup';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -424,7 +427,7 @@ const App = () => {
                 <Route path="drug-order" element={<DrugOrderNew />} />
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
-                <Route path="observations" element={<Observations hideSaveButton={true}/>} />
+                <Route path="observations" element={<Observations />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -437,7 +440,7 @@ const App = () => {
                 <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
-                <Route path="procedures" element={<Procedure />} />
+                <Route path="procedures" element={<ProcedureNew />} />
                 <Route path="patient-history" element={<PatientHistory />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
@@ -447,6 +450,7 @@ const App = () => {
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
                 <Route path="pediatric" element={<Pediatric />} />
+                
                 <Route
                   path="multidisciplinary-team-notes"
                   element={<MultidisciplinaryTeamNotes />}
@@ -490,7 +494,8 @@ const App = () => {
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
-                 <Route path="service-and-products" element={<ServiceAndProductsNew edit={any} />} />
+                    <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                 <Route path="service-and-products" element={<ServiceAndProductsNew />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
@@ -511,7 +516,7 @@ const App = () => {
                 <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
-                <Route path="procedures" element={<Procedure />} />
+                <Route path="procedures" element={<ProcedureNew />} />
                 <Route path="patient-history" element={<PatientHistory />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
@@ -627,6 +632,7 @@ const App = () => {
               <Route path='enums' element={<Enums/> }/>
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums />} />
+              <Route path='payer-setup' element={<PayerSetup/>} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
               <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />

@@ -67,24 +67,17 @@ type PatientEMRProps = {
   encounter?: any;
 };
 
-const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, encounter: enc }) => {
+const PatientEMRModal = ({ inModal = false, patient, encounter: enc }) => {
   const [expand, setExpand] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const propsData = patient || enc ? undefined : (location.state as any);
 
-  const [encounter, setLocalEncounter] = useState<any>(
-    enc ?? { ...newApEncounter, discharge: false }
-  );
 
-  const [localPatient, setLocalPatient] = useState<ApPatient>(
-    patient
-      ? patient
-      : propsData?.fromPage === 'clinicalVisit'
-      ? propsData?.localPatient
-      : { ...newApPatient }
-  );
+const [localPatient, setLocalPatient] = useState<ApPatient>(patient ?? newApPatient);
+const [localEncounter, setLocalEncounter] = useState<any>(enc ?? newApEncounter);
+
+
 
   const [refetchData, setRefetchData] = useState(false);
 
@@ -186,11 +179,13 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
   };
 
   // Function to check if the current row is the selected one
-  const isSelected = (rowData: any) => {
-    if (rowData && encounter && rowData.key === encounter.key) {
-      return 'selected-row';
-    } else return '';
-  };
+const isSelected = (rowData: any) => {
+  if (rowData && localEncounter && rowData.key === localEncounter.key) {
+    return 'selected-row';
+  }
+  return '';
+};
+
 
   // Handle Go to Visit Function
   const goToVisit = async (rowData: any) => {
@@ -246,6 +241,15 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
       }
     };
   }, [inModal, dispatch]);
+
+
+  useEffect(() => {
+    if (patient) setLocalPatient(patient);
+  }, [patient]);
+
+  useEffect(() => {
+    if (enc) setLocalEncounter(enc);
+  }, [enc]);
 
   return (
     <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
@@ -647,25 +651,26 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
 
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
-        {activeCard === 'clinicvisits' && <ClinicVisitsTable />}
-        {activeCard === 'inpatient' && <InpatientTable />}
-        {activeCard === 'daycase' && <DayCaseTable />}
-        {activeCard === 'emergency' && <EmergencyTable />}
-        {activeCard === 'nurseassessments' && <NurseAssessmentsTable />}
-        {activeCard === 'procedures' && <ProceduresTable />}
+
+        {activeCard === 'clinicvisits' && <ClinicVisitsTable  patient={localPatient}/>}
+        {/* {activeCard === 'inpatient' && <InpatientTable />} */}
+        {/* {activeCard === 'daycase' && <DayCaseTable />} */}
+        {activeCard === 'emergency' && <EmergencyTable  patient={localPatient}/>}
+        {/* {activeCard === 'nurseassessments' && <NurseAssessmentsTable />} */}
+        {activeCard === 'procedures' && <ProceduresTable patient={localPatient}/>}
         {activeCard === 'operations' && <OperationsTable />}
-        {activeCard === 'consultations' && <ConsultationsTable />}
-        {activeCard === 'laboratory' && <LaboratoryTable />}
-        {activeCard === 'radiology' && <RadiologyTable />}
-        {activeCard === 'pathology' && <PathologyTable />}
-        {activeCard === 'medications' && <CurrentMedicationsTable />}
-        {activeCard === 'vaccines' && <VaccinationTable />}
+        {activeCard === 'consultations' && <ConsultationsTable patient={localPatient}/>}
+        {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient}  />}
+        {activeCard === 'radiology' && <RadiologyTable patient={localPatient}/>}
+        {/* {activeCard === 'pathology' && <PathologyTable />} */}
+        {activeCard === 'medications' && <CurrentMedicationsTable patient={localPatient} />}
+        {activeCard === 'vaccines' && <VaccinationTable  patient={localPatient}/>}
         {activeCard === 'reports' && <ClinicalReportsTable />}
-        {activeCard === 'attachments' && <AttachmentsTable />}
-        {activeCard === 'appliedservices' && <AppliedServicesTable />}
+        {activeCard === 'attachments' && <AttachmentsTable localPatient={localPatient} />}
+        {activeCard === 'appliedservices' && <AppliedServicesTable patient={localPatient}/>}
         {activeCard === 'dentalcharts' && <DentalChartsTable />}
         {activeCard === 'ledgeraccount' && <LedgerAccountTable />}
-        {activeCard === 'pastmedicalhistory' && <PastMedicalHistoryTable />}
+        {activeCard === 'pastmedicalhistory' && <PatientHistory toShowData={true} patient={localPatient}/>}
 
         {/* 
         <MyTable
@@ -688,17 +693,9 @@ const PatientEMRModal: React.FC<PatientEMRProps> = ({ inModal = false, patient, 
 
       <div className="emr-right">
         <div className="patient-side-main-container-handle">
-          <PatientSide patient={localPatient} encounter={encounter} />
+          <PatientSide patient={localPatient} encounter={localEncounter} />
         </div>
         <div className="profile-sidebar-main-container-handle">
-          <ProfileSidebar
-            expand={expand}
-            setExpand={setExpand}
-            windowHeight={windowHeight}
-            setLocalPatient={setLocalPatient}
-            setRefetchData={setRefetchData}
-            refetchData={refetchData}
-          />
         </div>
       </div>
     </div>

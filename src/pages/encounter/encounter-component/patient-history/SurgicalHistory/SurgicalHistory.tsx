@@ -17,7 +17,9 @@ import { notify } from "@/utils/uiReducerActions";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import AddSurgicalHistory from "./AddSurgicalHistory";
 
-const SurgicalHistory = ({ patient, edit }) => {
+const SurgicalHistory = ({ patient, edit,
+  toShowData=false
+ }) => {
   const dispatch = useAppDispatch();
 
   const [open, setOpen] = useState(false);
@@ -70,85 +72,88 @@ const handleDelete = (row) => {
 
 
 
-  const columns = [
-    { key: "surgery", title: "SURGERY", dataKey: "surgery", flexGrow: 3 },
+ const columns = [
+  { key: "surgery", title: "SURGERY", dataKey: "surgery", flexGrow: 3 },
 
-    {
-      key: "dateOfSurgery",
-      title: "DATE OF SURGERY",
-      flexGrow: 3,
-      render: (row) =>
-        row.dateOfSurgery ? formatDateWithoutSeconds(row.dateOfSurgery) : "",
-    },
+  {
+    key: "dateOfSurgery",
+    title: "DATE OF SURGERY",
+    flexGrow: 3,
+    render: (row) =>
+      row.dateOfSurgery ? formatDateWithoutSeconds(row.dateOfSurgery) : "",
+  },
 
-    { key: "facility", title: "FACILITY", dataKey: "facility", flexGrow: 2 },
+  { key: "facility", title: "FACILITY", dataKey: "facility", flexGrow: 2 },
 
-    {
-      key: "complicationsLkey",
-      title: "COMPLICATIONS",
-      flexGrow: 3,
-      render: (row) =>
-        compLov?.object?.find((x) => x.key === row.complicationsLkey)
-          ?.lovDisplayVale ?? "",
-    },
+  {
+    key: "complicationsLkey",
+    title: "COMPLICATIONS",
+    flexGrow: 3,
+    render: (row) =>
+      compLov?.object?.find((x) => x.key === row.complicationsLkey)
+        ?.lovDisplayVale ?? "",
+  },
 
-    {
-      key: "anesthesiaTypeLkey",
-      title: "TYPE OF ANESTHESIA",
-      flexGrow: 3,
-      render: (row) =>
-        anesthLov?.object?.find((x) => x.key === row.anesthesiaTypeLkey)
-          ?.lovDisplayVale ?? "",
-    },
+  {
+    key: "anesthesiaTypeLkey",
+    title: "TYPE OF ANESTHESIA",
+    flexGrow: 3,
+    render: (row) =>
+      anesthLov?.object?.find((x) => x.key === row.anesthesiaTypeLkey)
+        ?.lovDisplayVale ?? "",
+  },
 
-    {
-      key: "adverseReactionsToAnesthesiaLkey",
-      title: "ADVERSE REACTIONS",
-      flexGrow: 3,
-      render: (row) =>
-        advLov?.object?.find(
-          (x) => x.key === row.adverseReactionsToAnesthesiaLkey
-        )?.lovDisplayVale ?? "",
-    },
+  {
+    key: "adverseReactionsToAnesthesiaLkey",
+    title: "ADVERSE REACTIONS",
+    flexGrow: 3,
+    render: (row) =>
+      advLov?.object?.find(
+        (x) => x.key === row.adverseReactionsToAnesthesiaLkey
+      )?.lovDisplayVale ?? "",
+  },
 
-    {
-      key: "isImplantsOrDevices",
-      title: "IMPLANTS OR DEVICES",
-      flexGrow: 3,
-      render: (row) =>
-        row.isImplantsOrDevices ? row.implantsOrDevicesDescription : "No",
-    },
+  {
+    key: "isImplantsOrDevices",
+    title: "IMPLANTS OR DEVICES",
+    flexGrow: 3,
+    render: (row) =>
+      row.isImplantsOrDevices ? row.implantsOrDevicesDescription : "No",
+  },
 
-    {
-      key: "actions",
-      title: "",
-      flexGrow: 1,
-      render: (row) => (
-        <div style={{ display: "flex", gap: "12px" }}>
-          <MdModeEdit
-            size={22}
-            fill="var(--primary-gray)"
-            style={{ cursor: "pointer" }}
-            onClick={() => {
-              setSelectedRow(row);
-              setOpen(true);
-            }}
-          />
-            <MdDelete
-            size={22}
-            fill="var(--primary-pink)"
-            style={{ cursor: "pointer" }}
-            onClick={(e) => {
-                e.stopPropagation();
-                setRowToDelete(row);
-                setOpenDeleteModal(true);
-            }}
-            />
-
-        </div>
-      ),
-    },
-  ];
+  ...(!toShowData
+    ? [
+        {
+          key: "actions",
+          title: "",
+          flexGrow: 1,
+          render: (row) => (
+            <div style={{ display: "flex", gap: "12px" }}>
+              <MdModeEdit
+                size={22}
+                fill="var(--primary-gray)"
+                style={{ cursor: "pointer" }}
+                onClick={() => {
+                  setSelectedRow(row);
+                  setOpen(true);
+                }}
+              />
+              <MdDelete
+                size={22}
+                fill="var(--primary-pink)"
+                style={{ cursor: "pointer" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRowToDelete(row);
+                  setOpenDeleteModal(true);
+                }}
+              />
+            </div>
+          ),
+        },
+      ]
+    : []),
+];
 
 
 
@@ -169,7 +174,7 @@ const handleDelete = (row) => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = data?.extraNumeric ?? 0;
 
-
+console.log("Surgical History Data =>", data?.object);
 
   return (
     <div className="medical-container-div">
@@ -177,13 +182,13 @@ const handleDelete = (row) => {
         title={
           <>
             Surgical History
-            <MyButton
+          { !toShowData&&<MyButton
               disabled={edit}
               prefixIcon={() => <PlusIcon />}
               onClick={() => setOpen(true)}
             >
               Add
-            </MyButton>
+            </MyButton>}
           </>
         }
         content={

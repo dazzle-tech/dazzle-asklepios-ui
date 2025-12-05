@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ApPatient } from '@/types/model-types';
-import { Panel, Tabs } from 'rsuite';
-import { useGetAgeGroupValueQuery } from '@/services/patientService';
+import { Panel } from 'rsuite';
 import { calculateAgeFormat } from '@/utils';
 import DemographicsTab from './tabs/DemographicsTab';
 import ExtraDetailsTab from './tabs/ExtraDetailsTab';
@@ -15,6 +14,8 @@ import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 import MyTab from '@/components/MyTab';
+import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupService'; 
+import { formatEnumString } from '@/utils';
 
 interface ProfileTabsProps {
   localPatient: ApPatient;
@@ -39,13 +40,9 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     ageFormat: ''
   });
 
-  // Fetch age group data
-  const { data: patientAgeGroupResponse } = useGetAgeGroupValueQuery(
-    {
-      dob: localPatient?.dob ? new Date(localPatient.dob).toISOString() : null
-    },
-    { skip: !localPatient?.dob }
-  );
+  const [fetchAgeGroupByBirthDate, { data: patientAgeGroupResponse }] =
+    useLazyGetAgeGroupByBirthDateQuery();
+  console.log('patientAgeGroupResponse', patientAgeGroupResponse);
 
   // Fetch LOV data for various fields
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
@@ -114,30 +111,36 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       )
     }
   ];
+
   // Update age format when DOB changes
   useEffect(() => {
     if (localPatient?.dob) {
       const calculatedFormat = calculateAgeFormat(localPatient.dob);
-      setAgeFormatType(prevState => ({
-        ...prevState,
+
+      setAgeFormatType(prev => ({
+        ...prev,
         ageFormat: calculatedFormat
       }));
+
+      fetchAgeGroupByBirthDate({
+        birthDate: String(localPatient.dob)
+      });
     } else {
-      setAgeFormatType(prevState => ({
-        ...prevState,
+      setAgeFormatType(prev => ({
+        ...prev,
         ageFormat: ''
       }));
     }
   }, [localPatient?.dob]);
 
-  // Update age group when response changes
   useEffect(() => {
-    if (patientAgeGroupResponse?.object?.lovDisplayVale) {
+    if (patientAgeGroupResponse?.ageGroup) {
       setAgeGroupValue({
-        ageGroup: patientAgeGroupResponse.object.lovDisplayVale
+        ageGroup: formatEnumString(patientAgeGroupResponse.ageGroup)
       });
     }
   }, [patientAgeGroupResponse]);
+
 
   return (
     <>
@@ -148,8 +151,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           </h5>
         }
       >
-        <MyTab 
-         data={tabData}
+        <MyTab
+          data={tabData}
         />
       </Panel>
     </>

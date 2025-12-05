@@ -451,6 +451,18 @@ const LaboratoryTable: React.FC<ResultProps> = ({ patient}) => {
 
  
 
+useEffect(() => {
+  setListResultResponse(prev => ({
+    ...prev!,
+    filters: [
+      { fieldName: "patient_key", operator: "match", value: patient?.key }
+    ],
+    pageNumber: 1,
+  }));
+}, [patient?.key]);
+
+
+
   return (
     <>
       <div className="results-actions-header">

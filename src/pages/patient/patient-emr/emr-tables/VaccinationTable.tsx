@@ -1,115 +1,143 @@
-import React, { useState } from 'react';
-import MyTable from '@/components/MyTable';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
-import Translate from '@/components/Translate';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import React, { useMemo, useState, useEffect } from "react";
+import MyTable from "@/components/MyTable";
+import Translate from "@/components/Translate";
+import { initialListRequest, ListRequest } from "@/types/types";
+import { formatDateWithoutSeconds } from "@/utils";
+import { useGetEncounterVaccineQuery } from "@/services/observationService";
 
-const sampleVaccinationData = [];
+const VaccinationTable = ({ patient}) => {
 
-const columns: ColumnConfig[] = [
-  {
-    key: 'vaccine',
-    title: <Translate>Vaccine</Translate>,
-    dataKey: 'vaccine'
-  },
-  {
-    key: 'date',
-    title: <Translate>Date</Translate>,
-    dataKey: 'date',
-    render: (row: any) =>
-      row?.date ? (
-        <span className="date-table-style">{formatDateWithoutSeconds(row.date)}</span>
-      ) : (
-        '-'
-      )
-  },
-  {
-    key: 'dose',
-    title: <Translate>Dose</Translate>,
-    dataKey: 'dose'
-  },
-  {
-    key: 'lotNumber',
-    title: <Translate>Lot Number</Translate>,
-    dataKey: 'lotNumber'
-  },
-  {
-    key: 'site',
-    title: <Translate>Site</Translate>,
-    dataKey: 'site'
-  },
-  {
-    key: 'provider',
-    title: <Translate>Provider</Translate>,
-    dataKey: 'provider'
-  },
-  {
-    key: 'reaction',
-    title: <Translate>Reaction</Translate>,
-    dataKey: 'reaction',
-    width: 160,
-    render: (row: any) => {
-      const reaction = row.reaction?.toLowerCase();
-
-      let bgColor = 'var(--light-gray)';
-      let color = 'var(--dark-gray)';
-
-      if (reaction === 'none') {
-        bgColor = 'var(--light-green)';
-        color = 'var(--primary-green)';
-      } else if (reaction.includes('mild')) {
-        bgColor = 'var(--light-orange)';
-        color = 'var(--primary-orange)';
-      } else if (reaction.includes('severe')) {
-        bgColor = 'var(--light-red)';
-        color = 'var(--primary-red)';
-      }
-
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <MyBadgeStatus backgroundColor={bgColor} color={color} contant={row.reaction} />
-        </div>
-      );
-    }
-  }
-];
-
-const VaccinationTable = () => {
-  const [sortColumn, setSortColumn] = useState('date');
-  const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [tableData, setTableData] = useState(sampleVaccinationData);
-
-  const sortedData = [...tableData].sort((a, b) => {
-    const aValue = a[sortColumn];
-    const bValue = b[sortColumn];
-    if (aValue === bValue) return 0;
-    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageNumber: 1,
+    pageSize: 15,
+    sortBy: "createdAt",
+    sortType: "desc",
+    filters: [
+      { fieldName: "patient_key", operator: "match", value: patient?.key },
+    ]
   });
 
-  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  const {
+    data: vaccineList,
+    isLoading,
+    refetch
+  } = useGetEncounterVaccineQuery(listRequest);
+
+  useEffect(() => {
+    refetch();
+  }, [patient?.key]);
+
+  const columns = [
+    {
+      key: 'vaccineName',
+      title: 'VACCINE NAME',
+      render: (rowData: any) => rowData.vaccine?.vaccineName
+    },
+    {
+      key: 'brandName',
+      title: 'BRAND NAME',
+      render: (rowData: any) => rowData.vaccineBrands?.brandName
+    },
+    {
+      key: 'doseNumber',
+      title: 'DOSE NUMBER',
+      render: (rowData: any) =>
+        rowData.vaccineDose?.doseNameLvalue?.lovDisplayVale || rowData.vaccineDose?.doseNameLkey
+    },
+    {
+      key: 'dateAdministered',
+      title: 'DATE OF ADMINISTRATION',
+      render: (rowData: any) => {
+        return !rowData.dateAdministered ? '' : formatDateWithoutSeconds(rowData.dateAdministered);
+      }
+    },
+    {
+      key: 'actualSide',
+      title: 'ACTUAL SIDE',
+      dataKey: 'actualSide',
+      expandable: true
+    },
+    {
+      key: 'roa',
+      title: 'ROA',
+      render: (rowData: any) =>
+        rowData.vaccine?.roaLvalue?.lovDisplayVale || rowData.vaccine?.roaLkey,
+      expandable: true
+    },
+    {
+      key: 'externalFacilityName',
+      title: 'VACCINATION LOCATION',
+      dataKey: 'externalFacilityName',
+      expandable: true
+    },
+    {
+      key: 'isReviewed',
+      title: 'Is Reviewed',
+      render: (rowData: any) => (rowData.reviewedAt === 0 ? 'No' : 'Yes')
+    },
+    {
+      key: 'totalDoses',
+      title: 'TOTAL VACCINE DOSES',
+      render: (rowData: any) =>
+        rowData.vaccine?.numberOfDosesLvalue?.lovDisplayVale || rowData.vaccine?.numberOfDosesLkey
+    },
+    {
+      key: 'status',
+      title: 'STATUS',
+      render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale || rowData.statusLkey
+    },
+  ];
+
+const handlePageChange = (_ , newPage) => {
+  setListRequest(prev => ({
+    ...prev,
+    pageNumber: newPage + 1
+  }));
+};
+
+const handleRowsPerPageChange = (e) => {
+  setListRequest(prev => ({
+    ...prev,
+    pageSize: Number(e.target.value),
+    pageNumber: 1
+  }));
+};
+
+const handleSortChange = (sortBy, sortType) => {
+  setListRequest(prev => ({
+    ...prev,
+    sortBy,
+    sortType,
+    pageNumber: 1
+  }));
+};
+
+
+
+    useEffect(() => {
+      setListRequest(prev => ({
+        ...prev!,
+        filters: [
+          { fieldName: "patient_key", operator: "match", value: patient?.key }
+        ],
+        pageNumber: 1,
+      }));
+    }, [patient?.key]);
 
   return (
     <MyTable
-      data={paginatedData}
       columns={columns}
-      loading={false}
-      sortColumn={sortColumn}
-      sortType={sortType}
-      onSortChange={(col, type) => {
-        setSortColumn(col);
-        setSortType(type);
-      }}
-      page={page}
-      rowsPerPage={rowsPerPage}
-      totalCount={tableData.length}
-      onPageChange={(_, newPage) => setPage(newPage)}
-      onRowsPerPageChange={e => {
-        setRowsPerPage(parseInt(e.target.value, 10));
-        setPage(0);
-      }}
+      data={vaccineList?.object ?? []}
+      loading={isLoading}
+      sortColumn={listRequest.sortBy}
+      sortType={listRequest.sortType}
+      page={(listRequest.pageNumber ?? 1) - 1}
+      rowsPerPage={listRequest.pageSize}
+      totalCount={vaccineList?.extraNumeric ?? 0}
+      onSortChange={handleSortChange}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
     />
   );
 };

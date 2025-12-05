@@ -22,7 +22,8 @@ import { newApAppointment } from '@/types/model-types-constructor';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import AppointmentModal from './AppoitmentModal';
 import { ApAppointment } from '@/types/model-types';
@@ -81,16 +82,6 @@ const ScheduleScreen = () => {
   const { data: resourcesWithAvailabilityResponse } =
     useGetResourcesWithAvailabilityQuery(listRequest);
 
-  useEffect(() => {
-    console.log(resourcesWithAvailabilityResponse?.object);
-  }, [resourcesWithAvailabilityResponse]);
-
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
   const {
     data: appointments,
     refetch: refitchAppointments,
@@ -98,7 +89,7 @@ const ScheduleScreen = () => {
     isFetching: isFetchingAppointments
   } = useGetAppointmentsQuery({
     resource_type: selectedResourceType?.resourcesType || null,
-    facility_id: selectedFacility?.facilityKey || null,
+    facility_id: selectedFacility?.id || null,
     resources: selectedResources ? selectedResources.resourceKey : []
   });
 
@@ -116,6 +107,11 @@ const ScheduleScreen = () => {
 
       const formattedAppointments = appointments.object.map(appointment => {
         const dob = new Date(appointment?.patient?.dob);
+        const patientFullName = appointment?.patient?.full_name || 
+          appointment?.patient?.fullName ||
+          (appointment?.patient?.first_name && appointment?.patient?.last_name 
+            ? `${appointment.patient.first_name} ${appointment.patient.last_name}`.trim()
+            : appointment?.patient?.first_name || appointment?.patient?.last_name || 'Unknown Patient');
 
         const resource = resourcesWithAvailabilityResponse.object.find(
           item => item.key === appointment.resourceKey
@@ -124,12 +120,12 @@ const ScheduleScreen = () => {
         const isHidden = appointment?.appointmentStatus === 'Canceled';
         return {
           id: appointment?.key,
-          title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
+          title: ` ${patientFullName}, ${isNaN(dob) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
             }Y  ${!(currentView === 'day' || currentView === 'week')
               ? ', ' + (resource?.resourceName || 'Unknown Resource')
               : ''
             }
- `, // Customize title as needed
+ `,
           start: convertDate(appointment.appointmentStart),
           end: convertDate(appointment.appointmentEnd),
           text: appointment.notes || 'No additional details available',
@@ -146,16 +142,13 @@ const ScheduleScreen = () => {
   }, [appointments, resourcesWithAvailabilityResponse, currentView]);
 
   useEffect(() => {
-    console.log("selectedResourceType");
-    console.log(selectedResourceType);
-    if (selectedResourceType) {
-      // const filtered = resourcesWithAvailabilityResponse.object.filter(
-      //   resource => resource.resourceTypeLkey === selectedResourceType?.resourcesType
-      // );
+    if (selectedResourceType && resourcesWithAvailabilityResponse?.object) {
       const filtered = resourcesWithAvailabilityResponse.object.filter(
         resource => selectedResourceType?.resourcesType.includes(resource.resourceTypeLkey)
       );
       setFilteredResourcesList(filtered);
+    } else if (!selectedResourceType) {
+      setFilteredResourcesList([]);
     }
   }, [resourcesWithAvailabilityResponse, selectedResourceType?.resourcesType]);
   useEffect(() => {
@@ -164,8 +157,6 @@ const ScheduleScreen = () => {
     }
   }, [selectedSlot]);
   const handleSelectEvent = event => {
-    console.log(event);
-    console.log(event?.appointmentData?.appointmentStatus);
     setSelectedEvent(event);
     if (
       event?.appointmentData?.appointmentStatus === 'Canceled' ||
@@ -178,9 +169,7 @@ const ScheduleScreen = () => {
     setActionsModalOpen(true);
   };
 
-  const { data: facilityListResponse } = useGetFacilitiesQuery({
-    ...initialListRequest
-  });
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
   const convertDate = appointmentTime => {
     return new Date(appointmentTime);
@@ -189,6 +178,15 @@ const ScheduleScreen = () => {
   const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
   const [drowerOpen, setDrowerOpen] = useState(false);
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(setPageCode('Schedule_Screen'));
+    dispatch(setDivContent('Scheduling'));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [dispatch]);
 
   const legendItems = [
     { label: 'No-Show', color: '#FDE68A' },
@@ -249,8 +247,9 @@ const ScheduleScreen = () => {
     setShowAppointmentOnly(true);
   };
   useEffect(() => {
-    console.log(filteredMonth);
-    console.log(drowerOpen);
+    if (filteredMonth) {
+      setDrowerOpen(false);
+    }
     setDrowerOpen(false);
   }, [filteredMonth]);
 
@@ -423,7 +422,6 @@ const ScheduleScreen = () => {
               defaultOpen
               format={currentView === 'month' ? 'yyyy-MM' : 'yyyy-MM-dd'}
               onClose={() => {
-                console.log('DatePicker closed');
                 setShowDatePicker(false);
               }}
             />
@@ -484,14 +482,7 @@ const ScheduleScreen = () => {
   };
 
   const [currentCalView, setCurrentCalView] = useState('month'); // Force "month" view
-  const divContent = (
-    "Scheduling"
-  );
-  dispatch(setPageCode('Schedule_Screen'));
-  dispatch(setDivContent(divContent));
-  useEffect(() => {
-    console.log(selectedEvent?.appointmentData.otherReason);
-  }, [selectedEvent]);
+
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -556,6 +547,44 @@ const ScheduleScreen = () => {
       finalList = resourcesWithAvailabilityResponse?.object || [];
     }
 
+    // ──────────────────────────── RESOURCES & AVAILABILITY LOGGING ────────────────────────────
+    console.log('📊 [ScheduleScreen] Final Resources List:', {
+      totalResources: finalList.length,
+      selectedResourceKeys: selectedKeys,
+      selectedTypeKey: selectedTypeKey,
+      filteredCount: filteredResourcesList.length,
+      currentView: currentView,
+      resources: finalList.map((resource, index) => ({
+        index: index + 1,
+        key: resource.key,
+        resourceKey: resource.resourceKey,
+        resourceName: resource.resourceName || 'N/A',
+        resourceType: resource.resourceTypeLkey,
+        facilityKey: resource.facilityKey,
+        availability: resource.availability ? {
+          periodsCount: resource.availability.length,
+          periods: resource.availability.map((period: any) => ({
+            dayOfWeek: period.dayOfWeek,
+            startHour: period.startHour,
+            startMinute: period.startMinute,
+            endHour: period.endHour,
+            endMinute: period.endMinute
+          }))
+        } : null,
+        availabilitySlices: resource.availabilitySlices ? {
+          slicesCount: resource.availabilitySlices.length,
+          slices: resource.availabilitySlices.map((slice: any) => ({
+            key: slice.key,
+            dayOfWeek: slice.dayOfWeek,
+            startHour: slice.startHour,
+            endHour: slice.endHour,
+            isBreak: slice.break,
+            facilityKey: slice.facilityKey
+          }))
+        } : null
+      }))
+    });
+
     setFinalResourceLit(finalList);
   }, [
     selectedResources,
@@ -564,9 +593,6 @@ const ScheduleScreen = () => {
     resourcesWithAvailabilityResponse
   ]);
 
-  useEffect(() => {
-    console.log(ResourceTypeEnum ?? []);
-  }, [ResourceTypeEnum]);
 
   const hexToRgba = (hex, alpha = 0.1) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -725,11 +751,11 @@ const ScheduleScreen = () => {
                       width={'11.5vw'}
                       column
                       fieldLabel="Facility"
-                      selectData={facilityListResponse?.object ?? []}
+                      selectData={facilityListResponse ?? []}
                       fieldType="select"
-                      selectDataLabel="facilityName"
-                      selectDataValue="key"
-                      fieldName="facilityKey"
+                      selectDataLabel="name"
+                      selectDataValue="id"
+                      fieldName="id"
                       record={selectedFacility}
                       setRecord={setSelectedFacility}
                       searchable={false}
@@ -911,8 +937,6 @@ const ScheduleScreen = () => {
             step={60}
             timeslots={1}
             onSelectSlot={slotInfo => {
-              console.log('Selected slot:', slotInfo);
-
               // Check if the slot is available before opening modal
               if (slotInfo.resourceId) {
                 const currentResource = resourcesWithAvailabilityResponse?.object.find(
@@ -940,9 +964,23 @@ const ScheduleScreen = () => {
                   if (!isAvailable) {
                     return; // Don't open modal for unavailable slots
                   }
+
+                  // Add resource information to slotInfo for AppointmentModal
+                  const enhancedSlotInfo = {
+                    ...slotInfo,
+                    resourceKey: currentResource.resourceKey,
+                    resourceTypeLkey: currentResource.resourceTypeLkey,
+                    resourceName: currentResource.resourceName,
+                    facilityKey: currentResource.facilityKey
+                  };
+
+                  setSelectedSlot(enhancedSlotInfo);
+                  setModalOpen(true);
+                  return;
                 }
               }
 
+              // If no resourceId or resource not found, still open modal but without resource info
               setSelectedSlot(slotInfo);
               setModalOpen(true);
             }}
@@ -1069,7 +1107,6 @@ const ScheduleScreen = () => {
         size="70vw"
         actionButtonLabel="Confirm"
         actionButtonFunction={() => {
-          console.log('Action confirmed!');
           setModalOpen(false);
         }}
         content={<ViewAppointmentRequests></ViewAppointmentRequests>}
