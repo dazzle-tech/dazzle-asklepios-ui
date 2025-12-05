@@ -2,9 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form, Tag } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
-import {
-  useGetResourcesAvailabilityTimeQuery
-} from '@/services/appointmentService';
+// import {
+//   useGetResourcesAvailabilityTimeQuery
+// } from '@/services/appointmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -18,7 +18,7 @@ import { useSelector } from 'react-redux';
 const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, localPatient }) => {
   const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult] = useState({});
-  const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
+  // const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
   const [newOrFollowup, setNewOrFollowup] = useState({ state: true });
   const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -113,7 +113,14 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
   }, {
     skip: !localEncounter?.facilityKey
   });
-  const [resourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // const [resourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // // Fetches the list of resource availability times.
+  // const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
+  //   ...resourcesAvailabilityTimeListRequest,
+  //   pageSize: 10000
+  // }, {
+  //   skip: !localEncounter?.resourceKey
+  // });
   const { data: dayCaseDepartmentListResponse } = useGetAppointableDepartmentByTypeQuery({
     type: 'DAY_CASE',
     facilityId: localEncounter?.facilityKey,
@@ -124,12 +131,12 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
     skip: !localEncounter?.facilityKey
   });
   // Fetches the list of resource availability times.
-  const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
-    ...resourcesAvailabilityTimeListRequest,
-    pageSize: 10000
-  }, {
-    skip: !localEncounter?.resourceKey
-  });
+  // const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
+  //   ...resourcesAvailabilityTimeListRequest,
+  //   pageSize: 10000
+  // }, {
+  //   skip: !localEncounter?.resourceKey
+  // });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   // Fetches the list of active resources based on the selected resource type from the new ResourceService
   const { data: resourcesByTypeResponse } = useGetActiveResourcesByTypeQuery(
@@ -309,19 +316,19 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
     });
   }, [localPatient, localEncounter]);
 
-  useEffect(() => {
-    if (!localEncounter?.resourceKey || !resourceAvailabilityTimeListResponse) return;
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    const filteredList = resourceAvailabilityTimeListResponse.object.filter(
-      item =>
-        item.resourceKey === localEncounter.resourceKey &&
-        item.departmentKey &&
-        item.dayLvalue?.lovDisplayVale === today //Day match
-    );
-    const departmentKeys = filteredList.map(item => item.departmentKey?.toString().trim());
-    const uniqueDepartmentKeys = Array.from(new Set(departmentKeys));
-    setUniqueDepartmentKeys(uniqueDepartmentKeys);
-  }, [localEncounter, resourceAvailabilityTimeListResponse]);
+  // useEffect(() => {
+  //   if (!localEncounter?.resourceKey || !resourceAvailabilityTimeListResponse) return;
+  //   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  //   const filteredList = resourceAvailabilityTimeListResponse.object.filter(
+  //     item =>
+  //       item.resourceKey === localEncounter.resourceKey &&
+  //       item.departmentKey &&
+  //       item.dayLvalue?.lovDisplayVale === today //Day match
+  //   );
+  //   const departmentKeys = filteredList.map(item => item.departmentKey?.toString().trim());
+  //   const uniqueDepartmentKeys = Array.from(new Set(departmentKeys));
+  //   setUniqueDepartmentKeys(uniqueDepartmentKeys);
+  // }, [localEncounter, resourceAvailabilityTimeListResponse]);
 
   // Calculate and set sequence daily number based on today's encounter count
   useEffect(() => {
