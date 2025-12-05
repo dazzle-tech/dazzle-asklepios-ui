@@ -243,11 +243,6 @@ type ReceiptProps = {
 type ReceiptItemRow = {
   invoiceNumber: string;
   itemCode: string;
-  description: string;
-  type: 'Service' | 'Product' | 'Other';
-  clinicService: string;
-  amount: number;
-  price: number;
   total: number;
 };
 
@@ -270,7 +265,6 @@ const Receipt: React.FC<ReceiptProps> = ({ patient }) => {
 
   const invoices: BillingInvoiceResponseVM[] = invoicePage?.data ?? [];
 
-  // بشكل بسيط: نعرض items لآخر فاتورة (أو أول واحدة)
   useEffect(() => {
     if (invoices.length && selectedInvoiceId == null) {
       setSelectedInvoiceId(invoices[0].id);
@@ -289,16 +283,11 @@ const Receipt: React.FC<ReceiptProps> = ({ patient }) => {
 
   const items: BillingInvoiceItemResponseVM[] = itemsPage?.data ?? [];
 
-  const receiptRows: ReceiptItemRow[] = items.map(it => ({
+    const receiptRows: ReceiptItemRow[] = items.map(it => ({
     invoiceNumber:
-      invoices.find(inv => inv.id === it.invoiceId)?.invoiceNumber ||
-      `INV-${it.invoiceId}`,
+      invoices.find(inv => inv.id === it.invoiceId)?.invoiceNumber ,
     itemCode: it.code || '',
-    description: it.code || '',
-    type: 'Other', // لو بدك نوع السيرفس/البرودكت لازم من الـ nurseServiceProduct
     clinicService: '',
-    amount: Number(it.quantity),
-    price: Number(it.unitPrice),
     total: Number(it.totalPrice),
   }));
 
@@ -311,11 +300,6 @@ const Receipt: React.FC<ReceiptProps> = ({ patient }) => {
   const columns = [
     { key: 'invoiceNumber', title: 'Invoice Number' },
     { key: 'itemCode', title: 'Code' },
-    { key: 'description', title: 'Description' },
-    { key: 'type', title: 'Type' },
-    { key: 'clinicService', title: 'Clinic / Service' },
-    { key: 'amount', title: 'Qty' },
-    { key: 'price', title: 'Unit Price' },
     { key: 'total', title: 'Total' },
     {
       key: 'actions',
