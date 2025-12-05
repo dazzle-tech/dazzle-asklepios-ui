@@ -58,6 +58,10 @@ import { Form } from 'rsuite';
 import { MdOutlinePriceChange } from 'react-icons/md';
 
 import { useGetAllActivePriceListsQuery } from '@/services/billing/PriceListService';
+import { useGetPriceListItemsByPriceListIdQuery } from '@/services/billing/PriceListItemService';
+import { set } from 'lodash';
+import { useSaveNurseServiceProductMutation } from '@/services/encounterService';
+import { ApNurseServiceProduct } from '@/types/model-types';
 
 type Props = {
   open: boolean;
@@ -67,7 +71,7 @@ type Props = {
   setRecord: (r: any) => void;
 };
 
-const ChangePriceListModal: React.FC<Props> = ({
+const ChangePriceListModal = ({
   open,
   setOpen,
   forAllServises,
@@ -79,6 +83,12 @@ const ChangePriceListModal: React.FC<Props> = ({
     size: 100,
     sort: 'name,asc',
   });
+ const [saveNurseServiceProduct] = useSaveNurseServiceProductMutation();
+   const { data: itemsRes, refetch, isFetching } =
+      useGetPriceListItemsByPriceListIdQuery(
+        { priceListId: record.priceList?.id as number, page: 0, size: 50, sort: "id,asc" },
+        { skip: !record.priceList?.id }
+      );
 
   const priceLists = data?.data ?? [];
 
@@ -100,12 +110,59 @@ const ChangePriceListModal: React.FC<Props> = ({
               menuMaxHeight={200}
               width="100%"
             />
+              <MyInput
+              fieldLabel="Price List Items"
+              fieldName="priceListItemId"
+              fieldType="select"
+              selectData={itemsRes?.data || []}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={record}
+              setRecord={setRecord}
+              menuMaxHeight={200}
+              width="100%"
+            />
+
+    <MyInput
+    readOnly={true}
+              fieldLabel="Price List Items"
+              fieldName="priceListItemPrice"
+              fieldType="select"
+              selectData={itemsRes?.data || []}
+              selectDataLabel="price"
+              selectDataValue="id"
+              record={record}
+              setRecord={setRecord}
+              menuMaxHeight={200}
+              width="100%"
+            />
+
           </Form>
         );
     }
   };
 
   const handleSave = () => {
+    const baseTotal =
+        record.totalPrice ?? record.price * (record.quantity || 1);
+        setRecord((prev) => ({
+          ...prev,
+          priceListItemId: record.priceListItemId,    
+          price:
+          itemsRes?.data.find((item) => item.id === record.priceListItemId)?.price || prev.price,
+          totalPrice:
+          (itemsRes?.data.find((item) => item.id === record.priceListItemId)?.price || prev.priceListItemPrice) *
+            (record.quantity || 1),
+        }));        
+          const updated: ApNurseServiceProduct = {
+    ...record,
+    totalPrice:
+          (itemsRes?.data.find((item) => item.id === record.priceListItemId)?.price || record.priceListItemPrice) *
+            (record.quantity || 1),
+  };
+
+  console.log('updating nurse row', updated);
+ saveNurseServiceProduct(updated).unwrap();
     setOpen(false);
   };
 

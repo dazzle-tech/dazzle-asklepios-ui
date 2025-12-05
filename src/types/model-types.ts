@@ -552,6 +552,9 @@ export interface ApConsultationOrder {
 	deletedAt:number;
 	isValid:boolean;
 	cancellationReason:string;
+	facilityKey:string;
+	departmentKey:string;
+	priorityLkey:string;
 } 
 
 export interface ApCpt { 
@@ -1489,9 +1492,9 @@ export interface ApEncounterVaccination {
 	key:string;
 	patientKey:string;
 	encounterKey:string;
-	vaccineKey:string;
-	vaccineBrandKey:string;
-	vaccineDoseKey:string;
+	vaccineId:number;
+	vaccineBrandId:number;
+	vaccineDoseId:number;
 	vaccineLotNumber:string;
 	dateAdministered:number;
 	actualSide:string;
@@ -2226,6 +2229,10 @@ export interface ApNurseServiceProduct {
 	deletedAt:number;
 	isValid:boolean;
 	brandId:number;
+	priceListId:number;
+	priceListItemId:number;
+	priceListItemPrice:number;
+	priceListItemTotalPrice:number;
 } 
 
 export interface ApOperationAnesthesiaCarePlan { 
@@ -3708,7 +3715,7 @@ export interface ApPrescriptionMedications {
 	patientKey:string;
 	visitKey:string;
 	prescriptionKey:string;
-	genericMedicationsKey:string;
+	genericMedicationsId:number;
 	numberOfRefills:number;
 	refillInterval:string;
 	instructionsTypeLkey:string;
@@ -4257,7 +4264,7 @@ export interface ApTelephonicConsultation {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-  	cancellationReason: string,
+	cancellationReason:string;
 } 
 
 export interface ApTenant { 
@@ -4763,6 +4770,7 @@ export interface ApWarehouseUser {
 	deletedAt:number;
 	isvalid:boolean;
 } 
+
 export interface AppUser { 
 	id:;
 	login:string;

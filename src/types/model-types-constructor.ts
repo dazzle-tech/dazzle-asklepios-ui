@@ -553,6 +553,9 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	deletedAt:undefined,
 	isValid:undefined,
 	cancellationReason:'',
+	facilityKey:undefined,
+	departmentKey:undefined,
+	priorityLkey:undefined,
 } 
 
 export const newApCpt:modelTypes.ApCpt = { 
@@ -1490,9 +1493,9 @@ export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = {
 	key:undefined,
 	patientKey:undefined,
 	encounterKey:undefined,
-	vaccineKey:undefined,
-	vaccineBrandKey:undefined,
-	vaccineDoseKey:undefined,
+	vaccineId:0,
+	vaccineBrandId:0,
+	vaccineDoseId:0,
 	vaccineLotNumber:'',
 	dateAdministered:0,
 	actualSide:'',
@@ -2227,6 +2230,10 @@ export const newApNurseServiceProduct:modelTypes.ApNurseServiceProduct = {
 	deletedAt:undefined,
 	isValid:undefined,
 	brandId:0,
+	priceListId:0,
+	priceListItemId:0,
+	priceListItemPrice:0,
+	priceListItemTotalPrice:0,
 } 
 
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 
@@ -3196,6 +3203,7 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	platestFunctionalStatus:'',
 	latestCognitiveCheck:'',
 	platestCognitiveCheck:'',
+	reasonOfVisit:'',
 } 
 
 export const newApPatientPlan:modelTypes.ApPatientPlan = { 
@@ -3708,7 +3716,7 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	patientKey:undefined,
 	visitKey:undefined,
 	prescriptionKey:undefined,
-	genericMedicationsKey:undefined,
+	genericMedicationsId:0,
 	numberOfRefills:0,
 	refillInterval:'',
 	instructionsTypeLkey:undefined,
@@ -4257,8 +4265,7 @@ export const newApTelephonicConsultation:modelTypes.ApTelephonicConsultation = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	cancellationReason: "",
-
+	cancellationReason:'',
 } 
 
 export const newApTenant:modelTypes.ApTenant = { 
