@@ -196,7 +196,7 @@ const Prescription = props => {
 
   const [isdraft, setIsDraft] = useState(
     prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
-      ?.saveDraft
+      ?.saveDraft 
   );
 
   // Effects
@@ -733,9 +733,11 @@ const Prescription = props => {
             />
           </Form>
           <UrgencyButton />
-          <MyButton>Validate With</MyButton>
+          <MyButton loading={isLoadingPrescriptions}
+          >Validate With</MyButton>
           {/* <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton> */}
-          <MyButton onClick={handleNewPrescriptionAndAddMedication} prefixIcon={() => <PlusIcon />}>
+          <MyButton onClick={handleNewPrescriptionAndAddMedication} prefixIcon={() => <PlusIcon />}
+          loading={isLoadingPrescriptions}>
             Add Medication
           </MyButton>
           <MyButton
@@ -746,6 +748,7 @@ const Prescription = props => {
             Cancel
           </MyButton>
           <MyButton
+            loading={isLoadingPrescriptions}
             onClick={handleSubmitPres}
             disabled={
               preKeyRecord['preKey']
@@ -754,7 +757,8 @@ const Prescription = props => {
                 )?.statusLkey === '1804482322306061'
                 : true
             }
-            prefixIcon={() => <CheckIcon />}
+            prefixIcon={() => <CheckIcon />
+            }
           >
             Sign & Submit Order
           </MyButton>

@@ -22,6 +22,9 @@ const PatientHistory = ({ toShowData = false,
     {title: "Social History", content: <SocialHistory patient={patient} encounter={encounter} edit={edit}  toShowData={toShowData}/>}
   ];
 
+
+
+  
   return (
    <MyTab
     data={tabData}
