@@ -17,7 +17,9 @@ import AddSocialHistory from "./AddSocialHistory";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 
-const SocialHistory = ({ patient, edit }) => {
+const SocialHistory = ({ patient, edit,
+  toShowData=false
+ }) => {
   const dispatch = useAppDispatch();
 
   const [open, setOpen] = useState(false);
@@ -74,7 +76,9 @@ const SocialHistory = ({ patient, edit }) => {
 
     { key: "alcoholConsumption", title: "ALCOHOL", render: r => r.alcoholConsumption ? "Yes" : "No" },
     { key: "typeOfAlcohol", title: "TYPE OF ALCOHOL" },
+  ...(!toShowData ? [
     {
+      key: "actions",
         key: "actions",
         title: "",
         flexGrow: 1,
@@ -98,10 +102,12 @@ const SocialHistory = ({ patient, edit }) => {
                 setRowToDelete(row);
                 setOpenDeleteModal(true);
             }}
+
             />
         </div>
         ),
-    },
+    }] : []
+  )
     ];
 
     const handlePageChange = (_: unknown, newPage: number) => {
@@ -129,13 +135,13 @@ const SocialHistory = ({ patient, edit }) => {
         title={
           <>
             Social History
-            <MyButton
+          {!toShowData&&  <MyButton
               disabled={edit}
               prefixIcon={() => <PlusIcon />}
               onClick={() => setOpen(true)}
             >
               Add
-            </MyButton>
+            </MyButton>}
           </>
         }
         content={

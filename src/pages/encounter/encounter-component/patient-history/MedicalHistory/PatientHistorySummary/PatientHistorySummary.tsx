@@ -10,7 +10,8 @@ const PatientHistorySummary = ({
   encounter = undefined,
   edit = undefined,
   title = null,
-  button = null
+  button = null,
+
 }) => {
   const patientKey = patient?.key || patient?.patientKey;
   const encounterKey = encounter?.key || encounter?.encounterKey;

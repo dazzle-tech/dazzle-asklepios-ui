@@ -14,7 +14,9 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
-const PatientProblems = ({ patient, encounter, edit }) => {
+const PatientProblems = ({ patient, encounter, edit,
+  toShowData=false
+ }) => {
 
   const dispatch = useAppDispatch();
 
@@ -130,7 +132,7 @@ const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => 
     },
 
     // ACTIONS COLUMN
-    {
+   ...(!toShowData ? [{
       key: 'actions',
       title: '',
       flexGrow: 2,
@@ -156,7 +158,7 @@ const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => 
           />
         </div>
       )
-    }
+    }] : [])
   ];
 
   const pageIndex = listRequestPatientProblems.pageNumber - 1;
@@ -168,9 +170,9 @@ const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => 
         title={
           <>
             Patient's Problems
-            <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+          { !toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
               Add
-            </MyButton>
+            </MyButton>}
           </>
         }
         content={

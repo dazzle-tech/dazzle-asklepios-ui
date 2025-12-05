@@ -58,6 +58,7 @@ import ProceduresTable from './emr-tables/ProceduresTable';
 import RadiologyTable from './emr-tables/RadiologyTable';
 import VaccinationTable from './emr-tables/VaccinationTable';
 import './styles.less';
+import PatientHistory from '@/pages/encounter/encounter-component/patient-history';
 
 const { getHeight } = DOMHelper;
 
@@ -358,7 +359,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         <div className="emr-main-row-handle">
           {activeSectionCard === 'history' && (
             <div className="emr-main-row-handle">
-              <div className="animation-emr-card-patient-emr">
+              {/* <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={10}
                   footerText="60s"
@@ -368,7 +369,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   height={100}
                   onClick={() => alert('Clicked')}
                 />
-              </div>
+              </div> */}
               <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={4}
@@ -675,7 +676,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         {activeCard === 'appliedservices' && <AppliedServicesTable patient={localPatient}/>}
         {activeCard === 'dentalcharts' && <DentalChartsTable />}
         {activeCard === 'ledgeraccount' && <LedgerAccountTable />}
-        {activeCard === 'pastmedicalhistory' && <PastMedicalHistoryTable />}
+        {activeCard === 'pastmedicalhistory' && <PatientHistory toShowData={true} patient={localPatient}/>}
       </div>
 
       <div className="emr-right">

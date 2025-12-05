@@ -14,7 +14,9 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
-const Hospitalizations = ({ patient, encounter, edit }) => {
+const Hospitalizations = ({ patient, encounter, edit ,
+  toShowData=false
+}) => {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -103,7 +105,7 @@ const Hospitalizations = ({ patient, encounter, edit }) => {
       dataKey: 'medicalInterventionsPerformed'
     },
 
-    {
+  ...(!toShowData ? [{
       key: 'actions',
       title: '',
       flexGrow: 2,
@@ -128,7 +130,7 @@ const Hospitalizations = ({ patient, encounter, edit }) => {
           />
         </div>
       ),
-    }
+    }] : [])
   ];
 
 
@@ -164,9 +166,9 @@ const Hospitalizations = ({ patient, encounter, edit }) => {
         title={
           <>
             Hospitalizations
-            <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+          {!toShowData&&  <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
               Add
-            </MyButton>
+            </MyButton>}
           </>
         }
         content={

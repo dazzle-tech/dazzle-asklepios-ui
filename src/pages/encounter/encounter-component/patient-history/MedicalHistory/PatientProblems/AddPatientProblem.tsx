@@ -10,7 +10,9 @@ import { useSavePatientProblemMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 
-const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
+const AddPatientProblem = ({ open, setOpen, initialData, patient
+  
+ }) => {
 
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState(newApPatientProblems);
