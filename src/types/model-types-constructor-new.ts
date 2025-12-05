@@ -1043,7 +1043,6 @@ export const newPatientAccountSummary: modelTypes.PatientAccountSummaryVM = {
   outstandingBalance: 0,
   totalInvoiced: 0,
   totalPaid: 0,
-=======
 };
 export const newDischargePlanning: modelTypes.DischargePlanning = {
   id: undefined,

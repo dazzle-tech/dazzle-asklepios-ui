@@ -1228,7 +1228,7 @@ export interface BillingItem {
   priceList: string;
   patientKey: string;
   quantity: number;
-=======
+}
 export interface DischargePlanning {
   id?: number;
 
