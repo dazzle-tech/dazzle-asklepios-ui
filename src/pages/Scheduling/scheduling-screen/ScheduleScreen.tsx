@@ -872,13 +872,13 @@ const ScheduleScreen = () => {
               {/* <ButtonToolbar> */}
               <div style={{ display: 'flex', gap: '5px' }}>
 
-                <MyButton
+                {/* <MyButton
                   appearance="ghost"
                   onClick={() => setAppRequestModalOpen(true)}
                   prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
                 >
                   View App Requests
-                </MyButton>
+                </MyButton> */}
 
                 <MyButton
                   // color="blue"

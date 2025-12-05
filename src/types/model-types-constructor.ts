@@ -556,6 +556,9 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	deletedAt:undefined,
 	isValid:undefined,
 	cancellationReason:'',
+	facilityKey:undefined,
+	departmentKey:undefined,
+	priorityLkey:undefined,
 } 
 
 export const newApCpt:modelTypes.ApCpt = { 

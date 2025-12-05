@@ -153,6 +153,7 @@ const ChangePriceListModal = ({
           totalPrice:
           (itemsRes?.data.find((item) => item.id === record?.priceListItemId)?.price || prev.priceListItemPrice) *
             (record?.quantity || 1),
+
         }));        
           const updated: ApNurseServiceProduct = {
     ...record,
