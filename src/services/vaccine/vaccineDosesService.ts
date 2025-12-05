@@ -40,6 +40,18 @@ export const vaccineDosesService = createApi({
       providesTags: ['VaccineDose']
     }),
 
+     getVaccineDoses: builder.query<
+      PagedResult<modelTypes.VaccineDose>,
+      PagedParams
+    >({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/vaccine/doses`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['VaccineDose']
+    }),
+
     addVaccineDose: builder.mutation<
       modelTypes.VaccineDose,
       { vaccineId: Id; data: modelTypes.VaccineDose }
@@ -82,6 +94,7 @@ export const vaccineDosesService = createApi({
 
 export const {
   useGetVaccineDosesByVaccineIdQuery,
+  useGetVaccineDosesQuery,
   useLazyGetVaccineDosesByVaccineIdQuery,
   useGetDoseNumbersUpToQuery,
   useAddVaccineDoseMutation,
