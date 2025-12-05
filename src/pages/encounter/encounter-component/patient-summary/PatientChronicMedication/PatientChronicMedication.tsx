@@ -40,6 +40,7 @@ const PatientChronicMedication = ({ patient, title = null }) => {
   // });
     const { data: genericMedicationListResponse } =
       useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+
   // Fetch prescription medications for a specific patient that are marked as chronic and active
   const { data: prescriptionMedications } = useGetPrescriptionMedicationsQuery({
     ...initialListRequest,
@@ -133,15 +134,21 @@ const PatientChronicMedication = ({ patient, title = null }) => {
 
   // Table Columns
   const columns = [
-    {
-      key: 'medicationBrandName',
-      title: 'MEDICATION BRAND NAME',
-       render: (rowData: any) => {
-        return genericMedicationListResponse?.data?.find(
-          item => item.id === rowData.genericMedicationsId
-        )?.name;
-      }
-    },
+{
+  key: 'medicationBrandName',
+  title: 'MEDICATION BRAND NAME',
+  render: (rowData: any) => {
+    const id = rowData.genericMedicationsKey;
+
+    const item = genericMedicationListResponse?.data?.find(item => {
+   
+      return item.id === id;
+    });
+
+    return item?.name || '-';
+  }
+},
+
     {
          key: 'instructions',
          dataKey: '',

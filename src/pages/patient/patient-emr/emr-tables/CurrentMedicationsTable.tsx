@@ -24,9 +24,9 @@ const CurrentMedicationsTable = ({ patient }) => {
 
     const { data: genericMedicationListResponse } =
       useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
-   
+ 
       const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
-  
+   
         const {
           data: customeInstructions,
           isLoading: isLoadingCustomeInstructions,
