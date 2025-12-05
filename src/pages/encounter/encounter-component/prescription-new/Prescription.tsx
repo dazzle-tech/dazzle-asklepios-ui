@@ -15,7 +15,7 @@ import {
 } from '@/services/encounterService';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
-import { ApPrescriptionMedications } from '@/types/model-types';
+import { ApPrescription, ApPrescriptionMedications } from '@/types/model-types';
 import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
@@ -49,6 +49,7 @@ const Prescription = props => {
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
   const [showCanceled, setShowCanceled] = useState(true);
+  const [prescription,setPrescription]=useState<ApPrescription>({...newApPrescription});
   const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
 
   const [customeinst, setCustomeinst] = useState({
@@ -441,9 +442,7 @@ const Prescription = props => {
       setOpenDetailsModal(true);
       setOpenToAdd(true);
 
-      if (preKeyRecord['preKey'] || prescriptions?.object?.some(p => p.saveDraft === true)) {
-        await saveDraft();
-      }
+    
     } catch (error) {
       dispatch(notify({ msg: 'Failed to complete actions', type: 'error' }));
     }
