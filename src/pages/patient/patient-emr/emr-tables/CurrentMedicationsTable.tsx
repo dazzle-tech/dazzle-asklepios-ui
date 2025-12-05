@@ -11,6 +11,10 @@ import Translate from '@/components/Translate';
 const CurrentMedicationsTable = ({ patient }) => {
   const [listRequest, setListRequest] = useState({
     ...initialListRequest,
+      pageNumber: 1,
+      pageSize: 15,
+      sortBy: "createdAt",
+      sortType: "desc",
     filters: [
       { fieldName: "patient_key", operator: "match", value: patient?.key },
     ]
@@ -132,6 +136,32 @@ const CurrentMedicationsTable = ({ patient }) => {
     },
   ];
 
+const handlePageChange = (_ , newPage) => {
+  setListRequest(prev => ({
+    ...prev,
+    pageNumber: newPage + 1
+  }));
+};
+
+const handleRowsPerPageChange = (e) => {
+  setListRequest(prev => ({
+    ...prev,
+    pageSize: Number(e.target.value),
+    pageNumber: 1
+  }));
+};
+
+const handleSortChange = (sortBy, sortType) => {
+  setListRequest(prev => ({
+    ...prev,
+    sortBy,
+    sortType,
+    pageNumber: 1
+  }));
+};
+
+
+
 useEffect(() => {
   setListRequest(prev => ({
     ...prev!,
@@ -150,16 +180,9 @@ useEffect(() => {
       page={(listRequest.pageNumber ?? 1) - 1}
       rowsPerPage={listRequest.pageSize}
       totalCount={prescriptionMedications?.extraNumeric ?? 0}
-      onPageChange={(_, newPage) =>
-        setListRequest(prev => ({ ...prev, pageNumber: newPage + 1 }))
-      }
-      onRowsPerPageChange={e =>
-        setListRequest(prev => ({
-          ...prev,
-          pageSize: Number(e.target.value),
-          pageNumber: 1
-        }))
-      }
+      onSortChange={handleSortChange}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
     />
   );
 };
