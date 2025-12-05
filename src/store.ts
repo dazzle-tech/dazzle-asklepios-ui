@@ -101,6 +101,7 @@ import { ReportTemplateService } from "./services/setup/report-template/reportTe
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
 import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
 import { PriceListItemService } from './services/billing/PriceListItemService';
+import { BillingService } from './services/billing/BillingService';
 import { referralRequestService } from "@/services/encounters/referralRequestService";
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
@@ -261,6 +262,9 @@ export const store = configureStore({
     // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
 
+    // billing
+    [BillingService.reducerPath]: BillingService.reducer, 
+
     [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     //vaccine
@@ -381,6 +385,7 @@ export const store = configureStore({
       procedureSetupService.middleware,
       procedureCodingService.middleware,
       procedurePriceListService.middleware,
+      BillingService.middleware,
       diagnosticTestCodingService.middleware,
       CdtDentalActionService.middleware,
       vaccineService.middleware,

@@ -556,6 +556,9 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	deletedAt:undefined,
 	isValid:undefined,
 	cancellationReason:'',
+	facilityKey:undefined,
+	departmentKey:undefined,
+	priorityLkey:undefined,
 } 
 
 export const newApCpt:modelTypes.ApCpt = { 
@@ -2230,6 +2233,10 @@ export const newApNurseServiceProduct:modelTypes.ApNurseServiceProduct = {
 	deletedAt:undefined,
 	isValid:undefined,
 	brandId:0,
+	priceListId:0,
+	priceListItemId:0,
+	priceListItemPrice:0,
+	priceListItemTotalPrice:0,
 } 
 
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 
@@ -4261,8 +4268,7 @@ export const newApTelephonicConsultation:modelTypes.ApTelephonicConsultation = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	cancellationReason: "",
-
+	cancellationReason:'',
 } 
 
 export const newApTenant:modelTypes.ApTenant = { 

@@ -1008,6 +1008,43 @@ export interface ReferralRequest {
   referralReason: string;
   priority: string;
   isActive: boolean;
+}
+
+
+export interface BillingInvoiceCreateVM {
+  facilityId: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  totalAmount: number | string;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+
+  currency?: string | null;
+}
+
+export interface BillingInvoiceUpdateVM {
+  id: number; 
+  facilityId?: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  totalAmount?: number | string;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+
+  currency?: string | null;
+}
+
+export interface BillingInvoiceResponseVM {
+  id: number;
+  invoiceNumber: string;
+  facilityId: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  status: string;
+  totalAmount: number | string;
+  paidAmount: number | string;
+  balanceAmount: number | string;
+  currency?: string | null;
   createdBy?: string | null;
   createdDate?: string | null;
   lastModifiedBy?: string | null;
@@ -1051,6 +1088,147 @@ export interface ReferralRequest {
 }
 
 
+export interface BillingInvoiceItemCreateVM {
+  invoiceId: number;
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+  quantity: number | string;
+  unitPrice: number | string;
+  totalPrice: number | string;
+  currency?: string | null;
+}
+
+
+export interface BillingInvoiceItemUpdateVM {
+  id: number;
+  invoiceId?: number;
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+  quantity?: number | string;
+  unitPrice?: number | string;
+  totalPrice?: number | string;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceItemResponseVM {
+  id: number;
+  invoiceId: number;
+
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+
+  quantity: number | string;
+  unitPrice: number | string;
+  totalPrice: number | string;
+
+  currency?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PatientPaymentCreateVM {
+  patientKey?: string | null;
+  facilityId: number;
+
+  paymentType: string | null;
+  paymentMethod: string | null;
+
+  paymentDate: string; 
+  amount: number | string;
+
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+export interface PatientPaymentUpdateVM {
+  id: number;
+
+  patientKey?: string | null;
+  facilityId?: number;
+
+  paymentType?: string | null;
+  paymentMethod?: string | null;
+
+  paymentDate?: string;
+  amount?: number | string;
+
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+// RESPONSE VM
+export interface PatientPaymentResponseVM {
+  id: number;
+  patientKey?: string | null;
+  facilityId: number;
+  paymentType: string | null;
+  paymentMethod: string | null;
+  paymentDate: string;
+  amount: number | string;
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PaymentAllocationCreateVM {
+  paymentId: number;
+  invoiceId: number;
+  allocatedAmount: number | string;
+  invoiceItemId?: number | null;
+}
+
+export interface PaymentAllocationUpdateVM {
+  id: number;
+  paymentId?: number;
+  invoiceId?: number;
+  allocatedAmount?: number | string;
+  invoiceItemId?: number | null;
+}
+
+export interface PaymentAllocationResponseVM {
+  id: number;
+  paymentId: number;
+  invoiceId: number;
+  allocatedAmount: number | string;
+  invoiceItemId?: number | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PatientAccountSummaryVM {
+  patientKey: string;
+  freeBalance: number | string;     
+  outstandingBalance: number | string; 
+  totalInvoiced: number | string;     
+  totalPaid: number | string;       
+}
+
+export interface BillingItem {
+  id: string;
+  nurseServiceProductKey: string;
+  clinic: string;
+  chargeDate: string;
+  type: string;
+  name: string;
+  price: number;
+  totalPrice: number;
+  currency: string;
+  discount: number;
+  priceList: string;
+  patientKey: string;
+  quantity: number;
+=======
 export interface DischargePlanning {
   id?: number;
 
