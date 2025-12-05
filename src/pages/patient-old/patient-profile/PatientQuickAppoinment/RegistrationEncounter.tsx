@@ -7,7 +7,7 @@ import {
   useGetResourcesQuery
 } from '@/services/appointmentService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, localPatient }) => {
   const [validationResult] = useState({});
@@ -58,7 +58,12 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
     pageSize: 100
   });
   const [resourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const dayCaseDepartmentListResponse = useGetResourceTypeQuery('5433343011954425');
+  const { data: dayCaseDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
+    resourceType: 'DAY_CASE',
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
   // Fetches the list of resource availability times.
   const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
     ...resourcesAvailabilityTimeListRequest,
@@ -190,7 +195,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
           column
           fieldType="select"
           fieldName="departmentKey"
-          selectData={dayCaseDepartmentListResponse?.data?.object ?? []}
+          selectData={dayCaseDepartmentListResponse?.data ?? []}
           selectDataLabel="name"
           selectDataValue="key"
           record={localEncounter}
