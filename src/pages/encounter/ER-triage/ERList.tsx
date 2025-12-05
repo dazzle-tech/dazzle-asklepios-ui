@@ -41,7 +41,7 @@ import { useLocation } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
-
+import { useNavigate } from 'react-router-dom';
 const ERList = () => {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -50,7 +50,7 @@ const ERList = () => {
   const divContent = 'ER Department';
   dispatch(setPageCode('ER_Patient_Encounters'));
   dispatch(setDivContent(divContent));
-
+  const navigate = useNavigate();
   const [cancelEncounter] = useCancelEncounterMutation();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
@@ -122,6 +122,28 @@ const ERList = () => {
     if (encounterData && encounterData.key) {
       dispatch(setEncounter(encounterData));
       dispatch(setPatient(encounterData['patientObject']));
+    }
+      const privatePatientPath = '/user-access-patient-private';
+    const encounterPath = '/encounter';
+    const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
+    if (patientData.privatePatient) {
+      navigate(targetPath, {
+        state: {
+          info: 'toEncounter',
+          fromPage: 'ER_Department',
+          patient: patientData,
+          encounter: encounterData
+        }
+      });
+    } else {
+      navigate(targetPath, {
+        state: {
+          info: 'toEncounter',
+          fromPage: 'ER_Department',
+          patient: patientData,
+          encounter: encounterData
+        }
+      });
     }
     sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
