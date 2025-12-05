@@ -401,23 +401,26 @@ const Referrals = (props: any) => {
           );
         }
       },
-      {
-        key: 'perform',
-        dataKey: '',
-        title: <Translate>PERFORM</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const isDisabled = !rowData?.currentDepartment;
-          return (
-            <FaBedPulse
-              size={22}
-              fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
-              style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
-              onClick={!isDisabled ? OpenPerformModel : undefined}
-            />
-          );
-        }
-      },
+//dont remove this comment 
+//please dont remove this comment
+
+      // {
+      //   key: 'perform',
+      //   dataKey: '',
+      //   title: <Translate>PERFORM</Translate>,
+      //   flexGrow: 1,
+      //   render: (rowData: any) => {
+      //     const isDisabled = !rowData?.currentDepartment;
+      //     return (
+      //       <FaBedPulse
+      //         size={22}
+      //         fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
+      //         style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
+      //         onClick={!isDisabled ? OpenPerformModel : undefined}
+      //       />
+      //     );
+      //   }
+      // },
       {
         key: 'edit',
         dataKey: '',
