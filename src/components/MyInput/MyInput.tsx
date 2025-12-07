@@ -48,18 +48,18 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check';
+  | 'text'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -435,12 +435,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                    {
-                      [valueKey]: '__load_more__',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
+                  {
+                    [valueKey]: '__load_more__',
+                    [labelKey]: 'Load more...',
+                    isLoadMore: true
+                  }
+                ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -757,8 +757,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
+                  ? 'orange'
+                  : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
@@ -782,7 +782,7 @@ const MyInput = ({
         )}
         {props.required && <span className="required-field ">*</span>}
       </Form.ControlLabel>
-      {props.column}
+      {props.column && <br />}
       {conjureFormControl()}
       {validationResult && conjureValidationMessages()}
     </Form.Group>
