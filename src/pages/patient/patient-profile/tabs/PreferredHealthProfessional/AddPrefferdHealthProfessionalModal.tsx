@@ -104,7 +104,6 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
   const [createPreferredHP] = useCreatePatientPreferredHealthProfessionalMutation();
   const [updatePreferredHP] = useUpdatePatientPreferredHealthProfessionalMutation();
 
-
   const handleSaveAddPrefferdHealthProfessional = async () => {
     try {
       if (!patient?.id) {
@@ -121,7 +120,6 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         ...hpRecord
       };
 
-
       if (hpRecord.id) {
         await updatePreferredHP({
           id: hpRecord.id,
@@ -135,9 +133,7 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
             sev: 'success'
           })
         );
-      }
-
-      else {
+      } else {
         await createPreferredHP({
           patientId: patient.id,
           body
@@ -163,10 +159,8 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
     }
   };
 
-
   const content = () => (
     <Form layout="inline" className="ph-main-container" fluid>
-
       <MyInput
         column
         required

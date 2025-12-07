@@ -144,7 +144,6 @@ export const conjureValueBasedOnIDFromList = (
   return record?.[preferredField] ?? currentKey;
 };
 
-
 export const conjureValueBasedOnKeyFromListOfValues = (
   list: [],
   currentKey: string,
@@ -166,7 +165,6 @@ export const conjureOrderBasedOnKeyFromListOfValues = (
 ) => {
   let displayValue = currentKey;
   list.map(record => {
-
     if (record['key'] === currentKey) {
       displayValue = record[preferredField];
     }
