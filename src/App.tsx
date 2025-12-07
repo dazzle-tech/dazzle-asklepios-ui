@@ -632,7 +632,7 @@ const App = () => {
               <Route path='enums' element={<Enums/> }/>
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums />} />
-              <Route path='payer-setup' element={<PayerSetup/>} />
+              <Route path='payor-setup' element={<PayerSetup/>} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
               <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />
