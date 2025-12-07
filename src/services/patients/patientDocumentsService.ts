@@ -1,25 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
-import { parseLinkHeader } from '@/utils/paginationHelper';
-
-type Id = number | string;
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
-type LinkMap = {
-  next?: string | null;
-  prev?: string | null;
-  first?: string | null;
-  last?: string | null;
-};
-type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
-
-const mapPaged = (response: any[], meta: any): PagedResult<any> => {
-  const headers = meta?.response?.headers;
-  return {
-    data: response,
-    totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-    links: parseLinkHeader(headers?.get('Link'))
-  };
-};
 
 export const patientDocumentsService = createApi({
   reducerPath: 'patientDocumentsApi',
@@ -27,73 +7,77 @@ export const patientDocumentsService = createApi({
   tagTypes: ['PatientDocument'],
 
   endpoints: builder => ({
-    // ======================================
-    // GET ALL DOCUMENTS (PAGED)
-    // ======================================
-    getAllDocuments: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
-        url: '/api/patient-documents/documents',
+    // GET all documents (paged)
+    getAllDocuments: builder.query<any, any>({
+      query: ({ page, size, sort }) => ({
+        url: '/api/patient/documents',
         params: { page, size, sort }
       }),
-      transformResponse: mapPaged,
+      transformResponse: (response, meta) => ({
+        data: response,
+        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0)
+      }),
       providesTags: ['PatientDocument']
     }),
 
-    // ======================================
-    // GET SECONDARY DOCUMENTS (Paged)
-    // ======================================
-    getSecondaryDocumentsByPatient: builder.query<
-      PagedResult<any>,
-      { patientId: Id } & PagedParams
-    >({
-      query: ({ patientId, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient-documents/documents/secondary/${patientId}`,
+    // GET all documents for a specific patient (paged)
+    getDocumentsByPatient: builder.query<any, any>({
+      query: ({ patientId, page, size, sort }) => ({
+        url: `/api/patient/documents/patient/${patientId}`,
         params: { page, size, sort }
       }),
-      transformResponse: mapPaged,
+      transformResponse: (response, meta) => ({
+        data: response,
+        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0)
+      }),
       providesTags: ['PatientDocument']
     }),
 
-    // ======================================
-    // GET PRIMARY DOCUMENTS (Non-paged)
-    // ======================================
-    getPrimaryDocumentsByPatient: builder.query<any[], { patientId: Id }>({
+    // GET secondary documents (isPrimary = false)
+    getSecondaryDocumentsByPatient: builder.query<any, any>({
+      query: ({ patientId, page, size, sort }) => ({
+        url: `/api/patient/documents/secondary/${patientId}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response, meta) => ({
+        data: response,
+        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0)
+      }),
+      providesTags: ['PatientDocument']
+    }),
+
+    // GET primary document (isPrimary = true)
+    getPrimaryDocumentsByPatient: builder.query<any, any>({
       query: ({ patientId }) => ({
-        url: `/api/patient-documents/documents/primary/${patientId}`
+        url: `/api/patient/documents/primary/${patientId}`
       }),
       providesTags: ['PatientDocument']
     }),
 
-    // ======================================
-    // CREATE DOCUMENT
-    // ======================================
+    // CREATE document
     addPatientDocument: builder.mutation<any, any>({
       query: body => ({
-        url: '/api/patient-documents/documents',
+        url: '/api/patient/documents',
         method: 'POST',
         body
       }),
       invalidatesTags: ['PatientDocument']
     }),
 
-    // ======================================
-    // UPDATE DOCUMENT
-    // ======================================
-    updatePatientDocument: builder.mutation<any, { id: Id } & any>({
+    // UPDATE document
+    updatePatientDocument: builder.mutation<any, any>({
       query: ({ id, ...body }) => ({
-        url: `/api/patient-documents/documents/${id}`,
+        url: `/api/patient/documents/${id}`,
         method: 'PUT',
         body: { id, ...body }
       }),
       invalidatesTags: ['PatientDocument']
     }),
 
-    // ======================================
-    // DELETE DOCUMENT
-    // ======================================
-    deletePatientDocument: builder.mutation<any, { id: Id }>({
+    // DELETE document
+    deletePatientDocument: builder.mutation<any, any>({
       query: ({ id }) => ({
-        url: `/api/patient-documents/documents/${id}`,
+        url: `/api/patient/documents/${id}`,
         method: 'DELETE'
       }),
       invalidatesTags: ['PatientDocument']
@@ -104,6 +88,9 @@ export const patientDocumentsService = createApi({
 export const {
   useGetAllDocumentsQuery,
   useLazyGetAllDocumentsQuery,
+
+  useGetDocumentsByPatientQuery,
+  useLazyGetDocumentsByPatientQuery,
 
   useGetPrimaryDocumentsByPatientQuery,
   useLazyGetPrimaryDocumentsByPatientQuery,

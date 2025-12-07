@@ -415,7 +415,7 @@ export interface Laboratory {
   testInstructions?: string;
   category?: string;
   tubeType?: string;
-  timing?: String;
+  timing?: string;
 }
 
 export interface DiagnosticTestProfile {
@@ -922,7 +922,7 @@ export interface Patient {
 
   isVerified?: boolean | null;
   isCompletedPatient?: boolean | null;
-
+  securityAccessLevel?: string | null;
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
@@ -965,19 +965,37 @@ export interface VisitDuration {
 
 export interface PatientDocument {
   id?: number;
-  patientId: number; // FK -> Patient
-  countryId: number; // FK -> Country
-  category?: string | null; // PRIMARY / SECONDARY
-  type: string; // NATIONAL_ID / PASSPORT / ...
-  number: string; // Document number
+  patientId: number;
+  countryId: number;
+  type: string;
+  number: string;
+  isPrimary?: boolean | null;
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
-  lastModifiedDate?: Date | null;}
+  lastModifiedDate?: Date | null;
+}
+
 export interface PatientHIPAA {
   patientId?: number;
   noticeOfPrivacyPractice: boolean;
   privacyAuthorization: boolean;
   noticeOfPrivacyPracticeDate: string | null;
   privacyAuthorizationDate: string | null;
+}
+
+export interface PatientPreferredHealthProfessional {
+  id?: number;
+
+  patientId: number; // FK -> Patient
+  practitionerId: number; // FK -> Practitioner (ID بس)
+  facilityId: number; // FK -> Facility (ID بس)
+
+  networkAffiliation?: string | null;
+  relatedWith?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
 }

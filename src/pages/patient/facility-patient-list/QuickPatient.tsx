@@ -13,73 +13,76 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { notify } from '@/utils/uiReducerActions';
-
-// ✅ استيراد Patient من الـ types الجديدة
 import type { Patient } from '@/types/model-types-new';
+import { newPatient } from '@/types/model-types-constructor-new';
+import {
+  useAddPatientMutation,
+  useAddUnknownPatientMutation
+} from '@/services/patient/patientService';
 
-// ✅ استيراد الـ mutation الجديدة
-import { useAddPatientMutation } from '@/services/patient/patientService';
+/* ========================================================= */
+/* =============== Helper Functions ======================== */
+/* ========================================================= */
 
-// دالة ترجع مريض فاضي حسب الـ interface الجديد
-const getEmptyPatient = (): Patient => ({
-  id: undefined,
-  mrn: null,
-  firstName: '',
-  secondName: null,
-  thirdName: null,
-  lastName: '',
-  sexAtBirth: null,
-  dateOfBirth: null,
-  patientClasses: null,
-  isPrivatePatient: null,
-  firstNameSecondaryLang: null,
-  secondNameSecondaryLang: null,
-  thirdNameSecondaryLang: null,
-  lastNameSecondaryLang: null,
-  primaryMobileNumber: null,
-  receiveSms: null,
-  secondMobileNumber: null,
-  homePhone: null,
-  workPhone: null,
-  email: null,
-  receiveEmail: null,
-  preferredWayOfContact: null,
-  nativeLanguage: null,
-  emergencyContactName: null,
-  emergencyContactRelation: null,
-  emergencyContactPhone: null,
-  role: null,
-  maritalStatus: null,
-  nationality: null,
-  religion: null,
-  ethnicity: null,
-  occupation: null,
-  responsibleParty: null,
-  educationalLevel: null,
-  previousId: null,
-  archivingNumber: null,
-  details: null,
-  isUnknown: null,
-  isVerified: null,
-  isCompletedPatient: null,
-  securityAccessLevel: null,
-  createdBy: null,
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-});
+const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
+  const data = err?.data ?? {};
+  const errorKey = data?.errorKey;
+  const title = data?.title || '';
+  const detail = data?.detail || '';
+  const message = data?.message || '';
+  const fieldErrors = data?.fieldErrors;
+
+  const traceId =
+    data?.traceId || data?.correlationId
+      ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
+      : '';
+
+  /* ========================================================= */
+  /* =============== 1) Bean Validation Errors =============== */
+  /* ========================================================= */
+  if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+    const lines = fieldErrors.map((e: any) => {
+      const label = fieldLabels[e.field] || e.field;
+      return `• ${label}: ${e.message}`;
+    });
+
+    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+  }
+
+  /* ========================================================= */
+  /* =============== 2) Specific Custom Errors ============== */
+  /* ========================================================= */
+
+  if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
+
+  if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
+
+  if (errorKey === 'unique.mrn') return 'A patient with the same MRN already exists.' + traceId;
+
+  if (errorKey === 'db.constraint')
+    return detail || 'Database constraint violated while saving or updating patient.' + traceId;
+
+  /* ========================================================= */
+  /* =============== 3) Generic unknown error ================ */
+  /* ========================================================= */
+
+  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+};
+
+/* ========================================================= */
+/* ======================= Component ======================== */
+/* ========================================================= */
 
 const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const dispatch = useAppDispatch();
 
   const [isUnknown, setIsUnknown] = useState(false);
   const [validationResult, setValidationResult] = useState<any>({});
-  const [localPatient, setLocalPatient] = useState<Patient>(getEmptyPatient());
+  const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
 
-  // ✅ mutation الجديدة
-  const [addPatient /* , addPatientMutation */] = useAddPatientMutation();
-
-  const [saveEncounter /* , saveEncounterMutation */] = useCompleteEncounterRegistrationMutation();
+  const [addPatient] = useAddPatientMutation();
+  const [addUnknownPatient] = useAddUnknownPatientMutation(); // ✅ إضافة الـ mutation الجديد
+  const [saveEncounter] = useCompleteEncounterRegistrationMutation();
 
   const [localEncounter, setLocalEncounter] = useState({
     ...newApEncounter,
@@ -91,34 +94,34 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   });
 
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
-
-  // LOV للنوع (الجندر)
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
-  // حفظ المريض + encounter
+  /* ========================================================= */
+  /* ======================= SAVE ============================= */
+  /* ========================================================= */
+
   const handleSave = async () => {
     try {
-      // تجهيز payload حسب Patient interface
-      const payload: Patient = {
-        ...localPatient,
-        // تأكد إن في lastName عالأقل نقطة لو فاضي
-        lastName: localPatient.lastName || '.',
-        isUnknown: isUnknown,
-        // quick registration غالباً مش مكتمل
-        isCompletedPatient: isUnknown ? false : false,
-        // خليها null لاني مش عارف القيمة من عندكم
-        securityAccessLevel:
-          localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
-      };
+      let savedPatient: Patient;
 
-      // 1. إضافة المريض
-      const savedPatient = await addPatient(payload).unwrap();
+      if (isUnknown) {
+        savedPatient = await addUnknownPatient().unwrap();
+      }
+      else {
+        const payload: Patient = {
+          ...localPatient,
+          isCompletedPatient: false,
+          lastName: localPatient.lastName || '.',
+          securityAccessLevel:
+            localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
+        };
 
-      // 2. إضافة encounter لو إحنا في ER_Triage
+        savedPatient = await addPatient(payload).unwrap();
+      }
+
       if (pageCode === 'ER_Triage') {
         await saveEncounter({
           ...localEncounter,
-          // نفترض إن الـ encounter يتعامل مع الـ id كمفتاح
           patientKey: savedPatient.id?.toString(),
           plannedStartDate: new Date(),
           encounterStatusLkey: '8890456518264959',
@@ -131,30 +134,43 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         dispatch(setRefetchEncounter(true));
       }
 
-      // 3. تحديث الحالة وتمرير المريض للفوق إن لزم
       setLocalPatient(savedPatient);
       if (setPatient != null) {
         setPatient(savedPatient);
       }
 
       setOpen(false);
-
-      // 4. تنظيف الفورم
       handleClearModal();
-      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
       setValidationResult(undefined);
-    } catch (error: any) {
-      console.log('rejected', error);
-      if (error?.data?.validationResult) {
-        setValidationResult(error.data.validationResult);
+
+      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
+    } catch (err: any) {
+      console.log('Save error:', err);
+
+      const msg = toHumanBackendError(err, {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dateOfBirth: 'Date of Birth',
+        primaryMobileNumber: 'Primary Mobile Number',
+        sexAtBirth: 'Sex At Birth',
+        nationality: 'Nationality'
+      });
+
+      dispatch(notify({ msg, sev: 'error' }));
+
+      if (err?.data?.validationResult) {
+        setValidationResult(err.data.validationResult);
       }
     }
   };
 
-  // تنظيف الحقول
+  /* ========================================================= */
+  /* ======================= CLEAR ============================ */
+  /* ========================================================= */
+
   const handleClearModal = () => {
     setIsUnknown(false);
-    setLocalPatient(getEmptyPatient());
+    setLocalPatient({ ...newPatient });
     setLocalEncounter({
       ...newApEncounter,
       visitTypeLkey: '2041082245699228',
@@ -165,7 +181,21 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
     });
   };
 
-  // محتوى المودال
+  /* ========================================================= */
+  /* ======================== EFFECTS ========================= */
+  /* ========================================================= */
+
+  useEffect(() => {
+    if (!open) {
+      handleClearModal();
+      setValidationResult(undefined);
+    }
+  }, [open]);
+
+  /* ========================================================= */
+  /* ========================= RENDER ========================= */
+  /* ========================================================= */
+
   const quickPatientContent = (
     <Form layout="inline" fluid>
       {/* First Name */}
@@ -179,7 +209,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         disabled={isUnknown}
       />
 
-      {/* Last Name (مطلوب في الـ interface) */}
+      {/* Last Name */}
       <MyInput
         width={350}
         vr={validationResult}
@@ -229,7 +259,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         record={localPatient}
         setRecord={setLocalPatient}
         disabled={isUnknown}
-        allowNull
       />
 
       {/* Unknown toggle */}
@@ -238,13 +267,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       </div>
     </Form>
   );
-
-  // لما المودال يتسكر، نظف البيانات
-  useEffect(() => {
-    if (!open) {
-      handleClearModal();
-    }
-  }, [open]);
 
   return (
     <MyModal

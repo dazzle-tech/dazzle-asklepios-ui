@@ -10,7 +10,7 @@ import { Panel } from 'rsuite';
 import ConsentFormTab from './ConsentFormTab';
 import PatientAttachment from './tabs/Attachment-new/PatientAttachment';
 import DemographicsTab from './tabs/DemographicsTab';
-import SecondaryIDTab from './tabs/ExtraDetails/SecondaryIDTab';
+import SecondaryIDTab from './tabs/ExtraDetails/IDTab';
 import ExtraDetailsTab from './tabs/ExtraDetailsTab';
 import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
 import InsuranceTab from './tabs/InsuranceTab';
@@ -45,7 +45,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
   const genderEnum = useEnumOptions('Gender');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-  const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
+  const patientDocumentEnum = useEnumOptions('DocumentType');
+
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
 
   const tabData = [
@@ -57,7 +58,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           setLocalPatient={setLocalPatient}
           validationResult={validationResult}
           genderEnum={genderEnum}
-          docTypeLovQueryResponse={docTypeLovQueryResponse}
+          patientDocumentEnum={patientDocumentEnum}
           countryLovQueryResponse={countryLovQueryResponse}
           patientClassLovQueryResponse={patientClassLovQueryResponse}
           ageFormatType={ageFormatType}
@@ -95,7 +96,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
     },
     { title: 'Family Members', content: <PatientFamilyMembers localPatient={localPatient} /> },
-    { title: 'Secondary ID', content: <SecondaryIDTab localPatient={localPatient} /> },
+    { title: 'ID Documents', content: <SecondaryIDTab localPatient={localPatient} /> },
     {
       title: 'Attachments',
       content: (

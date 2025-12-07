@@ -781,6 +781,7 @@ export const newPatient: modelTypes.Patient = {
   isVerified: false,
   isCompletedPatient: false,
 
+  securityAccessLevel: null,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -808,14 +809,15 @@ export const newPatientDocument: modelTypes.PatientDocument = {
   id: undefined,
   patientId: undefined,
   countryId: undefined,
-  category: null,
-  type: '',
+  type: 'NATIONAL_ID',
   number: '',
+  isPrimary: false,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null
 };
+
 export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   patientId: undefined,
   noticeOfPrivacyPractice: false,
@@ -823,3 +825,17 @@ export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   noticeOfPrivacyPracticeDate: null,
   privacyAuthorizationDate: null
 };
+
+export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredHealthProfessional =
+  {
+    id: undefined,
+    patientId: 0,
+    practitionerId: 0,
+    facilityId: 0,
+    networkAffiliation: '',
+    relatedWith: '',
+    createdBy: '',
+    createdDate: null,
+    lastModifiedBy: null,
+    lastModifiedDate: null
+  };

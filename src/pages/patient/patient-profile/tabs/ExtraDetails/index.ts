@@ -1,3 +1,3 @@
-import SecondaryIDTab from './SecondaryIDTab';
+import SecondaryIDTab from './IDTab';
 
 export default SecondaryIDTab;

@@ -15,7 +15,7 @@ interface DemographicsTabProps {
   setLocalPatient: (patient: Patient) => void;
   validationResult: any;
   genderEnum: any;
-  docTypeLovQueryResponse: any;
+  patientDocumentEnum: any;
   countryLovQueryResponse: any;
   patientClassLovQueryResponse: any;
   ageFormatType: { ageFormat: string };
@@ -27,7 +27,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   setLocalPatient,
   validationResult,
   genderEnum,
-  docTypeLovQueryResponse,
+  patientDocumentEnum,
   countryLovQueryResponse,
   patientClassLovQueryResponse,
   ageFormatType,
@@ -56,17 +56,10 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
               />
             </Row>
             <Row>
-              <SectionContainer
-                title={<Translate>Document</Translate>}
-                content={
-                  <DocumentInfo
-                    validationResult={validationResult}
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    docTypeLovQueryResponse={docTypeLovQueryResponse}
-                    countryLovQueryResponse={countryLovQueryResponse}
-                  />
-                }
+              <AddressTab
+                localPatient={localPatient}
+                setLocalPatient={setLocalPatient}
+                validationResult={validationResult}
               />
             </Row>
           </Col>
@@ -81,13 +74,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
                     validationResult={validationResult}
                   />
                 }
-              />
-            </Row>
-            <Row>
-              <AddressTab
-                localPatient={localPatient}
-                setLocalPatient={setLocalPatient}
-                validationResult={validationResult}
               />
             </Row>
           </Col>

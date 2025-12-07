@@ -1,3 +1,5 @@
+import { idParsingService } from '@/services/idParsingService';
+import { summarizationService } from '@/services/summarizationService';
 import { configureStore } from '@reduxjs/toolkit';
 import uiSlice from './reducers/uiSlice';
 import { uiService } from '@/services/uiService';
@@ -97,6 +99,10 @@ import { patientPreferredHealthProfessionalService } from './services/patients/P
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
 export const store = configureStore({
   reducer: {
+    //aid parsing and summarization services
+    [idParsingService.reducerPath]: idParsingService.reducer,
+    [summarizationService.reducerPath]: summarizationService.reducer,
+
     // ui
     [uiSlice.name]: uiSlice.reducer,
     [uiService.reducerPath]: uiService.reducer,
@@ -288,6 +294,8 @@ export const store = configureStore({
   // @ts-ignore
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware().concat([
+      idParsingService.middleware,
+      summarizationService.middleware,
       uiService.middleware,
       authService.middleware,
       authServiceApi.middleware,

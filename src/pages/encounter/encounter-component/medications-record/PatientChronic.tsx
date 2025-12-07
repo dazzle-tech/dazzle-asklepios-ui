@@ -35,7 +35,6 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions, pa
             }
         ],
     });
-
     orderMedicationsPatient?.object?.forEach(order => {
         if (order.chronicMedication) {
             combinedArray.push({
@@ -245,6 +244,9 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions, pa
         pageIndex * rowsPerPage,
         pageIndex * rowsPerPage + rowsPerPage
     );
+
+    console.log('orderMedicationsPatient', paginatedData);
+
     return (<>
         <MyTable
             data={paginatedData ?? []}

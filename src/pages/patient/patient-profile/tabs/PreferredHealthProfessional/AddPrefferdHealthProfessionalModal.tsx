@@ -29,7 +29,7 @@ type AddPrefferdHealthProfessionalModalProps = {
   practitioner: any;
   setPractitioner: (val: any) => void;
   refetch?: () => void;
-  editable?: boolean; // 👈 الجديد
+  editable?: boolean;
 };
 
 const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessionalModalProps> = ({
@@ -41,7 +41,7 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
   practitioner,
   setPractitioner,
   refetch,
-  editable = false // 👈 default false
+  editable = false
 }) => {
   const dispatch = useAppDispatch();
 
@@ -51,21 +51,35 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
   const specility = useEnumOptions('Specialty');
   const { data: facilityListResponse = [] } = useGetAllFacilitiesQuery({});
 
-  // --- PRACTITIONERS PAGINATION STATE ---
   const [practitionerPage, setPractitionerPage] = useState(0);
   const [practitionerList, setPractitionerList] = useState<any[]>([]);
 
-  const { data: practitionersResponse, isFetching: loadingPractitioners } =
-    useGetPractitionersByFacilityQuery(
-      {
-        facilityId: hpRecord?.facilityId,
-        page: practitionerPage,
-        size: 10
-      },
-      {
-        skip: !hpRecord?.facilityId
+  const {
+    data: practitionersResponse,
+    isFetching: loadingPractitioners,
+    refetch: refetchPractitioners
+  } = useGetPractitionersByFacilityQuery(
+    {
+      facilityId: hpRecord?.facilityId,
+      page: practitionerPage,
+      size: 10
+    },
+    {
+      skip: !hpRecord?.facilityId,
+      refetchOnMountOrArgChange: true
+    }
+  );
+
+  useEffect(() => {
+    if (open) {
+      setPractitionerPage(0);
+      setPractitionerList([]);
+
+      if (hpRecord?.facilityId && refetchPractitioners) {
+        refetchPractitioners();
       }
-    );
+    }
+  }, [open]);
 
   useEffect(() => {
     if (practitionersResponse?.data) {
@@ -77,13 +91,20 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
     }
   }, [practitionersResponse, practitionerPage]);
 
-  // --- CREATE / UPDATE MUTATIONS ---
+  useEffect(() => {
+    if (hpRecord?.practitionerId && practitionerList.length > 0) {
+      const matchingPractitioner = practitionerList.find(p => p.id === hpRecord.practitionerId);
+
+      if (matchingPractitioner) {
+        setPractitioner(matchingPractitioner);
+      }
+    }
+  }, [hpRecord?.facilityId, practitionerList, hpRecord?.practitionerId]);
+
   const [createPreferredHP] = useCreatePatientPreferredHealthProfessionalMutation();
   const [updatePreferredHP] = useUpdatePatientPreferredHealthProfessionalMutation();
 
-  // -------------------------------------------
-  // SAVE HANDLER
-  // -------------------------------------------
+
   const handleSaveAddPrefferdHealthProfessional = async () => {
     try {
       if (!patient?.id) {
@@ -100,7 +121,7 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         ...hpRecord
       };
 
-      // 🟢 Edit mode (عنده id)
+
       if (hpRecord.id) {
         await updatePreferredHP({
           id: hpRecord.id,
@@ -115,7 +136,7 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
           })
         );
       }
-      // 🔵 Create mode (ما عنده id)
+
       else {
         await createPreferredHP({
           patientId: patient.id,
@@ -142,12 +163,10 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
     }
   };
 
-  // -------------------------------------------
-  // MODAL UI CONTENT
-  // -------------------------------------------
+
   const content = () => (
     <Form layout="inline" className="ph-main-container" fluid>
-      {/* HP ORGANIZATION */}
+
       <MyInput
         column
         required
@@ -174,19 +193,20 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         }}
       />
 
-      {/* HP NAME */}
       <MyInput
         column
         required
         fieldLabel="HP Name"
         fieldType="selectPagination"
         fieldName="practitionerId"
-        selectData={practitionerList ?? []}
+        selectData={practitionersResponse?.data ?? []}
         selectDataLabel={['firstName', 'lastName']}
         selectDataValue="id"
         record={hpRecord}
         setRecord={updatedHP => {
-          const selected = practitionerList.find(p => p.id === updatedHP.practitionerId);
+          const selected = practitionersResponse?.data?.find(
+            p => p.id === updatedHP.practitionerId
+          );
 
           setPatientHP({
             ...updatedHP,
@@ -206,7 +226,6 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         }}
       />
 
-      {/* SPECIALITY */}
       <MyInput
         disabled
         column
@@ -220,7 +239,6 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         setRecord={setPractitioner}
       />
 
-      {/* NETWORK AFFILIATION */}
       <MyInput
         column
         fieldLabel="Network Affiliation"
@@ -230,7 +248,6 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         setRecord={setPatientHP}
       />
 
-      {/* EMAIL */}
       <MyInput
         column
         disabled
@@ -241,7 +258,6 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         setRecord={setPractitioner}
       />
 
-      {/* PHONE */}
       <MyInput
         column
         disabled
@@ -252,7 +268,6 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         setRecord={setPractitioner}
       />
 
-      {/* RELATED WITH */}
       <MyInput
         column
         fieldLabel="Related with"
@@ -264,11 +279,16 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
     </Form>
   );
 
-  // -------------------------------------------
   return (
     <MyModal
       open={open}
-      setOpen={setOpen}
+      setOpen={isOpen => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          setPractitionerPage(0);
+          setPractitionerList([]);
+        }
+      }}
       title={
         editable
           ? 'Edit Patient Preferred Health Professional'

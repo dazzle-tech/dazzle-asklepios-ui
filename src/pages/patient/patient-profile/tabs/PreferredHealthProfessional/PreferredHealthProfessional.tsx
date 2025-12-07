@@ -15,16 +15,12 @@ import { PlusRound } from '@rsuite/icons';
 import React, { useState } from 'react';
 import '../styles.less';
 import AddPrefferdHealthProfessionalModal from './AddPrefferdHealthProfessionalModal';
-
 import {
   useDeletePatientPreferredHealthProfessionalMutation,
   useGetPatientPreferredHealthProfessionalsQuery
 } from '@/services/patients/PatientPreferredHealthProfessional';
-
 import { PaginationPerPage } from '@/utils/paginationPerPage';
-
-// 👇 المهم: استخدام lazy query
-import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
 
 const PreferredHealthProfessional = ({ patient, isClick }) => {
   const dispatch = useAppDispatch();
@@ -66,16 +62,11 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
   const totalCount = preferredHPResponse?.totalCount ?? 0;
   const links = preferredHPResponse?.links ?? {};
 
-  //---------------------------------
-  //  Practitioner map (id -> Practitioner)
-  //---------------------------------
-  const [practitionersMap, setPractitionersMap] = useState<
-    Record<number | string, Practitioner>
-  >({});
+  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
+    {}
+  );
+  const [getPractitionersBulk] = useGetPractitionersBulkMutation();
 
-  const [triggerGetPractitionerById] = useLazyGetPractitionerByIdQuery();
-
-  // 👇 هون فعلياً منستخدم triggerGetPractitionerById عشان نجيب الـ practitioner لكل record
   React.useEffect(() => {
     const loadPractitioners = async () => {
       const rows = preferredHPResponse?.data ?? [];
@@ -84,44 +75,22 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
         return;
       }
 
-      // IDs فريدة
       const uniqueIds = Array.from(
-        new Set(
-          rows
-            .map((row: any) => row.practitionerId)
-            .filter((id: any) => id !== null && id !== undefined)
-        )
+        new Set(rows.map(row => row.practitionerId).filter(id => id !== null && id !== undefined))
       );
 
       try {
-        const results = await Promise.all(
-          uniqueIds.map(async (id) => {
-            try {
-              const res = await triggerGetPractitionerById(id).unwrap();
-              return [id, res] as [number | string, Practitioner];
-            } catch (e) {
-              console.error('Error fetching practitioner by id', id, e);
-              return null;
-            }
-          })
-        );
-
-        const validEntries = results.filter(
-          (entry): entry is [number | string, Practitioner] => entry !== null
-        );
-
-        setPractitionersMap(Object.fromEntries(validEntries));
+        const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
+        const map = Object.fromEntries(practitioners.map(p => [p.id, p]));
+        setPractitionersMap(map);
       } catch (e) {
-        console.error('Failed to load practitioners by id', e);
+        console.error('Bulk practitioner load failed', e);
       }
     };
 
     loadPractitioners();
-  }, [preferredHPResponse, triggerGetPractitionerById]);
+  }, [preferredHPResponse]);
 
-  //---------------------------------
-  // Add new
-  //---------------------------------
   const handleNewPreferredHP = () => {
     setEditable(false);
     setPatientHP({ ...newPatientPreferredHealthProfessional });
@@ -129,9 +98,6 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
     setOpen(true);
   };
 
-  //---------------------------------
-  // Delete
-  //---------------------------------
   const handleDeletePH = () => {
     deletePatientPH({
       id: patientHP.id,
@@ -150,9 +116,6 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
     setPractitioner({ ...newPractitioner });
   };
 
-  //---------------------------------
-  // Pagination handlers
-  //---------------------------------
   const handlePageChange = (event, newPage) => {
     PaginationPerPage.handlePageChange(
       event,
@@ -173,52 +136,31 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
     });
   };
 
-  //---------------------------------
-  // Table Columns (كلها تعتمد على practitionersMap اللي جاي من triggerGetPractitionerById)
-  //---------------------------------
   const columns = [
     {
       key: 'practitionerId',
       title: <Translate>Name of the HP</Translate>,
       flexGrow: 4,
-      render: (row: any) => {
+      render: row => {
         const p = practitionersMap[row.practitionerId];
-        // عدّل حسب structure تبع Practitioner عندك (مثلاً firstName + lastName)
         if (!p) return '';
-        return p.firstName
-          ? `${p.firstName} ${p.lastName ?? ''}`.trim()
-          : '';
+        return `${p.firstName} ${p.lastName ?? ''}`.trim();
       }
     },
-    // لو حاب تضيف speciality من الـ practitioner نفسه
-    // {
-    //   key: 'speciality',
-    //   title: <Translate>Speciality</Translate>,
-    //   flexGrow: 4,
-    //   render: (row: any) => {
-    //     const p = practitionersMap[row.practitionerId];
-    //     return p?.specialityName || '';
-    //   }
-    // },
     {
-      key: 'telephoneNo',
-      title: <Translate>Telephone no.</Translate>,
+      key: 'phoneNumber',
+      title: <Translate>Phone Number</Translate>,
       flexGrow: 4,
+      render: row => practitionersMap[row.practitionerId]?.phoneNumber ?? ''
     },
     {
       key: 'email',
       title: <Translate>Email</Translate>,
       flexGrow: 4,
-      render: (row: any) => {
+      render: row => {
         const p = practitionersMap[row.practitionerId];
         return p?.email || '';
       }
-    },
-    {
-      key: 'hpOrganization',
-      title: <Translate>HP Organization</Translate>,
-      flexGrow: 4,
-      render: (row: any) => row?.facility?.facilityName || ''
     },
     {
       key: 'networkAffiliation',
@@ -236,9 +178,8 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
       key: 'actions',
       title: <Translate>Actions</Translate>,
       width: 120,
-      render: (row: any) => {
+      render: row => {
         const p = practitionersMap[row.practitionerId];
-
         return (
           <div className="container-of-icons">
             <FontAwesomeIcon
@@ -267,9 +208,6 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
 
   const isSelected = row => (row?.id === patientHP?.id ? 'selected-row' : '');
 
-  //---------------------------------
-  // JSX
-  //---------------------------------
   return (
     <div className="tab-main-container">
       <AddPrefferdHealthProfessionalModal

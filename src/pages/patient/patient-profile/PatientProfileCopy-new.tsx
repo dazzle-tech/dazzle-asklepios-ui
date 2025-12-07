@@ -125,8 +125,11 @@ const PatientProfile = () => {
   const handleSave = async () => {
     try {
       const saved = localPatient?.id
-        ? await updatePatient({ id: localPatient.id, data: localPatient }).unwrap()
-        : await addPatient(localPatient).unwrap();
+        ? await updatePatient({
+            id: localPatient.id,
+            data: { ...localPatient, isCompletedPatient: true }
+          }).unwrap()
+        : await addPatient({ ...localPatient, isCompletedPatient: true }).unwrap();
 
       setLocalPatient(saved);
       dispatch(setPatient(saved));
@@ -274,7 +277,6 @@ const PatientProfile = () => {
           setLocalPatient={setLocalPatient}
           refetchData={refetchData}
           setRefetchData={setRefetchData}
-          searchRef={searchRef}
         />
       </div>
 
