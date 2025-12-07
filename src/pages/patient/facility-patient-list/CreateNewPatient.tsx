@@ -4,31 +4,36 @@ import { useAppDispatch } from '@/hooks';
 import { faUser, faIdCard, faPhone, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import './styles.less';
-import { newApEncounter, newApPatientInsurance, newApPatient } from '@/types/model-types-constructor';
-import { ApPatientInsurance, ApPatient } from '@/types/model-types';
+import { newApEncounter, newApPatientInsurance } from '@/types/model-types-constructor';
+import { ApPatientInsurance } from '@/types/model-types';
+import { newApPatient } from '@/types/model-types-constructor';
+import { ApPatient } from '@/types/model-types';
 import MyModal from '@/components/MyModal/MyModal';
-import { useGetLovValuesByCodeAndParentQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useSavePatientMutation, useSavePatientInsuranceMutation } from '@/services/patientService';
+import {
+  useGetLovValuesByCodeAndParentQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
+import { useSavePatientMutation } from '@/services/patientService';
 import { useNavigate } from 'react-router-dom';
+import { useSavePatientInsuranceMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyButton from '@/components/MyButton/MyButton';
+import './styles.less';
 import { calculateAgeFormat } from '@/utils';
 import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
-// NEW IMPORTS for Payors / Plans
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
-import { useGetPayorPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
-
 const CreateNewPatient = ({ open, setOpen }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
-  const [savePatientInsurance] = useSavePatientInsuranceMutation();
-  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
+  const [savePatientInsurance, savePatientInsuranceMutation] = useSavePatientInsuranceMutation();
+  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({
+    ...newApPatientInsurance
+  });
   const [savePatient, savePatientMutation] = useSavePatientMutation();
   const [openNextDocument, setOpenNextDocument] = useState(false);
   const [localEncounter, setLocalEncounter] = useState({
@@ -37,60 +42,24 @@ const CreateNewPatient = ({ open, setOpen }) => {
     patientKey: localPatient.key,
     plannedStartDate: new Date(),
     patientAge: calculateAgeFormat(localPatient.dob),
-    discharge: false,
+    discharge: false
   });
-  const [saveEncounter] = useCompleteEncounterRegistrationMutation();
+  const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
-
-  // LOVs
+  // Fetch LOV data for various fields
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-  const { data: preferredWayOfContactLovQueryResponse } = useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+  const { data: preferredWayOfContactLovQueryResponse } =
+    useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'CITY',
-    parentValueKey: localPatient.countryLkey,
+    parentValueKey: localPatient.countryLkey
   });
+  const { data: isnuranceProviderTypeResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
+  const { data: isnurancePlanTypeResponse } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
 
-  const [prevPayorId, setPrevPayorId] = useState<number | undefined>(undefined);
-
-  const [payorPage, setPayorPage] = useState(0);
-  const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
-
-  const [planPage, setPlanPage] = useState(0);
-
-  // Fetch Payors with pagination
-  const {
-    data: payorResponse,
-    isLoading: payorLoading,
-    isFetching: payorFetching,
-  } = useGetAllPayorsQuery({
-    page: payorPage,
-    size: 20,
-    sort: 'name,asc',
-    ...(payorSearchKeyword && { name: payorSearchKeyword }),
-  });
-
-  // Fetch Payor Plans based on selected Payor
-  const {
-    data: plansResponse,
-    isLoading: plansLoading,
-    isFetching: plansFetching,
-  } = useGetPayorPlansByPayorQuery(
-    {
-      payorId: Number(patientInsurance?.insuranceProviderLkey) || 0,
-      page: planPage,
-      size: 20,
-      sort: 'name,asc',
-    },
-    {
-      skip: !patientInsurance?.insuranceProviderLkey,
-    }
-  );
-
-  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
-  const selectedFacility = tenant?.selectedFacility || null;
-
+  // Handle Save Patient
   const handleSave = () => {
     savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
       .unwrap()
@@ -98,15 +67,18 @@ const CreateNewPatient = ({ open, setOpen }) => {
         dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
       });
   };
-
+  //handle Save Patient
   const handleSavePatientAndQuick = async () => {
     try {
+      // 1. Save patient and wait for the result
       const savedPatient = await savePatient({
         ...localPatient,
         incompletePatient: false,
-        unknownPatient: false,
+        unknownPatient: false
       }).unwrap();
 
+      // 2. Save encounter using saved patient key
+      // 2. Save encounter using saved patient key
       if (pageCode === 'ER_Triage') {
         await saveEncounter({
           ...localEncounter,
@@ -115,22 +87,26 @@ const CreateNewPatient = ({ open, setOpen }) => {
           encounterStatusLkey: '8890456518264959',
           patientAge: calculateAgeFormat(savedPatient.dob),
           visitTypeLkey: '2041082245699228',
-          resourceTypeLkey: 'EMERGENCY',
-          facilityKey: selectedFacility?.id,
-          resourceKey: '5006',
+          resourceTypeLkey: '6743167799449277',
+          resourceKey: '7101086042442391'
         });
         dispatch(setRefetchEncounter(true));
       }
 
+      // 3. Update state and navigate
       setLocalPatient(savedPatient);
-      { pageCode !== 'ER_Triage' && navigate('/patient-profile', { state: { patient: savedPatient } }); }
+      {
+        pageCode !== 'ER_Triage' &&
+          navigate('/patient-profile', { state: { patient: savedPatient } });
+      }
 
+      // 4. Clean up
       dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
     } catch (error) {
       console.log('rejected');
     }
   };
-
+  // Handle Go To Patient Profile
   const goToPatientProfile = () => {
     setOpen(false);
     const privatePatientPath = '/patient-profile';
@@ -138,7 +114,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
     setLocalPatient({ ...newApPatient });
     setPatientInsurance({ ...newApPatientInsurance });
   };
-
+  // Handle Save Patient Insurance
   const handleSaveInsurance = async () => {
     savePatientInsurance({ ...patientInsurance, patientKey: localPatient.key })
       .unwrap()
@@ -154,46 +130,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
         setPatientInsurance({ ...patientInsurance, primaryInsurance: false });
       });
   };
-
-  const hasMorePayors = payorResponse?.links?.next != null;
-  const hasMorePlans = plansResponse?.links?.next != null;
-
-  const handleLoadMorePayors = () => {
-    if (hasMorePayors && !payorFetching) {
-      setPayorPage(prev => prev + 1);
-    }
-  };
-
-  const handleLoadMorePlans = () => {
-    if (hasMorePlans && !plansFetching) {
-      setPlanPage(prev => prev + 1);
-    }
-  };
-
-  // Reset payors page when search changes
-  useEffect(() => {
-    setPayorPage(0);
-  }, [payorSearchKeyword]);
-
-  useEffect(() => {
-    const currentPayorId = patientInsurance?.insuranceProviderLkey
-      ? Number(patientInsurance.insuranceProviderLkey)
-      : undefined;
-
-    if (currentPayorId === prevPayorId) return;
-
-    setPlanPage(0);
-
-    if (prevPayorId !== undefined) {
-      setPatientInsurance(prev => ({
-        ...prev,
-        insurancePlanTypeLkey: undefined,
-      }));
-    }
-
-    setPrevPayorId(currentPayorId);
-  }, [patientInsurance?.insuranceProviderLkey, prevPayorId]);
-
+  // Modal Content
   const conjureFormContent = stepNumber => {
     switch (stepNumber) {
       case 0:
@@ -240,6 +177,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <MyInput
               width={200}
               required
@@ -423,28 +361,34 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               column
               width={200}
-              fieldLabel="Payor"
-              fieldType="selectPagination"
+              fieldLabel="Insurance Provider"
+              fieldType="select"
               fieldName="insuranceProviderLkey"
-              selectData={payorResponse?.data ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
+              selectData={isnuranceProviderTypeResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
               record={patientInsurance}
               setRecord={setPatientInsurance}
               disabled={!localPatient.key}
-              searchable={true}
-              loading={payorLoading || payorFetching}
-              hasMore={hasMorePayors}
-              onFetchMore={handleLoadMorePayors}
-              searchKeyWard={payorSearchKeyword}
-              setSearchKeyWard={setPayorSearchKeyword}
-              placeholder="Select Payor..."
             />
             <MyInput
               width={200}
               column
               fieldLabel="Insurance Policy Number"
               fieldName="insurancePolicyNumber"
+              record={patientInsurance}
+              setRecord={setPatientInsurance}
+              disabled={!localPatient.key}
+            />
+            <MyInput
+              width={200}
+              column
+              fieldLabel="Insurance Plan Type"
+              fieldType="select"
+              fieldName="insurancePlanTypeLkey"
+              selectData={isnurancePlanTypeResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
               record={patientInsurance}
               setRecord={setPatientInsurance}
               disabled={!localPatient.key}
@@ -461,28 +405,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               width={200}
               column
-              fieldLabel="Insurance Plan Type"
-              fieldType="selectPagination"
-              fieldName="insurancePlanTypeLkey"
-              selectData={plansResponse?.data ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={patientInsurance}
-              setRecord={setPatientInsurance}
-              disabled={!localPatient.key || !patientInsurance?.insuranceProviderLkey}
-              searchable={true}
-              loading={plansLoading || plansFetching}
-              hasMore={hasMorePlans}
-              onFetchMore={handleLoadMorePlans}
-              placeholder={
-                !patientInsurance?.insuranceProviderLkey
-                  ? 'Select Payor first...'
-                  : 'Select Plan...'
-              }
-            />
-            <MyInput
-              width={200}
-              column
               fieldType="date"
               fieldLabel="Expiration Date"
               fieldName="expirationDate"
@@ -492,11 +414,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
             />
           </Form>
         );
-      default:
-        return null;
     }
   };
 
+  // Effects
   useEffect(() => {
     if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
       setLocalPatient(savePatientMutation.data);
@@ -505,7 +426,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
       }
     }
   }, [savePatientMutation]);
-
   useEffect(() => {
     if (!open) {
       setLocalPatient({ ...newApPatient });
@@ -517,16 +437,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
         patientKey: localPatient.key,
         plannedStartDate: new Date(),
         patientAge: calculateAgeFormat(localPatient.dob),
-        discharge: false,
+        discharge: false
       });
-
-      setPrevPayorId(undefined);
-      setPayorPage(0);
-      setPayorSearchKeyword('');
-      setPlanPage(0);
     }
   }, [open]);
-
   return (
     <MyModal
       open={open}
@@ -541,24 +455,24 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyButton onClick={pageCode === 'ER_Triage' ? handleSavePatientAndQuick : handleSave}>
               {pageCode === 'ER_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
             </MyButton>
-          ),
+          )
         },
         {
           title: 'Document',
           icon: <FontAwesomeIcon icon={faIdCard} />,
           disabledNext: !openNextDocument,
-          footer: <MyButton onClick={handleSave}>Save</MyButton>,
+          footer: <MyButton onClick={handleSave}>Save</MyButton>
         },
         {
           title: 'Contact',
           icon: <FontAwesomeIcon icon={faPhone} />,
-          footer: <MyButton onClick={handleSave}>Save</MyButton>,
+          footer: <MyButton onClick={handleSave}>Save</MyButton>
         },
         {
           title: 'Insurance',
           icon: <FontAwesomeIcon icon={faShieldHalved} />,
-          footer: <MyButton onClick={handleSaveInsurance}>Save Insurance</MyButton>,
-        },
+          footer: <MyButton onClick={handleSaveInsurance}>Save Insurance</MyButton>
+        }
       ]}
       size="33vw"
       position="right"
@@ -571,5 +485,4 @@ const CreateNewPatient = ({ open, setOpen }) => {
     />
   );
 };
-
 export default CreateNewPatient;

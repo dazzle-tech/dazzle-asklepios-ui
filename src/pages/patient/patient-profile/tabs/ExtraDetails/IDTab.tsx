@@ -3,14 +3,13 @@ import { useAppDispatch } from '@/hooks';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
-import { initialListRequest, ListRequest } from '@/types/types';
 import {
-  useGetPatientSecondaryDocumentsQuery,
-  useDeletePatientSecondaryDocumentMutation
-} from '@/services/patientService';
+  useGetDocumentsByPatientQuery,
+  useDeletePatientDocumentMutation
+} from '@/services/patients/patientDocumentsService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
-import { newApPatientSecondaryDocuments } from '@/types/model-types-constructor';
+import { newPatientDocument } from '@/types/model-types-constructor-new';
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
@@ -18,164 +17,185 @@ import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddExtraDetails from './AddExtraDetails';
 import { formatDateWithoutSeconds } from '@/utils';
-const SecondaryIDTab = ({ localPatient }) => {
+
+const IDTab = ({ localPatient }) => {
   const dispatch = useAppDispatch();
   const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
-  const [secondaryDocument, setSecondaryDocument] = useState(newApPatientSecondaryDocuments);
+  const [secondaryDocument, setSecondaryDocument] = useState(newPatientDocument);
   const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
-  const [deleteSecondaryDocument] = useDeletePatientSecondaryDocumentMutation();
+  const [deletePatientDocument] = useDeletePatientDocumentMutation();
   const [selectedSecondaryDocument, setSelectedSecondaryDocument] = useState<any>({
-    ...newApPatientSecondaryDocuments
+    ...newPatientDocument
   });
-  // Initialize patient preferred health professional list request with default filters
-  const [documenstListRequest, setDocumentsListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
-  // Fetch patient secondary documents list
-  const { data: patientSecondaryDocumentsResponse, refetch: patientSecondaryDocuments } =
-    useGetPatientSecondaryDocumentsQuery(documenstListRequest, { skip: !localPatient.key });
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Fetch patient documents list
+  const {
+    data: patientSecondaryDocumentsResponse,
+    refetch: patientSecondaryDocuments,
+    isLoading
+  } = useGetDocumentsByPatientQuery(
+    {
+      patientId: localPatient?.id,
+      page,
+      size: rowsPerPage,
+      sort: 'createdDate,desc'
+    },
+    { skip: !localPatient?.id }
+  );
+
   // Function to check if the current row is the selected one
   const isSelectedDocument = rowData => {
-    if (rowData && secondaryDocument && secondaryDocument.key === rowData.key) {
+    if (rowData && secondaryDocument && secondaryDocument.id === rowData.id) {
       return 'selected-row';
     } else return '';
   };
+
   // Handle Delete Secondary Document Function
   const handleDeleteSecondaryDocument = () => {
-    deleteSecondaryDocument({
-      key: selectedSecondaryDocument.key
-    }).then(
-      () => (
-        patientSecondaryDocuments(),
-        dispatch(notify({ msg: 'Secondary Document Deleted', sev: 'success' })),
-        setDeleteDocModalOpen(false)
-      )
-    );
-    handleClearDocument();
+    deletePatientDocument({
+      id: selectedSecondaryDocument.id
+    })
+      .unwrap()
+      .then(() => {
+        patientSecondaryDocuments();
+        dispatch(notify({ msg: 'Document Deleted Successfully', sev: 'success' }));
+        setDeleteDocModalOpen(false);
+        handleClearDocument();
+      })
+      .catch(error => {
+        dispatch(notify({ msg: 'Failed to delete document', sev: 'error' }));
+        console.error('Error deleting document:', error);
+      });
   };
+
   // Handle Clear Secondary Document Function
   const handleClearDocument = () => {
     setSecondaryDocumentModalOpen(false);
-    setSecondaryDocument(newApPatientSecondaryDocuments);
+    setSecondaryDocument(newPatientDocument);
     setDeleteDocModalOpen(false);
+    setSelectedSecondaryDocument(newPatientDocument);
   };
+
   // Handle Edit Secondary Document Function
   const handleEditSecondaryDocument = () => {
-    if (selectedSecondaryDocument) {
+    if (selectedSecondaryDocument?.id) {
       setSecondaryDocumentModalOpen(true);
     }
   };
+
   // Change page event handler
   const handlePageChange = (_: unknown, newPage: number) => {
-    setDocumentsListRequest({ ...documenstListRequest, pageNumber: newPage + 1 });
+    setPage(newPage);
   };
+
   // Change number of rows per page
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDocumentsListRequest({
-      ...documenstListRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // Reset to first page
-    });
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to first page
   };
+
+  // Format document type for display
+  const formatDocumentType = (type: string) => {
+    if (!type) return '-';
+    // Convert enum format to readable format
+    return type
+      .split('_')
+      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const columns = [
     {
-      key: 'documentCountry',
+      key: 'isPrimary',
+      title: <Translate>Primary</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => (
+        <span style={{ color: rowData.isPrimary ? '#4caf50' : '#757575' }}>
+          {rowData.isPrimary ? '✓ Yes' : 'No'}
+        </span>
+      )
+    },
+    {
+      key: 'country',
       title: <Translate>Document Country</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.documentCountryLvalue
-          ? rowData.documentCountryLvalue.lovDisplayVale
-          : rowData.documentCountryLkey
+      render: (rowData: any) => rowData.country || '-'
     },
     {
-      key: 'documentType',
+      key: 'type',
       title: <Translate>Document Type</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.documentTypeLvalue
-          ? rowData.documentTypeLvalue.lovDisplayVale
-          : rowData.documentTypeLkey
+      render: (rowData: any) => formatDocumentType(rowData.type)
     },
     {
-      key: 'documentNo',
+      key: 'number',
       title: <Translate>Document Number</Translate>,
       flexGrow: 4,
-      dataKey: 'documentNo'
+      dataKey: 'number'
     },
     {
       key: 'createdAt',
       title: <Translate>CREATED AT/BY</Translate>,
+      flexGrow: 3,
       fullText: true,
       render: (row: any) =>
-        row?.createdAt ? (
+        row?.createdDate ? (
           <>
-            {row?.createdByUser?.fullName}
+            {row?.createdBy || '-'}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>{' '}
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
           </>
         ) : (
-          ' '
+          '-'
         )
     },
     {
       key: 'updatedAt',
       title: <Translate>UPDATED AT/BY</Translate>,
+      flexGrow: 3,
       fullText: true,
       render: (row: any) =>
-        row?.updatedAt ? (
+        row?.lastModifiedDate ? (
           <>
-            {row?.updatedByUser?.fullName}
+            {row?.lastModifiedBy || '-'}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.updatedAt)}</span>{' '}
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(row.lastModifiedDate)}
+            </span>
           </>
         ) : (
-          ' '
+          '-'
         )
     }
   ];
-  // Handle adding a new Secondary Document Function
+
+  // Handle adding a new Document Function
   const handleNewDocSecondary = () => {
     setSecondaryDocumentModalOpen(true);
-    setSelectedSecondaryDocument(newApPatientSecondaryDocuments);
+    setSecondaryDocument(newPatientDocument);
+    setSelectedSecondaryDocument(newPatientDocument);
   };
+
   // Effects
   useEffect(() => {
-    if (selectedSecondaryDocument) {
+    if (selectedSecondaryDocument?.id) {
       setSecondaryDocument(selectedSecondaryDocument);
     }
   }, [selectedSecondaryDocument]);
+
+  // Reset to first page when patient changes
   useEffect(() => {
-    setDocumentsListRequest(prev => ({
-      ...prev,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        ...(localPatient?.key
-          ? [
-              {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: localPatient.key
-              }
-            ]
-          : [])
-      ]
-    }));
-  }, [localPatient.key]);
-  // Pagination values
-  const pageIndex = documenstListRequest.pageNumber - 1;
-  const rowsPerPage = documenstListRequest.pageSize;
-  const totalCount = patientSecondaryDocumentsResponse?.extraNumeric ?? 0;
+    if (localPatient?.id) {
+      setPage(0);
+    }
+  }, [localPatient?.id]);
+
+  const totalCount = patientSecondaryDocumentsResponse?.totalCount ?? 0;
+
   return (
     <div className="tab-main-container">
       <div className="tab-content-btns">
@@ -189,20 +209,20 @@ const SecondaryIDTab = ({ localPatient }) => {
         />
         <MyButton
           onClick={handleNewDocSecondary}
-          disabled={!localPatient.key}
+          disabled={!localPatient?.id}
           prefixIcon={() => <PlusRound />}
         >
-          New Secondary Document
+          New Document
         </MyButton>
         <MyButton
-          disabled={!selectedSecondaryDocument?.key}
+          disabled={!selectedSecondaryDocument?.id}
           onClick={handleEditSecondaryDocument}
           prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
         >
           Edit
         </MyButton>
         <MyButton
-          disabled={!selectedSecondaryDocument?.key}
+          disabled={!selectedSecondaryDocument?.id}
           onClick={() => {
             setDeleteDocModalOpen(true);
           }}
@@ -213,26 +233,27 @@ const SecondaryIDTab = ({ localPatient }) => {
       </div>
       <MyTable
         height={600}
-        data={patientSecondaryDocumentsResponse?.object ?? []}
+        data={patientSecondaryDocumentsResponse?.data ?? []}
         columns={columns}
         onRowClick={rowData => {
           setSelectedSecondaryDocument(rowData);
         }}
         rowClassName={isSelectedDocument}
-        page={pageIndex}
+        page={page}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
+        loading={isLoading}
       />
       <DeletionConfirmationModal
         open={deleteDocModalOpen}
         setOpen={setDeleteDocModalOpen}
         itemToDelete="Document"
         actionButtonFunction={handleDeleteSecondaryDocument}
-      ></DeletionConfirmationModal>
+      />
     </div>
   );
 };
 
-export default SecondaryIDTab;
+export default IDTab;
