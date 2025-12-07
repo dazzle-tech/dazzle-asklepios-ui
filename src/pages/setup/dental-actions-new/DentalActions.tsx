@@ -48,7 +48,7 @@ const DentalActions = () => {
   const [link, setLink] = useState({});
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: "id,asc",
   });
   const [sortColumn, setSortColumn] = useState("id");
@@ -61,7 +61,7 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
 
  const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5
+    size: 15
     ,
     sort: "id,asc",
   });

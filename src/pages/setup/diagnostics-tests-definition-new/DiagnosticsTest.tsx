@@ -44,13 +44,13 @@ const DiagnosticsTest = () => {
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: 'id,asc',
     timestamp: Date.now()
   });
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: 'id,asc'
   });
   const [linksState, setLinksState] = useState<{
