@@ -206,6 +206,8 @@ import PriceLists from './pages/billing-module/priceList/PriceLists';
 import MyConsultations from './components/MyConsultations/MyConsultations';
 import PreviousMeasurements from './pages/encounter/encounter-pre-observations-new/previous-measurements';
 import PayerSetup from './pages/setup/payer-setup';
+import CountrySetup from './pages/setup/country-setup/CountrySetup';
+import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -411,6 +413,8 @@ const App = () => {
               <Route path="quick-visit" element={<QuickVisit />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="ER-triage" element={<ERTriage />} />
+              <Route path="country-setup" element={<CountrySetup />} />
+              <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
   <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>
