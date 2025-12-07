@@ -79,6 +79,24 @@ export const PractitionerService = createApi({
       },
       providesTags: ["Practitioner"],
     }),
+
+    // 🔹 Get active practitioners by sub-specialty
+    getActivePractitionersBySubSpecialty: builder.query({
+      query: ({ specialty, ...params }) => ({
+        url: `/api/setup/practitioner/active/by-sub-specialty/${specialty}`,
+        method: "GET",
+        params,
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["Practitioner"],
+    }),
     getPractitionerByName: builder.query({
       query: ({ name, ...params }) => ({
         url: `/api/setup/practitioner/by-name/${name}`,
@@ -146,6 +164,8 @@ export const {
   useLazyGetPractitionersBySpecialtyQuery,
   useLazyGetPractitionerByNameQuery,
   useGetPractitionersBySpecialtyQuery,
+  useGetActivePractitionersBySubSpecialtyQuery,
+  useLazyGetActivePractitionersBySubSpecialtyQuery,
   useGetPractitionerByIdQuery,
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,

@@ -21,8 +21,10 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const [isUnknown, setIsUnknown] = useState(false);
   const [validationResult, setValidationResult] = useState({});
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
+
   const [savePatient, savePatientMutation] = useSavePatientMutation();
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
+
   const [localEncounter, setLocalEncounter] = useState({
     ...newApEncounter,
     visitTypeLkey: '2041082245699228',
@@ -31,25 +33,48 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
     patientAge: calculateAgeFormat(localPatient.dob),
     discharge: false
   });
-
+ const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+  const selectedFacility = tenant?.selectedFacility || null;
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
 
-  // Fetch LOV data for various fields
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
-  //handle Save Patient
+  useEffect(() => {
+    if (localPatient?.dob) {
+      const ageFormatted = calculateAgeFormat(localPatient.dob);
+      setLocalPatient(
+        prev =>
+          ({
+            ...(prev as any),
+            ageDisplay: ageFormatted
+          } as ApPatient)
+      );
+    } else {
+      setLocalPatient(
+        prev =>
+          ({
+            ...(prev as any),
+            ageDisplay: ''
+          } as ApPatient)
+      );
+    }
+  }, [localPatient.dob]);
+
+  // Handle Save
   const handleSave = async () => {
     try {
-      // 1. Save patient and wait for the result
+      // Remove ageDisplay before sending to backend
+      const { ageDisplay, ...patientToSave } = (localPatient as any) || {};
+
+      // 1. Save patient
       const savedPatient = await savePatient({
-        ...localPatient,
+        ...(patientToSave as ApPatient),
         skipValidation: isUnknown,
         incompletePatient: true,
         unknownPatient: isUnknown
       }).unwrap();
 
-      // 2. Save encounter using saved patient key
-      // 2. Save encounter using saved patient key
+      // 2. Save encounter (ER only)
       if (pageCode === 'ER_Triage') {
         await saveEncounter({
           ...localEncounter,
@@ -58,52 +83,65 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
           encounterStatusLkey: '8890456518264959',
           patientAge: calculateAgeFormat(savedPatient.dob),
           visitTypeLkey: '2041082245699228',
-          resourceTypeLkey: '6743167799449277',
-          resourceKey: '7101086042442391'
+          resourceTypeLkey: 'EMERGENCY',
+          facilityKey: selectedFacility?.id,
+          resourceKey: '5006'
         });
         dispatch(setRefetchEncounter(true));
       }
-
-      // 3. Update state and navigate
       setLocalPatient(savedPatient);
       if (setPatient != null) {
         setPatient(savedPatient);
       }
       setOpen(false);
-      {
-        pageCode !== 'ER_Triage';
-      }
 
-      // 4. Clean up
+      // 4. Cleanup
       handleClearModal();
       dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
       setValidationResult(undefined);
     } catch (error) {
-      console.log('rejected');
       if (error?.data?.validationResult) {
         setValidationResult(error.data.validationResult);
       }
     }
   };
 
-  // Handle Clear Modal Fields
+  // Clear all fields
   const handleClearModal = () => {
     setIsUnknown(undefined);
     setLocalPatient(newApPatient);
   };
 
-  // Quick Patient Modal Content
+  // Modal content UI
   const quickPatientContent = (
     <Form layout="inline" fluid>
+      {/* First Name */}
       <MyInput
         width={350}
         vr={validationResult}
         column
+        fieldType="text"
         fieldName="firstName"
         record={localPatient}
         setRecord={setLocalPatient}
         disabled={isUnknown}
+        required
       />
+
+      {/* Last Name */}
+      <MyInput
+        width={350}
+        vr={validationResult}
+        column
+        fieldType="text"
+        fieldName="lastName"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        disabled={isUnknown}
+        required
+      />
+
+      {/* Gender */}
       <MyInput
         width={350}
         vr={validationResult}
@@ -118,34 +156,56 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         setRecord={setLocalPatient}
         disabled={isUnknown}
         searchable={false}
+        required
       />
+
+      {/* DOB + AGE (Y M D) using MyInput for Age, read-only */}
+      <div style={{ display: 'flex', gap: 10 }}>
+        <MyInput
+          width={200}
+          vr={validationResult}
+          column
+          fieldType="date"
+          fieldLabel="DOB"
+          fieldName="dob"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disabled={isUnknown}
+          required
+        />
+
+        <MyInput
+          width={150}
+          vr={validationResult}
+          column
+          fieldType="text"
+          fieldLabel="Age"
+          fieldName="ageDisplay"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disabled={true} 
+        />
+      </div>
+
+      {/* Mobile */}
       <MyInput
         width={350}
         vr={validationResult}
         column
+        fieldType="text"
         fieldName="mobileNumber"
         record={localPatient}
         setRecord={setLocalPatient}
         disabled={isUnknown}
       />
-      <MyInput
-        width={350}
-        vr={validationResult}
-        column
-        fieldType="date"
-        fieldLabel="DOB"
-        fieldName="dob"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        disabled={isUnknown}
-        allowNull
-      />
+
       <div>
         Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
       </div>
     </Form>
   );
-  // Effects
+
+  // Reset fields when modal closes
   useEffect(() => {
     if (!open) {
       setLocalPatient({ ...newApPatient });
@@ -159,6 +219,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       });
     }
   }, [open]);
+
   return (
     <MyModal
       open={open}

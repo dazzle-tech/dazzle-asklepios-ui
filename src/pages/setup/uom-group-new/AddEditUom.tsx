@@ -541,8 +541,8 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
           });
           setUomRelationUpdated({
             // id: undefined,
-            // fromUnitId: undefined,
-            // toUnitId: undefined,
+            fromUnitId: null,
+            toUnitId: null,
             // relation: 0
           });
           dispatch(

@@ -5,7 +5,8 @@ import {
   faCommentDots,
   faHeadset,
   faNoteSticky,
-  faRepeat
+  faRepeat,
+  faStethoscope
 } from '@fortawesome/free-solid-svg-icons';
 import { faSun } from '@fortawesome/free-solid-svg-icons';
 import { faMoon } from '@fortawesome/free-solid-svg-icons';
@@ -53,7 +54,7 @@ import { UserDepartment } from '@/types/model-types-new';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
-const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
+const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expandNotes }) => {
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
@@ -192,28 +193,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
             Customize Dashboard
           </div>
         </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => {
-            setOpenMoreMenu(false);
-            setShowChatModal(true);
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCommentDots} />
-            Secure Messaging
-          </div>
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => {
-            setOpenMoreMenu(false);
-            setShowAppointmentsModal(true);
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCalendarDays} />
-            My Appointments
-          </div>
-        </Dropdown.Item>
+     
 
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
@@ -526,19 +506,27 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Secure Messaging">
+            {/* <Tooltip title="Secure Messaging">
               <IconButton size="small" onClick={() => setShowChatModal(true)}>
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faCommentDots}
                 />
               </IconButton>
-            </Tooltip>
-            <Tooltip title="My Appointments">
+            </Tooltip> */}
+            {/* <Tooltip title="My Appointments">
               <IconButton size="small" onClick={() => setShowAppointmentsModal(true)}>
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faCalendarDays}
+                />
+              </IconButton>
+            </Tooltip> */}
+            <Tooltip title="My Consultations">
+              <IconButton size="small" onClick={() => {navigate('/my-consultations');}}>
+                <FontAwesomeIcon
+                  className="header-screen-bar-icon-size-handle"
+                  icon={faStethoscope}
                 />
               </IconButton>
             </Tooltip>
@@ -553,7 +541,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
               </IconButton>
             </Tooltip>
             <Tooltip title="Sticky Notes">
-              <IconButton size="small" onClick={() => setExpandNotes(true)}>
+              <IconButton size="small" onClick={() => setExpandNotes(!expandNotes)}>
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faNoteSticky}
@@ -670,7 +658,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
       </div>
 
       {/* Chat Screen Modal */}
-      <Dialog
+      {/* <Dialog
         open={showChatModal}
         onClose={() => setShowChatModal(false)}
         maxWidth="lg"
@@ -688,9 +676,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         <DialogContent className="chat-modal-content">
           <ChatScreen />
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
-      <MyModal
+      {/* <MyModal
         open={showAppointmentsModal}
         setOpen={setShowAppointmentsModal}
         title="My Appointments"
@@ -699,7 +687,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         content={<MyAppointmentScreen />}
         hideBack={true}
         actionButtonLabel="Save"
-      />
+      /> */}
     </>
   );
 };

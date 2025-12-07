@@ -13,7 +13,12 @@ import {
 import FullViewTable from './FullViewTable';
 import { useGetGenericMedicationActiveIngredientQuery } from '@/services/medicationsSetupService';
 import Section from '@/components/Section';
-
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
+import { formatEnumString } from '@/utils';
+// please dont remove any commented code in this page
+//
+//
 const PatientChronicMedication = ({ patient, title = null }) => {
   const [open, setOpen] = useState(false);
   // Initialize the state for generic medication list request with default settings and descending sort order
@@ -24,13 +29,18 @@ const PatientChronicMedication = ({ patient, title = null }) => {
   // Fetch custom instructions for medication prescriptions
   const { data: customeInstructions } = useGetCustomeInstructionsQuery({ ...initialListRequest });
   // Fetch predefined instruction list used in prescriptions
-  const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({
-    ...initialListRequest
-  });
+  // const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({
+  //   ...initialListRequest
+  // });
+    const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+  
   // Fetch list of generic medications
-  const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({
-    ...initialListRequest
-  });
+  // const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({
+  //   ...initialListRequest
+  // });
+    const { data: genericMedicationListResponse } =
+      useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+
   // Fetch prescription medications for a specific patient that are marked as chronic and active
   const { data: prescriptionMedications } = useGetPrescriptionMedicationsQuery({
     ...initialListRequest,
@@ -81,34 +91,34 @@ const PatientChronicMedication = ({ patient, title = null }) => {
   const combinedArray = [];
 
   // Loop through order medications and push formatted data into the combined array
-  orderMedications?.object?.forEach(order => {
-    combinedArray.push({
-      createdAt: order.createdAt,
-      createdBy: order.createdBy,
-      key: order.key,
-      genericMedicationsKey: order.genericMedicationsKey,
-      instructionsTypeLvalue: 'Custom',
-      instructions: order.instructions,
-      notes: order.notes,
-      parametersToMonitor: order.parametersToMonitor,
-      indication: order.indicationIcd,
-      indicationUse: order.indicationUseLvalue?.lovDisplayVale ?? '',
-      indicationManually: order.indicationManually,
-      activeIngredient: order.activeIngredient,
-      roa: order.roaLvalue?.lovDisplayVale,
-      frequency: order.frequency,
-      dose: order.dose,
-      unit: order.doseUnitLvalue?.lovDisplayVale,
-      sourceName: 'Order'
-    });
-  });
+  // orderMedications?.object?.forEach(order => {
+  //   combinedArray.push({
+  //     createdAt: order.createdAt,
+  //     createdBy: order.createdBy,
+  //     key: order.key,
+  //     genericMedicationsKey: order.genericMedicationsKey,
+  //     instructionsTypeLvalue: 'Custom',
+  //     instructions: order.instructions,
+  //     notes: order.notes,
+  //     parametersToMonitor: order.parametersToMonitor,
+  //     indication: order.indicationIcd,
+  //     indicationUse: order.indicationUseLvalue?.lovDisplayVale ?? '',
+  //     indicationManually: order.indicationManually,
+  //     activeIngredient: order.activeIngredient,
+  //     roa: order.roaLvalue?.lovDisplayVale,
+  //     frequency: order.frequency,
+  //     dose: order.dose,
+  //     unit: order.doseUnitLvalue?.lovDisplayVale,
+  //     sourceName: 'Order'
+  //   });
+  // });
   // Loop through prescription medications and push formatted data into the combined array
   prescriptionMedications?.object?.forEach(pre => {
     combinedArray.push({
       createdAt: pre.createdAt,
       createdBy: pre.createdBy,
       key: pre.key,
-      genericMedicationsKey: pre.genericMedicationsKey,
+      genericMedicationsKey: pre.genericMedicationsId,
       instructionsTypeLvalue: pre.instructionsTypeLvalue?.lovDisplayVale ?? '',
       instructionsTypeLkey: pre.instructionsTypeLkey,
       instructions: pre.instructions,
@@ -124,60 +134,68 @@ const PatientChronicMedication = ({ patient, title = null }) => {
 
   // Table Columns
   const columns = [
-    {
-      key: 'medicationBrandName',
-      title: 'MEDICATION BRAND NAME',
-      render: rowData =>
-        genericMedicationListResponse?.object?.find(
-          item => item.key === rowData.genericMedicationsKey
-        )?.genericName || ''
-    },
-    {
-      key: 'instructions',
-      title: 'INSTRUCTIONS',
-      render: rowData => {
-        if (rowData.sourceName === 'Prescription') {
-          if (rowData.instructionsTypeLkey === '3010591042600262') {
-            const generic = predefinedInstructionsListResponse?.object?.find(
-              item => item.key === rowData.instructions
-            );
-            return [
-              generic?.dose,
-              generic?.unitLvalue?.lovDisplayVale,
-              generic?.routLvalue?.lovDisplayVale,
-              generic?.frequencyLvalue?.lovDisplayVale
-            ]
-              .filter(Boolean)
-              .join(', ');
-          }
+{
+  key: 'medicationBrandName',
+  title: 'MEDICATION BRAND NAME',
+  render: (rowData: any) => {
+    const id = rowData.genericMedicationsKey;
 
-          if (rowData.instructionsTypeLkey === '3010573499898196') {
-            return rowData.instructions;
-          }
+    const item = genericMedicationListResponse?.data?.find(item => {
+   
+      return item.id === id;
+    });
 
-          if (rowData.instructionsTypeLkey === '3010606785535008') {
-            const custom = customeInstructions?.object?.find(
-              item => item.prescriptionMedicationsKey === rowData.key
-            );
-            return [
-              custom?.dose,
-              custom?.roaLvalue?.lovDisplayVale,
-              custom?.unitLvalue?.lovDisplayVale,
-              custom?.frequencyLvalue?.lovDisplayVale
-            ]
-              .filter(Boolean)
-              .join(', ');
-          }
-        } else {
-          return joinValuesFromArray([
-            rowData.dose,
-            rowData.unit,
-            rowData.frequency > 0 ? `every ${rowData.frequency} hours` : 'STAT',
-            rowData.roa
-          ]);
-        }
-      }
-    }
+    return item?.name || '-';
+  }
+},
+
+    {
+         key: 'instructions',
+         dataKey: '',
+         title: 'Instructions',
+         flexGrow: 3,
+         render: (rowData: any) => {
+           if (rowData.instructionsTypeLkey === '3010591042600262') {
+             const generic = predefinedInstructionsListResponse?.data?.find(
+               item => item.id === Number(rowData.instructions)
+             );
+          
+   
+             if (generic) {
+             } else {
+               console.warn('No matching generic found for key:', rowData.instructions);
+             }
+             return [
+               generic?.dose ?? '',
+               formatEnumString(generic?.unit) ?? '',
+               formatEnumString(generic?.rout) ?? '',   // ✅ route
+               formatEnumString(generic?.frequency) ?? '',
+             ]
+               .filter(v => v != null && String(v).trim() !== '')
+               .join(', ');
+           }
+           if (rowData.instructionsTypeLkey === '3010573499898196') {
+             return rowData.instructions;
+           }
+           if (rowData.instructionsTypeLkey === '3010606785535008') {
+             return (
+               customeInstructions?.object?.find(
+                 item => item.prescriptionMedicationsKey === rowData.key
+               )?.dose +
+               ',' +
+               customeInstructions?.object?.find(
+                 item => item.prescriptionMedicationsKey === rowData.key
+               )?.unitLvalue.lovDisplayVale +
+               ',' +
+               customeInstructions?.object?.find(
+                 item => item.prescriptionMedicationsKey === rowData.key
+               )?.frequencyLvalue.lovDisplayVale
+             );
+           }
+   
+           return 'no';
+         }
+       },
   ];
 
   // Join non-empty (truthy) values from an array into a comma-separated string

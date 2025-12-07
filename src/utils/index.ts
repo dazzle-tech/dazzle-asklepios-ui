@@ -7,7 +7,7 @@ export { default as formatValue } from './formatValue';
 export const fromCamelCaseToDBName = word => {
   let final = '';
   for (const char of word) {
-    if (char === char.toUpperCase()) {
+    if (char === char.toUpperCase() && char !== char.toLowerCase()) {
       final += '_' + char.toLowerCase();
     } else {
       final += char;
@@ -123,7 +123,7 @@ export const conjureValueBasedOnKeyFromList = (
   preferredField: any
 ) => {
   let displayValue: any = currentKey;
-  list.map(record => {
+  list?.map(record => {
     if (record?.key === currentKey) {
       displayValue = record?.[preferredField];
     }
@@ -134,21 +134,36 @@ export const conjureValueBasedOnKeyFromList = (
 export const conjureValueBasedOnIDFromList = (
   list: any[],
   currentKey: string | number | null | undefined,
-  preferredField: any
+  preferredField: string
 ) => {
-  let displayValue: any = currentKey;
-  list?.map(record => {
-    if (record?.id === currentKey) {
-      displayValue = record?.[preferredField];
-    }
-  });
-  return displayValue;
+  if (currentKey == null) return '';
+
+  const current = String(currentKey);
+
+  const record = list?.find(r => String(r.id) === current);
+  return record?.[preferredField] ?? currentKey;
 };
+
 
 export const conjureValueBasedOnKeyFromListOfValues = (
   list: [],
   currentKey: string,
   preferredField: 'lovDisplayVale'
+) => {
+  let displayValue = currentKey;
+  list.map(record => {
+
+    if (record['key'] === currentKey) {
+      displayValue = record[preferredField];
+    }
+  });
+  return displayValue;
+};
+
+export const conjureOrderBasedOnKeyFromListOfValues = (
+  list: [],
+  currentKey: string,
+  preferredField: 'valueOrder'
 ) => {
   let displayValue = currentKey;
   list.map(record => {

@@ -69,7 +69,7 @@ const Users = () => {
 
    // Pagination values
   const [pageIndex, setPageIndex] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [rowsPerPage, setRowsPerPage] = useState(15);
 
     const handlePageChange = (_: unknown, newPage: number) => {
         setPageIndex(newPage);

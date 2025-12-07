@@ -16,7 +16,7 @@ import {
 import { Form } from 'rsuite';
 import { ApBed, ApPatient, ApRoom, ApTransferPatient } from '@/types/model-types';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import MyLabel from '@/components/MyLabel';
 import { useSaveTransferPatientMutation } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
@@ -31,7 +31,12 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
   const [transferPatient, setTransferPatient] = useState<ApTransferPatient>({
     ...newApTransferPatient
   });
-  const inpatientDepartmentListResponse = useGetResourceTypeQuery('4217389643435490');
+  const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
+    resourceType: 'INPATIENT_ADMISSION',
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
   const [bedCount, setBedCount] = useState({ count: 0 });
   const [saveTransferPatient] = useSaveTransferPatientMutation();
   const dispatch = useAppDispatch();
@@ -77,7 +82,7 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
           fieldLabel="Transfer To Ward"
           fieldName="toInpatientDepartmentKey"
           selectData={
-            inpatientDepartmentListResponse?.data?.object?.filter(
+            inpatientDepartmentListResponse?.data?.filter(
               item => item.key !== localEncounter?.resourceObject?.key
             ) ?? []
           }

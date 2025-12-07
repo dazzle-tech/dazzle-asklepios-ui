@@ -14,7 +14,6 @@ import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 
 const BedTransactionsSecondTab = ({ departmentKey }) => {
-
   const dispatch = useDispatch();
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 

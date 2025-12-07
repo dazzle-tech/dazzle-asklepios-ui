@@ -7,9 +7,11 @@ import { initialListRequest, ListRequest } from "@/types/types";
 import React, { useState } from "react";
 import { formatDateWithoutSeconds } from "@/utils";
 import PrescriptionDetails from "./PrescriptionDetails";
-const Prescriptions = ({ patient, genericMedicationListResponse, customeInstructions }) => {
+import { useGetAllBrandMedicationsQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
+const Prescriptions = ({ patient,  customeInstructions }) => {
     const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
     //List of current patient prescriptions that have been submitted
+    // const {data:genericMedicationListResponse}=useGetAllBrandMedicationsQuery({page:1,size:1000});
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -138,7 +140,7 @@ const Prescriptions = ({ patient, genericMedicationListResponse, customeInstruct
         <br />
         {/* when click row show table for medication details */}
         {prescription.key &&
-            <PrescriptionDetails customeInstructions={customeInstructions} genericMedicationListResponse={genericMedicationListResponse} prescription={prescription} />}
+            <PrescriptionDetails customeInstructions={customeInstructions}  prescription={prescription} />}
     </>)
 }
 export default Prescriptions;

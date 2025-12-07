@@ -133,7 +133,8 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Medication Reconciliation", code: "MEDICATION_RECONCILIATION", icon: <FontAwesomeIcon icon={faPills} className="icon" />, path: "/medication-reconciliation" },
   { name: "Wound Care Documentation", code: "WOUND_CARE_DOCUMENTATION", icon: <FontAwesomeIcon icon={faBandAid} className="icon" />, path: "/wound-care-documentation" },
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
-  { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" }
+  { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
+  { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' }
 ];
 
 
@@ -186,7 +187,9 @@ export const MODULES: Module[] =
         { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
         { name: "User New", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 0, navPath: "users-new" },
         { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
-        { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" }
+        { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
+        { name: "Payer Setup", code: "PAYER", description: "test", icon: "FaGlobe", viewOrder: 21, navPath: "payer-setup" },
+
       ],
     },
     {
@@ -601,7 +604,7 @@ export const MODULES: Module[] =
           description: "",
           icon: "FaMoneyBill",
           viewOrder: 0,
-          navPath: "progress-notes",
+          navPath: "price-list",
         },
       ],
     },

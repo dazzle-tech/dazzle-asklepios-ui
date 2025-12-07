@@ -517,10 +517,10 @@ export const newBrandMedication:modelTypes.BrandMedication= {
   costCategory: '',
   roa: '',
   isActive: true,
-  hasActiveIngredient:false,
-  // 🟡 future fields (currently commented out in backend)
-  // uomGroupId?: null,
-  // uomGroupUnitId?: null
+  uomGroupId: null,
+  uomGroupUnitId: null,
+  hasActiveIngredient:false
+ 
 }
 
 export const newSubstitute:modelTypes.Substitute={
@@ -630,7 +630,9 @@ export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   description: null,
   type: '',
   departmentId: 0,
-  departmentName: null
+  departmentName: null,
+  facilityId: 0,
+  facilityName: null
 };
 
 export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
@@ -638,6 +640,7 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   description: null,
   type: '',
   departmentId: 0,
+  facilityId: 0
 };
 
 export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
@@ -645,6 +648,7 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   description: null,
   type: '',
   departmentId: 0,
+  facilityId: 0
 };
 export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
   id: 0,
@@ -692,6 +696,39 @@ export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFood
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
+};
+export const newInventoryProduct: modelTypes.InventoryProduct = {
+  id: undefined,
+  name: '',
+  type: '',
+  code: '',
+  barcode: '',
+  brandId: null,
+  uomGroupId: null,
+  baseUom: null,
+  dispenseUom: null,
+  controlledSubstance: false,
+  hazardousBiohazardousTag: null,
+  allergyRisk: false,
+  itemAverageCost: null,
+  pricePerBaseUom: null,
+  warrantyStartDate: null,
+  warrantyEndDate: null,
+  maintenanceSchedule: null,
+  maintenanceScheduleType: null,
+  criticalEquipment: false,
+  calibrationRequired: false,
+  trainingRequired: false,
+  batchManaged: false,
+  expiryDateMandatory: false,
+  reusable: false,
+  inventoryType: null,
+  shelfLife: null,
+  shelfLifeUnit: null,
+  leadTime: null,
+  leadTimeUnit: null,
+  erpIntegrationId: null,
+  isActive: true,
 };
 export const newDiagnosticTestCoding: modelTypes.DiagnosticTestCoding = {
   id: undefined,
@@ -741,4 +778,313 @@ export const newVisitDuration: modelTypes.VisitDuration = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
+};
+export const newPriceList: modelTypes.PriceList = {
+  id: undefined,
+  facilityId: null,
+  facilityIds: [],
+  name: "",
+  type: "",
+  effectiveFrom: "",
+  effectiveTo: null,
+  description: "",
+  isActive: false,
+};
+
+export const newReportTemplate: modelTypes.ReportTemplate = {
+  id: 0,
+  name: null,
+  templateValue: null,
+  isActive: true,
+};
+
+export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTemplate = {
+  id: 0,
+  diagnosticTest: null,
+  name: null,
+  templateValue: null,
+  isActive: true,
+};
+
+export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM = {
+    id: undefined,
+    userId: undefined,
+    note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'',
+    createdBy: '',
+    createdDate: null,
+    lastModifiedBy: '',
+    lastModifiedDate: null
+};
+
+export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
+    userId: undefined,
+     note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'--note-purple'
+}
+export const newPriceListItem: modelTypes.PriceListItem = {
+  id: undefined,
+  priceListId: 0,
+  itemType: null,
+  productType: null,
+  serviceId: null,
+  productId: null,
+  price: 0,
+  discountAllowed: false,
+  isActive: true,
+
+};
+
+export const newReferralRequest: modelTypes.ReferralRequest = {
+  id: null,
+  patientId: null,
+  encounterId: null,
+  referralType: "INTERNAL",
+  facilityId: null,
+  departmentId: null,
+  referralReason: "",
+  priority: null,
+  isActive: true,
+};
+// Billing Invoice
+
+export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
+  facilityId: 0,
+  patientKey: null,
+  encounterKey: null,
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: null,
+};
+
+export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
+  id: 0,
+  facilityId: 0,
+  patientKey: null,
+  encounterKey: null,
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: null,
+};
+
+export const newBillingInvoiceResponse: modelTypes.BillingInvoiceResponseVM = {
+  id: 0,
+  invoiceNumber: "",
+  facilityId: 0,
+  patientKey: null,
+  encounterKey: null,
+  status: "",
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+}
+
+export const newPayor: modelTypes.Payor = {
+  id: undefined,
+  code: "",
+  name: "",
+  category: null,
+  address: "",
+  phone: "",
+  email: "",
+  contractManagerContact: "",
+  startDate: null,
+  expiryDate: null,
+  renewable: false,
+  allowPartialCoverage: false,
+  acceptCopay: false,
+  acceptDeductibles: false,
+  allowPackagePricing: false,
+  allowDrgBilling: false,
+  forcePreApproval: false,
+  isActive: true,
+};
+
+export const newPayorPlan: modelTypes.PayorPlan = {
+  id: undefined,
+  payorId: 0,
+  name: '',
+  planType: null,
+  itemType: null,
+  amount: null,
+  coverageType: null,
+  isActive: true,
+  createdDate: null,
+  lastModifiedDate: null,
+
+};
+
+// Billing Invoice Item
+
+export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
+  invoiceId: 0,
+  nurseServiceProductKey: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: null,
+};
+
+export const newBillingInvoiceItemUpdate: modelTypes.BillingInvoiceItemUpdateVM = {
+  id: 0,
+  invoiceId: 0,
+  nurseServiceProductKey: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: null,
+};
+
+export const newBillingInvoiceItemResponse: modelTypes.BillingInvoiceItemResponseVM = {
+  id: 0,
+  invoiceId: 0,
+  nurseServiceProductKey: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+// Patient Payment
+
+export const newPatientPayment: modelTypes.PatientPaymentCreateVM = {
+  patientKey: null,
+  facilityId: 0,
+  paymentType: null,
+  paymentMethod: null,
+  paymentDate: "",
+  amount: 0,
+  currency: null,
+  reference: null,
+  notes: null,
+};
+
+export const newPatientPaymentUpdate: modelTypes.PatientPaymentUpdateVM = {
+  id: 0,
+  patientKey: null,
+  facilityId: 0,
+  paymentType: null,
+  paymentMethod: null,
+  paymentDate: "",
+  amount: 0,
+  currency: null,
+  reference: null,
+  notes: null,
+};
+
+export const newPatientPaymentResponse: modelTypes.PatientPaymentResponseVM = {
+  id: 0,
+  patientKey: null,
+  facilityId: 0,
+  paymentType: null,
+  paymentMethod: null,
+  paymentDate: "",
+  amount: 0,
+  currency: null,
+  reference: null,
+  notes: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+// Payment Allocation
+
+export const newPaymentAllocation: modelTypes.PaymentAllocationCreateVM = {
+  paymentId: 0,
+  invoiceId: 0,
+  allocatedAmount: 0,
+  invoiceItemId: null,
+};
+
+export const newPaymentAllocationUpdate: modelTypes.PaymentAllocationUpdateVM = {
+  id: 0,
+  paymentId: 0,
+  invoiceId: 0,
+  allocatedAmount: 0,
+  invoiceItemId: null,
+};
+
+export const newPaymentAllocationResponse: modelTypes.PaymentAllocationResponseVM = {
+  id: 0,
+  paymentId: 0,
+  invoiceId: 0,
+  allocatedAmount: 0,
+  invoiceItemId: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
+// Patient Account Summary
+
+export const newPatientAccountSummary: modelTypes.PatientAccountSummaryVM = {
+  patientKey: "",
+  freeBalance: 0,
+  outstandingBalance: 0,
+  totalInvoiced: 0,
+  totalPaid: 0,
+};
+export const newDischargePlanning: modelTypes.DischargePlanning = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  expectedDischargeDate: null,
+  estimatedLos: "",
+  readinessStatus: "",
+
+  medicalConditionStable: false,
+  vitalsStable: false,
+  pendingInvestigations: false,
+  mobilityAdlStatus: false,
+
+  diagnosisCode: "",
+  diagnosisName: "",
+
+  finalMedReconciliationCompleted: false,
+  dischargeSummaryPrepared: false,
+  dischargeOrdersSigned: false,
+  nursingDischargeReportDone: false,
+  patientFamilyInformed: false,
+  transportArranged: false,
+
+  medicalEquipment: "",
+  homeCareNeeded: false,
+  postDischargeDietaryPlan: "",
+  postDischargeSocialNeeds: "",
+
+  topicsCovered: "",
+  educationDietaryPlan: "",
+  educationSocialNeeds: "",
+
+  materialLeaflet: false,
+  materialVerbal: false,
+  materialVideo: false,
+
+  educationProvided: false,
+  patientUnderstanding: false,
+
+  isActive: true,
 };

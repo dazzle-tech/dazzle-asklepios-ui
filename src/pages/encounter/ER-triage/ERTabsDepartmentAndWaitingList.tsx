@@ -1,14 +1,12 @@
+import MyTab from '@/components/MyTab';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import React, { useEffect } from 'react';
-import { Tabs, Panel } from 'rsuite';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import ReactDOMServer from 'react-dom/server';
-import ERWaitingList from './ERWaitingList';
+import { Panel } from 'rsuite';
 import ERList from './ERList';
+import ERWaitingList from './ERWaitingList';
 import './styles.less';
-import Translate from '@/components/Translate';
-import MyTab from '@/components/MyTab';
 
 const ERTabsDepartmentAndWaitingList = () => {
   const location = useLocation();

@@ -562,6 +562,7 @@ const Departments = () => {
     handleToggleActive(department.id);
     setOpenConfirmDeleteDepartmentModal(false);
   };
+
   return (
     <Panel>
 

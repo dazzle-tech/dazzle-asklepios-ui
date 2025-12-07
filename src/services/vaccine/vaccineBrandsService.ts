@@ -45,6 +45,18 @@ export const vaccineBrandsService = createApi({
       providesTags: (_res, _err, { vaccineId }) => [{ type: 'VaccineBrand', id: `vaccine-${vaccineId}` }, 'VaccineBrand'],
     }),
 
+     getVaccineBrands: builder.query<
+      PagedResult<modelTypes.VaccineBrand>,
+      PagedParams
+    >({
+      query: ({page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/vaccine-brands`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: (_res, _err, _args) => ['VaccineBrand'],
+    }),
+
     addVaccineBrand: builder.mutation<
       modelTypes.VaccineBrand,
       { vaccineId: Id; data: modelTypes.VaccineBrand }
@@ -90,6 +102,7 @@ export const vaccineBrandsService = createApi({
 
 export const {
  useGetVaccineBrandsByVaccineQuery,
+ useGetVaccineBrandsQuery,
   useLazyGetVaccineBrandsByVaccineQuery,
   useAddVaccineBrandMutation,
   useUpdateVaccineBrandMutation,

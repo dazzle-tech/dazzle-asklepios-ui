@@ -123,11 +123,15 @@ export const setupService = createApi({
       },
     }),
     getAccessRoles: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/setup/access-role-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
+      queryFn: async () => {
+        return {
+          data: {
+            object: [],
+            extraNumeric: 0,
+          },
+        };
+      },
+      keepUnusedDataFor: 5,
     }),
     saveAccessRole: builder.mutation({
       query: (facility: ApFacility) => ({

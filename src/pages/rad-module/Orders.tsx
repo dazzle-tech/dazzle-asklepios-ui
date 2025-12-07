@@ -4,15 +4,35 @@ import { useGetDiagnosticOrderQuery } from '@/services/encounterService';
 import { formatDateWithoutSeconds } from '@/utils';
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useState,useEffect} from 'react';
+import React, { useState,useEffect, forwardRef, useImperativeHandle} from 'react';
 import { Tooltip, Whisper } from 'rsuite';
-const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) => {
+
+type OrdersProps = {
+  order: any;
+  setOrder: (value: any) => void;
+  listOrdersResponse: any;
+  setListOrdersResponse: (value: any) => void;
+};
+
+
+const Orders = forwardRef<any, OrdersProps>(({
+  order,
+  setOrder,
+  listOrdersResponse,
+  setListOrdersResponse
+}, ref) => {
+
+  
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const {
     data: ordersList,
     refetch: orderFetch,
     isFetching: isOrderFetching
   } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
+
+  useImperativeHandle(ref, () => ({
+    fetchOrders: orderFetch
+  }));
 
   const filterdOrderList = ordersList?.object.filter(item => item.hasRadiology === true);
   const isSelected = rowData => {
@@ -145,5 +165,6 @@ useEffect(() => {
       onRowsPerPageChange={handleRowsPerPageChange}
     />
   );
-};
+});
+
 export default Orders;

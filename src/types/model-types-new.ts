@@ -697,10 +697,9 @@ export interface BrandMedication {
   costCategory?: string;
   roa?: string;
   isActive?: boolean;
-  hasActiveIngredient?: boolean;
-  // 🟡 future fields (currently commented out in backend)
-  // uomGroupId?: number;
-  // uomGroupUnitId?: number;
+  uomGroupId?: number;
+  uomGroupUnitId?: number;
+  hasActiveIngredient?:boolean;
 }
 export interface Substitute {
   brandId: number;
@@ -750,12 +749,15 @@ export type CatalogResponseVM = {
   type: string;
   departmentId: number;
   departmentName?: string | null;
+  facilityId: number;
+  facilityName: string | null;
 };
 
 export type CatalogCreateVM = {
   name: string;
   description?: string | null;
   type: string;
+  facilityId: number;
   departmentId: number;
 };
 
@@ -764,6 +766,7 @@ export type CatalogUpdateVM = {
   description?: string | null;
   type?: string;
   departmentId?: number;
+  facilityId: number;
 };
 
 export type CatalogDiagnosticTest = {
@@ -852,6 +855,426 @@ export interface ActiveIngredientContraindication {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | string | null;
 }
+export interface InventoryProduct {
+  id?: number;
+  name: string;
+  type: string;
+  code?: string | null;
+  barcode?: string | null;
+  brandId?: string | null;
+  uomGroupId?: string | null;
+  baseUom?: number | null;
+  dispenseUom?: string | null;
+  controlledSubstance?: boolean | null;
+  hazardousBiohazardousTag?: string | null;
+  allergyRisk?: boolean | null;
+  itemAverageCost?: number | null;
+  pricePerBaseUom?: string | null;
+  warrantyStartDate?: Date | null;
+  warrantyEndDate?: Date | null;
+  maintenanceSchedule?: number | null;
+  maintenanceScheduleType?: string | null;
+  criticalEquipment?: boolean | null;
+  calibrationRequired?: boolean | null;
+  trainingRequired?: boolean | null;
+  batchManaged?: boolean | null;
+  expiryDateMandatory?: boolean | null;
+  reusable?: boolean | null;
+  inventoryType?: string | null;
+  shelfLife?: number | null;
+  shelfLifeUnit?: string | null;
+  leadTime?: number | null;
+  leadTimeUnit?: string | null;
+  erpIntegrationId?: string | null;
+  isActive?: boolean | null;
+}
+export interface Country {
+  id?: number;
+  name: string;
+  code: string;
+  isActive?: boolean;
+}
+export interface CountryDistrict {
+  id?: number;
+  countryId: number;
+  name: string;
+  code: string;
+  isActive?: boolean;
+}
+
+export interface DistrictCommunity {
+  id?: number;
+  districtId: number;
+  name: string;
+  isActive?: boolean;
+}
+
+export interface CommunityArea {
+  id?: number;
+  communityId: number;
+  name: string;
+  isActive?: boolean;
+}
+export interface VisitDuration {
+  id?: number;
+  visitType: string | null;        
+  durationInMinutes: number | null;
+  resourceSpecific?: boolean;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+
+}
+ export interface PriceList {
+  id?: number;
+  facilityId?: number | null;
+  facilityIds?: number[] | null; // for create/update
+  name: string;
+  type: string; // PriceListTypes enum value
+  currency?: string; // from backend
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  description?: string | null;
+  isActive?: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;}
+  
+export interface ReportTemplate{
+  id?:number;
+  name:string;
+  templateValue:string;
+  isActive:boolean
+}
+
+
+export interface DiagnosticTestReportTemplate{
+  id: number,
+  diagnosticTest: string,
+  name: string,
+  templateValue: string,
+  isActive: boolean,
+}
+
+export interface UserStickyNotesResponseVM{
+    id: number
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+    createdBy: string
+    createdDate: Date,
+    lastModifiedBy: string,
+    lastModifiedDate: Date
+}
+
+export interface UserStickyNotesCreateVM{
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+}
+
+export interface PriceListItem {
+  id?: number;
+  priceListId: number;
+
+  itemType: string;
+
+  // only if itemType = PRODUCT (enum ProductTypes on backend)
+  productType?: string | null; // MEDICATION | CONSUMABLE | ... (string enum)
+
+  // polymorphic target
+  serviceId?: number | null;
+  productId?: number | null;
+
+  price: number | string; // BigDecimal -> number/string on FE
+
+  discountAllowed: boolean;
+  isActive: boolean;
+
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}
+export interface ReferralRequest {
+  id: number | null;
+  patientId: number;
+  encounterId: number | null;
+  referralType: string;
+  facilityId: number | null;
+  departmentId: number;
+  referralReason: string;
+  priority: string;
+  isActive: boolean;
+}
+
+
+export interface BillingInvoiceCreateVM {
+  facilityId: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  totalAmount: number | string;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+
+  currency?: string | null;
+}
+
+export interface BillingInvoiceUpdateVM {
+  id: number; 
+  facilityId?: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  totalAmount?: number | string;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+
+  currency?: string | null;
+}
+
+export interface BillingInvoiceResponseVM {
+  id: number;
+  invoiceNumber: string;
+  facilityId: number;
+  patientKey?: string | null;
+  encounterKey?: string | null;
+  status: string;
+  totalAmount: number | string;
+  paidAmount: number | string;
+  balanceAmount: number | string;
+  currency?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+  export interface Payor {
+    id?: number;
+    code: string;
+    name: string;
+    category: string | null;
+    address?: string;
+    phone?: string;
+    email?: string;
+    contractManagerContact?: string;
+    startDate?: Date | string | null;
+    expiryDate?: Date | string | null;
+    renewable: boolean;
+    allowPartialCoverage: boolean;
+    acceptCopay: boolean;
+    acceptDeductibles: boolean;
+    allowPackagePricing: boolean;
+    allowDrgBilling: boolean;
+    forcePreApproval: boolean;
+    isActive: boolean;
+    createdDate?: Date | null;
+    lastModifiedDate?: Date | null;
+  }
+
+  export interface PayorPlan {
+  id?: number;
+  payorId: number;
+  name: string;
+  planType: string;
+  itemType: string;
+  amount?: number | null;
+  coverageType: string;
+  isActive: boolean;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+
+export interface BillingInvoiceItemCreateVM {
+  invoiceId: number;
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+  quantity: number | string;
+  unitPrice: number | string;
+  totalPrice: number | string;
+  currency?: string | null;
+}
+
+
+export interface BillingInvoiceItemUpdateVM {
+  id: number;
+  invoiceId?: number;
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+  quantity?: number | string;
+  unitPrice?: number | string;
+  totalPrice?: number | string;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceItemResponseVM {
+  id: number;
+  invoiceId: number;
+
+  nurseServiceProductKey?: string | null;
+  code?: string | null;
+
+  quantity: number | string;
+  unitPrice: number | string;
+  totalPrice: number | string;
+
+  currency?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PatientPaymentCreateVM {
+  patientKey?: string | null;
+  facilityId: number;
+
+  paymentType: string | null;
+  paymentMethod: string | null;
+
+  paymentDate: string; 
+  amount: number | string;
+
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+export interface PatientPaymentUpdateVM {
+  id: number;
+
+  patientKey?: string | null;
+  facilityId?: number;
+
+  paymentType?: string | null;
+  paymentMethod?: string | null;
+
+  paymentDate?: string;
+  amount?: number | string;
+
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+// RESPONSE VM
+export interface PatientPaymentResponseVM {
+  id: number;
+  patientKey?: string | null;
+  facilityId: number;
+  paymentType: string | null;
+  paymentMethod: string | null;
+  paymentDate: string;
+  amount: number | string;
+  currency?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PaymentAllocationCreateVM {
+  paymentId: number;
+  invoiceId: number;
+  allocatedAmount: number | string;
+  invoiceItemId?: number | null;
+}
+
+export interface PaymentAllocationUpdateVM {
+  id: number;
+  paymentId?: number;
+  invoiceId?: number;
+  allocatedAmount?: number | string;
+  invoiceItemId?: number | null;
+}
+
+export interface PaymentAllocationResponseVM {
+  id: number;
+  paymentId: number;
+  invoiceId: number;
+  allocatedAmount: number | string;
+  invoiceItemId?: number | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface PatientAccountSummaryVM {
+  patientKey: string;
+  freeBalance: number | string;     
+  outstandingBalance: number | string; 
+  totalInvoiced: number | string;     
+  totalPaid: number | string;       
+}
+
+export interface BillingItem {
+  id: string;
+  nurseServiceProductKey: string;
+  clinic: string;
+  chargeDate: string;
+  type: string;
+  name: string;
+  price: number;
+  totalPrice: number;
+  currency: string;
+  discount: number;
+  priceList: string;
+  patientKey: string;
+  quantity: number;
+}
+export interface DischargePlanning {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  expectedDischargeDate: string | Date | null; // mandatory
+  estimatedLos?: string | null;
+  readinessStatus: string | null; // mandatory
+
+  medicalConditionStable: boolean;
+  vitalsStable: boolean;
+  pendingInvestigations: boolean;
+  mobilityAdlStatus: boolean; // toggle
+
+  diagnosisCode: string; // mandatory
+  diagnosisName?: string | null;
+
+  finalMedReconciliationCompleted: boolean;
+  dischargeSummaryPrepared: boolean;
+  dischargeOrdersSigned: boolean;
+  nursingDischargeReportDone: boolean;
+  patientFamilyInformed: boolean;
+  transportArranged: boolean;
+
+  medicalEquipment?: string | null;
+  homeCareNeeded: boolean;
+  postDischargeDietaryPlan?: string | null;
+  postDischargeSocialNeeds?: string | null;
+
+  topicsCovered?: string | null; // tags -> string
+  educationDietaryPlan?: string | null;
+  educationSocialNeeds?: string | null;
+
+  materialLeaflet: boolean;
+  materialVerbal: boolean;
+  materialVideo: boolean;
+
+  educationProvided: boolean;
+  patientUnderstanding: boolean;
+
+  isActive: boolean;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
 export interface Country {
   id?: number;
   name: string;
@@ -879,14 +1302,3 @@ export interface CommunityArea {
   name: string;
   isActive?: boolean;
 }
-
-export const newVisitDuration: modelTypes.VisitDuration = {
-  id: undefined,
-  visitType: null,
-  durationInMinutes: 0,
-  resourceSpecific: false,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null,
-};

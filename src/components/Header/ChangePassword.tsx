@@ -31,8 +31,7 @@ const ChangePassword = ({ open, onClose }) => {
         }
 
         if (newPassword.newPassword !== confirmPassword.confirmPassword) {
-            console.log("new", newPassword);
-            console.log("confirm", confirmPassword)
+          
             setError('New passwords do not match');
             dispatch(notify({ msg: 'New passwords do not match', sev: 'info' }))
             return;
@@ -42,10 +41,7 @@ const ChangePassword = ({ open, onClose }) => {
 
             const Current = currentPassword.currentPassword;
             const New = newPassword.newPassword
-            console.log({
-                "currentPassword": Current,
-                "newPassword": New
-            });
+            
             await changePassword({
                 "currentPassword": Current,
                 "newPassword": New
@@ -55,7 +51,7 @@ const ChangePassword = ({ open, onClose }) => {
               clearFields();
 
         } catch (err) {
-            console.error('Password change failed:', err);
+            
             setError('Failed to change password. Please try again.');
             dispatch(notify({ msg: 'Failed to change password. Please try again.', sev: 'error' }));
         }

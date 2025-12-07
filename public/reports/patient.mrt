@@ -1,0 +1,715 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<StiSerializer version="1.02" type="Net" application="StiReport">
+  <Dictionary Ref="1" type="Dictionary" isKey="true">
+    <DataSources isList="true" count="2">
+      <PatientData Ref="2" type="Stimulsoft.Report.Dictionary.StiDataTableSource" isKey="true">
+        <Alias>PatientData</Alias>
+        <Columns isList="true" count="28">
+          <!-- Basic -->
+          <value>fullName,System.String</value>
+          <value>patientMrn,System.String</value>
+          <value>firstName,System.String</value>
+          <value>secondName,System.String</value>
+          <value>thirdName,System.String</value>
+          <value>lastName,System.String</value>
+          <value>dob,System.String</value>
+          <value>genderLvalue.lovDisplayVale,System.String</value>
+          <value>patientClassLvalue.lovDisplayVale,System.String</value>
+
+          <!-- Contact -->
+          <value>phoneNumber,System.String</value>
+          <value>mobileNumber,System.String</value>
+          <value>secondaryMobileNumber,System.String</value>
+          <value>homePhone,System.String</value>
+          <value>workPhone,System.String</value>
+          <value>email,System.String</value>
+
+          <!-- Address -->
+          <value>streetAddressLine1,System.String</value>
+          <value>streetAddressLine2,System.String</value>
+          <value>cityLvalue.lovDisplayVale,System.String</value>
+          <value>stateProvinceRegionLvalue.lovDisplayVale,System.String</value>
+          <value>countryLvalue.lovDisplayVale,System.String</value>
+          <value>postalCode,System.String</value>
+
+          <!-- ID -->
+          <value>documentTypeLvalue.lovDisplayVale,System.String</value>
+          <value>documentNo,System.String</value>
+          <value>documentCountryLvalue.lovDisplayVale,System.String</value>
+
+          <!-- Flags -->
+          <value>hasAllergy,System.String</value>
+          <value>hasWarning,System.String</value>
+          <value>verified,System.String</value>
+          <value>incompletePatient,System.String</value>
+        </Columns>
+        <Dictionary isRef="1" />
+        <Name>PatientData</Name>
+        <NameInSource>PatientData</NameInSource>
+      </PatientData>
+
+      <!-- Secondary documents data source -->
+      <SecondaryDocuments Ref="48" type="Stimulsoft.Report.Dictionary.StiDataTableSource" isKey="true">
+        <Alias>SecondaryDocuments</Alias>
+        <Columns isList="true" count="3">
+          <value>documentCountryLvalue.lovDisplayVale,System.String</value>
+          <value>documentTypeLvalue.lovDisplayVale,System.String</value>
+          <value>documentNo,System.String</value>
+        </Columns>
+        <Dictionary isRef="1" />
+        <Name>SecondaryDocuments</Name>
+        <NameInSource>SecondaryDocuments</NameInSource>
+      </SecondaryDocuments>
+      <!-- END SecondaryDocuments -->
+
+    </DataSources>
+  </Dictionary>
+
+  <EngineVersion>EngineV2</EngineVersion>
+  <ReportName>PatientSmartProfileReport</ReportName>
+
+  <Pages isList="true" count="1">
+    <Page1 Ref="3" type="Page" isKey="true">
+      <Border>None;Black;2;Solid;False;4;Black</Border>
+      <Brush>Solid:255,255,255</Brush>
+      <Margins>1,1,1,2.5</Margins>
+      <Name>Page1</Name>
+      <PageHeight>29.7</PageHeight>
+      <PageWidth>21</PageWidth>
+
+      <!-- HEADER, BODY, SECONDARY DOCUMENTS HEADER, SECONDARY DOCUMENTS DATA, FOOTER -->
+      <Components isList="true" count="5">
+
+        <!-- HEADER -->
+        <ReportTitleBand1 Ref="4" type="ReportTitleBand" isKey="true">
+          <Brush>Solid:24,49,83</Brush>
+          <ClientRectangle>0,0.4,19,3</ClientRectangle>
+          <Components isList="true" count="3">
+
+            <!-- Sub Title -->
+            <TextTitleAr Ref="46" type="Text" isKey="true">
+              <Border>None;Transparent;0;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.5,1.1,18,1</ClientRectangle>
+              <Font>Arial,20,Bold</Font>
+              <HorAlignment>Center</HorAlignment>
+              <Name>TextTitleAr</Name>
+              <Page isRef="3" />
+              <Parent isRef="4" />
+              <Text>Patient Profile Report</Text>
+              <TextBrush>0,51,153</TextBrush>
+              <VertAlignment>Center</VertAlignment>
+            </TextTitleAr>
+
+          </Components>
+          <Name>ReportTitleBand1</Name>
+          <Page isRef="3" />
+          <Parent isRef="3" />
+        </ReportTitleBand1>
+
+        <!-- BODY -->
+        <DataBand1 Ref="6" type="DataBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,3.8,19,21</ClientRectangle>
+          <DataSourceName>PatientData</DataSourceName>
+
+          <Components isList="true" count="35">
+
+            <!-- BASIC INFORMATION -->
+            <TextHeaderBasic Ref="7" type="Text" isKey="true">
+              <Border>All;52,108,177;1;Solid;False;4;Black</Border>
+              <Brush>Solid:52,108,177</Brush>
+              <ClientRectangle>0.5,0.2,18,0.9</ClientRectangle>
+              <Font>Arial,12,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextHeaderBasic</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>  Basic Information</Text>
+              <TextBrush>0,0,0</TextBrush>
+              <VertAlignment>Center</VertAlignment>
+            </TextHeaderBasic>
+
+            <!-- Full Name -->
+            <TextFullNameLabel Ref="8" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,1.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextFullNameLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Full Name:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextFullNameLabel>
+            <TextFullNameValue Ref="9" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,1.3,6.5,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextFullNameValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.fullName}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextFullNameValue>
+
+            <TextMrnLabel Ref="10" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>11.3,1.3,3,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextMrnLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>MRN:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextMrnLabel>
+            <TextMrnValue Ref="11" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>14,1.3,4.3,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextMrnValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.patientMrn}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextMrnValue>
+
+            <TextFirstNameLabel Ref="12" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,2.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextFirstNameLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>First Name:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextFirstNameLabel>
+            <TextFirstNameValue Ref="13" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,2.3,6.5,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextFirstNameValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.firstName}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextFirstNameValue>
+
+            <TextLastNameLabel Ref="14" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>11.3,2.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextLastNameLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Last Name:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextLastNameLabel>
+            <TextLastNameValue Ref="15" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>15.2,2.3,3.1,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextLastNameValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.lastName}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextLastNameValue>
+
+            <TextGenderLabel Ref="16" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,3.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextGenderLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Gender:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextGenderLabel>
+            <TextGenderValue Ref="17" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,3.3,6.5,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextGenderValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.genderLvalue.lovDisplayVale}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextGenderValue>
+
+            <TextDobLabel Ref="18" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>11.3,3.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextDobLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Date of Birth:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextDobLabel>
+            <TextDobValue Ref="19" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>15.2,3.3,3.1,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextDobValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.dob}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextDobValue>
+
+            <TextHeaderContact Ref="20" type="Text" isKey="true">
+              <Border>All;52,108,177;1;Solid;False;4;Black</Border>
+              <Brush>Solid:52,108,177</Brush>
+              <ClientRectangle>0.5,4.7,18,0.9</ClientRectangle>
+              <Font>Arial,12,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextHeaderContact</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>  Contact Information</Text>
+              <TextBrush>0,0,0</TextBrush>
+              <VertAlignment>Center</VertAlignment>
+            </TextHeaderContact>
+
+            <TextPhoneLabel Ref="21" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,5.8,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextPhoneLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Phone:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextPhoneLabel>
+            <TextPhoneValue Ref="22" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,5.8,6.5,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextPhoneValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.phoneNumber}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextPhoneValue>
+
+            <TextMobileLabel Ref="23" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>11.3,5.8,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextMobileLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Mobile:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextMobileLabel>
+            <TextMobileValue Ref="24" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>15.2,5.8,3.1,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextMobileValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.mobileNumber}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextMobileValue>
+
+            <TextEmailLabel Ref="25" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,6.8,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextEmailLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Email:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextEmailLabel>
+            <TextEmailValue Ref="26" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,6.8,14.9,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextEmailValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.email}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextEmailValue>
+
+            <TextHeaderAddress Ref="27" type="Text" isKey="true">
+              <Border>All;52,108,177;1;Solid;False;4;Black</Border>
+              <Brush>Solid:52,108,177</Brush>
+              <ClientRectangle>0.5,8.2,18,0.9</ClientRectangle>
+              <Font>Arial,12,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextHeaderAddress</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>  Address</Text>
+              <TextBrush>0,0,0</TextBrush>
+              <VertAlignment>Center</VertAlignment>
+            </TextHeaderAddress>
+
+            <TextStreet1Label Ref="28" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,9.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextStreet1Label</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Street 1:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextStreet1Label>
+            <TextStreet1Value Ref="29" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,9.3,14.9,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextStreet1Value</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.streetAddressLine1}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextStreet1Value>
+
+            <TextStreet2Label Ref="30" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,10.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextStreet2Label</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Street 2:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextStreet2Label>
+            <TextStreet2Value Ref="31" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,10.3,14.9,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextStreet2Value</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.streetAddressLine2}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextStreet2Value>
+
+            <TextCityLabel Ref="32" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,11.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextCityLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>City:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextCityLabel>
+            <TextCityValue Ref="33" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,11.3,6.5,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextCityValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.cityLvalue.lovDisplayVale}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextCityValue>
+
+            <TextCountryLabel Ref="34" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>11.3,11.3,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextCountryLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Country:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextCountryLabel>
+            <TextCountryValue Ref="35" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>15.2,11.3,3.1,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextCountryValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.countryLvalue.lovDisplayVale}</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextCountryValue>
+
+            <TextHeaderId Ref="36" type="Text" isKey="true">
+              <Border>All;52,108,177;1;Solid;False;4;Black</Border>
+              <Brush>Solid:52,108,177</Brush>
+              <ClientRectangle>0.5,12.7,18,0.9</ClientRectangle>
+              <Font>Arial,12,Bold</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextHeaderId</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>  Identification</Text>
+              <TextBrush>0,0,0</TextBrush>
+              <VertAlignment>Center</VertAlignment>
+            </TextHeaderId>
+
+            <TextDocTypeLabel Ref="37" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.7,13.8,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextDocTypeLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Document Type:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextDocTypeLabel>
+            <TextDocTypeValue Ref="38" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>4.3,13.8,6.5,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextDocTypeValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.documentTypeLvalue.lovDisplayVale}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextDocTypeValue>
+
+            <TextDocNoLabel Ref="39" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>11.3,13.8,4,0.7</ClientRectangle>
+              <Font>Arial,10,Bold</Font>
+              <Name>TextDocNoLabel</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>Document No:</Text>
+              <TextBrush>40,40,60</TextBrush>
+            </TextDocNoLabel>
+            <TextDocNoValue Ref="40" type="Text" isKey="true">
+              <Border>All;210,210,210;1;Solid;False;4;Black</Border>
+              <Brush>Solid:252,253,255</Brush>
+              <ClientRectangle>15.2,13.8,3.1,0.7</ClientRectangle>
+              <Font>Arial,10</Font>
+              <Name>TextDocNoValue</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text>{PatientData.documentNo}</Text>
+              <TextBrush>30,30,40</TextBrush>
+            </TextDocNoValue>
+
+            <TextSpacer Ref="47" type="Text" isKey="true">
+              <Border>None;Transparent;0;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.5,15,18,1.5</ClientRectangle>
+              <Font>Arial,1</Font>
+              <HorAlignment>Left</HorAlignment>
+              <Name>TextSpacer</Name>
+              <Page isRef="3" />
+              <Parent isRef="6" />
+              <Text />
+              <TextBrush>Transparent</TextBrush>
+            </TextSpacer>
+
+          </Components>
+          <Name>DataBand1</Name>
+          <Page isRef="3" />
+          <Parent isRef="3" />
+        </DataBand1>
+
+        <!-- SECONDARY DOCUMENTS HEADER (once) -->
+        <SecondaryHeaderBand Ref="49" type="HeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,16.8,19,2</ClientRectangle>
+          <Components isList="true" count="4">
+
+            <!-- Section Title -->
+            <TextHeaderSecondary Ref="50" type="Text" isKey="true">
+              <Border>All;0,0,0;1;Solid;False;4;Black</Border>
+              <Brush>Solid:255,255,255</Brush>
+              <ClientRectangle>0.5,0.1,18,0.9</ClientRectangle>
+              <Font>Arial,16,Bold</Font>
+              <HorAlignment>Center</HorAlignment>
+              <Name>TextHeaderSecondary</Name>
+              <Page isRef="3" />
+              <Parent isRef="49" />
+              <Text>Secondary Documents</Text>
+              <TextBrush>0,0,128</TextBrush>
+              <VertAlignment>Center</VertAlignment>
+            </TextHeaderSecondary>
+
+            <!-- Header Cells -->
+            <TextSecCountryHeader Ref="60" type="Text" isKey="true">
+              <Border>All;0,0,0;1;Solid;False;4;Black</Border>
+              <Brush>Solid:230,236,247</Brush>
+              <ClientRectangle>0.5,1.2,5.8,0.7</ClientRectangle>
+              <Font>Arial,12,Bold</Font>
+              <Name>TextSecCountryHeader</Name>
+              <Page isRef="3" />
+              <Parent isRef="49" />
+              <Text>Country</Text>
+              <TextBrush>0,0,128</TextBrush>
+              <HorAlignment>Center</HorAlignment>
+              <VertAlignment>Center</VertAlignment>
+            </TextSecCountryHeader>
+
+            <TextSecTypeHeader Ref="61" type="Text" isKey="true">
+              <Border>All;0,0,0;1;Solid;False;4;Black</Border>
+              <Brush>Solid:230,236,247</Brush>
+              <ClientRectangle>6.6,1.2,6.8,0.7</ClientRectangle>
+              <Font>Arial,12,Bold</Font>
+              <Name>TextSecTypeHeader</Name>
+              <Page isRef="3" />
+              <Parent isRef="49" />
+              <Text>Document Type</Text>
+              <TextBrush>0,0,128</TextBrush>
+
+              <HorAlignment>Center</HorAlignment>
+              <VertAlignment>Center</VertAlignment>
+            </TextSecTypeHeader>
+
+            <TextSecNumberHeader Ref="62" type="Text" isKey="true">
+              <Border>All;0,0,0;1;Solid;False;4;Black</Border>
+              <Brush>Solid:230,236,247</Brush>
+              <ClientRectangle>13.6,1.2,4.9,0.7</ClientRectangle>
+              <Font>Arial,12,Bold</Font>
+              <Name>TextSecNumberHeader</Name>
+              <Page isRef="3" />
+              <Parent isRef="49" />
+              <Text>Document No</Text>
+              <TextBrush>0,0,128</TextBrush>
+              <HorAlignment>Center</HorAlignment>
+              <VertAlignment>Center</VertAlignment>
+            </TextSecNumberHeader>
+
+          </Components>
+          <Name>SecondaryHeaderBand</Name>
+          <Page isRef="3" />
+          <Parent isRef="3" />
+        </SecondaryHeaderBand>
+
+        <!-- SECONDARY DOCUMENTS DATA ROWS (repeated) -->
+        <SecondaryDocumentsBand Ref="70" type="DataBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,18.8,19,1</ClientRectangle>
+          <DataSourceName>SecondaryDocuments</DataSourceName>
+          <Components isList="true" count="3">
+
+            <TextSecCountry Ref="51" type="Text" isKey="true">
+              <Border>All;0,0,0;1;Solid;False;4;Black</Border>
+              <Brush>Solid:255,255,255</Brush>
+              <ClientRectangle>0.5,0.1,5.8,0.7</ClientRectangle>
+              <Font>Arial,11</Font>
+              <Name>TextSecCountry</Name>
+              <Page isRef="3" />
+              <Parent isRef="70" />
+              <Text>{SecondaryDocuments.documentCountryLvalue.lovDisplayVale}</Text>
+              <TextBrush>0,0,128</TextBrush>
+              <HorAlignment>Center</HorAlignment>
+              <VertAlignment>Center</VertAlignment>
+            </TextSecCountry>
+
+            <TextSecType Ref="52" type="Text" isKey="true">
+              <Border>All;0,0,0;1;Solid;False;4;Black</Border>
+              <Brush>Solid:255,255,255</Brush>
+              <ClientRectangle>6.6,0.1,6.8,0.7</ClientRectangle>
+              <Font>Arial,11</Font>
+              <Name>TextSecType</Name>
+              <Page isRef="3" />
+              <Parent isRef="70" />
+              <Text>{SecondaryDocuments.documentTypeLvalue.lovDisplayVale}</Text>
+              <TextBrush>0,0,128</TextBrush>
+              <HorAlignment>Center</HorAlignment>
+              <VertAlignment>Center</VertAlignment>
+            </TextSecType>
+
+            <TextSecNumber Ref="53" type="Text" isKey="true">
+              <Border>All;0,0,0;1;Solid;False;4;Black</Border>
+              <Brush>Solid:255,255,255</Brush>
+              <ClientRectangle>13.6,0.1,4.9,0.7</ClientRectangle>
+              <Font>Arial,11</Font>
+              <Name>TextSecNumber</Name>
+              <Page isRef="3" />
+              <Parent isRef="70" />
+              <Text>{SecondaryDocuments.documentNo}</Text>
+              <TextBrush>0,0,128</TextBrush>
+              <HorAlignment>Center</HorAlignment>
+              <VertAlignment>Center</VertAlignment>
+            </TextSecNumber>
+
+          </Components>
+          <Name>SecondaryDocumentsBand</Name>
+          <Page isRef="3" />
+          <Parent isRef="3" />
+        </SecondaryDocumentsBand>
+
+        <!-- FOOTER -->
+        <FooterBand1 Ref="41" type="FooterBand" isKey="true">
+          <Border>Top;180,198,231;1;Solid;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,27.3,19,1</ClientRectangle>
+          <Components isList="true" count="2">
+            <TextPrintDate Ref="42" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.5,0.2,8,0.6</ClientRectangle>
+              <Font>Arial,9</Font>
+              <Name>TextPrintDate</Name>
+              <Page isRef="3" />
+              <Parent isRef="41" />
+              <Text>Print Date: {Today.ToString("MM/dd/yyyy HH:mm")}</Text>
+              <TextBrush>100,100,100</TextBrush>
+            </TextPrintDate>
+            <TextPageInfo Ref="43" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>10,0.2,8.5,0.6</ClientRectangle>
+              <Font>Arial,9</Font>
+              <HorAlignment>Right</HorAlignment>
+              <Name>TextPageInfo</Name>
+              <Page isRef="3" />
+              <Parent isRef="41" />
+              <Text>Page {PageNumber} of {TotalPageCount}</Text>
+              <TextBrush>100,100,100</TextBrush>
+            </TextPageInfo>
+          </Components>
+          <Name>FooterBand1</Name>
+          <Page isRef="3" />
+          <Parent isRef="3" />
+        </FooterBand1>
+
+      </Components>
+
+      <Watermark Ref="44" type="Stimulsoft.Report.Components.StiWatermark" isKey="true">
+        <Font>Arial,100</Font>
+        <TextBrush>50,0,0,0</TextBrush>
+      </Watermark>
+    </Page1>
+  </Pages>
+
+  <PrinterSettings Ref="45" type="Stimulsoft.Report.Print.StiPrinterSettings" isKey="true" />
+
+  <Script>using System;
+          using System.Drawing;
+          using System.Windows.Forms;
+          using System.Data;
+          using Stimulsoft.Report;
+          using Stimulsoft.Report.Components;
+
+          namespace Reports
+          {
+              public class PatientReport : Stimulsoft.Report.StiReport
+              {
+              }
+          }
+  </Script>
+</StiSerializer>

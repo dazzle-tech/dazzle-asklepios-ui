@@ -63,7 +63,7 @@ const GenericMedications = () => {
       rowData?.id === brandMedication?.id ? "selected-row" : "";
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: "id,asc",
     timestamp: Date.now(),
   });
@@ -121,7 +121,8 @@ const GenericMedications = () => {
         dispatch(notify({ msg: "Added successfully", sev: "success" }));
       }
       setOpenAddEditPopup(false);
-    } catch {
+    } catch(error) {
+      console.log(error)
       dispatch(notify({ msg: "Error saving medication", sev: "error" }));
     }
   };
@@ -148,7 +149,7 @@ const GenericMedications = () => {
     }
 
     try {
-      const params = { page: 0, size: 5, sort: "id,asc" };
+      const params = { page: 0, size: 15, sort: "id,asc" };
       let response;
 
       switch (field) {

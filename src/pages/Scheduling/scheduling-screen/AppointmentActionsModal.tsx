@@ -64,8 +64,9 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     }, [appointment])
 
     useEffect(() => {
-        if (localAppointmentData)
-            console.log(localAppointmentData)
+        if (localAppointmentData) {
+            // Handle local appointment data if needed
+        }
     }, [localAppointmentData])
 
     const handleConfirm = () => {
@@ -82,7 +83,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     }
 
     const handleNonShow = () => {
-        console.log(localAppointmentData)
         changeAppointmentStatus({ ...localAppointmentData, appointmentStatus: "No-Show", otherReason: otherReason?.otherReason, reasonLkey: reasonKey?.reasonLkey }).then(() => {
             dispatch(notify('Appointment Status has been changed Successfully'));
             onStatusChange()
@@ -114,9 +114,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         onActionsModalClose()
     }
 
-    useEffect(() => {
-        console.log(appointment)
-    }, [appointment])
 
     // Appoinment Actions Modal Content
     const actionsModalContent = (
