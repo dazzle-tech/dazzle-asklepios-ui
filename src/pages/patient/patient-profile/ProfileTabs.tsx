@@ -9,7 +9,7 @@ import { Panel, Tabs } from 'rsuite';
 import ConsentFormTab from './ConsentFormTab';
 import PatientAttachment from './tabs/Attachment/PatientAttachment';
 import DemographicsTab from './tabs/DemographicsTab';
-import SecondaryIDTab from './tabs/ExtraDetails/SecondaryIDTab';
+import SecondaryIDTab from './tabs/ExtraDetails/IDTab';
 import ExtraDetailsTab from './tabs/ExtraDetailsTab';
 import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
 import InsuranceTab from './tabs/InsuranceTab';

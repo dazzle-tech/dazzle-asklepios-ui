@@ -1,22 +1,23 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import {
-    useDeletePatientDocumentMutation,
-    useGetDocumentsByPatientQuery
-} from '@/services/patients/patientDocumentsService';
-import { newPatientDocument } from '@/types/model-types-constructor-new';
-import { faFilePen, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash, faFilePen } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
+import {
+  useGetDocumentsByPatientQuery,
+  useDeletePatientDocumentMutation
+} from '@/services/patients/patientDocumentsService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { newPatientDocument } from '@/types/model-types-constructor-new';
 
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
-import { notify } from '@/utils/uiReducerActions';
 import { PlusRound } from '@rsuite/icons';
+import { notify } from '@/utils/uiReducerActions';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddExtraDetails from './AddExtraDetails';
+import { formatDateWithoutSeconds } from '@/utils';
 
 const IDTab = ({ localPatient }) => {
   const dispatch = useAppDispatch();
