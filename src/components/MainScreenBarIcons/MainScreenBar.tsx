@@ -54,7 +54,7 @@ import { UserDepartment } from '@/types/model-types-new';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
-const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
+const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expandNotes }) => {
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
@@ -541,7 +541,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
               </IconButton>
             </Tooltip>
             <Tooltip title="Sticky Notes">
-              <IconButton size="small" onClick={() => setExpandNotes(true)}>
+              <IconButton size="small" onClick={() => setExpandNotes(!expandNotes)}>
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faNoteSticky}
