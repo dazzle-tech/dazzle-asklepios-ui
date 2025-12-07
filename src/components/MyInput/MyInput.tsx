@@ -376,6 +376,7 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            hideMinutes={props?.hideMinutes ? props?.hideMinutes : false}
           />
         );
 
