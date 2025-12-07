@@ -17,7 +17,7 @@ type HeaderProps = {
   setExpandNotes: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes }) => {
+const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes, expandNotes }) => {
     type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
    const authSlice = useAppSelector(state => state.auth);
    const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
@@ -139,6 +139,7 @@ const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes }) =>
               setExpandNotes={setExpandNotes}
               displaySearch={displaySearch}
               setDisplaySearch={setDisplaySearch}
+              expandNotes={expandNotes}
             />
           </div>
         </div>
