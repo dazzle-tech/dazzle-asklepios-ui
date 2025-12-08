@@ -29,7 +29,7 @@ const UOMGroup = () => {
   // Pagination values
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: 'id,asc',
     timestamp: Date.now()
   });

@@ -686,7 +686,7 @@ const Frame = (props: FrameProps) => {
 
         {/* Main content area */}
         <Container className={containerClasses}>
-          <Header expand={expand} setExpand={setExpand} setExpandNotes={setExpandNotes} />
+          <Header expand={expand} setExpand={setExpand} setExpandNotes={setExpandNotes} expandNotes={expandNotes} />
           <Content>
             <Stack
               id="fixedInfoBar"

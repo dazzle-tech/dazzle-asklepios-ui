@@ -143,7 +143,6 @@ const MyInput = ({
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
-
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
@@ -172,7 +171,6 @@ const MyInput = ({
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
   }, []);
-
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -378,6 +376,7 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            hideMinutes={props?.hideMinutes ? props?.hideMinutes : false}
           />
         );
 
@@ -429,8 +428,7 @@ const MyInput = ({
             accepter={SelectPicker}
             searchKeyWard={props?.searchKeyWard}
             // setSearchKeyWard={props?.setSearchKeyWard}
-            onSearch={(searchText) => {
-             
+            onSearch={searchText => {
               props.setSearchKeyWard?.(searchText);
             }}
             data={[
