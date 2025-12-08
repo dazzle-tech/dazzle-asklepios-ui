@@ -16,6 +16,7 @@ import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 import MyTab from '@/components/MyTab';
 import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupService'; 
 import { formatEnumString } from '@/utils';
+import NextOfKin from './tabs/NextOfKin/NextOfKin';
 
 interface ProfileTabsProps {
   localPatient: ApPatient;
@@ -107,6 +108,20 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           localPatient={localPatient}
           setRefetchAttachmentList={setRefetchAttachmentList}
           refetchAttachmentList={refetchAttachmentList}
+        />
+      )
+    },
+    {
+      title: 'Next of Kin',
+      content: (
+        // <PatientAttachment
+        //   localPatient={localPatient}
+        //   setRefetchAttachmentList={setRefetchAttachmentList}
+        //   refetchAttachmentList={refetchAttachmentList}
+        // />
+        <NextOfKin
+         patient={localPatient}
+         isClick={!localPatient.key}
         />
       )
     }
