@@ -25,9 +25,10 @@ import React, { useEffect, useState } from "react";
 import { FaUndo } from "react-icons/fa";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { useDispatch } from "react-redux";
-import { Form, Panel } from "rsuite";
+import { Form, Panel, Tooltip, Whisper } from "rsuite";
 import AddEditPractitioner from "./AddEditPractitioner";
 import "./styles.less";
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 const Practitioners = () => {
   const dispatch = useDispatch();
@@ -330,6 +331,8 @@ const Practitioners = () => {
     </div>
   );
 
+  const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
+
   const tableColumns = [
     {
       key: "facilityName", title: <Translate>Facility</Translate>, flexGrow: 4,
@@ -342,7 +345,39 @@ const Practitioners = () => {
       key: "specialty",
       title: <Translate>Specialty</Translate>,
       flexGrow: 3,
-      render: (rowData) => <p>{formatEnumString(rowData?.specialty)}</p>,
+      render: (rowData) => {
+        const isSpecialist = rowData?.specialty === "SPECIALIST";
+
+        const list = subSpecialityLovQueryResponse?.object ?? [];
+        const matched = list.find((x) => x.key === rowData?.subSpecialty);
+        const subSpecName = matched?.lovDisplayVale ?? "No Sub Specialty";
+
+        return (
+          <div style={{ display: "inline-block", position: "relative" }}>
+            <Whisper
+              placement="topStart"  // 👈 يجعل tooltip فوق الكلمة مباشرة
+              trigger={isSpecialist ? "hover" : "none"}
+              speaker={
+                isSpecialist ? (
+                  <Tooltip>
+                    {subSpecName}
+                  </Tooltip>
+                ) : null
+              }
+            >
+              <span
+                style={{
+                  cursor: isSpecialist ? "pointer" : "default",
+                  display: "inline-block",
+                  padding: "2px 4px"
+                }}
+              >
+                {formatEnumString(rowData?.specialty)}
+              </span>
+            </Whisper>
+          </div>
+        );
+      },
     },
     {
       key: "jobRole", title: <Translate>Job Role</Translate>, flexGrow: 3,
