@@ -108,10 +108,10 @@ const GenericMedications = () => {
   const handleSave = async () => {
     try {
       if (brandMedication.id) {
+       const { hasActiveIngredient, ...updatePayload } = brandMedication;
+
+await updateBrandMedication(updatePayload).unwrap();
        
-        await updateBrandMedication({
-          ...brandMedication
-        }).unwrap();
 
         dispatch(notify({ msg: "Updated successfully", sev: "success" }));
       } else {
