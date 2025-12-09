@@ -11,6 +11,7 @@ const BasicInfo = ({
   ageGroupValue,
   patientClassLovQueryResponse
 }) => {
+  console.log("ageGroupValue", ageGroupValue);
   return (
     <Form layout="inline">
       <MyInput
