@@ -137,6 +137,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     }
   }, [patientAgeGroupResponse]);
 
+  console.log('ageGroupValue in ProfileTabs-new:', ageGroupValue);
+  console.log("dateOfBirth in ProfileTabs-new:", localPatient?.dateOfBirth);
+  console.log("patientAgeGroupResponse in ProfileTabs-new:", patientAgeGroupResponse);
+
+
   return (
     <>
       <Panel

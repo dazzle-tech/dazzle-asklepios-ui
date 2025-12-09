@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faFilePen } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import {
@@ -10,6 +10,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 import { newPatientDocument } from '@/types/model-types-constructor-new';
+
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
@@ -170,6 +171,34 @@ const IDTab = ({ localPatient }) => {
         ) : (
           '-'
         )
+    },
+    {
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => (
+        <div className="table-actions">
+          <FontAwesomeIcon
+            icon={faFilePen}
+            className="action-icon edit-icon"
+            onClick={e => {
+              e.stopPropagation();
+              setSelectedSecondaryDocument(rowData);
+              setSecondaryDocument(rowData);
+              setSecondaryDocumentModalOpen(true);
+            }}
+          />
+          <FontAwesomeIcon
+            icon={faTrash}
+            className="action-icon delete-icon"
+            onClick={e => {
+              e.stopPropagation();
+              setSelectedSecondaryDocument(rowData);
+              setDeleteDocModalOpen(true);
+            }}
+          />
+        </div>
+      )
     }
   ];
 
@@ -213,22 +242,6 @@ const IDTab = ({ localPatient }) => {
           prefixIcon={() => <PlusRound />}
         >
           New Document
-        </MyButton>
-        <MyButton
-          disabled={!selectedSecondaryDocument?.id}
-          onClick={handleEditSecondaryDocument}
-          prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
-        >
-          Edit
-        </MyButton>
-        <MyButton
-          disabled={!selectedSecondaryDocument?.id}
-          onClick={() => {
-            setDeleteDocModalOpen(true);
-          }}
-          prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}
-        >
-          Delete
         </MyButton>
       </div>
       <MyTable

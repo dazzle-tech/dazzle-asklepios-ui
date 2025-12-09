@@ -223,6 +223,7 @@ const PatientProfile = () => {
         >
           <ProfileHeader
             localPatient={localPatient}
+            setLocalPatient={setLocalPatient}
             handleSave={handleSave}
             handleClear={handleClear}
             setVisitHistoryModel={setVisitHistoryModel}

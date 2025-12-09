@@ -81,6 +81,15 @@ export const patientDocumentsService = createApi({
         method: 'DELETE'
       }),
       invalidatesTags: ['PatientDocument']
+    }),
+
+    addNoDocument: builder.mutation<any, any>({
+      query: body => ({
+        url: '/api/patient/documents/no-document',
+        method: 'POST',
+        body
+      }),
+      invalidatesTags: ['PatientDocument']
     })
   })
 });
@@ -99,6 +108,7 @@ export const {
   useLazyGetSecondaryDocumentsByPatientQuery,
 
   useAddPatientDocumentMutation,
+  useAddNoDocumentMutation,
   useUpdatePatientDocumentMutation,
   useDeletePatientDocumentMutation
 } = patientDocumentsService;
