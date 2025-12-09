@@ -75,13 +75,13 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
     );
 
     if (!formData?.name?.trim()) {
-      dispatch(notify({ msg: "Please Enter Report Name", sev: "error" }));
+      dispatch(notify({ msg: "Please Enter Report Name", sev: "warning" }));
       return;
     }
 
     if (!htmlContent || htmlContent === "<p></p>\n") {
       dispatch(
-        notify({ msg: "Please enter report template content", sev: "error" })
+        notify({ msg: "Please enter report template content", sev: "warning" })
       );
       return;
     }

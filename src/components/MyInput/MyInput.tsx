@@ -146,18 +146,10 @@ const MyInput = ({
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
-
-      const menuClassList = [
-        'rs-picker-popup',
-        'rs-picker-select-menu',
-        'rs-picker-menu',
-        'rs-virtual-list',
-        'rs-virtual-list-scrollbar',
-        'rs-picker-tag-menu'
-      ];
-
-      if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
-        return;
+      
+      const modal = document.querySelector(".rs-modal-body");
+      if (modal && modal.contains(path[0])) {
+        return; // do NOT close pickers when scrolling inside modal
       }
 
       setIsSelectOpen(false);
@@ -168,8 +160,9 @@ const MyInput = ({
       setIsCheckPickerOpen(false);
     };
 
-    window.addEventListener('scroll', handleScroll, true);
-    return () => window.removeEventListener('scroll', handleScroll, true);
+    document.addEventListener("scroll", handleScroll, { capture: true });
+
+    return () => document.removeEventListener("scroll", handleScroll, { capture: true });
   }, []);
 
   useEffect(() => {

@@ -96,7 +96,7 @@ const { data: uomGroupsListResponse } = useGetAllUOMGroupsQuery({
         color="var(--deep-blue)"
         onClick={() => {
           if (!product?.uomGroupId) {
-            dispatch(notify({ msg: "Please select a UOM Group first", sev: "error" }));
+            dispatch(notify({ msg: "Please select a UOM Group first", sev: "warning" }));
             return;
           }
           setSelectedUom({ id: product?.uomGroupId });

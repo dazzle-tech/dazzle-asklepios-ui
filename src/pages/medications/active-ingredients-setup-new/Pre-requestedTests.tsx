@@ -87,12 +87,12 @@ const PreRequestedTests = ({ activeIngredient }) => {
   // -------------------------------
   const save = async () => {
     if (!activeIngredient?.id) {
-      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "warning" }));
       return;
     }
 
     if (!record.testId) {
-      dispatch(notify({ msg: "Please fix the following fields: • Diagnostic Test is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Diagnostic Test is required", sev: "warning" }));
       return;
     }
 

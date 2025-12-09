@@ -245,7 +245,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         dispatch(
           notify({
             msg: `${item.label} cannot be empty.`,
-            sev: "error",
+            sev: "warning",
           })
         );
         return;

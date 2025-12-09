@@ -427,7 +427,7 @@ const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllVa
     try {
 
       if (!diagnosticTestNormalRange.resultType) {
-        return dispatch(notify({ msg: "Please select Result Type", sev: "error" }));
+        return dispatch(notify({ msg: "Please select Result Type", sev: "warning" }));
       }
 
       const payload = {

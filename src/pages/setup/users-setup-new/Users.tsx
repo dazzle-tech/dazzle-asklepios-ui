@@ -190,7 +190,7 @@ const handleSave = async () => {
   dispatch(
     notify({
       msg: backendMessage,
-      sev: "error",
+      sev: "warning",
     })
   );
 }

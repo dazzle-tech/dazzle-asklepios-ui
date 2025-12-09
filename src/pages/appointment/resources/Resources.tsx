@@ -210,9 +210,9 @@ const Resources = () => {
         const messages = error.data.fieldErrors
           .map(fe => `${fe.field}: ${fe.message}`)
           .join("\n");
-        dispatch(notify({ msg: messages, sev: "error" }));
+        dispatch(notify({ msg: messages, sev: "warning" }));
       } else if (error?.data?.detail) {
-        dispatch(notify({ msg: error.data.detail, sev: "error" }));
+        dispatch(notify({ msg: error.data.detail, sev: "warning" }));
       } else {
         dispatch(notify({ msg: "Failed to create resource", sev: "error" }));
       }
