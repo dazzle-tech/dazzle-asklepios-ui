@@ -141,47 +141,56 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     return resolved;
   };
 
-  useEffect(() => {
-    if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
-      if (!hasWarnedNoDepartmentRef.current) {
-        toast(
-          'No departments are assigned to your user. Please contact the administrator to configure departments.'
-        );
-        hasWarnedNoDepartmentRef.current = true;
-      }
-      return;
-    }
-    if (!selectedDepartmentEffective) {
-      return;
-    }
-    const resolvedDepartmentName = resolveDepartmentName(selectedDepartmentEffective.departmentId);
-    const resolvedFacilityName = resolveFacilityName(selectedDepartmentEffective.facilityId);
-    if (
-      !selectedDepartment ||
-      selectedDepartment?.departmentId !== selectedDepartmentEffective.departmentId ||
-      selectedDepartment?.facilityId !== selectedDepartmentEffective.facilityId ||
-      selectedDepartment?.departmentName !== resolvedDepartmentName ||
-      selectedDepartment?.facilityName !== resolvedFacilityName
-    ) {
-      dispatch(
-        setSelectedDepartment({
-          departmentId: selectedDepartmentEffective.departmentId,
-          facilityId: selectedDepartmentEffective.facilityId,
-          departmentName: resolvedDepartmentName,
-          facilityName: resolvedFacilityName
-        })
+
+useEffect(() => {
+  if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
+    return;
+  }
+
+  if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
+    if (!hasWarnedNoDepartmentRef.current) {
+      toast(
+        'No departments are assigned to your user. Please contact the administrator to configure departments.'
       );
+      hasWarnedNoDepartmentRef.current = true;
     }
-  }, [
-    selectedDepartment,
-    selectedDepartmentEffective,
-    activeDepartments,
-    departments,
-    facilities,
-    isLoadingDepartments,
-    dispatch,
-    toast
-  ]);
+    return;
+  }
+
+  if (!selectedDepartmentEffective) {
+    return;
+  }
+
+  const resolvedDepartmentName = resolveDepartmentName(selectedDepartmentEffective.departmentId);
+  const resolvedFacilityName = resolveFacilityName(selectedDepartmentEffective.facilityId);
+
+  if (
+    !selectedDepartment ||
+    selectedDepartment?.departmentId !== selectedDepartmentEffective.departmentId ||
+    selectedDepartment?.facilityId !== selectedDepartmentEffective.facilityId ||
+    selectedDepartment?.departmentName !== resolvedDepartmentName ||
+    selectedDepartment?.facilityName !== resolvedFacilityName
+  ) {
+    dispatch(
+      setSelectedDepartment({
+        departmentId: selectedDepartmentEffective.departmentId,
+        facilityId: selectedDepartmentEffective.facilityId,
+        departmentName: resolvedDepartmentName,
+        facilityName: resolvedFacilityName
+      })
+    );
+  }
+}, [
+  selectedDepartment,
+  selectedDepartmentEffective,
+  activeDepartments,
+  departments,
+  facilities,
+  isLoadingDepartments,
+  dispatch,
+  toast
+]);
+
 
   // container to choose action from more menu
   const contentOfMoreIconMenu = (
