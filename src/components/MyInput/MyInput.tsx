@@ -143,34 +143,6 @@ const MyInput = ({
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = event => {
-      const path = event.composedPath ? event.composedPath() : [];
-
-      const menuClassList = [
-        'rs-picker-popup',
-        'rs-picker-select-menu',
-        'rs-picker-menu',
-        'rs-virtual-list',
-        'rs-virtual-list-scrollbar',
-        'rs-picker-tag-menu'
-      ];
-
-      if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
-        return;
-      }
-
-      setIsSelectOpen(false);
-      setIsDateOpen(false);
-      setIsDateTimeOpen(false);
-      setIsTimeOpen(false);
-      setIsMultyPickerOpen(false);
-      setIsCheckPickerOpen(false);
-    };
-
-    window.addEventListener('scroll', handleScroll, true);
-    return () => window.removeEventListener('scroll', handleScroll, true);
-  }, []);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);

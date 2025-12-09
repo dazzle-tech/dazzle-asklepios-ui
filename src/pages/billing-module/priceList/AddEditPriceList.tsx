@@ -54,7 +54,7 @@ const AddEditPriceList = ({
       dispatch(
         notify({
           msg: "Please fill required fields: " + missing.join(", "),
-          sev: "error",
+          sev: "warning",
         })
       );
       return false;

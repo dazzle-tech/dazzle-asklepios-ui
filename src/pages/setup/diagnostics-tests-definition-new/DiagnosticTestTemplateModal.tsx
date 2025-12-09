@@ -129,12 +129,12 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
     );
 
     if (!formData.name.trim()) {
-      dispatch(notify({ msg: "Please enter Template Name", sev: "error" }));
+      dispatch(notify({ msg: "Please enter Template Name", sev: "warning" }));
       return;
     }
 
     if (!htmlContent || htmlContent === "<p></p>\n") {
-      dispatch(notify({ msg: "Please enter Template Content", sev: "error" }));
+      dispatch(notify({ msg: "Please enter Template Content", sev: "warning" }));
       return;
     }
 

@@ -156,7 +156,7 @@ const PayorSetup = () => {
               ))}
             </>
           ),
-          sev: "error",
+          sev: "warning",
         })
       );
       return;
