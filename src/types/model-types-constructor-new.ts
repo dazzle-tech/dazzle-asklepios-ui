@@ -1088,3 +1088,11 @@ export const newDischargePlanning: modelTypes.DischargePlanning = {
 
   isActive: true,
 };
+export const newPriceListAttribute: modelTypes.PriceListAttribute = {
+  id:undefined,
+  priceListId: undefined,
+  attributeType:null, // PriceAttributes enum as string
+  attribute: null,
+  price: null ,// or string if you prefer BigDecimal string
+  isActive: true
+}
