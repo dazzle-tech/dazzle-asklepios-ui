@@ -1,0 +1,26 @@
+.blur-bg {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.blur-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: inherit;
+  background-size: cover;
+  background-position: center;
+  filter: blur(12px);
+  transform: scale(1.1);
+  z-index: 0;
+}
+
+.blur-bg > * {
+top: 10vw;
+  position: relative;
+  z-index: 1;
+}

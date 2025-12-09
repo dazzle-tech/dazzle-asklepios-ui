@@ -17,8 +17,10 @@ import {
   Loader,
   Stack,
 } from 'rsuite';
+import './styles.less';
 import MyButton from "@/components/MyButton/MyButton";
-
+import Background from "../.././images/auth-bg.png";
+import Logo from '../.././images/Logo_BLUE_New.svg';
 const { StringType } = Schema.Types;
 
 const model = Schema.Model({
@@ -74,7 +76,8 @@ const ResetPassword = () => {
   }
 
   return (
-    <Container style={{ maxWidth: 500, margin: '50px auto', padding: 30 }}>
+  <Panel className="blur-bg" style={{ backgroundImage: `url(${Background})` }}>
+    <Container style={{ maxWidth: 550, margin: '50px auto', padding: 30 }}>
       <Panel
         shaded
         bordered
@@ -82,12 +85,15 @@ const ResetPassword = () => {
           boxShadow: '0 4px 15px rgb(0 0 0 / 0.15)',
           borderRadius: 15,
           padding: '50px 40px',
-          background: 'linear-gradient(135deg, #749bbdff 0%, #162bc8ff 100%)',
-          color: '#fff',
+          backgroundColor: "#ffffff6f",
         }}
       >
         <Header>
-          <h4 style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 20 }}>
+                    <Panel className="logo-panel">
+                      <img src={Logo} alt="Tenant Logo" />
+                    </Panel>
+          <h4 style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 20,fontSize:'32px', fontFamily:'sans-serif',color:'#5A5A5B'
+           }}>
             Reset Your Password
           </h4>
           <Divider style={{ borderColor: 'rgba(255, 255, 255, 0.3)' }} />
@@ -104,7 +110,7 @@ const ResetPassword = () => {
             onSubmit={handleSubmit}
           >
             <Form.Group controlId="newPassword">
-              <Form.ControlLabel style={{ color: '#eee', fontWeight: '600' }}>
+              <Form.ControlLabel style={{ color: '#5A5A5B', fontWeight: '600' }}>
                 New Password
               </Form.ControlLabel>
               <Form.Control
@@ -117,7 +123,7 @@ const ResetPassword = () => {
             </Form.Group>
 
             <Form.Group controlId="confirmPassword" style={{ marginTop: 20 }}>
-              <Form.ControlLabel style={{ color: '#eee', fontWeight: '600' }}>
+              <Form.ControlLabel style={{ color: '#5A5A5B', fontWeight: '600' }}>
                 Confirm Password
               </Form.ControlLabel>
               <Form.Control
@@ -141,13 +147,14 @@ const ResetPassword = () => {
             )}
 
             <Stack justifyContent="center" alignItems="center" spacing={10} style={{ marginTop: 30 }}>
-              <MyButton onClick={handleSubmit} backgroundColor="#eee" color="#1153aaff">Reset Password</MyButton>
+              <MyButton onClick={handleSubmit} backgroundColor="#5A5A5B" color="#1153aaff">Reset Password</MyButton>
               
             </Stack>
           </Form>
         </Content>
       </Panel>
     </Container>
+    </Panel>
   );
 };
 
