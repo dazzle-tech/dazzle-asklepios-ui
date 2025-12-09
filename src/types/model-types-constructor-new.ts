@@ -1,5 +1,6 @@
 import { tr } from "date-fns/locale";
 import * as modelTypes from "./model-types-new";
+import { WarehouseProduct } from "./model-types-new";
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
   login: '',
@@ -1087,4 +1088,65 @@ export const newDischargePlanning: modelTypes.DischargePlanning = {
   patientUnderstanding: false,
 
   isActive: true,
+};
+
+export const newWarehouse: modelTypes.Warehouse = {
+  id: undefined,
+  facilityId: undefined,
+  departmentId: undefined,
+  warehouseName: '',
+  warehouseCode: '',
+  isDefault: false,
+  closeWarehouse: false,
+  locationId: '',
+  capacity: '',
+  workingHoursFromTime: undefined,
+  workingHoursToTime: undefined,
+  isActive: true,
+  createdBy: '',
+  createdDate: undefined,
+  lastModifiedBy: undefined,
+  lastModifiedDate: undefined,
+};
+
+export const newWarehouseUser: modelTypes.WarehouseUser = {
+  id: undefined,
+  warehouseId: undefined,
+  userId: undefined,
+  createdBy: '',
+  createdDate: undefined,
+  lastModifiedBy: undefined,
+  lastModifiedDate: undefined,
+};
+
+export const newWarehouseProduct: modelTypes.WarehouseProduct = {
+  id: undefined,
+  warehouseId: undefined,
+  productId: undefined,
+  quantity: 0,
+  reOrderQuantity: 0,
+  miniOrder: 0,
+  maxOrder: 0,
+  workingHoursFromTime: undefined,
+  workingHoursToTime: undefined,
+  isActive: true,
+  departmentId: undefined,
+  avgCost: 0,
+  createdBy: '',
+  createdDate: undefined,
+  lastModifiedBy: undefined,
+  lastModifiedDate: undefined,
+};
+
+export const newWarehouseProductDetails: modelTypes.WarehouseProductDetails = {
+  id: undefined,
+  warehouseProductId: undefined,
+  lotSerialNum: '',
+  quantity: 0,
+  isActive: true,
+  expiryDate: '',
+  createdBy: '',
+  createdDate: undefined,
+  lastModifiedBy: undefined,
+  lastModifiedDate: undefined,
 };

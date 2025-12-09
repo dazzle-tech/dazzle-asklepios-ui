@@ -1302,3 +1302,64 @@ export interface CommunityArea {
   name: string;
   isActive?: boolean;
 }
+
+export interface Warehouse {
+  id: number;
+  facilityId: string;
+  departmentId: string;
+  warehouseName: string;
+  warehouseCode: string;
+  isDefault: boolean;
+  closeWarehouse: boolean;
+  locationId: string;
+  capacity: string;
+  workingHoursFromTime: number;
+  workingHoursToTime: number;
+  isActive: boolean;
+  createdBy: string;
+  createdDate: number;
+  lastModifiedBy: string;
+  lastModifiedDate: number;
+}
+
+export interface WarehouseUser {
+  id: number;
+  warehouseId: number;
+  userId: number;
+  createdBy: string;
+  createdDate: number;
+  lastModifiedBy: string;
+  lastModifiedDate: number;
+}
+
+export interface WarehouseProduct {
+  id: number;
+  warehouseId: number;
+  productId: number;
+  quantity: number;
+  reOrderQuantity: number;
+  miniOrder: number;
+  maxOrder: number;
+  workingHoursFromTime: number;
+  workingHoursToTime: number;
+  isActive: boolean;
+  departmentId: number;
+  avgCost: number;
+  createdBy: string;
+  createdDate: number;
+  lastModifiedBy: string;
+  lastModifiedDate: number;
+}
+
+export interface WarehouseProductDetails {
+  id: number;
+  warehouseProductId: number;
+  lotSerialNum: string;
+  quantity: number;
+  isActive: boolean;
+  expiryDate: string; 
+  createdBy: string;
+  createdDate: number;
+  lastModifiedBy: string;
+  lastModifiedDate: number;
+}
