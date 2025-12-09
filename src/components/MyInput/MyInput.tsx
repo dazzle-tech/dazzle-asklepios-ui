@@ -143,27 +143,6 @@ const MyInput = ({
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = event => {
-      const path = event.composedPath ? event.composedPath() : [];
-      
-      const modal = document.querySelector(".rs-modal-body");
-      if (modal && modal.contains(path[0])) {
-        return; // do NOT close pickers when scrolling inside modal
-      }
-
-      setIsSelectOpen(false);
-      setIsDateOpen(false);
-      setIsDateTimeOpen(false);
-      setIsTimeOpen(false);
-      setIsMultyPickerOpen(false);
-      setIsCheckPickerOpen(false);
-    };
-
-    document.addEventListener("scroll", handleScroll, { capture: true });
-
-    return () => document.removeEventListener("scroll", handleScroll, { capture: true });
-  }, []);
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
