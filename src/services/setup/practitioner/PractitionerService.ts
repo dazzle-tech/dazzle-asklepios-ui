@@ -145,6 +145,21 @@ export const PractitionerService = createApi({
         "Practitioner",
       ],
     }),
+      getActiveAppointablePractitioner: builder.query({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/practitioner/active-appointable`,
+        params: { page, size, sort },
+      }),
+       transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["Practitioner"],
+    }),
 
     // 🔹 Toggle active status
     togglePractitionerActive: builder.mutation({
@@ -170,4 +185,5 @@ export const {
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
+  useGetActiveAppointablePractitionerQuery
 } = PractitionerService;
