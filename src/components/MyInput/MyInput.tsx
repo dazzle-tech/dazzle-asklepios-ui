@@ -754,7 +754,7 @@ const MyInput = ({
         )}
         {props.required && <span className="required-field ">*</span>}
       </Form.ControlLabel>
-      {props.column && <br />}
+      {props.column && <div style={{ marginBottom: 5 }} />}
       {conjureFormControl()}
       {validationResult && conjureValidationMessages()}
     </Form.Group>
