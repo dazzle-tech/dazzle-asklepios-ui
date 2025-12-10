@@ -175,16 +175,18 @@ const handleSave = async () => {
 
       const message = error?.data?.message?.toLowerCase();
 
+
+}
       if (message === "error.emailexists") {
         backendMessage = "This email is already in use";
       }
+    dispatch(
+    notify({
+      msg: backendMessage,
+      sev: "warning",
+    })
+  );
 
-      dispatch(
-        notify({
-          msg: backendMessage,
-          sev: "error",
-        })
-      );
 
       return;
     }
