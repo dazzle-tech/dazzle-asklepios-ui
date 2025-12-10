@@ -104,23 +104,29 @@ const AddBrandSubstitute = ({ open, setOpen, brandMedication }) => {
     },
   ];
 
+const filteredMedications =
+  allMedications?.data?.filter(med => med.id !== brandMedication?.id) ?? [];
+
+
   // ---------- RENDER ----------
   const modalContent = (
     <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
         <Form>
+          
       <MyInput
         fieldName="alternativeBrandId"
         fieldType="select"
-        selectData={allMedications?.data ?? []}
+        selectData={filteredMedications}
         selectDataLabel="name"
         selectDataValue="id"
         record={substitute}
         showLabel
         label="Select Substitute"
         placeholder="Choose substitute medication"
-        setRecord={setSubstitute }
+        setRecord={setSubstitute}
         loading={loadingMeds}
       />
+
 
       <MyButton
         color="var(--deep-blue)"
