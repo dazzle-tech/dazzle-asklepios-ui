@@ -1080,6 +1080,14 @@ export interface BillingInvoiceResponseVM {
   name: string;
   planType: string;
   itemType: string;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+  export interface PayorPlanItem {
+  id?: number;
+  payorId: number;
+  itemType: string;
   amount?: number | null;
   coverageType: string;
   isActive: boolean;

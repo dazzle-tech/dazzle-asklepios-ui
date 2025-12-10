@@ -104,7 +104,7 @@ import { Block } from "@mui/icons-material";
     // ---------------------------------------------
       const save = () => {
         if (!contraindication.icd10CodeId) {
-          return dispatch(notify({ msg: "Please fix the following fields: • ICD Code: is required", sev: "error" }));
+          return dispatch(notify({ msg: "Please fix the following fields: • ICD Code: is required", sev: "warning" }));
         }
 
         const payload = {

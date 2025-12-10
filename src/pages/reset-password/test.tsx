@@ -13,13 +13,12 @@ import {
   Divider,
   FlexboxGrid,
   IconButton,
- Icon,
+  Icon,
   Loader,
   Stack,
 } from 'rsuite';
-import './styles.less';
 import MyButton from "@/components/MyButton/MyButton";
-import Background from "../.././images/auth-bg.png";
+import Background from "../.././images/auth-bg.png"
 import Logo from '../.././images/Logo_BLUE_New.svg';
 const { StringType } = Schema.Types;
 
@@ -76,24 +75,27 @@ const ResetPassword = () => {
   }
 
   return (
-  <Panel className="blur-bg" style={{ backgroundImage: `url(${Background})` }}>
-    <Container style={{ maxWidth: 550, margin: '50px auto', padding: 30 }}>
+    <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
+
+    <Container style={{ maxWidth: 500, margin: '50px auto', padding: 30 }}>
       <Panel
         shaded
         bordered
         style={{
           boxShadow: '0 4px 15px rgb(0 0 0 / 0.15)',
           borderRadius: 15,
+          fontSize:'32px',
+          fontFamily:'sans-serif',
           padding: '50px 40px',
-          backgroundColor: "#ffffff6f",
+          backgroundColor: "#ffffff50",
+          color: '#424242ff',
         }}
       >
         <Header>
-                    <Panel className="logo-panel">
-                      <img src={Logo} alt="Tenant Logo" />
-                    </Panel>
-          <h4 style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 20,fontSize:'32px', fontFamily:'sans-serif',color:'#5A5A5B'
-           }}>
+          <Panel className="logo-panel">
+            <img src={Logo} alt="Tenant Logo" />
+          </Panel>
+          <h4 style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 20 }}>
             Reset Your Password
           </h4>
           <Divider style={{ borderColor: 'rgba(255, 255, 255, 0.3)' }} />
@@ -102,15 +104,9 @@ const ResetPassword = () => {
         <Content>
           <Form
             fluid
-            model={model}
-            formValue={formValue}
-            onChange={setFormValue}
-            onCheck={setFormError}
-            formError={formError}
-            onSubmit={handleSubmit}
           >
             <Form.Group controlId="newPassword">
-              <Form.ControlLabel style={{ color: '#5A5A5B', fontWeight: '600' }}>
+              <Form.ControlLabel style={{ color: '#eee', fontWeight: '600' }}>
                 New Password
               </Form.ControlLabel>
               <Form.Control
@@ -119,11 +115,11 @@ const ResetPassword = () => {
                 placeholder="Enter your new password"
                 style={{ borderRadius: 8 }}
               />
-              <Form.ErrorMessage style={{ color: '#0c55a9ff' }} name="newPassword" />
+              <Form />
             </Form.Group>
 
             <Form.Group controlId="confirmPassword" style={{ marginTop: 20 }}>
-              <Form.ControlLabel style={{ color: '#5A5A5B', fontWeight: '600' }}>
+              <Form.ControlLabel style={{ color: '#eee', fontWeight: '600' }}>
                 Confirm Password
               </Form.ControlLabel>
               <Form.Control
@@ -132,28 +128,23 @@ const ResetPassword = () => {
                 placeholder="Confirm your new password"
                 style={{ borderRadius: 8 }}
               />
-              <Form.ErrorMessage style={{ color: '#1153aaff' }} name="confirmPassword" />
+              <Form.ErrorMessage style={{ color: '#1153aaff' }} />
             </Form.Group>
 
-            {error && (
-              <Message showIcon type="error" style={{ marginTop: 25, fontWeight: '700' }}>
-                {error}
+              <Message>
               </Message>
-            )}
-            {success && (
               <Message showIcon type="success" style={{ marginTop: 25, fontWeight: '700' }}>
-                {success}
               </Message>
-            )}
 
             <Stack justifyContent="center" alignItems="center" spacing={10} style={{ marginTop: 30 }}>
-              <MyButton onClick={handleSubmit} backgroundColor="#5A5A5B" color="#1153aaff">Reset Password</MyButton>
+              <MyButton backgroundColor="#eee" color="#1153aaff">Reset Password</MyButton>
               
             </Stack>
           </Form>
         </Content>
       </Panel>
     </Container>
+    
     </Panel>
   );
 };

@@ -105,7 +105,7 @@ const ReportResultTemplate = () => {
   };
 
   const columns = [
-    { key: "TestName", title: "Test Name", dataKey: "name", width: 200 },
+    { key: "TestName", title: "Template Name", dataKey: "name", width: 200 },
     {
       key: "reportTemplate",
       title: "View",

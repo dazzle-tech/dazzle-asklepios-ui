@@ -168,32 +168,28 @@ const handleSave = async () => {
     setPopupOpen(false);
 
   } 
-  catch (error) {
-  console.error("❌ Error saving user:", error);
+    catch (error) {
+      console.error("❌ Error saving user:", error);
 
-  let backendMessage = "Failed to save user";
+      let backendMessage = "Failed to save user";
 
-  // Check for validation errors
-  if (error?.data?.fieldErrors?.length > 0) {
-    const fieldError = error.data.fieldErrors[0];
-    if (fieldError.field === "email") {
-      backendMessage = "Email cannot be empty";
-    } else {
-      backendMessage = fieldError.message;
-    }
-  } else if (error?.data?.detail) {
-    backendMessage = error.data.detail;
-  } else if (error?.data?.message === "error.emailExists") {
-    backendMessage = "This email is already in use";
-  }
+      const message = error?.data?.message?.toLowerCase();
 
-  dispatch(
+
+}
+      if (message === "error.emailexists") {
+        backendMessage = "This email is already in use";
+      }
+    dispatch(
     notify({
       msg: backendMessage,
-      sev: "error",
+      sev: "warning",
     })
   );
-}
+
+
+      return;
+    }
 };
 
   // Filter table

@@ -162,7 +162,7 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
         activeIngredientIndication.icd10CodeId;
 
       if (!icdId) {
-        dispatch(notify({ msg: "Please fix the following fields: • ICD Code: is required", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • ICD Code: is required", sev: "warning" }));
         return;
       }
 
@@ -209,7 +209,7 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
     setOpenConfirmDeleteIndicationModal(false);
 
     if (!activeIngredientIndication.id) {
-      dispatch(notify({ msg: "Invalid indication", sev: "error" }));
+      dispatch(notify({ msg: "Invalid indication", sev: "warning" }));
       return;
     }
 

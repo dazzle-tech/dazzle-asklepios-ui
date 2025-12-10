@@ -88,7 +88,7 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
       dispatch(
         notify({
           msg,
-          sev: "error",
+          sev: "warning",
         })
       );
     }
