@@ -87,12 +87,21 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   };
   const selectedDepartment = authSlice.selectedDepartment;
   const hasWarnedNoDepartmentRef = useRef(false);
-  const {
-    data: activeDepartmentsResponse,
-    isLoading: isLoadingDepartments
-  } = useGetActiveUserDepartmentsByUserQuery(userId as number, {
-    skip: !userId
-  });
+  const selectedFacilityId =
+  authSlice?.selectedDepartment?.facilityId ??
+  authSlice?.tenant?.selectedFacility?.id;
+  const facilityKey = selectedFacilityId ?? "no-facility";
+const {
+  data: activeDepartmentsResponse,
+  isLoading: isLoadingDepartments,
+    isFetching: isFetchingDepartments,
+} = useGetActiveUserDepartmentsByUserQuery(
+  { userId: userId as number, facilityId: facilityKey },
+  {
+    skip: !userId,
+    refetchOnMountOrArgChange: true,
+  }
+);
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
   const storedDepartmentMatch =
     selectedDepartment &&

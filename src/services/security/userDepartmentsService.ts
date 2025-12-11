@@ -24,12 +24,15 @@ export const userDepartmentService = createApi({
     }),
 
     // GET /api/user-departments/user/{userId}/active
-    getActiveUserDepartmentsByUser: builder.query<UserDepartment[], number | string>({
-      query: userId => ({
-        url: `/api/setup/user-departments/user/${userId}/active`
-      }),
-      providesTags: ['UserDepartment']
-    }),
+   getActiveUserDepartmentsByUser: builder.query<
+  UserDepartment[],
+  { userId: number; facilityId: number | string }
+>({
+  query: ({ userId }) =>
+    `/api/setup/user-departments/user/${userId}/active`,
+  providesTags: ['UserDepartment'],
+}),
+
 
     // GET /api/user-departments/user/{userId}/default
     getDefaultUserDepartmentByUser: builder.query<UserDepartment | null, number | string>({
