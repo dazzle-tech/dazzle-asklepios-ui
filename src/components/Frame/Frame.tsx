@@ -97,7 +97,7 @@ const Frame = (props: FrameProps) => {
   const dispatch = useAppDispatch();
   const departmentTriggerRef = React.useRef<WhisperInstance>(null);
 
-  const { data: departmentsResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
+  const { data: departmentsResponse,isLoading } = useGetDepartmentsQuery({ page: 0, size: 10000 });
   const departments = departmentsResponse?.data ?? [];
   const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilitiesResponse) ? facilitiesResponse : [];
@@ -106,14 +106,30 @@ const Frame = (props: FrameProps) => {
     departmentName?: string | null;
     facilityName?: string | null;
   };
+
+
   const selectedDepartment = authSlice.selectedDepartment;
-  const {
-    data: activeDepartmentsResponse,
-    isLoading: isLoadingDepartments
-  } = useGetActiveUserDepartmentsByUserQuery(userId as number, {
-    skip: !userId
-  });
+const selectedFacilityId =
+  authSlice?.selectedDepartment?.facilityId ??
+  authSlice?.tenant?.selectedFacility?.id;
+
+const facilityKey = selectedFacilityId ?? "no-facility";
+
+const {
+  data: activeDepartmentsResponse,
+  isLoading: isLoadingDepartments,
+    isFetching: isFetchingDepartments,
+} = useGetActiveUserDepartmentsByUserQuery(
+  { userId: userId as number, facilityId: facilityKey },
+  {
+    skip: !userId,
+    refetchOnMountOrArgChange: true,
+  }
+);
+
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
+  const departmentsReady = !isLoadingDepartments && !isFetchingDepartments;
+  console.log("active departments",activeDepartments)
   const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
   const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
   const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
@@ -124,7 +140,7 @@ const Frame = (props: FrameProps) => {
   );
   const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
   const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
-
+console.log("length",activeDepartments.length)
   const resolveFacilityName = useCallback(
     (facilityId?: string | number | null) => {
       if (facilityId != null) {
@@ -178,11 +194,13 @@ const Frame = (props: FrameProps) => {
           )}
         </div>
         <Divider style={{ margin: 0 }} />
-        {isLoadingDepartments ? (
-          <div style={{ padding: '12px' }}>Loading departments…</div>
-        ) : activeDepartments.length === 0 ? (
-          <div style={{ padding: '12px' }}>No active departments found.</div>
-        ) : (
+        
+      {isLoadingDepartments && isFetchingDepartments&&isLoading ? (
+  <div style={{ padding: '12px' }}>Loading departments…</div>
+) : activeDepartments.length === 0 ? (
+  <div style={{ padding: '12px' }}>No active departments found.</div>
+) : (
+
           <div style={{ maxHeight: 240, overflowY: 'auto', margin: '8px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {activeDepartments.map(dept => {
               const isDefault =
@@ -265,8 +283,8 @@ const Frame = (props: FrameProps) => {
                 </div>
               );
             })}
-          </div>
-        )}
+          </div>)}
+     
       </Popover>
     ),
     [
