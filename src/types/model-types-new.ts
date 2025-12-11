@@ -1315,8 +1315,8 @@ export interface Warehouse {
   id: number;
   facilityId: string;
   departmentId: string;
-  warehouseName: string;
-  warehouseCode: string;
+  name: string;
+  code: string;
   isDefault: boolean;
   closeWarehouse: boolean;
   locationId: string;

@@ -200,7 +200,7 @@ import InventoryManagementTransferApproval from './pages/inventory-management/in
 import InventoryManagementProductCatalog from './pages/inventory-management/product-catalog';
 import InventoryManagementProductSetup from './pages/inventory-management/product-setup/ProductSetup';
 import InventoryManagementWarehouseSetup from './pages/inventory-management/warehouse-setup/WarehouseSetup';
-import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
+// import InventoryManagementWarehouseItemsSetup from './pages/inventory-management/warehouse-Items-setup';
 import InventoryManagementDepartmentStock from './pages/inventory-management/departmentStock';
 import PriceLists from './pages/billing-module/priceList/PriceLists';
 import MyConsultations from './components/MyConsultations/MyConsultations';
@@ -643,7 +643,7 @@ const App = () => {
               <Route path="inventory-management-transfer-approval" element={<InventoryManagementTransferApproval />} />
               <Route path="inventory-management-product-catalog" element={<InventoryManagementProductCatalog />} />
               <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
-              <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
+              {/* <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} /> */}
               <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
             </Route>
           </Route>

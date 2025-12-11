@@ -322,25 +322,32 @@ const MyInput = ({
           />
         );
 
-      case 'time':
+      case 'time': {
+        const currentVal = record[fieldName];
+        const dateValue =
+          typeof currentVal === "string" && /^\d{2}:\d{2}$/.test(currentVal)
+            ? new Date(`1970-01-01T${currentVal}:00`)
+            : null;
+
         return (
           <Form.Control
             className="custom-time-input"
-            style={
-              {
-                width: props?.width ?? 145,
-                '--custom-time-input': `${props?.height ?? 30}px`
-              } as React.CSSProperties
-            }
+            style={{
+              width: props?.width ?? 145,
+              '--custom-time-input': `${props?.height ?? 30}px`
+            }}
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? record[fieldName] : null}
+            value={dateValue}
             accepter={TimePicker}
-            onChange={handleValueChange}
-            onClean={() => handleValueChange(null)}
-            placeholder={props.placeholder}
             format="HH:mm"
             cleanable
+            placeholder={props.placeholder}
+            onChange={(val) => {
+              const timeStr = val ? val.toTimeString().slice(0, 5) : "";
+              handleValueChange(timeStr);
+            }}
+            onClean={() => handleValueChange("")}
             onKeyDown={focusNextField}
             open={isTimeOpen}
             onOpen={() => setIsTimeOpen(true)}
@@ -348,9 +355,10 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
-            hideMinutes={props?.hideMinutes ? props?.hideMinutes : false}
           />
         );
+      }
+
 
       case 'select':
         return (
