@@ -1,383 +1,439 @@
-import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
-import { Form, Panel } from 'rsuite';
-import { FaUndo } from 'react-icons/fa';
-import { MdModeEdit } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
-import { useAppDispatch } from '@/hooks';
-import { FaSyringe } from 'react-icons/fa';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { notify } from '@/utils/uiReducerActions';
-import { ApVaccine, ApWarehouse } from '@/types/model-types';
-import { newApVaccine, newApWarehouse } from '@/types/model-types-constructor';
-import MyInput from '@/components/MyInput';
-import './styles.less';
-import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
+// ===================== IMPORTS =====================
+import React, { useEffect, useState } from "react";
+import "./styles.less";
+import { Panel, Form } from "rsuite";
+import { useAppDispatch } from "@/hooks";
+import { setDivContent, setPageCode } from "@/reducers/divSlice";
+import { notify, showSystemLoader, hideSystemLoader } from "@/utils/uiReducerActions";
+import { useGetDepartmentsQuery } from "@/services/security/departmentService";
+
+// UI Components
+import MyTable from "@/components/MyTable";
+import MyInput from "@/components/MyInput";
+import MyButton from "@/components/MyButton/MyButton";
+import AddOutlineIcon from "@rsuite/icons/AddOutline";
+import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
+
 import {
-  useGetVaccineListQuery,
-  useDeactiveActivVaccineMutation,
-  useGetWarehouseQuery,
-  useGetDepartmentsQuery,
-  useSaveWarehouseMutation,
-  useRemoveWarehouseMutation,
-} from '@/services/setupService';
-import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import MyTable from '@/components/MyTable';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyButton from '@/components/MyButton/MyButton';
-import AddEditWarehouse from './AddEditWarehouse';
-import { FaClock, FaHourglass, FaUser } from 'react-icons/fa6';
-import Users from './Users';
-import WorkingHours from './WorkingHours';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { set } from 'lodash';
+  useGetWarehousesQuery,
+  useAddWarehouseMutation,
+  useUpdateWarehouseMutation,
+  useToggleWarehouseIsActiveMutation,
+  useSearchWarehousesQuery,
+} from "@/services/inventory/inventory-warehouse/warehouseService";
+
+import { newWarehouse } from "@/types/model-types-constructor-new";
+import { Warehouse } from "@/types/model-types-new";
+
+import { MdModeEdit, MdDelete } from "react-icons/md";
+import { FaUser, FaClock } from "react-icons/fa6";
+import { FaUndo } from "react-icons/fa";
+
+import AddEditWarehouse from "./AddEditWarehouse";
+import Users from "./Users";
+import WorkingHours from "./WorkingHours";
+import ProductList from "./ProductList";
+
 const WarehouseSetup = () => {
   const dispatch = useAppDispatch();
-  const [warehouse, setWarehouse] = useState<ApWarehouse>({ ...newApWarehouse });
-  const [openConfirmDeleteWarehouseModal, setOpenConfirmDeleteWarehouseModal] =
-    useState<boolean>(false);
-  const [saveWarehouse, saveWarehouseMutation] = useSaveWarehouseMutation();
-  const [removeWarehouse, removeWarehouseMutation] = useRemoveWarehouseMutation();
-  const [stateOfDeleteWarehouseModal, setStateOfDeleteWarehouseModal] = useState<string>('delete');
-  const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
-  const [openAddEditUserPopup, setOpenAddEditUserPopup] = useState(false);
-  const [openAddEditWorkingHoursPopup, setOpenAddEditWorkingHoursPopup] = useState(false);
- const [edit_new, setEdit_new] = useState(false);
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    pageSize: 15
+
+  const [warehouse, setWarehouse] = useState<Warehouse>({ ...newWarehouse });
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [openUsers, setOpenUsers] = useState(false);
+  const [openWorkingHours, setOpenWorkingHours] = useState(false);
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [actionType, setActionType] = useState("deactivate");
+
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: "", value: "" });
+  const [isFiltered, setIsFiltered] = useState(false);
+
+  const [filterParams, setFilterParams] = useState({
+    page: 0,
+    size: 15,
+    sort: "id,asc",
+    quickSearch: "",
   });
-   const [departmentListRequest] = useState<ListRequest>({
-      ...initialListRequest
-    });
-  
-  // Fetch warehouse list response
+
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: "id,asc",
+  });
+
+  const [sortColumn, setSortColumn] = useState("id");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+  const isSearching = isFiltered && filterParams.quickSearch !== "";
+
   const {
-    data: warehouseListResponseLoading,
+    data,
+    isFetching,
     refetch,
-    isFetching
-  } = useGetWarehouseQuery(listRequest);
-  // Pagination values
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = warehouseListResponseLoading?.extraNumeric ?? 0;
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Department Name', value: 'departmentName' },
-    { label: 'Warehouse Name', value: 'warehouseName' },
-    { label: 'Status', value: 'isValid' }
-  ];
-  // Header page setUp
-  const divContent = (
-    "Warehouse"
-  );
-  dispatch(setPageCode('Warehouse'));
-  dispatch(setDivContent(divContent));
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && warehouse && warehouse.key === rowData.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  } = isSearching
+      ? useSearchWarehousesQuery(filterParams)
+      : useGetWarehousesQuery(paginationParams);
 
-  //useEffect
-  useEffect(() => {
-    if (recordOfFilter['filter']) {
-      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
-    } else {
-      setListRequest({
-        ...initialListRequest,
-        pageSize: listRequest.pageSize,
-        pageNumber: 1
-      });
-    }
-  }, [recordOfFilter]);
+  const [addWarehouse] = useAddWarehouseMutation();
+  const [updateWarehouse] = useUpdateWarehouseMutation();
+  const [toggleWarehouseActive] = useToggleWarehouseIsActiveMutation();
 
+  // =============== PAGE HEADER SETUP ===============
   useEffect(() => {
+    dispatch(setPageCode("Warehouse"));
+    dispatch(setDivContent("Warehouse Setup"));
+
     return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
+      dispatch(setPageCode(""));
+      dispatch(setDivContent(""));
     };
-  }, [location.pathname, dispatch]);
+  }, [dispatch]);
 
-  // handle click om edit  
-  const handleEdit = () => {
-    setEdit_new(true);
-    setOpenAddEditPopup(true);
-  };
-  // Fetch department list Response
-    const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-  // handle filter change
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listRequest
-        )
-      );
+  // =============== SELECT ROW CLASS ===============
+  const isSelected = (row: Warehouse) =>
+    row.id === warehouse.id ? "selected-row" : "";
+
+  const filterFields = [
+    { label: "Warehouse Name", value: "name" },
+    { label: "Code", value: "code" },
+    { label: "Department", value: "department" },
+  ];
+
+  const handleSortChange = (column: string, type: "asc" | "desc") => {
+    setSortColumn(column);
+    setSortType(type);
+
+    const sortValue = `${column},${type}`;
+
+    if (isFiltered) {
+      setFilterParams({ ...filterParams, sort: sortValue, page: 0 });
     } else {
-      setListRequest({ ...listRequest, filters: [] });
+      setPaginationParams({ ...paginationParams, sort: sortValue, page: 0 });
     }
   };
-  // handle deactivate warehouse
-  const handleDeactivateWarehouse = async data => {
-    setOpenConfirmDeleteWarehouseModal(false);
+
+
+
+  const handlePageChange = (event, newPage) => {
+    if (isFiltered) {
+      setFilterParams({ ...filterParams, page: newPage });
+    } else {
+      setPaginationParams({ ...paginationParams, page: newPage });
+    }
+  };
+
+  const handleSave = async () => {
     try {
-      await removeWarehouse({
-        ...warehouse
-      })
-        .unwrap()
-        .then(() => {
-          refetch();
-          dispatch(
-            notify({
-              msg: 'The warehouse was successfully ' + stateOfDeleteWarehouseModal,
-              sev: 'success'
-            })
-          );
-        });
-    } catch (error) {
+      dispatch(showSystemLoader());
+
+      const payload = {
+        name: warehouse.name,
+        code: warehouse.code,
+        capacity: warehouse.capacity,
+        isDefault: warehouse.isDefault ?? false,
+        closeWarehouse: warehouse.closeWarehouse ?? false,
+        isActive: warehouse.isActive ?? true,
+        facilityId: warehouse.facilityId,
+        departmentId: warehouse.departmentId,
+      };
+
+      if (warehouse.id) {
+        await updateWarehouse({ id: warehouse.id, ...payload }).unwrap();
+
+        dispatch(notify({ msg: "Warehouse updated successfully", sev: "success" }));
+      } else {
+        await addWarehouse(payload).unwrap();
+        dispatch(notify({ msg: "Warehouse created successfully", sev: "success" }));
+      }
+
+      setPopupOpen(false);
+      refetch();
+
+    } catch (err) {
+      console.log("Save Warehouse Error:", err);
+      dispatch(notify({ msg: "Failed to save warehouse", sev: "error" }));
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+  const handleToggleWarehouse = async () => {
+    try {
+      dispatch(showSystemLoader());
+
+      await toggleWarehouseActive(warehouse.id).unwrap();
+
       dispatch(
         notify({
-          msg: 'Failed to ' + stateOfDeleteWarehouseModal + ' this warehouse',
-          sev: 'error'
+          msg:
+            actionType === "deactivate"
+              ? "Warehouse deactivated successfully"
+              : "Warehouse activated successfully",
+          sev: "success",
         })
       );
+
+      setOpenConfirmModal(false);
+      refetch();
+
+    } catch {
+      dispatch(notify({ msg: "Failed to update status", sev: "error" }));
+    } finally {
+      dispatch(hideSystemLoader());
     }
   };
-  //handle Reactivate warehouse
-  const handleReactiveWarehouse = () => {
-    setOpenConfirmDeleteWarehouseModal(false);
-    const updatedWarehouse = { ...warehouse, deletedAt: null };
-    saveWarehouse(updatedWarehouse)
-      .unwrap()
-      .then(() => {
-         refetch();
-        // display success message
-        dispatch(notify({ msg: 'The warehouse has been activated successfully', sev: 'success' }));
-      })
-      .catch(() => {
-        // display error message
-        dispatch(notify({ msg: 'Failed to activated this warehouse', sev: 'error' }));
-      });
-  };
-  // Handle page change in navigation
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-  // Handle change rows per page in navigation
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
-  // Filter table
-  const filters = () => (<>
-    <Form layout="inline" fluid className="container-of-filter-fields">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={updatedRecord => {
-          setRecordOfFilter({
-            ...recordOfFilter,
-            filter: updatedRecord.filter,
-            value: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-      />
-    </Form>
-        <AdvancedSearchFilters searchFilter={true}/>
-  </>);
-  // Icons column (Edit, User, , reactive/Deactivate)
-  const iconsForActions = (rowData: ApWarehouse) => (
+
+  const iconsForActions = (row: Warehouse) => (
     <div className="container-of-icons">
+
       <MdModeEdit
         className="icons"
         title="Edit"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => handleEdit()}
-      />
-       <FaClock
-        className="icons"
-        title="Working hours"
-        size={22}
+        size={20}
         fill="var(--primary-gray)"
         onClick={() => {
-          setOpenAddEditWorkingHoursPopup(true);
+          setWarehouse(row);
+          setPopupOpen(true);
         }}
       />
+
+      <FaClock
+        className="icons"
+        title="Working Hours"
+        fill="var(--primary-gray)"
+        size={20}
+        onClick={() => {
+          setWarehouse(row);
+          setOpenWorkingHours(true);
+        }}
+      />
+
       <FaUser
         className="icons"
         title="Allowed Users"
-        size={22}
         fill="var(--primary-gray)"
+        size={20}
         onClick={() => {
-          setOpenAddEditUserPopup(true);
+          setWarehouse(row);
+          setOpenUsers(true);
         }}
       />
-      {!rowData?.deletedAt ? (
+
+      {row.isActive ? (
         <MdDelete
           className="icons"
           title="Deactivate"
-          size={24}
+          size={20}
           fill="var(--primary-pink)"
           onClick={() => {
-            setStateOfDeleteWarehouseModal('deactivate');
-            setOpenConfirmDeleteWarehouseModal(true);
+            setActionType("deactivate");
+            setWarehouse(row);
+            setOpenConfirmModal(true);
           }}
         />
       ) : (
         <FaUndo
           className="icons"
           title="Activate"
-          size={24}
           fill="var(--primary-gray)"
+          size={20}
           onClick={() => {
-            setStateOfDeleteWarehouseModal('reactivate');
-            setOpenConfirmDeleteWarehouseModal(true);
+            setActionType("reactivate");
+            setWarehouse(row);
+            setOpenConfirmModal(true);
           }}
         />
       )}
     </div>
   );
-  //Table columns
-  const tableColumns = [ 
+
+  const { data: departmentsResponse } = useGetDepartmentsQuery({
+    page: 0,
+    size: 200,
+    sort: "id,asc",
+  });
+  const departments = departmentsResponse?.data ?? [];
+
+  const getDepartmentName = (id: number) => {
+    const dept = departments.find(d => d.id === id);
+    return dept?.name ?? "—";
+  };
+
+
+
+  const tableColumns = [
     {
-      key: 'departmentKey',
-      title: <Translate>Department</Translate>,
+      key: "departmentId",
+      title: "Department",
       flexGrow: 4,
-            render: rowData => (
-              <span>
-                {conjureValueBasedOnKeyFromList(
-                  departmentListResponse?.object ?? [],
-                  rowData.departmentKey,
-                  'name'
-                )}
-              </span>
-            )
+      render: (row) => getDepartmentName(row.departmentId),
     },
+
     {
-      key: 'warehouseName',
-      title: <Translate>Warehouse Name</Translate>,
-      flexGrow: 4
-    },
-    {
-      key: 'warehouseId',
-      title: <Translate>Code</Translate>,
-      flexGrow: 4
-    },
-  {
-      key: 'isValid',
-      title: <Translate>Default</Translate>,
+      key: "name",
+      title: "Warehouse Name",
       flexGrow: 4,
-      render: rowData => (rowData.isValid ? 'True' : 'False')
+      render: (row) => row.name,
     },
     {
-      key: 'isdefault',
-      title: <Translate>Status</Translate>,
-      flexGrow: 4,
-      render: rowData => (rowData.isValid ? 'Valid' : 'InValid')
-    },
-    {
-      key: 'icons',
-      title: <Translate></Translate>,
+      key: "id",
+      title: "Code",
       flexGrow: 3,
-      render: rowData => iconsForActions(rowData)
-    }
+    },
+    {
+      key: "isDefault",
+      title: "Default",
+      flexGrow: 2,
+      render: (row) => (row.isDefault ? "Yes" : "No"),
+    },
+    {
+      key: "isActive",
+      title: "Status",
+      flexGrow: 3,
+      render: (row) => (row.isActive ? "Active" : "Inactive"),
+    },
+    {
+      key: "icons",
+      title: "",
+      flexGrow: 3,
+      render: (rowData) => iconsForActions(rowData),
+    },
   ];
-  const tablebuttons = (<div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={() => {
-            setOpenAddEditPopup(true), setWarehouse({ ...newApWarehouse }), setEdit_new(true);
-          }}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>);
+
+  const filters = () => (
+    <Form layout="inline" fluid className="filter-container">
+
+      <MyInput
+        fieldType="select"
+        fieldName="filter"
+        selectData={filterFields}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={recordOfFilter}
+        setRecord={(rec) =>
+          setRecordOfFilter({ ...recordOfFilter, filter: rec.filter })
+        }
+        placeholder="Select Filter"
+        showLabel={false}
+      />
+
+
+      <MyInput
+        fieldType="text"
+        fieldName="value"
+        placeholder="Search"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+      />
+
+    </Form>
+  );
+
+  useEffect(() => {
+    const { filter, value } = recordOfFilter;
+
+    if (!filter || !value) {
+      setIsFiltered(false);
+      setFilterParams((prev) => ({ ...prev, quickSearch: "" }));
+      return;
+    }
+
+    setIsFiltered(true);
+
+    let searchValue = value;
+
+    if (filter === "department") {
+      const dept = departments.find((d) =>
+        d.name.toLowerCase().includes(value.toLowerCase())
+      );
+      searchValue = dept?.name ?? value;
+    }
+
+    setFilterParams((prev) => ({
+      ...prev,
+      page: 0,
+      quickSearch: searchValue,
+    }));
+  }, [recordOfFilter, departments]);
+
+
   return (
     <Panel>
       <MyTable
-        height={450}
-        data={warehouseListResponseLoading?.object ?? []}
+        data={data?.data ?? []}
         loading={isFetching}
         columns={tableColumns}
-        tableButtons={tablebuttons}
         rowClassName={isSelected}
+        onRowClick={(row) => setWarehouse(row)}
         filters={filters()}
-        onRowClick={rowData => {
-          setWarehouse(rowData);
-        }}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-        }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
+        totalCount={data?.totalCount ?? 0}
+        page={isFiltered ? filterParams.page : paginationParams.page}
+        rowsPerPage={isFiltered ? filterParams.size : paginationParams.size}
         onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
-      <AddEditWarehouse
-        open={openAddEditPopup}
-        setOpen={setOpenAddEditPopup}
-        warehouse={warehouse}
-        setWarehouse={setWarehouse}
-        edit_new={edit_new}
-        setEdit_new={setEdit_new}
-        refetch={refetch}
-      />
-      <Users
-        open={openAddEditUserPopup}
-        setOpen={setOpenAddEditUserPopup}
-        warehouse={warehouse}
-        setWarehouse={setWarehouse}
-        refetch={refetch}
-      />
-        <WorkingHours
-        open={openAddEditWorkingHoursPopup}
-        setOpen={setOpenAddEditWorkingHoursPopup}
-        warehouse={warehouse}
-        setWarehouse={setWarehouse}
-        refetch={refetch}
-      />
-      <DeletionConfirmationModal
-        open={openConfirmDeleteWarehouseModal}
-        setOpen={setOpenConfirmDeleteWarehouseModal}
-        itemToDelete="Warehouse"
-        actionButtonFunction={
-          stateOfDeleteWarehouseModal == 'deactivate'
-            ? () => handleDeactivateWarehouse(warehouse)
-            : handleReactiveWarehouse
+        onRowsPerPageChange={(e) => {
+          const size = Number(e.target.value);
+
+          if (isFiltered) {
+            setFilterParams({ ...filterParams, size, page: 0 });
+          } else {
+            setPaginationParams({ ...paginationParams, size, page: 0 });
+          }
+        }}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              width="120px"
+              onClick={() => {
+                setWarehouse({ ...newWarehouse });
+                setPopupOpen(true);
+              }}
+            >
+              Add New
+            </MyButton>
+          </div>
         }
-        actionType={stateOfDeleteWarehouseModal}
+      />
+
+      <AddEditWarehouse
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        warehouse={warehouse}
+        setWarehouse={setWarehouse}
+        handleSave={handleSave}
+      />
+
+      <Users
+        open={openUsers}
+        setOpen={setOpenUsers}
+        warehouse={warehouse}
+      />
+
+      <WorkingHours
+        open={openWorkingHours}
+        setOpen={setOpenWorkingHours}
+        warehouse={warehouse}
+        setWarehouse={setWarehouse}
+        refetch={refetch}
+      />
+
+
+      {warehouse?.id && (
+        <div style={{ marginTop: "20px" }}>
+          <ProductList warehouse={warehouse} />
+        </div>
+      )}
+
+      <DeletionConfirmationModal
+        open={openConfirmModal}
+        setOpen={setOpenConfirmModal}
+        itemToDelete="Warehouse"
+        actionButtonFunction={handleToggleWarehouse}
+        actionType={actionType}
       />
     </Panel>
   );

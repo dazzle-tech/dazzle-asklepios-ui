@@ -1,185 +1,146 @@
-import React, { useEffect, useState } from 'react';
-import {
-  useDeactiveActivVaccineBrandsMutation,
-  useGetDepartmentsQuery,
-  useGetIcdListQuery,
-  useGetLovValuesByCodeQuery,
-  useGetVaccineBrandsListQuery,
-  useSaveVaccineBrandMutation,
-  useSaveVaccineMutation,
-  useSaveWarehouseMutation
-} from '@/services/setupService';
-import SearchIcon from '@rsuite/icons/Search';
-import MyInput from '@/components/MyInput';
-import { Dropdown, Form } from 'rsuite';
-import './styles.less';
-import ChildModal from '@/components/ChildModal';
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { MdVaccines } from 'react-icons/md';
-import { MdMedication } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
-import { MdModeEdit } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
-import { initialListRequest, ListRequest } from '@/types/types';
-import MyButton from '@/components/MyButton/MyButton';
-import { ApVaccineBrands } from '@/types/model-types';
-import { newApVaccineBrands } from '@/types/model-types-constructor';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyModal from '@/components/MyModal/MyModal';
-import { FaBabyCarriage, FaWarehouse } from 'react-icons/fa6';
-const AddEditWarehouse = ({ open, setOpen, warehouse, setWarehouse, edit_new, setEdit_new, refetch }) => {
-  const dispatch = useAppDispatch();
-  const [saveWarehouse, saveWarehouseMutation] = useSaveWarehouseMutation();
-  const [generateCode, setGenerateCode] = useState();
-  const [recordOfWarehouseCode, setRecordOfWarehouseCode] = useState({warehouseId:  '' });
-  // Generate code for Warehouse
-  const generateFiveDigitCode = () => {
-    const code = Math.floor(10000 + Math.random() * 90000);
-    setWarehouse({...warehouse, warehouseId: code})
-  };
-  const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
+import MyModal from "@/components/MyModal/MyModal";
+import React, { useEffect, useState } from "react";
+import MyInput from "@/components/MyInput";
+import { Form } from "rsuite";
+import { FaWarehouse } from "react-icons/fa6";
+import "./styles.less";
+import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
+import { useGetDepartmentByFacilityQuery, useGetDepartmentsQuery } from "@/services/security/departmentService";
+import { useAppSelector } from "@/hooks";
+import { skipToken } from "@reduxjs/toolkit/query";
+
+const AddEditWarehouse = ({ open, setOpen, warehouse, setWarehouse, handleSave }) => {
+
+  const selectedFacility = useAppSelector(
+    (state) => state.auth?.tenant?.selectedFacility
+  );
+
+  const { data: facilityResponse } = useGetAllFacilitiesQuery({});
+
+  const facilityOptions = selectedFacility
+    ? [
       {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined,
+        label: selectedFacility.facilityName ?? selectedFacility.name,
+        value: selectedFacility.id,
       },
-    ],
-  });
+    ]
+    : [];
+
+const { data: departmentResponse } = useGetDepartmentByFacilityQuery(
+  selectedFacility?.id
+    ? { facilityId: selectedFacility.id, page: 0, size: 1000, sort: "id,asc" }
+    : skipToken
+);
 
 
-  const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
+const departmentOptions =
+  departmentResponse?.data?.map((d) => ({
+    label: d.name,
+    value: d.id,
+  })) ?? [];
 
-    const handleSave = () => {
-      const response = saveWarehouse({
-        ...warehouse,
-      }).unwrap().then(() => {
-        console.log(response)
-        setWarehouse(response);
-        refetch();
-        dispatch(
-          notify({
-            msg: 'The Warehouse Added/Edited successfully ',
-            sev: 'success'
-          })
-        );
-      }).catch((e) => {
-  
-        if (e.status === 422) {
-          console.log("Validation error: Unprocessable Entity", e);
-  
-        } else {
-          console.log("An unexpected error occurred", e);
-          dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-        }
-      });;
-  
-    };
-  
+  const formContent = () => (
+    <Form fluid>
+
+      <MyInput
+        width="8vw"
+        disabled
+        fieldName="id"
+        fieldLabel="Warehouse Id"
+        record={warehouse}
+        setRecord={setWarehouse}
+      />
+<div className="add-edit-warhouse-modal-handle-rows">
+      <MyInput
+        width="22vw"
+        fieldName="departmentId"
+        fieldLabel="Department"
+        fieldType="select"
+        selectData={departmentOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={warehouse}
+        setRecord={setWarehouse}
+      />
+
+
+      <MyInput
+        width="22vw"
+        fieldName="facilityId"
+        fieldLabel="Facility"
+        fieldType="select"
+        disabled
+        selectData={facilityOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={warehouse}
+        setRecord={setWarehouse}
+      />
+</div>
+
+<div className="add-edit-warhouse-modal-handle-rows">
+
+        <MyInput
+          width="22vw"
+          fieldName="name"
+          fieldLabel="Warehouse Name"
+          record={warehouse}
+          setRecord={setWarehouse}
+        />
+
+        <MyInput
+          fieldName="isDefault"
+          fieldLabel="Default"
+          fieldType="checkbox"
+          record={warehouse}
+          setRecord={setWarehouse}
+        />
+
+        <MyInput
+          fieldName="closeWarehouse"
+          fieldLabel="Close"
+          fieldType="checkbox"
+          record={warehouse}
+          setRecord={setWarehouse}
+        />
+
+      </div>
+
+      <MyInput
+        width="100%"
+        fieldName="capacity"
+        fieldLabel="Capacity"
+        record={warehouse}
+        setRecord={setWarehouse}
+      />
+
+    </Form>
+  );
 
   useEffect(() => {
-    if (warehouse?.warehouseId){
-      setRecordOfWarehouseCode({ warehouseId: warehouse.warehouseId });
-      return;
+    if (selectedFacility?.id && open) {
+      setWarehouse((prev) => ({
+        ...prev,
+        facilityId: selectedFacility.id,
+      }));
     }
-    generateFiveDigitCode();
-    setRecordOfWarehouseCode({ warehouseId: warehouse?.warehouseId ?? generateCode });
-       console.log(recordOfWarehouseCode);
-  }, [warehouse?.warehouseId?.length]);
+  }, [selectedFacility, open]);
 
 
-
-
-  // Main modal content
-  const conjureFormContent = stepNumber => {
-    switch (stepNumber) {
-      case 0:
-        return (
-          <Form fluid>
-              <MyInput
-              fieldName="warehouseId"
-              record={recordOfWarehouseCode}
-              setRecord={setRecordOfWarehouseCode}
-              disabled={true}
-            />
-            <MyInput
-              width="100%"
-              disabled={warehouse.key ? true : false}
-              fieldName="departmentKey"
-              fieldType="select"
-              selectData={departmentListResponse?.object ?? []}
-              selectDataLabel="name"
-              selectDataValue="key"
-              record={warehouse}
-              setRecord={setWarehouse}
-            />
-          
-            <div className='container-of-three-fields' >
-                <div className='container-of-field' >
-               <MyInput
-                  width="100%"
-                  fieldName="warehouseName"
-                  record={warehouse}
-                  setRecord={setWarehouse}
-                />
-                </div>
-               
-                  <MyInput
-                 fieldLabel="Close Warehouse"
-                  fieldName="closeWarehouse"
-                  fieldType="checkbox"
-                  record={warehouse}
-                  setRecord={setWarehouse}
-                />
-                    <MyInput
-                 fieldLabel="Default Warehouse"
-                  fieldName="isdefault"
-                  fieldType="checkbox"
-                  record={warehouse}
-                  setRecord={setWarehouse}
-                />
-            </div>
-            <div className='container-of-two-fields'>
-              <div className='container-of-field' >
-              
-                <MyInput width="100%" fieldName="capacity" record={warehouse} setRecord={setWarehouse} />
-              </div>
-              <div className='container-of-field' >
-                <MyInput
-                  width="100%"
-                  fieldName="locationKey"
-                  fieldType="select"
-                  selectData={[]}
-                  selectDataLabel=""
-                  selectDataValue=""
-                  record={warehouse}
-                  setRecord={setWarehouse}
-                />
-              </div>
-            </div>
-       
-          </Form>
-        );
-    }
-  };
-
+  console.log("DEPARTMENTS BY FACILITY RESPONSE:", departmentResponse);
 
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={warehouse?.key ? 'Edit Warehouse' : 'New Warehouse'}
+      title={warehouse?.id ? "Edit Warehouse" : "New Warehouse"}
       position="right"
-      content={conjureFormContent}
-      actionButtonLabel={warehouse?.key ? 'Save' : 'Create'}
+      content={formContent}
+      steps={[{ title: "Warehouse Info", icon: <FaWarehouse /> }]}
+      actionButtonLabel={warehouse?.id ? "Save" : "Create"}
       actionButtonFunction={handleSave}
-      steps={[{ title: 'Warehouse Info', icon: <FaWarehouse /> }]}
     />
   );
 };
+
 export default AddEditWarehouse;

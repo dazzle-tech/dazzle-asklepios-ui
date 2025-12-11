@@ -24,6 +24,7 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditWarehouseProduct from './AddEditWarehouseProduct';
 import ProductList from './ProductList';
+
 const WarehouseItemsSetup = () => {
   const dispatch = useAppDispatch();
   const [warehouse, setWarehouse] = useState<ApWarehouse>({ ...newApWarehouse });
@@ -57,15 +58,11 @@ const WarehouseItemsSetup = () => {
     ]
   });
 
-  // Fetch warehouse product list response
   const {
     data: warehouseProductListResponseLoading,
     refetch: warehouseProductRefetch,
     isFetching: warehouseProductIsFetching
   } = useGetWarehouseProductsQuery(warehouseProductListRequest);
-  // Fetch warehouse product list response
-
-
 
   const [warehouseListRequest, setWarehouseListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -78,7 +75,6 @@ const WarehouseItemsSetup = () => {
     ]
   });
 
-  // Fetch warehouse contain product list response
   const {
     data: warehouseContainProductsListResponseLoading,
     refetch,
@@ -86,33 +82,29 @@ const WarehouseItemsSetup = () => {
     isFetching
   } = useGetWarehouseContainProductsQuery(warehouseListRequest);
 
-
-  // Pagination values
   const pageIndex = warehouseProductListRequest.pageNumber - 1;
   const rowsPerPage = warehouseProductListRequest.pageSize;
   const totalCount = warehouseProductListResponseLoading?.extraNumeric ?? 0;
-  // Available fields for filtering
+
   const filterFields = [
     { label: 'Department Name', value: 'departmentName' },
     { label: 'Warehouse Name', value: 'warehouseName' },
     { label: 'Warehouse Code', value: 'warehouseCode' },
     { label: 'Status', value: 'isValid' }
   ];
-  // Header page setUp
+
   const divContent = (
     "Warehouse Products"
   );
   dispatch(setPageCode('Warehouse_Items_Setup'));
   dispatch(setDivContent(divContent));
-  // class name for selected row
+
   const isSelected = rowData => {
     if (rowData && warehouse && warehouse.key === rowData.key) {
       return 'selected-row';
     } else return '';
   };
 
-
-  //useEffect
   useEffect(() => {
     if (recordOfFilter['filter']) {
       handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
@@ -132,14 +124,12 @@ const WarehouseItemsSetup = () => {
     };
   }, [location.pathname, dispatch]);
 
-  // handle click om edit  
   const handleEdit = () => {
     setEdit_new(true);
     setOpenAddEditPopup(true);
   };
-  // Fetch department list Response
+
   const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-  // handle filter change
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -154,7 +144,7 @@ const WarehouseItemsSetup = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-  // handle deactivate warehouse
+
   const handleDeactivateWarehouse = async data => {
     setOpenConfirmDeleteWarehouseModal(false);
     try {
@@ -180,7 +170,7 @@ const WarehouseItemsSetup = () => {
       );
     }
   };
-  //handle Reactivate warehouse
+
   const handleReactiveWarehouse = () => {
     setOpenConfirmDeleteWarehouseModal(false);
     const updatedWarehouse = { ...warehouse, deletedAt: null };
@@ -188,19 +178,17 @@ const WarehouseItemsSetup = () => {
       .unwrap()
       .then(() => {
         refetch();
-        // display success message
         dispatch(notify({ msg: 'The warehouse Item has been activated successfully', sev: 'success' }));
       })
       .catch(() => {
-        // display error message
         dispatch(notify({ msg: 'Failed to activated this warehouse Item', sev: 'error' }));
       });
   };
-  // Handle page change in navigation
+
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
-  // Handle change rows per page in navigation
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setListRequest({
       ...listRequest,
@@ -208,41 +196,7 @@ const WarehouseItemsSetup = () => {
       pageNumber: 1
     });
   };
-  // Filter table
-  const filters = () => (<>
-    <Form layout="inline" fluid className="container-of-filter-fields">
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={recordOfFilter}
-        setRecord={updatedRecord => {
-          setRecordOfFilter({
-            ...recordOfFilter,
-            filter: updatedRecord.filter,
-            value: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-      />
-    </Form>
-    <AdvancedSearchFilters searchFilter={true}/>
-  </>);
 
-
-  //Table columns
   const tableColumns = [
     {
       key: 'departmentKey',
@@ -277,17 +231,17 @@ const WarehouseItemsSetup = () => {
   ];
 
   const tablebuttons = (<><div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={() => {
-                setOpenAddEditPopup(true), setWarehouseProduct({ ...newApWarehouseProduct }), setEdit_new(true);
-              }}
-              width="109px"
-            >
-              Add New
-            </MyButton>
-          </div></>);
+    <MyButton
+      prefixIcon={() => <AddOutlineIcon />}
+      color="var(--deep-blue)"
+      onClick={() => {
+        setOpenAddEditPopup(true), setWarehouseProduct({ ...newApWarehouseProduct }), setEdit_new(true);
+      }}
+      width="109px"
+    >
+      Add New
+    </MyButton>
+  </div></>);
   return (
     <Panel>
       <Row className='container-of-add-new-button'>
@@ -299,7 +253,6 @@ const WarehouseItemsSetup = () => {
             columns={tableColumns}
             tableButtons={tablebuttons}
             rowClassName={isSelected}
-            filters={filters()}
             onRowClick={rowData => {
               setWarehouse(rowData);
             }}

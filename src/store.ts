@@ -105,8 +105,12 @@ import { BillingService } from './services/billing/BillingService';
 import { referralRequestService } from "@/services/encounters/referralRequestService";
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
-
+import { warehouseService } from './services/inventory/inventory-warehouse/warehouseService';
+import { warehouseUserService } from './services/inventory/inventory-warehouse/warehouseUserService';
+import { warehouseProductService } from './services/inventory/inventory-warehouse/warehouseProductService';
 import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
+import { warehouseProductDetailsService } from './services/inventory/inventory-warehouse/warehouseProductDetailsService';
+
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -312,6 +316,14 @@ export const store = configureStore({
     [PayorPlanService.reducerPath]: PayorPlanService.reducer,
 
     [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
+
+
+
+    [warehouseService.reducerPath]: warehouseService.reducer,
+    [warehouseUserService.reducerPath]: warehouseUserService.reducer,
+    [warehouseProductService.reducerPath]: warehouseProductService.reducer,
+    [warehouseProductDetailsService.reducerPath]: warehouseProductDetailsService.reducer,
+    
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -420,7 +432,10 @@ export const store = configureStore({
       PayorService.middleware,
       PayorPlanService.middleware,
       DischargePlanningService.middleware,
-
+      warehouseService.middleware,
+      warehouseUserService.middleware,
+      warehouseProductService.middleware,
+      warehouseProductDetailsService.middleware,
     ])
 });
 
