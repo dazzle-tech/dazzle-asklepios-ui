@@ -262,7 +262,6 @@ const ProductCatalog = () => {
                 variant="product-grid"
                 showOpenButton={true}
                 onCardClick={(selectedProduct) => {
-                     console.log('Clicked product:', selectedProduct);
                     setOpen(true);
                     setProduct(selectedProduct);
                 }}

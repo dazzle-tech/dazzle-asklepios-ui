@@ -5,10 +5,6 @@ import { Form } from 'rsuite';
 const FinancCostInfo = ({ product, setProduct, disabled, facilityCurrency }) => {
 
 
-console.log("💰 facilityCurrency inside Financial Tab:", facilityCurrency);
-console.log("💵 product.currency inside Financial Tab:", product.currency);
-
-
   useEffect(() => {
     if (facilityCurrency && !product.currency) {
       setProduct(prev => ({ ...prev, currency: facilityCurrency }));

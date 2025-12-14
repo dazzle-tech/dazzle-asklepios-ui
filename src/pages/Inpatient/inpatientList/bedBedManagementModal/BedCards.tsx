@@ -378,9 +378,6 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
     }
   };
 
-  const handlePatientAction = bed => {
-    console.log('View Patient Chart for bed:', bed);
-  };
 
   const patientInfo = {
     Name: 'Qais',
@@ -436,7 +433,7 @@ const BedCards = ({ data = [], handleChangeToOutService, handleChangeToReady }) 
                   }
                 : null
             }
-            onPatientAction={handlePatientAction}
+            onPatientAction={() => {}}
             patientInfo={patientInfo}
             vitals={vitals}
             equipment={equipment}

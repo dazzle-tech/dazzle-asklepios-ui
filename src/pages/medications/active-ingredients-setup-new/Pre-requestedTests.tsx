@@ -117,7 +117,6 @@ const PreRequestedTests = ({ activeIngredient }) => {
       setRecord({ ...newActiveIngredientPreRequestedTest });
 
     } catch (err) {
-      console.log("Save error:", err);
       dispatch(notify({ msg: "Save failed!", sev: "error" }));
     }
   };
@@ -142,7 +141,6 @@ const PreRequestedTests = ({ activeIngredient }) => {
       setRecord({ ...newActiveIngredientPreRequestedTest });
 
     } catch (err) {
-      console.log("Delete error:", err);
       dispatch(notify({ msg: "Delete failed!", sev: "error" }));
     }
   };

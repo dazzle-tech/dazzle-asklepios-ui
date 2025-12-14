@@ -96,7 +96,6 @@ const ProductDetails = ({
       ...prevRequest,
       filters: updatedFilters
     }));
-    console.log(warehouseProductDetailsListResponseLoading);
   }, [warehouseProduct?.key]);
 
   const [productsListRequest, setProductsListRequest] = useState<ListRequest>({

@@ -165,7 +165,6 @@ const SignIn = () => {
 
   // useEffect(() => {
   //   dispatch(setLang(langRecord['lang']));
-  //   console.log('lang: ' + langRecord['lang']);
   // }, [langRecord]);
 
   return (

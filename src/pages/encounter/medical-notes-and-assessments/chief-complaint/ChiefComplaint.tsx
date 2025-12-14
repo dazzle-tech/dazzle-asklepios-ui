@@ -26,8 +26,6 @@ const ChiefComplaint = () => {
   const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const [localEncounter, setLocalEncounter] = useState({ ...patientSlice.encounter });
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
-  console.log(patientSlice.encounter);
-  console.log(localEncounter);
 
   const [openModal, setOpenModal] = useState(null);
   const closeModal = () => setOpenModal(null);
@@ -58,7 +56,6 @@ const ChiefComplaint = () => {
 
   const saveChanges = async () => {
     try {
-      console.log(localEncounter)
       await saveEncounterChanges(localEncounter).unwrap();
       dispatch(notify('Chief Complain Saved Successfully'));
     } catch (error) {

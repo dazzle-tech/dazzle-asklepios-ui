@@ -92,7 +92,6 @@ const ProductListIn = ({
       ...prevRequest,
       filters: updatedFilters
     }));
-    console.log(transactionProductListResponseLoading);
   }, [transaction?.key]);
 
    useEffect(() => {

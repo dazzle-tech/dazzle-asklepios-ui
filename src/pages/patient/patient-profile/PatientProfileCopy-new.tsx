@@ -94,7 +94,6 @@ const PatientProfile = () => {
   //       dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
   //     }
   //   } catch (error) {
-  //     console.log(error);
   //   }
   // };
 // Add this validation function before handleSave in PatientProfile component
@@ -147,11 +146,9 @@ const handleSave = async () => {
     setRefetchData(true);
     dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
   } catch (error) {
-    console.log(error);
   }
 };
 
-console.log('inside patient profile copy new');
   // Handle clear patient data
   const handleClear = () => {
     setLocalPatient({

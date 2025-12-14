@@ -243,7 +243,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const normalizeParsedData = (raw: any) => {
-    console.log('NORMALIZING RAW OCR DATA:', raw);
 
     return {
       firstName:
@@ -276,11 +275,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const handleIdParsed = (parsedData: any) => {
-    console.log('ID Parsed Data RAW:', parsedData);
 
     const normalized = normalizeParsedData(parsedData);
 
-    console.log('ID NORMALIZED:', normalized);
 
     const updatedPatient: Partial<ApPatient> = { ...localPatient };
 

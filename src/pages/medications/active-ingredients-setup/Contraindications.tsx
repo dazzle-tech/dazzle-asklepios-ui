@@ -122,7 +122,6 @@ const Contraindications = ({ activeIngredients }) => {
       .then(() => {
         dispatch(notify('Saved successfully'));
       });
-    console.log(selectedActiveIngredientContraindication.icdCodeKey);
   };
 
   // Effects

@@ -70,7 +70,6 @@ const Indications = ({ selectedActiveIngredients }) => {
     refetch,
     isFetching
   } = useGetIndicationsByActiveIngredientIdQuery(selectedActiveIngredients?.id);
-  console.log("LIST", indicationListResponseData)
   const totalCount = indicationListResponseData?.length ?? 0;
 
 
@@ -221,7 +220,6 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
         setActiveIngredientIndication({ ...newActiveIngredientIndication });
       })
       .catch((err) => {
-        console.log("Delete Error:", err);
         dispatch(notify({ msg: "Failed to delete", sev: "error" }));
       });
   };
@@ -332,8 +330,6 @@ const sortedList = useMemo(() => {
     }
   }, [selectedActiveIngredients]);
 
-
-  console.log("Indication Table Data: ", indicationListResponseData);
 
 
 

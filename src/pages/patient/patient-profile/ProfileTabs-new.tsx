@@ -43,7 +43,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
   const [fetchAgeGroupByBirthDate, { data: patientAgeGroupResponse }] =
     useLazyGetAgeGroupByBirthDateQuery();
-  console.log('patientAgeGroupResponse', patientAgeGroupResponse);
 
   // Fetch LOV data for various fields
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
