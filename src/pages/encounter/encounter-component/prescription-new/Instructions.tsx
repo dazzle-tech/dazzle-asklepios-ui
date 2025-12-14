@@ -52,7 +52,6 @@ useEffect(() => {
       const t = predefinedInstructionsListResponse?.data?.find(
         item => item.id === Number(prescriptionMedication.instructions)
       );
-      console.log("Predefined Instruction Selected:", t);
       setSelectedPreDefine(t);
     } else if (selectedOption === '3010573499898196') {
       //Mnuil  Instruction

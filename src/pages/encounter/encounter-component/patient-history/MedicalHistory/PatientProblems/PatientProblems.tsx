@@ -37,7 +37,6 @@ const PatientProblems = ({ patient, encounter, edit,
 
   const { data: patientProblemsData, isLoading } = useGetPatientProblemsQuery(listRequestPatientProblems);
 
-console.log("Patient Problems Data =>", patientProblemsData?.object);
   const isSelected = row => {
     if (row && selectedProblem && row.key === selectedProblem.key) return 'selected-row';
     return '';

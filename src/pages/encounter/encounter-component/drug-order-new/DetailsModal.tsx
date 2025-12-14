@@ -126,7 +126,6 @@ const DetailsModal = ({
   const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
-  console.log('genericMedicationListResponse', genericMedicationListResponse?.object);
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
     'MED_ORDER_ADMIN_NSTRUCTIONS'
   );
@@ -345,7 +344,6 @@ const DetailsModal = ({
         });
     } catch (error) {
       dispatch(notify({ msg: 'Failed to add', sev: 'error' }));
-      console.log(error);
     }
   };
   const handleSearch = value => {
@@ -363,14 +361,12 @@ const DetailsModal = ({
   // handle add new attachment
   const handleAddNewAttachment = () => {
     const sourceIdValue = orderMedication?.key ? Number(orderMedication.key) : 0;
-    console.log('Capturing sourceId for drug order attachment:', sourceIdValue);
     setCapturedSourceId(sourceIdValue);
     setAttachmentsModalOpen(true);
   };
 
   useEffect(() => {
     if (attachmentsModalOpen) {
-      console.log('Modal is now open - capturedSourceId:', capturedSourceId);
     } else {
       // Reset captured sourceId when modal closes
       setCapturedSourceId(0);

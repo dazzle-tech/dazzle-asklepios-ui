@@ -5,10 +5,6 @@ import MyInput from '@/components/MyInput';
 const WoundAssessment = ({object, setObject}) => {
   const { data: nmbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
   
-  useEffect(() => {
-    console.log("print");
-    console.log(object);
-  },[object]);
   return (
     <div>
       <Row>

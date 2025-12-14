@@ -69,7 +69,6 @@ const VoiceCitation = ({
       );
 
       const data = await apiResponse.json();
-      console.log('API Response:', data);
 
       if (data.error) {
         // oopsie daisy
@@ -95,8 +94,6 @@ const VoiceCitation = ({
     const arrayBuffer = await blob.arrayBuffer();
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     const duration = audioBuffer.duration;
-
-    console.log('Recording duration:', duration);
 
     if (auto) {
       if (duration > 3) {

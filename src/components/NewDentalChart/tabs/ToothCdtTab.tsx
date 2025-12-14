@@ -10,10 +10,6 @@ interface ToothCdtTabProps {
 }
 
 const ToothCdtTab: React.FC<ToothCdtTabProps> = ({ selectedTooth, cdtMap }) => {
-  const handleRemoveCdt = (rowIndex: number) => {
-    console.log('Remove CDT at index:', rowIndex);
-    // Implement remove CDT logic here
-  };
 
   const columns = [
     {
@@ -54,7 +50,6 @@ const ToothCdtTab: React.FC<ToothCdtTabProps> = ({ selectedTooth, cdtMap }) => {
           appearance="primary"
           color="red"
           size="sm"
-          onClick={() => handleRemoveCdt(rowIndex)}
         >
           <Trash />
         </Button>

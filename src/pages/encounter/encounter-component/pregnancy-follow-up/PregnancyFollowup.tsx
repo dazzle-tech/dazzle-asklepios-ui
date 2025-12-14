@@ -45,14 +45,14 @@ const PregnancyFollowup = () => {
       <StartNewPregnancyModal
         open={openStartModal}
         setOpen={setOpenStartModal}
-        onSave={data => console.log('Start Pregnancy Data:', data)}
+        onSave={data => {}}
       />
 
       {/* Modal for ending pregnancy */}
       <EndPregnancyModal
         open={openEndModal}
         setOpen={setOpenEndModal}
-        onSave={data => console.log('End Pregnancy Data:', data)}
+        onSave={data => {}}
       />
     </>
   );

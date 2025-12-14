@@ -112,16 +112,12 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations ,r
     };
     // Effects
     useEffect(() => {
-        console.log(`lastencounterop`, lastencounterop);
         if (lastencounterop) {
             setPatientObservationSummary({
                 ...lastencounterop
             });
-            console.log(patientObservationSummary.latestbpSystolic)
-
-
         }
-    }, [lastencounterop])
+    }, [lastencounterop]);
     useEffect(() => {
         setVital({
             ...vital,

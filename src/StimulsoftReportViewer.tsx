@@ -20,7 +20,6 @@ const StimulsoftReportViewer: React.FC = () => {
       return;
     }
 
-    console.log('Patient data:', patient);
 
     const report = new Stimulsoft.Report.StiReport();
 
@@ -41,7 +40,6 @@ const StimulsoftReportViewer: React.FC = () => {
           );
         }
       } catch (error) {
-        console.log('Could not set page background color:', error);
       }
 
       const patientData = {
@@ -104,7 +102,6 @@ const StimulsoftReportViewer: React.FC = () => {
         }))
       };
 
-      console.log('SecondaryDocuments for report = ', reportData.SecondaryDocuments);
 
       const dataSet = new Stimulsoft.System.Data.DataSet('DataSet');
       dataSet.readJson(reportData);
@@ -112,9 +109,7 @@ const StimulsoftReportViewer: React.FC = () => {
       report.regData('DataSet', 'DataSet', dataSet);
       report.dictionary.synchronize();
 
-      console.log('Report loaded successfully');
     } catch (e) {
-      console.error('Error loading report:', e);
     }
 
     const viewerOptions = new Stimulsoft.Viewer.StiViewerOptions();

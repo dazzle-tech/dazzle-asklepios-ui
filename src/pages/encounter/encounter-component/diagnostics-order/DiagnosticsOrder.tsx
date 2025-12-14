@@ -419,10 +419,8 @@ const DiagnosticsOrder = props => {
 
       orderTestRefetch()
         .then(() => {
-          console.log('Refetch complete');
         })
         .catch(error => {
-          console.error('Refetch failed:', error);
         });
     } catch (error) {
       dispatch(notify('Save Failed'));
@@ -457,10 +455,8 @@ const DiagnosticsOrder = props => {
 
       orderTestRefetch()
         .then(() => {
-          console.log('Refetch complete');
         })
         .catch(error => {
-          console.error('Refetch failed:', error);
         });
       setSelectedRows([]);
       CloseConfirmDeleteModel();

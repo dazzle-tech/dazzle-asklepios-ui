@@ -50,8 +50,6 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   const [userStickyNotesCreateVM, setUserStickyNotesCreateVM] = useState<UserStickyNotesCreateVM>({
     ...newUserStickyNotesCreateVM
   });
-  console.log(user);
-  console.log("user");
   const { data: getUserStickyNotes, refetch } = useGetAlluserStickyNotesByUserIdQuery(user?.id);
   const [createUserStickyNotes] = useCreateUserStickyNotesMutation();
   const [deleteUserStickyNotes] = useDeleteUserStickyNotesMutation();
@@ -61,8 +59,6 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   const [noteToDelete, setNoteToDelete] = useState<StickyNote | null>(null);
 
   const { data: lowMidHighLovQueryResponse } = useGetLovValuesByCodeQuery('LOW_MOD_HIGH');
-  console.log(lowMidHighLovQueryResponse);
-  console.log("lowMidHighLovQueryResponse");
 
   const colorOptions = [
     { label: 'Purple', value: '--note-purple' },
@@ -173,8 +169,6 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
             'valueOrder'
           );
           const toCreate = { ...userStickyNotesCreateVM, userId: user?.id, priorityOrder: order_value };
-          console.log("toCreate");
-          console.log(toCreate);
           createUserStickyNotes(toCreate)
             .unwrap()
             .then(() => {

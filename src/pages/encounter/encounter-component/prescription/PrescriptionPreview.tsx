@@ -26,7 +26,6 @@ const PrescriptionPreview = ({
     return item ? item.lovDisplayVale : '';
   };
   const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
-  console.log("orderMedication===>", orderMedication);
   return (
     <div>
       {/* Prescription Details */}

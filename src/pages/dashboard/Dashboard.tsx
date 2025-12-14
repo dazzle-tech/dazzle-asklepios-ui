@@ -23,8 +23,6 @@ const Dashboard = () => {
     };
   }, [dispatch]);
 
-  console.log("Dashboard Rendered");
-
   return (
     <Panel>
       <FlexboxGrid>

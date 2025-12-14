@@ -277,7 +277,6 @@ const OccupationalPlans = () => {
                         setProgressNotes={setProgressNotes}
                         currentChart={{ key: 'physio-plan' }}
                         dispatch={action => {
-                          console.log(action);
                         }}
                       />
                     </div>
@@ -560,18 +559,13 @@ const OccupationalPlans = () => {
     ? plansData
     : plansData.filter(plan => plan.status !== 'Cancelled');
 
-  // Handle exporting PDF
-  const handleExportPDF = () => {
-    console.log('Exporting PDF...');
-  };
+ 
   // Handle saving draft
   const handleSaveDraft = () => {
-    console.log('Saving draft...', planData);
     setInitiatePlanModalOpen(false);
   };
   // Handle submitting plan
   const handleSubmitPlan = () => {
-    console.log('Submitting plan...', planData);
     setInitiatePlanModalOpen(false);
   };
   return (
@@ -591,7 +585,6 @@ const OccupationalPlans = () => {
           <MyButton disabled>Cancel</MyButton>
           <MyButton
             prefixIcon={() => <FontAwesomeIcon icon={faFilePdf} />}
-            onClick={handleExportPDF}
             appearance="ghost"
           >
             Export PDF

@@ -189,12 +189,10 @@ const EncounterRegistration = () => {
   // dispatch(setPatient(cachedPatient));
   useEffect(() => {
     if (!patientSlice.patient && !localEncounter.patientKey) {
-      console.log('case1-no patient');
       dispatch(setPatient({ ...newApPatient }));
       dispatch(setEncounter({ ...newApEncounter, discharge: false }));
       // navigate('/patient-profile');
     } else {
-      console.log('case2 patient');
       setEditing(true);
       initEncounterFromPatient();
     }
@@ -236,7 +234,6 @@ const EncounterRegistration = () => {
   const handleOpenNoteModel = () => setOpenModelVisitNote(true);
   const handleCloseNoteModel = () => setOpenModelVisitNote(false);
   const handleSaveNote = () => {
-    console.log(localEncounter.encounterNotes);
     setOpenModelVisitNote(false);
   };
   const handleOpenPaymentModel = () => setOpenModelPayment(true);
@@ -281,7 +278,6 @@ const EncounterRegistration = () => {
   const handleSelectPatient = data => {
     if (patientSearchTarget === 'primary') {
       // selecteing primary patient (localPatient)
-      console.log(data);
       dispatch(setPatient(data));
 
       setLocalEncounter({
@@ -310,7 +306,6 @@ const EncounterRegistration = () => {
   const search = target => {
     setPatientSearchTarget(target);
     setSearchResultVisible(true);
-    console.log(patientSearchTarget);
     if (searchKeyword !== '' && searchKeyword.length >= 3 && selectedCriterion) {
       setListRequest({
         ...listRequest,
@@ -324,9 +319,6 @@ const EncounterRegistration = () => {
         ]
       });
     }
-    console.log('kw' + searchKeyword);
-    console.log('PatientSearchTarget' + patientListResponse?.object);
-    console.log(listRequest);
   };
 
   useEffect(() => {}, [paymentMethodSelected]);
@@ -357,9 +349,6 @@ const EncounterRegistration = () => {
 
     search({ searchBy, keyword });
   };
-
-  console.log('searchByField:', record.searchByField);
-  console.log('patientName:', record.patientName);
 
   const conjurePatientSearchBar = target => {
     return (
@@ -505,7 +494,6 @@ const EncounterRegistration = () => {
                       selectDataValue="key"
                       record={{}}
                       setRecord={newValue => {
-                        console.log('Selected Payment Method:', newValue.PaymentMethod);
                         setPaymentMethodSelected(newValue.PaymentMethod);
                       }}
                     />

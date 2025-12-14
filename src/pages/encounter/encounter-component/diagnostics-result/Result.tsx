@@ -289,10 +289,8 @@ const Result: React.FC<ResultProps> = ({ patient, user }) => {
   // Function to generate and download PDF
   const handleGeneratePdf = async () => {
     try {
-      console.log('Starting Results PDF generation...');
 
       const data = prepareResultsData();
-      console.log('Prepared data:', data);
 
       const result = await generateLabResultsPdf(data).unwrap();
 
@@ -315,9 +313,7 @@ const Result: React.FC<ResultProps> = ({ patient, user }) => {
         { placement: 'topEnd', duration: 5000 }
       );
 
-      console.log('Results PDF generated and downloaded successfully');
     } catch (error) {
-      console.error('Error generating Results PDF:', error);
 
       // Show error message
       toaster.push(

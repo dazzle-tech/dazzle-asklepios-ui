@@ -140,7 +140,6 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       refetch();
       setOpenModal(false);
     } catch (error) {
-      console.log('Failed to delete Patient Service/Product', error);
       dispatch(
         notify({ msg: 'Failed to delete Patient Service/Product', sev: 'error' })
       );
@@ -175,7 +174,6 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       refetch();
       setPopupOpen(false);
     } catch (error) {
-      console.log('Failed to save Patient Service/Product', error);
       dispatch(
         notify({ msg: 'Failed to save Patient Service/Product', sev: 'error' })
       );
