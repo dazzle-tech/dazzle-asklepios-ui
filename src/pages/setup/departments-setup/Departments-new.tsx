@@ -116,10 +116,6 @@ const Departments = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-
-  useEffect(() => {
-    console.log("ShowScreen", showScreen)
-  }, [showScreen])
   
   useEffect(() => {
     if (departmentListResponse?.links) {

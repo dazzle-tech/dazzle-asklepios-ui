@@ -192,7 +192,6 @@ const Facilities = () => {
   const handleUpdate = async () => {
     setPopupOpen(false);
     setLoad(true);
-    console.log(facility);
    await updateFacility({ ...facility }).unwrap().then(() => {
     dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
     refetchFacility();

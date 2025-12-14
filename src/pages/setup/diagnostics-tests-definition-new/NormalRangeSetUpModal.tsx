@@ -251,7 +251,6 @@ useEffect(() => {
         setShowChild(false);
 
       } catch (err) {
-        console.log("HANDLE SAVE ERROR", err);
         dispatch(notify({ msg: "Failed to Save Normal Range", sev: "error" }));
       }
     };

@@ -197,7 +197,6 @@ const PotintialDuplicate = () => {
 
   // handle save role
   const handleSave = async () => {
-    console.log("Candidate in Save", candidate)
     setPopupOpen(false);
     if (!candidate.id) {
       try {

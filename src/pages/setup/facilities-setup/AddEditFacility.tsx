@@ -24,11 +24,6 @@ const AddEditFacility = ({
   const [validationResult] = useState({});
   
 
-
-  useEffect(() => {
-    console.log('facility data in modal:', facility);
-  }, [handleSave]);
-
   // Fetch  facilityTypeOptions list response
   const facilityTypeOptions = useEnumOptions("FacilityType"); 
 

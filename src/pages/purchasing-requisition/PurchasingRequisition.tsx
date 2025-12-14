@@ -451,7 +451,6 @@ const PurchasingRequisition = () => {
               </Form>
             </>
           }
-          onRowClick={row => console.log('Clicked row:', row)}
           page={pageIndex}
           rowsPerPage={rowsPerPage}
           totalCount={totalCount}

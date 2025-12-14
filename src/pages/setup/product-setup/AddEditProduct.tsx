@@ -48,7 +48,6 @@ const AddEditProduct = ({
         const response = saveProduct({
             ...product,
         }).unwrap().then(() => {
-            console.log(response)
             setProduct({ ...response });
             refetch();
             dispatch(
@@ -60,10 +59,8 @@ const AddEditProduct = ({
         }).catch((e) => {
 
             if (e.status === 422) {
-                console.log("Validation error: Unprocessable Entity", e);
 
             } else {
-                console.log("An unexpected error occurred", e);
                 dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
             }
         });;

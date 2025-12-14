@@ -60,7 +60,6 @@ const AddEditPractitioner = ({
   }, [practitioner]);
 
   useEffect(() => {
-    console.log("link: " + linkedUserName);
     setRecordOfSearch({ searchKeyword: linkedUserName });
   }, [linkedUserName]);
 

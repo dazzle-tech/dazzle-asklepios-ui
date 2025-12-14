@@ -111,7 +111,6 @@ const ICD10Setup = () => {
       
     }
   }
- console.log("Derived error message:", errorMsg);
   dispatch(notify({msg:errorMsg,sev: "error"}));
 }
   };
