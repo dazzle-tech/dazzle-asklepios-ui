@@ -79,7 +79,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
       setValidationResult(undefined);
     } catch (error) {
-      console.log('rejected');
       if (error?.data?.validationResult) {
         setValidationResult(error.data.validationResult);
       }

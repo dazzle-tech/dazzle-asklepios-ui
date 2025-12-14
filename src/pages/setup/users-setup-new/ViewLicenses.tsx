@@ -76,13 +76,11 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
       .then(() => {
         setOpenConfirmDeleteLicenseModal(false);
         dispatch(notify({ msg: 'The License was successfully Deactivated', sev: 'success' }));
-        console.log('removed');
         refetchLicense();
       })
       .catch(() => {
         setOpenConfirmDeleteLicenseModal(false);
         dispatch(notify({ msg: 'Failed to Deactivated this License', sev: 'error' }));
-        console.log('error in remove');
         refetchLicense();
       });
   };
@@ -94,7 +92,6 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
       })
         .unwrap()
         .then(() => {
-          console.log('addedSuccessfully');
           setOpenChildModal(false);
           dispatch(notify({ msg: 'The License has been saved successfully', sev: 'success' }));
           setUserLicense({...newApUserMedicalLicense});

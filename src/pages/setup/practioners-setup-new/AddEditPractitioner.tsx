@@ -419,10 +419,6 @@ setSearchResultVisible(true);
               onClick={async () => {
                 if (!practitioner?.id) return;
                 try {
-                  console.log('Creating link with', {
-                    practitionerId: practitioner.id,
-                    departmentId: localSelection.selectedDepartment,
-                  });
                   await createPractitionerDepartment({
                     practitionerId: practitioner.id,
                     departmentId: localSelection.selectedDepartment,

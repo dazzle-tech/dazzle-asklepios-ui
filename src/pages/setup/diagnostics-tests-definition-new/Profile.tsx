@@ -469,7 +469,6 @@ const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllVa
 
 
     } catch (err) {
-      console.log("HANDLE SAVE ERROR", err);
       dispatch(notify({ msg: "Failed to Save Normal Range", sev: "error" }));
     }
   };

@@ -171,7 +171,6 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         dispatch(notify('Resolved Successfully'));
       });
   };
-  console.log("warning-->", warnings);
   // Handle undo resolve Patient warning 
   const handleUpdateAdministrativeWarningsUnDoResolved = (warning) => {
     updatePatientAdministrativeWarnings({

@@ -15,8 +15,6 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
 
   // Fetch Facility list response
   const { data: facilityListResponse, refetch: fetchFaci, isFetching } = useGetAvailableForRoleQuery(Candidate?.id, { skip: !Candidate?.id });
-  console.log("Facilitys", facilityListResponse)
-  // save facility
 
   const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
   //Table columns

@@ -204,7 +204,6 @@ const Practitioners = () => {
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
       setPractitioner({ ...Response });
-      console.log(Response);
     } catch (error) {
       console.error("Error updating practitioner:", error);
 

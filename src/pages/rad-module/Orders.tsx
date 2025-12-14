@@ -133,14 +133,7 @@ const Orders = forwardRef<any, OrdersProps>(({
     });
   };
 
-  console.log("Second test", ordersList?.object.filter(item => item.hasRadiology === true))
-console.log("All orders", ordersList?.object);
 
-useEffect(() => {
-  if (ordersList?.object) {
-    console.log("All orders", ordersList.object);
-  }
-}, [ordersList]);
 
   return (
     <MyTable

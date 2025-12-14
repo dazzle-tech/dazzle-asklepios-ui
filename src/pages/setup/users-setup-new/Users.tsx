@@ -120,7 +120,6 @@ const Users = () => {
   }, [location.pathname, dispatch]);
 
   useEffect(() => {
-   console.log( saveUserMutation)
     if (saveUserMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
