@@ -199,14 +199,12 @@ const SpeechTherapy = () => {
         icon={faEye}
         color="var(--primary-gray)"
         className="icons-style"
-        onClick={() => console.log('View for:', rowData)}
       />
       <FontAwesomeIcon
         title="Follow-up"
         icon={faCalendarDays}
         color="var(--primary-gray)"
         className="icons-style"
-        onClick={() => console.log('Follow-up for:', rowData)}
       />
     </div>
   );
@@ -342,20 +340,14 @@ const SpeechTherapy = () => {
 
   // Handle saving draft
   const handleSaveDraft = () => {
-    console.log('Saving draft...', planData);
     setInitiatePlanModalOpen(false);
   };
 
   // Handle submitting plan
   const handleSubmitPlan = () => {
-    console.log('Submitting plan...', planData);
     setInitiatePlanModalOpen(false);
   };
 
-  // Handle exporting PDF
-  const handleExportPDF = () => {
-    console.log('Exporting PDF...');
-  };
 
   return (
     <>
@@ -393,7 +385,6 @@ const SpeechTherapy = () => {
             <MyButton disabled>Cancel</MyButton>
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faFilePdf} />}
-              onClick={handleExportPDF}
               appearance="ghost"
             >
               Export PDF

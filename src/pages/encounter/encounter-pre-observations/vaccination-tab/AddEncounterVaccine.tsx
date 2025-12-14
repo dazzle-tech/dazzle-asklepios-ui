@@ -174,7 +174,6 @@ const AddEncounterVaccine = ({
     };
   });
 
-  console.log('📋 Raw API Response:', searchKeyword);
   //handle Search Function
   const handleSearch = value => {
     setSearchKeyword(value);
@@ -262,7 +261,6 @@ const AddEncounterVaccine = ({
     }
   }, [encounter?.encounterStatusLkey]);
 
-  console.log('vaccineListResponseLoading Out==>', vaccineListResponseLoading);
 
   useEffect(() => {
     setVaccineDosesIntervalListRequest(prev => ({
@@ -396,7 +394,6 @@ const AddEncounterVaccine = ({
 
   useEffect(() => {
     if (searchKeyword.trim() !== '') {
-      console.log('inside if st==>', searchKeyword);
       setVaccineListRequest({
         ...initialListRequest,
         filterLogic: 'and',

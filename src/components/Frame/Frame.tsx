@@ -129,7 +129,6 @@ const {
 
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
   const departmentsReady = !isLoadingDepartments && !isFetchingDepartments;
-  console.log("active departments",activeDepartments)
   const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
   const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
   const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
@@ -140,7 +139,6 @@ const {
   );
   const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
   const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
-console.log("length",activeDepartments.length)
   const resolveFacilityName = useCallback(
     (facilityId?: string | number | null) => {
       if (facilityId != null) {

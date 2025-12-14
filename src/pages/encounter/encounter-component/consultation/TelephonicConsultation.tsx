@@ -226,7 +226,7 @@ const TelephonicConsultation = () => {
         setConsultationOrder={setConsultationOrder}
         open={openDetailsModal}
         setOpen={setOpenDetailsModal}
-        refetchCon={() => console.log('refetch called')}
+        refetchCon={() => {}}
         editing={false}
         edit={false}
       />

@@ -107,12 +107,10 @@ const SignIn = () => {
       
 
       const dict = await getDictionary(credentials.language).unwrap(); // { translation_key: value }
-      console.log(dict );
       // optional local cache:
       localStorage.setItem('language', credentials.language);
       dispatch(setLang(credentials.language));
       localStorage.setItem('dict', JSON.stringify(dict));
-      console.log("dict" + dict)
       dispatch(setTranslations(dict));
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));

@@ -166,7 +166,6 @@ useEffect(() => {
   };
 
   const handleSave = () => {
-    console.log("EX", consultationData.expectedResponseTime)
     try {
       const response = save({
         ...consultationData, patientId: patient.key, encounterId: encounter.key,

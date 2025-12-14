@@ -170,7 +170,6 @@ const [cancelObject, setCancelObject] = useState<any>({});
     totalScore: number;
     riskLevel: string;
   }) => {
-    console.log('Saved assessment:', totalScore, riskLevel);
 
     //If statment to open the Second Modal
     if (riskLevel === 'Moderate Risk' || riskLevel === 'High Risk') {
@@ -260,7 +259,6 @@ const tablebuttons = (
   object={cancelObject}
   setObject={setCancelObject}
   handleCancle={() => {
-    console.log('Cancelled:', cancelObject);
     setOpenCancelModal(false);
   }}
   title="Cancel Assessment"
