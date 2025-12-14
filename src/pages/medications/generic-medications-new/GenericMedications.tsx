@@ -122,7 +122,6 @@ await updateBrandMedication(updatePayload).unwrap();
       }
       setOpenAddEditPopup(false);
     } catch(error) {
-      console.log(error)
       dispatch(notify({ msg: "Error saving medication", sev: "error" }));
     }
   };

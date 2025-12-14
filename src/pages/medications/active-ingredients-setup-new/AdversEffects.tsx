@@ -183,9 +183,6 @@ const sortedList = useMemo(() => {
   // RENDER
   // ---------------------------
 
-
-  console.log("LovData: ", lovData);
-
   return (
     <Panel>
       <Form fluid>

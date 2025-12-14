@@ -127,7 +127,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
       dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
     } catch (error) {
-      console.log('rejected');
     }
   };
 

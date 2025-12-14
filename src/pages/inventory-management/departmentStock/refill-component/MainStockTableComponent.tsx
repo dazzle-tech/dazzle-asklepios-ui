@@ -136,9 +136,6 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
       title: <Translate>Name</Translate>,
       width: 150,
       isLink: true,
-      onLinkClick: row => {
-        console.log('Clicked', row.code);
-      }
     },
     {
       key: 'code',
@@ -285,13 +282,6 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
     }
   ];
 
-  const handleExportXLS = () => {
-    console.log('Export XLS clicked');
-  };
-
-  const handleRefillRequest = () => {
-    console.log('Refill Request clicked');
-  };
 
   return (
     <MyTable
@@ -305,8 +295,8 @@ const MainStockTableComponent: React.FC<MainStockTableComponentProps> = ({
       height={500}
       tableButtons={
         <DepartmentStockHeader
-          onExportXLS={handleExportXLS}
-          onRefillRequest={handleRefillRequest}
+          onExportXLS={() => {}}
+          onRefillRequest={() => {}}
         />
       }
       filters={filters()}

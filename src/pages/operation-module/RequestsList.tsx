@@ -280,7 +280,6 @@ const RequestList = ({
                       refetchOnGoing();
                       setActiveTab('2');
                       setOpen(true);
-                      console.log('Response', Response);
                     } catch (error) {
                       dispatch(notify({ msg: 'Failed', sev: 'error' }));
                     }
