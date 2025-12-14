@@ -315,7 +315,7 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
     }
   ];
 
- const handleExportXLS = () => {
+
 
   return (
     <MyTable
@@ -328,8 +328,8 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
       onRowsPerPageChange={onRowsPerPageChange}
       height={500}
       tableButtons={<><DepartmentStockHeader
-          onExportXLS={handleExportXLS}
-          /></>}
+          onExportXLS={() => {}}
+          onRefillRequest={() => {}}/></>}
       filters={filters()}
     />
   );
