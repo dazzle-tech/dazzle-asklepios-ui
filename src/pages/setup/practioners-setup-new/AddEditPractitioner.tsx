@@ -235,7 +235,7 @@ setSearchResultVisible(true);
             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 width={250}
-                fieldLabel="Sex at Birth"
+                fieldLabel="Gender"
                 fieldType="select"
                 fieldName="gender"
                 selectData={genders ?? []}

@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { ApDiagnosticOrderTests, ApDiagnosticTest } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -60,9 +60,14 @@ import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/med
 import { newApDrugOrderMedications } from '@/types/model-types-constructor';
 import SampleModal from '@/pages/lab-module/SampleModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 const DiagnosticsOrder = props => {
   const location = useLocation();
+     const authSlice = useAppSelector(state => state.auth);
+  
+     const selectedDepartment = authSlice.selectedDepartment;
+  
   // Reference to table container
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -120,6 +125,8 @@ const DiagnosticsOrder = props => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [drugKey, setDrugKey] = useState(null);
   const [openToAdd, setOpenToAdd] = useState(true);
+  const [missingDeptModalOpen, setMissingDeptModalOpen] = useState(false);
+  const [missingDeptList, setMissingDeptList] = useState([]); 
   const [openSampleModal, setOpenSampleModal] = useState(false);
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
@@ -353,7 +360,7 @@ const DiagnosticsOrder = props => {
 
   const handleSaveTest = async () => {
     try {
-      await saveOrderTests(orderTest).unwrap();
+      await saveOrderTests({...orderTest,fromFacilityId:selectedDepartment.facilityId ,fromDepartmentId:selectedDepartment.departmentId}).unwrap();
       setOpenDetailsModel(false);
       dispatch(notify({ msg: 'saved Successfully', sev: 'success' }));
 
@@ -449,6 +456,7 @@ const DiagnosticsOrder = props => {
           statusLkey: '164797574082125',
           labStatusLkey: '6055029972709625',
           radStatusLkey: '6055029972709625',
+          saveDraft: true,
           // Add new fields to the order
           typeKey: selectedType,
           catalogKey: selectedCatalog,
@@ -469,72 +477,49 @@ const DiagnosticsOrder = props => {
     }
   };
 
-  const handleSubmitPres = async () => {
-    try {
-      await saveOrders({
-        ...orders,
-        statusLkey: '1804482322306061',
-        saveDraft: false,
-        submittedAt: Date.now()
-      }).unwrap();
-      dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
-      ordersRefetch();
-      orderTestRefetch();
-    } catch (error) {
-      console.error('Error saving :', error);
+const handleSubmitPres = async () => {
+
+  const missingTests =
+    orderTestList?.object
+      ?.filter(item => !item.receivedLabId)
+      ?.map(item => item.test?.testName || 'Unnamed Test') || [];
+
+  if (missingTests.length > 0) {
+    setMissingDeptList(missingTests);
+    setMissingDeptModalOpen(true);         
+    return;                         
+  }
+
+  try {
+    await saveOrders({
+      ...orders,
+      statusLkey: '1804482322306061',
+      saveDraft: false,
+      submittedAt: Date.now()
+    }).unwrap();
+
+    dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
+    ordersRefetch();
+    orderTestRefetch();
+  } catch (error) {
+    console.error('Error saving :', error);
+  }
+
+  orderTestList?.object?.map(item => {
+    if (item.statusLkey !== '1804447528780744') {
+      saveOrderTests({ ...item, statusLkey: '1804482322306061', submitDate: Date.now() });
     }
+  });
 
-    orderTestList?.object?.map(item => {
-      if (item.statusLkey !== '1804447528780744') {
-        saveOrderTests({ ...item, statusLkey: '1804482322306061', submitDate: Date.now() });
-      }
-    });
-    setIsDraft(false);
-    setFlag(true);
-    await ordersRefetch();
-    orderTestRefetch().then(() => '');
-    setOrders({ ...newApDiagnosticOrders });
-    handleClearDiagnostics(); // Reset status after sending
-  };
+  setIsDraft(false);
+  setFlag(true);
+  await ordersRefetch();
+  orderTestRefetch().then(() => '');
+  setOrders({ ...newApDiagnosticOrders });
+  handleClearDiagnostics();
+};
 
-  //   const handleSaveOrders = async ({ isDraft = false } = {}) => {
-  //     if (!patient || !encounter) {
-  //       console.warn('Patient or encounter is missing. Cannot save prescription.');
-  //       return;
-  //     }
 
-  //     try {
-  //       const payload = isDraft
-  //         ? { ...orders, saveDraft: true }
-  //         : {
-  //             ...newApDiagnosticOrders,
-  //             patientKey: patient.key,
-  //             visitKey: encounter.key,
-  //             statusLkey: '164797574082125',
-  //             labStatusLkey: '6055029972709625',
-  //             radStatusLkey: '6055029972709625',
-  //             typeKey: selectedType,
-  //             catalogKey: selectedCatalog,
-  //             categoryKey: selectedCategory,
-  //             proposedExecutionDate: proposedExecutionDate?.getTime(),
-  //             executionNumber,
-  //             approvalNumber
-  //           };
-
-  //       const response = await saveOrders(payload).unwrap();
-
-  //       if (isDraft) {
-  //         setIsDraft(true);
-  //         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-  //       } else {
-  //         setOpenTestsModal(true);
-  //         dispatch(notify('Start New Order with ID:' + response?.orderId));
-  //         setOrders(response);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error saving order:', error);
-  //     }
-  //   };
 
   const handleRecall = rowData => {
     const genericMedication = genericMedicationListResponse?.object?.find(
@@ -622,6 +607,7 @@ const DiagnosticsOrder = props => {
   const joinValuesFromArray = values => {
     return values.filter(Boolean).join(', ');
   };
+
   const tableColumns = [
     {
       key: 'check',
@@ -1343,6 +1329,37 @@ const DiagnosticsOrder = props => {
         edit={edit}
         onSave={handleSaveTest}
       />
+
+      <MyModal
+        open={missingDeptModalOpen}
+        setOpen={setMissingDeptModalOpen}
+        title="Missing Receiving Department"
+        modalColor="var(--primary-orange)"
+        steps={[
+          {
+            title: "Warning",
+            icon: <FontAwesomeIcon icon={faTriangleExclamation} />
+          }
+        ]}
+        actionButtonLabel="OK"
+        hideCancel={true}
+        content={
+          <div style={{ padding: '10px' }}>
+            <p style={{ fontWeight: 'bold', color: 'var(--primary-orange)' }}>
+              Please select a receiving department for the following tests:
+            </p>
+            <ul>
+              {missingDeptList.map((name, idx) => (
+                <li key={idx} style={{ marginBottom: '6px' }}>
+                  • {name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        }
+      />
+
+
     </>
   );
 };

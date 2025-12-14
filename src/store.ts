@@ -1,270 +1,432 @@
-import patientSlice from '@/reducers/patientSlice';
-import { attachmentService } from '@/services/attachmentService';
-import { authService } from '@/services/authService';
-import { authServiceApi } from '@/services/authServiceApi';
-import { dentalService } from '@/services/dentalService';
-import { dvmService } from '@/services/dvmService';
-import { encounterService } from '@/services/encounterService';
-import { enumsApi } from '@/services/enumsApi';
-import { observationService } from '@/services/observationService';
-import { patientService } from '@/services/patientService';
-import { potintialService } from '@/services/potintialDuplicateService';
-import { radService } from '@/services/radService';
-import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
-import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
-import { BrandMedicationSubstituteService } from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
-import { CdtDentalActionService } from '@/services/setup/dental-action/CdtDentalActionService';
-import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
-import { diagnosticTestPathologyService } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
-import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { radiologyService } from '@/services/setup/diagnosticTest/radiologyTestService';
-import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
-import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
-import { setupService } from '@/services/setupService';
-import { uiService } from '@/services/uiService';
-import { userService } from '@/services/userService';
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './reducers/authSlice';
+
+import { idParsingService } from '@/services/idParsingService';
+import { summarizationService } from '@/services/summarizationService';
+
+import uiSlice from './reducers/uiSlice';
 import divSlice from './reducers/divSlice';
 import refetchReducer from './reducers/refetchEncounterState';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
-import uiSlice from './reducers/uiSlice';
+import authReducer from './reducers/authSlice';
+import callReducer from './store/callSlice';
+import patientSlice from '@/reducers/patientSlice';
+
+import { uiService } from '@/services/uiService';
+import { authService } from '@/services/authService';
+import { authServiceApi } from '@/services/authServiceApi';
 import { accountApi } from './services/accountService';
-import { appointmentService } from './services/appointmentService';
-import { encounterAttachmentsService } from './services/encounters/attachmentsService';
-import { enumService } from './services/enumService';
-import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
-import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
-import { inventoryService } from './services/inventoryTransactionService';
-import { labService } from './services/labService';
-import { MedicalsheetsService } from './services/MedicalSheetsService';
-import { medicationsSetupService } from './services/medicationsSetupService';
-import { operationService } from './services/operationService';
+
+import { patientService } from '@/services/patientService';
 import { newPatientService } from './services/patient/patientService';
 import { addressService } from './services/patients/AddressService';
-import { patientAttachmentService } from './services/patients/attachmentService';
-import { procedureService } from './services/procedureService';
-import { recoveryService } from './services/RecoveryService';
-import { departmentService } from './services/security/departmentService';
-import { facilityService } from './services/security/facilityService';
-import { roleService } from './services/security/roleService';
-import { userDepartmentService } from './services/security/userDepartmentsService';
-import { userRoleService } from './services/security/UserRoleService';
+import { hipaaService } from './services/patients/hipaaService';
+import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
+import { patientDocumentsService } from './services/patients/patientDocumentsService';
+
+import { setupService } from '@/services/setupService';
+import { dvmService } from '@/services/dvmService';
+import { encounterService } from '@/services/encounterService';
+import { dentalService } from '@/services/dentalService';
+import { observationService } from '@/services/observationService';
+
+import { medicationsSetupService } from './services/medicationsSetupService';
+import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
+import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
+import { activeIngredientIndicationService } from '@/services/setup/activeIngredients/activeIngredientIndicationService';
+import { activeIngredientSpecialPopulationService } from '@/services/setup/activeIngredients/activeIngredientSpecialPopulationService';
+import { activeIngredientPreRequestedTestService } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
 import activeIngredientAdverseEffectService from './services/setup/activeIngredients/activeIngredientAdverseEffectService';
+import { activeIngredientDrugInteractionService } from '@/services/setup/activeIngredients/activeIngredientDrugInteractionService';
+import activeIngredientFoodInteractionService from './services/setup/activeIngredients/ActiveIngredientFoodInteraction';
 import { activeIngredientsService } from './services/setup/activeIngredients/activeIngredientsService';
-import { ageGroupService } from './services/setup/ageGroupService';
-import { allergensService } from './services/setup/allergensService';
-import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService ';
-import { cdtCodeService } from './services/setup/cdtCodeService';
-import { cptCodeService } from './services/setup/cptCodeService';
-import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-import { diagnosticTestProfileService } from './services/setup/diagnosticTest/diagnosticTestProfileService';
-import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
-import { Icd10Service } from './services/setup/icd10service';
+
+import { attachmentService } from '@/services/attachmentService';
+import { patientAttachmentService } from './services/patients/attachmentService';
+import { encounterAttachmentsService } from './services/encounters/attachmentsService';
+import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
+import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
+
+import { appointmentService } from './services/appointmentService';
+import { userService } from '@/services/userService';
+
+import { labService } from './services/labService';
+import { radService } from '@/services/radService';
+import { procedureService } from './services/procedureService';
+import { operationService } from './services/operationService';
+
+import { inventoryService } from './services/inventoryTransactionService';
+import { inventoryProductsService } from './services/inventory/inventory-products/inventoryProductsService';
+
+import { recoveryService } from './services/RecoveryService';
+
+import { enumsApi } from '@/services/enumsApi';
+
+import { facilityService } from './services/security/facilityService';
+import { departmentService } from './services/security/departmentService';
+import { roleService } from './services/security/roleService';
+import { userRoleService } from './services/security/UserRoleService';
+import { enumService } from './services/enumService';
+import { userDepartmentService } from './services/security/userDepartmentsService';
+
+import { MedicalsheetsService } from './services/MedicalSheetsService';
+
+import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
-import { loincCodeService } from './services/setup/loincCodeService';
-import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
+import { translationService } from './services/setup/translationService';
+
 import { PractitionerService } from './services/setup/practitioner/PractitionerService';
-import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
+import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
+
+import { Icd10Service } from './services/setup/icd10service';
+import { ResourceService } from './services/setup/resource/ResourceService';
+
+import { ageGroupService } from './services/setup/ageGroupService';
+import { potintialService } from '@/services/potintialDuplicateService';
+import { allergensService } from './services/setup/allergensService';
+
+import { diagnosticTestService } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { laboratoryService } from './services/setup/diagnosticTest/laboratoryService';
+import { diagnosticTestProfileService } from './services/setup/diagnosticTest/diagnosticTestProfileService';
+import { diagnosticTestPathologyService } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
+import { radiologyService } from '@/services/setup/diagnosticTest/radiologyTestService';
+import { diagnosticTestNormalRangeService } from './services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import { diagnosticTestCodingService } from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
+
+import { cdtCodeService } from './services/setup/cdtCodeService';
+import { loincCodeService } from './services/setup/loincCodeService';
+import { cptCodeService } from './services/setup/cptCodeService';
+
+import { dentalActionService } from '@/services/setup/dental-action/dentalActionService';
+import { CdtDentalActionService } from '@/services/setup/dental-action/CdtDentalActionService';
+
+import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
-import { procedureSetupService } from './services/setup/procedure/procedureService';
-import { serviceService } from './services/setup/serviceService';
-import { translationService } from './services/setup/translationService';
-import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
-import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesIntervalService';
-import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
+
 import { vaccineService } from './services/vaccine/vaccineService';
 import callReducer from './store/callSlice';
 import {hipaaService } from '@/services/patients/hipaaService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
 import { PatientRelationService } from './services/patients/PatientRelationService';
+import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
+import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
+import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesIntervalService';
+
+import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
+import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
+
+import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService ';
+import { BrandMedicationSubstituteService } from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
+import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
+
+import { prescriptionInstructionService } from './services/setup/prescription-instruction/prescriptionInstructionService';
+
+import { uomGroupService } from './services/setup/uom-group/uomGroupService';
+
+import { countryService } from './services/setup/country/countryService';
+import { countryDistrictService } from './services/setup/country/countryDistrictService';
+import { districtCommunityService } from './services/setup/country/districtCommunityService';
+import { communityAreaService } from './services/setup/country/communityAreaService';
+
+import { dischargePService } from './services/setup/dischargeService';
+
+import { resultReportApi } from './services/setup/resultReportApi';
+import { invoiceReportApi } from './services/setup/invoiceReportApi';
+import { visitDurationService } from './services/setup/visitDurationService';
+
+import { catalogService } from './services/setup/catalog/catalogService';
+import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
+
+import { PriceListService } from './services/billing/PriceListService';
+import { PriceListItemService } from './services/billing/PriceListItemService';
+import { BillingService } from './services/billing/BillingService';
+
+import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
+import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
+
+import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
+
+import { referralRequestService } from '@/services/encounters/referralRequestService';
+
+import { PayorService } from './services/setup/payer/PayorService';
+import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
+
+import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
+
 export const store = configureStore({
   reducer: {
+    // ai parsing and summarization
+    [idParsingService.reducerPath]: idParsingService.reducer,
+    [summarizationService.reducerPath]: summarizationService.reducer,
+
     // ui
     [uiSlice.name]: uiSlice.reducer,
     [uiService.reducerPath]: uiService.reducer,
+    [divSlice.name]: divSlice.reducer,
 
     // auth
     auth: authReducer,
-
     [authService.reducerPath]: authService.reducer,
     [authServiceApi.reducerPath]: authServiceApi.reducer,
 
     // patient
     [patientSlice.name]: patientSlice.reducer,
     [patientService.reducerPath]: patientService.reducer,
+    [newPatientService.reducerPath]: newPatientService.reducer,
+    [addressService.reducerPath]: addressService.reducer,
+    [hipaaService.reducerPath]: hipaaService.reducer,
+    [patientPreferredHealthProfessionalService.reducerPath]:
+      patientPreferredHealthProfessionalService.reducer,
+    [patientDocumentsService.reducerPath]: patientDocumentsService.reducer,
 
-    //setup
+    // setup
     [setupService.reducerPath]: setupService.reducer,
 
-    //inventory
+    // inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
+    [inventoryProductsService.reducerPath]: inventoryProductsService.reducer,
 
-    //medication
+    // medication / active ingredients
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
-
+    [activeIngredientSynonymsService.reducerPath]: activeIngredientSynonymsService.reducer,
+    [activeIngredientSpecialPopulationService.reducerPath]:
+      activeIngredientSpecialPopulationService.reducer,
+    [activeIngredientContraindicationService.reducerPath]:
+      activeIngredientContraindicationService.reducer,
+    [activeIngredientPreRequestedTestService.reducerPath]:
+      activeIngredientPreRequestedTestService.reducer,
     [activeIngredientAdverseEffectService.reducerPath]:
       activeIngredientAdverseEffectService.reducer,
-
     [activeIngredientIndicationService.reducerPath]: activeIngredientIndicationService.reducer,
+    [activeIngredientDrugInteractionService.reducerPath]:
+      activeIngredientDrugInteractionService.reducer,
+    [activeIngredientFoodInteractionService.reducerPath]:
+      activeIngredientFoodInteractionService.reducer,
+    [activeIngredientsService.reducerPath]: activeIngredientsService.reducer,
 
-    //account
+    // account / billing base
     [accountApi.reducerPath]: accountApi.reducer,
 
-    //appointment
+    // appointment
     [appointmentService.reducerPath]: appointmentService.reducer,
 
-    //dvm
+    // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
-
-    //encounter
     [encounterService.reducerPath]: encounterService.reducer,
-
-    //dental
     [dentalService.reducerPath]: dentalService.reducer,
-
-    //observation
     [observationService.reducerPath]: observationService.reducer,
 
-    //attachment
+    // attachments
     [attachmentService.reducerPath]: attachmentService.reducer,
     [patientAttachmentService.reducerPath]: patientAttachmentService.reducer,
     [encounterAttachmentsService.reducerPath]: encounterAttachmentsService.reducer,
     [inventoryTransferAttachmentService.reducerPath]: inventoryTransferAttachmentService.reducer,
     [inventoryTransactionAttachmentService.reducerPath]:
       inventoryTransactionAttachmentService.reducer,
-    //lab module
+
+    // lab / rad / operation / procedures
     [labService.reducerPath]: labService.reducer,
-    //operation
     [operationService.reducerPath]: operationService.reducer,
     [radService.reducerPath]: radService.reducer,
-    // div slice
-    [divSlice.name]: divSlice.reducer,
-    //role
-    [roleService.reducerPath]: roleService.reducer,
-    [userRoleService.reducerPath]: userRoleService.reducer,
-    [enumsApi.reducerPath]: enumsApi.reducer,
-    [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
-    //cpt code
-    [cptCodeService.reducerPath]: cptCodeService.reducer,
-    //refetch Encounters
-    refetch: refetchReducer,
-    //refetch Patient Side Information
-    refetchPatientSide: refetchPatientSideInfo,
-
-    //procedure
     [procedureService.reducerPath]: procedureService.reducer,
 
-    //prescription instruction
+    // refetch flags
+    refetch: refetchReducer,
+    refetchPatientSide: refetchPatientSideInfo,
+
+    // prescription instruction
     [prescriptionInstructionService.reducerPath]: prescriptionInstructionService.reducer,
 
-    //recovery
-
+    // recovery
     [recoveryService.reducerPath]: recoveryService.reducer,
+
+    // user / call
     [userService.reducerPath]: userService.reducer,
     [potintialService.reducerPath]: potintialService.reducer,
     call: callReducer,
 
+    // security / enums
     [facilityService.reducerPath]: facilityService.reducer,
     [departmentService.reducerPath]: departmentService.reducer,
-
+    [roleService.reducerPath]: roleService.reducer,
+    [userRoleService.reducerPath]: userRoleService.reducer,
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
+    [enumsApi.reducerPath]: enumsApi.reducer,
+
+    // medical sheets
+    [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
+
+    // services / language / translation
+    [serviceService.reducerPath]: serviceService.reducer,
+    [languageService.reducerPath]: languageService.reducer,
+    [translationService.reducerPath]: translationService.reducer,
+
+    // practitioner
     [PractitionerService.reducerPath]: PractitionerService.reducer,
     [PractitionerDepartmentService.reducerPath]: PractitionerDepartmentService.reducer,
 
-    //Categories setup
+    // categories
     [MedicationCategoriesService.reducerPath]: MedicationCategoriesService.reducer,
     [MedicationCategoriesClassService.reducerPath]: MedicationCategoriesClassService.reducer,
 
-    // Language slice
-    [languageService.reducerPath]: languageService.reducer,
-
-    // Translation slice
-    [translationService.reducerPath]: translationService.reducer,
-
-    //service
-    [serviceService.reducerPath]: serviceService.reducer,
-
-    //age group
+    // misc setup (age, ICD, resource, allergens)
     [ageGroupService.reducerPath]: ageGroupService.reducer,
-
     [Icd10Service.reducerPath]: Icd10Service.reducer,
+    [ResourceService.reducerPath]: ResourceService.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
+
+    // diagnostic tests
     [diagnosticTestService.reducerPath]: diagnosticTestService.reducer,
     [laboratoryService.reducerPath]: laboratoryService.reducer,
     [radiologyService.reducerPath]: radiologyService.reducer,
-    [activeIngredientsService.reducerPath]: activeIngredientsService.reducer,
-
-    //loinc code
-    [loincCodeService.reducerPath]: loincCodeService.reducer,
     [diagnosticTestProfileService.reducerPath]: diagnosticTestProfileService.reducer,
-
     [diagnosticTestPathologyService.reducerPath]: diagnosticTestPathologyService.reducer,
-    [dentalActionService.reducerPath]: dentalActionService.reducer,
     [diagnosticTestNormalRangeService.reducerPath]: diagnosticTestNormalRangeService.reducer,
+    [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
 
-    //cdt code
+    // coding
     [cdtCodeService.reducerPath]: cdtCodeService.reducer,
+    [loincCodeService.reducerPath]: loincCodeService.reducer,
+    [cptCodeService.reducerPath]: cptCodeService.reducer,
 
-    // procedure
-    // procedure setup
+    // dental actions
+    [dentalActionService.reducerPath]: dentalActionService.reducer,
+    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
+
+    // procedures
     [procedureSetupService.reducerPath]: procedureSetupService.reducer,
-    // procedure coding
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
-    // procedure price list
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
-    //vaccine
+
+    // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
     [vaccineDosesService.reducerPath]: vaccineDosesService.reducer,
     [vaccineDosesIntervalService.reducerPath]: vaccineDosesIntervalService.reducer,
+
+    // brand medications
     [BrandMedicationService.reducerPath]: BrandMedicationService.reducer,
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
-    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     [BrandMedicationActiveIngredientService.reducerPath]:
       BrandMedicationActiveIngredientService.reducer,
 
-    // Patient
-    [newPatientService.reducerPath]: newPatientService.reducer,
+    // uom
+    [uomGroupService.reducerPath]: uomGroupService.reducer,
 
     //
     [addressService.reducerPath]: addressService.reducer,
     [hipaaService.reducerPath]: hipaaService.reducer,
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
     [PatientRelationService.reducerPath]: PatientRelationService.reducer
+    // country / geo
+    [countryService.reducerPath]: countryService.reducer,
+    [countryDistrictService.reducerPath]: countryDistrictService.reducer,
+    [districtCommunityService.reducerPath]: districtCommunityService.reducer,
+    [communityAreaService.reducerPath]: communityAreaService.reducer,
 
+    // discharge
+    [dischargePService.reducerPath]: dischargePService.reducer,
+    [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
+
+    // reporting
+    [resultReportApi.reducerPath]: resultReportApi.reducer,
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
+
+    // visit duration
+    [visitDurationService.reducerPath]: visitDurationService.reducer,
+
+    // catalog
+    [catalogService.reducerPath]: catalogService.reducer,
+    [catalogDiagnosticTestService.reducerPath]: catalogDiagnosticTestService.reducer,
+
+    // billing / price list
+    [BillingService.reducerPath]: BillingService.reducer,
+    [PriceListService.reducerPath]: PriceListService.reducer,
+    [PriceListItemService.reducerPath]: PriceListItemService.reducer,
+
+    // report templates
+    [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
+    [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
+
+    // sticky notes
+    [userStickyNotesService.reducerPath]: userStickyNotesService.reducer,
+
+    // referral
+    [referralRequestService.reducerPath]: referralRequestService.reducer,
+
+    // payer
+    [PayorService.reducerPath]: PayorService.reducer,
+    [PayorPlanService.reducerPath]: PayorPlanService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware().concat([
+      // ai
+      idParsingService.middleware,
+      summarizationService.middleware,
+
+      // ui
       uiService.middleware,
+
+      // auth / account
       authService.middleware,
       authServiceApi.middleware,
       accountApi.middleware,
+
+      // patient
       patientService.middleware,
+      newPatientService.middleware,
+      addressService.middleware,
+      hipaaService.middleware,
+      patientPreferredHealthProfessionalService.middleware,
+      patientDocumentsService.middleware,
+
+      // inventory
       inventoryService.middleware,
+      inventoryProductsService.middleware,
+
+      // setup
       setupService.middleware,
+
+      // medication / active ingredients
       medicationsSetupService.middleware,
+      activeIngredientSynonymsService.middleware,
       activeIngredientAdverseEffectService.middleware,
       activeIngredientIndicationService.middleware,
+      activeIngredientSpecialPopulationService.middleware,
+      activeIngredientContraindicationService.middleware,
+      activeIngredientPreRequestedTestService.middleware,
+      activeIngredientDrugInteractionService.middleware,
+      activeIngredientFoodInteractionService.middleware,
+      activeIngredientsService.middleware,
+
+      // appointment / clinical
       appointmentService.middleware,
       dvmService.middleware,
       encounterService.middleware,
       dentalService.middleware,
       observationService.middleware,
+
+      // attachments
       attachmentService.middleware,
       patientAttachmentService.middleware,
       encounterAttachmentsService.middleware,
       inventoryTransferAttachmentService.middleware,
       inventoryTransactionAttachmentService.middleware,
+
+      // lab / rad / procedure / operation
       labService.middleware,
       radService.middleware,
       procedureService.middleware,
       operationService.middleware,
+
+      // recovery / user
       recoveryService.middleware,
       userService.middleware,
+      potintialService.middleware,
+
+      // enums / security
       enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
@@ -272,18 +434,28 @@ export const store = configureStore({
       userRoleService.middleware,
       enumService.middleware,
       userDepartmentService.middleware,
+
+      // medical sheets
       MedicalsheetsService.middleware,
+
+      // services / language / translation
       serviceService.middleware,
       MedicationCategoriesService.middleware,
       MedicationCategoriesClassService.middleware,
       languageService.middleware,
       translationService.middleware,
+
+      // practitioner
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
+
+      // misc setup
+      ResourceService.middleware,
       ageGroupService.middleware,
       Icd10Service.middleware,
       allergensService.middleware,
-      potintialService.middleware,
+
+      // diagnostic tests
       diagnosticTestService.middleware,
       cdtCodeService.middleware,
       loincCodeService.middleware,
@@ -292,32 +464,77 @@ export const store = configureStore({
       diagnosticTestProfileService.middleware,
       diagnosticTestPathologyService.middleware,
       radiologyService.middleware,
-      activeIngredientsService.middleware,
-      dentalActionService.middleware,
       diagnosticTestNormalRangeService.middleware,
-      vaccineService.middleware,
-      vaccineBrandsService.middleware,
-      procedureSetupService.middleware,
-      procedureCodingService.middleware,
-      procedurePriceListService.middleware,
+      diagnosticTestCodingService.middleware,
+
+      // dental actions
+      dentalActionService.middleware,
+      CdtDentalActionService.middleware,
+
+      // vaccines
       vaccineService.middleware,
       vaccineBrandsService.middleware,
       vaccineDosesService.middleware,
       vaccineDosesIntervalService.middleware,
+
+      // brand medications
       BrandMedicationService.middleware,
       BrandMedicationSubstituteService.middleware,
-      prescriptionInstructionService.middleware,
-      CdtDentalActionService.middleware,
       BrandMedicationActiveIngredientService.middleware,
       newPatientService.middleware,
       addressService.middleware,
       hipaaService.middleware,
       RelationsMatrixService.middleware,
       PatientRelationService.middleware,
+
+      // prescription instruction
+      prescriptionInstructionService.middleware,
+
+      // uom
+      uomGroupService.middleware,
+
+      // geo
+      countryService.middleware,
+      countryDistrictService.middleware,
+      districtCommunityService.middleware,
+      communityAreaService.middleware,
+
+      // discharge
+      dischargePService.middleware,
+      DischargePlanningService.middleware,
+
+      // reporting
+      resultReportApi.middleware,
+      invoiceReportApi.middleware,
+
+      // visit duration
+      visitDurationService.middleware,
+
+      // catalog
+      catalogService.middleware,
+      catalogDiagnosticTestService.middleware,
+
+      // billing / price list
+      BillingService.middleware,
+      PriceListService.middleware,
+      PriceListItemService.middleware,
+
+      // report templates
+      ReportTemplateService.middleware,
+      DiagnosticTestTemplateService.middleware,
+
+      // sticky notes
+      userStickyNotesService.middleware,
+
+      // referral
+      referralRequestService.middleware,
+
+      // payer
+      PayorService.middleware,
+      PayorPlanService.middleware
     ])
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
-// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
 export type AppDispatch = typeof store.dispatch;

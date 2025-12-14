@@ -1,136 +1,244 @@
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyTable from '@/components/MyTable';
-import React, { useEffect, useState } from 'react';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
-import { Form, Panel } from 'rsuite';
-import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
-import ReactDOMServer from 'react-dom/server';
+import MyTable from '@/components/MyTable';
+import MyInput from '@/components/MyInput';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import {
+  useGetVisitDurationsQuery,
+  useDeleteVisitDurationMutation,
+  useLazyGetVisitDurationsByTypeQuery
+} from '@/services/setup/visitDurationService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { formatEnumString } from '@/utils';
+import { PaginationPerPage } from '@/utils/paginationPerPage';
+import { notify } from '@/utils/uiReducerActions';
+import PlusIcon from '@rsuite/icons/Plus';
+import React, { useEffect, useMemo, useState } from 'react';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { useDispatch } from 'react-redux';
-import { setPageCode, setDivContent } from '@/reducers/divSlice';
-import { formatDateWithoutSeconds } from '@/utils';
-import VisitDurationSetupModal from './VisitDurationSetupModal';
 import { useLocation } from 'react-router-dom';
-import Translate from '@/components/Translate';
+import { Form, Panel } from 'rsuite';
+import VisitDurationSetupModal from './VisitDurationSetupModal';
+import { VisitDuration } from '@/types/model-types-new';
+import { newVisitDuration } from '@/types/model-types-constructor-new';
 
+type SortType = 'asc' | 'desc';
 
-// Sample table data
-const sampleData = [
-  {
-    id: 1,
-    visitType: 'Consultion',
-    duration: '30 mins',
-    resourceSpecific: 'Yes',
-    resourceType: 'Doctor',
-    resource: 'Dr. Ahmad',
-    status: 'Active',
-    createdBy: 'System',
-    createdAt: '2025-08-07T14:40:00',
-    active: true
-  },
-  {
-    id: 2,
-    visitType: 'Operation',
-    duration: '60 mins',
-    resourceSpecific: 'No',
-    resourceType: '',
-    resource: '',
-    status: 'Deactive',
-    createdBy: 'System',
-    createdAt: '2025-08-07T14:40:00',
-    active: false
-  },
-  {
-    id: 3,
-    visitType: 'Follow-up',
-    duration: '15 mins',
-    resourceSpecific: 'Yes',
-    resourceType: 'Doctor',
-    resource: 'Dr. Farouk',
-    status: 'Active',
-    createdBy: 'System',
-    createdAt: '2025-08-07T14:40:00',
-    active: true
-  }
-];
-
-const VisitDurationSetup = () => {
+const VisitDurationSetup: React.FC = () => {
   const dispatch = useDispatch();
   const { pathname } = useLocation();
 
-  // State for table sorting, pagination, and modal control
-  const [sortColumn, setSortColumn] = useState('visitType');
-  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  // sorting
+  const [sortColumn, setSortColumn] = useState('id');
+  const [sortType, setSortType] = useState<SortType>('asc');
+
+  //  pagination (unfiltered)
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 5,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+
+  // pagination (filtered)
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 5,
+    sort: 'id,desc'
+  });
+
+  // modal add/edit
   const [openModal, setOpenModal] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [tableData, setTableData] = useState(sampleData);
+  const [record, setRecord] = useState<VisitDuration | null>({ ...newVisitDuration });
 
-  // State for delete/reactivate confirmation modal
+  // delete confirmation modal
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [actionType, setActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
 
-  // Record to edit
-  const [record, setRecord] = useState(null);
+  //  Filter state
+  const [recordOfFilter, setRecordOfFilter] = useState<{
+    filter: '' | 'visitType';
+    value: any;
+  }>({
+    filter: '',
+    value: ''
+  });
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [filteredData, setFilteredData] = useState<VisitDuration[]>([]);
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+  const [filteredLinks, setFilteredLinks] = useState<any | undefined>(undefined);
 
-  // Handle confirm delete or reactivate
-  const handleDeleteConfirm = () => {
-    if (selectedItemId !== null) {
-      setTableData(prev =>
-        prev.map(item =>
-          item.id === selectedItemId
-            ? {
-                ...item,
-                active: actionType === 'reactivate',
-                status: actionType === 'reactivate' ? 'Active' : 'Deactive'
-              }
-            : item
-        )
-      );
-    }
-    setOpenConfirmDeleteModal(false);
-    setSelectedItemId(null);
+  // enum options للـ VisitType
+  const visitTypeOptions = useEnumOptions('VisitType');
+
+  // API data (main)
+  const {
+    data: pageData,
+    isLoading,
+    isFetching,
+    refetch
+  } = useGetVisitDurationsQuery({
+    page: paginationParams.page,
+    size: paginationParams.size,
+    sort: paginationParams.sort
+  });
+
+  // lazy query للفلترة بالسيرفر
+  const [fetchByVisitType, byVisitTypeResult] = useLazyGetVisitDurationsByTypeQuery();
+
+  const [deleteVisitDuration, { isLoading: isDeleting }] = useDeleteVisitDurationMutation();
+
+  // ⛳ derived values (زي Vaccine)
+  const totalCount = useMemo(
+    () => (isFiltered ? filteredTotal : pageData?.totalCount ?? 0),
+    [isFiltered, filteredTotal, pageData?.totalCount]
+  );
+
+  const links = (isFiltered ? filteredLinks : pageData?.links) || {};
+
+  const tableData: VisitDuration[] = useMemo(
+    () => (isFiltered ? filteredData : pageData?.data ?? []),
+    [isFiltered, filteredData, pageData?.data]
+  );
+
+  //  reset to unfiltered mode
+  const resetToUnfiltered = () => {
+    setIsFiltered(false);
+    setFilteredData([]);
+    setFilteredTotal(0);
+    setFilteredLinks(undefined);
+
+    setFilterPagination(prev => ({ ...prev, page: 0, sort: 'id,desc' }));
+    setPaginationParams(prev => ({
+      ...prev,
+      page: 0,
+      sort: 'id,asc',
+      timestamp: Date.now()
+    }));
+
+    refetch();
   };
 
-  // Define table columns
+  //  unified refetch respecting current mode
+  const refetchList = async () => {
+    if (isFiltered) {
+      await handleFilterChange(
+        recordOfFilter.filter,
+        recordOfFilter.value,
+        filterPagination.page,
+        filterPagination.size,
+        filterPagination.sort
+      );
+    } else {
+      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
+      await refetch();
+    }
+  };
+
+  //  run filtered query (server-side)
+  const runFilterQuery = async (
+    fieldName: 'visitType',
+    value: any,
+    page = 0,
+    size = filterPagination.size,
+    sort?: string
+  ) => {
+    if (!value && value !== 0) return undefined;
+    const effectiveSort = sort ?? (isFiltered ? filterPagination.sort : paginationParams.sort);
+
+    const common = { page, size, sort: effectiveSort, ts: Date.now() } as const;
+
+    if (fieldName === 'visitType') {
+      return await fetchByVisitType({ visitType: String(value), ...common }).unwrap();
+    }
+
+    return undefined;
+  };
+
+  //  apply / clear filter
+  const handleFilterChange = async (
+    fieldName: '' | 'visitType',
+    value: any,
+    page = 0,
+    size = filterPagination.size,
+    sort = filterPagination.sort
+  ) => {
+    if (!value && value !== 0) {
+      resetToUnfiltered();
+      return;
+    }
+
+    try {
+      const resp = await runFilterQuery(fieldName as any, value, page, size, sort);
+
+      setFilteredData(resp?.data ?? []);
+      setFilteredTotal(resp?.totalCount ?? 0);
+      setFilteredLinks(resp?.links || {});
+      setIsFiltered(true);
+
+      setFilterPagination(prev => ({ ...prev, page, size, sort }));
+    } catch (e) {
+      console.error(e);
+      dispatch(notify({ msg: 'Failed to filter visit durations', sev: 'error' } as any));
+      resetToUnfiltered();
+    }
+  };
+
+  //  auto revert when filter value cleared
+  useEffect(() => {
+    if (!recordOfFilter.value && recordOfFilter.value !== 0 && isFiltered) {
+      resetToUnfiltered();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recordOfFilter.value]);
+
+  // delete confirm
+  const handleDeleteConfirm = async () => {
+    if (selectedItemId == null) {
+      setOpenConfirmDeleteModal(false);
+      return;
+    }
+
+    try {
+      await deleteVisitDuration({ id: selectedItemId }).unwrap();
+      setOpenConfirmDeleteModal(false);
+      setSelectedItemId(null);
+      await refetchList();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const columns = [
-    { key: 'visitType', title: 'Visit Type', dataKey: 'visitType', width: 120 },
-    { key: 'duration', title: 'Duration', dataKey: 'duration', width: 100 },
+    {
+      key: 'visitType',
+      title: 'Visit Type',
+      dataKey: 'visitType',
+      width: 150,
+      render: (row: VisitDuration) => formatEnumString(row?.visitType)
+    },
+    {
+      key: 'durationInMinutes',
+      title: 'Duration (mins)',
+      dataKey: 'durationInMinutes',
+      width: 150,
+      render: (row: VisitDuration) =>
+        row?.durationInMinutes != null ? `${row.durationInMinutes} mins` : ''
+    },
     {
       key: 'resourceSpecific',
       title: 'Resource Specific',
       dataKey: 'resourceSpecific',
-      width: 150
-    },
-    { key: 'resourceType', title: 'Resource Type', dataKey: 'resourceType', width: 150 },
-    { key: 'resource', title: 'Resource', dataKey: 'resource', width: 150 },
-    {
-      key: 'createdByAt',
-      title: 'Created By\\At',
-      dataKey: 'createdBy',
-      width: 220,
-      render: (row: any) =>
-        row?.createdAt ? (
-          <>
-            {row?.createdBy}
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
-          </>
-        ) : (
-          ' '
-        )
+      width: 160,
+      render: (row: VisitDuration) => (row?.resourceSpecific ? 'Yes' : 'No')
     },
     {
       key: 'actions',
       title: '',
       width: 120,
-      align: 'center',
-      render: rowData => (
+      render: (rowData: VisitDuration) => (
         <div className="container-of-icons">
-          {/* Edit icon */}
           <MdModeEdit
             title="Edit"
             id="icon0-0"
@@ -142,53 +250,25 @@ const VisitDurationSetup = () => {
               setOpenModal(true);
             }}
           />
-          {/* Delete or Reactivate icon based on status */}
-          {rowData.active ? (
-            <MdDelete
-              className="icons-style"
-              title="Deactivate"
-              size={24}
-              fill="var(--primary-pink)"
-              onClick={() => {
-                setSelectedItemId(rowData.id);
-                setActionType('deactivate');
-                setOpenConfirmDeleteModal(true);
-              }}
-            />
-          ) : (
-            <FaUndo
-              className="icons-style"
-              title="Reactivate"
-              fill="var(--primary-gray)"
-              size={24}
-              onClick={() => {
-                setSelectedItemId(rowData.id);
-                setActionType('reactivate');
-                setOpenConfirmDeleteModal(true);
-              }}
-            />
-          )}
+          <MdDelete
+            className="icons-style"
+            title="Delete"
+            size={24}
+            fill="var(--primary-pink)"
+            onClick={() => {
+              if (!rowData.id) return;
+              setSelectedItemId(rowData.id);
+              setOpenConfirmDeleteModal(true);
+            }}
+          />
         </div>
       )
     }
   ];
 
-  // Sort table data based on selected column and direction
-  const sortedData = [...tableData].sort((a, b) => {
-    const aValue = a[sortColumn];
-    const bValue = b[sortColumn];
-    if (aValue === bValue) return 0;
-    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
-  });
-
-  // Pagination logic
-  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-
-  // Header page setup: dispatch inside useEffect bound to path
+  // header page setup
   useEffect(() => {
-    const divContent = (
-      "Visit Duration Setup"
-    );
+    const divContent = 'Visit Duration Setup';
 
     dispatch(setPageCode('Visit_Duration_Setup'));
     dispatch(setDivContent(divContent));
@@ -199,13 +279,184 @@ const VisitDurationSetup = () => {
     };
   }, [dispatch, pathname]);
 
+  const filterFields = [{ label: 'Visit Type', value: 'visitType' }];
+
+  const filters = () => {
+    const selected = recordOfFilter.filter;
+
+    let dynamicInput: React.ReactNode = (
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Enter Value"
+        width={220}
+      />
+    );
+
+    if (selected === 'visitType') {
+      dynamicInput = (
+        <MyInput
+          width={220}
+          fieldName="value"
+          fieldLabel=""
+          fieldType="select"
+          selectData={visitTypeOptions ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={recordOfFilter}
+          setRecord={(u: any) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          searchable={false}
+          placeholder="Select Visit Type"
+        />
+      );
+    }
+
+    return (
+      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+        <MyInput
+          selectDataValue="value"
+          selectDataLabel="label"
+          selectData={filterFields}
+          fieldName="filter"
+          fieldType="select"
+          record={recordOfFilter}
+          setRecord={(u: any) => setRecordOfFilter({ filter: u.filter, value: '' })}
+          showLabel={false}
+          placeholder="Select Filter"
+          searchable={false}
+          width="170px"
+        />
+        {dynamicInput}
+        <MyButton
+          color="var(--deep-blue)"
+          onClick={() =>
+            handleFilterChange(
+              recordOfFilter.filter,
+              recordOfFilter.value,
+              0,
+              filterPagination.size,
+              filterPagination.sort || 'id,desc'
+            )
+          }
+          width="80px"
+        >
+          Search
+        </MyButton>
+      </Form>
+    );
+  };
+
+
+  const handleSortChange = (column: string, type: SortType) => {
+    setSortColumn(column);
+    setSortType(type);
+    const sortValue = `${column},${type}`;
+
+    if (isFiltered) {
+      setFilterPagination(prev => ({ ...prev, sort: sortValue, page: 0 }));
+      handleFilterChange(
+        recordOfFilter.filter,
+        recordOfFilter.value,
+        0,
+        filterPagination.size,
+        sortValue
+      );
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        sort: sortValue,
+        page: 0,
+        timestamp: Date.now()
+      }));
+    }
+  };
+
+  //  pagination change
+  const handlePageChange = (_: unknown, newPage: number) => {
+    if (isFiltered) {
+      handleFilterChange(
+        recordOfFilter.filter,
+        recordOfFilter.value,
+        newPage,
+        filterPagination.size,
+        filterPagination.sort
+      );
+      return;
+    }
+
+    const currentPage = paginationParams.page;
+    const linksMap = links || {};
+    let targetLink: string | null | undefined = null;
+
+    if (newPage > currentPage && linksMap.next) targetLink = linksMap.next;
+    else if (newPage < currentPage && linksMap.prev) targetLink = linksMap.prev;
+    else if (newPage === 0 && linksMap.first) targetLink = linksMap.first;
+    else if (newPage > currentPage + 1 && linksMap.last) targetLink = linksMap.last;
+
+    if (targetLink) {
+      try {
+        const { page, size } = (PaginationPerPage as any).extractPaginationFromLink
+          ? (PaginationPerPage as any).extractPaginationFromLink(targetLink)
+          : { page: newPage, size: paginationParams.size };
+
+        setPaginationParams(prev => ({
+          ...prev,
+          page,
+          size,
+          timestamp: Date.now()
+        }));
+      } catch {
+        PaginationPerPage.handlePageChange(
+          _,
+          newPage,
+          paginationParams,
+          linksMap,
+          setPaginationParams
+        );
+      }
+    } else {
+      PaginationPerPage.handlePageChange(
+        _,
+        newPage,
+        paginationParams,
+        linksMap,
+        setPaginationParams
+      );
+    }
+  };
+
+  // rows per page
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newSize = parseInt(event.target.value, 10);
+
+    if (isFiltered) {
+      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+      handleFilterChange(
+        recordOfFilter.filter,
+        recordOfFilter.value,
+        0,
+        newSize,
+        filterPagination.sort
+      );
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+        timestamp: Date.now()
+      }));
+    }
+  };
+
   return (
     <Panel className="main-visit-duration-page-gaps">
-      {/* Main Table Component */}
       <MyTable
-        data={paginatedData}
+        data={tableData}
         columns={columns}
-        filters={<></>}
+        filters={filters()}
         tableButtons={
           <Form fluid>
             <div className="bt-div">
@@ -214,7 +465,7 @@ const VisitDurationSetup = () => {
                   prefixIcon={() => <PlusIcon />}
                   onClick={() => {
                     setModalMode('add');
-                    setRecord(null);
+                    setRecord({ ...newVisitDuration });
                     setOpenModal(true);
                   }}
                 >
@@ -225,30 +476,24 @@ const VisitDurationSetup = () => {
           </Form>
         }
         height={470}
-        loading={false}
+        loading={isLoading || isFetching || isDeleting || byVisitTypeResult.isFetching}
         sortColumn={sortColumn}
         sortType={sortType}
-        onSortChange={(col, type) => {
-          setSortColumn(col);
-          setSortType(type);
-        }}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        totalCount={tableData.length}
-        onPageChange={(_, newPage) => setPage(newPage)}
-        onRowsPerPageChange={e => {
-          setRowsPerPage(parseInt(e.target.value, 10));
-          setPage(0);
-        }}
+        onSortChange={(col, type) => handleSortChange(col, type as SortType)}
+        page={isFiltered ? filterPagination.page : paginationParams.page}
+        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
 
-      {/* Delete / Reactivate Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       <DeletionConfirmationModal
         open={openConfirmDeleteModal}
         setOpen={setOpenConfirmDeleteModal}
         itemToDelete="Visit Duration"
         actionButtonFunction={handleDeleteConfirm}
-        actionType={actionType}
+        actionType="delete"
       />
 
       {/* Add / Edit Modal */}
@@ -256,7 +501,8 @@ const VisitDurationSetup = () => {
         open={openModal}
         setOpen={setOpenModal}
         mode={modalMode}
-        record={record}
+        record={record || undefined}
+        onSuccess={refetchList}
       />
     </Panel>
   );

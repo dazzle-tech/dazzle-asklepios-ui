@@ -81,7 +81,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         <MyInput
           width={150}
           column
-          fieldLabel="Sex at Birth"
+          fieldLabel="Gender"
           fieldType="select"
           fieldName="genderLkey"
           selectData={genderLovQueryResponse?.object ?? []}

@@ -68,7 +68,7 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
         <Text className="patient-mrn"># {patient.mrn}</Text>
       </div>
       <div className="actions">
-        {actions}
+        {/* {actions} */}
         <Button onClick={handleClick} className="arrow-button">
           {arrowDirection === 'left' ? <FaArrowLeft /> : <FaArrowRight />}
         </Button>

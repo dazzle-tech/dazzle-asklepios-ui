@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { baseQuery, onQueryStarted } from '../api';
+import { BaseQuery, onQueryStarted } from '../newApi';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
 import {
@@ -10,11 +10,11 @@ import {
 
 export const appointmentService = createApi({
   reducerPath: 'appointmentSetupApi',
-  baseQuery: baseQuery,
+  baseQuery: BaseQuery,
   endpoints: builder => ({
     getResources: builder.query({
       query: (listRequest: ListRequest) => ({
-        url: `/appointment/resources-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/setup/resources-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -50,9 +50,14 @@ export const appointmentService = createApi({
     }),
     getAppointments: builder.query({
       query: ({ resource_type, facility_id, resources }) => {
-        const resourcesParam = resources;
+        const params = new URLSearchParams();
+        if (resource_type) params.append('resource-type', resource_type);
+        if (facility_id) params.append('facility-id', String(facility_id));
+        if (resources && Array.isArray(resources) && resources.length > 0) {
+          params.append('resources', resources.join(','));
+        }
         return {
-          url: `/appointment/appointments-list?resource-type=${resource_type}&facility-id=${facility_id}&resources=${resourcesParam}`,
+          url: `/appointment/appointments-list${params.toString() ? '?' + params.toString() : ''}`,
         };
       },
       onQueryStarted: onQueryStarted,
@@ -138,11 +143,10 @@ export const appointmentService = createApi({
         url: '/appointment/save',
         method: 'POST',
         body: requestData,
+        responseHandler: (response: Response) => response.text(),
       }),
       onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
+      transformResponse: (response: any) => response,
     }),
   }),
 

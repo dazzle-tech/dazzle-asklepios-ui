@@ -32,8 +32,19 @@ import MyLabel from '@/components/MyLabel';
 import SendToModal from './SendToModal';
 import { ApEncounter } from '@/types/model-types';
 import SectionContainer from '@/components/SectionsoContainer';
-const ERStartTriage = () => {
+import StartTriage from './StartTriage';
+interface ERTriageProps {
+  patient?: any;
+  encounter?: any;
+  edit?: boolean;
+
+}
+
+const ERStartTriage = (props:ERTriageProps) => {
   const location = useLocation();
+  const patient = props.patient ?? location.state?.patient ?? {};
+  const encounterData = props.encounter ?? location.state?.encounter ?? {};
+  const edit = props.edit ?? location.state?.edit ?? false;
   const propsData = location.state;
   const authSlice = useAppSelector(state => state.auth);
   const navigate = useNavigate();
@@ -45,7 +56,7 @@ const ERStartTriage = () => {
   const [refetchPatientObservations, setRefetchPatientObservations] = useState(false);
   const [openSendToModal, setOpenSendToModal] = useState(false);
   const [patientPriority, setPatientPriority] = useState({ key: '' });
-  const [encounter, setEncounter] = useState<ApEncounter>({ ...propsData.encounter });
+  const [encounter, setEncounter] = useState<ApEncounter>({ ...encounterData });
   const YES_KEY = '1476229927081534';
   const NO_KEY = '1476240934233400';
 
@@ -61,12 +72,12 @@ const ERStartTriage = () => {
       {
         fieldName: 'patient_key',
         operator: 'match',
-        value: propsData.patient?.key
+        value: patient?.key
       },
       {
         fieldName: 'encounter_key',
         operator: 'match',
-        value: propsData.encounter?.key
+        value:encounter?.key
       }
     ]
   });
@@ -90,7 +101,7 @@ const ERStartTriage = () => {
 
   // Header setup
   const divContent = (
-      "ER Start Triage"
+    "ER Start Triage"
   );
   dispatch(setPageCode('Start_Triage'));
   dispatch(setDivContent(divContent));
@@ -112,8 +123,8 @@ const ERStartTriage = () => {
       if (emergencyTriage.key === undefined) {
         await saveTriage({
           ...emergencyTriage,
-          patientKey: propsData.patient?.key,
-          encounterKey: propsData.encounter?.key,
+          patientKey: patient?.key,
+          encounterKey: encounterData?.key,
           createdBy: authSlice.user.key
         }).unwrap();
         refetch();
@@ -121,8 +132,8 @@ const ERStartTriage = () => {
       } else {
         await saveTriage({
           ...emergencyTriage,
-          patientKey: propsData.patient?.key,
-          encounterKey: propsData.encounter?.key,
+          patientKey: patient?.key,
+          encounterKey: encounterData?.key,
           updatedBy: authSlice.user.key
         }).unwrap();
         dispatch(notify({ msg: ' Updated Successfully', sev: 'success' }));
@@ -230,364 +241,17 @@ const ERStartTriage = () => {
   return (
     <div className="er-main-container">
       <div className="left-box">
-        <div className="bt-field-div">
-          <BackButton
-            onClick={() => {
-              navigate('/ER-triage');
-            }}
-          />
-          <MyButton
-            prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-            onClick={handleCompleteEncounter}
-            appearance="ghost"
-          >
-            <Translate> Complete Visit </Translate>
-          </MyButton>
-          <MyButton
-            prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
-            onClick={() => {
-              setOpenSendToModal(true);
-            }}
-            disabled={!emergencyTriage?.emergencyLevelLkey || !encounter?.emergencyLevelLkey}
-          >
-            <Translate> Send to </Translate>
-          </MyButton>
-          <div className="bt-right">
-            <Form fluid className="patient-priority-er-level-handle-position">
-              <MyInput
-                width={200}
-                fieldType="select"
-                fieldLabel="Patient Priority"
-                fieldName="key"
-                selectData={patientPriorityLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={patientPriority}
-                setRecord={setPatientPriority}
-              />
-              <MyLabel label="Emergency Level" />
-              {emergencyTriage?.emergencyLevelLkey && (
-                <MyBadgeStatus
-                  color={selectedEmergencyLevel?.valueColor}
-                  contant={
-                    selectedEmergencyLevel?.lovDisplayVale ?? emergencyTriage?.emergencyLevelLkey
-                  }
-                />
-              )}
-            </Form>
-          </div>{' '}
-        </div>
-        <Row gutter={30}>
-          <Divider />
-        </Row>
-        <Row gutter={30}>
-          <Panel header="Emergency Level Assessment">
-            <Form fluid layout="inline">
-              <MyInput
-                column
-                width={200}
-                fieldLabel="Life-saving Interventions Required?"
-                fieldType="select"
-                fieldName="lifeSavingLkey"
-                selectData={booleanLovQuery?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={emergencyTriage}
-                setRecord={setEmergencyTriage}
-                searchable={false}
-              />
-            </Form>
-            <Form fluid layout="inline">
-              {emergencyTriage.lifeSavingLkey === NO_KEY && (
-                <Form fluid layout="inline">
-                  <MyInput
-                    column
-                    width={200}
-                    fieldLabel="Is the patient unresponsive or acutely mentally altered?"
-                    fieldType="select"
-                    fieldName="unresponsiveLkey"
-                    selectData={booleanLovQuery?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={emergencyTriage}
-                    setRecord={setEmergencyTriage}
-                    searchable={false}
-                  />
-                </Form>
-              )}
-
-              {emergencyTriage.lifeSavingLkey === NO_KEY &&
-                emergencyTriage.unresponsiveLkey === NO_KEY && (
-                  <Form fluid layout="inline">
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="High-risk situation?"
-                      fieldType="select"
-                      fieldName="highRiskLkey"
-                      selectData={booleanLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="AVPU Scale"
-                      fieldType="select"
-                      fieldName="avpuScaleLkey"
-                      selectData={levelOfConscLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="Pain Score"
-                      fieldType="select"
-                      fieldName="painScoreLkey"
-                      selectData={painScoreLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-                  </Form>
-                )}
-
-              {emergencyTriage.lifeSavingLkey === NO_KEY &&
-                emergencyTriage.unresponsiveLkey === NO_KEY &&
-                isHiddenFields && (
-                  <Form fluid layout="inline">
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="Labs Required"
-                      fieldType="select"
-                      fieldName="labsLkey"
-                      selectData={booleanLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="Imaging Required"
-                      fieldType="select"
-                      fieldName="imagingLkey"
-                      selectData={booleanLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="IV Fluids Required"
-                      fieldType="select"
-                      fieldName="ivFluidsLkey"
-                      selectData={booleanLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="Medication Required"
-                      fieldType="select"
-                      fieldName="medicationLkey"
-                      selectData={booleanLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="ECG Required"
-                      fieldType="select"
-                      fieldName="ecgLkey"
-                      selectData={booleanLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-                    <MyInput
-                      column
-                      width={200}
-                      fieldLabel="Consultation Required"
-                      fieldType="select"
-                      fieldName="consultationLkey"
-                      selectData={booleanLovQuery?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                      searchable={false}
-                    />
-                  </Form>
-                )}
-              <div className="button-right">
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  className="button-bottom-align"
-                  onClick={handleSave}
-                >
-                  <Translate>Save</Translate>
-                </MyButton>
-              </div>
-            </Form>
-          </Panel>
-        </Row>
-        <Row gutter={30}>
-          <VitalSignsTriage
-            patient={propsData.patient}
-            encounter={propsData.encounter}
-            setRefetchPatientObservations={setRefetchPatientObservations}
-          />
-        </Row>
-        <Row gutter={30}>
-          <GeneralAssessmentTriage patient={propsData.patient} encounter={propsData.encounter} />
-        </Row>
-        <Row>
-          <Col md={12}>
-            <SectionContainer
-              title="Right Eye"
-              content={
-                <Form fluid layout="inline">
-                  <MyInput
-                    width={200}
-                    column
-                    fieldLabel="Reacting to light"
-                    fieldType="checkbox"
-                    fieldName="rightEyeLightResponse"
-                    record={emergencyTriage}
-                    setRecord={setEmergencyTriage}
-                  />
-                  <MyInput
-                    column
-                    width={200}
-                    fieldLabel="Pupil Size"
-                    fieldType="select"
-                    fieldName="rightEyePupilSizeLkey"
-                    selectData={sizeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={emergencyTriage}
-                    setRecord={setEmergencyTriage}
-                    searchable={false}
-                  />
-                </Form>
-              }
-            />
-          </Col>
-          <Col md={12}>
-            <SectionContainer
-              title="Left Eye"
-              content={
-                <Form fluid layout="inline">
-                  <MyInput
-                    width={200}
-                    column
-                    fieldLabel="Reacting to light"
-                    fieldType="checkbox"
-                    fieldName="leftEyeLightResponse"
-                    record={emergencyTriage}
-                    setRecord={setEmergencyTriage}
-                  />
-                  <MyInput
-                    column
-                    width={200}
-                    fieldLabel="Pupil Size"
-                    fieldType="select"
-                    fieldName="leftEyePupilSizeLkey"
-                    selectData={sizeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={emergencyTriage}
-                    setRecord={setEmergencyTriage}
-                    searchable={false}
-                  />
-                </Form>
-              }
-            />
-          </Col>
-        </Row>
-        <Row>
-          <Col md={12}>
-            <ChiefComplainTriage patient={propsData.patient} encounter={propsData.encounter} />
-          </Col>
-          <Col md={12}>
-            <SectionContainer
-              title="HPI"
-              content={
-                <Form fluid layout="inline" className="form-inline-wrap bt-div">
-                  <MyInput
-                    column
-                    fieldType="textarea"
-                    record={emergencyTriage}
-                    setRecord={setEmergencyTriage}
-                    fieldLabel="History of Present Illness"
-                    fieldName="historyOfPresentIllness"
-                    width={400}
-                  />
-                  <MyInput
-                    column
-                    fieldType="textarea"
-                    record={emergencyTriage}
-                    setRecord={setEmergencyTriage}
-                    fieldLabel="Additional Notes"
-                    fieldName="additionalNotes"
-                    width={400}
-                  />
-                  {propsData?.patient?.genderLvalue?.valueCode === 'F' && (
-                    <MyInput
-                      width={150}
-                      column
-                      fieldLabel="Pregnancy"
-                      fieldType="checkbox"
-                      fieldName="isPregnancy"
-                      record={emergencyTriage}
-                      setRecord={setEmergencyTriage}
-                    />
-                  )}
-                  <MyButton
-                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                    className="button-bottom-align"
-                    onClick={handleSave}
-                  >
-                    <Translate> Save </Translate>
-                  </MyButton>
-                </Form>
-              }
-            />
-          </Col>
-        </Row>
+       <StartTriage
+          patient={patient}
+          encounter={encounter}
+          sourcePage={"Emergency"}
+          // edit={edit}
+        />
       </div>
       <div className="right-box">
         <PatientSide
-          patient={propsData.patient}
-          encounter={propsData.encounter}
+          patient={patient}
+          encounter={encounterData}
           refetchList={refetchPatientObservations}
         />
       </div>

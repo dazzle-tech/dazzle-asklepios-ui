@@ -21,7 +21,7 @@ import {
 import { newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { faRightLeft, faPills } from '@fortawesome/free-solid-svg-icons';
 import Instructions from './Instructions';
-import Substitues from '../drug-order/Substitutes';
+import Substitues from '../drug-order/SubstitutesNew';
 import clsx from 'clsx';
 import DiagnosticsOrder from '../diagnostics-order';
 import CheckIcon from '@rsuite/icons/Check';

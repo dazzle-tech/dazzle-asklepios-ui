@@ -26,31 +26,32 @@ const MedicationsRecord = () => {
       title: 'Prescriptions',
       content: (
         <Prescriptions
-          genericMedicationListResponse={genericMedicationListResponse?.object}
+          // genericMedicationListResponse={genericMedicationListResponse?.object}
           customeInstructions={customeInstructions?.object}
           patient={patient}
         />
       )
     },
-    {
-      title: 'Drug Orders',
-      content: (
-        <DrugOrder
-          genericMedicationListResponse={genericMedicationListResponse?.object}
-          patient={patient}
-        />
-      )
-    },
-    {
-      title: 'Patient’s Chronic Medications',
-      content: (
-        <PatientChronic
-          genericMedicationListResponse={genericMedicationListResponse?.object}
-          patient={patient}
-          customeInstructions={customeInstructions?.object}
-        />
-      )
-    }
+    // don't remove these comments - they are for future features
+    // {
+    //   title: 'Drug Orders',
+    //   content: (
+    //     <DrugOrder
+    //       genericMedicationListResponse={genericMedicationListResponse?.object}
+    //       patient={patient}
+    //     />
+    //   )
+    // },
+    // {
+    //   title: 'Patient’s Chronic Medications',
+    //   content: (
+    //     <PatientChronic
+    //       genericMedicationListResponse={genericMedicationListResponse?.object}
+    //       patient={patient}
+    //       customeInstructions={customeInstructions?.object}
+    //     />
+    //   )
+    // }
   ];
 
   return (

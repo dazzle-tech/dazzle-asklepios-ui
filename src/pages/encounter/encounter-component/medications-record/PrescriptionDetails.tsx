@@ -2,12 +2,18 @@ import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useGetPrescriptionMedicationsQuery } from "@/services/encounterService";
 import { useGetPrescriptionInstructionQuery } from "@/services/medicationsSetupService";
+import { useGetAllBrandMedicationsQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
+import { useGetAllPrescriptionInstructionsQuery } from "@/services/setup/prescription-instruction/prescriptionInstructionService";
 import { initialListRequest } from "@/types/types";
+import { formatEnumString } from "@/utils";
 import React from "react";
 import { FlexboxGrid } from "rsuite";
-const PrescriptionDetails=({genericMedicationListResponse,customeInstructions ,prescription})=>{
-    console.log("PrescriptionDetails", prescription);
-     const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
+const PrescriptionDetails=({customeInstructions ,prescription})=>{
+   
+    const { data: genericMedicationListResponse } =
+        useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+     const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery
+     ({page:1,size:1000});
      const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
              ...initialListRequest,
      
@@ -31,53 +37,62 @@ const PrescriptionDetails=({genericMedicationListResponse,customeInstructions ,p
     const tableColumns=[
         {
             key: "genericMedicationsKey",
-            dataKey:"genericMedicationsKey",
+            dataKey:"genericMedicationsId",
             title: <Translate>Medication Name</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return genericMedicationListResponse?.find(item => item.key === rowData.genericMedicationsKey)?.genericName??"";
-            }
+           render: (rowData: any) => {
+        return genericMedicationListResponse?.data?.find(
+          item => item.id === rowData.genericMedicationsId
+        )?.name;
+      }
         },
         {
-            key: "",
-            title: <Translate>Instructions</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                if (rowData.instructionsTypeLkey === "3010591042600262") {
-                    const generic = predefinedInstructionsListResponse?.object?.find(
-                        item => item.key === rowData.instructions
-                    );
-
-                    if (generic) {
-                        console.log("Found generic:", generic);
-                    } else {
-                        console.warn("No matching generic found for key:", rowData.instructions);
-                    }
-                    return [
-                        generic?.dose,
-                        generic?.unitLvalue?.lovDisplayVale,
-                        generic?.routLvalue?.lovDisplayVale,
-                        generic?.frequencyLvalue?.lovDisplayVale
-                    ]
-                        .filter(Boolean)
-                        .join(', ');
+              key: 'instructions',
+              dataKey: '',
+              title: 'Instructions',
+              flexGrow: 3,
+              render: (rowData: any) => {
+                if (rowData.instructionsTypeLkey === '3010591042600262') {
+                  const generic = predefinedInstructionsListResponse?.data?.find(
+                    item => item.id === Number(rowData.instructions)
+                  );
+               
+        
+                  if (generic) {
+                  } else {
+                    console.warn('No matching generic found for key:', rowData.instructions);
+                  }
+                  return [
+                    generic?.dose ?? '',
+                    formatEnumString(generic?.unit) ?? '',
+                    formatEnumString(generic?.rout) ?? '',   // ✅ route
+                    formatEnumString(generic?.frequency) ?? '',
+                  ]
+                    .filter(v => v != null && String(v).trim() !== '')
+                    .join(', ');
                 }
-                if (rowData.instructionsTypeLkey === "3010573499898196") {
-                    return rowData.instructions
-
+                if (rowData.instructionsTypeLkey === '3010573499898196') {
+                  return rowData.instructions;
                 }
-                if (rowData.instructionsTypeLkey === "3010606785535008") {
-                    return customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose + ","
-                        + customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue?.lovDisplayVale +
-                        "," + customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue?.lovDisplayVale + "," +
-                        customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue?.lovDisplayVale
-
-
+                if (rowData.instructionsTypeLkey === '3010606785535008') {
+                  return (
+                    customeInstructions?.object?.find(
+                      item => item.prescriptionMedicationsKey === rowData.key
+                    )?.dose +
+                    ',' +
+                    customeInstructions?.object?.find(
+                      item => item.prescriptionMedicationsKey === rowData.key
+                    )?.unitLvalue.lovDisplayVale +
+                    ',' +
+                    customeInstructions?.object?.find(
+                      item => item.prescriptionMedicationsKey === rowData.key
+                    )?.frequencyLvalue.lovDisplayVale
+                  );
                 }
-
-                return " ";
-            }
-        },
+        
+                return 'no';
+              }
+            },
         {
             key: "",
             title: <Translate>Instructions Type</Translate>,

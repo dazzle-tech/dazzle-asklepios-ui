@@ -18,6 +18,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useRef, useState } from "react";
 import { Checkbox, Col, Form, HStack, Row, Tooltip, Whisper } from "rsuite";
 import { addFilterToListRequest, formatDate } from '@/utils';
+import AddReportModal from "../rad-module/AddReportModal";
 const ReviewReport = ({ setEncounter, setPatient, user }) => {
     const [openReportModal, setOpenReportModal] = useState(false);
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
@@ -423,52 +424,20 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
             }}
         />
         <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
-        <MyModal
-            open={openReportModal}
-            setOpen={setOpenReportModal}
-            hideActionBtn
-            title={"Report"}
-            size="sm"
-            bodyheight="30vh"
-            content={
-                <>
-                    <Form fluid>
-                        <Row>
-                            <Col md={24}>
-
-                                <MyInput
-                                    width="100%"
-                                    disabled={true}
-                                    fieldName={'severityLkey'}
-                                    fieldType="select"
-                                    selectData={severityLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    record={report}
-                                    setRecord={setReport}
-                                />
-
-                            </Col>
-                        </Row>
-                        <Row >
-                            <Col md={24}>
-
-                                <MyInput
-                                    disabled={true}
-                                    width="100%"
-                                    hight={200}
-                                    fieldLabel={''}
-                                    fieldName={'reportValue'}
-                                    fieldType="textarea"
-                                    record={report}
-                                    setRecord={setReport}
-                                />
-                            </Col>
-
-                        </Row>
-                    </Form></>
-            }
-        />
+        
+          <AddReportModal
+                  open={openReportModal}
+                  setOpen={setOpenReportModal}
+                  test={test}
+                  setTest={setTest}
+                  resultFetch={reportFetch}
+                  report={report}
+                  setReport={setReport}
+                  saveReport={()=>{}}
+                  saveTest={()=>{}}
+                  disableEdit={true}
+                  attachmentRefetch={()=>{}}
+                />
     </>);
 }
 export default ReviewReport;

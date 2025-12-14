@@ -1,4 +1,30 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed, ApProgressNotes, ApPatient, ApTeleConsultationProgressNote, ApTeleConsultationCallLog } from './../types/model-types';
+import {
+  ApAdmitOutpatientInpatient,
+  ApAudiometryPuretone,
+  ApBedTransactions,
+  ApElectrocardiogramEcg,
+  ApOptometricExam,
+  ApProcedureRegistration,
+  ApTreadmillStress,
+  ApPainAssessment,
+  ApInpatientChiefComplain,
+  ApGeneralAssessment,
+  ApFunctionalAssessment,
+  ApMedicationReconciliation,
+  ApTransferPatient,
+  ApDoctorRound,
+  ApNurseNotes,
+  ApRepositioning,
+  ApDayCaseEncounters,
+  ApPreOperationAdministeredMedications,
+  ApEmergencyTriage,
+  ApEncounterAssignToBed,
+  ApProgressNotes,
+  ApPatient,
+  ApTeleConsultationProgressNote,
+  ApTeleConsultationCallLog,
+  ApNurseServiceProduct
+} from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -8,11 +34,22 @@ import {
   ApCustomeInstructions,
   ApDiagnosticOrders,
   ApDiagnosticOrderTests,
-  ApDrugOrder, ApDrugOrderMedications,
-  ApEncounter, ApPatientDiagnose,
+  ApDrugOrder,
+  ApDrugOrderMedications,
+  ApEncounter,
+  ApPatientDiagnose,
   ApPatientEncounterOrder,
-  ApPatientPlan, ApPrescription,
-  ApPrescriptionMedications, ApProcedure, ApPatientTemporaryDischarge, ApReviewOfSystem, ApVisitAllergies, ApPsychologicalExam, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsSamples
+  ApPatientPlan,
+  ApPrescription,
+  ApPrescriptionMedications,
+  ApProcedure,
+  ApPatientTemporaryDischarge,
+  ApReviewOfSystem,
+  ApVisitAllergies,
+  ApPsychologicalExam,
+  ApDiagnosticOrderTestsNotes,
+  ApDiagnosticOrderTestsSamples,
+  ApTelephonicConsultation
 } from '@/types/model-types';
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -29,9 +66,8 @@ export const encounterService = createApi({
       query: (patientId: string) => ({
         url: `/encounter/get-encounter-by-id`,
         params: {
-          key: patientId,
+          key: patientId
         }
-
       }),
       transformResponse: (response: any) => {
         return response.object;
@@ -91,7 +127,7 @@ export const encounterService = createApi({
     getEncounterReviewOfSystems: builder.query({
       query: (encounterKey: any) => ({
         headers: {
-          "encounter-key": encounterKey
+          'encounter-key': encounterKey
         },
         url: `/encounter/encounter-review-of-systems`
       }),
@@ -221,7 +257,7 @@ export const encounterService = createApi({
       query: (patEncounterOrder: ApPatientEncounterOrder) => ({
         url: `/encounter/remove-encounter-order`,
         method: 'POST',
-        body: patEncounterOrder,
+        body: patEncounterOrder
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
@@ -286,6 +322,20 @@ export const encounterService = createApi({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/consultation-orders-list?${fromListRequestToQueryParams(listRequest)}`
       }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getConsultationOrdersByDepartment: builder.query({
+      query: ({ listRequest, department_key, preferred_consultant_key }: { listRequest: ListRequest, department_key: string, preferred_consultant_key?: string }) => {
+        const params = new URLSearchParams(fromListRequestToQueryParams(listRequest));
+        params.append('department_key', department_key);
+        if (preferred_consultant_key) {
+          params.append('preferred_consultant_key', preferred_consultant_key);
+        }
+        return {
+          url: `/encounter/consultation-orders-by-department?${params.toString()}`
+        };
+      },
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
@@ -382,7 +432,6 @@ export const encounterService = createApi({
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
-
     }),
     saveDiagnosticOrderTestNotes: builder.mutation({
       query: (note: ApDiagnosticOrderTestsNotes) => ({
@@ -404,7 +453,6 @@ export const encounterService = createApi({
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
-
     }),
     saveDiagnosticOrderTestSamples: builder.mutation({
       query: (note: ApDiagnosticOrderTestsSamples) => ({
@@ -570,7 +618,7 @@ export const encounterService = createApi({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/inpatient-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
-          "department-key": department_key
+          'department-key': department_key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -668,7 +716,9 @@ export const encounterService = createApi({
     }),
     getMedicationReconciliation: builder.query({
       query: (listRequest: ListRequest) => ({
-        url: `/encounter/medication-reconciliation-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/encounter/medication-reconciliation-list?${fromListRequestToQueryParams(
+          listRequest
+        )}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -728,7 +778,7 @@ export const encounterService = createApi({
       onQueryStarted
     }),
     saveDoctorRoundStaff: builder.mutation({
-      query: (body) => ({
+      query: body => ({
         url: `/encounter/save-doctor-round-staff`,
         method: 'POST',
         body
@@ -820,7 +870,9 @@ export const encounterService = createApi({
     }),
     getPreOperationMedicationsList: builder.query({
       query: (listRequest: ListRequest) => ({
-        url: `/encounter/pre-operation-administered-medications-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/encounter/pre-operation-administered-medications-list?${fromListRequestToQueryParams(
+          listRequest
+        )}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -851,26 +903,26 @@ export const encounterService = createApi({
       keepUnusedDataFor: 5
     }),
     ERCompleteEncounter: builder.mutation({
-      query: (data: { encounter: ApEncounter, triageKey: string, destinationKey: string }) => ({
+      query: (data: { encounter: ApEncounter; triageKey: string; destinationKey: string }) => ({
         url: `/encounter/er-complete-encounter`,
         method: 'POST',
         body: data.encounter,
         headers: {
-          "triage-key": data.triageKey,
-          "destination-key": data.destinationKey,
+          'triage-key': data.triageKey,
+          'destination-key': data.destinationKey
         }
-      }),
+      })
     }),
     SentToER: builder.mutation({
-      query: (data: { encounter: ApEncounter, triageKey: string, destinationKey: string }) => ({
+      query: (data: { encounter: ApEncounter; triageKey: string; destinationKey: string }) => ({
         url: `/encounter/sent-to-er`,
         method: 'POST',
         body: data.encounter,
         headers: {
-          "triage-key": data.triageKey,
-          "destination-key": data.destinationKey,
+          'triage-key': data.triageKey,
+          'destination-key': data.destinationKey
         }
-      }),
+      })
     }),
     getEREncountersList: builder.query({
       query: (listRequest: ListRequest) => ({
@@ -883,7 +935,7 @@ export const encounterService = createApi({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/emergency-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
-          "department-key": department_key
+          'department-key': department_key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -930,12 +982,18 @@ export const encounterService = createApi({
       }
     }),
     returnTemporaryDischarge: builder.mutation({
-      query: ({ patientTemporaryDischarge, department_key }: { patientTemporaryDischarge: ApPatientTemporaryDischarge, department_key: string }) => ({
+      query: ({
+        patientTemporaryDischarge,
+        department_key
+      }: {
+        patientTemporaryDischarge: ApPatientTemporaryDischarge;
+        department_key: string;
+      }) => ({
         url: `/encounter/return-from-temporary-discharge`,
         method: 'POST',
         body: patientTemporaryDischarge,
         headers: {
-          "department-key": department_key
+          'department-key': department_key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -947,7 +1005,7 @@ export const encounterService = createApi({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/day-case-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
-          "department-key": department_key
+          'department-key': department_key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -983,18 +1041,22 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-    getTeleConsultationProgressNotesList: builder.query<ApTeleConsultationProgressNote[], ListRequest>({
-      query: (listRequest) => ({
-        url: `/encounter/tele-consultation-progress-notes-list?${fromListRequestToQueryParams(listRequest)}`
+    getTeleConsultationProgressNotesList: builder.query<
+      ApTeleConsultationProgressNote[],
+      ListRequest
+    >({
+      query: listRequest => ({
+        url: `/encounter/tele-consultation-progress-notes-list?${fromListRequestToQueryParams(
+          listRequest
+        )}`
       }),
       transformResponse: (response: any) => {
-        console.log("RAW progress notes API response", response);
+        console.log('RAW progress notes API response', response);
         return response?.object ?? [];
       },
-      keepUnusedDataFor: 5,
+      keepUnusedDataFor: 5
     }),
-
-      saveTeleConsultationCallLog: builder.mutation({
+    saveTeleConsultationCallLog: builder.mutation({
       query: (log: ApTeleConsultationCallLog) => ({
         url: `/encounter/save-tele-consultation-call-log`,
         method: 'POST',
@@ -1006,19 +1068,101 @@ export const encounterService = createApi({
       }
     }),
     getTeleConsultationCallLogList: builder.query<ApTeleConsultationProgressNote[], ListRequest>({
-      query: (listRequest) => ({
-        url: `/encounter/tele-consultation-call-log-list?${fromListRequestToQueryParams(listRequest)}`
+      query: listRequest => ({
+        url: `/encounter/tele-consultation-call-log-list?${fromListRequestToQueryParams(
+          listRequest
+        )}`
       }),
       transformResponse: (response: any) => {
-    
         return response?.object ?? [];
       },
-      keepUnusedDataFor: 5,
+      keepUnusedDataFor: 5
+    }),
+    saveTelephonicConsultationOrder: builder.mutation({
+      query: (request: ApTelephonicConsultation) => ({
+        url: `/encounter/save-telephonic-consultation-order`,
+        method: 'POST',
+        body: request
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getTelephonicConsultationOrdersList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/telephonic-consultation-orders-list?${fromListRequestToQueryParams(
+          listRequest
+        )}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getUserDashboardComponents: builder.query({
+      query: userId => ({
+        url: `/encounter/user-dashboard-components-list/${userId}`
+      }),
+
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
     }),
 
+    getNurseServiceProductList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/nurse-service-product-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveNurseServiceProduct: builder.mutation({
+      query: (apNurseServiceProduct: ApNurseServiceProduct) => ({
+        url: `/encounter/save-nurse-service-product`,
+        method: 'POST',
+        body: apNurseServiceProduct
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    removeNurseServiceProduct: builder.mutation({
+      query: (apNurseServiceProduct: ApNurseServiceProduct) => ({
+        url: `/encounter/remove-nurse-service-product`,
+        method: 'POST',
+        body: apNurseServiceProduct
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    addUserDashboardComponents: builder.mutation({
+      query: UserDashboardComponents => ({
+        url: `/encounter/add-user-dashboard-components`,
+        method: 'POST',
+        body: UserDashboardComponents
+      })
+    }),
 
-
-  }),
+    deleteUserDashboardComponents: builder.mutation({
+      query: UserDashboardComponents => ({
+        url: `/encounter/delete-user-dashboard-components`,
+        method: 'DELETE',
+        body: UserDashboardComponents
+      })
+    }),
+    getClinicalSummary: builder.query({
+      query: ({ patientKey, encounterKey, lang = 'en' }) => ({
+        url: `/encounter/clinical-summary`,
+        method: 'GET',
+        params: {
+          patientKey,
+          encounterKey,
+          lang
+        }
+      })
+    })
+  })
 });
 
 export const {
@@ -1050,6 +1194,7 @@ export const {
   useGetCustomeInstructionsQuery,
   useSaveCustomeInstructionsMutation,
   useGetConsultationOrdersQuery,
+  useGetConsultationOrdersByDepartmentQuery,
   useSaveConsultationOrdersMutation,
   useGetDrugOrderQuery,
   useSaveDrugOrderMutation,
@@ -1127,5 +1272,13 @@ export const {
   useGetTeleConsultationProgressNotesListQuery,
   useSaveTeleConsultationCallLogMutation,
   useGetTeleConsultationCallLogListQuery,
-
+  useGetNurseServiceProductListQuery,
+  useSaveNurseServiceProductMutation,
+  useRemoveNurseServiceProductMutation,
+  useSaveTelephonicConsultationOrderMutation,
+  useGetTelephonicConsultationOrdersListQuery,
+  useGetUserDashboardComponentsQuery,
+  useAddUserDashboardComponentsMutation,
+  useDeleteUserDashboardComponentsMutation,
+  useGetClinicalSummaryQuery
 } = encounterService;

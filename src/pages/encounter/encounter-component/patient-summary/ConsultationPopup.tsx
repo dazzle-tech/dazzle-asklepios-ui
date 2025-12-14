@@ -1,22 +1,26 @@
 // ConsultationPopup.tsx
-import React, { useState } from 'react';
-import MyModal from '@/components/MyModal/MyModal';
-import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
-import { Form } from 'rsuite';
-import SectionContainer from '@/components/SectionsoContainer';
-import { useGetDepartmentsQuery, useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
-import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
-import { initialListRequest, initialListRequestId } from '@/types/types';
-import { newApTeleConsultation } from '@/types/model-types-constructor';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
+import SectionContainer from '@/components/SectionsoContainer';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useGetTeleConsultationListQuery, useSaveTeleConsultationMutation } from '@/services/encounterService';
-import { notify } from '@/utils/uiReducerActions';
-import { useAppDispatch } from '@/hooks';
+import { useGetDepartmentByFacilityQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newApTeleConsultation } from '@/types/model-types-constructor';
+import { initialListRequestId } from '@/types/types';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { notify } from '@/utils/uiReducerActions';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
+import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
+import { de } from 'date-fns/locale';
 
 
 interface ConsultationPopupProps {
@@ -26,103 +30,120 @@ interface ConsultationPopupProps {
   encounter: any;
 }
 
-const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, patient ,encounter}) => {
+const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, patient, encounter }) => {
   const dispatch = useAppDispatch();
-  const [consultationData, setConsultationData] = useState({...newApTeleConsultation});
-  const {data:orders,refetch}=useGetTeleConsultationListQuery({...initialListRequestId,
-     filters: [
-            {
-                fieldName: 'patient_id',
-                operator: 'match',
-                value: patient?.key
-            },
-            {
-                fieldName: 'encounter_id',
-                operator: 'match',
-                value: encounter?.key
-            }
-          ],
-  })
- 
- const [save,saveMutation]=useSaveTeleConsultationMutation();
- //facility & Department - Mock data
-  const {data:facilities}=useGetFacilitiesQuery({...initialListRequest});
- const {data:departments}=useGetDepartmentsQuery({...initialListRequest
-  , filters: [
-    {
-        fieldName: 'facility_key',
+  const authSlice=useAppSelector((state)=>state.auth);
+  const [consultationData, setConsultationData] = useState({ ...newApTeleConsultation });
+  const { data: orders, refetch } = useGetTeleConsultationListQuery({
+    ...initialListRequestId,
+    filters: [
+      {
+        fieldName: 'patient_id',
         operator: 'match',
-        value: consultationData.consultantFacilityId??''
-    }
-  ]
+        value: patient?.key
+      },
+      {
+        fieldName: 'encounter_id',
+        operator: 'match',
+        value: encounter?.key
+      }
+    ],
+  })
 
- },{
-    skip:!consultationData.consultantFacilityId
- });
+  const [save, saveMutation] = useSaveTeleConsultationMutation();
+  //facility & Department - Mock data
+  const { data: facilities } = useGetAllFacilitiesQuery({page:0,size:100});
+
+  const [deptPage, setDeptPage] = useState(0);
+
+const [getDepartments, { data, isFetching, error }] =
+  useLazyGetActiveDepartmentByFacilityListQuery();
+
+const [allDepartments, setAllDepartments] = useState<any[]>([]);
+
+useEffect(() => {
+  if (!consultationData?.toFacilityId) return;
+
+  getDepartments({
+    facilityId: consultationData.toFacilityId,
+  });
+}, [consultationData?.toFacilityId, getDepartments]);
+
+useEffect(() => {
+  if (!data) return;
+ 
+  setAllDepartments( data?? []); 
+}, [data]);
+
 
 
   // Fetch Sub Specialty Lov list response
   const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
   const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
 
+
   const tableColumns = [
-    { key: 'consultantFacilityId',
-     title: 'Facility',
-     width: 100,
+    {
+      key: 'consultantFacilityId',
+      title: 'Facility',
+      width: 100,
       render: row => {
         return <span>
-                  {conjureValueBasedOnKeyFromList(
-                    facilities?.object ?? [],
-                    row.consultantFacilityId,
-                    'facilityName'
-                  )}
-                </span>
+          {conjureValueBasedOnKeyFromList(
+            facilities?? [],
+            row.toFacilityId,
+            'name'
+          )}
+        </span>
       }
-     },
-    { key: 'consultantDepartmentId', title: 'Department', width: 100
-    , render: row => {
-      return <span>
-                {conjureValueBasedOnKeyFromList(
-                  departments?.object ?? [],
-                  row.consultantDepartmentId,
-                  'name'
-                )}
-              </span>
-    }
+    },
+    {
+      key: 'consultantDepartmentId', title: 'Department', width: 100
+      , render: row => {
+        return <span>
+          {conjureValueBasedOnKeyFromList(
+            departments?.data ?? [],
+            row.toDepartmentId,
+            'name'
+          )}
+        </span>
+      }
 
-     },
-    { key: 'specialtyLkey', title: 'Specialty', width: 100
+    },
+    {
+      key: 'specialtyLkey', title: 'Specialty', width: 100
       ,
       render: row => {
         return <span>
-                  {conjureValueBasedOnKeyFromList(
-                    subSpecialityLovQueryResponse?.object ?? [],
-                    row.specialtyLkey,
-                    'lovDisplayVale'
-                  )}
-                </span>
+          {conjureValueBasedOnKeyFromList(
+            subSpecialityLovQueryResponse?.object ?? [],
+            row.specialtyLkey,
+            'lovDisplayVale'
+          )}
+        </span>
       }
-     },
-    { key: 'urgencyLkey', title: 'Urgency', width: 80 ,
+    },
+    {
+      key: 'urgencyLkey', title: 'Urgency', width: 80,
       render: row => {
         return <span>
-                  {conjureValueBasedOnKeyFromList(
-                    priorityLevelLovQueryResponse?.object ?? [],
-                    row.urgencyLkey,
-                    'lovDisplayVale'
-                  )}
-                </span>
+          {conjureValueBasedOnKeyFromList(
+            priorityLevelLovQueryResponse?.object ?? [],
+            row.urgencyLkey,
+            'lovDisplayVale'
+          )}
+        </span>
       }
     },
     { key: 'expectedResponse', title: 'Expected Response', width: 120 },
     {
       key: 'statusLkey',
       title: 'Status',
-      
+
 
       render: row => {
-      
-        return <MyBadgeStatus  color={row.statusLvalue?.valueColor} contant={row.statusLvalue?.lovDisplayVale} />;
+
+        return <MyBadgeStatus color={row.statusLvalue?.valueColor} contant={row.statusLvalue?.lovDisplayVale} />;
       }
     },
     {
@@ -145,25 +166,31 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
   };
 
   const handleSave = () => {
-    console.log("EX",consultationData.expectedResponseTime)
-    try{
-      const response=save({...consultationData,patientId:patient.key,encounterId:encounter.key,
+    console.log("EX", consultationData.expectedResponseTime)
+    try {
+      const response = save({
+        ...consultationData, patientId: patient.key, encounterId: encounter.key,
+        fromDepartmentId: authSlice.selectedDepartment?.departmentId,
+        fromFacilityId: authSlice.selectedDepartment?.facilityId,
+        createdBy: authSlice.user?.login,
+       
         // ToDo status key for ORD_STAT_REQST
-        statusLkey:'5959341154465084',
-expectedResponseTime: consultationData.expectedResponseTime
-  ? new Date(consultationData.expectedResponseTime).getTime()
-  : null
-       ,
-       requestedAt: new Date().getTime()
+        statusLkey: '5959341154465084',
+        expectedResponseTime: consultationData.expectedResponseTime
+          ? new Date(consultationData.expectedResponseTime).getTime()
+          : null
+        ,
+        requestedAt: new Date().getTime()
       }).unwrap();
-      response.then((res)=>{
+      response.then((res) => {
         dispatch(notify({ sev: 'success', msg: 'Consultation saved successfully' }));
         refetch();
       })
-    }catch(err){
+    } catch (err) {
       dispatch(notify({ sev: 'error', msg: 'Error saving consultation' }));
 
-    }}
+    }
+  }
   const handleExpectedResponseChange = (type: string) => {
     setConsultationData(prev => ({
       ...prev,
@@ -199,27 +226,29 @@ expectedResponseTime: consultationData.expectedResponseTime
             <>
               <div className="flex-20">
                 <MyInput
-                  fieldName="consultantFacilityId"
+                  fieldName="toFacilityId"
                   fieldType="select"
                   record={consultationData}
                   setRecord={setConsultationData}
-                  selectData={facilities?.object ?? []}
-                  selectDataLabel="facilityName"
-                  selectDataValue="key"
+                  selectData={facilities?? []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
                   width={150}
                   fieldLabel="Consultant Facility"
                 />
+               
                 <MyInput
-                  fieldName="consultantDepartmentId"
-                  fieldType="select"
-                  record={consultationData}
-                  setRecord={setConsultationData}
-                  selectData={departments?.object ?? []}
+                  fieldType="selectPagination"
+                  fieldLabel="Add Department"
+                  fieldName="toDepartmentId"
+                  selectData={allDepartments}
                   selectDataLabel="name"
-                  selectDataValue="key"
+                  selectDataValue="id"
+                 record={consultationData}
+                  setRecord={setConsultationData}
+                  searchable
                   width={150}
-                  fieldLabel="Consultant Department"
-                  menuMaxHeight={'15vh'}
+                  
                 />
               </div>
               <div className="flex-20">
@@ -315,9 +344,9 @@ expectedResponseTime: consultationData.expectedResponseTime
         />
       </Form>
       <div className="flex-end-5">
-        <MyButton 
-        prefixIcon={() => <FontAwesomeIcon icon={faSave}/> }
-        onClick={handleSave}
+        <MyButton
+          prefixIcon={() => <FontAwesomeIcon icon={faSave} />}
+          onClick={handleSave}
         >Save&Submit</MyButton>
 
       </div>
@@ -326,7 +355,7 @@ expectedResponseTime: consultationData.expectedResponseTime
         title="Orders List"
         content={
           <div>
-            <MyTable data={orders?.object??[]} columns={tableColumns} height={200} loading={false} />
+            <MyTable data={orders?.object ?? []} columns={tableColumns} height={200} loading={false} />
           </div>
         }
       />

@@ -3,11 +3,8 @@ import { Form, Toggle } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
-import { ApPatient } from '@/types/model-types';
 import MyModal from '@/components/MyModal/MyModal';
-import { useSavePatientMutation } from '@/services/patientService';
-import { notify } from '@/utils/uiReducerActions';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import { newApEncounter } from '@/types/model-types-constructor';
 import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
@@ -15,86 +12,193 @@ import { calculateAgeFormat } from '@/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
+import { notify } from '@/utils/uiReducerActions';
+import type { Patient } from '@/types/model-types-new';
+import { newPatient } from '@/types/model-types-constructor-new';
+import {
+  useAddPatientMutation,
+  useAddUnknownPatientMutation
+} from '@/services/patient/patientService';
+
+/* ========================================================= */
+/* =============== Helper Functions ======================== */
+/* ========================================================= */
+
+const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
+  const data = err?.data ?? {};
+  const errorKey = data?.errorKey;
+  const title = data?.title || '';
+  const detail = data?.detail || '';
+  const message = data?.message || '';
+  const fieldErrors = data?.fieldErrors;
+
+  const traceId =
+    data?.traceId || data?.correlationId
+      ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
+      : '';
+
+  /* ========================================================= */
+  /* =============== 1) Bean Validation Errors =============== */
+  /* ========================================================= */
+  if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+    const lines = fieldErrors.map((e: any) => {
+      const label = fieldLabels[e.field] || e.field;
+      return `• ${label}: ${e.message}`;
+    });
+
+    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+  }
+
+  /* ========================================================= */
+  /* =============== 2) Specific Custom Errors ============== */
+  /* ========================================================= */
+
+  if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
+
+  if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
+
+  if (errorKey === 'unique.mrn') return 'A patient with the same MRN already exists.' + traceId;
+
+  if (errorKey === 'db.constraint')
+    return detail || 'Database constraint violated while saving or updating patient.' + traceId;
+
+  /* ========================================================= */
+  /* =============== 3) Generic unknown error ================ */
+  /* ========================================================= */
+
+  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+};
+
+/* ========================================================= */
+/* ======================= Component ======================== */
+/* ========================================================= */
 
 const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const dispatch = useAppDispatch();
+
   const [isUnknown, setIsUnknown] = useState(false);
-  const [validationResult, setValidationResult] = useState({});
-  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
-  const [savePatient, savePatientMutation] = useSavePatientMutation();
-  const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
+  const [validationResult, setValidationResult] = useState<any>({});
+  const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
+
+  const [addPatient] = useAddPatientMutation();
+  const [addUnknownPatient] = useAddUnknownPatientMutation(); // ✅ إضافة الـ mutation الجديد
+  const [saveEncounter] = useCompleteEncounterRegistrationMutation();
+
   const [localEncounter, setLocalEncounter] = useState({
     ...newApEncounter,
     visitTypeLkey: '2041082245699228',
-    patientKey: localPatient.key,
     plannedStartDate: new Date(),
-    patientAge: calculateAgeFormat(localPatient.dob),
-    discharge: false
+    patientAge: null,
+    discharge: false,
+    patientKey: undefined
   });
 
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
-
-  // Fetch LOV data for various fields
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
-  //handle Save Patient
+  /* ========================================================= */
+  /* ======================= SAVE ============================= */
+  /* ========================================================= */
+
   const handleSave = async () => {
     try {
-      // 1. Save patient and wait for the result
-      const savedPatient = await savePatient({
-        ...localPatient,
-        skipValidation: isUnknown,
-        incompletePatient: true,
-        unknownPatient: isUnknown
-      }).unwrap();
+      let savedPatient: Patient;
 
-      // 2. Save encounter using saved patient key
-      // 2. Save encounter using saved patient key
+      if (isUnknown) {
+        savedPatient = await addUnknownPatient().unwrap();
+      }
+      else {
+        const payload: Patient = {
+          ...localPatient,
+          isCompletedPatient: false,
+          lastName: localPatient.lastName || '.',
+          securityAccessLevel:
+            localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
+        };
+
+        savedPatient = await addPatient(payload).unwrap();
+      }
+
       if (pageCode === 'ER_Triage') {
         await saveEncounter({
           ...localEncounter,
-          patientKey: savedPatient.key,
+          patientKey: savedPatient.id?.toString(),
           plannedStartDate: new Date(),
           encounterStatusLkey: '8890456518264959',
-          patientAge: calculateAgeFormat(savedPatient.dob),
+          patientAge: calculateAgeFormat(savedPatient.dateOfBirth),
           visitTypeLkey: '2041082245699228',
           resourceTypeLkey: '6743167799449277',
           resourceKey: '7101086042442391'
         });
+
         dispatch(setRefetchEncounter(true));
       }
 
-      // 3. Update state and navigate
       setLocalPatient(savedPatient);
       if (setPatient != null) {
         setPatient(savedPatient);
       }
-      setOpen(false);
-      {
-        pageCode !== 'ER_Triage';
-      }
 
-      // 4. Clean up
+      setOpen(false);
       handleClearModal();
-      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
       setValidationResult(undefined);
-    } catch (error) {
-      console.log('rejected');
-      if (error?.data?.validationResult) {
-        setValidationResult(error.data.validationResult);
+
+      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
+    } catch (err: any) {
+      console.log('Save error:', err);
+
+      const msg = toHumanBackendError(err, {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dateOfBirth: 'Date of Birth',
+        primaryMobileNumber: 'Primary Mobile Number',
+        sexAtBirth: 'Sex At Birth',
+        nationality: 'Nationality'
+      });
+
+      dispatch(notify({ msg, sev: 'error' }));
+
+      if (err?.data?.validationResult) {
+        setValidationResult(err.data.validationResult);
       }
     }
   };
 
-  // Handle Clear Modal Fields
+  /* ========================================================= */
+  /* ======================= CLEAR ============================ */
+  /* ========================================================= */
+
   const handleClearModal = () => {
-    setIsUnknown(undefined);
-    setLocalPatient(newApPatient);
+    setIsUnknown(false);
+    setLocalPatient({ ...newPatient });
+    setLocalEncounter({
+      ...newApEncounter,
+      visitTypeLkey: '2041082245699228',
+      plannedStartDate: new Date(),
+      patientAge: null,
+      discharge: false,
+      patientKey: undefined
+    });
   };
 
-  // Quick Patient Modal Content
+  /* ========================================================= */
+  /* ======================== EFFECTS ========================= */
+  /* ========================================================= */
+
+  useEffect(() => {
+    if (!open) {
+      handleClearModal();
+      setValidationResult(undefined);
+    }
+  }, [open]);
+
+  /* ========================================================= */
+  /* ========================= RENDER ========================= */
+  /* ========================================================= */
+
   const quickPatientContent = (
     <Form layout="inline" fluid>
+      {/* First Name */}
       <MyInput
         width={350}
         vr={validationResult}
@@ -104,13 +208,26 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         setRecord={setLocalPatient}
         disabled={isUnknown}
       />
+
+      {/* Last Name */}
+      <MyInput
+        width={350}
+        vr={validationResult}
+        column
+        fieldName="lastName"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        disabled={isUnknown}
+      />
+
+      {/* Gender → sexAtBirth */}
       <MyInput
         width={350}
         vr={validationResult}
         column
         fieldLabel="Gender"
         fieldType="select"
-        fieldName="genderLkey"
+        fieldName="sexAtBirth"
         selectData={genderLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -119,52 +236,49 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         disabled={isUnknown}
         searchable={false}
       />
+
+      {/* Mobile → primaryMobileNumber */}
       <MyInput
         width={350}
         vr={validationResult}
         column
-        fieldName="mobileNumber"
+        fieldName="primaryMobileNumber"
         record={localPatient}
         setRecord={setLocalPatient}
         disabled={isUnknown}
       />
+
+      {/* DOB → dateOfBirth */}
       <MyInput
         width={350}
         vr={validationResult}
         column
         fieldType="date"
         fieldLabel="DOB"
-        fieldName="dob"
+        fieldName="dateOfBirth"
         record={localPatient}
         setRecord={setLocalPatient}
         disabled={isUnknown}
-        allowNull
       />
-      <div>
+
+      {/* Unknown toggle */}
+      <div style={{ marginTop: 8 }}>
         Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
       </div>
     </Form>
   );
-  // Effects
-  useEffect(() => {
-    if (!open) {
-      setLocalPatient({ ...newApPatient });
-      setLocalEncounter({
-        ...newApEncounter,
-        visitTypeLkey: '2041082245699228',
-        patientKey: localPatient.key,
-        plannedStartDate: new Date(),
-        patientAge: calculateAgeFormat(localPatient.dob),
-        discharge: false
-      });
-    }
-  }, [open]);
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Quick Patient"
-      steps={[{ title: 'Basic Information', icon: <FontAwesomeIcon icon={faBoltLightning} /> }]}
+      steps={[
+        {
+          title: 'Basic Information',
+          icon: <FontAwesomeIcon icon={faBoltLightning} />
+        }
+      ]}
       size="xs"
       position="right"
       actionButtonLabel="Create"

@@ -9,6 +9,7 @@ import {
   useLazyGetPatientsByFullNameQuery,
   useLazyGetPatientsByMrnQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
+  useLazyGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsQuery
 } from '@/services/patient/patientService';
 
@@ -16,10 +17,12 @@ import type { ApPatient } from '@/types/model-types';
 import { Box, Skeleton } from '@mui/material';
 import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
-import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav } from 'rsuite';
+import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav, DatePicker } from 'rsuite';
+
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 interface ProfileSidebarProps {
   expand: boolean;
@@ -41,22 +44,18 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   setLocalPatient,
   title = <Translate>Search Patient</Translate>,
   direction = 'left',
-  showButton = true
+  showButton = true,
+  refetchData,
+  setRefetchData
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
   const [searchKeyword, setSearchKeyword] = useState('');
 
-  const [page, setPage] = useState(0);
   const [patients, setPatients] = useState<any[]>([]);
-  const [isLastPage, setIsLastPage] = useState(false);
-
-  // NEW LOADING STATE
+  const [links, setLinks] = useState<any>({});
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
-
-  // Lazy Endpoints
-  const [triggerFn, setTriggerFn] = useState<any>(() => null);
 
   const [fetchPatients] = useLazyGetPatientsQuery();
   const [fetchByMrn] = useLazyGetPatientsByMrnQuery();
@@ -64,87 +63,99 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [fetchByPrimaryPhone] = useLazyGetPatientsByPrimaryPhoneQuery();
   const [fetchByDob] = useLazyGetPatientsByDateOfBirthQuery();
   const [fetchByFullName] = useLazyGetPatientsByFullNameQuery();
+  const [fetchByDocumentNo] = useLazyGetPatientsByAnyDocumentNumberQuery();
 
-  const searchCriteriaOptions = [
-    { label: <Translate>MRN</Translate>, value: 'patientMrn' },
-    { label: <Translate>Document Number</Translate>, value: 'documentNo' },
-    { label: <Translate>Full Name</Translate>, value: 'fullName' },
-    { label: <Translate>Archiving Number</Translate>, value: 'archivingNumber' },
-    { label: <Translate>Primary Phone Number</Translate>, value: 'phoneNumber' },
-    { label: <Translate>Date of Birth</Translate>, value: 'dob' }
-  ];
+  const selectTrigger = () => {
+    switch (selectedCriterion) {
+      case 'patientMrn':
+        return fetchByMrn;
+      case 'documentNo':
+        return fetchByDocumentNo;
+      case 'archivingNumber':
+        return fetchByArchiving;
+      case 'phoneNumber':
+        return fetchByPrimaryPhone;
+      case 'dob':
+        return fetchByDob;
+      default:
+        return fetchByFullName;
+    }
+  };
 
-  const search = () => {
-    if (searchKeyword.length < 3) return;
-
-    setPage(0);
-    setPatients([]);
-    setIsLastPage(false);
-
-    let newTriggerFn: any;
+  const buildParams = (page = 0) => {
+    const params: any = {
+      page,
+      size: PAGE_SIZE,
+      sort: 'id,asc'
+    };
 
     switch (selectedCriterion) {
       case 'patientMrn':
-        newTriggerFn = fetchByMrn;
+        params.mrn = searchKeyword;
         break;
+
+      case 'documentNo':
+        params.number = searchKeyword;
+        break;
+
       case 'archivingNumber':
-        newTriggerFn = fetchByArchiving;
+        params.archivingNumber = searchKeyword;
         break;
+
       case 'phoneNumber':
-        newTriggerFn = fetchByPrimaryPhone;
+        params.phone = searchKeyword;
         break;
+
       case 'dob':
-        newTriggerFn = fetchByDob;
+        params.date = searchKeyword;
         break;
-      case 'fullName':
-        newTriggerFn = fetchByFullName;
-        break;
+
       default:
-        newTriggerFn = fetchPatients;
-        break;
+        params.keyword = searchKeyword;
     }
 
-    setTriggerFn(() => newTriggerFn);
-
-    loadPage(0, newTriggerFn);
+    return params;
   };
 
-  const loadPage = async (pageIndex: number, fn?: any) => {
-    const effectiveTrigger = fn || triggerFn;
-    if (!effectiveTrigger) return;
+  const search = useCallback(
+    async (page = 0) => {
+      if (selectedCriterion !== 'dob' && searchKeyword.length < 3) return;
+      if (selectedCriterion === 'dob' && searchKeyword.length < 4) return;
 
-    setIsLoadingPatients(true); 
+      setIsLoadingPatients(true);
 
-    const params: any = {
-      page: pageIndex,
-      size: PAGE_SIZE
-    };
+      const trigger = selectTrigger();
+      const params = buildParams(page);
 
-    if (selectedCriterion === 'patientMrn') params.mrn = searchKeyword;
-    if (selectedCriterion === 'archivingNumber') params.archivingNumber = searchKeyword;
-    if (selectedCriterion === 'phoneNumber') params.phone = searchKeyword;
-    if (selectedCriterion === 'dob') params.date = searchKeyword;
-    if (selectedCriterion === 'fullName') params.keyword = searchKeyword;
+      const resp = await trigger(params).unwrap();
 
-    const result = await effectiveTrigger(params);
+      if (page === 0) setPatients(resp.data);
+      else setPatients(prev => [...prev, ...resp.data]);
 
-    const response = result?.data;
-    const newData = response?.data || [];
-    const last = response?.last ?? true;
+      setLinks(resp.links || {});
+      setIsLoadingPatients(false);
+    },
+    [searchKeyword, selectedCriterion]
+  );
 
-    if (pageIndex === 0) setPatients(newData);
-    else setPatients(prev => [...prev, ...newData]);
+  const loadMore = async () => {
+    if (!links?.next) return;
 
-    setIsLastPage(last);
-    setIsLoadingPatients(false);
+    const { page } = extractPaginationFromLink(links.next);
+    search(page);
   };
-
 
   useEffect(() => {
-    setSearchKeyword('');
+    if (refetchData) {
+      if (searchKeyword.length >= 3) search(0);
+      setRefetchData?.(false);
+    }
+  }, [refetchData]);
+
+  useEffect(() => {
     setPatients([]);
-    setPage(0);
-    setIsLastPage(false);
+    setLinks({});
+    setSearchKeyword('');
   }, [selectedCriterion]);
 
   return (
@@ -166,37 +177,76 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     </Button>
                   )}
 
-                  {/* Search UI */}
                   <div className="patient-search-container">
                     <Form fluid>
                       <MyInput
                         fieldType="select"
                         fieldName="searchCriteria"
-                        selectData={searchCriteriaOptions}
+                        selectData={[
+                          { label: <Translate>MRN</Translate>, value: 'patientMrn' },
+                          { label: <Translate>Document Number</Translate>, value: 'documentNo' },
+                          { label: <Translate>Full Name</Translate>, value: 'fullName' },
+                          {
+                            label: <Translate>Archiving Number</Translate>,
+                            value: 'archivingNumber'
+                          },
+                          {
+                            label: <Translate>Primary Phone Number</Translate>,
+                            value: 'phoneNumber'
+                          },
+                          { label: <Translate>Date of Birth</Translate>, value: 'dob' }
+                        ]}
                         selectDataLabel="label"
                         selectDataValue="value"
                         showLabel={false}
                         record={{ searchCriteria: selectedCriterion }}
-                        setRecord={record => setSelectedCriterion(record.searchCriteria)}
-                        placeholder="Select Search Criteria"
-                        searchable={false}
-                        width="auto"
+                        setRecord={r => setSelectedCriterion(r.searchCriteria)}
+                        width={300}
                       />
                     </Form>
 
-                    <InputGroup inside>
-                      <Input
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') search();
-                        }}
-                        placeholder="Search Patients"
-                        value={searchKeyword}
-                        onChange={val => setSearchKeyword(val)}
-                      />
-                      <InputGroup.Button onClick={search}>
-                        <SearchIcon />
-                      </InputGroup.Button>
-                    </InputGroup>
+                    {/* التعديل فقط هنا */}
+                    {selectedCriterion === 'dob' ? (
+                      <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                        <DatePicker
+                          format="dd-MM-yyyy"
+                          placeholder="Select Date of Birth"
+                          style={{ flex: 1 }}
+                          oneTap
+                          value={searchKeyword ? new Date(searchKeyword) : null}
+                          onChange={val => {
+                            if (!val) {
+                              setSearchKeyword('');
+                              return;
+                            }
+                            const year = val.getFullYear();
+                            const month = String(val.getMonth() + 1).padStart(2, '0');
+                            const day = String(val.getDate()).padStart(2, '0');
+                            // نحتفظ بقيمة البحث بصيغة مناسبة للـ API (yyyy-MM-dd)
+                            setSearchKeyword(`${year}-${month}-${day}`);
+                          }}
+                        />
+                        <Button
+                          appearance="primary"
+                          onClick={() => search(0)}
+                          disabled={!searchKeyword}
+                        >
+                          <SearchIcon />
+                        </Button>
+                      </div>
+                    ) : (
+                      <InputGroup inside>
+                        <Input
+                          placeholder="Search Patients"
+                          value={searchKeyword}
+                          onChange={val => setSearchKeyword(val)}
+                          onKeyDown={e => e.key === 'Enter' && search(0)}
+                        />
+                        <InputGroup.Button onClick={() => search(0)}>
+                          <SearchIcon />
+                        </InputGroup.Button>
+                      </InputGroup>
+                    )}
                   </div>
 
                   <Box className="patient-list">
@@ -204,10 +254,24 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                       Array.from({ length: 4 }).map((_, index) => (
                         <Box width={250} key={index} className="patient-list-loader">
                           <div className="patient-list-loader-circle">
-                            <Skeleton variant="circular" width={40} height={40} />
-                            <Skeleton variant="text" width="80%" height={25} />
+                            <Skeleton
+                              variant="circular"
+                              width={40}
+                              height={40}
+                              className="loader-circle"
+                            />
+                            <Skeleton
+                              variant="text"
+                              width="80%"
+                              height={25}
+                              className="loader-text"
+                            />
                           </div>
-                          <Skeleton variant="rectangular" height={90} />
+                          <Skeleton
+                            variant="rectangular"
+                            height={90}
+                            className="loader-rectangular"
+                          />
                           <Skeleton width="100%" />
                         </Box>
                       ))
@@ -216,37 +280,32 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         <Translate>No patients found</Translate>
                       </div>
                     ) : (
-                      patients.map(patient => (
-                        <PatientCardWithPicture
-                          key={patient.id}
-                          patient={patient}
-                          onClick={() => setLocalPatient(patient)}
-                          actions={
-                            <Button className="actions-button">
-                              <FaEllipsis />
-                            </Button>
-                          }
-                          arrowDirection={direction as 'left' | 'right'}
-                        />
-                      ))
-                    )}
+                      <>
+                        {patients.map(p => (
+                          <PatientCardWithPicture
+                            key={p.id}
+                            patient={p}
+                            onClick={() => setLocalPatient(p)}
+                            actions={
+                              <Button className="actions-button">
+                                <FaEllipsis />
+                              </Button>
+                            }
+                            arrowDirection={direction as any}
+                          />
+                        ))}
 
-                    {!isLoadingPatients &&
-                      !isLastPage &&
-                      patients.length !== 0 &&
-                      patients.length % PAGE_SIZE === 0 && (
-                        <Button
-                          appearance="ghost"
-                          onClick={() => {
-                            const nextPage = page + 1;
-                            setPage(nextPage);
-                            loadPage(nextPage);
-                          }}
-                          style={{ width: '100%', marginTop: 10 }}
-                        >
-                          Load More
-                        </Button>
-                      )}
+                        {links?.next && (
+                          <Button
+                            appearance="ghost"
+                            onClick={loadMore}
+                            style={{ width: '100%', marginTop: 10 }}
+                          >
+                            Load More
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </Box>
                 </Panel>
               ) : (

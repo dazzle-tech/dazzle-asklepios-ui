@@ -31,6 +31,7 @@ import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
 import AdministrativeWarningsModal from './AdministrativeWarning';
+import ScanDocumentModal from './ScanDocumentModal';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -43,7 +44,9 @@ interface ProfileHeaderProps {
   setOpenBedsideRegistrations: (value: boolean) => void;
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
+  setLocalPatient: (patient: Patient) => void;
 }
+
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
   handleSave,
@@ -54,19 +57,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   validationResult,
   setOpenBedsideRegistrations,
   setOpenRegistrationWarningsSummary,
-  setOpenBulkRegistrationModal
+  setOpenBulkRegistrationModal,
+  setLocalPatient
 }) => {
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
   const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
+  const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
-  // Fetch patient profile image using new API (returns DownloadTicket directly)
-  // Convert key (string) to number for patientId
+  // Fetch patient profile image using new API
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
   const {
     data: profilePictureTicket,
@@ -77,7 +81,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
-  // container to choose action from more menu
+  // Container to choose action from more menu
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
@@ -156,7 +160,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     </Popover>
   );
 
-  // container to choose action from print menu
+  // Container to choose action from print menu
   const contentOfPrintIconMenu = (
     <Popover full>
       <Dropdown.Menu>
@@ -179,7 +183,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (localPatient.id) profileImageFileInputRef.current.click();
   };
 
-  // Handle file change for profile image using new API
+  // Handle file change for profile image
   const handleFileChange = async event => {
     if (!localPatient || !patientId) return;
 
@@ -194,7 +198,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           source: 'PATIENT_PROFILE_PICTURE'
         }).unwrap();
 
-        // Refetch profile picture to get the updated image
         refetchProfilePicture();
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
@@ -204,186 +207,245 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       }
     }
   };
+
   // Handle quick appointment
   const handleNewVisit = () => {
     setQuickAppointmentModel(true);
   };
-  //
+
+  // Handle scan document button click
+  const handleScanDocumentClick = () => {
+    // Allow opening modal even without patient ID for ID parsing
+    setOpenScanDocumentModal(true);
+  };
+
+  // Handle ID parsed data - Auto-fill patient form
+  const handleIdParsed = (parsedData: any) => {
+    console.log('ID Parsed Data:', parsedData);
+
+    // Auto-fill patient form with parsed data
+    const updatedPatient: Partial<Patient> = {
+      ...localPatient
+    };
+
+    // Map parsed data to patient fields
+    if (parsedData.firstName) updatedPatient.firstName = parsedData.firstName;
+    if (parsedData.lastName) updatedPatient.lastName = parsedData.lastName;
+    if (parsedData.secondName) updatedPatient.secondName = parsedData.secondName;
+    if (parsedData.thirdName) updatedPatient.thirdName = parsedData.thirdName;
+    if (parsedData.dateOfBirth) updatedPatient.dateOfBirth = parsedData.dateOfBirth;
+    if (parsedData.documentNo) updatedPatient.documentNo = parsedData.documentNo;
+    if (parsedData.documentType) updatedPatient.documentTypeLkey = parsedData.documentType;
+    if (parsedData.nationality) updatedPatient.nationalityLkey = parsedData.nationality;
+    if (parsedData.gender || parsedData.sexAtBirth)
+      updatedPatient.sexAtBirth = parsedData.gender || parsedData.sexAtBirth;
+
+    setLocalPatient(updatedPatient as Patient);
+
+    dispatch(
+      notify({
+        msg: 'Patient data auto-filled from ID document',
+        sev: 'success'
+      })
+    );
+  };
+
+  // Close menus
   const closeMenus = useCallback(() => {
     setOpenMoreMenu(false);
     setOpenPrintMenu(false);
   }, []);
-  // Effects for patient image - use the download URL from the profile picture ticket or from patient object
+
+  // Effects for patient image
   React.useEffect(() => {
     const patientWithUrl = localPatient as any;
 
-    // Priority 1: Use profilePictureUrl from PatientCard if available
     if (patientWithUrl?.profilePictureUrl) {
       setPatientImageUrl(patientWithUrl.profilePictureUrl);
       setPatientImage({ url: patientWithUrl.profilePictureUrl } as any);
       return;
     }
 
-    // Priority 2: Use fetched profile picture from API
     if (profilePictureTicket && profilePictureTicket.url && !isError) {
       setPatientImageUrl(profilePictureTicket.url);
       setPatientImage({ url: profilePictureTicket.url } as any);
       return;
     }
 
-    // Priority 3: No picture available or error - clear it
     setPatientImageUrl('');
     setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
+
   return (
-    <Stack>
-      <Stack.Item grow={1}>
-        <Form layout="inline" fluid className="profile-header">
-          <AvatarGroup spacing={6} className="avatar-card-parent">
-            <input
-              type="file"
-              ref={profileImageFileInputRef}
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-              accept="image/*"
-            />
-            <Avatar
-              size="lg"
-              circle
-              bordered
-              onClick={handleImageClick}
-              src={
-                patientImageUrl
-                  ? patientImageUrl
-                  : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
-              }
-              alt={localPatient?.firstName}
-              className="avatar-image"
-            />
-            <div className="avatar-container">
-              <span className="patient-name">
-                {localPatient?.firstName} {localPatient?.lastName}
-              </span>
-              <div className="patient-info">
-                {localPatient.id != undefined && <FaUser />}
-                {
-                  genderLovQueryResponse?.object?.find(item => item.key === localPatient.sexAtBirth)
-                    ?.lovDisplayVale
-                }
-                {localPatient.id !== undefined &&
-                  calculateAgeFormat(localPatient.dateOfBirth) &&
-                  ','}
-                {localPatient.dateOfBirth && `${calculateAgeFormat(localPatient.dateOfBirth)} old`}{' '}
-              </div>
-              <span className="patient-mrn">
-                {localPatient.id != undefined && `# `}
-                {localPatient?.mrn}
-              </span>
-            </div>
-            <div className="status-icons-container">
-              {localPatient.id && (
-                <Whisper
-                  placement="top"
-                  controlId="control-id-click"
-                  trigger="hover"
-                  speaker={
-                    <Tooltip>
-                      {localPatient.isVerified ? 'Verified Patient' : 'Unverified Patient'}
-                    </Tooltip>
-                  }
-                >
-                  <div className="status-icon">
-                    {!localPatient.isVerified && <Icon color="red" as={VscUnverified} />}
-                    {localPatient.isVerified && <Icon color="green" as={VscVerified} />}
-                  </div>
-                </Whisper>
-              )}
-              {localPatient.id && (
-                <Whisper
-                  placement="bottom"
-                  controlId="control-id-click"
-                  trigger="hover"
-                  speaker={
-                    <Tooltip>
-                      {localPatient.isCompletedPatient ? 'Incomplete Patient' : 'Complete Patient'}
-                    </Tooltip>
-                  }
-                >
-                  <div className="status-icon">
-                    {localPatient.isCompletedPatient && <Icon color="red" as={VscUnverified} />}
-                    {!localPatient.isCompletedPatient && <Icon color="green" as={VscVerified} />}
-                  </div>
-                </Whisper>
-              )}
-            </div>
-          </AvatarGroup>
-
-          <div className="button-group-left-align">
-            <Form fluid layout="inline" className="registration-header-buttons-section">
-              <MyButton>Scan Document</MyButton>
-              <MyButton
-                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                onClick={handleSave}
-              >
-                {localPatient?.id ? 'Edit' : 'Save'}
-              </MyButton>
-
-              <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
-                Clear
-              </MyButton>
-              <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                Quick Appointment
-              </MyButton>
-
-              <AdministrativeWarningsModal
-                localPatient={localPatient}
-                validationResult={validationResult}
+    <>
+      <Stack>
+        <Stack.Item grow={1}>
+          <Form layout="inline" fluid className="profile-header">
+            <AvatarGroup spacing={6} className="avatar-card-parent">
+              <input
+                type="file"
+                ref={profileImageFileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+                accept="image/*"
               />
-
-              <Whisper
-                open={openMoreMenu}
-                onClose={() => setOpenMoreMenu(false)}
-                placement="bottom"
-                speaker={contentOfMoreIconMenu}
-              >
-                <span>
-                  <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
-                    <FontAwesomeIcon icon={faEllipsisVertical} />
-                  </MyButton>
+              <Avatar
+                size="lg"
+                circle
+                bordered
+                onClick={handleImageClick}
+                src={
+                  patientImageUrl
+                    ? patientImageUrl
+                    : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                }
+                alt={localPatient?.firstName}
+                className="avatar-image"
+              />
+              <div className="avatar-container">
+                <span className="patient-name">
+                  {localPatient?.firstName} {localPatient?.lastName}
                 </span>
-              </Whisper>
-
-              <Whisper
-                open={openPrintMenu}
-                onClose={() => setOpenPrintMenu(false)}
-                placement="bottom"
-                speaker={contentOfPrintIconMenu}
-              >
-                <span>
-                  <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
-                    <FontAwesomeIcon icon={faPrint} />
-                  </MyButton>
+                <div className="patient-info">
+                  {localPatient.id != undefined && <FaUser />}
+                  {
+                    genderLovQueryResponse?.object?.find(
+                      item => item.key === localPatient.sexAtBirth
+                    )?.lovDisplayVale
+                  }
+                  {localPatient.id !== undefined &&
+                    calculateAgeFormat(localPatient.dateOfBirth) &&
+                    ','}
+                  {localPatient.dateOfBirth &&
+                    `${calculateAgeFormat(localPatient.dateOfBirth)} old`}{' '}
+                </div>
+                <span className="patient-mrn">
+                  {localPatient.id != undefined && `# `}
+                  {localPatient?.mrn}
                 </span>
-              </Whisper>
+              </div>
+              <div className="status-icons-container">
+                {localPatient.id && (
+                  <Whisper
+                    placement="top"
+                    controlId="control-id-click"
+                    trigger="hover"
+                    speaker={
+                      <Tooltip>
+                        {localPatient.isVerified ? 'Verified Patient' : 'Unverified Patient'}
+                      </Tooltip>
+                    }
+                  >
+                    <div className="status-icon">
+                      {!localPatient.isVerified && <Icon color="red" as={VscUnverified} />}
+                      {localPatient.isVerified && <Icon color="green" as={VscVerified} />}
+                    </div>
+                  </Whisper>
+                )}
+                {localPatient.id && (
+                  <Whisper
+                    placement="bottom"
+                    controlId="control-id-click"
+                    trigger="hover"
+                    speaker={
+                      <Tooltip>
+                        {localPatient.isCompletedPatient
+                          ? 'Completed Patient'
+                          : 'Incomplete Patient'}
+                      </Tooltip>
+                    }
+                  >
+                    <div className="status-icon">
+                      {localPatient.isCompletedPatient && <Icon color="green" as={VscUnverified} />}
+                      {!localPatient.isCompletedPatient && <Icon color="red" as={VscVerified} />}
+                    </div>
+                  </Whisper>
+                )}
+              </div>
+            </AvatarGroup>
 
-              {(openMoreMenu || openPrintMenu) && (
-                <div
-                  onClick={closeMenus}
-                  style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    zIndex: 1
-                  }}
+            <div className="button-group-left-align">
+              <Form fluid layout="inline" className="registration-header-buttons-section">
+                <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
+                <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                  onClick={handleSave}
+                >
+                  {localPatient?.id ? 'Edit' : 'Save'}
+                </MyButton>
+
+                <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                  onClick={handleClear}
+                >
+                  Clear
+                </MyButton>
+                <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
+                  Quick Appointment
+                </MyButton>
+
+                <AdministrativeWarningsModal
+                  localPatient={localPatient}
+                  validationResult={validationResult}
                 />
-              )}
-            </Form>
-          </div>
-        </Form>
-      </Stack.Item>
-    </Stack>
+
+                <Whisper
+                  open={openMoreMenu}
+                  onClose={() => setOpenMoreMenu(false)}
+                  placement="bottom"
+                  speaker={contentOfMoreIconMenu}
+                >
+                  <span>
+                    <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
+                      <FontAwesomeIcon icon={faEllipsisVertical} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+
+                <Whisper
+                  open={openPrintMenu}
+                  onClose={() => setOpenPrintMenu(false)}
+                  placement="bottom"
+                  speaker={contentOfPrintIconMenu}
+                >
+                  <span>
+                    <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
+                      <FontAwesomeIcon icon={faPrint} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+
+                {(openMoreMenu || openPrintMenu) && (
+                  <div
+                    onClick={closeMenus}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      zIndex: 1
+                    }}
+                  />
+                )}
+              </Form>
+            </div>
+          </Form>
+        </Stack.Item>
+      </Stack>
+
+      {/* Scan Document Modal */}
+      <ScanDocumentModal
+        open={openScanDocumentModal}
+        setOpen={setOpenScanDocumentModal}
+        patientId={patientId}
+        onUploadSuccess={() => {
+          setRefetchAttachmentList(true);
+        }}
+        onIdParsed={handleIdParsed}
+      />
+    </>
   );
 };
+
 export default ProfileHeader;

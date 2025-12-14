@@ -1,7 +1,7 @@
 import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
   useGetDiagnosticOrderTestQuery,
   useGetOrderTestNotesByTestIdQuery,
@@ -42,33 +42,36 @@ type TestsProps = {
   saveReport: any;
   saveReportMutation: any;
   reportFetch: () => void;
+  fetchAllTests: () => void;
 };
+
 
 type TestsRef = {
   fetchTest: () => void;
 };
 
 const Tests = forwardRef<TestsRef, TestsProps>(
-  (
-    {
-      test,
-      setTest,
-      order,
-      patient,
-      encounter,
-      saveTest,
-      saveReport,
-      saveReportMutation,
-      reportFetch
-    },
-    ref
-  ) => {
+  ({
+    test,
+    setTest,
+    order,
+    patient,
+    encounter,
+    saveTest,
+    saveReport,
+    saveReportMutation,
+    reportFetch,
+    fetchAllTests
+  },
+    ref) => {
+
 
     useImperativeHandle(ref, () => ({
       fetchTest
     }));
 
 
+    const authSlice = useAppSelector(state => state.auth);
 
     const dispatch = useAppDispatch();
     const [openNoteModal, setOpenNoteModal] = useState(false);
@@ -76,6 +79,7 @@ const Tests = forwardRef<TestsRef, TestsProps>(
     const [manualSearchTriggeredTest, setManualSearchTriggeredTest] = useState(false);
     const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
     const [openRejectedModal, setOpenRejectedModal] = useState(false);
+    const selectedDepartment = authSlice.selectedDepartment;
     const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
       ...initialListRequest,
       filters: [
@@ -88,6 +92,11 @@ const Tests = forwardRef<TestsRef, TestsProps>(
           fieldName: 'order_type_lkey',
           operator: 'match',
           value: '862828331135792'
+        },
+        {
+          fieldName: 'received_lab_id',
+          operator: 'match',
+          value: selectedDepartment?.departmentId || undefined
         },
         {
           fieldName: 'status_lkey',
@@ -138,6 +147,11 @@ const Tests = forwardRef<TestsRef, TestsProps>(
           value: '862828331135792'
         },
         {
+          fieldName: 'received_lab_id',
+          operator: 'match',
+          value: selectedDepartment?.departmentId || undefined
+        },
+        {
           fieldName: 'status_lkey',
           operator: 'match',
           value: '1804482322306061'
@@ -183,17 +197,27 @@ const Tests = forwardRef<TestsRef, TestsProps>(
     //When the test is accepted, a report is generated for it,but the patient must have arrived
     const handleAcceptTest = async rowData => {
       if (rowData.patientArrivedAt !== null) {
+        if (!rowData?.key) {
+          dispatch(notify({ msg: 'Missing test row key', sev: 'error' }));
+          return;
+        }
+
+        if (!rowData?.testKey) {
+          dispatch(notify({ msg: 'Missing medical test key', sev: 'error' }));
+          return;
+        }
         try {
           const Response = await saveTest({
             ...rowData,
+
             processingStatusLkey: '6055074111734636',
             acceptedAt: Date.now()
           }).unwrap();
           await saveReport({
             ...newApDiagnosticOrderTestsRadReport,
             orderKey: order?.key,
-            orderTestKey: test?.key,
-            medicalTestKey: test?.testKey,
+            orderTestKey: rowData?.key,
+            medicalTestKey: rowData?.testKey,
             patientKey: patient?.key,
             visitKey: encounter?.key,
             statusLkey: '6055029972709625'

@@ -4,6 +4,7 @@ import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
+import AddReportModal from "@/pages/rad-module/AddReportModal";
 import { useGetDiagnosticOrderTestRadReportListQuery, useGetDiagnosticOrderTestReportNotesByReportIdQuery, useSaveDiagnosticOrderTestRadReportMutation, useSaveDiagnosticOrderTestReportNotesMutation } from "@/services/radService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsRadReport, newApDiagnosticOrderTestsReportNotes } from "@/types/model-types-constructor";
@@ -251,6 +252,7 @@ const Reports = ({ patient, user }) => {
                             placement="top"
                             trigger="hover"
                             speaker={<Tooltip>Print</Tooltip>}
+                            onClick={()=>{setOpenReportModal(true)}}
                         >
                             <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
                         </Whisper>
@@ -359,51 +361,20 @@ const Reports = ({ patient, user }) => {
             }}
         />
         <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
-        <MyModal
-            open={openReportModal}
-            setOpen={setOpenReportModal}
-            hideActionBtn
-            title={"Report"}
-            size="sm"
-            bodyheight="30vh"
-            content={
-                <>
-                    <Form fluid>
-                        <Row>
-                            <Col md={24}>
-
-                                <MyInput
-                                    width="100%"
-                                    disabled={true}
-                                    fieldName={'severityLkey'}
-                                    fieldType="select"
-                                    selectData={severityLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    record={report}
-                                    setRecord={setReport}
-                                />
-
-                            </Col>
-                        </Row>
-                        <Row >
-                            <Col md={24}>
-
-                                <MyInput
-                                    disabled={true}
-                                    width="100%"
-                                    hight={200}
-                                    fieldLabel={''}
-                                    fieldName={'reportValue'}
-                                    fieldType="textarea"
-                                    record={report}
-                                    setRecord={setReport}
-                                />
-                            </Col>
-
-                        </Row>
-                    </Form></>
-            }
-        /></>)
+        
+          <AddReportModal
+                  open={openReportModal}
+                  setOpen={setOpenReportModal}
+                  test={test}
+                  setTest={setTest}
+                  resultFetch={reportFetch}
+                  report={report}
+                  setReport={setReport}
+                  saveReport={()=>{}}
+                  saveTest={()=>{}}
+                  disableEdit={true}
+                  attachmentRefetch={()=>{}}
+                />
+        </>)
 }
 export default Reports;

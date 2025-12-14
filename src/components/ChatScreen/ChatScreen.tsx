@@ -100,7 +100,7 @@ const ChatScreen = () => {
     },
     {
       id: 2,
-      name: 'Team Project',
+      name: 'Cardiology Ward',
       lastMessage: 'Meeting at 3 PM today',
       time: '9:45 AM',
       unread: 5,
@@ -156,8 +156,8 @@ const ChatScreen = () => {
     },
     {
       id: 4,
-      name: 'Family Chat',
-      lastMessage: 'Dinner this Sunday?',
+      name: 'ECG help!',
+      lastMessage: 'Will next session be tomorrow?',
       time: 'Yesterday',
       unread: 1,
       isGroup: true,
@@ -181,7 +181,7 @@ const ChatScreen = () => {
         },
         {
           id: 3,
-          text: 'Dinner this Sunday?',
+          text: 'Will next session be tomorrow?',
           sender: 'other',
           time: 'Yesterday 08:00 AM',
           flagged: false

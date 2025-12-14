@@ -31,13 +31,16 @@ type Props = {
   label?: string;
   disabled?: boolean;
   mode?: Mode;
+  required?: boolean;
 };
+
 
 const Icd10Search: React.FC<Props> = ({
   object,
   setOpject,
   fieldName,
   mode = 'singleICD10',
+  required,
   ...props
 }) => {
   const [value, setValue] = useState('');
@@ -242,7 +245,12 @@ const Icd10Search: React.FC<Props> = ({
   return (
     <div key={instanceId} data-instance-id={instanceId} className="icd10-root">
       <Row>
-        <Text><Translate>{props?.label ?? (mode === 'singleICD10' ? 'Diagnosis (ICD-10)' : 'Select ICD-10 Codes')}</Translate></Text>
+          <Text>
+            <Translate>
+              {props?.label ?? (mode === 'singleICD10' ? 'Diagnosis (ICD-10)' : 'Select ICD-10 Codes')}
+            </Translate>
+              {required && <span style={{ color: 'var(--primary-pink)' }}> *</span>}
+          </Text>
         <Col md={24}>
           <div className="search-wrap">
             <InputGroup className="search-group" inside>

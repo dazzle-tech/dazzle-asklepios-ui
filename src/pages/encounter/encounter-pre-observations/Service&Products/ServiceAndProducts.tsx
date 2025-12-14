@@ -27,6 +27,13 @@ const productsList = [
   { id: 'prd3', name: 'Blood Pressure Monitor', baseUOM: 'Piece' }
 ];
 
+
+const initialTableData = [
+  { id: 1, category: 'Service', name: 'Consultation', type: 'Service', quantity: 1 },
+  { id: 2, category: 'Product', name: 'BSM Kit',  type: 'Product', quantity: 2 },
+  { id: 3, category: 'Service', name: 'Vital Signs',   type: 'Service', quantity: 1 }
+];
+
 const ServiceAndProductsTab = ({ edit: propEdit }) => {
   // List request params for API
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -38,8 +45,12 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const { data: productListResponse } = useGetProductQuery(listRequest);
   const { data: serviceListResponse } = useGetServicesQuery(listRequest);
 
+
   // Table data
-  const [data, setData] = useState([]);
+  const [data, setData] = useState(initialTableData);
+
+  // // Table data
+  // const [data, setData] = useState([]);
 
 
   const location = useLocation();

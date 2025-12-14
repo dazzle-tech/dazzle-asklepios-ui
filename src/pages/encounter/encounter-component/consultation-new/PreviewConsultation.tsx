@@ -1,12 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetPractitionersQuery
-} from '@/services/setupService';
-import { initialListRequest } from '@/types/types';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useLazyGetActivePractitionersBySubSpecialtyQuery } from '@/services/setup/practitioner/PractitionerService';
 import './styles.less';
 
 interface PreviewConsultationProps {
@@ -19,18 +18,43 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
   onClose
 }) => {
   // LOV Queries
-  const { data: practitionerListResponse } = useGetPractitionersQuery({
-    ...initialListRequest
-  });
   const { data: consultantSpecialtyLovQueryResponse } =
     useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY ');
-  const { data: cityLovQueryResponse } = useGetLovValuesByCodeQuery('CITY');
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
+  const [getDepartmentsByFacility, { data: departmentListResponse }] = 
+    useLazyGetActiveDepartmentByFacilityListQuery();
+  const [getPractitionersBySpecialty, { data: practitionerListResponse }] = 
+    useLazyGetActivePractitionersBySubSpecialtyQuery();
   const { data: consultationMethodLovQueryResponse } =
     useGetLovValuesByCodeQuery('CONSULT_METHOD');
   const { data: consultationTypeLovQueryResponse } =
     useGetLovValuesByCodeQuery('CONSULT_TYPE');
   const { data: orderPriorityLovQueryResponse } =
     useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+
+  // Transform practitioner data to show firstName + lastName
+  const practitionerList = (practitionerListResponse?.data ?? []).map(practitioner => ({
+    ...practitioner,
+    fullName: `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim()
+  }));
+
+  // Load departments when facilityKey exists
+  useEffect(() => {
+    if (consultation?.facilityKey) {
+      getDepartmentsByFacility({ facilityId: consultation.facilityKey });
+    }
+  }, [consultation?.facilityKey, getDepartmentsByFacility]);
+
+  // Load practitioners when consultantSpecialtyLkey exists
+  useEffect(() => {
+    if (consultation?.consultantSpecialtyLkey) {
+      getPractitionersBySpecialty({ 
+        specialty: consultation.consultantSpecialtyLkey,
+        page: 0,
+        size: 100
+      });
+    }
+  }, [consultation?.consultantSpecialtyLkey, getPractitionersBySpecialty]);
 
   if (!consultation) return null;
 
@@ -60,6 +84,36 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                   disabled
                   width={'8vw'}
                   fieldType="select"
+                  fieldLabel="Facility"
+                  selectData={Array.isArray(facilityListResponse) ? facilityListResponse : []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  fieldName="facilityKey"
+                  record={{
+                    ...consultation,
+                    facilityKey: consultation?.facilityKey ? Number(consultation.facilityKey) : undefined
+                  }}
+                  setRecord={() => { }}
+                />
+                <MyInput
+                  disabled
+                  width={'8vw'}
+                  fieldType="select"
+                  fieldLabel="Department"
+                  selectData={Array.isArray(departmentListResponse) ? departmentListResponse : []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  fieldName="departmentKey"
+                  record={{
+                    ...consultation,
+                    departmentKey: consultation?.departmentKey ? Number(consultation.departmentKey) : undefined
+                  }}
+                  setRecord={() => { }}
+                />
+                <MyInput
+                  disabled
+                  width={'8vw'}
+                  fieldType="select"
                   fieldLabel="Consultant Specialty"
                   selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
@@ -72,24 +126,15 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                   width={'8vw'}
                   disabled
                   fieldType="select"
-                  fieldLabel="Preferred Consultant"
+                  fieldLabel="Consultant"
                   fieldName="preferredConsultantKey"
-                  selectData={practitionerListResponse?.object ?? []}
-                  selectDataLabel="practitionerFullName"
-                  selectDataValue="key"
-                  record={consultation}
-                  setRecord={() => { }}
-                />
-                <MyInput
-                  width={'8vw'}
-                  disabled
-                  fieldType="select"
-                  fieldLabel="City"
-                  selectData={cityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="cityLkey"
-                  record={consultation}
+                  selectData={practitionerList}
+                  selectDataLabel="fullName"
+                  selectDataValue="id"
+                  record={{
+                    ...consultation,
+                    preferredConsultantKey: consultation?.preferredConsultantKey ? Number(consultation.preferredConsultantKey) : undefined
+                  }}
                   setRecord={() => { }}
                 />
               </div>

@@ -55,13 +55,13 @@ const Practitioners = () => {
   const [valueSpecility, setValueSpecility] = useState({ specility: "" });
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 3,
+    size: 15,
     sort: "id,asc",
     timestamp: Date.now(),
   });
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
-    size: 3,
+    size: 15,
     sort: "id,asc",
   });
   const [sortColumn, setSortColumn] = useState("id");

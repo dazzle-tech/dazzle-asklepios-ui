@@ -535,9 +535,12 @@ export interface ApConsultationOrder {
 	visitKey:string;
 	consultantSpecialtyLkey:string;
 	cityLkey:string;
+	facilityKey:string;
+	departmentKey:string;
 	preferredConsultantKey:string;
 	consultationMethodLkey:string;
 	consultationTypeLkey:string;
+	priorityLkey:string;
 	consultationContent:string;
 	notes:string;
 	statusLkey:string;
@@ -552,6 +555,9 @@ export interface ApConsultationOrder {
 	deletedAt:number;
 	isValid:boolean;
 	cancellationReason:string;
+	facilityKey:string;
+	departmentKey:string;
+	priorityLkey:string;
 } 
 
 export interface ApCpt { 
@@ -691,6 +697,17 @@ export interface ApDepartment {
 	encountertypelkey:string;
 } 
 
+export interface ApDepartmentService { 
+	key:string;
+	departmentKey:string;
+	serviceKey:string;
+	isActive:boolean;
+	serviceTypeLkey:string;
+	serviceName:string;
+	servicePrice:number;
+	serviceCurrencyLkey:string;
+} 
+
 export interface ApDiagnosticCoding { 
 	key:string;
 	diagnosticsKey:string;
@@ -711,7 +728,7 @@ export interface ApDiagnosticOrderTests {
 	statusLkey:string;
 	orderKey:string;
 	testKey:string;
-	receivedLabKey:string;
+	receivedLabId:number;
 	reasonLkey:string;
 	priorityLkey:string;
 	notes:string;
@@ -735,6 +752,9 @@ export interface ApDiagnosticOrderTests {
 	readyAt:number;
 	approvedAt:number;
 	cancellationReason:string;
+	fromDepartmentId:number;
+	fromFacilityId:number;
+	toFacilityId:number;
 } 
 
 export interface ApDiagnosticOrderTestsNotes { 
@@ -1457,13 +1477,27 @@ export interface ApEncounterAssignToBed {
 	departmentKey:string;
 } 
 
+export interface ApEncounterService { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	serviceKey:string;
+	serviceTypeLkey:string;
+	serviceName:string;
+	servicePrice:number;
+	serviceCurrencyLkey:string;
+	encounterDate:number;
+	createdBy:string;
+	createdAt:number;
+} 
+
 export interface ApEncounterVaccination { 
 	key:string;
 	patientKey:string;
 	encounterKey:string;
-	vaccineKey:string;
-	vaccineBrandKey:string;
-	vaccineDoseKey:string;
+	vaccineId:number;
+	vaccineBrandId:number;
+	vaccineDoseId:number;
 	vaccineLotNumber:string;
 	dateAdministered:number;
 	actualSide:string;
@@ -2032,6 +2066,7 @@ export interface ApMedicalSheets {
 	medicalCalculators:boolean;
 	cpoeResultsManager:boolean;
 	icu:boolean;
+	triage:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -2175,6 +2210,32 @@ export interface ApNurseNotes {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+} 
+
+export interface ApNurseServiceProduct { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	departmentId:number;
+	categoryLkey:string;
+	serviceId:number;
+	warehouseProductId:number;
+	quantity:number;
+	baseUomId:number;
+	unitPrice:number;
+	totalPrice:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	brandId:number;
+	priceListId:number;
+	priceListItemId:number;
+	priceListItemPrice:number;
+	priceListItemTotalPrice:number;
 } 
 
 export interface ApOperationAnesthesiaCarePlan { 
@@ -2955,6 +3016,40 @@ export interface ApPatientEncounterOrder {
 	submitDate:number;
 } 
 
+export interface ApPatientFamilyHistory { 
+	key:string;
+	patientKey:string;
+	condition:string;
+	relationLkey:string;
+	inheritedDiseases:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientHospitalization { 
+	key:string;
+	patientKey:string;
+	facility:string;
+	reason:string;
+	admissionTypeLkey:string;
+	dateOfAdmission:number;
+	lengthOfStay:number;
+	outcomes:string;
+	medicalInterventionsPerformed:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPatientIds { 
 	key:string;
 	patientKey:string;
@@ -3110,6 +3205,7 @@ export interface ApPatientObservationSummary {
 	platestFunctionalStatus:string;
 	latestCognitiveCheck:string;
 	platestCognitiveCheck:string;
+	reasonOfVisit:string;
 } 
 
 export interface ApPatientPlan { 
@@ -3170,6 +3266,25 @@ export interface ApPatientProblem {
 	isValid:boolean;
 } 
 
+export interface ApPatientProblems { 
+	key:string;
+	patientKey:string;
+	condition:string;
+	dateOfDiagnosis:number;
+	statusLkey:string;
+	typeLkey:string;
+	dateOfResolution:number;
+	sourceOfInformationLkey:string;
+	byPatient:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPatientRelation { 
 	key:string;
 	patientKey:string;
@@ -3191,6 +3306,55 @@ export interface ApPatientSecondaryDocuments {
 	documentTypeLkey:string;
 	documentNo:string;
 	patientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientSocialHistory { 
+	key:string;
+	patientKey:string;
+	currentSmoker:boolean;
+	smokeStartDate:number;
+	cigaretteAmount:number;
+	cigaretteType:string;
+	previousSmoker:boolean;
+	smokeQuitDate:number;
+	exposureToSecondHandSmoke:boolean;
+	alcoholConsumption:boolean;
+	typeOfAlcohol:string;
+	alcoholSinceWhen:number;
+	substanceUse:boolean;
+	routeLkey:string;
+	frequencyLkey:string;
+	physicalLimitationLkey:string;
+	diagnosedEatingDisordersLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPatientSurgicalHistory { 
+	key:string;
+	patientKey:string;
+	surgery:string;
+	dateOfSurgery:number;
+	facility:string;
+	other:boolean;
+	otherDesc:string;
+	anesthesiaTypeLkey:string;
+	complicationsLkey:string;
+	adverseReactionsToAnesthesiaLkey:string;
+	isImplantsOrDevices:boolean;
+	implantsOrDevicesDescription:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -3554,7 +3718,7 @@ export interface ApPrescriptionMedications {
 	patientKey:string;
 	visitKey:string;
 	prescriptionKey:string;
-	genericMedicationsKey:string;
+	genericMedicationsId:number;
 	numberOfRefills:number;
 	refillInterval:string;
 	instructionsTypeLkey:string;
@@ -4046,8 +4210,8 @@ export interface ApSnomedCode {
 export interface ApTeleConsultation { 
 	id:string;
 	questionToConsultant:string;
-	consultantFacilityId:string;
-	consultantDepartmentId:string;
+	fromFacilityId:number;
+	fromDepartmentId:number;
 	specialtyLkey:string;
 	urgencyLkey:string;
 	expectedResponse:string;
@@ -4067,6 +4231,8 @@ export interface ApTeleConsultation {
 	callStartedBy:string;
 	callColsedAt:number;
 	callColsedBy:string;
+	toDepartmentId:number;
+	toFacilityId:number;
 } 
 
 export interface ApTeleConsultationCallLog { 
@@ -4082,6 +4248,26 @@ export interface ApTeleConsultationProgressNote {
 	createdBy:string;
 	createdDate:number;
 	teleConsultationId:string;
+} 
+
+export interface ApTelephonicConsultation { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	physician:number;
+	dateOfCall:number;
+	consultationContent:string;
+	approvalNumber:string;
+	notes:string;
+	extraDocumentation:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	cancellationReason:string;
 } 
 
 export interface ApTenant { 
@@ -4340,6 +4526,12 @@ export interface ApUserAccessPrivatePatient {
 	deletedAt:number;
 	reason:string;
 	patientKey:string;
+} 
+
+export interface ApUserDashboardComponents { 
+	key:string;
+	userId:number;
+	componentKey:string;
 } 
 
 export interface ApUserFacilities { 
@@ -4601,5 +4793,7 @@ export interface AppUser {
 	phoneNumber:string;
 	birthDate:Date;
 	gender:string;
+	jobRole:string;
+	securityAccessLeve:string;
 } 
 

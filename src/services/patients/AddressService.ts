@@ -9,6 +9,9 @@ export const addressService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Address'],
   endpoints: builder => ({
+    /* =============================
+       Get all patient addresses
+       ============================= */
     getPatientAddresses: builder.query<PagedResult<Address>, { patientId: number }>({
       query: ({ patientId }) => ({
         url: `/api/patient/addresses/patient/${patientId}`,
@@ -21,6 +24,9 @@ export const addressService = createApi({
       providesTags: (_res, _err, { patientId }) => [{ type: 'Address', id: patientId }]
     }),
 
+    /* =============================
+       Get current address
+       ============================= */
     getCurrentPatientAddress: builder.query<Address, { patientId: number }>({
       query: ({ patientId }) => ({
         url: `/api/patient/addresses/patient/${patientId}/current`,
@@ -29,6 +35,9 @@ export const addressService = createApi({
       providesTags: (_res, _err, { patientId }) => [{ type: 'Address', id: patientId }]
     }),
 
+    /* =============================
+       Create new Address (AddressCreateVM)
+       ============================= */
     createAddress: builder.mutation<Address, { patientId: number; body: Address }>({
       query: ({ patientId, body }) => ({
         url: `/api/patient/addresses/patient/${patientId}`,
@@ -38,6 +47,9 @@ export const addressService = createApi({
       invalidatesTags: (_res, _err, { patientId }) => [{ type: 'Address', id: patientId }]
     }),
 
+    /* =============================
+       Update Address (AddressUpdateVM)
+       ============================= */
     updateAddress: builder.mutation<Address, { id: number; patientId: number; body: Address }>({
       query: ({ id, body }) => ({
         url: `/api/patient/addresses/${id}`,

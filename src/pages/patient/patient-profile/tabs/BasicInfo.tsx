@@ -1,6 +1,6 @@
+import MyInput from '@/components/MyInput';
 import React from 'react';
 import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
 
 const BasicInfo = ({
   validationResult,
@@ -11,6 +11,7 @@ const BasicInfo = ({
   ageGroupValue,
   patientClassLovQueryResponse
 }) => {
+  console.log("ageGroupValue", ageGroupValue);
   return (
     <Form layout="inline">
       <MyInput
@@ -48,7 +49,7 @@ const BasicInfo = ({
         required
         vr={validationResult}
         column
-        fieldLabel="Sex at Birth"
+        fieldLabel="Gender"
         fieldType="select"
         fieldName="sexAtBirth"
         selectData={genderEnum ?? []}
@@ -59,6 +60,7 @@ const BasicInfo = ({
         searchable={false}
       />
       <MyInput
+        required
         vr={validationResult}
         column
         fieldType="date"
@@ -74,7 +76,7 @@ const BasicInfo = ({
         fieldType="text"
         disabled
         fieldName="ageFormat"
-        record={localPatient?.dob ? ageFormatType : null}
+        record={localPatient?.dateOfBirth ? ageFormatType : null}
       />
       <MyInput
         vr={validationResult}
@@ -83,7 +85,8 @@ const BasicInfo = ({
         fieldType="text"
         fieldName="ageGroup"
         disabled
-        record={localPatient?.dob ? ageGroupValue : null}
+        record={localPatient?.dateOfBirth ? ageGroupValue : null}
+        isEnum
       />
       <MyInput
         vr={validationResult}

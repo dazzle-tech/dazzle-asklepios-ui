@@ -1,4 +1,4 @@
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useSaveDiagnosticOrderTestRadReportMutation } from '@/services/radService';
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
@@ -50,12 +50,17 @@ const Rad = () => {
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest,
     sortBy: 'isUrgent',
-    sortType: 'desc'
+    sortType: 'desc',
+   
   });
   const ReportRef = useRef(null);
   const refetchReport = () => {
     ReportRef.current?.reportFetch();
   };
+
+const OrdersRef = useRef<any>(null);
+
+
 
   const TestsRef = useRef(null);
   const refetchTests = () => {
@@ -278,52 +283,18 @@ const Rad = () => {
         width={'20vw'}
       />
     </div>
-      <div className="count-div-on-top-of-page">
-        <DetailsCard
-          title="Result Ready"
-          number={2}
-          icon={faCircleCheck}
-          color="--green-600"
-          backgroundClassName="result-ready-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="Patient Arrived"
-          number={2}
-          icon={faClock}
-          color="--primary-yellow"
-          backgroundClassName="sample-collected-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="New"
-          number={2}
-          icon={faRectangleList}
-          color="--primary-blue"
-          backgroundClassName="new-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="Total Test"
-          number={2}
-          icon={faTriangleExclamation}
-          color="--gray-dark"
-          backgroundClassName="total-test-section"
-          width={'20vw'}
-        />
-      </div>
-
-
       <div className="container">
         <div className="left-boxs">
           <Row>
             <Col xs={14}>
               <Orders
+                ref={OrdersRef}
                 order={order}
                 setOrder={setOrder}
                 listOrdersResponse={listOrdersResponse}
                 setListOrdersResponse={setListOrdersResponse}
               />
+
             </Col>
             <Col xs={10}>
               <Row>

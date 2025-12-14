@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   useGetDiagnosticsTestNormalRangeListQuery,
+  useGetLovAllValuesQuery,
   useGetLovValuesByCodeQuery,
   useRemoveDiagnosticsTestProfileMutation,
   useSaveDiagnosticsTestNormalRangeMutation,
@@ -38,6 +39,7 @@ import {
 import { DiagnosticTestNormalRange, DiagnosticTestProfile } from '@/types/model-types-new';
 import { newDiagnosticTestNormalRange, newDiagnosticTestProfile, newLaboratory, newPathology } from '@/types/model-types-constructor-new';
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
+import { initialListRequestAllValues } from '@/types/types';
 const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const dispatch = useAppDispatch();
   const [diagnosticsTestProfile, setDiagnosticsTestProfile] = useState<DiagnosticTestProfile>({
@@ -62,6 +64,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const { data: unitsLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   // Fetch diagnostics test profile List response
 
+const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -193,10 +196,11 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
       key: "lovKeys",
       title: <Translate>LOV Values</Translate>,
       render: (rowData) => {
-        if (!rowData.lovKeys || !allLovValues?.object) return "-";
+        
+        if (!rowData.lovKeys || !lovValues?.object) return "-";
 
         const names = rowData.lovKeys
-          .map(key => allLovValues.object.find(lov => lov.key === key)?.lovDisplayVale)
+          .map(key => lovValues.object.find(lov => lov.key === key)?.lovDisplayVale)
           .filter(Boolean);
 
         return names.length ? names.join(", ") : "-";

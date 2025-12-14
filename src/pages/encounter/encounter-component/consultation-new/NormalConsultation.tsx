@@ -19,6 +19,7 @@ import { IoIosMore } from 'react-icons/io';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import CancellationModal from '@/components/CancellationModal';
 import { Checkbox, HStack } from 'rsuite';
+import ConsultationResponseModal from '@/components/ConsultationResponseModal';
 import Details from './Details';
 import './styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
@@ -52,6 +53,10 @@ const NormalConsultation = (props: any) => {
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
   const [previewConsultation, setPreviewConsultation] = useState<ApConsultationOrder | null>(null);
+
+  // Response modal states
+  const [openResponseModal, setOpenResponseModal] = useState(false);
+  const [selectedConsultation, setSelectedConsultation] = useState<ApConsultationOrder | null>(null);
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -248,6 +253,18 @@ const NormalConsultation = (props: any) => {
     setEditing(false);
   };
 
+  /** Handle open response modal (readonly) */
+  const handleOpenResponseModal = (consultation: ApConsultationOrder) => {
+    setSelectedConsultation(consultation);
+    setOpenResponseModal(true);
+  };
+
+  /** Handle close response modal */
+  const handleCloseResponseModal = () => {
+    setOpenResponseModal(false);
+    setSelectedConsultation(null);
+  };
+
   /** Table columns */
   const tableColumns = useMemo(
     () => [
@@ -294,7 +311,18 @@ const NormalConsultation = (props: any) => {
         key: 'viewResponse',
         title: <Translate>VIEW RESPONSE</Translate>,
         flexGrow: 1,
-        render: () => <IoIosMore size={22} fill="var(--primary-gray)" />
+        render: (rowData: any) => (
+          <IoIosMore 
+            size={22} 
+            fill={rowData?.viewResponse ? "var(--primary-gray)" : "#ccc"}
+            onClick={() => {
+              if (rowData?.viewResponse) {
+                handleOpenResponseModal(rowData);
+              }
+            }}
+            style={{ cursor: rowData?.viewResponse ? 'pointer' : 'not-allowed' }}
+          />
+        )
       },
       {
         key: 'attachedFile',
@@ -329,11 +357,11 @@ const NormalConsultation = (props: any) => {
               onClick={() => setOpenDetailsModal(true)}
               className="icon-button"
             />
-            <FontAwesomeIcon
+            {/* <FontAwesomeIcon
               icon={faClone}
               title="Clone"
               className="icon-button clone-icon-main-style"
-            />
+            /> */}
           </div>
         )
       }
@@ -418,13 +446,13 @@ const NormalConsultation = (props: any) => {
                 >
                   Add Consultation
                 </MyButton>
-                <MyButton
+                {/* <MyButton
                   onClick={handleSubmit}
                   disabled={selectedRows.length === 0 || edit}
                   prefixIcon={() => <CheckIcon />}
                 >
                   Submit
-                </MyButton>
+                </MyButton> */}
               </div>
             </div>
           }
@@ -476,6 +504,13 @@ const NormalConsultation = (props: any) => {
             setRefetchAttachmentList={() => {}}
           />
         }
+      />
+
+      <ConsultationResponseModal
+        open={openResponseModal}
+        consultation={selectedConsultation}
+        readonly={true}
+        onClose={handleCloseResponseModal}
       />
     </div>
   );

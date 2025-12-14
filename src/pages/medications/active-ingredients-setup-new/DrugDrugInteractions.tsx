@@ -1,276 +1,362 @@
-import React, { useEffect, useState } from 'react';
-import { Text, Form } from 'rsuite';
+import React, { useState, useMemo } from 'react';
+import { Form, Text, Panel } from 'rsuite';
+import { MdSave, MdDelete } from 'react-icons/md';
 import { Plus } from '@rsuite/icons';
-import { MdSave } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import {
-  useGetActiveIngredientQuery,
-  useSaveActiveIngredientDrugInteractionMutation,
-  useRemoveActiveIngredientDrugInteractionMutation,
-  useGetActiveIngredientDrugInteractionByKeyQuery
-} from '@/services/medicationsSetupService';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { ApActiveIngredientDrugInteraction } from '@/types/model-types';
-import { newApActiveIngredientDrugInteraction } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
+
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-const DrugDrugInteractions = ({ activeIngredients }) => {
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { conjureValueBasedOnIDFromList } from '@/utils';
+import { useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import {
+  useGetByActiveIngredientIdQuery,
+  useCreateMutation,
+  useUpdateMutation,
+  useDeleteMutation
+} from '@/services/setup/activeIngredients/activeIngredientDrugInteractionService';
+
+import {
+  newActiveIngredientDrugInteraction
+} from '@/types/model-types-constructor-new';
+
+import './styles.less';
+import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import { Block } from '@mui/icons-material';
+
+const DrugDrugInteractions = ({ selectedActiveIngredients }) => {
   const dispatch = useAppDispatch();
-  const [selectedActiveIngredientDrugInteraction, setSelectedActiveIngredientDrugInteraction] =
-    useState<ApActiveIngredientDrugInteraction>({
-      ...newApActiveIngredientDrugInteraction
-    });
-  const [openConfirmDeleteDrugInteractionModal, setOpenConfirmDeleteDrugInteractionModal] =
-    useState<boolean>(false);
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest,
-    pageSize: 100,
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
+
+  // ---------------------------
+  // STATE
+  // ---------------------------
+  const [record, setRecord] = useState({
+    ...newActiveIngredientDrugInteraction
   });
-  const [activeIngredientsListRequest] = useState<ListRequest>({
-    ...initialListRequest
+const [sortColumn, setSortColumn] = useState("interactedIngredientId");
+const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+  const [openDelete, setOpenDelete] = useState(false);
+
+  // ---------------------------
+  // LOVs
+  // ---------------------------
+
+  const { data: activeIngredientResponse } = useGetActiveIngredientsQuery({
+    page: 0,
+    size: 1000
   });
-  // Fetch active ingredients list response
-  const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery(
-    activeIngredientsListRequest
-  );
-  // Fetch severity Lov response
-  const { data: severityLovQueryResponseData } = useGetLovValuesByCodeQuery('SEVERITY');
-  // Fetch drug list response
+
+
+  // Severity LOV
+  const { data: severityLovQueryResponseData } =
+    useGetLovValuesByCodeQuery('SEVERITY');
+
+  // ---------------------------
+  // API
+  // ---------------------------
   const {
-    data: drugListResponseData,
-    refetch: drugRefetch,
-    isFetching
-  } = useGetActiveIngredientDrugInteractionByKeyQuery(activeIngredients.key || '');
-  // save active ingredient drug interaction
-  const [saveActiveIngredientDrugInteraction, saveActiveIngredientDrugInteractionMutation] =
-    useSaveActiveIngredientDrugInteractionMutation();
-  // remove active ingredient drug interaction
-  const [removeActiveIngredientDrugInteraction, removeActiveIngredientDrugInteractionMutation] =
-    useRemoveActiveIngredientDrugInteractionMutation();
+    data: list = [],
+    isFetching,
+    refetch
+  } = useGetByActiveIngredientIdQuery(selectedActiveIngredients?.id, {
+    skip: !selectedActiveIngredients?.id,
+  });
 
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && rowData.key === selectedActiveIngredientDrugInteraction.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  const [createInteraction] = useCreateMutation();
+  const [updateInteraction] = useUpdateMutation();
+  const [deleteInteraction] = useDeleteMutation();
 
-  // Icons column (remove)
-  const iconsForActions = () => (
-    <div className="container-of-icons">
-      <MdDelete
-        className="icons-style"
-        title="Delete"
-        size={24}
-        fill="var(--primary-pink)"
-        onClick={() => setOpenConfirmDeleteDrugInteractionModal(true)}
-      />
-    </div>
-  );
-
-  //Table columns
-  const tableColumns = [
+  // ---------------------------
+  // TABLE COLUMNS
+  // ---------------------------
+  const columns = [
     {
-      key: 'activeIngredients',
-      title: <Translate>Active Ingredients</Translate>,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            activeIngredientListResponseData?.object ?? [],
-            activeIngredients.key === rowData.activeIngredientKey
-              ? rowData.interactedActiveIngredientKey
-              : rowData.activeIngredientKey,
-            'name'
-          )}
-        </span>
-      )
+  key: 'interactedIngredientId',
+  title: <Translate>Interacted Ingredient</Translate>,
+  render: row => (
+    <Text>
+      {conjureValueBasedOnIDFromList(
+        activeIngredientResponse?.data ?? [],
+        row.interactedIngredientId,
+        'name'
+      )}
+    </Text>
+  )
     },
     {
       key: 'severity',
       title: <Translate>Severity</Translate>,
-      render: rowData =>
-        rowData.severityLvalue ? rowData.severityLvalue.lovDisplayVale : rowData.severityLkey
+      render: row => <Text>{row.severity}</Text>
     },
     {
       key: 'description',
       title: <Translate>Description</Translate>,
-      render: rowData => <Text>{rowData.description}</Text>
+      render: row => <Text>{row.description}</Text>
     },
     {
       key: 'icons',
-      title: <Translate></Translate>,
-      render: () => iconsForActions()
+      title: '',
+      render: row => (
+        <MdDelete
+          size={24}
+          fill="var(--primary-pink)"
+          className="icons-style"
+          onClick={() => {
+            setRecord(row);
+            setOpenDelete(true);
+          }}
+        />
+      )
     }
   ];
 
-  // handle save
-  const save = () => {
-    saveActiveIngredientDrugInteraction({
-      ...selectedActiveIngredientDrugInteraction,
-      activeIngredientKey: activeIngredients.key,
-      createdBy: 'Administrator'
-    })
-      .unwrap()
-      .then(() => {
-        dispatch(notify('Added successfully'));
-        drugRefetch();
-      });
-  };
 
-  // handle new
-  const handleDrugsNew = () => {
-    setSelectedActiveIngredientDrugInteraction({
-      ...newApActiveIngredientDrugInteraction
-    });
-  };
 
-  // handle remove
-  const remove = () => {
-    setOpenConfirmDeleteDrugInteractionModal(false);
-    if (selectedActiveIngredientDrugInteraction.key) {
-      removeActiveIngredientDrugInteraction({
-        ...selectedActiveIngredientDrugInteraction
-      })
-        .unwrap()
-        .then(() => {
-          dispatch(notify('Deleted successfully'));
-          drugRefetch();
-        });
-    }
-  };
-
-  // Effects
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'active_ingredient_key',
-        operator: 'match',
-        value: activeIngredients.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
+  // ---------------------------
+  // SAVE
+  // ---------------------------
+  const save = async () => {
+      if (!selectedActiveIngredients || !selectedActiveIngredients.id) {
+        dispatch(notify({ msg: "No Active Ingredient selected", sev: "error" }));
+        return;
       }
-    ];
-    setListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
-    drugRefetch();
-  }, [activeIngredients.key]);
 
-  useEffect(() => {
-    if (saveActiveIngredientDrugInteractionMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
+      if (!record?.interactedIngredientId) {
+        dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
+        return;
+      }
 
-      setSelectedActiveIngredientDrugInteraction({ ...newApActiveIngredientDrugInteraction });
-    }
-  }, [saveActiveIngredientDrugInteractionMutation]);
+      if (!record?.severity) {
+        dispatch(notify({ msg: "Please fix the following fields: • Severity is required", sev: "error" }));
+        return;
+      }
 
-  useEffect(() => {
-    if (removeActiveIngredientDrugInteractionMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
+      if (!record?.description || record.description.trim() === "") {
+        dispatch(notify({ msg: "Please fix the following fields: • Description is required", sev: "error" }));
+        return;
+      }
 
-      setSelectedActiveIngredientDrugInteraction({ ...newApActiveIngredientDrugInteraction });
-    }
-  }, [removeActiveIngredientDrugInteractionMutation]);
+      const payload = {
+        ...record,
+        id: record.id ?? record.Id ?? record.ID ?? null,
+        activeIngredientId: selectedActiveIngredients.id,
+      };
 
+      delete payload.Id;
+      delete payload.ID;
+
+      try {
+        if (payload.id) {
+          await updateInteraction(payload).unwrap();
+          dispatch(notify({ msg: "Updated successfully", sev: "success" }));
+        } else {
+          await createInteraction(payload).unwrap();
+          dispatch(notify({ msg: "Added successfully", sev: "success" }));
+        }
+
+        refetch();
+        setRecord({ ...newActiveIngredientDrugInteraction });
+
+      } catch (e) {
+        console.error("SAVE ERROR:", e);
+        dispatch(notify({ msg: "Save failed", sev: "error" }));
+      }
+  };
+
+
+
+
+  // ---------------------------
+  // DELETE
+  // ---------------------------
+  const remove = async () => {
+  setOpenDelete(false);
+
+  if (!record?.id) {
+    dispatch(notify({ msg: "Invalid item", sev: "error" }));
+    return;
+  }
+
+  try {
+    await deleteInteraction(record.id).unwrap();
+    dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
+    refetch();
+    setRecord({ ...newActiveIngredientDrugInteraction });
+  } catch {
+    dispatch(notify({ msg: "Delete failed", sev: "error" }));
+  }
+  };
+
+
+  // ---------------------------
+  // PAGINATION
+  // ---------------------------
+  // 📌 SORTING IMPLEMENTATION
+  const sortedList = useMemo(() => {
+    if (!list || !sortColumn) return list ?? [];
+
+    return [...list].sort((a, b) => {
+      let aVal = a[sortColumn];
+      let bVal = b[sortColumn];
+
+      // ⭐ Special Case: Interacted Ingredient (Sort by DISPLAY NAME, not ID)
+      if (sortColumn === "interactedIngredientId") {
+        aVal = conjureValueBasedOnIDFromList(
+          activeIngredientResponse?.data ?? [],
+          aVal,
+          "name"
+        );
+        bVal = conjureValueBasedOnIDFromList(
+          activeIngredientResponse?.data ?? [],
+          bVal,
+          "name"
+        );
+      }
+
+      if (aVal == null) return -1;
+      if (bVal == null) return 1;
+
+      let result = 0;
+
+      if (typeof aVal === "string") {
+        result = aVal.toString().localeCompare(bVal.toString(), undefined, {
+          numeric: true
+        });
+      } else {
+        result = aVal > bVal ? 1 : -1;
+      }
+
+      return sortType === "asc" ? result : -result;
+    });
+  }, [list, sortColumn, sortType, activeIngredientResponse]);
+
+
+
+  const [pagination, setPagination] = useState({ page: 0, size: 5 });
+
+  const paginatedData = useMemo(() => {
+    const start = pagination.page * pagination.size;
+    return sortedList.slice(start, start + pagination.size);
+  }, [sortedList, pagination.page, pagination.size]);
+
+  const totalCount = list.length;
+
+  // ---------------------------
+  // RENDER
+  // ---------------------------
   return (
-    <Form fluid>
-      <div className="container-of-actions-header-active">
-        <div className="container-of-fields-active">
+    <Panel>
+      <Form fluid>
+
+        <div className="container-of-actions-header-active">
+          <div className="container-of-fields-active">
+
           <MyInput
-            fieldLabel="Active Ingredients"
-            fieldName="interactedActiveIngredientKey"
+            fieldLabel="Active Ingredient"
+            fieldName="interactedIngredientId"
             fieldType="select"
-            selectData={activeIngredientListResponseData?.object ?? []}
-            selectDataLabel={'name'}
-            selectDataValue="key"
-            record={selectedActiveIngredientDrugInteraction}
-            setRecord={setSelectedActiveIngredientDrugInteraction}
-            menuMaxHeight={200}
-            width={200}
+            selectData={activeIngredientResponse?.data ?? []}
+            selectDataLabel="name"
+            selectDataValue="id"
+            record={record}
+            setRecord={setRecord}
+            width={220}
             required
           />
-          <MyInput
-            fieldType="select"
-            selectData={severityLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            width={200}
-            fieldName="severityLkey"
-            fieldLabel="Severity"
-            record={selectedActiveIngredientDrugInteraction}
-            setRecord={setSelectedActiveIngredientDrugInteraction}
-            required
-          />
+
+
+            <MyInput
+              fieldType="select"
+              selectData={severityLovQueryResponseData?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="lovDisplayVale"
+              fieldName="severity"
+              width={180}
+              fieldLabel="Severity"
+              record={record}
+              setRecord={setRecord}
+              required
+            />
+
+          </div>
+
+          <div className="container-of-buttons-active">
+            <MyButton
+              prefixIcon={() => <MdSave />}
+              onClick={save}
+              title="Save"
+              color="var(--deep-blue)"
+            />
+
+            <MyButton
+              prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
+              onClick={() => setRecord({ ...newActiveIngredientDrugInteraction })}
+              title="Clear"
+              color="var(--deep-blue)"
+            />
+          </div>
         </div>
-        <div className="container-of-buttons-active">
-          <MyButton
-            prefixIcon={() => <MdSave />}
-            color="var(--deep-blue)"
-            onClick={save}
-            title="Save"
-          ></MyButton>
-          <MyButton
-            prefixIcon={() => <Plus />}
-            color="var(--deep-blue)"
-            onClick={handleDrugsNew}
-            title="New"
-          ></MyButton>
-        </div>
-      </div>
-      <MyInput
-        width="100%"
-        fieldName="description"
-        fieldType="textarea"
-        record={selectedActiveIngredientDrugInteraction}
-        setRecord={setSelectedActiveIngredientDrugInteraction}
-        required
-      />
-      <br />
-      <MyTable
-        noBorder
-        height={450}
-        data={drugListResponseData?.object ?? []}
-        loading={isFetching}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        onRowClick={rowData => {
-          setSelectedActiveIngredientDrugInteraction(rowData);
-        }}
-      />
-      <DeletionConfirmationModal
-        open={openConfirmDeleteDrugInteractionModal}
-        setOpen={setOpenConfirmDeleteDrugInteractionModal}
-        itemToDelete="Drug Interaction"
-        actionButtonFunction={remove}
-        actionType="Delete"
-      />
-    </Form>
+
+        <MyInput
+          width="100%"
+          fieldName="description"
+          fieldType="textarea"
+          record={record}
+          setRecord={setRecord}
+          required
+        />
+
+        <br />
+
+        <MyTable
+          height={450}
+          data={paginatedData}
+          loading={isFetching}
+          columns={columns}
+          onRowClick={row => {
+            const normalizedId = row.id ?? row.Id ?? row.ID ?? null;
+
+            setRecord({
+              ...row,
+              id: normalizedId
+            });
+          }}
+          rowClassName={row => {
+            const rowId = row.id ?? row.Id ?? row.ID ?? null;
+            const selectedId = record.id ?? null;
+
+            return rowId === selectedId ? "selected-row" : "";
+          }}
+          page={pagination.page}
+          rowsPerPage={pagination.size}
+          totalCount={totalCount}
+          onPageChange={(_, newPage) => setPagination({ ...pagination, page: newPage })}
+          onRowsPerPageChange={e =>
+            setPagination({ page: 0, size: Number(e.target.value) })
+          }
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={(col, order) => {
+            setSortColumn(col);
+            setSortType(order);
+          }}
+        />
+
+        <DeletionConfirmationModal
+          open={openDelete}
+          setOpen={setOpenDelete}
+          itemToDelete="Drug Interaction"
+          actionButtonFunction={remove}
+          actionType="Delete"
+        />
+
+      </Form>
+    </Panel>
   );
 };
 

@@ -7,11 +7,11 @@ import MyTable from '@/components/MyTable';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { FaChartLine } from 'react-icons/fa';
-import { initialListRequest } from '@/types/types';
+import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import MyButton from '@/components/MyButton/MyButton';
 import { MdDelete } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { useGetLovAllValuesQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { MdModeEdit } from 'react-icons/md';
 import AddNormalRange from './AddNormalRange';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -38,8 +38,7 @@ const NormalRangeSetupModal = ({ open, setOpen, diagnosticsTest }) => {
     });
 
 
-const { data: allLovValues } = useGetLovValuesByCodeQuery("LAB_NORMRANGE_VALUE_TYPE");
-
+const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
 
  const {data:getLaboratoryDetails}=useGetLaboratoryByTestIdQuery(diagnosticsTest?.id)
    const [laboratory,setLaboratory]=useState({...newLaboratory});
@@ -155,10 +154,11 @@ const {
       key: "lovKeys",
       title: <Translate>LOV Values</Translate>,
       render: (rowData) => {
-        if (!rowData.lovKeys || !allLovValues?.object) return "-";
+        
+        if (!rowData.lovKeys || !lovValues?.object) return "-";
 
         const names = rowData.lovKeys
-          .map(key => allLovValues.object.find(lov => lov.key === key)?.lovDisplayVale)
+          .map(key => lovValues.object.find(lov => lov.key === key)?.lovDisplayVale)
           .filter(Boolean);
 
         return names.length ? names.join(", ") : "-";

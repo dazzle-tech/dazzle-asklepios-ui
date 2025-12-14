@@ -2,7 +2,7 @@ import CancellationModal from '@/components/CancellationModal';
 import ChatModal from '@/components/ChatModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
   useGetDiagnosticOrderTestQuery,
   useGetOrderTestNotesByTestIdQuery,
@@ -50,12 +50,13 @@ type Props = {
   fecthSample: () => void;
 };
 const Tests = forwardRef<unknown, Props>(
-  ({ order, test, setTest, samplesList, resultFetch,fetchAllTests ,fecthSample }, ref) => {
+  ({ order, test, setTest, samplesList, resultFetch, fetchAllTests, fecthSample }, ref) => {
     useImperativeHandle(ref, () => ({
       fetchTest
     }));
+    const authSlice = useAppSelector(state => state.auth);
+
     const dispatch = useAppDispatch();
-    const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [selectedCatValue, setSelectedCatValue] = useState(null);
     const [showListFilter, setShowListFilter] = useState(false);
     const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
@@ -63,6 +64,7 @@ const Tests = forwardRef<unknown, Props>(
     const [openSampleModal, setOpenSampleModal] = useState(false);
     const [openRejectedModal, setOpenRejectedModal] = useState(false);
     const { data: labCatLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
+    const selectedDepartment = authSlice.selectedDepartment;
     const [listRequest, setListRequest] = useState<ListRequest>({
       ...initialListRequest,
       filters: [
@@ -75,6 +77,11 @@ const Tests = forwardRef<unknown, Props>(
           fieldName: 'order_type_lkey',
           operator: 'match',
           value: '862810597620632'
+        },
+        {
+          fieldName: 'received_lab_id',
+          operator: 'match',
+          value: selectedDepartment?.departmentId || undefined
         },
         {
           fieldName: 'status_lkey',
@@ -148,7 +155,11 @@ const Tests = forwardRef<unknown, Props>(
               operator: 'match',
               value: '862810597620632'
             },
-            ,
+            {
+              fieldName: 'received_lab_id',
+              operator: 'match',
+              value: selectedDepartment?.departmentId || undefined
+            },
             {
               fieldName: 'status_lkey',
               operator: 'match',
@@ -176,6 +187,11 @@ const Tests = forwardRef<unknown, Props>(
           fieldName: 'order_type_lkey',
           operator: 'match',
           value: '862810597620632'
+        },
+         {
+          fieldName: 'received_lab_id',
+          operator: 'match',
+          value: selectedDepartment?.departmentId || undefined
         },
         {
           fieldName: 'status_lkey',
@@ -365,12 +381,15 @@ const Tests = forwardRef<unknown, Props>(
         flexGrow: 1,
         render: (rowData: any) => {
           const cat = laboratoryList?.object?.find(item => item.testKey === rowData.testKey);
-          if (cat) {
-            return cat?.testDurationTime + ' ' + cat?.timeUnitLvalue?.lovDisplayVale;
-          }
-          return '';
+          if (!cat) return '';
+
+          const unit = cat?.timeUnitLvalue?.lovDisplayVale ?? '';
+          const duration = cat?.testDurationTime ?? '';
+
+          return `${duration} ${unit}`.trim();
         }
       },
+
       {
         key: 'notes',
         dataKey: 'notes',
@@ -612,6 +631,11 @@ const Tests = forwardRef<unknown, Props>(
               operator: 'match',
               value: '862810597620632'
             },
+              {
+          fieldName: 'received_lab_id',
+          operator: 'match',
+          value: selectedDepartment?.departmentId || undefined
+        },
             {
               fieldName: 'status_lkey',
               operator: 'match',
@@ -652,61 +676,62 @@ const Tests = forwardRef<unknown, Props>(
     };
     console.log("testsList: ");
     console.log(testsList);
-return (
-  <Panel ref={ref} header="Order's Tests" defaultExpanded>
-    <MyTable
-      filters={filters()}
-      columns={tableClumns}
-      data={testsList?.object ?? []}
-      onRowClick={rowData => {
-        setTest(rowData);
-      }}
-      rowClassName={isTestSelected}
-      loading={isTestsFetching}
-      sortColumn={listRequest.sortBy}
-      sortType={listRequest.sortType}
-      onSortChange={(sortBy, sortType) => {
-        setListRequest({ ...listRequest, sortBy, sortType });
-      }}
-      page={pageIndex}
-      rowsPerPage={rowsPerPage}
-      totalCount={totalCount}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-    />
+    return (
+      <Panel ref={ref} header="Order's Tests" defaultExpanded>
+        <MyTable
+          filters={filters()}
+          columns={tableClumns}
+          height={450}
+          data={testsList?.object ?? []}
+          onRowClick={rowData => {
+            setTest(rowData);
+          }}
+          rowClassName={isTestSelected}
+          loading={isTestsFetching}
+          sortColumn={listRequest.sortBy}
+          sortType={listRequest.sortType}
+          onSortChange={(sortBy, sortType) => {
+            setListRequest({ ...listRequest, sortBy, sortType });
+          }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
 
-    <SampleModal
-      open={openSampleModal}
-      setOpen={setOpenSampleModal}
-      samplesList={samplesList}
-      labDetails={laboratoryList?.object?.find(item => item.testKey === test.testKey)}
-      saveTest={saveTest}
-      fetchTest={fetchTest}
-      test={test}
-      setTest={setTest}
-      fecthSample={fecthSample}
-      fetchAllTests={fetchAllTests}
-    />
-    <ChatModal
-      open={openNoteModal}
-      setOpen={setOpenNoteModal}
-      handleSendMessage={handleSendMessage}
-      title="Technician Notes"
-      list={messagesList?.object}
-      fieldShowName="notes"
-    />
-    <CancellationModal
-      open={openRejectedModal}
-      setOpen={setOpenRejectedModal}
-      fieldName="rejectedReason"
-      handleCancle={handleRejectedTest}
-      object={test}
-      setObject={setTest}
-      fieldLabel="Reject Reason"
-      title="Reject"
-    />
-  </Panel>
-);
+        <SampleModal
+          open={openSampleModal}
+          setOpen={setOpenSampleModal}
+          samplesList={samplesList}
+          labDetails={laboratoryList?.object?.find(item => item.testKey === test.testKey)}
+          saveTest={saveTest}
+          fetchTest={fetchTest}
+          test={test}
+          setTest={setTest}
+          fecthSample={fecthSample}
+          fetchAllTests={fetchAllTests}
+        />
+        <ChatModal
+          open={openNoteModal}
+          setOpen={setOpenNoteModal}
+          handleSendMessage={handleSendMessage}
+          title="Technician Notes"
+          list={messagesList?.object}
+          fieldShowName="notes"
+        />
+        <CancellationModal
+          open={openRejectedModal}
+          setOpen={setOpenRejectedModal}
+          fieldName="rejectedReason"
+          handleCancle={handleRejectedTest}
+          object={test}
+          setObject={setTest}
+          fieldLabel="Reject Reason"
+          title="Reject"
+        />
+      </Panel>
+    );
 
   }
 );

@@ -1,206 +1,279 @@
-import React, { useEffect, useState } from 'react';
-import '../styles.less';
-import Translate from '@/components/Translate';
-import { PlusRound } from '@rsuite/icons';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
-import { useAppDispatch } from '@/hooks';
-import { newApPractitioner, newApPatientPreferredHealthProfessional } from '@/types/model-types-constructor';
-import { ApPractitioner, ApPatientPreferredHealthProfessional } from '@/types/model-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserPen } from '@fortawesome/free-solid-svg-icons';
-import { useGetPatientPreferredHealthProfessionalQuery, useDeletePatientPreferredHealthProfessionalMutation } from '@/services/patientService';
-import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import {
+  newPatientPreferredHealthProfessional,
+  newPractitioner
+} from '@/types/model-types-constructor-new';
+import { PatientPreferredHealthProfessional, Practitioner } from '@/types/model-types-new';
+import { notify } from '@/utils/uiReducerActions';
+import { faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { PlusRound } from '@rsuite/icons';
+import React, { useState } from 'react';
+import '../styles.less';
 import AddPrefferdHealthProfessionalModal from './AddPrefferdHealthProfessionalModal';
+import {
+  useDeletePatientPreferredHealthProfessionalMutation,
+  useGetPatientPreferredHealthProfessionalsQuery
+} from '@/services/patients/PatientPreferredHealthProfessional';
+import { PaginationPerPage } from '@/utils/paginationPerPage';
+import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
+
 const PreferredHealthProfessional = ({ patient, isClick }) => {
-    const dispatch = useAppDispatch();
-    const [open, setOpen] = useState(false);
-    const [patientHP, setPatientHP] = useState<ApPatientPreferredHealthProfessional>({ ...newApPatientPreferredHealthProfessional })
-    const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
-    const [deletePreferredHealthModalOpen, setDeletePreferredHealthModalOpen] = useState(false);
-    const [deletePatientPH] = useDeletePatientPreferredHealthProfessionalMutation();
-    const [editable, setEditable] = useState(false);
-    //Table Content Column
-    const columns = [
-        {
-            key: 'nameOfHP',
-            title: <Translate>Name of the HP</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.practitioner?.practitionerFullName || ' ',
-        },
-        {
-            key: 'speciality',
-            title: <Translate>Speciality</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) =>
-                rowData?.practitioner?.specialtyLvalue
-                    ? rowData?.practitioner?.specialtyLvalue?.lovDisplayVale
-                    : rowData?.specialtyLkey,
-        },
-        {
-            key: 'telephoneNo',
-            title: <Translate>Telephone no.</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.practitioner?.practitionerPhoneNumber || ' ',
-        },
-        {
-            key: 'email',
-            title: <Translate>Email</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.practitioner?.practitionerEmail || ' ',
-        },
-        {
-            key: 'hpOrganization',
-            title: <Translate>HP Organization</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.facility?.facilityName || ' ',
-        },
-        {
-            key: 'networkAffiliation',
-            title: <Translate>Network Affiliation</Translate>,
-            flexGrow: 4,
-            dataKey: 'networkAffiliation',
-        },
-        {
-            key: 'relatedWith',
-            title: <Translate>Related with</Translate>,
-            flexGrow: 4,
-            dataKey: 'relatedWith',
-        },
-    ];
+  const dispatch = useAppDispatch();
 
-    // Function to check if the current row is the selected one
-    const isSelected = rowData => {
-        if (rowData && patientHP && patientHP.key === rowData.key) {
-            return 'selected-row';
-        } else return '';
+  const [open, setOpen] = useState(false);
+  const [editable, setEditable] = useState(false);
+  const [deletePreferredHealthModalOpen, setDeletePreferredHealthModalOpen] = useState(false);
+
+  const [patientHP, setPatientHP] = useState<PatientPreferredHealthProfessional>({
+    ...newPatientPreferredHealthProfessional
+  });
+  const [practitioner, setPractitioner] = useState<Practitioner>({ ...newPractitioner });
+
+  const [deletePatientPH] = useDeletePatientPreferredHealthProfessionalMutation();
+
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+
+  const {
+    data: preferredHPResponse,
+    isFetching,
+    refetch
+  } = useGetPatientPreferredHealthProfessionalsQuery(
+    {
+      page: paginationParams.page,
+      size: paginationParams.size,
+      sort: paginationParams.sort,
+      patientId: patient?.id
+    },
+    { skip: !patient.id }
+  );
+
+  const rowsPerPage = paginationParams.size;
+  const pageIndex = paginationParams.page;
+  const totalCount = preferredHPResponse?.totalCount ?? 0;
+  const links = preferredHPResponse?.links ?? {};
+
+  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
+    {}
+  );
+  const [getPractitionersBulk] = useGetPractitionersBulkMutation();
+
+  React.useEffect(() => {
+    const loadPractitioners = async () => {
+      const rows = preferredHPResponse?.data ?? [];
+      if (!rows.length) {
+        setPractitionersMap({});
+        return;
+      }
+
+      const uniqueIds = Array.from(
+        new Set(rows.map(row => row.practitionerId).filter(id => id !== null && id !== undefined))
+      );
+
+      try {
+        const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
+        const map = Object.fromEntries(practitioners.map(p => [p.id, p]));
+        setPractitionersMap(map);
+      } catch (e) {
+        console.error('Bulk practitioner load failed', e);
+      }
     };
 
-    // Initialize patient preferred health professional list request with default filters
-    const [patientPreferredHealthProfessional, setPatientPreferredHealthProfessional] = useState<ListRequest>({
-        ...initialListRequest,
-        pageSize: 15,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-        ]
-    });
-    // Fetch patient preferred health professional data
-    const { data: patientPreferredHealthProfessionalResponse, refetch: patientPreferredHealthProfessionalRefetch } =
-        useGetPatientPreferredHealthProfessionalQuery(patientPreferredHealthProfessional, { skip: !patient.key });
+    loadPractitioners();
+  }, [preferredHPResponse]);
 
-    // Handle adding a new preferred health professional
-    const handleNewPreferredHP = () => {
-        setPatientHP({ ...newApPatientPreferredHealthProfessional });
-        setPractitioner({ ...newApPractitioner });
-        setOpen(true);
-    };
-    // Handle clearing and closing delete and preferred health professional modals
-    const handleClearDeletePH = () => {
-        setPatientHP({ ...newApPatientPreferredHealthProfessional });
-        setPractitioner({ ...newApPractitioner });
-        setDeletePreferredHealthModalOpen(false);
-    };
-    // Handle deleting a preferred health professional
-    const handleDeletePH = () => {
-        deletePatientPH({ ...patientHP }).unwrap().then(() => {
-            dispatch(notify({ msg: 'Preferred Health Professional Deleted Successfully', sev: 'success' }));
-            patientPreferredHealthProfessionalRefetch();
-        })
-        handleClearDeletePH();
-    };
-    // Change page event handler
-    const handlePageChange = (_: unknown, newPage: number) => {
-        setPatientPreferredHealthProfessional({ ...patientPreferredHealthProfessional, pageNumber: newPage + 1 });
-    };
-    // Change number of rows per page
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setPatientPreferredHealthProfessional({
-            ...patientPreferredHealthProfessional,
-            pageSize: parseInt(event.target.value, 10),
-            pageNumber: 1 // Reset to first page
-        });
-    };
-    // Effects
-    useEffect(() => {
-        setPatientPreferredHealthProfessional((prev) => ({
-            ...prev,
-            filters: [
-                {
-                    fieldName: 'deleted_at',
-                    operator: 'isNull',
-                    value: undefined,
-                },
-                ...(patient?.key
-                    ? [
-                        {
-                            fieldName: 'patient_key',
-                            operator: 'match',
-                            value: patient?.key,
-                        }
-                    ]
-                    : []),
-            ],
-        }));
-    }, [patient]);
-    // Pagination values
-    const pageIndex = patientPreferredHealthProfessional.pageNumber - 1;
-    const rowsPerPage = patientPreferredHealthProfessional.pageSize;
-    const totalCount = patientPreferredHealthProfessionalResponse?.extraNumeric ?? 0;
-    return (
-        <div className="tab-main-container">
-            <div className="tab-content-btns">
-                <AddPrefferdHealthProfessionalModal open={open} setOpen={setOpen} patient={patient} patientHP={patientHP} setPatientHP={setPatientHP} refetch={patientPreferredHealthProfessionalRefetch} practitioner={practitioner} setPractitioner={setPractitioner} />
-                <MyButton
-                    onClick={handleNewPreferredHP}
-                    disabled={isClick}
-                    prefixIcon={() => <PlusRound />}>
-                    New Preferred Health Professional
-                </MyButton>
-                <MyButton
-                    disabled={isClick || !editable}
-                    onClick={() => {
-                        setOpen(true);
-                    }}
-                    prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}>
-                    Edit
-                </MyButton>
-                <MyButton
-                    disabled={isClick || !editable}
-                    onClick={() => { setDeletePreferredHealthModalOpen(true) }}
-                    prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}>
-                    Delete
-                </MyButton>
-            </div>
-            <MyTable
-                data={patientPreferredHealthProfessionalResponse?.object ?? []}
-                columns={columns}
-                onRowClick={rowData => {
-                    setPatientHP(rowData);
-                    setEditable(true);
-                    setPractitioner(rowData?.practitioner);
-                }}
-                rowClassName={isSelected}
-                page={pageIndex}
-                rowsPerPage={rowsPerPage}
-                totalCount={totalCount}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-            />
-            <DeletionConfirmationModal
-                open={deletePreferredHealthModalOpen}
-                setOpen={setDeletePreferredHealthModalOpen}
-                itemToDelete='Record'
-                actionButtonFunction={handleDeletePH}>
-            </DeletionConfirmationModal>
-        </div>
+  const handleNewPreferredHP = () => {
+    setEditable(false);
+    setPatientHP({ ...newPatientPreferredHealthProfessional });
+    setPractitioner({ ...newPractitioner });
+    setOpen(true);
+  };
+
+  const handleDeletePH = () => {
+    deletePatientPH({
+      id: patientHP.id,
+      patientId: patient.id
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(
+          notify({ msg: 'Preferred Health Professional Deleted Successfully', sev: 'success' })
+        );
+        refetch();
+      });
+
+    setDeletePreferredHealthModalOpen(false);
+    setPatientHP({ ...newPatientPreferredHealthProfessional });
+    setPractitioner({ ...newPractitioner });
+  };
+
+  const handlePageChange = (event, newPage) => {
+    PaginationPerPage.handlePageChange(
+      event,
+      newPage,
+      paginationParams,
+      links,
+      setPaginationParams
     );
+  };
+
+  const handleRowsPerPageChange = event => {
+    const newSize = Number(event.target.value);
+    setPaginationParams({
+      ...paginationParams,
+      size: newSize,
+      page: 0,
+      timestamp: Date.now()
+    });
+  };
+
+  const columns = [
+    {
+      key: 'practitionerId',
+      title: <Translate>Name of the HP</Translate>,
+      flexGrow: 4,
+      render: row => {
+        const p = practitionersMap[row.practitionerId];
+        if (!p) return '';
+        return `${p.firstName} ${p.lastName ?? ''}`.trim();
+      }
+    },
+    {
+      key: 'phoneNumber',
+      title: <Translate>Phone Number</Translate>,
+      flexGrow: 4,
+      render: row => practitionersMap[row.practitionerId]?.phoneNumber ?? ''
+    },
+    {
+      key: 'email',
+      title: <Translate>Email</Translate>,
+      flexGrow: 4,
+      render: row => {
+        const p = practitionersMap[row.practitionerId];
+        return p?.email || '';
+      }
+    },
+    {
+      key: 'networkAffiliation',
+      title: <Translate>Network Affiliation</Translate>,
+      flexGrow: 4,
+      dataKey: 'networkAffiliation'
+    },
+    {
+      key: 'relatedWith',
+      title: <Translate>Related with</Translate>,
+      flexGrow: 4,
+      dataKey: 'relatedWith'
+    },
+    {
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      width: 120,
+      render: row => {
+        const p = practitionersMap[row.practitionerId];
+        return (
+          <div className="container-of-icons">
+            <FontAwesomeIcon
+              icon={faUserPen}
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                setPatientHP(row);
+                setPractitioner(p || { ...newPractitioner });
+                setEditable(true);
+                setOpen(true);
+              }}
+            />
+            <FontAwesomeIcon
+              icon={faTrash}
+              style={{ marginLeft: 15, color: 'var(--primary-pink)', cursor: 'pointer' }}
+              onClick={() => {
+                setPatientHP(row);
+                setDeletePreferredHealthModalOpen(true);
+              }}
+            />
+          </div>
+        );
+      }
+    }
+  ];
+
+  const isSelected = row => (row?.id === patientHP?.id ? 'selected-row' : '');
+
+  return (
+    <div className="tab-main-container">
+      <AddPrefferdHealthProfessionalModal
+        open={open}
+        setOpen={setOpen}
+        patient={patient}
+        patientHP={patientHP}
+        setPatientHP={setPatientHP}
+        refetch={refetch}
+        practitioner={practitioner}
+        setPractitioner={setPractitioner}
+        editable={editable}
+      />
+
+      <DeletionConfirmationModal
+        open={deletePreferredHealthModalOpen}
+        setOpen={setDeletePreferredHealthModalOpen}
+        itemToDelete="Record"
+        actionButtonFunction={handleDeletePH}
+      />
+
+      <div className="tab-content-btns">
+        <MyButton
+          onClick={handleNewPreferredHP}
+          disabled={isClick}
+          prefixIcon={() => <PlusRound />}
+        >
+          New Preferred Health Professional
+        </MyButton>
+
+        <MyButton
+          disabled={isClick || !editable}
+          onClick={() => setOpen(true)}
+          prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
+        >
+          Edit
+        </MyButton>
+
+        <MyButton
+          disabled={isClick || !editable}
+          onClick={() => setDeletePreferredHealthModalOpen(true)}
+          prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}
+        >
+          Delete
+        </MyButton>
+      </div>
+
+      <MyTable
+        data={preferredHPResponse?.data ?? []}
+        loading={isFetching}
+        columns={columns}
+        onRowClick={row => {
+          const p = practitionersMap[row.practitionerId];
+          setPatientHP(row);
+          setEditable(true);
+          setPractitioner(p || { ...newPractitioner });
+        }}
+        rowClassName={isSelected}
+        totalCount={totalCount}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+    </div>
+  );
 };
 
 export default PreferredHealthProfessional;

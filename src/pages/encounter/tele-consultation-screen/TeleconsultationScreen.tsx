@@ -9,6 +9,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import Translate from '@/components/Translate';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import {
   setEncounter as setEncounterRedux,
   setPatient as setPatientRedux
@@ -47,6 +48,7 @@ import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import CallLog from './CallLog';
 import DragDropTable from './DragDropTable';
 import './start-tele-consultation/styles.less';
+import { filter } from 'lodash';
 
 const TeleconsultationRequests = () => {
   const sliceauth = useSelector((state: any) => state.auth);
@@ -101,7 +103,15 @@ const TeleconsultationRequests = () => {
     data: orders,
     refetch,
     isLoading: ordersLod
-  } = useGetTeleConsultationListQuery({ ...initialListRequestId });
+  } = useGetTeleConsultationListQuery({ ...initialListRequestId,
+    filters: [
+      {
+        fieldName: 'to_department_id',
+        operator: 'match',
+        value:sliceauth.selectedDepartment?.departmentId
+      }
+    ]
+   });
 
   const { data: callLogs } = useGetTeleConsultationCallLogListQuery(
     {
@@ -119,7 +129,7 @@ const TeleconsultationRequests = () => {
     }
   );
 
-  console.log('callLogs', callLogs);
+
 
   const [save, saveMutation] = useSaveTeleConsultationMutation();
   const [saveCallLog, saveCallLogMutation] = useSaveTeleConsultationCallLogMutation();
@@ -129,6 +139,15 @@ const TeleconsultationRequests = () => {
       setEncounter(encounterData);
     }
   }, [encounterData]);
+
+ useEffect(() => {
+  if (isLoading || isFetching) {
+    dispatch(showSystemLoader());
+  } else {
+    dispatch(hideSystemLoader());
+  }
+}, [isLoading, isFetching, dispatch]);
+
 
   useEffect(() => {
     setPatient(requests?.patient ?? {});
@@ -158,8 +177,8 @@ const TeleconsultationRequests = () => {
         })
       );
 
-      refetch();
-
+      await refetch().unwrap?.(); 
+      
       navigate('/start-tele-consultation', {
         state: {
           patient,
@@ -359,6 +378,7 @@ const TeleconsultationRequests = () => {
                 size="small"
                 disabled={rowData.statusLkey === '32943037809141'}
                 onClick={async () => {
+                  setRequests(rowData);
                   if (
                     rowData.statusLkey !== '32943037809141' &&
                     rowData.statusLkey !== '5959341154465084'
@@ -373,7 +393,7 @@ const TeleconsultationRequests = () => {
                         patient: patient,
                         encounter: encounter,
                         fromPage: 'teleconsultation-requests',
-                        consultaition: requests,
+                        consultaition: rowData,
                         notelist: fetchedProgressNotes ?? []
                       }
                     });
@@ -454,7 +474,6 @@ const TeleconsultationRequests = () => {
 
   const paginatedData = sortedData?.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
-  console.log(paginatedData);
 
   const divContent = (
       "Tele Consultation Screen"

@@ -61,8 +61,7 @@ export const BrandMedicationService = createApi({
     // 🔹 Update
    updateBrandMedication: builder.mutation({
   query: (body ) => {
-    console.log("🧩 updateBrandMedication BODY:", body);
-    console.log("🧩 updateBrandMedication ID:", body.id);
+
 
     return {
       url: `/api/setup/brand-medication/${body.id}`,
@@ -226,6 +225,19 @@ export const BrandMedicationService = createApi({
       },
       providesTags: ["BrandMedication"],
     }),
+
+        // 🔹 Search by Brand name/code OR ActiveIngredient name/ATC
+    searchBrandMedicationsByNameOrActive: builder.query<
+      [],
+      { keyword: string }
+    >({
+      query: ({ keyword }) => ({
+        url: `/api/setup/brand-medication/search/${encodeURIComponent(keyword)}`,
+        method: "GET",
+      }),
+      providesTags: ["BrandMedication"],
+    }),
+
   }),
 });
 
@@ -250,5 +262,6 @@ export const {
   useGetBrandMedicationsByUseSinglePatientQuery,
   useLazyGetBrandMedicationsByUseSinglePatientQuery,
   useGetBrandMedicationsByIsActiveQuery,
-  useLazyGetBrandMedicationsByIsActiveQuery
+  useLazyGetBrandMedicationsByIsActiveQuery,
+  useSearchBrandMedicationsByNameOrActiveQuery,
 } = BrandMedicationService;

@@ -1,240 +1,317 @@
-import React, { useEffect, useState } from 'react';
-import { Text, Form } from 'rsuite';
-import { MdDelete } from 'react-icons/md';
-import { Plus } from '@rsuite/icons';
-import { MdSave } from 'react-icons/md';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { newApActiveIngredientSpecialPopulation } from '@/types/model-types-constructor';
-import { ApActiveIngredientSpecialPopulation } from '@/types/model-types';
-import { initialListRequest, ListRequest } from '@/types/types';
+import React, { useState, useMemo } from "react";
+import { Form, Text, Panel } from "rsuite";
+import { MdSave, MdDelete } from "react-icons/md";
+import { Plus } from "@rsuite/icons";
+
+import Translate from "@/components/Translate";
+import MyTable from "@/components/MyTable";
+import MyInput from "@/components/MyInput";
+import MyButton from "@/components/MyButton/MyButton";
+import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
+
+import { useAppDispatch } from "@/hooks";
+import { notify } from "@/utils/uiReducerActions";
+
 import {
-  useGetActiveIngredientSpecialPopulationQuery,
-  useRemoveActiveIngredientSpecialPopulationMutation,
-  useSaveActiveIngredientSpecialPopulationMutation
-} from '@/services/medicationsSetupService';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import './styles.less';
-const SpecialPopulation = ({ activeIngredients }) => {
+  useGetActiveIngredientSpecialPopulationsQuery,
+  useCreateActiveIngredientSpecialPopulationMutation,
+  useUpdateActiveIngredientSpecialPopulationMutation,
+  useDeleteActiveIngredientSpecialPopulationMutation
+} from "@/services/setup/activeIngredients/activeIngredientSpecialPopulationService";
+
+import { newActiveIngredientSpecialPopulation } from "@/types/model-types-constructor-new";
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+
+import "./styles.less";
+import { conjureValueBasedOnKeyFromList } from "@/utils";
+import { Block } from "@mui/icons-material";
+
+const SpecialPopulation = ({ selectedActiveIngredients }) => {
   const dispatch = useAppDispatch();
-  const [openConfirmDeleteSpecialPopulationnModal, setOpenConfirmDeleteSpecialPopulationModal] =
-    useState<boolean>(false);
-  const [selectedActiveIngredientSpecialPopulation, setSelectedActiveIngredientSpecialPopulation] =
-    useState<ApActiveIngredientSpecialPopulation>({
-      ...newApActiveIngredientSpecialPopulation
-    });
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  // Fetch special population Lov response
-  const { data: specialPopulationLovQueryResponseData } = useGetLovValuesByCodeQuery(
-    'SPECIAL_POPULATION_GROUPS'
-  );
-  // Fetch special population list response
+
+  // ---------------------------
+  // STATE
+  // ---------------------------
+  const [record, setRecord] = useState({
+    ...newActiveIngredientSpecialPopulation,
+  });
+
+  const [openDelete, setOpenDelete] = useState(false);
+  const [sortColumn, setSortColumn] = useState("specialPopulation");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+  // ---------------------------
+  // LOVs
+  // ---------------------------
+  const { data: specialLov } = useGetLovValuesByCodeQuery("SPECIAL_POPULATION_GROUPS");
+
+  // ---------------------------
+  // API
+  // ---------------------------
   const {
-    data: specialPopulationListResponseData,
+    data: list = [],
+    isFetching,
     refetch,
-    isFetching
-  } = useGetActiveIngredientSpecialPopulationQuery(listRequest);
-  // remove active ingredient special population
-  const [removeActiveIngredientSpecialPopulation, removeActiveIngredientSpecialPopulationMutation] =
-    useRemoveActiveIngredientSpecialPopulationMutation();
-  // save active ingredient special population
-  const [saveActiveIngredientSpecialPopulation, saveActiveIngredientSpecialPopulationMutation] =
-    useSaveActiveIngredientSpecialPopulationMutation();
-
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && rowData.key === selectedActiveIngredientSpecialPopulation.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  // Icons column (remove)
-  const iconsForActions = () => (
-    <div className="container-of-icons">
-      <MdDelete
-        className="icons-style"
-        title="Delete"
-        size={24}
-        fill="var(--primary-pink)"
-        onClick={() => setOpenConfirmDeleteSpecialPopulationModal(true)}
-      />
-    </div>
+  } = useGetActiveIngredientSpecialPopulationsQuery(
+    selectedActiveIngredients?.id,
+    { skip: !selectedActiveIngredients?.id }
   );
 
-  //Table columns
-  const tableColumns = [
+  const [createSP] = useCreateActiveIngredientSpecialPopulationMutation();
+  const [updateSP] = useUpdateActiveIngredientSpecialPopulationMutation();
+  const [deleteSP] = useDeleteActiveIngredientSpecialPopulationMutation();
+
+  // ---------------------------
+  // TABLE COLUMNS
+  // ---------------------------
+  const columns = [
     {
-      key: 'specialPopulation',
+      key: "specialPopulation",
       title: <Translate>Special Population</Translate>,
-      render: rowData => (
+      render: (row) => (
         <Text>
-          {rowData.additionalPopulationLvalue
-            ? rowData.additionalPopulationLvalue.lovDisplayVale
-            : rowData.additionalPopulationLkey}
+          {conjureValueBasedOnKeyFromList(
+            specialLov?.object ?? [],
+            row?.additionalPopulation,
+            "lovDisplayVale"
+          )}
         </Text>
-      )
+      ),
     },
     {
-      key: 'considerations',
+      key: "considerations",
       title: <Translate>Considerations</Translate>,
-      render: rowData => <Text>{rowData.considerations}</Text>
+      render: (row) => <Text>{row.considerations}</Text>,
     },
     {
-      key: 'icons',
-      title: <Translate></Translate>,
-      render: () => iconsForActions()
-    }
+      key: "icons",
+      title: "",
+      render: (row) => (
+        <MdDelete
+          size={24}
+          fill="var(--primary-pink)"
+          className="icons-style"
+          onClick={() => {
+            setRecord(row);
+            setOpenDelete(true);
+          }}
+        />
+      ),
+    },
   ];
 
-  // handle new
-  const handleNew = () => {
-    setSelectedActiveIngredientSpecialPopulation({
-      ...newApActiveIngredientSpecialPopulation,
-      additionalPopulationLkey: null
-    });
-  };
 
-  // handle remove
-  const remove = () => {
-    setOpenConfirmDeleteSpecialPopulationModal(false);
-    if (selectedActiveIngredientSpecialPopulation.key) {
-      removeActiveIngredientSpecialPopulation({
-        ...selectedActiveIngredientSpecialPopulation
-      })
-        .unwrap()
-        .then(() => {
-          dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-          setSelectedActiveIngredientSpecialPopulation({
-            ...newApActiveIngredientSpecialPopulation,
-            additionalPopulationLkey: null
-          });
-          refetch();
-        });
+  // ---------------------------
+  // SAVE
+  // ---------------------------
+  const save = async () => {
+    if (!selectedActiveIngredients?.id) {
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
+      return;
     }
-  };
 
-  // handle save
-  const save = () => {
-    saveActiveIngredientSpecialPopulation({
-      ...selectedActiveIngredientSpecialPopulation,
-      activeIngredientKey: activeIngredients.key,
-      createdBy: 'Administrator'
-    })
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-        setSelectedActiveIngredientSpecialPopulation({
-          ...newApActiveIngredientSpecialPopulation,
-          additionalPopulationLkey: null
-        });
-        refetch();
-      });
-  };
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'active_ingredient_key',
-        operator: 'match',
-        value: activeIngredients.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
+    if (!record.specialPopulation) {
+      dispatch(notify({ msg: "Please fix the following fields: • Special Population is required", sev: "error" }));
+      return;
+    }
+
+    if (!record.considerations || record.considerations.trim() === "") {
+      dispatch(notify({ msg: "Please fix the following fields: • Considerations is required", sev: "error" }));
+      return;
+    }
+
+
+    const payload: any = {
+      id: record.id ?? record.Id ?? record.ID ?? null,
+      activeIngredientId: selectedActiveIngredients.id,
+      additionalPopulation: record.specialPopulation,
+      considerations: record.considerations,
+    };
+
+    delete payload.Id;
+    delete payload.ID;
+
+    try {
+      if (payload.id) {
+        await updateSP(payload).unwrap();
+        dispatch(notify({ msg: "Updated successfully", sev: "success" }));
+      } else {
+        await createSP(payload).unwrap();
+        dispatch(notify({ msg: "Added successfully", sev: "success" }));
       }
-    ];
-    setListRequest(prevRequest => ({
-      ...prevRequest,
-      filters: updatedFilters
-    }));
-  }, [activeIngredients.key]);
 
-  // Effects
-  useEffect(() => {
-    if (saveActiveIngredientSpecialPopulationMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
+      refetch();
+      setRecord({ ...newActiveIngredientSpecialPopulation });
+
+    } catch (err) {
+      dispatch(notify({ msg: "Save failed", sev: "error" }));
     }
-  }, [saveActiveIngredientSpecialPopulationMutation]);
+  };
 
-  useEffect(() => {
-    if (removeActiveIngredientSpecialPopulationMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
+
+
+  // ---------------------------
+  // DELETE
+  // ---------------------------
+  const remove = async () => {
+    setOpenDelete(false);
+
+    if (!record?.id) {
+      dispatch(notify({ msg: "Invalid item", sev: "error" }));
+      return;
     }
-  }, [removeActiveIngredientSpecialPopulationMutation]);
 
+    try {
+      await deleteSP(record.id).unwrap();
+      dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
+      refetch();
+      setRecord({ ...newActiveIngredientSpecialPopulation });
+    } catch {
+      dispatch(notify({ msg: "Delete failed", sev: "error" }));
+    }
+  };
+
+  // ---------------------------
+  // PAGINATION
+  // ---------------------------
+
+  // 📌 SORTING IMPLEMENTATION
+  const sortedList = useMemo(() => {
+    if (!list || !sortColumn) return list ?? [];
+
+    return [...list].sort((a, b) => {
+      let aVal = a[sortColumn];
+      let bVal = b[sortColumn];
+
+      // ⭐ Special sorting: LOV — sort by display name
+      if (sortColumn === "specialPopulation") {
+        aVal = conjureValueBasedOnKeyFromList(
+          specialLov?.object ?? [],
+          a.additionalPopulation,
+          "lovDisplayVale"
+        );
+        bVal = conjureValueBasedOnKeyFromList(
+          specialLov?.object ?? [],
+          b.additionalPopulation,
+          "lovDisplayVale"
+        );
+      }
+
+      if (aVal == null) return -1;
+      if (bVal == null) return 1;
+
+      let result = 0;
+
+      if (typeof aVal === "string") {
+        result = aVal.toString().localeCompare(bVal.toString(), undefined, { numeric: true });
+      } else {
+        result = aVal > bVal ? 1 : -1;
+      }
+
+      return sortType === "asc" ? result : -result;
+    });
+  }, [list, sortColumn, sortType, specialLov]);
+
+  const [pagination, setPagination] = useState({ page: 0, size: 5 });
+
+  const paginatedData = useMemo(() => {
+    const start = pagination.page * pagination.size;
+    return sortedList.slice(start, start + pagination.size);
+  }, [sortedList, pagination.page, pagination.size]);
+
+  const totalCount = list.length;
+
+  // ---------------------------
+  // RENDER
+  // ---------------------------
   return (
-    <Form fluid>
-      <div className="container-of-actions-header-active">
-        <div className="container-of-fields-active">
-          <MyInput
-            fieldType="select"
-            selectData={specialPopulationLovQueryResponseData?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            width={200}
-            fieldName="additionalPopulationLkey"
-            fieldLabel="Additional Population"
-            record={selectedActiveIngredientSpecialPopulation}
-            setRecord={setSelectedActiveIngredientSpecialPopulation}
-            menuMaxHeight={200}
-          />
+    <Panel>
+      <Form fluid>
+        <div className="container-of-actions-header-active">
+          <div className="container-of-fields-active">
+            <MyInput
+              fieldType="select"
+              selectData={specialLov?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              fieldName="specialPopulation"
+              record={record}
+              setRecord={setRecord}
+              required
+            />
+          </div>
+
+          <div className="container-of-buttons-active">
+            <MyButton
+              prefixIcon={() => <MdSave />}
+              title="Save"
+              onClick={save}
+              color="var(--deep-blue)"
+            />
+            <MyButton
+              prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
+              title="Clear"
+              color="var(--deep-blue)"
+              onClick={() => setRecord({ ...newActiveIngredientSpecialPopulation })}
+            />
+          </div>
         </div>
-        <div className="container-of-buttons-active">
-          <MyButton
-            prefixIcon={() => <MdSave />}
-            color="var(--deep-blue)"
-            onClick={save}
-            title="Save"
-          ></MyButton>
-          <MyButton
-            prefixIcon={() => <Plus />}
-            color="var(--deep-blue)"
-            onClick={handleNew}
-            title="New"
-          ></MyButton>
-        </div>
-      </div>
-      <MyInput
-        width="100%"
-        fieldName="considerations"
-        fieldType="textarea"
-        record={selectedActiveIngredientSpecialPopulation}
-        setRecord={setSelectedActiveIngredientSpecialPopulation}
-        required
-      />
-      <MyTable
-        height={450}
-        data={specialPopulationListResponseData?.object ?? []}
-        loading={isFetching}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        onRowClick={rowData => {
-          setSelectedActiveIngredientSpecialPopulation(rowData);
-        }}
-        sortColumn={listRequest.sortBy}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-        }}
-      />
-      <DeletionConfirmationModal
-        open={openConfirmDeleteSpecialPopulationnModal}
-        setOpen={setOpenConfirmDeleteSpecialPopulationModal}
-        itemToDelete="Special Population"
-        actionButtonFunction={remove}
-        actionType="Delete"
-      />
-    </Form>
+
+        <MyInput
+          width="100%"
+          fieldName="considerations"
+          fieldType="textarea"
+          record={record}
+          setRecord={setRecord}
+          required
+        />
+
+        <br />
+
+        <MyTable
+          height={450}
+          data={paginatedData}
+          loading={isFetching}
+          columns={columns}
+          onRowClick={(row) => {
+            const id = row.id ?? row.Id ?? row.ID ?? null;
+
+            setRecord({
+              id,
+              activeIngredientId: selectedActiveIngredients?.id ?? 0,
+              considerations: row.considerations ?? "",
+              specialPopulation: row.additionalPopulation ?? ""
+            });
+          }}
+          rowClassName={(row) => {
+            const r = row.id ?? row.Id ?? row.ID;
+            const s = record.id ?? null;
+            return r === s ? "selected-row" : "";
+          }}
+          page={pagination.page}
+          rowsPerPage={pagination.size}
+          totalCount={totalCount}
+          onPageChange={(_, p) => setPagination({ ...pagination, page: p })}
+          onRowsPerPageChange={(e) =>
+            setPagination({ page: 0, size: Number(e.target.value) })
+          }
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={(col, order) => {
+            setSortColumn(col);
+            setSortType(order);
+          }}
+        />
+
+        <DeletionConfirmationModal
+          open={openDelete}
+          setOpen={setOpenDelete}
+          itemToDelete="Special Population"
+          actionButtonFunction={remove}
+          actionType="Delete"
+        />
+      </Form>
+    </Panel>
   );
 };
 

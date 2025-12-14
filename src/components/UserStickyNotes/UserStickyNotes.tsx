@@ -9,8 +9,17 @@ import { RadioGroup } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { Button, Form, Nav, Panel, Sidebar, Sidenav } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useAppSelector } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { conjureOrderBasedOnKeyFromListOfValues, conjureValueBasedOnKeyFromListOfValues } from '@/utils';
 import './style.less';
+import {
+  useCreateUserStickyNotesMutation,
+  useDeleteUserStickyNotesMutation,
+  useGetAlluserStickyNotesByUserIdQuery
+} from '@/services/setup/userStickyNotes/userStickyNotes';
+import { UserStickyNotesCreateVM } from '@/types/model-types-new';
+import { newUserStickyNotesCreateVM } from '@/types/model-types-constructor-new';
+import { notify } from '@/utils/uiReducerActions';
 
 interface StickyNote {
   id: number;
@@ -32,23 +41,28 @@ interface UserStickyNotesProps {
 const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   expand,
   setExpand,
-  windowHeight,
   title = 'User Sticky Notes',
-  direction = 'left',
   showButton = true
 }) => {
+  const dispatch = useAppDispatch();
   const mode = useAppSelector((state: any) => state.ui.mode);
-  const [noteInput, setNoteInput] = useState({
-    note: '',
-    level: '',
-    color: ''
+  const user = JSON.parse(localStorage.getItem('user'));
+  const [userStickyNotesCreateVM, setUserStickyNotesCreateVM] = useState<UserStickyNotesCreateVM>({
+    ...newUserStickyNotesCreateVM
   });
+  console.log(user);
+  console.log("user");
+  const { data: getUserStickyNotes, refetch } = useGetAlluserStickyNotesByUserIdQuery(user?.id);
+  const [createUserStickyNotes] = useCreateUserStickyNotesMutation();
+  const [deleteUserStickyNotes] = useDeleteUserStickyNotesMutation();
 
-  const [notes, setNotes] = useState<StickyNote[]>([]);
+  
   const [modalOpen, setModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<StickyNote | null>(null);
 
   const { data: lowMidHighLovQueryResponse } = useGetLovValuesByCodeQuery('LOW_MOD_HIGH');
+  console.log(lowMidHighLovQueryResponse);
+  console.log("lowMidHighLovQueryResponse");
 
   const colorOptions = [
     { label: 'Purple', value: '--note-purple' },
@@ -67,8 +81,18 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
   // Confirm delete
   const confirmDelete = () => {
     if (noteToDelete) {
-      setNotes(notes.filter(note => note.id !== noteToDelete.id));
-      setNoteToDelete(null);
+      deleteUserStickyNotes(noteToDelete?.id)
+        .unwrap()
+        .then(() => {
+          dispatch(
+          notify({ msg: 'The Sticky Note has been deleted successfully', sev: 'success' })
+          );
+          refetch();
+        }).catch(e => {
+          dispatch(
+          notify({ msg: e?.data?.fieldErrors[0]?.message, sev: 'error' })
+          );
+        });
       setModalOpen(false);
     }
   };
@@ -83,22 +107,24 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
         fieldLabel="Note"
         fieldName="note"
         height={120}
-        record={noteInput}
-        setRecord={setNoteInput}
+        record={userStickyNotesCreateVM}
+        setRecord={setUserStickyNotesCreateVM}
+        required
       />
 
       {/* Priority select */}
       <MyInput
         fieldLabel="Priority Level"
-        fieldName="level"
+        fieldName="priority"
         fieldType="select"
         selectData={lowMidHighLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         searchable={false}
-        record={noteInput}
-        setRecord={setNoteInput}
+        record={userStickyNotesCreateVM}
+        setRecord={setUserStickyNotesCreateVM}
         width={350}
+        required
       />
 
       {/* Color selector */}
@@ -106,8 +132,10 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
         <label className="label">Choose Color</label>
         <RadioGroup
           name="color"
-          value={noteInput.color || ''}
-          onChange={value => setNoteInput({ ...noteInput, color: value })}
+          value={userStickyNotesCreateVM.color || ''}
+          onChange={value =>
+            setUserStickyNotesCreateVM({ ...userStickyNotesCreateVM, color: String(value) })
+          }
           inline
         >
           {colorOptions.map(option => (
@@ -115,15 +143,21 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
               <input
                 type="radio"
                 value={option.value}
-                checked={noteInput.color === option.value}
-                onChange={() => setNoteInput({ ...noteInput, color: option.value })}
+                checked={userStickyNotesCreateVM.color === option.value}
+                onChange={() =>
+                  setUserStickyNotesCreateVM({ ...userStickyNotesCreateVM, color: option.value })
+                }
                 style={{ display: 'none' }}
               />
               <div
-                className={`color-circle ${noteInput.color === option.value ? 'active' : ''}`}
+                className={`color-circle ${
+                  userStickyNotesCreateVM.color === option.value ? 'active' : ''
+                }`}
                 style={{ backgroundColor: `var(${option.value})` }}
               >
-                {noteInput.color === option.value && <span className="checkmark">✓</span>}
+                {userStickyNotesCreateVM.color === option.value && (
+                  <span className="checkmark">✓</span>
+                )}
               </div>
             </label>
           ))}
@@ -133,38 +167,63 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
       {/* Save button */}
       <MyButton
         onClick={() => {
-          if (!noteInput.note.trim()) return;
-          const newNote = {
-            id: Date.now(),
-            text: noteInput.note,
-            createdAt: new Date().toLocaleString(),
-            level: noteInput.level || 'low',
-            color: noteInput.color || '--note-yellow'
-          };
-          setNotes([newNote, ...notes]);
-          setNoteInput({ note: '', level: '', color: '' });
+          const order_value = conjureOrderBasedOnKeyFromListOfValues(
+            lowMidHighLovQueryResponse?.object ?? [],
+            userStickyNotesCreateVM?.priority,
+            'valueOrder'
+          );
+          const toCreate = { ...userStickyNotesCreateVM, userId: user?.id, priorityOrder: order_value };
+          console.log("toCreate");
+          console.log(toCreate);
+          createUserStickyNotes(toCreate)
+            .unwrap()
+            .then(() => {
+              setUserStickyNotesCreateVM({...newUserStickyNotesCreateVM})
+              refetch();
+              dispatch(
+               notify({ msg: 'The Sticky Note has been saved successfully', sev: 'success' })
+              );
+            })
+            .catch(e => {
+              dispatch(
+             notify({ msg: e?.data?.fieldErrors[0]?.message, sev: 'error' })
+              );
+            });
         }}
       >
         Save
       </MyButton>
       {/* Notes list */}
       <div className="note-list-wrapper">
-        {notes.map(note => (
-          <div key={note.id} className="note-box" style={{ backgroundColor: `var(${note.color})` }}>
-            <strong className="note-level">{note.level}</strong>
-            <div>{note.text}</div>
-            <div className="note-footer">
-              <span>{note.createdAt}</span>
-              <button
-                onClick={() => openDeleteModal(note)}
-                className="delete-note-btn"
-                title="Delete Note"
-              >
-                <FaX />
-              </button>
+        {getUserStickyNotes?.map(note => {
+          // Get the display value for the priority level from LOV
+          const priorityDisplayValue = conjureValueBasedOnKeyFromListOfValues(
+            lowMidHighLovQueryResponse?.object ?? [],
+            note?.priority,
+            'lovDisplayVale'
+          );
+
+          return (
+            <div
+              key={note.id}
+              className="note-box"
+              style={{ backgroundColor: `var(${note.color})` }}
+            >
+              <strong className="note-level">{priorityDisplayValue}</strong>
+              <div>{note.note}</div>
+              <div className="note-footer">
+                <span>{new Date(note.createdDate).toLocaleString()}</span>
+                <button
+                  onClick={() => openDeleteModal(note)}
+                  className="delete-note-btn"
+                  title="Delete Note"
+                >
+                  <FaX />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Form>
   );
@@ -203,7 +262,7 @@ const UserStickyNotes: React.FC<UserStickyNotesProps> = ({
       <DeletionConfirmationModal
         open={modalOpen}
         setOpen={setModalOpen}
-        itemToDelete={`note: "${noteToDelete?.text.substring(0, 20)}..."`}
+        itemToDelete={`note: "${noteToDelete?.note?.substring(0, 20)}..."`}
         actionButtonFunction={confirmDelete}
         actionType="delete"
         confirmationQuestion="Are you sure you want to delete this note?"

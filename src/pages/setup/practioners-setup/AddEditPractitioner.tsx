@@ -166,7 +166,7 @@ const AddEditPractitioner = ({
 
               <MyInput
                 column
-                fieldLabel="sex at birth"
+                fieldLabel="Gender"
                 fieldType="select"
                 fieldName="sexAtBirthLkey"
                 selectData={gndrLovQueryResponse?.object ?? []}

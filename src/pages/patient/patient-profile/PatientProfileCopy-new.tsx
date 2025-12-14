@@ -9,7 +9,7 @@ import { newPatient } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
 import clsx from 'clsx';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Col, DOMHelper, Panel, Row } from 'rsuite';
 import BedsideRegistrationsModal from './BedsideRegistrations';
@@ -116,6 +116,8 @@ const PatientProfile = () => {
 
   const divContent = 'Patient Registration';
 
+  const searchRef = useRef<(() => void) | null>(null);
+
   /* ========================================================= */
   /* ======================= SAVE / UPDATE ==================== */
   /* ========================================================= */
@@ -123,8 +125,11 @@ const PatientProfile = () => {
   const handleSave = async () => {
     try {
       const saved = localPatient?.id
-        ? await updatePatient({ id: localPatient.id, data: localPatient }).unwrap()
-        : await addPatient(localPatient).unwrap();
+        ? await updatePatient({
+            id: localPatient.id,
+            data: { ...localPatient, isCompletedPatient: true }
+          }).unwrap()
+        : await addPatient({ ...localPatient, isCompletedPatient: true }).unwrap();
 
       setLocalPatient(saved);
       dispatch(setPatient(saved));
@@ -137,6 +142,12 @@ const PatientProfile = () => {
           sev: 'success'
         })
       );
+
+      if (searchRef.current) {
+        setTimeout(() => {
+          searchRef.current?.();
+        }, 500);
+      }
     } catch (err: any) {
       const msg = toHumanBackendError(err, {
         firstName: 'First Name',
@@ -212,6 +223,7 @@ const PatientProfile = () => {
         >
           <ProfileHeader
             localPatient={localPatient}
+            setLocalPatient={setLocalPatient}
             handleSave={handleSave}
             handleClear={handleClear}
             setVisitHistoryModel={setVisitHistoryModel}
@@ -317,6 +329,13 @@ const PatientProfile = () => {
               setRefetchData(true);
               dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
               setOpenPatientsDuplicateModal(false);
+
+              // تنفيذ البحث بعد حفظ المريض من modal
+              if (searchRef.current) {
+                setTimeout(() => {
+                  searchRef.current?.();
+                }, 500);
+              }
             })
         }
       />

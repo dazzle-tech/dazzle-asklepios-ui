@@ -1,6 +1,6 @@
 import MyInput from '@/components/MyInput';
-import { useGetResourcesQuery, useSaveAvailabilitySlicesMutation } from '@/services/appointmentService';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { useSaveAvailabilitySlicesMutation, useGetResourcesWithAvailabilityQuery } from '@/services/appointmentService';
+import { initialListRequest } from '@/types/types';
 import React, { useEffect, useState } from 'react';
 import {
     Modal,
@@ -14,12 +14,15 @@ import {
 } from 'rsuite';
 import { DAYS, DayValue } from '@/constants/days';
 import { ApResources } from '@/types/model-types';
-import { useGetFacilitiesQuery } from '@/services/setupService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { notify } from '@/utils/uiReducerActions';
+import { useDispatch } from 'react-redux';
 
 
 const SLICE_DURATION_MINUTES = 30;
 
 const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
+    const dispatch = useDispatch();
     const [facility, setFacility] = useState(null);
     const [resource, setResource] = useState<ApResources>(selectedResource || null);
     const [fromTime, setFromTime] = useState(null);
@@ -39,32 +42,77 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
     );
     const [saveResourcesAvailabilitySlices] = useSaveAvailabilitySlicesMutation();
 
-    useEffect(() => { console.log(selectedDays) }, [selectedDays]);
+    const resourceKey = selectedResource?.object?.[0]?.key;
+    const resourceFacilityKey = selectedResource?.object?.[0]?.facilityKey;
 
-    const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 100 });
-
-    const { data: resourcesListResponse } = useGetResourcesQuery(
-        resourcesListRequest
-    );
     const {
         data: facilityListResponse,
         isLoading: isGettingFacilities,
         isFetching: isFetchingFacilities
-    } = useGetFacilitiesQuery({ ...initialListRequest });
+    } = useGetAllFacilitiesQuery({});
+
+    // Load facility from selectedResource when modal opens (if facilityKey is provided)
+    useEffect(() => {
+        if (open && resourceFacilityKey && facilityListResponse && !facility) {
+            const facilityFromList = facilityListResponse.find(f => f.id?.toString() === resourceFacilityKey);
+            if (facilityFromList) {
+                setFacility(facilityFromList);
+            } else {
+                setFacility({ id: resourceFacilityKey });
+            }
+        }
+    }, [open, resourceFacilityKey, facilityListResponse, facility]);
+
+    // Fetch saved availability data when modal opens
+    const { data: resourcesWithAvailabilityResponse, refetch: refetchAvailability } = useGetResourcesWithAvailabilityQuery(
+        {
+            ...initialListRequest,
+            filters: resourceKey ? [{ fieldName: 'resource_key', operator: 'match', value: resourceKey }] : []
+        },
+        { skip: !resourceKey || !open }
+    );
+
+    // Fetch availability data when modal opens
+    useEffect(() => {
+        if (open && resourceKey) {
+            refetchAvailability();
+        }
+    }, [open, resourceKey, refetchAvailability]);
+
+    // Load facility from API response (even if no slices exist)
+    useEffect(() => {
+        if (resourcesWithAvailabilityResponse?.object?.length > 0 && facilityListResponse && !facility) {
+            resourcesWithAvailabilityResponse.object.forEach(objItem => {
+                if (objItem.key === resourceKey && objItem.facilityKey) {
+                    // Get facilityKey from objItem (backend should populate it from slices or resource)
+                    const facilityFromList = facilityListResponse.find(f => f.id?.toString() === objItem.facilityKey);
+                    if (facilityFromList) {
+                        setFacility(facilityFromList);
+                    } else {
+                        setFacility({ id: objItem.facilityKey });
+                    }
+                }
+            });
+        }
+    }, [resourcesWithAvailabilityResponse, resourceKey, facilityListResponse, facility]);
 
     useEffect(() => {
-        console.log('Selected Resource:', selectedResource);
-
-    }, [selectedResource])
-
-    useEffect(() => {
-        console.log('Selected Resource:', selectedResource);
-        if (selectedResource?.object?.length > 0) {
+        if (resourcesWithAvailabilityResponse?.object?.length > 0 && facilityListResponse) {
             const loadedSlices: Record<string, any[]> = {};
             const loadedDays: DayValue[] = [];
+            let loadedFacility = null;
 
-            selectedResource.object.forEach(objItem => {
-                if (objItem.availabilitySlices?.length > 0) {
+            let globalStartMinutes: number | null = null;
+            let globalEndMinutes: number | null = null;
+
+            resourcesWithAvailabilityResponse.object.forEach(objItem => {
+                if (objItem.key === resourceKey && objItem.availabilitySlices?.length > 0) {
+
+                    if (!loadedFacility && objItem.facilityKey) {
+                        const facilityFromList = facilityListResponse.find(f => f.id?.toString() === objItem.facilityKey);
+                        loadedFacility = facilityFromList || { id: objItem.facilityKey };
+                    }
+                    
                     objItem.availabilitySlices.forEach(slice => {
                         const day = String(slice.dayOfWeek);
                         
@@ -77,8 +125,24 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
                             loadedDays.push(day as DayValue);
                         }
 
-                        const fromDate = minutesToDisplayDate(slice.startHour);
-                        const toDate = minutesToDisplayDate(slice.endHour);
+                        // Backend sends startHour/startMinute and endHour/endMinute as separate fields
+                        const fromMinutes =
+                            (typeof slice.startHour === 'number' ? slice.startHour : 0) * 60 +
+                            (typeof slice.startMinute === 'number' ? slice.startMinute : 0);
+                        const toMinutes =
+                            (typeof slice.endHour === 'number' ? slice.endHour : 0) * 60 +
+                            (typeof slice.endMinute === 'number' ? slice.endMinute : 0);
+
+                        // Track global min/max across all slices (earliest start, latest end)
+                        if (globalStartMinutes === null || fromMinutes < globalStartMinutes) {
+                            globalStartMinutes = fromMinutes;
+                        }
+                        if (globalEndMinutes === null || toMinutes > globalEndMinutes) {
+                            globalEndMinutes = toMinutes;
+                        }
+
+                        const fromDate = minutesToDisplayDate(fromMinutes);
+                        const toDate = minutesToDisplayDate(toMinutes);
 
                         loadedSlices[day].push({
                             from: fromDate,
@@ -89,29 +153,32 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
                 }
             });
 
+            if (loadedFacility) {
+                setFacility(loadedFacility);
+            }
+
+            // Every time we open the modal, derive Time Range from the widest slice range
+            if (globalStartMinutes !== null && globalEndMinutes !== null) {
+                setFromTime(minutesToDisplayDate(globalStartMinutes));
+                setToTime(minutesToDisplayDate(globalEndMinutes));
+            }
+
+            // Set slices and days
             if (loadedDays.length > 0) {
                 setTimeSlices(loadedSlices);
                 setSelectedDays(loadedDays);
-                console.log('selectedResource:', selectedResource);
-                console.log('Loaded Days:', loadedDays);
-                console.log('Loaded Slices:', loadedSlices);
             }
         }
-    }, [selectedResource]);
+    }, [resourcesWithAvailabilityResponse, resourceKey, facilityListResponse]);
 
     const generateSlices = (from, to, duration) => {
-        console.log('generateSlices - Raw From:', from);
-        console.log('generateSlices - Raw To:', to);
-
         const start = (from instanceof Date && !isNaN(from.getTime())) ? from : new Date();
         const end = (to instanceof Date && !isNaN(to.getTime())) ? to : new Date();
 
         if (isNaN(start.getTime())) {
-            console.warn("Invalid 'from' date provided to generateSlices. Defaulting to 9 AM (fallback).");
             start.setHours(9, 0, 0, 0);
         }
         if (isNaN(end.getTime())) {
-            console.warn("Invalid 'to' date provided to generateSlices. Defaulting to 5 PM (fallback).");
             end.setHours(17, 0, 0, 0);
         }
 
@@ -179,34 +246,75 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
         return d;
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        if (!facility || (!facility.id && !facility.facilityKey)) {
+            dispatch(notify({ msg: 'Please select a facility', sev: 'warn' }));
+            return;
+        }
+
+        if (!selectedResource?.object?.[0]?.key) {
+            dispatch(notify({ msg: 'Resource is required', sev: 'warn' }));
+            return;
+        }
+
+        if (selectedDays.length === 0) {
+            dispatch(notify({ msg: 'Please select at least one day', sev: 'warn' }));
+            return;
+        }
 
         const finalData = selectedDays.map(day => {
             return {
                 day: day,
-                slices: timeSlices[day].map(slice => ({
+                slices: timeSlices[day]?.map(slice => ({
                     startTimeMinutes: generateMinutesFromMidnight(slice.from),
                     endTimeMinutes: generateMinutesFromMidnight(slice.to),
                     isBreak: slice.isBreak || false
-                }))
+                })) || []
             };
         });
 
+        // Get facility value - prioritize id, then facilityKey
+        const facilityValue = facility.id ? facility.id.toString() : (facility.facilityKey || null);
+        
+        if (!facilityValue) {
+            dispatch(notify({ msg: 'Facility ID is missing', sev: 'error' }));
+            return;
+        }
+
         try {
-            saveResourcesAvailabilitySlices({
-                facility: facility?.facilityKey,
-                resource: selectedResource?.object[0].key,
+            await saveResourcesAvailabilitySlices({
+                facility: facilityValue,
+                resource: selectedResource.object[0].key,
                 availability: finalData
             }).unwrap();
-            console.log('✅ SAVE SUCCESS:', {
-                facility,
-                resource: selectedResource?.object[0].key,
-                availability: finalData
-            });
-        } catch (err) {
-            console.error('❌ SAVE ERROR:', err);
+            dispatch(notify({ msg: 'Availability saved successfully', sev: 'success' }));
+            if (resourceKey) {
+                await refetchAvailability();
+            }
+        } catch (err: any) {
+            
+            // Extract error message from different possible locations
+            let errorMessage = 'Unknown error';
+            
+            if (err?.data) {
+                // Try different error message locations
+                errorMessage = err.data.message || err.data.msg || err.data.detail || err.data.title || errorMessage;
+            } else if (err?.error?.data) {
+                errorMessage = err.error.data.message || err.error.data.msg || err.error.data.detail || err.error.data.title || errorMessage;
+            } else if (err?.message) {
+                errorMessage = err.message;
+            } else if (err?.error?.message) {
+                errorMessage = err.error.message;
+            }
+            
+            // Add status code if available
+            const statusCode = err?.status || err?.error?.status;
+            if (statusCode) {
+                errorMessage = `Error ${statusCode}: ${errorMessage}`;
+            }
+            
+            dispatch(notify({ msg: `Error saving availability: ${errorMessage}`, sev: 'error' }));
         }
-        setOpen(false);
     };
 
     const handleToggleBreak = (day, index) => {
@@ -289,7 +397,6 @@ const handleAddSliceLeft = (day) => {
         const slices = prev[day] || [];
 
         if (!canAddSliceLeft(day, slices, sliceDuration, fromTime)) {
-            console.log('handleAddSliceLeft: Operation prevented by boundary check.');
             return prev;
         }
 
@@ -308,7 +415,6 @@ const handleAddSliceLeft = (day) => {
         }
 
         const newSlice = { from: newFrom, to: newTo, isBreak: false };
-        console.log('New slice added to left:', newSlice);
         return {
             ...prev,
             [day]: [newSlice, ...slices]
@@ -321,7 +427,6 @@ const handleAddSliceRight = (day) => {
         const slices = prev[day] || [];
 
         if (!canAddSliceRight(day, slices, sliceDuration, toTime)) {
-            console.log('handleAddSliceRight: Operation prevented by boundary check.');
             return prev;
         }
 
@@ -340,7 +445,6 @@ const handleAddSliceRight = (day) => {
         }
 
         const newSlice = { from: newFrom, to: newTo, isBreak: false };
-        console.log('New slice added to right:', newSlice);
         return {
             ...prev,
             [day]: [...slices, newSlice]
@@ -349,19 +453,18 @@ const handleAddSliceRight = (day) => {
 };
 
     const handleCancel = () => {
+        // Reset local UI state so closing the modal clears the view.
         setFacility(null);
-        setResource(null);
         setFromTime(null);
         setToTime(null);
         setSliceDuration(SLICE_DURATION_MINUTES);
         setSelectedDays([]);
         setTimeSlices({});
-        // setOpen(false); 
+        setOpen(false);
     };
 
-
     return (
-        <Modal open={open} onClose={() => setOpen(false)} size="lg">
+        <Modal open={open} onClose={handleCancel} size="lg">
             <Modal.Header>
                 <Modal.Title>New Availability Time</Modal.Title>
             </Modal.Header>
@@ -374,13 +477,22 @@ const handleAddSliceRight = (day) => {
 
                             column
                             fieldLabel="Facility"
-                            selectData={facilityListResponse?.object ?? []}
+                            selectData={facilityListResponse ?? []}
                             fieldType="select"
-                            selectDataLabel="facilityName"
-                            selectDataValue="key"
-                            fieldName="facilityKey"
-                            record={facility}
-                            setRecord={setFacility}
+                            selectDataLabel="name"
+                            selectDataValue="id"
+                            fieldName="id"
+                            record={facility ? { id: facility.id } : null}
+                            setRecord={(updatedRecord) => {
+                                if (updatedRecord?.id) {
+                                    const selectedFacility = facilityListResponse?.find(f => f.id === updatedRecord.id);
+                                    if (selectedFacility) {
+                                        setFacility(selectedFacility);
+                                    }
+                                } else {
+                                    setFacility(null);
+                                }
+                            }}
                         />
                         
                     </div>
@@ -574,7 +686,7 @@ const handleAddSliceRight = (day) => {
             </Modal.Body >
             <Modal.Footer>
                 <Button onClick={handleSave} appearance="primary">Save</Button>
-                <Button onClick={() => { handleCancel() }} appearance="subtle">Cancel</Button>
+                <Button onClick={handleCancel} appearance="subtle">Cancel</Button>
             </Modal.Footer>
         </Modal >
     );

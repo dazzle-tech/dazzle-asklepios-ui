@@ -21,9 +21,10 @@ import {
   useDeleteAdverseEffectMutation
 } from "@/services/setup/activeIngredients/activeIngredientAdverseEffectService";
 
-import { newActiveIngredientAdverseEffects } from "@/types/model-types-constructor-new";
+import { newActiveIngredientAdverseEffect } from "@/types/model-types-constructor-new";
 
 import "./styles.less";
+import { Block } from "@mui/icons-material";
 
 const AdversEffects = ({ activeIngredients }) => {
   const dispatch = useAppDispatch();
@@ -32,10 +33,12 @@ const AdversEffects = ({ activeIngredients }) => {
   // STATE
   // ---------------------------
   const [record, setRecord] = useState({
-    ...newActiveIngredientAdverseEffects
+    ...newActiveIngredientAdverseEffect
   });
 
   const [openDelete, setOpenDelete] = useState(false);
+  const [sortColumn, setSortColumn] = useState("adverseEffect");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
   // ---------------------------
   // LOV
@@ -91,7 +94,7 @@ const AdversEffects = ({ activeIngredients }) => {
   // ---------------------------
   const save = async () => {
     if (!record.adverseEffect) {
-      dispatch(notify({ msg: "Select adverse effect", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • adverse effect is required", sev: "error" }));
       return;
     }
 
@@ -110,7 +113,7 @@ const AdversEffects = ({ activeIngredients }) => {
       }
 
       refetch();
-      setRecord({ ...newActiveIngredientAdverseEffects });
+      setRecord({ ...newActiveIngredientAdverseEffect });
 
     } catch {
       dispatch(notify({ msg: "Save failed", sev: "error" }));
@@ -127,7 +130,7 @@ const AdversEffects = ({ activeIngredients }) => {
       await deleteAdverse(record.id).unwrap();
       dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
       refetch();
-      setRecord({ ...newActiveIngredientAdverseEffects });
+      setRecord({ ...newActiveIngredientAdverseEffect });
     } catch {
       dispatch(notify({ msg: "Delete failed", sev: "error" }));
     }
@@ -136,6 +139,31 @@ const AdversEffects = ({ activeIngredients }) => {
   // ---------------------------
   // PAGINATION (Same as Indications)
   // ---------------------------
+// 📌 SORTING IMPLEMENTATION
+const sortedList = useMemo(() => {
+  if (!data || !sortColumn) return data ?? [];
+
+  return [...data].sort((a, b) => {
+    const aVal = a[sortColumn];
+    const bVal = b[sortColumn];
+
+    if (aVal == null) return -1;
+    if (bVal == null) return 1;
+
+    let result = 0;
+
+    if (typeof aVal === "string") {
+      result = aVal.toString().localeCompare(bVal.toString());
+    } else {
+      result = aVal > bVal ? 1 : -1;
+    }
+
+    return sortType === "asc" ? result : -result;
+  });
+}, [data, sortColumn, sortType]);
+
+
+
   const [pagination, setPagination] = useState({
     page: 0,
     size: 5
@@ -146,8 +174,8 @@ const AdversEffects = ({ activeIngredients }) => {
 
   const paginatedData = useMemo(() => {
     const start = page * rowsPerPage;
-    return data.slice(start, start + rowsPerPage);
-  }, [data, page, rowsPerPage]);
+    return sortedList.slice(start, start + rowsPerPage);
+  }, [sortedList, page, rowsPerPage]);
 
   const totalCount = data.length;
 
@@ -174,6 +202,7 @@ const AdversEffects = ({ activeIngredients }) => {
               selectDataValue="lovDisplayVale"
               width={220}
               menuMaxHeight={150}
+              required
             />
 
             {record.adverseEffect === "Other" && (
@@ -195,11 +224,11 @@ const AdversEffects = ({ activeIngredients }) => {
             />
 
             <MyButton
-              prefixIcon={() => <Plus />}
+              prefixIcon={() => <Block style={{width:'15px',height:'15px'}} />}
               color="var(--deep-blue)"
-              title="New"
+              title="Clear"
               onClick={() =>
-                setRecord({ ...newActiveIngredientAdverseEffects })
+                setRecord({ ...newActiveIngredientAdverseEffect })
               }
             />
           </div>
@@ -224,6 +253,12 @@ const AdversEffects = ({ activeIngredients }) => {
         onRowsPerPageChange={(e) => {
           const newSize = Number(e.target.value);
           setPagination({ page: 0, size: newSize });
+        }}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={(col, order) => {
+          setSortColumn(col);
+          setSortType(order);
         }}
       />
 
