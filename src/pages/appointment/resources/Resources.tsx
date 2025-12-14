@@ -21,11 +21,6 @@ import {
   useToggleResourceActiveMutation,
   useLazyGetResourcesByTypeQuery,
 } from "@/services/setup/resource/ResourceService";
-import { useLazyGetResourcesWithAvailabilityQuery } from "@/services/appointmentService";
-import { initialListRequest } from "@/types/types";
-import { Table, TableHead, TableBody, TableRow, TableCell, Box, Typography, CircularProgress, Collapse, IconButton } from "@mui/material";
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import "./styles.less";
 import { formatEnumString } from "@/utils";
 import { PaginationPerPage } from "@/utils/paginationPerPage";
@@ -86,11 +81,6 @@ const Resources = () => {
   // ──────────────────────────── DATA ────────────────────────────
   const { data: resourceListResponse, refetch ,isFetching } =
     useGetAllResourcesQuery(paginationParams);
-
-  const [getResourceAvailability] = useLazyGetResourcesWithAvailabilityQuery();
-  const [expandedResourceAvailability, setExpandedResourceAvailability] = useState<Record<string, any[]>>({});
-  const [loadingResources, setLoadingResources] = useState<Record<string, boolean>>({});
-  const [expandedFacilities, setExpandedFacilities] = useState<Record<string, boolean>>({});
 
   const [createResource] = useCreateResourceMutation();
   const [updateResource] = useUpdateResourceMutation();
@@ -293,7 +283,6 @@ const Resources = () => {
         fill="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
-          console.log('Resource Availability Data:', rowData);
           setResourceAvailabilityDetails({
             object: [{
               key: rowData.resourceKey,
@@ -340,162 +329,6 @@ const Resources = () => {
       )}
     </div>
   );
-
-  const getDayName = (dayOfWeek: number): string => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[dayOfWeek] || '-';
-  };
-
-  const formatTime = (hour: number, minute: number): string => {
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-  };
-
-  const fetchResourceAvailability = async (resourceKey: string) => {
-    if (expandedResourceAvailability[resourceKey] || loadingResources[resourceKey]) return; 
-    
-    setLoadingResources(prev => ({ ...prev, [resourceKey]: true }));
-    
-    try {
-      console.log('Fetching availability for resource:', resourceKey);
-      const result = await getResourceAvailability({
-        ...initialListRequest,
-        filters: [{ fieldName: 'resource_key', operator: 'match', value: resourceKey }]
-      }).unwrap();
-      
-      console.log('Availability result:', result);
-      
-      setExpandedResourceAvailability(prev => ({
-        ...prev,
-        [resourceKey]: result?.object || []
-      }));
-    } catch (error) {
-      console.error('Error fetching availability:', error);
-      setExpandedResourceAvailability(prev => ({
-        ...prev,
-        [resourceKey]: []
-      }));
-    } finally {
-      setLoadingResources(prev => ({ ...prev, [resourceKey]: false }));
-    }
-  };
-
-  const toggleFacilityExpand = (facilityKey: string) => {
-    setExpandedFacilities(prev => ({
-      ...prev,
-      [facilityKey]: !prev[facilityKey]
-    }));
-  };
-
-  const renderExpandedRow = (rowData: Resource) => {
-    const resourceKey = rowData.resourceKey;
-    const facilitiesData = expandedResourceAvailability[resourceKey];
-    const isLoading = loadingResources[resourceKey];
-    
-    // Trigger fetch if not loaded yet
-    if (!facilitiesData && !isLoading) {
-      fetchResourceAvailability(resourceKey);
-    }
-    
-    if (isLoading || !facilitiesData) {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-          <CircularProgress size={24} />
-        </Box>
-      );
-    }
-
-    if (facilitiesData.length === 0) {
-      return (
-        <Box sx={{ p: 2, textAlign: 'center' }}>
-          <Typography variant="body2" color="textSecondary">
-            No facilities configured for this resource
-          </Typography>
-        </Box>
-      );
-    }
-
-    return (
-      <Box sx={{ p: 1 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell sx={{ width: '50px' }} />
-              <TableCell sx={{ fontWeight: 600 }}>Facility</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Resource Name</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {facilitiesData.map((facilityData: any, idx: number) => {
-              const facilityKey = `${resourceKey}_${facilityData.facilityKey || idx}`;
-              const isExpanded = expandedFacilities[facilityKey];
-              const availability = facilityData?.availability || [];
-              
-              return (
-                <React.Fragment key={facilityKey}>
-                  <TableRow 
-                    sx={{ 
-                      '&:hover': { backgroundColor: '#fafafa' },
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => toggleFacilityExpand(facilityKey)}
-                  >
-                    <TableCell sx={{ width: '50px' }}>
-                      <IconButton size="small">
-                        {isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                      </IconButton>
-                    </TableCell>
-                    <TableCell>{facilityData.facilityName || facilityData.facilityKey || 'Unknown Facility'}</TableCell>
-                    <TableCell>{facilityData.resourceName || '-'}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={3} sx={{ p: 0, border: 0 }}>
-                      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                        <Box sx={{ p: 2, backgroundColor: '#fafafa' }}>
-                          {availability.length === 0 ? (
-                            <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center' }}>
-                              No availability configured
-                            </Typography>
-                          ) : (
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell sx={{ fontWeight: 600, width: '150px' }}>Day</TableCell>
-                                  <TableCell sx={{ fontWeight: 600, width: '180px' }}>Time (From - To)</TableCell>
-                                  <TableCell sx={{ fontWeight: 600, width: '100px' }}>Duration</TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {availability
-                                  .slice()
-                                  .sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek)
-                                  .map((item: any, idx: number) => (
-                                    <TableRow key={idx}>
-                                      <TableCell sx={{ fontWeight: 500 }}>
-                                        {getDayName(item.dayOfWeek)}
-                                      </TableCell>
-                                      <TableCell>
-                                        {formatTime(item.startHour, item.startMinute)} - {formatTime(item.endHour, item.endMinute)}
-                                      </TableCell>
-                                      <TableCell>
-                                        {item.slotDurationMinutes ? `${item.slotDurationMinutes} min` : '-'}
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                              </TableBody>
-                            </Table>
-                          )}
-                        </Box>
-                      </Collapse>
-                    </TableCell>
-                  </TableRow>
-                </React.Fragment>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Box>
-    );
-  };
 
   const tableColumns = [
     {
@@ -557,6 +390,7 @@ const Resources = () => {
       }
     };
 
+  // ──────────────────────────── FILTER UI ────────────────────────────
   const filters = () => (
     <Form layout="inline" style={{ display: "flex", gap: "10px" }}>
       <MyInput
@@ -631,8 +465,7 @@ const Resources = () => {
         onRowClick={rowData => setResource(rowData)}
         filters={filters()}
         loading={isFetching}
-        renderExpandedRow={renderExpandedRow}
-        page={isFiltered ? filterPagination.page : pageIndex}
+       page={isFiltered ? filterPagination.page : pageIndex}
         rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
         onPageChange={handlePageChange}
         onRowsPerPageChange={e => {
@@ -670,16 +503,6 @@ const Resources = () => {
           open={openAvailabilityTimePopup}
           setOpen={setOpenAvailabilityTimePopup}
           selectedResource={resourceAvailabilityDetails}
-          onSave={() => {
-            const resourceKey = resourceAvailabilityDetails?.object?.[0]?.key;
-            if (resourceKey) {
-              setExpandedResourceAvailability(prev => {
-                const newState = { ...prev };
-                delete newState[resourceKey];
-                return newState;
-              });
-            }
-          }}
         />
       )}
 

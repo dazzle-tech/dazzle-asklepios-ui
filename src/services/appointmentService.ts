@@ -158,7 +158,6 @@ export const {
   useSaveAvailabilitySlicesMutation,
   useGetResourcesQuery,
   useGetResourcesWithAvailabilityQuery,
-  useLazyGetResourcesWithAvailabilityQuery,
   useGetResourceWithDetailsQuery,
   useGetResourcesByResourceIdQuery,
   useGetResourceTypeQuery,

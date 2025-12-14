@@ -51,7 +51,6 @@ interface MyTableProps {
   totalCount?: number;
   onPageChange?: (event: unknown, newPage: number) => void;
   onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  renderExpandedRow?: (rowData: any, rowIndex: number) => ReactNode;
 }
 
 const MyTable: React.FC<MyTableProps> = ({
@@ -70,14 +69,12 @@ const MyTable: React.FC<MyTableProps> = ({
   rowsPerPage,
   totalCount,
   onPageChange,
-  onRowsPerPageChange,
-  renderExpandedRow
+  onRowsPerPageChange
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const mode = useSelector((state: any) => state.ui.mode);
   const visibleColumns = columns.filter(col => !col.expandable);
   const expandableColumns = columns.filter(col => col.expandable);
-  const hasExpandableContent = expandableColumns.length > 0 || !!renderExpandedRow;
 
   const handleExpandClick = (index: number) => {
     setExpandedRow(prev => (prev === index ? null : index));
@@ -86,7 +83,7 @@ const MyTable: React.FC<MyTableProps> = ({
   const emptyTable = () => (
     <TableRow>
       <TableCell
-        colSpan={visibleColumns.length + (hasExpandableContent ? 1 : 0)}
+        colSpan={visibleColumns.length + (expandableColumns.length > 0 ? 1 : 0)}
         align="center"
       >
         <Typography variant="body2" className="no-data-label">
@@ -110,7 +107,7 @@ const MyTable: React.FC<MyTableProps> = ({
           <Table stickyHeader size="small">
             <TableHead className="my-table-header">
               <TableRow>
-                {hasExpandableContent && <TableCell />}
+                {expandableColumns.length > 0 && <TableCell />}
                 {visibleColumns.map(col => {
                   const isSortable = !!onSortChange;
                   const isActive = sortColumn === col.key;
@@ -161,7 +158,7 @@ const MyTable: React.FC<MyTableProps> = ({
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={visibleColumns.length + (hasExpandableContent ? 1 : 0)}
+                    colSpan={visibleColumns.length + (expandableColumns.length > 0 ? 1 : 0)}
                     align="center"
                   >
                     <CircularProgress size={24} />
@@ -182,9 +179,9 @@ const MyTable: React.FC<MyTableProps> = ({
                         })}
                         hover
                       >
-                        {hasExpandableContent && (
+                        {expandableColumns.length > 0 && (
                           <TableCell padding="checkbox">
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleExpandClick(index); }}>
+                            <IconButton size="small" onClick={() => handleExpandClick(index)}>
                               {expandedRow === index ? (
                                 <KeyboardArrowUpIcon />
                               ) : (
@@ -221,41 +218,37 @@ const MyTable: React.FC<MyTableProps> = ({
                           </TableCell>
                         ))}
                       </TableRow>
-                      {hasExpandableContent && expandedRow === index && (
+                      {expandableColumns.length > 0 && expandedRow === index && (
                         <TableRow className="expanded-row">
                           <TableCell colSpan={visibleColumns.length + 1} className="expanded-table">
-                            {renderExpandedRow ? (
-                              renderExpandedRow(row, index)
-                            ) : (
-                              <Box>
-                                <Table size="small">
-                                  <TableHead className="my-table-header">
-                                    <TableRow>
-                                      {expandableColumns.map(col => (
-                                        <TableCell
-                                          key={col.key}
-                                          align={col.align || 'left'}
-                                          sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
-                                        >
-                                         <Translate>{col.title}</Translate>
-                                        </TableCell>
-                                      ))}
-                                    </TableRow>
-                                  </TableHead>
-                                  <TableBody>
-                                    <TableRow>
-                                      {expandableColumns.map(col => (
-                                        <TableCell key={col.key} align={col.align || 'left'}>
-                                          {col.render
-                                            ? col.render(row, index)
-                                            : row[col.dataKey || col.key]}
-                                        </TableCell>
-                                      ))}
-                                    </TableRow>
-                                  </TableBody>
-                                </Table>
-                              </Box>
-                            )}
+                            <Box>
+                              <Table size="small">
+                                <TableHead className="my-table-header">
+                                  <TableRow>
+                                    {expandableColumns.map(col => (
+                                      <TableCell
+                                        key={col.key}
+                                        align={col.align || 'left'}
+                                        sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
+                                      >
+                                       <Translate>{col.title}</Translate>
+                                      </TableCell>
+                                    ))}
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  <TableRow>
+                                    {expandableColumns.map(col => (
+                                      <TableCell key={col.key} align={col.align || 'left'}>
+                                        {col.render
+                                          ? col.render(row, index)
+                                          : row[col.dataKey || col.key]}
+                                      </TableCell>
+                                    ))}
+                                  </TableRow>
+                                </TableBody>
+                              </Table>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       )}
