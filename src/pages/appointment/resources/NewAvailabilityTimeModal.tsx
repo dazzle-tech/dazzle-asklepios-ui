@@ -734,7 +734,12 @@ import { useDispatch } from 'react-redux';
 
 const SLICE_DURATION_MINUTES = 30;
 
-const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
+const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource, onSave }: { 
+    open: boolean; 
+    setOpen: (open: boolean) => void; 
+    selectedResource: any; 
+    onSave?: () => void 
+}) => {
     const dispatch = useDispatch();
     const [facility, setFacility] = useState(null);
     const [resource, setResource] = useState<ApResources>(selectedResource || null);
@@ -811,6 +816,8 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
 
     useEffect(() => {
         if (resourcesWithAvailabilityResponse?.object?.length > 0 && facilityListResponse) {
+            console.log('📅 Resource Availability Response:', resourcesWithAvailabilityResponse);
+            
             const loadedSlices: Record<string, any[]> = {};
             const loadedDays: DayValue[] = [];
             let loadedFacility = null;
@@ -1034,6 +1041,7 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
             if (resourceKey) {
                 await refetchAvailability();
             }
+            onSave?.();
         } catch (err: any) {
             
             // Extract error message from different possible locations
@@ -1216,7 +1224,7 @@ const handleAddSliceRight = (day) => {
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <MyInput
                             height={35}
-                            width={"100%"}
+                            width={"350px"}
                             column
                             fieldLabel="Facility"
                             selectData={facilityListResponse ?? []}
@@ -1240,46 +1248,50 @@ const handleAddSliceRight = (day) => {
                         
                     </div>
 
-                    <Form.Group style={{ marginTop: '1rem' }}>
-                        <Form.ControlLabel>
-                            Time Range
-                            <span className="required-field">*</span>
-                        </Form.ControlLabel>
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
-                            <TimePicker
-                                placeholder="From"
-                                value={fromTime}
-                                onChange={handleFromTimeChange}
-                                style={{ flex: 1 }}
-                                hideMinutes={minute => minute % 30 !== 0}
-                            />
-                            <TimePicker
-                                placeholder="To"
-                                value={toTime}
-                                onChange={handleToTimeChange}
-                                style={{ flex: 1 }}
-                                hideMinutes={minute => minute % 30 !== 0}
-                            />
-                            <div style={{ flex: '0 0 150px' }}>
-                                <Form.ControlLabel>
-                                    Slice Duration
-                                    <span className="required-field">*</span>
-                                </Form.ControlLabel>
-                                <SelectPicker
-                                    data={[
-                                        { label: '10 minutes', value: 10 },
-                                        { label: '20 minutes', value: 20 },
-                                        { label: '30 minutes', value: 30 },
-                                        { label: '60 minutes', value: 60 },
-                                    ]}
-                                    value={sliceDuration}
-                                    onChange={setSliceDuration}
-                                    style={{ width: '100%' }}
-                                    cleanable={false}
-                                />
-                            </div>
-                        </div>
-                    </Form.Group>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginTop: '1rem' }}>
+                        <MyInput
+                            column
+                            fieldName="from"
+                            fieldLabel="From"
+                            fieldType="time"
+                            record={{ from: fromTime }}
+                            setRecord={(updatedRecord) => handleFromTimeChange(updatedRecord?.from ?? null)}
+                            width={170}
+                            height={35}
+                            required
+                        />
+                        <MyInput
+                            column
+                            fieldName="to"
+                            fieldLabel="To"
+                            fieldType="time"
+                            record={{ to: toTime }}
+                            setRecord={(updatedRecord) => handleToTimeChange(updatedRecord?.to ?? null)}
+                            width={170}
+                            height={35}
+                            required
+                        />
+                        <MyInput
+                            column
+                            fieldName="sliceDuration"
+                            fieldLabel="Slice Duration"
+                            fieldType="select"
+                            selectData={[
+                                { label: '10 minutes', value: 10 },
+                                { label: '20 minutes', value: 20 },
+                                { label: '30 minutes', value: 30 },
+                                { label: '60 minutes', value: 60 },
+                            ]}
+                            selectDataLabel="label"
+                            selectDataValue="value"
+                            record={{ sliceDuration }}
+                            setRecord={(updatedRecord) => setSliceDuration(updatedRecord?.sliceDuration)}
+                            width={150}
+                            height={35}
+                            cleanable={false}
+                            required
+                        />
+                    </div>
 
                     <Form.Group>
                         <Form.ControlLabel>Select Days</Form.ControlLabel>
