@@ -155,12 +155,36 @@ const Facilities = () => {
   const handleSave = async () => {
     setPopupOpen(false);
     setLoad(true);
+    let errMsg = "";
+    if(!createFacility.code){
+      errMsg += "Field Facility Id is required";
+    }
+    if(!createFacility.type){
+      if(errMsg){
+      errMsg += ", Field Facility type is required";
+      }
+      else{
+        errMsg += "Field Facility type is required";
+      }
+    }
+    if(!createFacility.defaultCurrency){
+      if(errMsg){
+      errMsg += ", Field Default Currency is required";
+      }
+      else{
+        errMsg += "Field Default Currency is required";
+      }
+    }
+    if(!errMsg){
    await saveFacility({ ...createFacility }).unwrap().then(() => {
     dispatch(notify({ msg: 'The Facility has been saved successfully', sev: 'success' }));
     refetchFacility();
    }).catch(() => {
     dispatch(notify({ msg: 'Failed to save this Facility', sev: 'error' }));
    });
+  } else{
+     dispatch(notify({ msg: errMsg, sev: 'error' }));
+  }
    setLoad(false);
   };
 
