@@ -11,7 +11,6 @@ const BasicInfo = ({
   ageGroupValue,
   patientClassLovQueryResponse
 }) => {
-  console.log("ageGroupValue", ageGroupValue);
   return (
     <Form layout="inline">
       <MyInput
@@ -21,9 +20,10 @@ const BasicInfo = ({
         fieldName="firstName"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
-        // required
+        width={170}
         vr={validationResult}
         column
         fieldName="secondName"
@@ -36,6 +36,7 @@ const BasicInfo = ({
         fieldName="thirdName"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         required
@@ -44,6 +45,7 @@ const BasicInfo = ({
         fieldName="lastName"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         required
@@ -58,6 +60,7 @@ const BasicInfo = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        width={170}
       />
       <MyInput
         required
@@ -68,6 +71,7 @@ const BasicInfo = ({
         fieldName="dateOfBirth"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -77,6 +81,7 @@ const BasicInfo = ({
         disabled
         fieldName="ageFormat"
         record={localPatient?.dateOfBirth ? ageFormatType : null}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -87,6 +92,7 @@ const BasicInfo = ({
         disabled
         record={localPatient?.dateOfBirth ? ageGroupValue : null}
         isEnum
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -100,6 +106,7 @@ const BasicInfo = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        width={170}
       />
       {localPatient?.incompletePatient ? (
         <MyInput
@@ -111,6 +118,7 @@ const BasicInfo = ({
           record={localPatient}
           setRecord={setLocalPatient}
           disabled
+          width={170}
         />
       ) : null}
       <MyInput
@@ -121,9 +129,11 @@ const BasicInfo = ({
         fieldName="isPrivatePatient"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
+        width={170}
         column
         fieldLabel="First Name (Sec. Lang)"
         fieldName="firstNameSecondaryLang"
@@ -137,6 +147,7 @@ const BasicInfo = ({
         fieldName="secondNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -145,6 +156,7 @@ const BasicInfo = ({
         fieldName="thirdNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -153,6 +165,7 @@ const BasicInfo = ({
         fieldName="lastNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
     </Form>
   );

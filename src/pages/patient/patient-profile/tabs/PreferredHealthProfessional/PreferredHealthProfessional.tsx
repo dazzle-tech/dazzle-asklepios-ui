@@ -12,7 +12,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { PlusRound } from '@rsuite/icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles.less';
 import AddPrefferdHealthProfessionalModal from './AddPrefferdHealthProfessionalModal';
 import {
@@ -67,7 +67,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
   );
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const loadPractitioners = async () => {
       const rows = preferredHPResponse?.data ?? [];
       if (!rows.length) {
@@ -237,26 +237,10 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
         >
           New Preferred Health Professional
         </MyButton>
-
-        <MyButton
-          disabled={isClick || !editable}
-          onClick={() => setOpen(true)}
-          prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
-        >
-          Edit
-        </MyButton>
-
-        <MyButton
-          disabled={isClick || !editable}
-          onClick={() => setDeletePreferredHealthModalOpen(true)}
-          prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}
-        >
-          Delete
-        </MyButton>
       </div>
 
       <MyTable
-        data={preferredHPResponse?.data ?? []}
+        data={patient?.id ? preferredHPResponse?.data ?? [] : []}
         loading={isFetching}
         columns={columns}
         onRowClick={row => {

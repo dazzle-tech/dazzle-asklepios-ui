@@ -996,16 +996,40 @@ export interface Patient {
   lastModifiedDate?: Date | null;
 }
 
+export interface SimpleCountry {
+  id: number;
+  name: string;
+  code: string;
+}
+
+export interface SimpleDistrict {
+  id: number;
+  name: string;
+  code: string;
+}
+
+export interface SimpleCommunity {
+  id: number;
+  name: string;
+}
+
+export interface SimpleArea {
+  id: number;
+  name: string;
+}
+
+export interface AddressLocation {
+  country: SimpleCountry | null;
+  district: SimpleDistrict | null;
+  community: SimpleCommunity | null;
+  area: SimpleArea | null;
+}
+
 export interface Address {
   id?: number;
   patientId: number;
 
-  countryId?: number | null;
-
-  countryName?: string | null;
-  districtName?: string | null;
-  communityName?: string | null;
-  areaName?: string | null;
+  locationJson: AddressLocation;
 
   streetName?: string | null;
   houseApartmentNumber?: string | null;
@@ -1013,7 +1037,6 @@ export interface Address {
   additionalAddressLine?: string | null;
 
   isCurrent?: boolean | null;
-
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;

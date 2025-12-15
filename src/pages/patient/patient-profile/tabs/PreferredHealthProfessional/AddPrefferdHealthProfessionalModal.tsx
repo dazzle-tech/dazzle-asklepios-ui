@@ -20,19 +20,7 @@ import {
   useUpdatePatientPreferredHealthProfessionalMutation
 } from '@/services/patients/PatientPreferredHealthProfessional';
 
-type AddPrefferdHealthProfessionalModalProps = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  patient: any;
-  patientHP: any;
-  setPatientHP: (val: any) => void;
-  practitioner: any;
-  setPractitioner: (val: any) => void;
-  refetch?: () => void;
-  editable?: boolean;
-};
-
-const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessionalModalProps> = ({
+const AddPrefferdHealthProfessionalModal = ({
   open,
   setOpen,
   patient,
@@ -51,60 +39,57 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
   const specility = useEnumOptions('Specialty');
   const { data: facilityListResponse = [] } = useGetAllFacilitiesQuery({});
 
+  // Pagination , search , cache , refresh
   const [practitionerPage, setPractitionerPage] = useState(0);
-  const [practitionerList, setPractitionerList] = useState<any[]>([]);
+  const [practitionerSearch, setPractitionerSearch] = useState('');
+  const [practitionerCache, setPractitionerCache] = useState<any[]>([]);
+  const [refreshToken, setRefreshToken] = useState(0);
 
-  const {
-    data: practitionersResponse,
-    isFetching: loadingPractitioners,
-    refetch: refetchPractitioners
-  } = useGetPractitionersByFacilityQuery(
-    {
-      facilityId: hpRecord?.facilityId,
-      page: practitionerPage,
-      size: 10
-    },
-    {
-      skip: !hpRecord?.facilityId,
-      refetchOnMountOrArgChange: true
-    }
-  );
+  const { data: practitionersResponse, isFetching: loadingPractitioners } =
+    useGetPractitionersByFacilityQuery(
+      {
+        facilityId: hpRecord?.facilityId,
+        page: practitionerPage,
+        size: 5,
+        search: practitionerSearch || undefined,
+        refreshToken
+      },
+      {
+        skip: !hpRecord?.facilityId
+      }
+    );
 
+  // Reset pagination when modal opens
   useEffect(() => {
     if (open) {
       setPractitionerPage(0);
-      setPractitionerList([]);
-
-      if (hpRecord?.facilityId && refetchPractitioners) {
-        refetchPractitioners();
-      }
+      setPractitionerCache([]);
+      setPractitionerSearch('');
+      setRefreshToken(prev => prev + 1);
     }
   }, [open]);
 
+  // Cache management
   useEffect(() => {
-    if (practitionersResponse?.data) {
-      setPractitionerList(prev =>
-        practitionerPage === 0
-          ? practitionersResponse.data
-          : [...prev, ...practitionersResponse.data]
-      );
-    }
+    if (!practitionersResponse?.data) return;
+
+    setPractitionerCache(prev =>
+      practitionerPage === 0 ? practitionersResponse.data : [...prev, ...practitionersResponse.data]
+    );
   }, [practitionersResponse, practitionerPage]);
 
+  // Auto-select practitioner when editing
   useEffect(() => {
-    if (hpRecord?.practitionerId && practitionerList.length > 0) {
-      const matchingPractitioner = practitionerList.find(p => p.id === hpRecord.practitionerId);
-
-      if (matchingPractitioner) {
-        setPractitioner(matchingPractitioner);
-      }
+    if (hpRecord?.practitionerId && practitionerCache.length > 0) {
+      const match = practitionerCache.find(p => p.id === hpRecord.practitionerId);
+      if (match) setPractitioner(match);
     }
-  }, [hpRecord?.facilityId, practitionerList, hpRecord?.practitionerId]);
+  }, [practitionerCache, hpRecord?.practitionerId]);
 
   const [createPreferredHP] = useCreatePatientPreferredHealthProfessionalMutation();
   const [updatePreferredHP] = useUpdatePatientPreferredHealthProfessionalMutation();
 
-  const handleSaveAddPrefferdHealthProfessional = async () => {
+  const handleSave = async () => {
     try {
       if (!patient?.id) {
         dispatch(notify({ msg: 'No patient selected', sev: 'error' }));
@@ -116,9 +101,7 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         return;
       }
 
-      const body = {
-        ...hpRecord
-      };
+      const body = { ...hpRecord };
 
       if (hpRecord.id) {
         await updatePreferredHP({
@@ -127,24 +110,14 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
           body
         }).unwrap();
 
-        dispatch(
-          notify({
-            msg: 'Preferred Health Professional updated',
-            sev: 'success'
-          })
-        );
+        dispatch(notify({ msg: 'Preferred Health Professional updated', sev: 'success' }));
       } else {
         await createPreferredHP({
           patientId: patient.id,
           body
         }).unwrap();
 
-        dispatch(
-          notify({
-            msg: 'Preferred Health Professional added',
-            sev: 'success'
-          })
-        );
+        dispatch(notify({ msg: 'Preferred Health Professional added', sev: 'success' }));
       }
 
       setOpen(false);
@@ -174,16 +147,18 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         setRecord={updatedHP => {
           const facilityId = updatedHP.facilityId ?? null;
 
-          setPractitionerPage(0);
-          setPractitionerList([]);
-
           setPatientHP({
             ...updatedHP,
             facilityId,
-            practitionerId: 0
+            practitionerId: null
           });
 
+          // Reset practitioner data
           setPractitioner({ ...newPractitioner });
+          setPractitionerPage(0);
+          setPractitionerCache([]);
+          setPractitionerSearch('');
+          setRefreshToken(prev => prev + 1);
         }}
       />
 
@@ -193,14 +168,12 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         fieldLabel="HP Name"
         fieldType="selectPagination"
         fieldName="practitionerId"
-        selectData={practitionersResponse?.data ?? []}
+        selectData={practitionerCache}
         selectDataLabel={['firstName', 'lastName']}
         selectDataValue="id"
         record={hpRecord}
         setRecord={updatedHP => {
-          const selected = practitionersResponse?.data?.find(
-            p => p.id === updatedHP.practitionerId
-          );
+          const selected = practitionerCache.find(p => p.id === updatedHP.practitionerId);
 
           setPatientHP({
             ...updatedHP,
@@ -210,8 +183,10 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
           setPractitioner(selected ? selected : { ...newPractitioner });
         }}
         searchable
+        searchKeyWard={practitionerSearch}
+        setSearchKeyWard={setPractitionerSearch}
         loading={loadingPractitioners}
-        hasMore={practitionersResponse?.links?.next ? true : false}
+        hasMore={!!practitionersResponse?.links?.next}
         onFetchMore={() => {
           if (practitionersResponse?.links?.next) {
             const { page } = extractPaginationFromLink(practitionersResponse.links.next);
@@ -280,7 +255,7 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
         setOpen(isOpen);
         if (!isOpen) {
           setPractitionerPage(0);
-          setPractitionerList([]);
+          setPractitionerCache([]);
         }
       }}
       title={
@@ -290,7 +265,7 @@ const AddPrefferdHealthProfessionalModal: React.FC<AddPrefferdHealthProfessional
       }
       actionButtonLabel={editable ? 'Update' : 'Save'}
       bodyheight="65vh"
-      actionButtonFunction={handleSaveAddPrefferdHealthProfessional}
+      actionButtonFunction={handleSave}
       steps={[
         {
           title: 'Preferred Health Professional',

@@ -96,7 +96,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
     },
     { title: 'Family Members', content: <PatientFamilyMembers localPatient={localPatient} /> },
-    { title: 'ID Documents', content: <SecondaryIDTab localPatient={localPatient} /> },
+    { title: 'Documents', content: <SecondaryIDTab localPatient={localPatient} /> },
     {
       title: 'Attachments',
       content: (

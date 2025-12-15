@@ -5,12 +5,13 @@ import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupSer
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Panel } from 'rsuite';
 import ConsentFormTab from './ConsentFormTab';
+import AddressTab from './tabs/AddressTab';
 import PatientAttachment from './tabs/Attachment-new/PatientAttachment';
 import DemographicsTab from './tabs/DemographicsTab';
-import SecondaryIDTab from './tabs/ExtraDetails/IDTab';
+import SecondaryIDTab from './tabs/ExtraDetails';
 import ExtraDetailsTab from './tabs/ExtraDetailsTab';
 import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
 import InsuranceTab from './tabs/InsuranceTab';
@@ -32,22 +33,58 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   refetchAttachmentList,
   setRefetchAttachmentList
 }) => {
-  const [ageGroupValue, setAgeGroupValue] = useState({
+  const [ageGroupValue, setAgeGroupValue] = useState<{ ageGroup: string }>({
     ageGroup: ''
   });
 
-  const [ageFormatType, setAgeFormatType] = useState({
+  const [ageFormatType, setAgeFormatType] = useState<{ ageFormat: string }>({
     ageFormat: ''
   });
 
-  const [fetchAgeGroupByBirthDate, { data: patientAgeGroupResponse }] =
-    useLazyGetAgeGroupByBirthDateQuery();
+  const lastProcessedDOB = useRef<string | null>(null);
+
+  const [fetchAgeGroupByBirthDate] = useLazyGetAgeGroupByBirthDateQuery();
 
   const genderEnum = useEnumOptions('Gender');
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   const patientDocumentEnum = useEnumOptions('DocumentType');
 
+  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
+
+  useEffect(() => {
+    if (!localPatient?.dateOfBirth) {
+      setAgeFormatType({ ageFormat: '' });
+      setAgeGroupValue({ ageGroup: '' });
+      lastProcessedDOB.current = null;
+      return;
+    }
+
+    if (lastProcessedDOB.current === localPatient.dateOfBirth) {
+      return;
+    }
+
+    lastProcessedDOB.current = localPatient.dateOfBirth;
+
+    const calculatedFormat = calculateAgeFormat(localPatient.dateOfBirth);
+    setAgeFormatType({ ageFormat: calculatedFormat });
+
+    fetchAgeGroupByBirthDate({
+      birthDate: localPatient.dateOfBirth.includes('T')
+        ? localPatient.dateOfBirth.split('T')[0]
+        : String(localPatient.dateOfBirth)
+    })
+      .unwrap()
+      .then(res => {
+        setAgeGroupValue({
+          ageGroup: res?.ageGroup ?? ''
+        });
+      })
+      .catch(err => {
+        console.error('Age group API error:', err);
+        setAgeGroupValue({ ageGroup: '' });
+      });
+  }, [localPatient?.id, localPatient?.dateOfBirth]);
 
   const tabData = [
     {
@@ -63,6 +100,14 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           patientClassLovQueryResponse={patientClassLovQueryResponse}
           ageFormatType={ageFormatType}
           ageGroupValue={ageGroupValue}
+        />
+      )
+    },
+    {
+      title: 'Address',
+      content: (
+        <AddressTab
+          localPatient={localPatient}
         />
       )
     },
@@ -95,8 +140,14 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       title: 'Preferred Health Professional',
       content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
     },
-    { title: 'Family Members', content: <PatientFamilyMembers localPatient={localPatient} /> },
-    { title: 'ID Documents', content: <SecondaryIDTab localPatient={localPatient} /> },
+    {
+      title: 'Family Members',
+      content: <PatientFamilyMembers localPatient={localPatient} />
+    },
+    {
+      title: 'Documents',
+      content: <SecondaryIDTab localPatient={localPatient} />
+    },
     {
       title: 'Attachments',
       content: (
@@ -109,50 +160,16 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     }
   ];
 
-  useEffect(() => {
-    if (localPatient?.dateOfBirth) {
-      const calculatedFormat = calculateAgeFormat(localPatient.dateOfBirth);
-
-      setAgeFormatType(prev => ({
-        ...prev,
-        ageFormat: calculatedFormat
-      }));
-
-      fetchAgeGroupByBirthDate({
-        birthDate: String(localPatient.dateOfBirth)
-      });
-    } else {
-      setAgeFormatType(prev => ({
-        ...prev,
-        ageFormat: ''
-      }));
-    }
-  }, [localPatient?.dateOfBirth]);
-
-  useEffect(() => {
-    if (patientAgeGroupResponse?.ageGroup) {
-      setAgeGroupValue({
-        ageGroup: patientAgeGroupResponse.ageGroup
-      });
-    }
-  }, [patientAgeGroupResponse]);
-
-  console.log('ageGroupValue in ProfileTabs-new:', ageGroupValue);
-  console.log('dateOfBirth in ProfileTabs-new:', localPatient?.dateOfBirth);
-  console.log('patientAgeGroupResponse in ProfileTabs-new:', patientAgeGroupResponse);
-
   return (
-    <>
-      <Panel
-        header={
-          <h5 className="title">
-            <Translate>Details</Translate>
-          </h5>
-        }
-      >
-        <MyTab data={tabData} />
-      </Panel>
-    </>
+    <Panel
+      header={
+        <h5 className="title">
+          <Translate>Details</Translate>
+        </h5>
+      }
+    >
+      <MyTab data={tabData} />
+    </Panel>
   );
 };
 

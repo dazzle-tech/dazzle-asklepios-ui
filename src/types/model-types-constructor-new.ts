@@ -1196,19 +1196,19 @@ export const newPatient: modelTypes.Patient = {
 
 export const newAddress: modelTypes.Address = {
   id: undefined,
-  patientId: 0, // يتم تعبئته من الـ route أو من الـ context
+  patientId: 0,
 
-  countryId: null,
+  locationJson: {
+    country: null,
+    district: null,
+    community: null,
+    area: null
+  },
 
-  countryName: '',
-  districtName: '',
-  communityName: '',
-  areaName: '',
   streetName: '',
   houseApartmentNumber: '',
   postalZipCode: '',
   additionalAddressLine: '',
-
   isCurrent: true,
 
   createdBy: '',
@@ -1216,3 +1216,17 @@ export const newAddress: modelTypes.Address = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
+
+export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredHealthProfessional =
+  {
+    id: undefined,
+    patientId: 0,
+    practitionerId: 0,
+    facilityId: 0,
+    networkAffiliation: '',
+    relatedWith: '',
+    createdBy: '',
+    createdDate: null,
+    lastModifiedBy: null,
+    lastModifiedDate: null
+  };

@@ -9,12 +9,10 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditCountryModal from './AddEditCountryModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-
 import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
-
 import {
   useGetCountriesQuery,
   useLazyGetCountryByNameQuery,
@@ -23,7 +21,6 @@ import {
   useUpdateCountryMutation,
   useToggleCountryActiveMutation
 } from '@/services/setup/country/countryService';
-
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { Country } from '@/types/model-types-new';

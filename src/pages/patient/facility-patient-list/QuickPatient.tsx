@@ -19,10 +19,7 @@ import {
   useAddPatientMutation,
   useAddUnknownPatientMutation
 } from '@/services/patient/patientService';
-
-/* ========================================================= */
-/* =============== Helper Functions ======================== */
-/* ========================================================= */
+import { useEnumOptions } from '@/services/enumsApi';
 
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
@@ -36,10 +33,6 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     data?.traceId || data?.correlationId
       ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
       : '';
-
-  /* ========================================================= */
-  /* =============== 1) Bean Validation Errors =============== */
-  /* ========================================================= */
   if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
     const lines = fieldErrors.map((e: any) => {
       const label = fieldLabels[e.field] || e.field;
@@ -49,9 +42,6 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
   }
 
-  /* ========================================================= */
-  /* =============== 2) Specific Custom Errors ============== */
-  /* ========================================================= */
 
   if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
 
@@ -62,16 +52,9 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   if (errorKey === 'db.constraint')
     return detail || 'Database constraint violated while saving or updating patient.' + traceId;
 
-  /* ========================================================= */
-  /* =============== 3) Generic unknown error ================ */
-  /* ========================================================= */
-
   return detail || title || message || 'Unexpected server error occurred.' + traceId;
 };
 
-/* ========================================================= */
-/* ======================= Component ======================== */
-/* ========================================================= */
 
 const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const dispatch = useAppDispatch();
@@ -94,11 +77,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   });
 
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
-  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const genderEnum = useEnumOptions('Gender');
 
-  /* ========================================================= */
-  /* ======================= SAVE ============================= */
-  /* ========================================================= */
 
   const handleSave = async () => {
     try {
@@ -134,7 +114,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       }
 
       setLocalPatient(savedPatient);
-      if (setPatient != null) {
+
+      if (typeof setPatient === 'function') {
         setPatient(savedPatient);
       }
 
@@ -142,7 +123,12 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       handleClearModal();
       setValidationResult(undefined);
 
-      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
+      dispatch(
+        notify({
+          msg: 'Patient added successfully',
+          sev: 'success'
+        })
+      );
     } catch (err: any) {
       console.log('Save error:', err);
 
@@ -163,10 +149,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
     }
   };
 
-  /* ========================================================= */
-  /* ======================= CLEAR ============================ */
-  /* ========================================================= */
-
+  
   const handleClearModal = () => {
     setIsUnknown(false);
     setLocalPatient({ ...newPatient });
@@ -180,10 +163,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
     });
   };
 
-  /* ========================================================= */
-  /* ======================== EFFECTS ========================= */
-  /* ========================================================= */
-
   useEffect(() => {
     if (!open) {
       handleClearModal();
@@ -191,15 +170,10 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
     }
   }, [open]);
 
-  /* ========================================================= */
-  /* ========================= RENDER ========================= */
-  /* ========================================================= */
-
   const quickPatientContent = (
     <Form layout="inline" fluid>
-      {/* First Name */}
       <MyInput
-        width={350}
+        width={250}
         vr={validationResult}
         column
         fieldName="firstName"
@@ -208,9 +182,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         disabled={isUnknown}
       />
 
-      {/* Last Name */}
       <MyInput
-        width={350}
+        width={250}
         vr={validationResult}
         column
         fieldName="lastName"
@@ -219,26 +192,24 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         disabled={isUnknown}
       />
 
-      {/* Gender → sexAtBirth */}
       <MyInput
-        width={350}
+        width={235}
         vr={validationResult}
         column
         fieldLabel="Gender"
         fieldType="select"
         fieldName="sexAtBirth"
-        selectData={genderLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        selectData={genderEnum ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={localPatient}
         setRecord={setLocalPatient}
         disabled={isUnknown}
         searchable={false}
       />
 
-      {/* Mobile → primaryMobileNumber */}
       <MyInput
-        width={350}
+        width={250}
         vr={validationResult}
         column
         fieldName="primaryMobileNumber"
@@ -247,9 +218,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         disabled={isUnknown}
       />
 
-      {/* DOB → dateOfBirth */}
       <MyInput
-        width={350}
+        width={235}
         vr={validationResult}
         column
         fieldType="date"
@@ -260,7 +230,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         disabled={isUnknown}
       />
 
-      {/* Unknown toggle */}
       <div style={{ marginTop: 8 }}>
         Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
       </div>
@@ -278,7 +247,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
           icon: <FontAwesomeIcon icon={faBoltLightning} />
         }
       ]}
-      size="xs"
+      size="20vw"
       position="right"
       actionButtonLabel="Create"
       actionButtonFunction={handleSave}
