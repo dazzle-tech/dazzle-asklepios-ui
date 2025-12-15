@@ -201,7 +201,7 @@ else {
 
     try {
       await toggleInventoryProductActive({ id: currentProduct.id }).unwrap()
-        .catch(() => console.log("Retry with PUT or PATCH"));
+        .catch(() =>{});
 
       dispatch(
         notify({

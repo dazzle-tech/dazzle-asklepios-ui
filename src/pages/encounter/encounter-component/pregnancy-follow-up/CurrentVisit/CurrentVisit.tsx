@@ -130,8 +130,6 @@ const tablebuttons = (
           checked={showCancelled}
           onChange={(value, checked, event) => {
             // Log the checkbox state for debugging
-            console.log('Checkbox value:', value);
-            console.log('Checkbox checked:', checked);
             // Update state to show/hide cancelled visits
             setShowCancelled(checked);
           }}

@@ -237,7 +237,6 @@ const AddEditRoom = ({
     setGenderSpecific({ genderSpecific: false });
   };
 
-  console.log("room:", room);
 
   // SAVE
   const handleSave = () => {

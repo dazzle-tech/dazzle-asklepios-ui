@@ -124,7 +124,6 @@ const DetailsModal = ({
   const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
-  console.log('genericMedicationListResponse', genericMedicationListResponse?.object);
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
     'MED_ORDER_ADMIN_NSTRUCTIONS'
   );
@@ -343,7 +342,6 @@ const DetailsModal = ({
         });
     } catch (error) {
       dispatch(notify({ msg: 'Failed to add', sev: 'error' }));
-      console.log(error);
     }
   };
   const handleSearch = value => {

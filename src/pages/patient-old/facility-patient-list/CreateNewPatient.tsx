@@ -85,7 +85,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
             // 4. Clean up
             dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
         } catch (error) {
-            console.log('rejected')
         }
     };
     // Handle Go To Patient Profile 

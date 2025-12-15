@@ -90,10 +90,8 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             }).catch((e) => {
 
                 if (e.status === 422) {
-                    console.log("Validation error: Unprocessable Entity", e);
 
                 } else {
-                    console.log("An unexpected error occurred", e);
                     dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
                 }
             });

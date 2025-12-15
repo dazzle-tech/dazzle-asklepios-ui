@@ -53,16 +53,12 @@ const Recovery = () => {
   const { data: patientData } = useGetPatientByIdQuery(request?.patientKey, {
     skip: !request?.patientKey
   });
-  console.log('Patient Data', patientData);
   const [patient, setPatient] = useState({ ...newApPatient });
-  console.log('patient', patient);
   const { data: encounterData, isLoading: isEncounterLoading } = useGetEncounterByIdQuery(
     request.encounterKey,
     { skip: !request.encounterKey }
   );
-  console.log('Encounter Data', encounterData);
   const [encounter, setEncounter] = useState({ ...newApEncounter });
-  console.log('Encounter', encounter);
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: null

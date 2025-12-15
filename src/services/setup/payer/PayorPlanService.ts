@@ -1,105 +1,231 @@
 import { BaseQuery } from "@/newApi";
 import { parseLinkHeader } from "@/utils/paginationHelper";
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/dist/query/react";
+import type { PayorPlan, PayorPlanItem } from "@/types/model-types-new";
 
-type PagedParams = {
-  page: number;
-  size: number;
-  sort?: string;
-};
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type LinkMap = { next?: string | null; prev?: string | null; first?: string | null; last?: string | null };
+type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
-type LinkMap = {
-  next?: string | null;
-  prev?: string | null;
-  first?: string | null;
-  last?: string | null;
-};
+export type PayorPlanSaveVM = Omit<PayorPlan, "id" | "items" | "createdDate" | "lastModifiedDate">;
+export type PayorPlanUpdateVM = Omit<PayorPlan, "items" | "createdDate" | "lastModifiedDate">;
 
-type PagedResult<T> = {
-  data: T[];
-  totalCount: number;
-  links?: LinkMap;
-};
-
-export type PayorPlan = any;
-export type PayorPlanSaveVM = any;
-export type PayorPlanUpdateVM = any;
+export type PayorPlanItemSaveVM = Omit<PayorPlanItem, "id" | "createdDate" | "lastModifiedDate">;
+export type PayorPlanItemUpdateVM = Omit<PayorPlanItem, "createdDate" | "lastModifiedDate">;
 
 export const PayorPlanService = createApi({
-  reducerPath: "newPayorPlanApi",
+  reducerPath: "payorPlanApi",
   baseQuery: BaseQuery,
-  tagTypes: ["PayorPlan"],
+  tagTypes: ["PayorPlan", "PayorPlanItem"],
   endpoints: (builder) => ({
-    // 🔹 Get Payor Plans by Payor ID (paged)
-    getPayorPlansByPayor: builder.query<
-      PagedResult<PayorPlan>,
-      PagedParams & { payorId: number }
-    >({
-      query: ({ payorId, page, size, sort = "id,asc" }) => ({
-        url: `/api/setup/payor-plan/by-payor/${payorId}`,
+
+    // ---------------- PLANS ----------------
+
+    getAllPlans: builder.query<PagedResult<PayorPlan>, PagedParams>({
+      query: ({ page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/payor-plan",
         method: "GET",
         params: { page, size, sort },
       }),
-      transformResponse: (response: PayorPlan[], meta) => {
-        const headers = meta?.response?.headers;
-
+      transformResponse: (res: PayorPlan[], meta) => {
+        const h = meta?.response?.headers;
         return {
-          data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          data: res,
+          totalCount: Number(h?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(h?.get("Link")),
         };
       },
       providesTags: ["PayorPlan"],
     }),
 
-    // 🔹 Get single plan by ID
-    getPayorPlanById: builder.query<PayorPlan, number | string>({
+    getAllActivePlans: builder.query<PagedResult<PayorPlan>, PagedParams>({
+      query: ({ page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/payor-plan/active",
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (res: PayorPlan[], meta) => {
+        const h = meta?.response?.headers;
+        return {
+          data: res,
+          totalCount: Number(h?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(h?.get("Link")),
+        };
+      },
+      providesTags: ["PayorPlan"],
+    }),
+
+    getPlansByPayor: builder.query<PagedResult<PayorPlan>, { payorId: number | string } & PagedParams>({
+      query: ({ payorId, page, size, sort = "id,desc" }) => ({
+        url: `/api/setup/payor-plan/by-payor/${payorId}`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (res: PayorPlan[], meta) => {
+        const h = meta?.response?.headers;
+        return {
+          data: res,
+          totalCount: Number(h?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(h?.get("Link")),
+        };
+      },
+      providesTags: ["PayorPlan"],
+    }),
+
+    getActivePlansByPayor: builder.query<PagedResult<PayorPlan>, { payorId: number | string } & PagedParams>({
+      query: ({ payorId, page, size, sort = "id,desc" }) => ({
+        url: `/api/setup/payor-plan/by-payor/${payorId}/active`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (res: PayorPlan[], meta) => {
+        const h = meta?.response?.headers;
+        return {
+          data: res,
+          totalCount: Number(h?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(h?.get("Link")),
+        };
+      },
+      providesTags: ["PayorPlan"],
+    }),
+
+    getPlanById: builder.query<PayorPlan, number | string>({
       query: (id) => ({
         url: `/api/setup/payor-plan/${id}`,
         method: "GET",
+        params: { includeItems: true },
       }),
-      providesTags: (result, error, id) => [{ type: "PayorPlan", id }],
+      providesTags: (r, e, id) => [{ type: "PayorPlan", id }],
     }),
 
-    // 🔹 Create new PayorPlan
-    createPayorPlan: builder.mutation<PayorPlan, PayorPlanSaveVM>({
+    createPlan: builder.mutation<PayorPlan, PayorPlanSaveVM>({
       query: (body) => ({
-        url: `/api/setup/payor-plan`,
+        url: "/api/setup/payor-plan",
         method: "POST",
         body,
       }),
       invalidatesTags: ["PayorPlan"],
     }),
 
-    // 🔹 Update PayorPlan
-    updatePayorPlan: builder.mutation<PayorPlan, PayorPlanUpdateVM>({
+    updatePlan: builder.mutation<PayorPlan, PayorPlanUpdateVM>({
       query: (body) => ({
-        url: `/api/setup/payor-plan`,
+        url: "/api/setup/payor-plan",
         method: "PUT",
         body,
       }),
-      invalidatesTags: (result, error, body: any) =>
-        body?.id
-          ? [{ type: "PayorPlan", id: body.id }, "PayorPlan"]
-          : ["PayorPlan"],
+      invalidatesTags: (r, e, body: any) =>
+        body?.id ? [{ type: "PayorPlan", id: body.id }, "PayorPlan"] : ["PayorPlan"],
     }),
 
-    // 🔹 Delete PayorPlan
-    deletePayorPlan: builder.mutation<void, number>({
+    togglePlanActive: builder.mutation<PayorPlan, number | string>({
+      query: (id) => ({
+        url: `/api/setup/payor-plan/${id}/toggle-active`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["PayorPlan"],
+    }),
+
+    deletePlan: builder.mutation<void, number | string>({
       query: (id) => ({
         url: `/api/setup/payor-plan/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["PayorPlan"],
+      invalidatesTags: ["PayorPlan", "PayorPlanItem"],
+    }),
+
+    // ---------------- PLAN ITEMS ----------------
+
+    getItemsByPlan: builder.query<PagedResult<PayorPlanItem>, { planId: number | string } & PagedParams>({
+      query: ({ planId, page, size, sort = "id,asc" }) => ({
+        url: `/api/setup/payor-plan-item/by-plan/${planId}`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (res: PayorPlanItem[], meta) => {
+        const h = meta?.response?.headers;
+        return {
+          data: res,
+          totalCount: Number(h?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(h?.get("Link")),
+        };
+      },
+      providesTags: ["PayorPlanItem"],
+    }),
+
+    getActiveItemsByPlan: builder.query<PagedResult<PayorPlanItem>, { planId: number | string } & PagedParams>({
+      query: ({ planId, page, size, sort = "id,asc" }) => ({
+        url: `/api/setup/payor-plan-item/by-plan/${planId}/active`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (res: PayorPlanItem[], meta) => {
+        const h = meta?.response?.headers;
+        return {
+          data: res,
+          totalCount: Number(h?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(h?.get("Link")),
+        };
+      },
+      providesTags: ["PayorPlanItem"],
+    }),
+
+    createPlanItem: builder.mutation<PayorPlanItem, PayorPlanItemSaveVM>({
+      query: (body) => ({
+        url: "/api/setup/payor-plan-item",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["PayorPlanItem", "PayorPlan"],
+    }),
+
+    updatePlanItem: builder.mutation<PayorPlanItem, PayorPlanItemUpdateVM>({
+      query: (body) => ({
+        url: "/api/setup/payor-plan-item",
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["PayorPlanItem", "PayorPlan"],
+    }),
+
+    togglePlanItemActive: builder.mutation<PayorPlanItem, number | string>({
+      query: (id) => ({
+        url: `/api/setup/payor-plan-item/${id}/toggle-active`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["PayorPlanItem", "PayorPlan"],
+    }),
+
+    deletePlanItem: builder.mutation<void, number | string>({
+      query: (id) => ({
+        url: `/api/setup/payor-plan-item/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["PayorPlanItem", "PayorPlan"],
     }),
   }),
 });
 
 export const {
-  useGetPayorPlansByPayorQuery,
-  useLazyGetPayorPlansByPayorQuery,
-  useGetPayorPlanByIdQuery,
-  useCreatePayorPlanMutation,
-  useUpdatePayorPlanMutation,
-  useDeletePayorPlanMutation,
+  useGetAllPlansQuery,
+  useLazyGetAllPlansQuery,
+  useGetAllActivePlansQuery,
+  useLazyGetAllActivePlansQuery,
+  useGetPlansByPayorQuery,
+  useLazyGetPlansByPayorQuery,
+  useGetActivePlansByPayorQuery,
+  useLazyGetActivePlansByPayorQuery,
+  useGetPlanByIdQuery,
+  useCreatePlanMutation,
+  useUpdatePlanMutation,
+  useTogglePlanActiveMutation,
+  useDeletePlanMutation,
+
+  useGetItemsByPlanQuery,
+  useLazyGetItemsByPlanQuery,
+  useGetActiveItemsByPlanQuery,
+  useLazyGetActiveItemsByPlanQuery,
+  useCreatePlanItemMutation,
+  useUpdatePlanItemMutation,
+  useTogglePlanItemActiveMutation,
+  useDeletePlanItemMutation,
 } = PayorPlanService;

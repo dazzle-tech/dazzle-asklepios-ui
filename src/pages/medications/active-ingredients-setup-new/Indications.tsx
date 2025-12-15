@@ -70,7 +70,6 @@ const Indications = ({ selectedActiveIngredients }) => {
     refetch,
     isFetching
   } = useGetIndicationsByActiveIngredientIdQuery(selectedActiveIngredients?.id);
-  console.log("LIST", indicationListResponseData)
   const totalCount = indicationListResponseData?.length ?? 0;
 
 
@@ -162,7 +161,7 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
         activeIngredientIndication.icd10CodeId;
 
       if (!icdId) {
-        dispatch(notify({ msg: "Please fix the following fields: • ICD Code: is required", sev: "error" }));
+        dispatch(notify({ msg: "Please fix the following fields: • ICD Code: is required", sev: "warning" }));
         return;
       }
 
@@ -209,7 +208,7 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
     setOpenConfirmDeleteIndicationModal(false);
 
     if (!activeIngredientIndication.id) {
-      dispatch(notify({ msg: "Invalid indication", sev: "error" }));
+      dispatch(notify({ msg: "Invalid indication", sev: "warning" }));
       return;
     }
 
@@ -221,7 +220,6 @@ const [updateActiveIngredientIndication] = useUpdateIndicationMutation();
         setActiveIngredientIndication({ ...newActiveIngredientIndication });
       })
       .catch((err) => {
-        console.log("Delete Error:", err);
         dispatch(notify({ msg: "Failed to delete", sev: "error" }));
       });
   };
@@ -332,8 +330,6 @@ const sortedList = useMemo(() => {
     }
   }, [selectedActiveIngredients]);
 
-
-  console.log("Indication Table Data: ", indicationListResponseData);
 
 
 

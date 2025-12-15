@@ -27,23 +27,7 @@ export const encounterAttachmentsService = createApi({
         }
         if (source && source.trim()) {
           formData.append('source', source);
-        }
-        
-        // Log FormData contents for debugging
-        console.log('Upload Encounter Attachment Request:', {
-          encounterId,
-          sourceId: finalSourceId,
-          source,
-          type,
-          details,
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type
-        });
-        for (let pair of formData.entries()) {
-          console.log(pair[0], '=', pair[1]);
-        }
-        
+        } 
         return {
           url: `/api/setup/encounters/${encounterId}/attachments`,
           method: 'POST',
@@ -66,7 +50,6 @@ export const encounterAttachmentsService = createApi({
         const queryString = params.toString();
         const url = `/api/setup/encounters/attachments/by-encounterIdAndSource/${encounterId}/${source}${queryString ? `?${queryString}` : ''}`;
         
-        console.log('Fetching encounter attachments:', { encounterId, source, sourceId, url });
         
         return {
           url,

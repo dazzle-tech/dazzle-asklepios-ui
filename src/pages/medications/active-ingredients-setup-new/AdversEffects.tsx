@@ -94,7 +94,7 @@ const AdversEffects = ({ activeIngredients }) => {
   // ---------------------------
   const save = async () => {
     if (!record.adverseEffect) {
-      dispatch(notify({ msg: "Please fix the following fields: • adverse effect is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • adverse effect is required", sev: "warning" }));
       return;
     }
 
@@ -182,9 +182,6 @@ const sortedList = useMemo(() => {
   // ---------------------------
   // RENDER
   // ---------------------------
-
-
-  console.log("LovData: ", lovData);
 
   return (
     <Panel>

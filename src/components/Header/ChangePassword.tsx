@@ -63,9 +63,8 @@ const ChangePassword = ({ open, onClose }) => {
                 <Modal.Title>Change Password</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Form layout="inline">
+                <Form fluid layout="inline">
                     <MyInput
-
                         width={350}
                         column
                         fieldLabel="Current Password"
@@ -81,7 +80,6 @@ const ChangePassword = ({ open, onClose }) => {
                         record={newPassword}
                         setRecord={setNewPassword}
                     />
-
                     <MyInput
                         width={350}
                         column

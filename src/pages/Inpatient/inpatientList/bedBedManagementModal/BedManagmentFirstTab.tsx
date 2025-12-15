@@ -156,7 +156,6 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   // Calculate statistics (use latest fetched data)
   const bedsData = fetchBedsRelatedToDepartmentResponse ?? [];
 
-  console.log('bedsData==>', bedsData);
   const totalBeds = bedsData.length;
   const occupiedBeds = bedsData.filter(item => {
     const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';

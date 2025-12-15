@@ -674,8 +674,6 @@ const Tests = forwardRef<unknown, Props>(
         </Form>
       );
     };
-    console.log("testsList: ");
-    console.log(testsList);
     return (
       <Panel ref={ref} header="Order's Tests" defaultExpanded>
         <MyTable

@@ -110,8 +110,6 @@ const payload = {
 };
 
 
-      console.log("FINAL TELEPHONIC PAYLOAD => ", payload);
-
       await saveTeleConsultation(payload).unwrap();
 
       dispatch(notify({ msg: "Saved Successfully", sev: "success" }));

@@ -16,7 +16,6 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
 
 
   const jobRoles=useEnumOptions("JobRole");
-   console.log("JobRoles",jobRoles)
 
   const genders = [
     {

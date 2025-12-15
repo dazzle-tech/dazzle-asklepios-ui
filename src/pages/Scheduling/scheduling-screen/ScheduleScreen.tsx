@@ -548,42 +548,7 @@ const ScheduleScreen = () => {
     }
 
     // ──────────────────────────── RESOURCES & AVAILABILITY LOGGING ────────────────────────────
-    console.log('📊 [ScheduleScreen] Final Resources List:', {
-      totalResources: finalList.length,
-      selectedResourceKeys: selectedKeys,
-      selectedTypeKey: selectedTypeKey,
-      filteredCount: filteredResourcesList.length,
-      currentView: currentView,
-      resources: finalList.map((resource, index) => ({
-        index: index + 1,
-        key: resource.key,
-        resourceKey: resource.resourceKey,
-        resourceName: resource.resourceName || 'N/A',
-        resourceType: resource.resourceTypeLkey,
-        facilityKey: resource.facilityKey,
-        availability: resource.availability ? {
-          periodsCount: resource.availability.length,
-          periods: resource.availability.map((period: any) => ({
-            dayOfWeek: period.dayOfWeek,
-            startHour: period.startHour,
-            startMinute: period.startMinute,
-            endHour: period.endHour,
-            endMinute: period.endMinute
-          }))
-        } : null,
-        availabilitySlices: resource.availabilitySlices ? {
-          slicesCount: resource.availabilitySlices.length,
-          slices: resource.availabilitySlices.map((slice: any) => ({
-            key: slice.key,
-            dayOfWeek: slice.dayOfWeek,
-            startHour: slice.startHour,
-            endHour: slice.endHour,
-            isBreak: slice.break,
-            facilityKey: slice.facilityKey
-          }))
-        } : null
-      }))
-    });
+   
 
     setFinalResourceLit(finalList);
   }, [

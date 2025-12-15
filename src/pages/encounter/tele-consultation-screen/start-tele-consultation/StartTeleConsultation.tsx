@@ -58,7 +58,6 @@ const StartTeleConsultation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
   const { state } = useLocation();
   const { patient, encounter, fromPage, consultaition, notelist } = state || {};
-  console.log("consultaition", state.consultaition);
   const sliceauth = useSelector((state: any) => state.auth);
 
   const [showProcedureDetails, setShowProcedureDetails] = useState(false);
@@ -180,7 +179,6 @@ const StartTeleConsultation = () => {
                     callClosedAt: Date.now(),
                     callClosedBy: sliceauth.user?.login
                   };
-                  console.log('close', payload);
                   await save(payload).unwrap();
                 }}
               >

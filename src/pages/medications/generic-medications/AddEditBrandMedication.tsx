@@ -276,7 +276,6 @@ const AddEditBrandMedication = ({
     setSelectedGeneric(null);
   };
   // Icons column (Edite, reactive/Deactivate)
-  console.log('modifiedMedicationList-->', modifiedMedicationList);
   const iconsForActions = (rowData: ApGenericMedicationActiveIngredient) => (
     <div className="container-of-icons">
       {/* deactivate/activate  when click on one of these icon */}

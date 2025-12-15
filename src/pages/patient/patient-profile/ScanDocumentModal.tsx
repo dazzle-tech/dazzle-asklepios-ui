@@ -61,12 +61,8 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
     try {
       setIsProcessing(true);
 
-      console.log('Starting ID parsing for file:', selectedFile.name);
-
       // Step 1: Parse the ID document
       const parsedData = await parseIdDocument(selectedFile).unwrap();
-
-      console.log('ID parsed successfully:', parsedData);
 
       dispatch(
         notify({
@@ -78,7 +74,6 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
       // Step 2: Upload the attachment if patient exists
       if (patientId) {
         try {
-          console.log('Uploading attachment for patient:', patientId);
 
           await uploadAttachments({
             patientId: Number(patientId),
@@ -168,18 +163,9 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
         source: 'PATIENT_DOCUMENT'
       };
 
-      console.log('Uploading with params:', {
-        patientId: uploadParams.patientId,
-        fileName: selectedFile.name,
-        fileSize: selectedFile.size,
-        type: uploadParams.type,
-        details: uploadParams.details,
-        source: uploadParams.source
-      });
 
       const result = await uploadAttachments(uploadParams).unwrap();
 
-      console.log('Upload successful:', result);
 
       dispatch(
         notify({

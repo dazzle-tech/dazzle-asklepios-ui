@@ -74,7 +74,6 @@ const Lab = () => {
     //   }]
   });
  
-  console.log('selectedDepartment', selectedDepartment);
   const [listResultResponse, setListResultResponse] = useState<ListRequest>({
     ...initialListRequest,
     filters: [

@@ -1051,7 +1051,6 @@ export const encounterService = createApi({
         )}`
       }),
       transformResponse: (response: any) => {
-        console.log('RAW progress notes API response', response);
         return response?.object ?? [];
       },
       keepUnusedDataFor: 5

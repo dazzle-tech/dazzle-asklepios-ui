@@ -959,19 +959,49 @@ const NewAvailabilityTimeModal = ({ open, setOpen, selectedResource }) => {
         return d;
     };
 
+    const handleFromTimeChange = (newFromTime) => {
+        setFromTime(newFromTime);
+        if (newFromTime && toTime && newFromTime >= toTime) {
+            dispatch(notify({ msg: 'To time must be greater than From time', sev: 'warning' }));
+        }
+    };
+
+    const handleToTimeChange = (newToTime) => {
+        if (newToTime && fromTime && newToTime <= fromTime) {
+            dispatch(notify({ msg: 'To time must be greater than From time', sev: 'warning' }));
+            return; 
+        }
+        setToTime(newToTime);
+    };
+
     const handleSave = async () => {
         if (!facility || (!facility.id && !facility.facilityKey)) {
-            dispatch(notify({ msg: 'Please select a facility', sev: 'warn' }));
+            dispatch(notify({ msg: 'Facility is mandatory', sev: 'warning' }));
+            return;
+        }
+
+        if (!fromTime || !toTime) {
+            dispatch(notify({ msg: 'Time From-To is Mandatory', sev: 'warning' }));
+            return;
+        }
+
+        if (fromTime >= toTime) {
+            dispatch(notify({ msg: 'To time must be greater than From time', sev: 'warning' }));
+            return;
+        }
+
+        if (!sliceDuration) {
+            dispatch(notify({ msg: 'Slice Duration Mandatory', sev: 'warning' }));
             return;
         }
 
         if (!selectedResource?.object?.[0]?.key) {
-            dispatch(notify({ msg: 'Resource is required', sev: 'warn' }));
+            dispatch(notify({ msg: 'Resource is required', sev: 'warning' }));
             return;
         }
 
         if (selectedDays.length === 0) {
-            dispatch(notify({ msg: 'Please select at least one day', sev: 'warn' }));
+            dispatch(notify({ msg: 'Please select at least one day', sev: 'warning' }));
             return;
         }
 
@@ -1187,7 +1217,6 @@ const handleAddSliceRight = (day) => {
                         <MyInput
                             height={35}
                             width={"100%"}
-
                             column
                             fieldLabel="Facility"
                             selectData={facilityListResponse ?? []}
@@ -1206,47 +1235,51 @@ const handleAddSliceRight = (day) => {
                                     setFacility(null);
                                 }
                             }}
+                            required
                         />
                         
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                        <Form.Group style={{ flex: 1 }}>
-                            <Form.ControlLabel>Time Range</Form.ControlLabel>
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <TimePicker
-                                    placeholder="From"
-                                    value={fromTime}
-                                    onChange={setFromTime}
+                    <Form.Group style={{ marginTop: '1rem' }}>
+                        <Form.ControlLabel>
+                            Time Range
+                            <span className="required-field">*</span>
+                        </Form.ControlLabel>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+                            <TimePicker
+                                placeholder="From"
+                                value={fromTime}
+                                onChange={handleFromTimeChange}
+                                style={{ flex: 1 }}
+                                hideMinutes={minute => minute % 30 !== 0}
+                            />
+                            <TimePicker
+                                placeholder="To"
+                                value={toTime}
+                                onChange={handleToTimeChange}
+                                style={{ flex: 1 }}
+                                hideMinutes={minute => minute % 30 !== 0}
+                            />
+                            <div style={{ flex: '0 0 150px' }}>
+                                <Form.ControlLabel>
+                                    Slice Duration
+                                    <span className="required-field">*</span>
+                                </Form.ControlLabel>
+                                <SelectPicker
+                                    data={[
+                                        { label: '10 minutes', value: 10 },
+                                        { label: '20 minutes', value: 20 },
+                                        { label: '30 minutes', value: 30 },
+                                        { label: '60 minutes', value: 60 },
+                                    ]}
+                                    value={sliceDuration}
+                                    onChange={setSliceDuration}
                                     style={{ width: '100%' }}
-                                    hideMinutes={minute => minute % 30 !== 0}
-                                />
-                                <TimePicker
-                                    placeholder="To"
-                                    value={toTime}
-                                    onChange={setToTime}
-                                    style={{ width: '100%' }}
-                                    hideMinutes={minute => minute % 30 !== 0}
+                                    cleanable={false}
                                 />
                             </div>
-                        </Form.Group>
-
-                        <Form.Group style={{ flex: '0 0 150px' }}>
-                            <Form.ControlLabel>Slice Duration</Form.ControlLabel>
-                            <SelectPicker
-                                data={[
-                                    { label: '10 minutes', value: 10 },
-                                    { label: '20 minutes', value: 20 },
-                                    { label: '30 minutes', value: 30 },
-                                    { label: '60 minutes', value: 60 },
-                                ]}
-                                value={sliceDuration}
-                                onChange={setSliceDuration}
-                                style={{ width: '100%' }}
-                                cleanable={false}
-                            />
-                        </Form.Group>
-                    </div>
+                        </div>
+                    </Form.Group>
 
                     <Form.Group>
                         <Form.ControlLabel>Select Days</Form.ControlLabel>

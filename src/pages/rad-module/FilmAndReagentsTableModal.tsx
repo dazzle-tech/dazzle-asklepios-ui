@@ -103,7 +103,6 @@ const FilmAndReagentsTableModal: React.FC<FilmAndReagentsTableModalProps> = ({ o
           }
         ]}
         actionButtonFunction={() => {
-          console.log('Saved data:', tableData);
           setOpen(false);
         }}
         content={() => (

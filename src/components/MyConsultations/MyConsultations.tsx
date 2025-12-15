@@ -732,7 +732,6 @@ const MyConsultations = () => {
                 size="small"
                 radius="6px"
                 backgroundColor="black"
-                onClick={() => console.log("Add Report", row)}
               >
                 <FontAwesomeIcon icon={faUpload} color="white" />
               </MyButton>
