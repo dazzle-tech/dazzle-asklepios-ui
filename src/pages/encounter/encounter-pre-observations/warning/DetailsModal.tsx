@@ -2,6 +2,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
+import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { useSaveWarningsMutation } from '@/services/observationService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApVisitWarning } from '@/types/model-types-constructor';
@@ -16,7 +17,7 @@ const DetailsModal = ({
   setOpen,
   warning,
   setWarning,
-  fetchwarnings,
+  fetchWarnings,
   patient,
   encounter,
   editing,
@@ -46,8 +47,9 @@ const DetailsModal = ({
 
       //  setShowPrev(false);
       setOpen(false);
-      await fetchwarnings();
-
+      await fetchWarnings();
+      dispatch(resetRefetchEncounter());
+      dispatch(setRefetchEncounter(true));
       handleClear();
       //setShowPrev(true);
     } catch (error) {

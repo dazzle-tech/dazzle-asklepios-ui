@@ -19,6 +19,7 @@ import { useLocation } from 'react-router-dom';
 import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
+import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 interface WarningProps {
   patient?: any;
@@ -141,6 +142,8 @@ const Warning = (props: WarningProps) => {
       setOpenConfirmResolvedModel(false);
       setShowPrev(true);
       setWarning({ ...newApVisitWarning });
+      dispatch(resetRefetchEncounter());
+      dispatch(setRefetchEncounter(true));
     } catch {
       dispatch(notify('Resolved Failed'));
     }
@@ -155,6 +158,8 @@ const Warning = (props: WarningProps) => {
       setOpenConfirmUndoResolvedModel(false);
       setShowPrev(true);
       setWarning({ ...newApVisitWarning });
+      dispatch(resetRefetchEncounter());
+      dispatch(setRefetchEncounter(true));
     } catch {
       dispatch(notify('Undo Resolved Failed'));
     }

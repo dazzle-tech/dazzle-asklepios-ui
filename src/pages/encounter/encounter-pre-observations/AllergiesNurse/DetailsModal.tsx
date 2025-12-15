@@ -16,6 +16,7 @@ import { useSaveAllergiesMutation } from '@/services/observationService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import clsx from 'clsx';
+import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
 const DetailsModal = ({
   open,
   setOpen,
@@ -116,6 +117,8 @@ const DetailsModal = ({
       setOpen(false);
       await fetchallerges();
       await handleClear();
+      dispatch(resetRefetchEncounter());
+      dispatch(setRefetchEncounter(true));
     } catch (error) {
       dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
     }

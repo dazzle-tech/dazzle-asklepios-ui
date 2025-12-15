@@ -16,7 +16,7 @@ const DetailsModal = ({
   setOpen,
   warning,
   setWarning,
-  fetchwarnings,
+  fetchWarnings,
   patient,
   encounter,
   editing,
@@ -46,7 +46,7 @@ const DetailsModal = ({
 
       //  setShowPrev(false);
       setOpen(false);
-      await fetchwarnings();
+      await fetchWarnings();
 
       handleClear();
       //setShowPrev(true);
