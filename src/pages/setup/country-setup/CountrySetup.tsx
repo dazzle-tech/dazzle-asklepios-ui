@@ -1,74 +1,75 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Panel, Form } from 'rsuite';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { MdModeEdit, MdDelete } from 'react-icons/md';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FaUndo } from 'react-icons/fa';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { Form, Panel } from 'rsuite';
 
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
 import {
-  useGetCountriesQuery,
-  useLazyGetCountryByNameQuery,
-  useLazyGetCountryByCodeQuery,
   useAddCountryMutation,
-  useUpdateCountryMutation,
-  useToggleCountryActiveMutation
+  useGetCountriesQuery,
+  useLazyGetCountryByCodeQuery,
+  useLazyGetCountryByNameQuery,
+  useToggleCountryActiveMutation,
+  useUpdateCountryMutation
 } from '@/services/setup/country/countryService';
 
 import {
+  useAddDistrictMutation,
   useGetDistrictsByCountryQuery,
   useLazyGetDistrictsByCountryQuery,
-  useAddDistrictMutation,
-  useUpdateDistrictMutation,
-  useToggleDistrictActiveMutation
+  useToggleDistrictActiveMutation,
+  useUpdateDistrictMutation
 } from '@/services/setup/country/countryDistrictService';
 
 import {
+  useAddCommunityMutation,
   useGetCommunitiesByDistrictQuery,
   useLazyGetCommunitiesByDistrictQuery,
-  useAddCommunityMutation,
-  useUpdateCommunityMutation,
-  useToggleCommunityActiveMutation
+  useToggleCommunityActiveMutation,
+  useUpdateCommunityMutation
 } from '@/services/setup/country/districtCommunityService';
 
 import {
+  useAddAreaMutation,
   useGetAreasByDistrictQuery,
   useLazyGetAreasByDistrictQuery,
-  useAddAreaMutation,
-  useUpdateAreaMutation,
-  useToggleAreaActiveMutation
+  useToggleAreaActiveMutation,
+  useUpdateAreaMutation
 } from '@/services/setup/country/communityAreaService';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 import {
+  newCommunityArea,
+  newCountry,
+  newCountryDistrict
+} from '@/types/model-types-constructor-new';
+import {
+  CommunityArea,
   Country,
   CountryDistrict,
-  DistrictCommunity,
-  CommunityArea
+  DistrictCommunity
 } from '@/types/model-types-new';
-import {
-  newCountry,
-  newCountryDistrict,
-  newCommunityArea
-} from '@/types/model-types-constructor-new';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
-import './geo-hierarchy.less';
 import SectionContainer from '@/components/SectionsoContainer';
+import './geo-hierarchy.less';
+import { useLocation } from 'react-router-dom';
 
 const CountrySetup: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { pathname } = useLocation();
 
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<CountryDistrict | null>(null);
@@ -76,7 +77,9 @@ const CountrySetup: React.FC = () => {
   const [selectedArea, setSelectedArea] = useState<CommunityArea | null>(null);
 
   const [countryForEdit, setCountryForEdit] = useState<Country>({ ...newCountry });
-  const [districtForEdit, setDistrictForEdit] = useState<CountryDistrict>({ ...newCountryDistrict });
+  const [districtForEdit, setDistrictForEdit] = useState<CountryDistrict>({
+    ...newCountryDistrict
+  });
   const [communityForEdit, setCommunityForEdit] = useState<DistrictCommunity>({
     id: undefined,
     districtId: 0,
@@ -154,7 +157,12 @@ const CountrySetup: React.FC = () => {
     setFilteredCountriesTotal(0);
     setFilteredCountriesLinks(undefined);
     setCountryFilterPagination(prev => ({ ...prev, page: 0 }));
-    setCountryPaginationParams(prev => ({ ...prev, page: 0, sort: 'id,asc', timestamp: Date.now() }));
+    setCountryPaginationParams(prev => ({
+      ...prev,
+      page: 0,
+      sort: 'id,asc',
+      timestamp: Date.now()
+    }));
     refetchCountries();
   };
 
@@ -283,7 +291,7 @@ const CountrySetup: React.FC = () => {
       );
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+      <Form layout="inline" fluid className="flex-dis-row">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -298,7 +306,7 @@ const CountrySetup: React.FC = () => {
           showLabel={false}
           placeholder="Select Filter"
           searchable={false}
-          width="170px"
+          width={170}
         />
         {dynamicInput}
         <div style={{ marginTop: '24px' }}>
@@ -559,7 +567,7 @@ const CountrySetup: React.FC = () => {
     }
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+      <Form layout="inline" fluid className="flex-dis-row">
         <MyInput
           selectDataValue="value"
           selectDataLabel="label"
@@ -580,7 +588,6 @@ const CountrySetup: React.FC = () => {
         {dynamicInput}
 
         <div style={{ marginTop: '24px' }}>
-
           <MyButton
             color="var(--deep-blue)"
             width="80px"
@@ -801,7 +808,7 @@ const CountrySetup: React.FC = () => {
           placeholder="Enter Community Name"
           record={recordOfCommunityFilter}
           setRecord={setRecordOfCommunityFilter}
-          width={150}
+          width={170}
         />
       );
     } else {
@@ -814,13 +821,13 @@ const CountrySetup: React.FC = () => {
           placeholder="Enter Value"
           record={recordOfCommunityFilter}
           setRecord={setRecordOfCommunityFilter}
-          width={150}
+          width={170}
         />
       );
     }
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+      <Form layout="inline" fluid className="flex-dis-row">
         <MyInput
           fieldType="select"
           fieldName="filter"
@@ -833,11 +840,10 @@ const CountrySetup: React.FC = () => {
           setRecord={(v: any) => setRecordOfCommunityFilter({ filter: v.filter, value: '' })}
           placeholder="Select Filter"
           searchable={false}
-          width={150}
+          width={170}
         />
         {dynamicInput}
         <div style={{ marginTop: '24px' }}>
-
           <MyButton
             color="var(--deep-blue)"
             width="80px"
@@ -1077,7 +1083,7 @@ const CountrySetup: React.FC = () => {
     }
 
     return (
-      <Form layout="inline" fluid style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+      <Form layout="inline" fluid className="flex-dis-row">
         <MyInput
           fieldType="select"
           fieldName="filter"
@@ -1094,7 +1100,6 @@ const CountrySetup: React.FC = () => {
         />
         {dynamicInput}
         <div style={{ marginTop: '24px' }}>
-
           <MyButton
             color="var(--deep-blue)"
             width="80px"
@@ -1126,6 +1131,17 @@ const CountrySetup: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordOfAreaFilter.value]);
 
+  useEffect(() => {
+    const divContent = 'Country Setup';
+
+    dispatch(setPageCode('Country_Setup'));
+    dispatch(setDivContent(divContent));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch, pathname]);
   const [addCountry] = useAddCountryMutation();
   const [updateCountry] = useUpdateCountryMutation();
   const [toggleCountryActive] = useToggleCountryActiveMutation();
@@ -1541,427 +1557,336 @@ const CountrySetup: React.FC = () => {
     }
   ];
 
-
-
- return (
-  <Panel className="geo-hierarchy-container">
-    <div className="geo-columns">
-      <SectionContainer
-        title={<Translate>Country</Translate>}
-        minHeight={600}
-        action={
-          <MyButton
-            color="var(--deep-blue)"
-            width="90px"
-            prefixIcon={() => <AddOutlineIcon />}
-            onClick={() => {
-              setCountryForEdit({ ...newCountry, isActive: true });
-              setShowCountryForm(true);
-            }}
-          >
-            Add
-          </MyButton>
-        }
-        content={
-          <>
-            {showCountryForm && (
-              <div className="geo-inline-form">
-                <Form fluid layout="inline" className="flex-dis-row">
-                  <MyInput
-                    fieldName="name"
-                    fieldType="select"
-                    column
-                    fieldLabel="Country Name"
-                    record={countryForEdit}
-                    setRecord={setCountryForEdit}
-                    selectData={lovResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    placeholder="Select country"
-                    width={220}
-                  />
-                  <MyInput
-                    fieldName="code"
-                    fieldType="text"
-                    fieldLabel="Code"
-                    column
-                    record={countryForEdit}
-                    setRecord={setCountryForEdit}
-                    placeholder="Code"
-                    width={120}
-                  />
-
-                  <div style={{ marginTop: '36px' }}>
-                    <MyButton
-                      color="var(--deep-blue)"
-                      width="80px"
-                      onClick={() => handleSaveCountry(countryForEdit)}
-                    >
-                      Save
-                    </MyButton>
-                  </div>
-
-                  <div style={{ marginTop: '36px' }}>
-                    <MyButton
-                      color="var(--primary-gray)"
-                      width="80px"
-                      onClick={() => {
-                        setShowCountryForm(false);
-                        setCountryForEdit({ ...newCountry });
-                      }}
-                    >
-                      Cancel
-                    </MyButton>
-                  </div>
-                </Form>
-              </div>
-            )}
-
-            {countryFiltersUI()}
-
-            <MyTable
-              data={countryTableData}
-              columns={countryColumns}
-              totalCount={countryTotalCount}
-              page={
-                isCountryFiltered
-                  ? countryFilterPagination.page
-                  : countryPaginationParams.page
-              }
-              rowsPerPage={
-                isCountryFiltered
-                  ? countryFilterPagination.size
-                  : countryPaginationParams.size
-              }
-              onPageChange={handleCountryPageChange}
-              onRowsPerPageChange={handleCountryRowsPerPageChange}
-              loading={countriesFetching}
-              filters={null}
-              onRowClick={row => {
-                setSelectedCountry(row as Country);
-                setSelectedDistrict(null);
-                setSelectedCommunity(null);
-                setSelectedArea(null);
-              }}
-              rowClassName={row =>
-                selectedCountry && row.id === selectedCountry.id ? 'selected-row' : ''
-              }
-            />
-          </>
-        }
-      />
-
-      {selectedCountry && (
+  return (
+    <Panel className="geo-hierarchy-container">
+      <div className="geo-columns">
         <SectionContainer
-          title={<Translate>Districts</Translate>}
-          minHeight={600}
+          title={<Translate>Country</Translate>}
           content={
             <>
-              {showDistrictForm && (
+              <div className="inputs-dis-flex">
                 <div className="geo-inline-form">
-                  <Form fluid layout="inline">
+                  <Form fluid layout="inline" className="flex-dis-row">
                     <MyInput
                       fieldName="name"
-                      fieldType="text"
+                      fieldType="select"
                       column
-                      fieldLabel="District Name"
-                      record={districtForEdit}
-                      setRecord={setDistrictForEdit}
-                      placeholder="Enter district name"
-                      width={200}
+                      fieldLabel="Country Name"
+                      record={countryForEdit}
+                      setRecord={setCountryForEdit}
+                      selectData={lovResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      width={220}
                     />
                     <MyInput
                       fieldName="code"
                       fieldType="text"
-                      column
                       fieldLabel="Code"
-                      record={districtForEdit}
-                      setRecord={setDistrictForEdit}
-                      placeholder="Code"
+                      column
+                      record={countryForEdit}
+                      setRecord={setCountryForEdit}
                       width={120}
                     />
+
                     <div style={{ marginTop: '36px' }}>
                       <MyButton
                         color="var(--deep-blue)"
                         width="80px"
-                        onClick={() => handleSaveDistrict(districtForEdit)}
+                        onClick={() => handleSaveCountry(countryForEdit)}
                       >
                         Save
                       </MyButton>
                     </div>
+
                     <div style={{ marginTop: '36px' }}>
                       <MyButton
                         color="var(--primary-gray)"
                         width="80px"
                         onClick={() => {
-                          setShowDistrictForm(false);
-                          setDistrictForEdit({ ...newCountryDistrict });
+                          setShowCountryForm(false);
+                          setCountryForEdit({ ...newCountry });
                         }}
                       >
-                        Cancel
+                        Clear
                       </MyButton>
                     </div>
                   </Form>
                 </div>
-              )}
-              {districtFiltersUI()}
+
+                {countryFiltersUI()}
+              </div>
               <MyTable
-                data={districtTableData}
-                columns={districtColumns}
-                totalCount={districtTotalCount}
+                data={countryTableData}
+                columns={countryColumns}
+                totalCount={countryTotalCount}
                 page={
-                  isDistrictFiltered
-                    ? districtFilterPagination.page
-                    : districtPaginationParams.page
+                  isCountryFiltered ? countryFilterPagination.page : countryPaginationParams.page
                 }
                 rowsPerPage={
-                  isDistrictFiltered
-                    ? districtFilterPagination.size
-                    : districtPaginationParams.size
+                  isCountryFiltered ? countryFilterPagination.size : countryPaginationParams.size
                 }
-                onPageChange={handleDistrictPageChange}
-                onRowsPerPageChange={handleDistrictRowsPerPageChange}
-                loading={districtsFetching}
+                onPageChange={handleCountryPageChange}
+                onRowsPerPageChange={handleCountryRowsPerPageChange}
+                loading={countriesFetching}
                 filters={null}
                 onRowClick={row => {
-                  setSelectedDistrict(row as CountryDistrict);
+                  setSelectedCountry(row as Country);
+                  setSelectedDistrict(null);
                   setSelectedCommunity(null);
                   setSelectedArea(null);
                 }}
                 rowClassName={row =>
-                  selectedDistrict && row.id === selectedDistrict.id ? 'selected-row' : ''
+                  selectedCountry && row.id === selectedCountry.id ? 'selected-row' : ''
                 }
               />
             </>
           }
-          action={
-            <MyButton
-              color="var(--deep-blue)"
-              width="90px"
-              prefixIcon={() => <AddOutlineIcon />}
-              disabled={!selectedCountry}
-              onClick={() => {
-                if (!selectedCountry) return;
-                setDistrictForEdit({
-                  ...newCountryDistrict,
-                  countryId: selectedCountry.id!,
-                  isActive: true
-                });
-                setShowDistrictForm(true);
-              }}
-            >
-              Add
-            </MyButton>
-          }
         />
-      )}
 
-      {selectedDistrict && (
-        <SectionContainer
-          title={<Translate>Communities</Translate>}
-          minHeight={600}
-          content={
-            <>
-              {showCommunityForm && (
-                <div className="geo-inline-form">
-                  <Form fluid layout="inline">
-                    <MyInput
-                      fieldName="name"
-                      fieldType="text"
-                      column
-                      fieldLabel="Community Name"
-                      record={communityForEdit}
-                      setRecord={setCommunityForEdit}
-                      placeholder="Enter community name"
-                      width={220}
-                    />
-                    <div style={{ marginTop: '36px' }}>
-                      <MyButton
-                        color="var(--deep-blue)"
-                        width="80px"
-                        onClick={() => handleSaveCommunity(communityForEdit)}
-                      >
-                        Save
-                      </MyButton>
-                    </div>
-                    <div style={{ marginTop: '36px' }}>
-                      <MyButton
-                        color="var(--primary-gray)"
-                        width="80px"
-                        onClick={() => {
-                          setShowCommunityForm(false);
-                          setCommunityForEdit({
-                            id: undefined,
-                            districtId,
-                            name: '',
-                            isActive: true
-                          });
-                        }}
-                      >
-                        Cancel
-                      </MyButton>
-                    </div>
-                  </Form>
+        {selectedCountry && (
+          <SectionContainer
+            title={<Translate>Districts</Translate>}
+            content={
+              <>
+                <div className="inputs-dis-flex">
+                  <div className="geo-inline-form">
+                    <Form fluid layout="inline">
+                      <MyInput
+                        fieldName="name"
+                        fieldType="text"
+                        column
+                        fieldLabel="District Name"
+                        record={districtForEdit}
+                        setRecord={setDistrictForEdit}
+                        width={200}
+                      />
+                      <MyInput
+                        fieldName="code"
+                        fieldType="text"
+                        column
+                        fieldLabel="Code"
+                        record={districtForEdit}
+                        setRecord={setDistrictForEdit}
+                        width={120}
+                      />
+                      <div style={{ marginTop: '36px' }}>
+                        <MyButton
+                          color="var(--deep-blue)"
+                          width="80px"
+                          onClick={() => handleSaveDistrict(districtForEdit)}
+                        >
+                          Save
+                        </MyButton>
+                      </div>
+                      <div style={{ marginTop: '36px' }}>
+                        <MyButton
+                          color="var(--primary-gray)"
+                          width="80px"
+                          onClick={() => {
+                            setShowDistrictForm(false);
+                            setDistrictForEdit({ ...newCountryDistrict });
+                          }}
+                        >
+                          Clear
+                        </MyButton>
+                      </div>
+                    </Form>
+                  </div>
+                  {districtFiltersUI()}
                 </div>
-              )}
-              {communityFiltersUI()}
-              <MyTable
-                data={communityTableData}
-                columns={communityColumns}
-                totalCount={communityTotalCount}
-                page={
-                  isCommunityFiltered
-                    ? communityFilterPagination.page
-                    : communityPaginationParams.page
-                }
-                rowsPerPage={
-                  isCommunityFiltered
-                    ? communityFilterPagination.size
-                    : communityPaginationParams.size
-                }
-                onPageChange={handleCommunityPageChange}
-                onRowsPerPageChange={handleCommunityRowsPerPageChange}
-                loading={communitiesFetching}
-                filters={null}
-                onRowClick={row => {
-                  setSelectedCommunity(row as DistrictCommunity);
-                  setSelectedArea(null);
-                }}
-                rowClassName={row =>
-                  selectedCommunity && row.id === selectedCommunity.id ? 'selected-row' : ''
-                }
-              />
-            </>
-          }
-          action={
-            <MyButton
-              color="var(--deep-blue)"
-              width="90px"
-              prefixIcon={() => <AddOutlineIcon />}
-              disabled={!selectedDistrict}
-              onClick={() => {
-                if (!selectedDistrict) return;
-                setCommunityForEdit({
-                  id: undefined,
-                  districtId: selectedDistrict.id!,
-                  name: '',
-                  isActive: true
-                });
-                setShowCommunityForm(true);
-              }}
-            >
-              Add
-            </MyButton>
-          }
-        />
-      )}
+                <MyTable
+                  data={districtTableData}
+                  columns={districtColumns}
+                  totalCount={districtTotalCount}
+                  page={
+                    isDistrictFiltered
+                      ? districtFilterPagination.page
+                      : districtPaginationParams.page
+                  }
+                  rowsPerPage={
+                    isDistrictFiltered
+                      ? districtFilterPagination.size
+                      : districtPaginationParams.size
+                  }
+                  onPageChange={handleDistrictPageChange}
+                  onRowsPerPageChange={handleDistrictRowsPerPageChange}
+                  loading={districtsFetching}
+                  filters={null}
+                  onRowClick={row => {
+                    setSelectedDistrict(row as CountryDistrict);
+                    setSelectedCommunity(null);
+                    setSelectedArea(null);
+                  }}
+                  rowClassName={row =>
+                    selectedDistrict && row.id === selectedDistrict.id ? 'selected-row' : ''
+                  }
+                />
+              </>
+            }
+          />
+        )}
 
-      {selectedCommunity && (
-        <SectionContainer
-          title={<Translate>Areas</Translate>}
-          minHeight={600}
-          content={
-            <>
-              {showAreaForm && (
-                <div className="geo-inline-form">
-                  <Form fluid layout="inline">
-                    <MyInput
-                      fieldName="name"
-                      fieldType="text"
-                      column
-                      fieldLabel="Area Name"
-                      record={areaForEdit}
-                      setRecord={setAreaForEdit}
-                      placeholder="Enter area name"
-                      width={220}
-                    />
-                    <div style={{ marginTop: '36px' }}>
-                      <MyButton
-                        color="var(--deep-blue)"
-                        width="80px"
-                        onClick={() => handleSaveArea(areaForEdit)}
-                      >
-                        Save
-                      </MyButton>
-                    </div>
-                    <div style={{ marginTop: '36px' }}>
-                      <MyButton
-                        color="var(--primary-gray)"
-                        width="80px"
-                        onClick={() => {
-                          setShowAreaForm(false);
-                          setAreaForEdit({ ...newCommunityArea, communityId });
-                        }}
-                      >
-                        Cancel
-                      </MyButton>
-                    </div>
-                  </Form>
+        {selectedDistrict && (
+          <SectionContainer
+            title={<Translate>Communities</Translate>}
+            content={
+              <>
+                <div className="inputs-dis-flex">
+                  <div className="geo-inline-form">
+                    <Form fluid layout="inline">
+                      <MyInput
+                        fieldName="name"
+                        fieldType="text"
+                        column
+                        fieldLabel="Community Name"
+                        record={communityForEdit}
+                        setRecord={setCommunityForEdit}
+                        width={220}
+                      />
+                      <div style={{ marginTop: '36px' }}>
+                        <MyButton
+                          color="var(--deep-blue)"
+                          width="80px"
+                          onClick={() => handleSaveCommunity(communityForEdit)}
+                        >
+                          Save
+                        </MyButton>
+                      </div>
+                      <div style={{ marginTop: '36px' }}>
+                        <MyButton
+                          color="var(--primary-gray)"
+                          width="80px"
+                          onClick={() => {
+                            setShowCommunityForm(false);
+                            setCommunityForEdit({
+                              id: undefined,
+                              districtId,
+                              name: '',
+                              isActive: true
+                            });
+                          }}
+                        >
+                          Clear
+                        </MyButton>
+                      </div>
+                    </Form>
+                  </div>
+                  {communityFiltersUI()}
                 </div>
-              )}
-              {areaFiltersUI()}
-              <MyTable
-                data={areaTableData}
-                columns={areaColumns}
-                totalCount={areaTotalCount}
-                page={
-                  isAreaFiltered ? areaFilterPagination.page : areaPaginationParams.page
-                }
-                rowsPerPage={
-                  isAreaFiltered ? areaFilterPagination.size : areaPaginationParams.size
-                }
-                onPageChange={handleAreaPageChange}
-                onRowsPerPageChange={handleAreaRowsPerPageChange}
-                loading={areasFetching}
-                filters={null}
-                onRowClick={row => setSelectedArea(row as CommunityArea)}
-                rowClassName={row =>
-                  selectedArea && row.id === selectedArea.id ? 'selected-row' : ''
-                }
-              />
-            </>
-          }
-          action={
-            <MyButton
-              color="var(--deep-blue)"
-              width="90px"
-              prefixIcon={() => <AddOutlineIcon />}
-              disabled={!selectedCommunity}
-              onClick={() => {
-                if (!selectedCommunity) return;
-                setAreaForEdit({
-                  ...newCommunityArea,
-                  communityId: selectedCommunity.id!,
-                  isActive: true
-                });
-                setShowAreaForm(true);
-              }}
-            >
-              Add
-            </MyButton>
-          }
-        />
-      )}
-    </div>
+                <MyTable
+                  data={communityTableData}
+                  columns={communityColumns}
+                  totalCount={communityTotalCount}
+                  page={
+                    isCommunityFiltered
+                      ? communityFilterPagination.page
+                      : communityPaginationParams.page
+                  }
+                  rowsPerPage={
+                    isCommunityFiltered
+                      ? communityFilterPagination.size
+                      : communityPaginationParams.size
+                  }
+                  onPageChange={handleCommunityPageChange}
+                  onRowsPerPageChange={handleCommunityRowsPerPageChange}
+                  loading={communitiesFetching}
+                  filters={null}
+                  onRowClick={row => {
+                    setSelectedCommunity(row as DistrictCommunity);
+                    setSelectedArea(null);
+                  }}
+                  rowClassName={row =>
+                    selectedCommunity && row.id === selectedCommunity.id ? 'selected-row' : ''
+                  }
+                />
+              </>
+            }
+          />
+        )}
 
-    <DeletionConfirmationModal
-      open={openDeleteConfirm}
-      setOpen={setOpenDeleteConfirm}
-      itemToDelete={
-        deleteType === 'country'
-          ? 'Country'
-          : deleteType === 'district'
-          ? 'District'
-          : deleteType === 'community'
-          ? 'Community'
-          : 'Area'
-      }
-      actionButtonFunction={handleConfirmToggle}
-      actionType={deleteMode}
-    />
-  </Panel>
-);
+        {selectedCommunity && (
+          <SectionContainer
+            title={<Translate>Areas</Translate>}
+            content={
+              <>
+                <div className="inputs-dis-flex">
+                  <div className="geo-inline-form">
+                    <Form fluid layout="inline">
+                      <MyInput
+                        fieldName="name"
+                        fieldType="text"
+                        column
+                        fieldLabel="Area Name"
+                        record={areaForEdit}
+                        setRecord={setAreaForEdit}
+                        width={220}
+                      />
+                      <div style={{ marginTop: '36px' }}>
+                        <MyButton
+                          color="var(--deep-blue)"
+                          width="80px"
+                          onClick={() => handleSaveArea(areaForEdit)}
+                        >
+                          Save
+                        </MyButton>
+                      </div>
+                      <div style={{ marginTop: '36px' }}>
+                        <MyButton
+                          color="var(--primary-gray)"
+                          width="80px"
+                          onClick={() => {
+                            setShowAreaForm(false);
+                            setAreaForEdit({ ...newCommunityArea, communityId });
+                          }}
+                        >
+                          Clear
+                        </MyButton>
+                      </div>
+                    </Form>
+                  </div>
+                  {areaFiltersUI()}
+                </div>
+                <MyTable
+                  data={areaTableData}
+                  columns={areaColumns}
+                  totalCount={areaTotalCount}
+                  page={isAreaFiltered ? areaFilterPagination.page : areaPaginationParams.page}
+                  rowsPerPage={
+                    isAreaFiltered ? areaFilterPagination.size : areaPaginationParams.size
+                  }
+                  onPageChange={handleAreaPageChange}
+                  onRowsPerPageChange={handleAreaRowsPerPageChange}
+                  loading={areasFetching}
+                  filters={null}
+                  onRowClick={row => setSelectedArea(row as CommunityArea)}
+                  rowClassName={row =>
+                    selectedArea && row.id === selectedArea.id ? 'selected-row' : ''
+                  }
+                />
+              </>
+            }
+          />
+        )}
+      </div>
 
+      <DeletionConfirmationModal
+        open={openDeleteConfirm}
+        setOpen={setOpenDeleteConfirm}
+        itemToDelete={
+          deleteType === 'country'
+            ? 'Country'
+            : deleteType === 'district'
+            ? 'District'
+            : deleteType === 'community'
+            ? 'Community'
+            : 'Area'
+        }
+        actionButtonFunction={handleConfirmToggle}
+        actionType={deleteMode}
+      />
+    </Panel>
+  );
 };
 
 export default CountrySetup;
