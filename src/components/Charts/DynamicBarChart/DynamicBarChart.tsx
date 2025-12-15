@@ -4,7 +4,7 @@ import type { ChartOptions, ChartData } from 'chart.js';
 import 'chart.js/auto';
 import { Button } from 'rsuite';
 import { useSelector } from 'react-redux';
-
+import './styles.less'
 // Original single-column data type
 type BarChartDataPoint = {
   label: string;
@@ -45,6 +45,7 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
     dataset?: string;
   } | null>(null);
   const mode = useSelector((state: any) => state.ui.mode);
+   const direction = localStorage.getItem('direction');
 
   const [data, setData] = useState<ChartData<'bar'>>({
     labels: [],
@@ -159,7 +160,10 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+  <div
+    className="dynamic-bar-chart-container"
+    dir={direction === 'RTL' ? 'rtl' : 'ltr'}
+  >
       <span className="font-12">Admissions, discharges, and emergency visits</span>
       {selectable && (
         <div style={{ marginBottom: 10 }}>
