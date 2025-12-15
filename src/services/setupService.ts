@@ -589,6 +589,18 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 3600
     }),
+    getIcdById: builder.query({
+      query: (diagnosisId: string) => ({
+        url: `/setup/icd-list-by-id`,
+        params: {
+          key: diagnosisId,
+        }
+
+      }),
+      transformResponse: (response: any) => {
+        return response?.object;
+      }
+    }),
     getDiagnosticsTestNormalRangeList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/diagnostic-test-normal-range-list?${fromListRequestToQueryParams(listRequest)}`
@@ -1618,5 +1630,6 @@ export const {
   useGetWarehouseProductsDetailsQuery,
   useSaveWarehouseProductsDetailsMutation,
   useRemoveWarehouseProductsDetailsMutation,
-  useLazyGetCandidatesByDepartmentKeyQuery
+  useLazyGetCandidatesByDepartmentKeyQuery,
+  useGetIcdByIdQuery
 } = setupService;
