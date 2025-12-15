@@ -43,7 +43,7 @@ const Users = () => {
 
   const [record, setRecord] = useState({ filter: '', value: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
-
+  const [canProceed, setCanProceed] = useState(false);
   const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
   const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
   const [popupOpen, setPopupOpen] = useState(false);
@@ -146,48 +146,49 @@ const Users = () => {
 
  
   // Handle Save User
-const handleSave = async () => {
-  
-  try {
-    if (user.id !== undefined) {
+  const handleSave = async () => {
+    
+    try {
+      if (user.id !== undefined) {
 
-   const  Response= await updateUser({ ...user } ).unwrap();
-      dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
-      setUser({...Response})
-      refetch();
-    } else {
-   
+    const  Response= await updateUser({ ...user } ).unwrap();
+        dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
+        setUser({...Response})
+        refetch();
+      } else {
+    
 
-     const Response=await saveUser({ ...user}).unwrap();
-      dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
-      refetch();
-    }
-  
-    refetchFacility();
-    setPopupOpen(false);
-
-  } 
-    catch (error) {
-      console.error("❌ Error saving user:", error);
-
-      let backendMessage = "Failed to save user";
-
-      const message = error?.data?.message?.toLowerCase();
-
-      if (message === "error.emailexists") {
-        backendMessage = "This email is already in use";
+      const Response=await saveUser({ ...user}).unwrap();
+        dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
+        refetch();
       }
+    
+      refetchFacility();
+      setCanProceed(true);
+      // setPopupOpen(false);
 
-      dispatch(
-        notify({
-          msg: backendMessage,
-          sev: "error",
-        })
-      );
+    } 
+      catch (error) {
+        console.error("❌ Error saving user:", error);
 
-      return;
-    }
-};
+        let backendMessage = "Failed to save user";
+
+        const message = error?.data?.message?.toLowerCase();
+
+        if (message === "error.emailexists") {
+          backendMessage = "This email is already in use";
+        }
+
+        dispatch(
+          notify({
+            msg: backendMessage,
+            sev: "error",
+          })
+        );
+
+        return;
+      }
+  };
 
   // Filter table
   const handleFilterChange = (fieldName, value) => {
@@ -414,6 +415,15 @@ const handleSave = async () => {
     </Form>
   );
   
+  useEffect(() => {
+    if (popupOpen && user?.id) {
+      setCanProceed(true);
+    } else {
+      setCanProceed(false);
+    }
+  }, [popupOpen, user]);
+
+
   return (
     <div>
       <div>
@@ -449,15 +459,16 @@ const handleSave = async () => {
             </MyButton>
           </div>}
           />
-          <AddEditUser
-            open={popupOpen}
-            setOpen={setPopupOpen}
-            user={user}
-            setUser={setUser}
-            handleSave={handleSave}
-           
-            width={width}
-          />
+            <AddEditUser
+              open={popupOpen}
+              setOpen={setPopupOpen}
+              user={user}
+              setUser={setUser}
+              handleSave={handleSave}
+              width={width}
+              canProceed={canProceed}
+              setCanProceed={setCanProceed}
+            />
         </Panel>
       </div>
       <ResetPassword
