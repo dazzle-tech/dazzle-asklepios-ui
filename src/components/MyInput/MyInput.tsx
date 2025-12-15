@@ -129,6 +129,7 @@ const MyInput = ({
 }: MyInputProps) => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.ui);
+   const direction = localStorage.getItem('direction');
   const recognitionRef = useRef<any>(null);
   const [recording, setRecording] = useState(false);
 
@@ -742,6 +743,7 @@ const MyInput = ({
 
   return (
     <Form.Group
+      style={{direction: direction === "LTR" ? "ltr" : "rtl"}}
       className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
     >
       <Form.ControlLabel>
