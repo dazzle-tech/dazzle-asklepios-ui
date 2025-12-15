@@ -53,6 +53,7 @@ import {
 } from '@/services/security/userDepartmentsService';
 import { conjureValueBasedOnIDFromList } from '@/utils';
 import { UserDepartment } from '@/types/model-types-new';
+import Translate from '../Translate';
 
 const { getHeight, on } = DOMHelper;
 
@@ -79,6 +80,7 @@ const collapsedWidth = 60;
 
 const Frame = (props: FrameProps) => {
   const { navs, mode } = props;
+  const direction = localStorage.getItem('direction');
 
   // State variables
   const [expand, setExpand] = useState(false); // sidebar expanded or not
@@ -97,7 +99,7 @@ const Frame = (props: FrameProps) => {
   const dispatch = useAppDispatch();
   const departmentTriggerRef = React.useRef<WhisperInstance>(null);
 
-  const { data: departmentsResponse,isLoading } = useGetDepartmentsQuery({ page: 0, size: 10000 });
+  const { data: departmentsResponse, isLoading } = useGetDepartmentsQuery({ page: 0, size: 10000 });
   const departments = departmentsResponse?.data ?? [];
   const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilitiesResponse) ? facilitiesResponse : [];
@@ -107,25 +109,23 @@ const Frame = (props: FrameProps) => {
     facilityName?: string | null;
   };
 
-
   const selectedDepartment = authSlice.selectedDepartment;
-const selectedFacilityId =
-  authSlice?.selectedDepartment?.facilityId ??
-  authSlice?.tenant?.selectedFacility?.id;
+  const selectedFacilityId =
+    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-const facilityKey = selectedFacilityId ?? "no-facility";
+  const facilityKey = selectedFacilityId ?? 'no-facility';
 
-const {
-  data: activeDepartmentsResponse,
-  isLoading: isLoadingDepartments,
-    isFetching: isFetchingDepartments,
-} = useGetActiveUserDepartmentsByUserQuery(
-  { userId: userId as number, facilityId: facilityKey },
-  {
-    skip: !userId,
-    refetchOnMountOrArgChange: true,
-  }
-);
+  const {
+    data: activeDepartmentsResponse,
+    isLoading: isLoadingDepartments,
+    isFetching: isFetchingDepartments
+  } = useGetActiveUserDepartmentsByUserQuery(
+    { userId: userId as number, facilityId: facilityKey },
+    {
+      skip: !userId,
+      refetchOnMountOrArgChange: true
+    }
+  );
 
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
   const departmentsReady = !isLoadingDepartments && !isFetchingDepartments;
@@ -188,18 +188,28 @@ const {
         >
           <span>My Departments</span>
           {departmentHeaderFacilityName && (
-            <span style={{ fontSize: '12px', color: '#6c757d' }}>{departmentHeaderFacilityName}</span>
+            <span style={{ fontSize: '12px', color: '#6c757d' }}>
+              {departmentHeaderFacilityName}
+            </span>
           )}
         </div>
         <Divider style={{ margin: 0 }} />
-        
-      {isLoadingDepartments && isFetchingDepartments&&isLoading ? (
-  <div style={{ padding: '12px' }}>Loading departments…</div>
-) : activeDepartments.length === 0 ? (
-  <div style={{ padding: '12px' }}>No active departments found.</div>
-) : (
 
-          <div style={{ maxHeight: 240, overflowY: 'auto', margin: '8px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {isLoadingDepartments && isFetchingDepartments && isLoading ? (
+          <div style={{ padding: '12px' }}>Loading departments…</div>
+        ) : activeDepartments.length === 0 ? (
+          <div style={{ padding: '12px' }}>No active departments found.</div>
+        ) : (
+          <div
+            style={{
+              maxHeight: 240,
+              overflowY: 'auto',
+              margin: '8px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8
+            }}
+          >
             {activeDepartments.map(dept => {
               const isDefault =
                 defaultDepartmentEntity?.id != null
@@ -281,8 +291,8 @@ const {
                 </div>
               );
             })}
-          </div>)}
-     
+          </div>
+        )}
       </Popover>
     ),
     [
@@ -363,27 +373,64 @@ const {
 
   return (
     <Container className={`frame ${mode === 'light' ? 'light' : 'dark'}`}>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: 'flex', flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}>
+        {/* <Container className={containerClasses}>
+          <Header expand={expand} setExpand={setExpand} setExpandNotes={setExpandNotes} expandNotes={expandNotes} />
+          <Content>
+            <Stack
+              id="fixedInfoBar"
+              className={classNames({
+                'fixed-info-bar-visible': patientSlice.patient,
+                'fixed-info-bar-semi-transparent': !patientSlice.patient
+              })}
+              divider={<Divider vertical />}
+            ></Stack>
+
+            <div className="content-with-sticky">
+              <div className="main-content-area">
+                <Outlet />
+              </div>
+
+              {expandNotes && (
+                <div className="sticky-sidebar-area">
+                  <UserStickyNotes
+                    expand={expandNotes}
+                    setExpand={setExpandNotes}
+                  />
+                </div>
+              )}
+            </div>
+          </Content>
+        </Container> */}
+
         {/* Sidebar toggle button */}
         <IconButton
           color="inherit"
           aria-label="toggle drawer"
           onClick={() => setExpand(!expand)}
-          edge="start"
+          edge={direction === 'LTR' ? 'start' : 'end'}
           sx={{
             position: 'fixed',
             top: 12,
-            left: expand ? `${drawerWidth - 28}px` : '22px', // adjust margin-left when closed
+            [direction === 'LTR' ? 'left' : 'right']: expand ? `${drawerWidth - 28}px` : '22px',
+            // right: expand ? `${drawerWidth - 28}px` : '22px', // adjust margin-left when closed
             zIndex: 5,
             background: 'transparent',
             padding: '6px',
-            transition: 'left 0.3s ease',
+            transition: direction === 'LTR' ? 'left 0.3s ease' : 'right 0.3s ease',
             '&:hover': { background: 'transparent' }
           }}
         >
           <ArrowForwardIosIcon
             sx={{
-              transform: expand ? 'rotate(180deg)' : 'rotate(0deg)', // arrow rotation
+              transform:
+                direction === 'LTR'
+                  ? expand
+                    ? 'rotate(180deg)'
+                    : 'rotate(0deg)'
+                  : expand
+                  ? 'rotate(deg)'
+                  : 'rotate(180deg)', // arrow rotation
               transition: 'transform 0.3s ease'
             }}
           />
@@ -392,6 +439,7 @@ const {
         {/* Sidebar Drawer */}
         <Drawer
           variant="permanent"
+          anchor={direction === 'LTR' ? 'left' : 'right'}
           open={expand}
           sx={{
             zIndex: 1,
@@ -453,12 +501,12 @@ const {
                       setDepartmentPopoverOpen(open => !open);
                     }
                   }}
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: 'pointer', flexDirection: direction === "LTR" ? "row" : "row-reverse" }}
                 >
                   <FontAwesomeIcon className="organization-img" icon={faHospital} size="lg" />
                   <div>
-                    <div className="name">{selectedFacilityName}</div>
-                    <div className="location">{selectedDepartmentName}</div>
+                    <div className="name"><Translate>{selectedFacilityName}</Translate></div>
+                    <div className="location"><Translate>{selectedDepartmentName}</Translate></div>
                   </div>
                 </div>
               </Whisper>
@@ -466,7 +514,7 @@ const {
 
             {/* Search input */}
             {expand && (
-              <Form className="search-field search-form" fluid>
+              <Form className="search-field search-form" fluid style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
                 <div className="search-input-wrapper">
                   <MyInput
                     fieldName="screen"
@@ -512,11 +560,32 @@ const {
                         }}
                         sx={{
                           minHeight: 48,
-                          justifyContent: expand ? 'initial' : 'center',
-                          px: 2.5,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: expand ? 'flex-start' : 'center',
+
+                          flexDirection: direction === 'RTL' ? 'row-reverse' : 'row',
+
+                          paddingInline: theme => theme.spacing(2.5),
+                          gap: theme => theme.spacing(1.5),
+
+                          '& .MuiListItemIcon-root': {
+                            minWidth: 0,
+                            marginInlineEnd: theme => theme.spacing(1)
+                          },
+
+                          '& .MuiListItemText-root': {
+                            whiteSpace: 'nowrap'
+                          },
+
                           '& .MuiListItemText-primary': {
                             fontSize: '0.73rem',
-                            fontWeight: 'bold'
+                            fontWeight: 'bold',
+                            textAlign: direction === "LTR" ? 'left' : 'right'
+                          },
+
+                          '& .MuiSvgIcon-root': {
+                            transform: direction === 'RTL' ? 'scaleX(-1)' : 'none'
                           }
                         }}
                       >
@@ -547,7 +616,7 @@ const {
                             )}
                           </ListItemIcon>
                         </Tooltip>
-                        {expand && <ListItemText primary={item.title} />}
+                        {expand && <ListItemText primary={<Translate>{item.title}</Translate>} />}
                         {expand &&
                           item.children &&
                           (submenuOpen === item.eventKey ? <ExpandLess /> : <ExpandMore />)}
@@ -575,8 +644,10 @@ const {
                                   pl: 6,
                                   ml: 2,
                                   display: 'flex',
-                                  alignItems: 'center',
-                                  '& .MuiListItemText-primary': { fontSize: '0.65rem' },
+                                  justifyContent: expand ? 'flex-start' : 'center',
+                                  flexDirection: direction === 'RTL' ? 'row-reverse' : 'row',
+                                  gap: 1.5,
+                                  '& .MuiListItemText-primary': { fontSize: '0.65rem', textAlign: direction === "LTR" ? 'left' : 'right'},
                                   '& svg': {
                                     fontSize: '16px',
                                     marginRight: '6px',
@@ -602,7 +673,7 @@ const {
                                 {expand && (
                                   <ListItemText
                                     primary={
-                                      isCodingModule(item) ? child.title.toUpperCase() : child.title
+                                      isCodingModule(item) ? child.title.toUpperCase() : <Translate>{child.title}</Translate>
                                     }
                                   />
                                 )}
@@ -702,7 +773,12 @@ const {
 
         {/* Main content area */}
         <Container className={containerClasses}>
-          <Header expand={expand} setExpand={setExpand} setExpandNotes={setExpandNotes} expandNotes={expandNotes} />
+          <Header
+            expand={expand}
+            setExpand={setExpand}
+            setExpandNotes={setExpandNotes}
+            expandNotes={expandNotes}
+          />
           <Content>
             <Stack
               id="fixedInfoBar"
@@ -720,10 +796,7 @@ const {
 
               {expandNotes && (
                 <div className="sticky-sidebar-area">
-                  <UserStickyNotes
-                    expand={expandNotes}
-                    setExpand={setExpandNotes}
-                  />
+                  <UserStickyNotes expand={expandNotes} setExpand={setExpandNotes} />
                 </div>
               )}
             </div>
