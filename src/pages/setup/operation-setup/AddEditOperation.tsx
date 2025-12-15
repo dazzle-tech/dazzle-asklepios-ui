@@ -688,7 +688,7 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
             ]}
             childTitle={childStep == 1 ? 'New Code' : 'New Price List'} // baaaaaaaaaaack
             childContent={conjureFormContentOfChildModal}
-            mainSize="sm"
+            mainSize="40vw"
             childStep={[
                 {
                     title: childStep == 1 ? 'Coding' : 'Price List', //baack

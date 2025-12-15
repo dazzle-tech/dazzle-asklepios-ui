@@ -1,13 +1,44 @@
-
 .container-of-two-fields-practitioner {
   display: flex;
   gap: 20px;
 }
 
-.container-of-two-fields-practitioner-new{
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  flex-wrap: wrap;
-  box-sizing: border-box;
+/* Tablet */
+@media (max-width: 1024px) {
+  .container-of-two-fields-practitioner {
+    flex-wrap: wrap;
   }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .container-of-two-fields-practitioner {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .container-of-two-fields-practitioner
+  .rs-input,
+  .container-of-two-fields-practitioner
+  .rs-picker,
+  .container-of-two-fields-practitioner
+  input,
+  .container-of-two-fields-practitioner
+  select {
+    width: 100% !important;
+  }
+}
+
+/* Section Container Style */
+.container-form-section {
+  max-width: 100%; /* Ensures it's responsive */
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Adding a max-width for larger screens */
+@media (min-width: 768px) {
+  .container-form-section {
+    max-width: 800px; /* Adjust accordingly */
+  }
+}
