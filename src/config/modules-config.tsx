@@ -598,6 +598,14 @@ export const MODULES: Module[] =
           viewOrder: 1,
           navPath: "billing-accounting",
         },
+          {
+          name: "Claims",
+          code: "CLAIMS",
+          description: "",
+          icon: "FaMobileRetro",
+          viewOrder: 2,
+          navPath: "billing-claims",
+        },
         {
           name: "Price Lists",
           code: "PRICE_LISTS",
