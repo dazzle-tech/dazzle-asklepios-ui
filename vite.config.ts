@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
     },
 
     build: {
-      outDir: 'assets',
+      outDir: 'dist',
       sourcemap: env.GENERATE_SOURCEMAP !== 'false',
       minify: isProduction ? 'oxc' : false,
       rollupOptions: {

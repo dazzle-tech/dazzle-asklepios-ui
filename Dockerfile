@@ -22,8 +22,8 @@ RUN npm run build
 # Use Nginx to serve the application
 FROM nginx:alpine
 
-# Copy built assets from the previous stage
-COPY --from=build /app/assets /usr/share/nginx/html
+# Copy built dist from the previous stage
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
