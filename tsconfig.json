@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["dotenv"],
+    "types": ["dotenv", "vite/client"],
     "strict": false,
     "declaration": false,
     "allowJs": true,

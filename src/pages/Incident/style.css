@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+/* Tailwind utilities */
+@import 'tailwindcss/utilities' layer(utilities);
 
 /* --- Design Tokens (Light) --- */
 @layer base {
@@ -55,8 +57,6 @@
   }
 }
 
-/* Tailwind utilities */
-@import 'tailwindcss/utilities' layer(utilities);
 
 /* Dashboard helpers */
 @layer utilities {

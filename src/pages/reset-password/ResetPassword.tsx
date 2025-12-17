@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFinishPasswordResetMutation } from '@/services/userService';
 import {
   Form,
-  Button,
   Panel,
   Message,
   Schema,
@@ -11,12 +10,9 @@ import {
   Header,
   Content,
   Divider,
-  FlexboxGrid,
-  IconButton,
- Icon,
-  Loader,
   Stack,
 } from 'rsuite';
+import { Close } from '@rsuite/icons';
 import './styles.less';
 import MyButton from "@/components/MyButton/MyButton";
 import Background from "../.././images/auth-bg.png";
@@ -67,7 +63,7 @@ const ResetPassword = () => {
     return (
       <Container style={{ maxWidth: 400, margin: 'auto', padding: 20 }}>
         <Panel bordered shaded style={{ textAlign: 'center' }}>
-          <Icon icon="close-circle" size="3x" style={{ color: '#E74C3C' }} />
+          <Close style={{ fontSize: '3em', color: '#E74C3C' }} />
           <h3 style={{ marginTop: 20 }}>Invalid or missing reset key</h3>
           <p>Please check your reset link or request a new one.</p>
         </Panel>
@@ -148,7 +144,7 @@ const ResetPassword = () => {
 
             <Stack justifyContent="center" alignItems="center" spacing={10} style={{ marginTop: 30 }}>
               <MyButton onClick={handleSubmit} backgroundColor="#5A5A5B" color="#1153aaff">Reset Password</MyButton>
-              
+
             </Stack>
           </Form>
         </Content>

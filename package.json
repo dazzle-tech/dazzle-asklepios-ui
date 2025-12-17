@@ -6,10 +6,12 @@
     "lib": "lib/"
   },
   "scripts": {
-    "dev": "webpack serve --history-api-fallback --mode development --port 3100 --host 0.0.0.0 --progress ",
+    "dev": "vite",
+    "dev:webpack": "webpack serve --history-api-fallback --mode development --port 3100 --host 0.0.0.0 --progress ",
     "clear": "rm -rf assets",
+    "build": "vite build && cp -R public/* ./assets/ ",
     "build:webpack": "NODE_ENV=production  webpack --mode production --progress && cp -R public/* ./assets/ ",
-    "build": "npm run clear && npm run build:webpack",
+    "preview": "vite preview",
     "publish:gh-pages": "node gh-pages.js",
     "format": "prettier --write ."
   },
@@ -138,7 +140,7 @@
     "@types/react-dom": "^17.0.0",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.30.5",
-    "@vitejs/plugin-react-swc": "^3.11.0",
+    "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.21",
     "babel-loader": "^8.1.0",
     "babel-plugin-module-resolver": "^4.1.0",
@@ -169,7 +171,7 @@
     "tailwindcss": "^4.1.14",
     "typescript": "^4.6.4",
     "url-loader": "^4.1.1",
-    "vite": "^6.3.6",
+    "vite": "npm:rolldown-vite@7.2.7",
     "webpack": "^5.102.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.2"
@@ -183,5 +185,8 @@
     "**/*.{js,jsx,ts,tsx}": [
       "prettier --write"
     ]
+  },
+  "volta": {
+    "node": "22.21.1"
   }
 }
