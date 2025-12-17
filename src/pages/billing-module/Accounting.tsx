@@ -263,8 +263,6 @@ const Accounting: React.FC = () => {
     isValid: false, 
   };
 
-  console.log('updating nurse row', updated);
-
   await saveNurseServiceProduct(updated).unwrap();
 }
 

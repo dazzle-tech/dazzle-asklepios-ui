@@ -58,6 +58,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
+   const direction = localStorage.getItem('direction');
   const authSlice = useAppSelector(state => state.auth);
   const toast = useCallback(
     (msg: string) => {
@@ -87,12 +88,20 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   };
   const selectedDepartment = authSlice.selectedDepartment;
   const hasWarnedNoDepartmentRef = useRef(false);
+  const selectedFacilityId =
+    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
+  const facilityKey = selectedFacilityId ?? 'no-facility';
   const {
     data: activeDepartmentsResponse,
-    isLoading: isLoadingDepartments
-  } = useGetActiveUserDepartmentsByUserQuery(userId as number, {
-    skip: !userId
-  });
+    isLoading: isLoadingDepartments,
+    isFetching: isFetchingDepartments
+  } = useGetActiveUserDepartmentsByUserQuery(
+    { userId: userId as number, facilityId: facilityKey },
+    {
+      skip: !userId,
+      refetchOnMountOrArgChange: true
+    }
+  );
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
   const storedDepartmentMatch =
     selectedDepartment &&
@@ -111,9 +120,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     }
   );
 
-  const defaultDepartment = (defaultDepartmentResponse ?? null) as
-    | UserDepartmentWithNames
-    | null;
+  const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
   const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
   const selectedDepartmentEffective =
     storedDepartmentMatch ??
@@ -142,6 +149,10 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   };
 
   useEffect(() => {
+    if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
+      return;
+    }
+
     if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
       if (!hasWarnedNoDepartmentRef.current) {
         toast(
@@ -151,11 +162,14 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       }
       return;
     }
+
     if (!selectedDepartmentEffective) {
       return;
     }
+
     const resolvedDepartmentName = resolveDepartmentName(selectedDepartmentEffective.departmentId);
     const resolvedFacilityName = resolveFacilityName(selectedDepartmentEffective.facilityId);
+
     if (
       !selectedDepartment ||
       selectedDepartment?.departmentId !== selectedDepartmentEffective.departmentId ||
@@ -193,7 +207,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             Customize Dashboard
           </div>
         </Dropdown.Item>
-     
 
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
@@ -281,7 +294,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       </Popover>
     );
   };
- const uiSlice = useAppSelector(state => state.ui);
+  const uiSlice = useAppSelector(state => state.ui);
   const renderLangSpeaker = ({ onClose, left, top, className }: any, ref) => {
     // const uiSlice = useAppSelector(state => state.ui);
 
@@ -304,14 +317,21 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
           <Dropdown.Item divider />
           {langData?.map(lang => (
             <>
-            <Dropdown.Item
-              key={lang.langKey}
-              active={uiSlice?.lang === lang?.langKey} 
-              onClick={() => dispatch(setLang(lang?.langKey))}
-            >
-              {lang.langName}
-            </Dropdown.Item>
-            <Dropdown.Item divider />
+              <Dropdown.Item
+                key={lang.langKey}
+                active={uiSlice?.lang === lang?.langKey}
+                onClick={() => {
+                  dispatch(setLang(lang?.langKey));
+                  const selectedObject = langData.find(
+                    item => item?.langKey === lang?.langKey
+                  );
+                  localStorage.setItem('direction', selectedObject?.direction);
+                  localStorage.setItem('language', selectedObject?.langKey);
+                }}
+              >
+                {lang.langName}
+              </Dropdown.Item>
+              <Dropdown.Item divider />
             </>
           ))}
         </Dropdown.Menu>
@@ -358,7 +378,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         <Dropdown.Menu onSelect={handleSelect}>
           <Dropdown.Item panel style={{ padding: 10, width: 200 }}>
             <p>Signed in as</p>
-            <strong>{authSlice.user?.firstName}-{authSlice.user?.lastName}</strong>
+            <strong>
+              {authSlice.user?.firstName}-{authSlice.user?.lastName}
+            </strong>
           </Dropdown.Item>
           <Dropdown.Item panel style={{ padding: 10, width: 160 }}>
             <p>Job Role</p>
@@ -495,7 +517,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   return (
     <>
-      <div className={`main-screen-bar-icons-main-container-header ${mode}`}>
+      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
         {width >= 930 ? (
           <>
             <Tooltip title="Customize Dashboard">
@@ -523,7 +545,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               </IconButton>
             </Tooltip> */}
             <Tooltip title="My Consultations">
-              <IconButton size="small" onClick={() => {navigate('/my-consultations');}}>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  navigate('/my-consultations');
+                }}
+              >
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faStethoscope}
@@ -597,7 +624,10 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               <span>
                 <Tooltip title="Switch Department">
                   <IconButton size="small">
-                    <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faRepeat} />
+                    <FontAwesomeIcon
+                      className="header-screen-bar-icon-size-handle"
+                      icon={faRepeat}
+                    />
                   </IconButton>
                 </Tooltip>
               </span>

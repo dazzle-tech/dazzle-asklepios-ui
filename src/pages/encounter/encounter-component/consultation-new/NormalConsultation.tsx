@@ -120,7 +120,6 @@ const NormalConsultation = (props: any) => {
 
   /** Handle open attachment modal */
   const handleOpenAttachmentModal = () => {
-    console.log('Consultation order for attachment (from table):', consultationOrders);
     setAttachmentsModalOpen(true);
   };
 

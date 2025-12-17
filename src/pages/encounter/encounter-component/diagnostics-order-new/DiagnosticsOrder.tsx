@@ -132,7 +132,6 @@ const DiagnosticsOrder = props => {
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
 
   const handleOpenAttachmentModal = () => {
-    console.log('Diagnostic order test for attachment:', orderTest);
     setAttachmentsModalOpen(true);
   };
   const [orderMedication, setOrderMedication] = useState<any>({
@@ -366,10 +365,8 @@ const DiagnosticsOrder = props => {
 
       orderTestRefetch()
         .then(() => {
-          console.log('Refetch complete');
         })
         .catch(error => {
-          console.error('Refetch failed:', error);
         });
     } catch (error) {
       dispatch(notify('Save Failed'));
@@ -404,15 +401,12 @@ const DiagnosticsOrder = props => {
 
       orderTestRefetch()
         .then(() => {
-          console.log('Refetch complete');
         })
         .catch(error => {
-          console.error('Refetch failed:', error);
         });
       setSelectedRows([]);
       CloseConfirmDeleteModel();
     } catch (error) {
-      console.error('Encounter save failed:', error);
       dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
       CloseConfirmDeleteModel();
     }

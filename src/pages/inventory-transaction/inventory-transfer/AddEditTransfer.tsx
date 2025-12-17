@@ -77,7 +77,6 @@ const AddEditTransfer: React.FC<AddEditTransferProps> = ({
         }
         generateFiveDigitCode();
         setRecordOfTransferCode({ transNo: transfer?.transNo ?? generateCode });
-        console.log(recordOfTransferCode);
     }, [transfer?.transNo?.length]);
 
     const leftContent = () => {

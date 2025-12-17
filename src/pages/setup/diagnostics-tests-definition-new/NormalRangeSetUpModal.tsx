@@ -207,7 +207,7 @@ useEffect(() => {
     const handleSave = async () => {
       try {
         if (!diagnosticTestNormalRange.resultType) {
-          return dispatch(notify({ msg: "Please select Result Type", sev: "error" }));
+          return dispatch(notify({ msg: "Please select Result Type", sev: "warning" }));
         }
 
         const payload = {
@@ -251,7 +251,6 @@ useEffect(() => {
         setShowChild(false);
 
       } catch (err) {
-        console.log("HANDLE SAVE ERROR", err);
         dispatch(notify({ msg: "Failed to Save Normal Range", sev: "error" }));
       }
     };

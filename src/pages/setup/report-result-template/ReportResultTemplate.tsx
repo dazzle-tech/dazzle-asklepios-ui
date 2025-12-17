@@ -91,7 +91,6 @@ const ReportResultTemplate = () => {
         })
       );
     } catch (err) {
-      console.log("Report Template Toggle Error:", err);
       dispatch(
         notify({
           msg: "Failed to update Report Template status",
@@ -105,7 +104,7 @@ const ReportResultTemplate = () => {
   };
 
   const columns = [
-    { key: "TestName", title: "Test Name", dataKey: "name", width: 200 },
+    { key: "TestName", title: "Template Name", dataKey: "name", width: 200 },
     {
       key: "reportTemplate",
       title: "View",

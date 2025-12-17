@@ -95,7 +95,6 @@ const TransferProductList = ({
       ...prevRequest,
       filters: updatedFilters
     }));
-    console.log(transferProductListResponseLoading);
   }, [transfer?.key]);
 
   useEffect(() => {

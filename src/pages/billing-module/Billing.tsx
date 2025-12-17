@@ -238,7 +238,6 @@ const Billing = ({ data, patient, onCreateInvoice }) => {
         columns={columns}
         onRowClick={(row) => {
           setSelectedRows(row)
-          console.log('row', row)
         }}
         loading={false}
         tableButtons={tableButtons}

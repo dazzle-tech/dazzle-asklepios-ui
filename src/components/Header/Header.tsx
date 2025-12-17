@@ -20,6 +20,7 @@ type HeaderProps = {
 const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes, expandNotes }) => {
     type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
    const authSlice = useAppSelector(state => state.auth);
+   const direction = localStorage.getItem('direction');
    const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
     const globalAllowed = new Set<string>();
     const moduleAllowed = new Map<string, Set<string>>();
@@ -124,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes, expa
 
   return (
     <>
-      <Stack className={`header ${expand ? 'expand' : ''}`} spacing={8}>
+      <Stack className={`header ${expand ? 'expand' : ''}`} spacing={8} style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
         <MainScreenBarFilters
           displaySearch={displaySearch}
           setDisplaySearch={setDisplaySearch}

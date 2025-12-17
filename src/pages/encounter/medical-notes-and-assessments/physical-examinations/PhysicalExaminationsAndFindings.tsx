@@ -57,7 +57,6 @@ const PhysicalExaminationsAndFindings = () => {
 
   const buildMainData = data => {
     const _map = {};
-    console.log(data);
     if (data) {
       data.map(record => {
         _map[record.physicalExamAreaDetailLkey] = record;

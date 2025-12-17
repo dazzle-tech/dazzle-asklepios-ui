@@ -93,7 +93,6 @@ const ReportIncident = () => {
         Math.floor(Math.random() * 1000)
       ).padStart(3, "0")} has been submitted for review.`,
     });
-    console.log("Incident Report Data:", { ...formData, riskMatrix: riskScore });
   };
 
   const calculateRiskScore = (likelihood: string, consequence: string): string => {

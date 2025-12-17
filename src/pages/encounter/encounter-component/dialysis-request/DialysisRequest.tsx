@@ -242,7 +242,6 @@ const DialysisRequest = () => {
         steps={[{ title: 'Dialysis Request', icon: <GiKidneys size={20} /> }]}
         actionButtonLabel="Save"
         actionButtonFunction={() => {
-          console.log('Saved!');
         }}
         cancelButtonLabel="Cancel"
         footerButtons={
@@ -265,7 +264,6 @@ const DialysisRequest = () => {
   object={cancelObject}
   setObject={setCancelObject}
   handleCancle={() => {
-    console.log('Cancelled:', cancelObject);
     setOpenCancelModal(false);
   }}
   title="Cancel Assessment"

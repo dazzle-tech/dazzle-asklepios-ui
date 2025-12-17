@@ -149,10 +149,8 @@ const TableTaskManagment = ({ openModal, setOpenModal }) => {
 
       orderTestRefetch()
         .then(() => {
-          console.log('Refetch complete');
         })
         .catch(error => {
-          console.error('Refetch failed:', error);
         });
     } catch (error) {
       dispatch(notify('Save Failed'));
@@ -248,7 +246,7 @@ const TableTaskManagment = ({ openModal, setOpenModal }) => {
     <Popover full>
       <Dropdown.Menu>
         {icons.map(item => (
-          <Dropdown.Item key={item.key} onClick={() => console.log('Selected:', item.title)}>
+          <Dropdown.Item key={item.key}>
             <div className="container-of-icon-and-key">
               {item.icon}
               {item.title}

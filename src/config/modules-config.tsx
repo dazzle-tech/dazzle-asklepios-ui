@@ -603,7 +603,24 @@ export const MODULES: Module[] =
           icon: "FaMobileRetro",
           viewOrder: 1,
           navPath: "billing-accounting",
-        }
+        
+        },
+          {
+          name: "Claims",
+          code: "CLAIMS",
+          description: "",
+          icon: "FaMobileRetro",
+          viewOrder: 2,
+          navPath: "billing-claims",
+        },
+        {
+          name: "Price Lists",
+          code: "PRICE_LISTS",
+          description: "",
+          icon: "FaMoneyBill",
+          viewOrder: 0,
+          navPath: "price-list",
+        },
       ],
     },
     {

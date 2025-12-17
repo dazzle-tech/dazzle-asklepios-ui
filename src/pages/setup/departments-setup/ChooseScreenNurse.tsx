@@ -25,15 +25,8 @@ const ChooseScreenNurse = ({
 
  
   const { data: departmentSheets = [], isLoading } =useGetNurseMedicalSheetsByDepartmentQuery(department?.id, { skip: !department?.id});
-   console.log("id",department?.id)
-   console.log("sheets",departmentSheets)
   const [bulkSaveMedicalSheets] = useBulkSaveNurseMedicalSheetsMutation();
 
-
- 
- useEffect(()=>{
-  console.log("show",showScreen)
- },[])
 
 useEffect(() => {
   if (!department?.id) return;
@@ -79,7 +72,6 @@ useEffect(() => {
           medicalSheet: code.toUpperCase(),
         }));
 
-      console.log("SELECTED",selectedSheets)
       await bulkSaveMedicalSheets(selectedSheets).unwrap();
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setOpen(false);

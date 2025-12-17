@@ -26,6 +26,7 @@ import ProfileHeader from './ProfileHeader-new';
 import ProfileSidebar from './ProfileSidebar-new';
 import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
+import ViewPriceList from './ViewPriceList';
 
 const { getHeight } = DOMHelper;
 
@@ -48,7 +49,8 @@ const PatientProfile = () => {
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
   const [openBedsideRegistrations,setOpenBedsideRegistrations] = useState<boolean>(false);
   const [openRegistrationWarningsSummary,setOpenRegistrationWarningsSummary] = useState<boolean>(false);
-    const [openBulkRegistrationModal,setOpenBulkRegistrationModal] = useState<boolean>(false);
+  const [openBulkRegistrationModal,setOpenBulkRegistrationModal] = useState<boolean>(false);
+  const [openViewPriceListModal,setOpenBViewPriceListModal] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
   const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
@@ -92,7 +94,6 @@ const PatientProfile = () => {
   //       dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
   //     }
   //   } catch (error) {
-  //     console.log(error);
   //   }
   // };
 // Add this validation function before handleSave in PatientProfile component
@@ -145,11 +146,9 @@ const handleSave = async () => {
     setRefetchData(true);
     dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
   } catch (error) {
-    console.log(error);
   }
 };
 
-console.log('inside patient profile copy new');
   // Handle clear patient data
   const handleClear = () => {
     setLocalPatient({
@@ -237,6 +236,7 @@ console.log('inside patient profile copy new');
             setOpenBedsideRegistrations={setOpenBedsideRegistrations}
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
+            setOpenBViewPriceListModal={setOpenBViewPriceListModal}
             setLocalPatient={setLocalPatient}
           />
 
@@ -310,6 +310,10 @@ console.log('inside patient profile copy new');
       <BulkRegistration
       open={openBulkRegistrationModal}
       setOpen={setOpenBulkRegistrationModal}
+      />
+      <ViewPriceList
+      open={openViewPriceListModal}
+      setOpen={setOpenBViewPriceListModal}
       />
       <PatientDuplicate
         open={openPatientsDuplicateModal}

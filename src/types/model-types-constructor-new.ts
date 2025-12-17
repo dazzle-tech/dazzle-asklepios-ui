@@ -917,12 +917,20 @@ export const newPayorPlan: modelTypes.PayorPlan = {
   name: '',
   planType: null,
   itemType: null,
+  createdDate: null,
+  lastModifiedDate: null,
+};
+
+
+export const newPayorPlanItem: modelTypes.PayorPlanItem = {
+  id: undefined,
+  payorId: 0,
+  itemType: null,
   amount: null,
   coverageType: null,
   isActive: true,
   createdDate: null,
   lastModifiedDate: null,
-
 };
 
 // Billing Invoice Item

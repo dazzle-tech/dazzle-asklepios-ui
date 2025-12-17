@@ -168,14 +168,14 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
         icon={faEye}
         color="var(--primary-gray)"
         className="icons-style"
-        onClick={() => console.log('Follow-up for:', rowData)}
+        onClick={() => {}}
       />
       <FontAwesomeIcon
         title="Follow-up"
         icon={faCalendarDays}
         color="var(--primary-gray)"
         className="icons-style"
-        onClick={() => console.log('Follow-up for:', rowData)}
+        onClick={() => {}}
       />
     </div>
   );
@@ -564,7 +564,6 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
                         setProgressNotes={setProgressNotes}
                         currentChart={{ key: 'physio-plan' }}
                         dispatch={action => {
-                          console.log(action);
                         }}
                       />
                     </div>
@@ -653,20 +652,14 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
 
   // Handle saving draft
   const handleSaveDraft = () => {
-    console.log('Saving draft...', planData);
     setInitiatePlanModalOpen(false);
   };
 
   // Handle submitting plan
   const handleSubmitPlan = () => {
-    console.log('Submitting plan...', planData);
     setInitiatePlanModalOpen(false);
   };
 
-  // Handle exporting PDF
-  const handleExportPDF = () => {
-    console.log('Exporting PDF...');
-  };
 
   return (
     <div className="physiotherapy-container">
@@ -708,7 +701,6 @@ const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
             <MyButton disabled>Cancel</MyButton>
             <MyButton
               prefixIcon={() => <FontAwesomeIcon icon={faFilePdf} />}
-              onClick={handleExportPDF}
               appearance="ghost"
             >
               Export PDF

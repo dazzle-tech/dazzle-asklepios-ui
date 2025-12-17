@@ -59,8 +59,6 @@ const DischargePlanning = () => {
   const state = location.state || {};
   const patient = state.patient;
   const encounter = state.encounter;
-  console.log('DischargePlanning - patient', patient);
-  console.log('DischargePlanning - encounter', encounter);
 
 const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
 
@@ -76,7 +74,6 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
     data: existingData,
     isFetching: loadingExisting
   } = useGetDischargePlanningByEncounterQuery(Number(encounter.key));
-  console.log("E",existingData)
 
   // ------------------ STATE ------------------
   const [object, setObject] = useState({
@@ -245,7 +242,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         dispatch(
           notify({
             msg: `${item.label} cannot be empty.`,
-            sev: "error",
+            sev: "warning",
           })
         );
         return;
@@ -297,7 +294,6 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         );
       }
     } catch (err: any) {
-      console.log("DischargePlanning Save Error:", err);
       dispatch(
         notify({
           msg: "Failed to save Discharge Planning",

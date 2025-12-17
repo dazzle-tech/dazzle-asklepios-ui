@@ -317,9 +317,6 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
     <div className="bt-div-2">
       <div className="bt-left-2">
         <MyButton
-          onClick={() => {
-            console.log('Cancel clicked');
-          }}
           prefixIcon={() => <CloseOutlineIcon />}
           disabled={!edit ? !selectedRow : false}
         >
@@ -376,9 +373,6 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
         patient={patient}
         encounter={encounter}
         echoTestObject={echoTestObject}
-        refetch={() => {
-          console.log('Refetch after save');
-        }}
         edit={false}
       />
 </>

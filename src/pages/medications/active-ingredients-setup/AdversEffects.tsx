@@ -189,9 +189,6 @@ const AdversEffects = ({ activeIngredients }) => {
     }));
   }, [activeIngredients.key]);
 
-  useEffect(() => {
-    console.log(selectedActiveIngredientAdverseEffect);
-  }, [selectedActiveIngredientAdverseEffect]);
 
   return (
     <Panel>

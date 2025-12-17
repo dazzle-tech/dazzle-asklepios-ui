@@ -97,6 +97,7 @@ const AddEditPractitioner = ({
       lastName: 'Last Name',
       facilityId: 'Facility',
       specialty: 'Specialty',
+      jobRole: 'Job Role',
     };
 
     const missingFields = Object.keys(fieldLabels).filter((key) => !practitioner[key]);
@@ -164,7 +165,7 @@ setSearchResultVisible(true);
     switch (stepNumber) {
       case 0:
         return (
-          <Form layout="inline" fluid>
+          <Form fluid>
             {/* User Search */}
 
           <SectionContainer title="Facility"
@@ -274,64 +275,67 @@ setSearchResultVisible(true);
             </div>
           </>}/>
 
-          <SectionContainer title="Specialty/Job Information"
-          content={<>
-                      {/* Job Info */}
-                      <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-                        <MyInput
-                          column
-                          fieldLabel="Job Role"
-                          fieldType="select"
-                          fieldName="jobRole"
-                          selectData={jobRoles ?? []}
-                          selectDataLabel="label"
-                          selectDataValue="value"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width={250}
-                        />
-                        <MyInput
-                          column
-                          fieldLabel="Educational Level"
-                          fieldType="select"
-                          fieldName="educationalLevel"
-                          selectData={eduLvlLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width={250}
-                        />
-                      </div>
+          <SectionContainer 
+            title="Specialty/Job Information"
+            content={
+              <>
+              <div className="container-of-two-fields-practitioner-new">
+                  <MyInput
+                    fieldLabel="Job Role"
+                    fieldType="select"
+                    fieldName="jobRole"
+                    selectData={jobRoles ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={practitioner}
+                    setRecord={setPractitioner}
+                    width={250}
+                    required
+                    column
+                  />
 
-                      {/* Specialty */}
-                      <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-                        <MyInput
-                          width={250}
-                          fieldLabel="Specialty"
-                          fieldType="select"
-                          fieldName="specialty"
-                          selectData={specility ?? []}
-                          selectDataLabel="label"
-                          selectDataValue="value"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          required
-                        />
-                        <MyInput
-                          column
-                          fieldLabel="Sub Specialty"
-                          fieldType="select"
-                          fieldName="subSpecialty"
-                          selectData={subSpecialityLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width={250}
-                        />
-                      </div>
-          </>}/>
+                  <MyInput
+                    fieldLabel="Educational Level"
+                    fieldType="select"
+                    fieldName="educationalLevel"
+                    selectData={eduLvlLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={practitioner}
+                    setRecord={setPractitioner}
+                    width={250}
+                  />
+
+                  <MyInput
+                    width={250}
+                    fieldLabel="Specialty"
+                    fieldType="select"
+                    fieldName="specialty"
+                    selectData={specility ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={practitioner}
+                    setRecord={setPractitioner}
+                    required
+                  />
+
+                  {practitioner?.specialty === "SPECIALIST" && (
+                    <MyInput
+                      fieldLabel="Sub Specialty"
+                      fieldType="select"
+                      fieldName="subSpecialty"
+                      selectData={subSpecialityLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      width={250}
+                    />
+                  )}</div>
+              </>
+            }
+          />
+
 
 
           <SectionContainer title="Medical License Information"
@@ -415,10 +419,6 @@ setSearchResultVisible(true);
               onClick={async () => {
                 if (!practitioner?.id) return;
                 try {
-                  console.log('Creating link with', {
-                    practitionerId: practitioner.id,
-                    departmentId: localSelection.selectedDepartment,
-                  });
                   await createPractitionerDepartment({
                     practitionerId: practitioner.id,
                     departmentId: localSelection.selectedDepartment,

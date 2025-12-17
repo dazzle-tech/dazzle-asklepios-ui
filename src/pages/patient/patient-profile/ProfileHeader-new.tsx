@@ -49,6 +49,7 @@ interface ProfileHeaderProps {
   setOpenBedsideRegistrations: (value: boolean) => void;
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
+  setOpenBViewPriceListModal: (value: boolean) => void;
   setLocalPatient: (patient: ApPatient) => void;
 }
 
@@ -63,6 +64,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenBedsideRegistrations,
   setOpenRegistrationWarningsSummary,
   setOpenBulkRegistrationModal,
+  setOpenBViewPriceListModal,
   setLocalPatient
 }) => {
   const authSlice = useAppSelector(state => state.auth); // مستخدم لاحقًا إذا احتجت له
@@ -241,7 +243,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const normalizeParsedData = (raw: any) => {
-    console.log('NORMALIZING RAW OCR DATA:', raw);
 
     return {
       firstName:
@@ -274,11 +275,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const handleIdParsed = (parsedData: any) => {
-    console.log('ID Parsed Data RAW:', parsedData);
 
     const normalized = normalizeParsedData(parsedData);
 
-    console.log('ID NORMALIZED:', normalized);
 
     const updatedPatient: Partial<ApPatient> = { ...localPatient };
 
@@ -445,6 +444,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 {/* More Menu */}
                 <Whisper
                   trigger="click"
+                   open={openMoreMenu}
+                  onClose={() => setOpenMoreMenu(false)}
                   placement="bottom"
                   speaker={
                     <Popover full>
@@ -479,7 +480,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                           </div>
                         </Dropdown.Item>
 
-                        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+                        <Dropdown.Item onClick={() => {setOpenMoreMenu(false); setOpenBViewPriceListModal(true);}}>
                           <div className="container-of-icon-and-key1">
                             <FontAwesomeIcon icon={faHandHoldingDollar} />
                             <Translate>View Price List</Translate>
@@ -534,7 +535,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   }
                 >
                   <span>
-                    <MyButton size="small">
+                    <MyButton size="small" onClick={() => setOpenMoreMenu(!openMoreMenu)}>
                       <FontAwesomeIcon icon={faEllipsisVertical} />
                     </MyButton>
                   </span>

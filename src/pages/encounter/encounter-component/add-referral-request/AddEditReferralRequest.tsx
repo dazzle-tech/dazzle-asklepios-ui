@@ -19,12 +19,8 @@ const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, h
     (state) => state.auth?.tenant?.selectedFacility
   );
 
-  console.log("Selected Facility", selectedFacility);
-
   // Facility list from RTK
   const { data: facilityResponse } = useGetAllFacilitiesQuery({});
-
-  console.log("Facility Response", facilityResponse);
 
   // Map facilities for select
   const facilityOptions =
@@ -32,8 +28,6 @@ const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, h
       label: f.name ?? "",
       value: f.id,
     })) ?? [];
-
-  console.log("Facility Options", facilityOptions);
 
 
 

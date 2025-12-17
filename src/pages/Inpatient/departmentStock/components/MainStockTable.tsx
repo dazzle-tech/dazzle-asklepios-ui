@@ -43,17 +43,14 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
    */
   const actionsForItems = rowData => {
     const handleViewTransactions = () => {
-      console.log('View transactions for:', rowData.name);
       // TODO: Implement view transactions logic
     };
 
     const handleAdjustQuantity = () => {
-      console.log('Adjust quantity for:', rowData.name);
       // TODO: Implement adjust quantity logic
     };
 
     const handleProductCard = () => {
-      console.log('Product card for:', rowData.name);
       // TODO: Implement product card logic
     };
 
@@ -318,10 +315,7 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
     }
   ];
 
- const handleExportXLS = () => {
-    console.log('Export XLS clicked');};
-  const handleRefillRequest = () => {
-    console.log('Refill Request clicked');};
+
 
   return (
     <MyTable
@@ -334,8 +328,8 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
       onRowsPerPageChange={onRowsPerPageChange}
       height={500}
       tableButtons={<><DepartmentStockHeader
-          onExportXLS={handleExportXLS}
-          onRefillRequest={handleRefillRequest}/></>}
+          onExportXLS={() => {}}
+          onRefillRequest={() => {}}/></>}
       filters={filters()}
     />
   );

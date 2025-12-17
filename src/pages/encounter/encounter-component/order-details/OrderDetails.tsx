@@ -620,7 +620,7 @@ const SlidingScale = () => {
         rules={displayedRules}
         columns={columnsToRender}
         canEdit={canEdit}
-        onRowClick={row => console.log('Rule clicked', row)}
+        onRowClick={row => {}}
       />
 
       <SafetyMonitoringSection

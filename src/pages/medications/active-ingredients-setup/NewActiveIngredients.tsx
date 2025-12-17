@@ -59,7 +59,6 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
     try {
       const response = await saveActiveIngredient(activeIngredient).unwrap();
       dispatch(notify({ msg: response.msg, sev: 'success' }));
-      console.log(response.msg);
     } catch (error) {
       if (error.data && error.data.message) {
         dispatch(notify(error.data.message));

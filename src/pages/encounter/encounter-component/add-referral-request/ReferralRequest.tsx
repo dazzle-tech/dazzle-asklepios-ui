@@ -98,7 +98,7 @@ const encounterId = encounter?.key ? Number(encounter.key) : undefined;
           dispatch(
             notify({
               msg: `${requiredFields[field]}, Can Not Be Empty`,
-              sev: "error",
+              sev: "warning",
             })
           );
           return false;
@@ -292,7 +292,6 @@ departmentsResponse?.data?.forEach((dep) => {
         object={cancelObject}
         setObject={setCancelObject}
         handleCancle={() => {
-          console.log("Cancelled:", cancelObject);
           setOpenCancelModal(false);
         }}
         title="Cancel Referral"
