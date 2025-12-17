@@ -105,7 +105,7 @@ import { BillingService } from './services/billing/BillingService';
 import { referralRequestService } from "@/services/encounters/referralRequestService";
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
-
+import {priceListAttributesService} from '@/services/billing/PriceListAttributesService';
 import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
 export const store = configureStore({
   reducer: {
@@ -312,6 +312,7 @@ export const store = configureStore({
     [PayorPlanService.reducerPath]: PayorPlanService.reducer,
 
     [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
+    [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -420,6 +421,7 @@ export const store = configureStore({
       PayorService.middleware,
       PayorPlanService.middleware,
       DischargePlanningService.middleware,
+      priceListAttributesService.middleware,
 
     ])
 });

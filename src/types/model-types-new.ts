@@ -1310,3 +1310,12 @@ export interface CommunityArea {
   name: string;
   isActive?: boolean;
 }
+
+export interface PriceListAttribute {
+  id?: number | null;
+  priceListId: number | null;
+  attributeType: string; // PriceAttributes enum as string
+  attribute: string;
+  price: number; // or string if you prefer BigDecimal string
+  isActive?: boolean;
+}
