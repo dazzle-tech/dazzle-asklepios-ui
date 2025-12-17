@@ -140,8 +140,7 @@ export const MedicalSheets: MedicalSheet[] = [
 
 export const MODULES: Module[] =
   [
-    {
-      name: "System Setup",
+    {name: "System Setup",
       description: "",
       icon: "FaWrench",
       viewOrder: 0,
@@ -189,7 +188,14 @@ export const MODULES: Module[] =
         { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
         { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
         { name: "Payor Setup", code: "PAYER", description: "test", icon: "FaGlobe", viewOrder: 21, navPath: "payor-setup" },
-
+        ,
+        {name: "Price Lists",
+          code: "PRICE_LISTS",
+          description: "",
+          icon: "FaMoneyBill",
+          viewOrder: 0,
+          navPath: "price-list",
+        },
       ],
     },
     {
@@ -597,6 +603,15 @@ export const MODULES: Module[] =
           icon: "FaMobileRetro",
           viewOrder: 1,
           navPath: "billing-accounting",
+        
+        },
+          {
+          name: "Claims",
+          code: "CLAIMS",
+          description: "",
+          icon: "FaMobileRetro",
+          viewOrder: 2,
+          navPath: "billing-claims",
         },
         {
           name: "Price Lists",

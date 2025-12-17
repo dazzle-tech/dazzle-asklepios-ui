@@ -91,7 +91,6 @@ const ReportResultTemplate = () => {
         })
       );
     } catch (err) {
-      console.log("Report Template Toggle Error:", err);
       dispatch(
         notify({
           msg: "Failed to update Report Template status",

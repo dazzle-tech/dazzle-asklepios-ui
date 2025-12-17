@@ -101,7 +101,6 @@ const RadiologyTable = ({ patient }) => {
    ...initialListRequest,
     pageSize: 1000
   });
- console.log("diagnosticTest", diagnosticTest);
   const { data: prevResultsList, refetch: prevResultFetch, isLoading } =
     useGetDiagnosticOrderTestRadReportListQuery({ ...listPrevResultResponse });
   const {

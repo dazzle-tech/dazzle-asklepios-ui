@@ -189,7 +189,6 @@ const DetailsModal = ({
   }, [selectedOption]);
 
   useEffect(() => {
-    console.log(open);
     setSearchKeyword('');
     if (open == false) {
       handleCleare();

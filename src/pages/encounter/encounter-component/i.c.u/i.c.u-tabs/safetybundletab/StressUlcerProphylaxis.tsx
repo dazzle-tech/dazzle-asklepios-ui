@@ -61,7 +61,6 @@ const StressUlcerProphylaxis = () => {
             <div className="safety-bundle-icu-add-btn-wrapper">
               <MyButton
                 prefixIcon={() => <PlusIcon />}
-                onClick={() => console.log("Add Stress Ulcer clicked")}
               >
                 Add
               </MyButton>

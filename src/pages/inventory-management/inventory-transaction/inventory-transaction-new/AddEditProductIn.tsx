@@ -231,18 +231,15 @@ const AddEditProductIn = ({ open, setOpen, transProduct, setTransProduct, transa
 
 
     useEffect(() => {
-        console.log(productselectListResponseLoading);
         if (productselectListResponseLoading?.object?.length > 0) {
             const firstItem = productselectListResponseLoading.object[0];
             setSelectedProduct(firstItem);
-            console.log(firstItem);
         }
     }, [productselectListResponseLoading?.object]);
 
 
     useEffect(() => {
         setTotalCost(Number(calculateCost(transProduct?.newQuentity, transProduct?.newCost)) || 0);
-        console.log("Total Cost:", totalCost);
     }, [transProduct?.newQuantity, transProduct?.newCost]);
 
 

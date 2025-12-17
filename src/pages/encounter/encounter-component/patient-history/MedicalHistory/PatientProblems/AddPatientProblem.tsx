@@ -54,8 +54,6 @@ const normalizePayload = (data) => ({
 const save = () => {
   const payload = normalizePayload(formData);
 
-  console.log("PAYLOAD SENT >>>", payload);
-
   savePatientProblem(payload)
     .unwrap()
     .then(() => {

@@ -664,9 +664,6 @@ const DayCaseList = () => {
           </>
         }
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
         cancelButtonLabel="Close"
       />
 
@@ -681,9 +678,6 @@ const DayCaseList = () => {
           </>
         }
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
         cancelButtonLabel="Close"
       />
 

@@ -170,7 +170,6 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
       onSaved?.();
       setOpen(false);
     } catch (err) {
-      console.log("Save Diagnostic Template Error", err);
       dispatch(
         notify({
           msg: "Failed to save Diagnostic Template",

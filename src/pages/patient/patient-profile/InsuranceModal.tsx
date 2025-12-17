@@ -4,7 +4,7 @@ import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
-import { useGetPayorPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
 import { ApPatientInsurance } from '@/types/model-types';
 import { faShieldHeart } from '@fortawesome/free-solid-svg-icons';
@@ -61,7 +61,7 @@ const InsuranceModal = ({
     data: plansResponse,
     isLoading: plansLoading,
     isFetching: plansFetching,
-  } = useGetPayorPlansByPayorQuery(
+  } = useGetPlansByPayorQuery(
     {
       payorId: Number(patientInsurance?.insuranceProviderLkey) || 0,
       page: planPage,

@@ -46,7 +46,6 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
 
   const [getDepartmentsByFacility, { data: departmentsResponse, isFetching: deptLoading }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
-  console.log('departmentsResponse from lazy query:', departmentsResponse);
 
   // Delete user department
   const [deleteUserDepartment] = useDeleteUserDepartmentMutation();

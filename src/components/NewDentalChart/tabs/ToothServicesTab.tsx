@@ -25,10 +25,6 @@ const ToothServicesTab: React.FC<ToothServicesTabProps> = ({
   addService,
   servicesLoading
 }) => {
-  const handleRemoveService = (rowIndex: number) => {
-    console.log('Remove service at index:', rowIndex);
-    // Implement remove service logic here
-  };
 
   const columns = [
     {
@@ -60,7 +56,6 @@ const ToothServicesTab: React.FC<ToothServicesTabProps> = ({
           appearance="primary"
           color="red"
           size="sm"
-          onClick={() => handleRemoveService(rowIndex)}
         >
           <Trash />
         </Button>

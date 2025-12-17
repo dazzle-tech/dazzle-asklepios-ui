@@ -106,7 +106,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
 
   // Fetch patient Encounters List
   const { data: encounterListResponse, isFetching } = useGetEncountersQuery(listRequest);
-  console.log('encounterListResponse', encounterListResponse);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
 
   const [activeCard, setActiveCard] = useState<string | null>(null);

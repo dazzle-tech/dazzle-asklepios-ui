@@ -81,7 +81,6 @@ const ViewTriage = () => {
                 : triageResponse.object.sort((a, b) => b.updatedAt - a.updatedAt)[0];
             
             setEmergencyTriage(triageData);
-            console.log("تم تحميل بيانات Triage:", triageData);
         }
     }, [triageResponse]);
 

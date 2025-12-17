@@ -133,7 +133,6 @@ const Synonyms = ({ activeIngredients }) => {
 
     } catch (err) {
       dispatch(notify({ msg: "Failed to save Synonym", sev: "error" }));
-      console.log("Error saving synonym:", err);
     }
   };
 
@@ -160,7 +159,6 @@ const Synonyms = ({ activeIngredients }) => {
 
     } catch (err) {
       dispatch(notify({ msg: "Delete failed", sev: "error" }));
-      console.log("Delete error:", err);
     }
   };
 

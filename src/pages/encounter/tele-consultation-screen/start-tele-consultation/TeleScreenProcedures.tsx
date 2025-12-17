@@ -28,7 +28,7 @@ const TeleScreenProcedures = ({ open = false, onClose }) => {
             onClose();
           }
         }}
-        proRefetch={() => console.log('Refetch procedures')}
+        proRefetch={() => {}}
       />
     </div>
   );

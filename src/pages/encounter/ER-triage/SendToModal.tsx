@@ -43,7 +43,6 @@ const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
             refetch();
         }
     } catch (e: any) {
-        console.log('SAVE ENCOUNTER ERROR >>>', e);
 
         // RTK Query error shapes
         const status = e?.status;
@@ -53,14 +52,12 @@ const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
             (typeof e?.data === 'string' ? e.data : null);
 
         if (status === 422) {
-            console.log("Validation error: Unprocessable Entity", e);
             dispatch(notify({ msg: backendMessage || 'Validation error (422)', sev: 'warn' }));
         } else if (backendMessage) {
             dispatch(notify({ msg: backendMessage, sev: 'error' }));
         } else if (status === 'FETCH_ERROR') {
             dispatch(notify({ msg: 'Network error, please check your connection', sev: 'error' }));
         } else {
-            console.log("An unexpected error occurred", e);
             dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
         }
     }

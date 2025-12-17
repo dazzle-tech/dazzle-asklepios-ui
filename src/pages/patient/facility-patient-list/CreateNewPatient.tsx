@@ -21,7 +21,7 @@ import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 // NEW IMPORTS for Payors / Plans
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
-import { useGetPayorPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 
 const CreateNewPatient = ({ open, setOpen }) => {
   const dispatch = useAppDispatch();
@@ -76,7 +76,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
     data: plansResponse,
     isLoading: plansLoading,
     isFetching: plansFetching,
-  } = useGetPayorPlansByPayorQuery(
+  } = useGetPlansByPayorQuery(
     {
       payorId: Number(patientInsurance?.insuranceProviderLkey) || 0,
       page: planPage,
@@ -127,7 +127,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
       dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
     } catch (error) {
-      console.log('rejected');
     }
   };
 

@@ -166,7 +166,6 @@ const AddEditProduct = ({ open, setOpen, transferProduct, setTransferProduct, tr
     const handleConvertQuantity = async () => {
         if (!selectedProduct || !transferProduct) return;
 
-        console.log("qty:", transferProduct.quentityRequested);
         const result = await triggerGetQty({
             quantity: transferProduct.quentityRequested,
             transUnit: transferProduct.transUomKey,
@@ -289,26 +288,21 @@ const AddEditProduct = ({ open, setOpen, transferProduct, setTransferProduct, tr
 
     useEffect(() => {
         setTransferProduct({ ...transferProduct, inventoryTransKey: transfer?.key });
-        console.log(transfer?.key);
     }, [transfer?.key]);
 
 
 
     useEffect(() => {
-        console.log(productselectListResponseLoading);
         if (productselectListResponseLoading?.object?.length > 0) {
             const firstItem = productselectListResponseLoading.object[0];
             setSelectedProduct(firstItem);
-            console.log(firstItem);
         }
     }, [productselectListResponseLoading?.object]);
 
      useEffect(() => {
-        console.log(warehouseProductSelectedListResponseLoading);
         if (warehouseProductSelectedListResponseLoading?.object?.length > 0) {
             const firstItem = warehouseProductSelectedListResponseLoading.object[0];
             setSelectedWarehouseProduct(firstItem);
-            console.log(firstItem);
         }
 
     }, [warehouseProductSelectedListResponseLoading?.object]);
@@ -461,7 +455,6 @@ const AddEditProduct = ({ open, setOpen, transferProduct, setTransferProduct, tr
                             lotserialnumber: selectedObject?.key
                         });
                         setSelectedWarehouseProductdetails(selectedObject? { ...selectedObject } : { ...newApWarehouseProductDetails });
-                        console.log(record);
                         }}
                     />
 

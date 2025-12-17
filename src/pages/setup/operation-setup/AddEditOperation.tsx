@@ -21,7 +21,6 @@ import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import SearchIcon from '@rsuite/icons/Search';
 const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) => {
     const dispatch = useAppDispatch();
-    console.log("Operation", operation)
     //save mutation function
     const [saveOperation] = useSaveOperationMutation();
     const [saveOperationCoding] = useSaveOperationCodingMutation();
@@ -133,7 +132,6 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
                 contraindications: contraindicationsDescription,
                 isValid: true
             }).unwrap();
-            console.log("Response", response?.object)
             dispatch(notify({ msg: 'The Procedure has been saved successfully', sev: 'success' }));
             refetch();
             setOperation(response?.object);

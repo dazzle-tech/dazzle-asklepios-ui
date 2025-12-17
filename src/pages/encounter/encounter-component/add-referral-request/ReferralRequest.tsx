@@ -292,7 +292,6 @@ departmentsResponse?.data?.forEach((dep) => {
         object={cancelObject}
         setObject={setCancelObject}
         handleCancle={() => {
-          console.log("Cancelled:", cancelObject);
           setOpenCancelModal(false);
         }}
         title="Cancel Referral"

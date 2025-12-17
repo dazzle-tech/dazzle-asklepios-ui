@@ -183,7 +183,6 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
         }));
     }
 }, [departmentKey]);
-    console.log("dep---->", departmentKey)
     return (
         <>
             <MyModal

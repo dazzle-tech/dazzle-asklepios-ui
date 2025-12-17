@@ -36,7 +36,6 @@ const Details = ({
   const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
   
   const handleOpenAttachmentModal = () => {
-    console.log('Operation request for attachment:', request);
     setIsAttachmentModalOpen(true);
   };
 
