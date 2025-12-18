@@ -815,7 +815,6 @@ export const MODULES: Module[] = [
         viewOrder: 21,
         navPath: 'payor-setup'
       },
-      ,
       {
         name: 'Price Lists',
         code: 'PRICE_LISTS',
