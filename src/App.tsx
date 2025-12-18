@@ -208,6 +208,7 @@ import PreviousMeasurements from './pages/encounter/encounter-pre-observations-n
 import PayerSetup from './pages/setup/payer-setup';
 import CountrySetup from './pages/setup/country-setup/CountrySetup';
 import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
+import Form from './pages/dashboard/Form';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -645,6 +646,7 @@ const App = () => {
               <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
               <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
               <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
+              <Route path="form" element={<Form />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

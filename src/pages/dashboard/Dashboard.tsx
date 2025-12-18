@@ -9,11 +9,14 @@ import { TitleWithIcon } from '@/components/Charts/DynamicTableChart/TitleWithIc
 import DynamicMainTableChart from '@/components/Charts/DynamicTableChart/DynamicMainTableChart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icons';
+import MyButton from '@/components/MyButton/MyButton';
+import { useNavigate } from 'react-router-dom';
 import './styles.less';
 import { useSelector } from 'react-redux';
 const Dashboard = () => {
   const dispatch = useAppDispatch();
   const mode = useSelector((state) => state.ui.mode);
+   const navigate = useNavigate();
 
   useEffect(() => {
     const divContent = "Dashboard";
@@ -29,6 +32,9 @@ const Dashboard = () => {
   return (
     <Panel className={mode === 'dark' ? 'dashboard-dark' : ''}>
       <FlexboxGrid>
+        <MyButton   onClick={() => navigate("form")}>
+          Form Analytics
+        </MyButton>
 
         {/* Bar Chart */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
