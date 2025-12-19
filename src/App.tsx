@@ -208,6 +208,7 @@ import PreviousMeasurements from './pages/encounter/encounter-pre-observations-n
 import PayerSetup from './pages/setup/payer-setup';
 import CountrySetup from './pages/setup/country-setup/CountrySetup';
 import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
+import Claimscreen from './pages/billing-module/billingClaims/Claims';
 
 
 
@@ -652,6 +653,8 @@ useEffect(() => {
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="billing-accounting" element={<Accounting />} />
+              <Route path="billing-claims" element={<Claimscreen/>} />
+
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
               {/* <Route path="inventory-product-setup" element={<ProductSetup />} /> */}
