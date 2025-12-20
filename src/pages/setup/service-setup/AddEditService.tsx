@@ -139,7 +139,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
       actionButtonLabel={isEdit ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Service Info', icon: <FaStar /> }]}
-      size={width > 600 ? '36vw' : '70vw'}
+      size={'40vw'}
     />
   );
 };
