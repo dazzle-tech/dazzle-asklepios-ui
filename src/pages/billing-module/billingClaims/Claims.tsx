@@ -198,7 +198,6 @@ const Claimscreen = () => {
     </div>
   );
 
-
   return (
     <Panel>
         {filters()}
