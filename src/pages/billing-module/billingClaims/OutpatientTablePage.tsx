@@ -12,7 +12,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
-import OpenClaimModal from './openClaimModal';
+import OpenClaimModal from './OpenClaimModal';
 
 const OutpatientTablePage = () => {
 
