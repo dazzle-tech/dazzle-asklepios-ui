@@ -38,7 +38,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
                 required
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
               />
 
               <MyInput
@@ -46,13 +46,13 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
                 required
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
-              <MyInput fieldName="login" required record={user} setRecord={setUser} width={250} />
+              <MyInput fieldName="login" required record={user} setRecord={setUser} width={'13vw'} />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldLabel="Job Role"
                 fieldType="select"
                 fieldName="jobRole"
@@ -73,7 +73,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
                 selectDataValue="value"
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
                 searchable={false}
               />
               <MyInput
@@ -82,17 +82,17 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
                 fieldName="birthDate"
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
-              <MyInput fieldName="email" required record={user} setRecord={setUser} width={250} />
+              <MyInput fieldName="email" required record={user} setRecord={setUser} width={'13vw'} />
               <MyInput
                 fieldName="phoneNumber"
                 required
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
               />
             </div>
             <MyInput
@@ -101,7 +101,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
               required
               record={user}
               setRecord={setUser}
-              width={width > 600 ? 520 : 250}
+              width={'13vw'}
             />
           </Form>
         );

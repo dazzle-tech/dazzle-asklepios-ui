@@ -35,23 +35,14 @@ const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
 ));
 
 const focusNextField = (e: any) => {
-  if (e.key !== 'Enter') return;
-
-  const target = e.target as HTMLElement;
-  const form = target?.closest('form');
-
-  if (!form || !form.elements) return;
-
-  e.preventDefault();
-
-  const elements = Array.from(form.elements) as HTMLElement[];
-  const index = elements.indexOf(target);
-
-  if (index === -1) return;
-
-  const next = elements[index + 1];
-  if (next && typeof (next as any).focus === 'function') {
-    (next as any).focus();
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const form = e.target.form;
+    const index = Array.prototype.indexOf.call(form, e.target);
+    const next = form?.elements[index + 1];
+    if (next && typeof next.focus === 'function') {
+      next.focus();
+    }
   }
 };
 
@@ -208,10 +199,10 @@ const MyInput = ({
     if (!setRecord || typeof setRecord !== 'function') return;
 
     if (fieldType === 'date') {
-      const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
-      setRecord({ ...record, [fieldName]: dateStr });
+      setRecord({ ...record, [fieldName]: value });
       return;
     }
+
     setRecord({ ...record, [fieldName]: value });
   };
 

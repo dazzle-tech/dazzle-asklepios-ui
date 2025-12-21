@@ -6,7 +6,7 @@ import * as icons from 'react-icons/fa6';
 import { MdDashboard } from 'react-icons/md';
 import { IntlProvider } from 'react-intl';
 import { useSelector } from 'react-redux';
-import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { CustomProvider } from 'rsuite';
 import enGB from 'rsuite/locales/en_GB';
 import config from '../app-config';
@@ -209,6 +209,56 @@ import PreviousMeasurements from './pages/encounter/encounter-pre-observations-n
 import PayerSetup from './pages/setup/payer-setup';
 import CountrySetup from './pages/setup/country-setup/CountrySetup';
 import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
+import Claimscreen from './pages/billing-module/billingClaims/Claims';
+
+
+
+type BackendMenuItem = { screen?: string | null };
+
+const PUBLIC_PATHS = new Set([
+  '/login',
+  '/reset-password',
+  '/error-403',
+  '/error-404',
+  '/error-500',
+  '/error-503'
+]);
+
+const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
+
+function ParentPermissionGuard() {
+  const location = useLocation();
+  const authSlice = useAppSelector((s) => s.auth);
+
+  const path = location.pathname || '/';
+
+  if (PUBLIC_PATHS.has(path)) return <Outlet />;
+
+  if (!authSlice?.menu) return <Outlet />;
+
+  const parent = norm(path.split('?')[0]).split('/')[0]; 
+  if (!parent) return <Outlet />; 
+
+  const parentToCode = new Map<string, string>();
+  MODULES.forEach((m: any) => {
+    (m.screens ?? []).forEach((s: any) => {
+      if (s?.navPath && s?.code) parentToCode.set(norm(s.navPath), String(s.code));
+    });
+  });
+
+  const requiredCode = parentToCode.get(parent);
+  if (!requiredCode) return <Outlet />;
+
+  const allowedCodes = new Set(
+    (authSlice.menu as BackendMenuItem[]).map((x) => String(x.screen ?? '').toUpperCase())
+  );
+
+  const hasPermission = allowedCodes.has(requiredCode.toUpperCase());
+
+  if (!hasPermission) return <Navigate to="/error-403" replace state={{ from: path }} />;
+
+  return <Outlet />;
+}
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -221,8 +271,20 @@ const App = () => {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
+  const navigate = useNavigate();
 
+  
+useEffect(() => {
+  const onPageShow = (e: PageTransitionEvent) => {
+    if (e.persisted) {
+      const token = localStorage.getItem('token');
+      if (!token) navigate('/login', { replace: true });
+    }
+  };
 
+  window.addEventListener('pageshow', onPageShow);
+  return () => window.removeEventListener('pageshow', onPageShow);
+}, [navigate]);
 
   // ------------------------------ MENU BUILD HELPERS ---------------------------
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
@@ -380,7 +442,7 @@ const App = () => {
                     }
                     blocked={uiSlice.loading}
                   >
-                    <Outlet />
+                    <ParentPermissionGuard  />
                   </BlockUI>
                 </ProtectedRoute>
               </AuthGuard>
@@ -592,6 +654,8 @@ const App = () => {
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="billing-accounting" element={<Accounting />} />
+              <Route path="billing-claims" element={<Claimscreen/>} />
+
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
               {/* <Route path="inventory-product-setup" element={<ProductSetup />} /> */}

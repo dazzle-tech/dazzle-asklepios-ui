@@ -58,7 +58,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
-   const direction = localStorage.getItem('direction');
+  const direction = localStorage.getItem('direction');
   const authSlice = useAppSelector(state => state.auth);
   const toast = useCallback(
     (msg: string) => {
@@ -364,7 +364,10 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
       localStorage.clear();
 
-      navigate('/login');
+      dispatch({ type: 'auth/logout' }); 
+
+      
+      navigate('/login', { replace: true });
     };
 
     useEffect(() => {
@@ -413,12 +416,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         {(selectedDepartment?.facilityName ||
           authSlice?.tenant?.selectedFacility?.name ||
           authSlice?.tenant?.selectedFacility?.facilityName) && (
-          <span style={{ fontSize: '12px', color: '#6c757d' }}>
-            {selectedDepartment?.facilityName ??
-              authSlice?.tenant?.selectedFacility?.name ??
-              authSlice?.tenant?.selectedFacility?.facilityName}
-          </span>
-        )}
+            <span style={{ fontSize: '12px', color: '#6c757d' }}>
+              {selectedDepartment?.facilityName ??
+                authSlice?.tenant?.selectedFacility?.name ??
+                authSlice?.tenant?.selectedFacility?.facilityName}
+            </span>
+          )}
       </div>
       <Divider style={{ margin: 0 }} />
       {isLoadingDepartments ? (
@@ -432,7 +435,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               defaultDepartmentEntity?.id != null
                 ? defaultDepartmentEntity.id === dept.id
                 : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                  defaultDepartmentEntity?.facilityId === dept.facilityId;
+                defaultDepartmentEntity?.facilityId === dept.facilityId;
             const isActive =
               selectedDepartment?.departmentId === dept.departmentId &&
               selectedDepartment?.facilityId === dept.facilityId;
@@ -517,7 +520,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   return (
     <>
-      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
+      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{ flexDirection: direction === "LTR" ? "row" : "row-reverse" }}>
         {width >= 930 ? (
           <>
             <Tooltip title="Customize Dashboard">

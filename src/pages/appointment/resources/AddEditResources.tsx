@@ -268,7 +268,7 @@ const AddEditResources = ({
       actionButtonLabel={resource?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Resource Info', icon: <GrScheduleNew /> }]}
-      size={width > 600 ? '36vw' : '70vw'}
+      size={'40vw'}
     />
   );
 };
