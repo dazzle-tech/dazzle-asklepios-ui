@@ -843,7 +843,7 @@ const MyInput = ({
   return (
     <Form.Group
       style={{direction: direction === "RTL" ? "rtl" : "ltr"}}
-      className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
+      className={clsx(`my-input-container ${className} ${direction === 'RTL' ? 'rtl' : 'ltr'} ${mode == 'light' ? 'light' : 'dark'}`)}
     >
       <Form.ControlLabel>
         {showLabel && (
