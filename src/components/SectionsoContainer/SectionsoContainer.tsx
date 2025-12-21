@@ -24,6 +24,7 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
   maxWidth
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
+  const direction = localStorage.getItem('direction');
 
   return (
     <div
@@ -33,9 +34,9 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
         maxWidth: maxWidth ?? 'none'
       }}
     >
-      <div className="title-div flex-cen-between">
+      <div className="title-div flex-cen-between" style={{flexDirection: direction === "RTL" ? "row-reverse" : "row"}}>
         <div>{title}</div>
-        {action && <div>{action}</div>}
+        {action && <div style={{flexDirection: direction === "RTL" ? "row-reverse" : "row"}}>{action}</div>}
       </div>
 
       <Divider />
@@ -45,7 +46,7 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
       {button && (
         <>
           <Divider />
-          <div className="container-of-add-new-button-pre">{button}</div>
+          <div className="container-of-add-new-button-pre" style={{flexDirection: direction === "RTL" ? "row-reverse" : "row"}}>{button}</div>
         </>
       )}
     </div>

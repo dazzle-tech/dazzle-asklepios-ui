@@ -11,8 +11,9 @@ const BasicInfo = ({
   ageGroupValue,
   patientClassLovQueryResponse
 }) => {
+  const direction = localStorage.getItem('direction');
   return (
-    <Form layout="inline">
+    <Form layout="inline" style={{flexDirection: direction === "RTL" ? 'row-reverse' : "row"}}>
       <MyInput
         required
         vr={validationResult}

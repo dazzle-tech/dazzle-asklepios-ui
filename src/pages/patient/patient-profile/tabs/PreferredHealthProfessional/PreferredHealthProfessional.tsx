@@ -24,6 +24,7 @@ import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/P
 
 const PreferredHealthProfessional = ({ patient, isClick }) => {
   const dispatch = useAppDispatch();
+  const direction = localStorage.getItem('direction');
 
   const [open, setOpen] = useState(false);
   const [editable, setEditable] = useState(false);
@@ -229,7 +230,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
         actionButtonFunction={handleDeletePH}
       />
 
-      <div className="tab-content-btns">
+      <div className="tab-content-btns" dir={direction === "RTL" ? "rtl" : "ltr"}>
         <MyButton
           onClick={handleNewPreferredHP}
           disabled={isClick}

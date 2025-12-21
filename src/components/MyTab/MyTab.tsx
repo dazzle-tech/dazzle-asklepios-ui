@@ -44,6 +44,7 @@ const MyTab: React.FC<MyTabProps> = ({
   setActiveTab
 }) => {
 
+  const direction = localStorage.getItem('direction');
   if (!Array.isArray(data)) {
     return null;
   }
@@ -64,7 +65,8 @@ const MyTab: React.FC<MyTabProps> = ({
             defaultActiveKey,
           })}
       appearance={appearance}
-      className={`tabs-style ${className}`}
+      // style={{flexDirection: direction === "LTR" ? "row" : "row-reverse" }}
+      className={`tabs-style ${className} ${direction}`}
     >
       {data.map((item, index) => (
           <Tabs.Tab key={index} eventKey={(index + 1) + ""} title={<Translate>{item.title}</Translate>} disabled={item.disabled ? item.disabled : false}>

@@ -71,6 +71,7 @@ const MyTable: React.FC<MyTableProps> = ({
   onPageChange,
   onRowsPerPageChange
 }) => {
+  const direction = localStorage.getItem('direction');
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const mode = useSelector((state: any) => state.ui.mode);
   const visibleColumns = columns.filter(col => !col.expandable);
@@ -95,18 +96,18 @@ const MyTable: React.FC<MyTableProps> = ({
 
   return (
     <Box className={`my-table-wrapper ${mode === 'light' ? 'light' : 'dark'}`}>
-      {filters && <Box className="my-table-filters">{filters}</Box>}
+      {filters && <Box sx={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} className="my-table-filters">{filters}</Box>}
 
-      {tableButtons && <Box className="my-table-buttons-wrapper">{tableButtons}</Box>}
+      {tableButtons && <Box sx={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} className="my-table-buttons-wrapper">{tableButtons}</Box>}
       <Box className="my-table-content-wrapper">
         <TableContainer
           component={Paper}
-          sx={{ maxHeight: height, overflowY: 'auto' }}
+          sx={{ maxHeight: height, overflowY: 'auto', direction: direction === 'RTL' ? 'rtl' : 'ltr' }}
           className="my-table-container"
         >
           <Table stickyHeader size="small">
             <TableHead className="my-table-header">
-              <TableRow>
+              <TableRow >
                 {expandableColumns.length > 0 && <TableCell />}
                 {visibleColumns.map(col => {
                   const isSortable = !!onSortChange;
@@ -193,7 +194,7 @@ const MyTable: React.FC<MyTableProps> = ({
                         {visibleColumns.map(col => (
                           <TableCell
                             key={col.key}
-                            align={col.align || 'left'}
+                            align={col.align || (direction === 'RTL' ? 'right' : 'left')}
                             className="even"
                             sx={{
                               width: col.width ? `${col.width}px` : 'auto',
@@ -228,7 +229,7 @@ const MyTable: React.FC<MyTableProps> = ({
                                     {expandableColumns.map(col => (
                                       <TableCell
                                         key={col.key}
-                                        align={col.align || 'left'}
+                                        align={col.align || (direction === 'RTL' ? 'right' : 'left')}
                                         sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
                                       >
                                        <Translate>{col.title}</Translate>

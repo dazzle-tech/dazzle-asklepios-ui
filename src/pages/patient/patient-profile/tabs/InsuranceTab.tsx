@@ -24,6 +24,7 @@ interface InsuranceTabProps {
 }
 const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const dispatch = useAppDispatch();
+  const direction = localStorage.getItem('direction');
   const [selectedInsurance, setSelectedInsurance] = useState<ApPatientInsurance | null>();
   const [InsuranceModalOpen, setInsuranceModalOpen] = useState(false);
   const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
@@ -155,7 +156,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
 
   return (
     <div className="tab-main-container">
-      <div className="tab-content-btns">
+      <div className="tab-content-btns" dir={direction === "RTL" ? "rtl" : "ltr"}>
         <MyButton
           onClick={() => {
             setInsuranceModalOpen(true);

@@ -19,12 +19,13 @@ const ContactTab: React.FC<ContactTabProps> = ({
   const { data: preferredWayOfContactLovQueryResponse } =
     useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
+  const direction = localStorage.getItem('direction');
   const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
 
   return (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid style={{flexDirection: direction === "RTL" ? 'row-reverse' : "row"}}>
       <MyInput
         vr={validationResult}
         column

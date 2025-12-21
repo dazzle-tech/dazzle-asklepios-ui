@@ -28,45 +28,86 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   ageFormatType,
   ageGroupValue
 }) => {
-
+  const direction = localStorage.getItem('direction');
 
   return (
     <Stack>
       <Stack.Item grow={1}></Stack.Item>
       <Stack.Item grow={15}>
         <Row gutter={15} className="d">
-          <Col md={12}>
-            <Row>
-              <SectionContainer
-                title={<Translate>Basic Information</Translate>}
-                content={
-                  <BasicInfo
-                    validationResult={validationResult}
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    genderEnum={genderEnum}
-                    ageFormatType={ageFormatType}
-                    ageGroupValue={ageGroupValue}
-                    patientClassLovQueryResponse={patientClassLovQueryResponse}
+          {direction === 'RTL' ? (
+            <>
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Translate>Contact</Translate>}
+                    content={
+                      <ContactTab
+                        localPatient={localPatient}
+                        setLocalPatient={setLocalPatient}
+                        validationResult={validationResult}
+                      />
+                    }
                   />
-                }
-              />
-            </Row>
-          </Col>
-          <Col md={12}>
-            <Row>
-              <SectionContainer
-                title={<Translate>Contact</Translate>}
-                content={
-                  <ContactTab
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    validationResult={validationResult}
+                </Row>
+              </Col>
+
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Translate>Basic Information</Translate>}
+                    content={
+                      <BasicInfo
+                        validationResult={validationResult}
+                        localPatient={localPatient}
+                        setLocalPatient={setLocalPatient}
+                        genderEnum={genderEnum}
+                        ageFormatType={ageFormatType}
+                        ageGroupValue={ageGroupValue}
+                        patientClassLovQueryResponse={patientClassLovQueryResponse}
+                      />
+                    }
                   />
-                }
-              />
-            </Row>
-          </Col>
+                </Row>
+              </Col>
+            </>
+          ) : (
+            <>
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Translate>Basic Information</Translate>}
+                    content={
+                      <BasicInfo
+                        validationResult={validationResult}
+                        localPatient={localPatient}
+                        setLocalPatient={setLocalPatient}
+                        genderEnum={genderEnum}
+                        ageFormatType={ageFormatType}
+                        ageGroupValue={ageGroupValue}
+                        patientClassLovQueryResponse={patientClassLovQueryResponse}
+                      />
+                    }
+                  />
+                </Row>
+              </Col>
+
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Translate>Contact</Translate>}
+                    content={
+                      <ContactTab
+                        localPatient={localPatient}
+                        setLocalPatient={setLocalPatient}
+                        validationResult={validationResult}
+                      />
+                    }
+                  />
+                </Row>
+              </Col>
+            </>
+          )}
         </Row>
       </Stack.Item>
     </Stack>

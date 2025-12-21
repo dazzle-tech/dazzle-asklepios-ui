@@ -22,7 +22,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const IDTab = ({ localPatient }) => {
   const dispatch = useAppDispatch();
-
+  const direction = localStorage.getItem('direction');
   const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
   const [secondaryDocument, setSecondaryDocument] = useState(newPatientDocument);
   const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
@@ -266,7 +266,7 @@ const IDTab = ({ localPatient }) => {
   }, [localPatient?.id]);
 
   return (
-    <div className="tab-main-container">
+    <div className="tab-main-container" dir={direction === "RTL" ? "rtl" : "ltr"}>
       <AddExtraDetails
         open={secondaryDocumentModalOpen}
         setOpen={setSecondaryDocumentModalOpen}

@@ -125,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes, expa
 
   return (
     <>
-      <Stack className={`header ${expand ? 'expand' : ''}`} spacing={8} style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
+      <Stack className={`header ${expand ? 'expand' : ''}`} spacing={8} style={{flexDirection: direction === "RTL" ? "row-reverse" : "row"}}>
         <MainScreenBarFilters
           displaySearch={displaySearch}
           setDisplaySearch={setDisplaySearch}

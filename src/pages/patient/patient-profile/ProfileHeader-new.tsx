@@ -63,6 +63,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setLocalPatient
 }) => {
   const profileImageFileInputRef = useRef(null);
+  const direction = localStorage.getItem('direction');
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
@@ -268,7 +269,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
     <>
-      <Stack>
+      <Stack dir={direction === 'RTL' ? 'rtl' : 'ltr'}>
         <Stack.Item grow={1}>
           <Form layout="inline" fluid className="profile-header">
             <AvatarGroup spacing={6} className="avatar-card-parent">
@@ -354,8 +355,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             </AvatarGroup>
 
-            <div className="button-group-left-align">
-              <Form fluid layout="inline" className="registration-header-buttons-section">
+            <div className="button-group-left-align" >
+              <Form style={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} fluid layout="inline" className="registration-header-buttons-section">
                 <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}

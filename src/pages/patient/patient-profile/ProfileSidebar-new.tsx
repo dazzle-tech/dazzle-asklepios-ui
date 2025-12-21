@@ -18,7 +18,7 @@ import { Box, Skeleton } from '@mui/material';
 import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
+import { FaArrowRight, FaEllipsis, FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
 import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav, DatePicker } from 'rsuite';
 
@@ -49,7 +49,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   setRefetchData
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
-
+  const directionOfPage = localStorage.getItem('direction');
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
   const [searchKeyword, setSearchKeyword] = useState('');
 
@@ -173,12 +173,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                 <Panel header={title} className="sidebar-panel">
                   {showButton && (
                     <Button onClick={() => setExpand(false)} className="expand-sidebar">
-                      <FaArrowRight />
+                      {directionOfPage === 'RTL' ? <FaArrowLeft /> : <FaArrowRight />}
                     </Button>
                   )}
 
                   <div className="patient-search-container">
-                    <Form fluid>
+                    <Form fluid style={{flexDirection: direction === "RTL" ? 'row-reverse' : "row"}}>
                       <MyInput
                         fieldType="select"
                         fieldName="searchCriteria"
@@ -291,7 +291,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                                 <FaEllipsis />
                               </Button>
                             }
-                            arrowDirection={direction as any}
+                            // arrowDirection={direction as any}
+                            arrowDirection={directionOfPage === 'LTR' ? 'left' : 'right'}
                           />
                         ))}
 

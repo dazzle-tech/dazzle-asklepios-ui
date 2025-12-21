@@ -52,6 +52,7 @@ const PAGE_SIZE = 5;
 
 const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
   const dispatch = useAppDispatch();
+  const direction = localStorage.getItem('direction');
   const patientId = localPatient?.id;
 
 
@@ -300,7 +301,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
           </div>
         }
         content={
-          <div>
+          <div dir={direction === "RTL" ? "rtl" : "ltr"}>
             <MyButton
               color="var(--primary-gray)"
               onClick={() => setOpenChangeLog(true)}

@@ -81,6 +81,7 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
 
 const PatientProfile = () => {
   const dispatch = useAppDispatch();
+  const direction = localStorage.getItem('direction');
   const [localVisit] = useState({ ...newApEncounter, discharge: false });
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
@@ -214,7 +215,7 @@ const PatientProfile = () => {
 
   return (
     <>
-      <div className="patient-profile-container">
+      <div style={{flexDirection: direction === 'RTL' ? 'row-reverse' : 'row'}} className="patient-profile-container">
         <Panel
           bordered
           className={clsx('patient-profile-info', {
@@ -249,7 +250,34 @@ const PatientProfile = () => {
           <br />
 
           <Row className="btm-sections">
+
+            {direction === "RTL" ? 
+            (
+             <>
             <Col md={12}>
+              <SectionContainer
+                title={<Translate>Appointments</Translate>}
+                content={<PatientAppointments patient={localPatient} />}
+              />
+            </Col>
+             <Col md={12}>
+              <SectionContainer
+                title={<Translate>Visit history</Translate>}
+                content={
+                  <PatientVisitHistoryTable
+                    quickAppointmentModel={quickAppointmentModel}
+                    setQuickAppointmentModel={setQuickAppointmentModel}
+                    localPatient={localPatient}
+                  />
+                }
+              />
+            </Col>
+
+             </>
+            ) :
+            (
+            <>
+              <Col md={12}>
               <SectionContainer
                 title={<Translate>Visit history</Translate>}
                 content={
@@ -268,6 +296,11 @@ const PatientProfile = () => {
                 content={<PatientAppointments patient={localPatient} />}
               />
             </Col>
+            </>
+            )
+          };
+
+          
           </Row>
         </Panel>
 

@@ -28,6 +28,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   validationResult
 }) => {
   const dispatch = useAppDispatch();
+  const direction = localStorage.getItem('direction');
   const toaster = useToaster();
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
   const [hippa, setHippa] = useState({ ...newPatientHIPAA });
@@ -104,7 +105,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   };
 
   return (
-    <div className="tab-main-container">
+    <div className="tab-main-container" dir={direction === "RTL" ? "rtl" : "ltr"}>
       <AddVerification
         open={verificationModalOpen}
         setOpen={setVerificationModalOpen}

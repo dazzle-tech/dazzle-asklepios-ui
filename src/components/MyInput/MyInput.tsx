@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useTranslate } from '../Translate/useTranslate';
 import dayjs from 'dayjs';
 
 const Textarea = React.forwardRef((props, ref: any) => (
@@ -130,6 +131,7 @@ const MyInput = ({
   className = '',
   ...props
 }: MyInputProps) => {
+  const translate = useTranslate();
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.ui);
    const direction = localStorage.getItem('direction');
@@ -279,7 +281,7 @@ const MyInput = ({
               style={{ width: '100%', height: props?.height ?? 70 }}
               disabled={props.disabled}
               name={fieldName}
-              placeholder={props.placeholder}
+              placeholder={translate(props.placeholder)}
               value={record[fieldName] ? record[fieldName] : ''}
               accepter={Textarea}
               onChange={handleValueChange}
@@ -287,7 +289,7 @@ const MyInput = ({
             />
             {!props.disabled && (
               <div
-                className={`container-of-search-icon-textarea ${recording ? 'recording' : ''}`}
+                className={`container-of-search-icon-textarea ${direction === 'RTL' ? 'rtl' : ''} ${recording ? 'recording' : ''}`}
                 onClick={changeRecordingState}
                 style={{ position: 'relative' }}
               >
@@ -330,7 +332,7 @@ const MyInput = ({
             value={record[fieldName] ? new Date(record[fieldName]) : null}
             accepter={CustomDateTimePicker}
             onChange={handleValueChange}
-            placeholder={props.placeholder}
+            placeholder={translate(props.placeholder)}
             onKeyDown={focusNextField}
             open={isDateTimeOpen}
             onOpen={() => setIsDateTimeOpen(true)}
@@ -357,7 +359,7 @@ const MyInput = ({
             accepter={TimePicker}
             onChange={handleValueChange}
             onClean={() => handleValueChange(null)}
-            placeholder={props.placeholder}
+            placeholder={translate(props.placeholder)}
             format="HH:mm"
             cleanable
             onKeyDown={focusNextField}
@@ -380,7 +382,7 @@ const MyInput = ({
 
         return (
           <Form.Control
-            style={{ width: styleWidth, height: props?.height ?? 30 }}
+            style={{ width: styleWidth, height: props?.height ?? 30}}
             className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
             block
             disabled={props.disabled}
@@ -407,7 +409,7 @@ const MyInput = ({
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
             defaultValue={props.defaultSelectValue}
-            placeholder={props.placeholder}
+            placeholder={props.placeholder ? translate(props.placeholder) : translate('Select')}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             loading={props?.loading ?? false}
@@ -540,7 +542,8 @@ const MyInput = ({
 
               return props.isEnum ? formatEnumString(String(label)) : label;
             }}
-            placeholder={props.placeholder ?? 'Select...'}
+            // placeholder={props.placeholder ?? 'Select...'}
+            placeholder={props.placeholder ? translate(props.placeholder) : translate('Select')}
             searchable
             cleanable
             loading={props.loading ?? false}
@@ -570,7 +573,7 @@ const MyInput = ({
             valueKey={props?.selectDataValue ?? ''}
             value={record ? record[fieldName] : []}
             onChange={handleValueChange}
-            placeholder={props.placeholder ?? 'Select...'}
+            placeholder={props.placeholder ? translate(props.placeholder) : translate('Select')}
             creatable={props.creatable ?? false}
             groupBy={props.groupBy ?? null}
             searchBy={props.searchBy}
@@ -598,7 +601,8 @@ const MyInput = ({
             valueKey={props?.selectDataValue ?? ''}
             value={record ? record[fieldName] : []}
             onChange={handleValueChange}
-            placeholder={props.placeholder ?? 'Select...'}
+            // placeholder={props.placeholder ?? 'Select...'}
+            placeholder={props.placeholder ? translate(props.placeholder) : translate('Select')}
             groupBy={props.groupBy ?? null}
             searchBy={props.searchBy}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
@@ -624,7 +628,8 @@ const MyInput = ({
             value={record[fieldName] ? dayjs(record[fieldName], 'YYYY-MM-DD').toDate() : null}
             accepter={CustomDatePicker}
             onChange={handleValueChange}
-            placeholder={props.placeholder}
+            // placeholder={props.placeholder}
+            placeholder={translate(props.placeholder)}
             onKeyDown={focusNextField}
             open={isDateOpen}
             onOpen={() => setIsDateOpen(true)}
@@ -676,7 +681,7 @@ const MyInput = ({
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={InputNumber}
             onChange={handleValueChange}
-            placeholder={props.placeholder}
+            placeholder={translate(props.placeholder)}
             onKeyDown={focusNextField}
           />
         );
@@ -762,7 +767,7 @@ const MyInput = ({
               type={fieldType}
               value={displayValue}
               onChange={handleValueChange}
-              placeholder={props.placeholder}
+              placeholder={translate(props.placeholder)}
               onKeyDown={async e => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -775,7 +780,7 @@ const MyInput = ({
             />
             {!props.disabled && (
               <div
-                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
+                className={`container-of-search-icon ${direction === 'RTL' ? 'rtl' : ''} ${recording ? 'recording' : ''}`}
                 onClick={changeRecordingState}
               >
                 <FontAwesomeIcon
@@ -837,7 +842,7 @@ const MyInput = ({
 
   return (
     <Form.Group
-      style={{direction: direction === "LTR" ? "ltr" : "rtl"}}
+      style={{direction: direction === "RTL" ? "rtl" : "ltr"}}
       className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
     >
       <Form.ControlLabel>

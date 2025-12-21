@@ -12,6 +12,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddEditNextOfKin from './AddEditNextOfKin';
 const NextOfKin = ({ patient, isClick }) => {
   const dispatch = useAppDispatch();
+  const direction = localStorage.getItem('direction');
   const [open, setOpen] = useState(false);
   const [nextOfKin, setNextOfKin] = useState({});
   const [id, setId] = useState(5);
@@ -169,7 +170,7 @@ const NextOfKin = ({ patient, isClick }) => {
 
   return (
     <div className="tab-main-container">
-      <div className="tab-content-btns">
+      <div className="tab-content-btns" dir={direction === "RTL" ? "rtl" : "ltr"}>
         <AddEditNextOfKin
           open={open}
           setOpen={setOpen}

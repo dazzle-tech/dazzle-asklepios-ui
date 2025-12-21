@@ -643,7 +643,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               </IconButton>
             </Whisper>
             <Whisper
-              placement="bottomEnd"
+              placement={direction === 'RTL' ? "bottomStart" : "bottomEnd"}
               trigger="click"
               ref={trigger}
               speaker={renderNoticeSpeaker}
@@ -657,7 +657,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             </Whisper>
             <Divider style={{ height: '31px', fontSize: '4px' }} vertical />
             <Whisper
-              placement="bottomEnd"
+              placement={direction === 'RTL' ? "bottomStart" : "bottomEnd"}
               trigger="click"
               ref={trigger}
               speaker={renderAdminSpeaker}

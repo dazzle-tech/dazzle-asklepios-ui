@@ -20,6 +20,7 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
   arrowDirection = 'left'
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
+  const direction = localStorage.getItem('direction');
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
 
   // Fetch profile picture for this patient
@@ -48,8 +49,9 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
   };
 
   return (
-    <Panel className={`patient-card-container ${mode === 'light' ? 'light' : 'dark'}`}>
-      <div className="patient-info">
+    <Panel className={`patient-card-container ${mode}`}>
+      <div className="patient-info"
+       >
         <Avatar
           circle
           src={

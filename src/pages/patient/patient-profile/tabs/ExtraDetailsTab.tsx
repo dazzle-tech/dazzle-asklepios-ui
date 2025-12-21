@@ -1,4 +1,5 @@
 import MyInput from '@/components/MyInput';
+import SectionContainer from '@/components/SectionsoContainer';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import React from 'react';
@@ -13,6 +14,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
   setLocalPatient,
   validationResult
 }) => {
+  const direction = localStorage.getItem('direction');
   // Fetch LOV data for various fields
   const { data: maritalStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MARI_STATUS');
   const { data: nationalityLovQueryResponse } = useGetLovValuesByCodeQuery('NAT');
@@ -23,7 +25,11 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
   const { data: educationalLevelLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
 
   return (
-    <Form layout="inline" fluid>
+
+    <SectionContainer 
+    title="Extra Details"
+    content = {
+    <Form layout="inline" fluid style={{flexDirection: direction === "RTL" ? 'row-reverse' : "row"}}>
       <MyInput
         vr={validationResult}
         column
@@ -140,6 +146,8 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         setRecord={setLocalPatient}
       />
     </Form>
+    }
+    />
   );
 };
 
