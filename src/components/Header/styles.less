@@ -1,16 +1,18 @@
 .header {
-  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 72px; // leave space for the left sidebar & arrow
+  right: 0;
   cursor: pointer;
-  z-index: 1;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  right: 0;
+  width: calc(100% - 72px);
   padding: 10px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--rs-border-primary);
-   overflow: hidden;
+  background-color: #ffffff; // pure white in light mode
   .headerItem {
     button {
       background: none;
@@ -19,6 +21,9 @@
       }
     }
   }
+}
+.header.dark {
+  background-color: var(--black);
 }
 .headerItem {
   display: flex;
