@@ -33,7 +33,42 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       data.dateOfAdmission ? new Date(data.dateOfAdmission).getTime() : null
   });
 
+  const validateRequiredFields = () => {
+    const requiredFields = [
+      { key: 'facility', label: 'Facility' },
+      { key: 'reason', label: 'Reason' },
+      { key: 'dateOfAdmission', label: 'Date of admission' }
+    ];
+
+    const missing = requiredFields.filter(field => {
+      const value = (formData as any)[field.key];
+      return value === undefined || value === null || value === '';
+    });
+
+    if (missing.length > 0) {
+      const msg =
+        missing.length === 1
+          ? `Please fill the required field: ${missing[0].label}.`
+          : `Please fill the required fields: ${missing.map(f => f.label).join(', ')}.`;
+
+      dispatch(
+        notify({
+          msg,
+          sev: 'error'
+        })
+      );
+
+      return false;
+    }
+
+    return true;
+  };
+
   const save = () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     const payload = normalizePayload(formData);
 
     saveHospitalization(payload)
@@ -98,7 +133,8 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       <MyInput
         width={200}
         column
-        fieldLabel="Length of stay"
+        fieldLabel="Length of stay (days)"
+        fieldType="number"
         fieldName="lengthOfStay"
         record={formData}
         setRecord={setFormData}

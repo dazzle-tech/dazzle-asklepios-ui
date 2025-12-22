@@ -3038,7 +3038,7 @@ export const newApPatientHospitalization:modelTypes.ApPatientHospitalization = {
 	facility:'',
 	reason:'',
 	admissionTypeLkey:undefined,
-	dateOfAdmission:0,
+	dateOfAdmission: undefined,
 	lengthOfStay:0,
 	outcomes:'',
 	medicalInterventionsPerformed:'',
