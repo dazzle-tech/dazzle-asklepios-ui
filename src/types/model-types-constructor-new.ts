@@ -816,7 +816,8 @@ export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM 
     createdBy: '',
     createdDate: null,
     lastModifiedBy: '',
-    lastModifiedDate: null
+    lastModifiedDate: null,
+    patientId: undefined
 };
 
 export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
@@ -824,7 +825,8 @@ export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
      note: '',
     priority: '',
     priorityOrder: 0,
-    color:'--note-purple'
+    color:'--note-purple',
+    patientId: undefined
 }
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
