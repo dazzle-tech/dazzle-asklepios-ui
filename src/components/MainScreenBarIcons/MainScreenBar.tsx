@@ -6,7 +6,8 @@ import {
   faHeadset,
   faNoteSticky,
   faRepeat,
-  faStethoscope
+  faStethoscope,
+  faUserDoctor
 } from '@fortawesome/free-solid-svg-icons';
 import { faSun } from '@fortawesome/free-solid-svg-icons';
 import { faMoon } from '@fortawesome/free-solid-svg-icons';
@@ -556,7 +557,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               >
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
-                  icon={faStethoscope}
+                  icon={faUserDoctor}
                 />
               </IconButton>
             </Tooltip>
