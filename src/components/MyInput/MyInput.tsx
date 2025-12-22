@@ -800,7 +800,7 @@ const MyInput = ({
                 }
               }}
             />
-            {!props.disabled && (
+            {/* {!props.disabled && (
               <div
                 className={`container-of-search-icon ${recording ? 'recording' : ''}`}
                 onClick={changeRecordingState}
@@ -811,7 +811,7 @@ const MyInput = ({
                 />
                 {recording && <span className="pulse-ring"></span>}
               </div>
-            )}
+            )} */}
           </div>
         );
 
