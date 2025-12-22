@@ -209,6 +209,7 @@ import PayerSetup from './pages/setup/payer-setup';
 import CountrySetup from './pages/setup/country-setup/CountrySetup';
 import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
 import Claimscreen from './pages/billing-module/billingClaims/Claims';
+import OrganizationDefinition from './pages/system-configurations';
 
 
 
@@ -477,6 +478,7 @@ useEffect(() => {
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="country-setup" element={<CountrySetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
+              <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
   <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>

@@ -1106,3 +1106,16 @@ export const newPriceListAttribute: modelTypes.PriceListAttribute = {
   price: null ,// or string if you prefer BigDecimal string
   isActive: true
 }
+
+export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
+  id: undefined,
+  name: '',
+  description: '',
+  address: '',
+  contactName: '',
+  contactAddress: '',
+  contactEmail: '',
+  contactMobile: '',
+  contactLandNumber: '',
+  taxValue: undefined
+};

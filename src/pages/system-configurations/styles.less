@@ -1,0 +1,121 @@
+.organization-definition-container {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .organization-definition-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .rs-panel-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  }
+
+  .container-of-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+
+    @media (max-width: 750px) {
+      flex-direction: column;
+      margin-bottom: 9px;
+    }
+
+    .search-fields-container {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      flex: 1;
+
+      @media (max-width: 750px) {
+        width: 100%;
+      }
+    }
+
+    .action-buttons-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+
+      @media (max-width: 750px) {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  }
+
+  .table-container {
+    flex: 1;
+    overflow: hidden;
+    min-height: 400px;
+  }
+
+  .container-of-icons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.organization-section-panel {
+  margin-bottom: 16px;
+
+  .rs-panel-body {
+    padding: 16px;
+  }
+}
+
+.organization-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  &.two-columns {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+
+    > * {
+      flex: 1;
+      min-width: 48%;
+    }
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+
+    > * {
+      width: 100% !important;
+    }
+  }
+}
+
+.organization-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rs-border-primary);
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+

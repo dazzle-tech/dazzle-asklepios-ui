@@ -1321,3 +1321,16 @@ export interface PriceListAttribute {
   price: number; // or string if you prefer BigDecimal string
   isActive?: boolean;
 }
+
+export interface OrganizationDefinition {
+  id?: number;
+  name?: string;
+  description?: string;
+  address?: string;
+  contactName?: string;
+  contactAddress?: string;
+  contactEmail?: string;
+  contactMobile?: string;
+  contactLandNumber?: string;
+  taxValue?: number;
+}
