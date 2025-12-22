@@ -966,7 +966,8 @@ export interface UserStickyNotesResponseVM{
     createdBy: string
     createdDate: Date,
     lastModifiedBy: string,
-    lastModifiedDate: Date
+    lastModifiedDate: Date,
+    patientId: number
 }
 
 export interface UserStickyNotesCreateVM{
@@ -974,7 +975,8 @@ export interface UserStickyNotesCreateVM{
     note: string
     priority: string,
     priorityOrder: number,
-    color:string
+    color:string,
+    patientId: string
 }
 
 export interface PriceListItem {
