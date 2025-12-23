@@ -21,6 +21,7 @@ export const newApUser: modelTypes.ApUser = {
   gender: null,
   jobDescription: null,
   jobRole: null,
+  admin: false,
 };
 
 export const newCandidate: modelTypes.Candidate = {

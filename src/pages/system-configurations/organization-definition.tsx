@@ -6,7 +6,7 @@ import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
-import { Form, Panel } from 'rsuite';
+import { Form } from 'rsuite';
 import clsx from 'clsx';
 import { OrganizationDefinition as OrganizationDefinitionType } from '@/types/model-types-new';
 import { newOrganizationDefinition } from '@/types/model-types-constructor-new';
@@ -15,12 +15,14 @@ import {
   useCreateOrganizationDefinitionMutation,
   useUpdateOrganizationDefinitionMutation,
 } from '@/services/system-configurations/organizationDefinitionService';
+import ActiveAdminsModal from './ActiveAdminsModal';
 import './styles.less';
 
 const OrganizationDefinition = () => {
   const dispatch = useAppDispatch();
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [organization, setOrganization] = useState<OrganizationDefinitionType>({ ...newOrganizationDefinition });
+  const [showAdminsModal, setShowAdminsModal] = useState(false);
 
   // API hooks
   const { data: organizations, isLoading, refetch } = useGetAllOrganizationDefinitionsQuery({});
@@ -60,6 +62,10 @@ const OrganizationDefinition = () => {
     // Validation
     if (!organization.name) {
       dispatch(notify({ msg: 'Organization Name is required', sev: 'error' }));
+      return;
+    }
+    if (organization.taxValue === undefined || organization.taxValue === null) {
+      dispatch(notify({ msg: 'Tax Value is required', sev: 'error' }));
       return;
     }
 
@@ -216,6 +222,7 @@ const OrganizationDefinition = () => {
                   setRecord={setOrganization}
                   width={width > 600 ? "48%" : "100%"}
                   disabled={isLoadingData}
+                  required
                 />
               </div>
             }
@@ -228,6 +235,15 @@ const OrganizationDefinition = () => {
           {/* Action Buttons */}
           <div className="organization-modal-actions">
             <MyButton
+              appearance="default"
+              onClick={() => setShowAdminsModal(true)}
+              title={<Translate>View Active Admins</Translate>}
+              disabled={isLoadingData}
+              style={{ marginRight: '10px' }}
+            >
+              <Translate>View Active Admins</Translate>
+            </MyButton>
+            <MyButton
               appearance="primary"
               onClick={handleSave}
               title={<Translate>Save</Translate>}
@@ -237,6 +253,12 @@ const OrganizationDefinition = () => {
             </MyButton>
           </div>
         </Form>
+
+        {/* Active Admins Modal */}
+        <ActiveAdminsModal
+          open={showAdminsModal}
+          onClose={() => setShowAdminsModal(false)}
+        />
     
     </div>
   );

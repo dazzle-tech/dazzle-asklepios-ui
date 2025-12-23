@@ -29,6 +29,22 @@ export const userService = createApi({
         body: user,
       }),
     }),
+    getActiveAdmins: builder.query({
+      query: (pageable?: { page?: number; size?: number; sort?: string }) => {
+        const params = new URLSearchParams();
+        if (pageable?.page !== undefined) {
+          params.append('page', pageable.page.toString());
+        }
+        if (pageable?.size !== undefined) {
+          params.append('size', pageable.size.toString());
+        }
+        if (pageable?.sort) {
+          params.append('sort', pageable.sort);
+        }
+        const queryString = params.toString();
+        return `/api/admin/users/admins/active${queryString ? `?${queryString}` : ''}`;
+      },
+    }),
 
     requestPasswordReset: builder.mutation({
       query: (email) => ({
@@ -134,6 +150,7 @@ export const {
   useAddUserMutation,
   useDeleteUserMutation,
   useUpdateUserMutation,
+  useGetActiveAdminsQuery,
   useRequestPasswordResetMutation,
   useGetAccountQuery,
   useSaveAccountMutation,

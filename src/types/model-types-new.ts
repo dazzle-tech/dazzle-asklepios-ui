@@ -19,6 +19,7 @@ export interface ApUser {
   gender?: string | null;
   jobDescription?: string | null;
   jobRole?: string | null;
+  admin?: boolean;
 }
 
 
