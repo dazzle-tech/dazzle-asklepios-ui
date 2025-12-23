@@ -14,7 +14,9 @@ import { useGetLovValuesByCodeQuery, useGetAllergensQuery } from '@/services/set
 import { initialListRequest } from '@/types/types';
 import { useSaveAllergiesMutation } from '@/services/observationService';
 import { notify } from '@/utils/uiReducerActions';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
+
 import clsx from 'clsx';
 const DetailsModal = ({
   open,
@@ -29,6 +31,7 @@ const DetailsModal = ({
   openToAdd
 }) => {
   const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
   const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
   const { data: onsetLovQueryResponse } = useGetLovValuesByCodeQuery('ONSET');
@@ -110,11 +113,14 @@ const DetailsModal = ({
         visitKey: encounter?.key,
         statusLkey: '9766169155908512',
         reactionDescription: reaction,
-        onsetDate: allerges.onsetDate ? new Date(allerges.onsetDate).getTime() : null
+        onsetDate: allerges.onsetDate ? new Date(allerges.onsetDate).getTime() : null,
+        createdBy: authSlice.user?.login
       }).unwrap();
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       setOpen(false);
       await fetchallerges();
+      dispatch(resetRefetchEncounter());
+      dispatch(setRefetchEncounter(true));
       await handleClear();
     } catch (error) {
       dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
