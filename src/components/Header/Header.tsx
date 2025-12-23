@@ -16,15 +16,24 @@ type HeaderProps = {
   setExpand: React.Dispatch<React.SetStateAction<boolean>>;
   setExpandNotes: React.Dispatch<React.SetStateAction<boolean>>;
   expandNotes: boolean;
+  drawerOffset: number;
+  direction: string | null;
 };
 
-const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes, expandNotes }) => {
+
+const Header: React.FC<HeaderProps> = ({
+  expand,
+  setExpand,
+  setExpandNotes,
+  expandNotes,
+  drawerOffset,
+  direction
+}) => {
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
   const authSlice = useAppSelector(state => state.auth);
   const uiMode = useAppSelector(state => state.ui.mode);
   // Read layout direction ("LTR" / "RTL") from localStorage as before
-  const direction = localStorage.getItem('direction');
-   const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
+  const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
     const globalAllowed = new Set<string>();
     const moduleAllowed = new Map<string, Set<string>>();
 
@@ -72,39 +81,39 @@ const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes, expa
 
   const childrenNavs: any[] = [];
   MODULES.forEach((module, mIdx) => {
-        if (!module.screens?.length) return;
-        const sortedScreens = [...module.screens].sort(
-          (a, b) => (a.viewOrder ?? 0) - (b.viewOrder ?? 0)
-        );
-  
-        sortedScreens.forEach((screen, sIdx) => {
-          if (isScreenAllowed(screen, module.name, lookups)) {
-            // const safeIconKey = (screen?.icon as keyof typeof icons) ?? 'FaCircle';
-            // const IconComp = icons[safeIconKey] ?? icons.FaCircle;
-  
-            childrenNavs.push({
-              eventKey: `nav:${module.name}:${screen.navPath}:${sIdx}`,
-              // icon: <Icon as={IconComp} />,
-              title: screen.name,
-              to: `/${screen.navPath}`
-            });
-          }
+    if (!module.screens?.length) return;
+    const sortedScreens = [...module.screens].sort(
+      (a, b) => (a.viewOrder ?? 0) - (b.viewOrder ?? 0)
+    );
+
+    sortedScreens.forEach((screen, sIdx) => {
+      if (isScreenAllowed(screen, module.name, lookups)) {
+        // const safeIconKey = (screen?.icon as keyof typeof icons) ?? 'FaCircle';
+        // const IconComp = icons[safeIconKey] ?? icons.FaCircle;
+
+        childrenNavs.push({
+          eventKey: `nav:${module.name}:${screen.navPath}:${sIdx}`,
+          // icon: <Icon as={IconComp} />,
+          title: screen.name,
+          to: `/${screen.navPath}`
         });
-  
-        // if (childrenNavs.length > 0) {
-        //   const safeModuleIconKey = (module?.icon as keyof typeof icons) ?? 'FaBox';
-        //   const ModuleIconComp = icons[safeModuleIconKey] ?? icons.FaBox;
-  
-        //   navsTemp.push({
-        //     eventKey: `nav:${module.name}:${mIdx}`,
-        //     icon: <Icon as={ModuleIconComp} />,
-        //     title: module.name,
-        //     children: childrenNavs
-        //   });
-        // }
-       
-      });
-     
+      }
+    });
+
+    // if (childrenNavs.length > 0) {
+    //   const safeModuleIconKey = (module?.icon as keyof typeof icons) ?? 'FaBox';
+    //   const ModuleIconComp = icons[safeModuleIconKey] ?? icons.FaBox;
+
+    //   navsTemp.push({
+    //     eventKey: `nav:${module.name}:${mIdx}`,
+    //     icon: <Icon as={ModuleIconComp} />,
+    //     title: module.name,
+    //     children: childrenNavs
+    //   });
+    // }
+
+  });
+
   const dispatch = useDispatch();
   const [displaySearch, setDisplaySearch] = useState<boolean>(true);
 
@@ -124,15 +133,22 @@ const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes, expa
     dispatch(closeEditProfile());
   };
 
-  
+
 
   return (
     <>
       <Stack
         className={`header ${expand ? 'expand' : ''} ${uiMode === 'dark' ? 'dark' : 'light'}`}
         spacing={8}
-        style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+        style={{
+          flexDirection: direction === 'LTR' ? 'row' : 'row-reverse',
+          left: direction === 'LTR' ? drawerOffset : 0,
+          right: direction === 'RTL' ? drawerOffset : 0,
+          width: `calc(100% - ${drawerOffset}px)`,
+          transition: 'left 0.3s ease, right 0.3s ease, width 0.3s ease'
+        }}
       >
+
         <MainScreenBarFilters
           displaySearch={displaySearch}
           setDisplaySearch={setDisplaySearch}
