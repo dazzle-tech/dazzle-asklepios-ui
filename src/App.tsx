@@ -81,14 +81,14 @@ import VaccineReccord from './pages/encounter/encounter-component/vaccine-reccor
 import VTERiskAssessment from './pages/encounter/encounter-component/vte-risk-assessment';
 import EncounterList from './pages/encounter/encounter-list';
 import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
-import Allergies from './pages/encounter/encounter-pre-observations/AllergiesNurse';
+import Allergies from './pages/encounter/encounter-pre-observations-new/AllergiesNurse';
 import EncounterPreObservationsNew from './pages/encounter/encounter-pre-observations-new/EncounterPreObservations';
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import Observations from './pages/encounter/encounter-pre-observations-new/observations/Observations';
 import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
 import ServiceAndProductsNew from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import VaccinationTab from './pages/encounter/encounter-pre-observations-new/vaccination-tab';
-import Warning from './pages/encounter/encounter-pre-observations/warning';
+import Warning from './pages/encounter/encounter-pre-observations-new/warning';
 import EncounterRegistration from './pages/encounter/encounter-registration';
 import Encounter from './pages/encounter/encounter-screen';
 import ERDashboards from './pages/encounter/ER-triage/Er-dashboard/ERDashboard';
