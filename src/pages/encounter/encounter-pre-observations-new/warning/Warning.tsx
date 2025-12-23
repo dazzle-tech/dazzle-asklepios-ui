@@ -3,7 +3,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useGetWarningsQuery, useSaveWarningsMutation } from '@/services/observationService';
 import { newApVisitWarning } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -19,7 +19,8 @@ import { useLocation } from 'react-router-dom';
 import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-
+import { formatDateWithoutSeconds } from '@/utils';
+import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
 interface WarningProps {
   patient?: any;
   encounter?: any;
@@ -34,7 +35,7 @@ const Warning = (props: WarningProps) => {
   const encounter = props.encounter ?? location.state?.encounter ?? {};
   const edit = props.edit ?? location.state?.edit ?? false;
   const { showTableActions = true, showTableButtons = true } = props;
-
+  const authSlice = useAppSelector(state => state.auth);
   const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [openToAdd, setOpenToAdd] = useState(true);
@@ -118,7 +119,8 @@ const Warning = (props: WarningProps) => {
         ...warning,
         statusLkey: '3196709905099521',
         isValid: false,
-        deletedAt: Date.now()
+        deletedAt: Date.now(),
+        deletedBy: authSlice.user?.login
       }).unwrap();
       dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
       await fetchWarnings();
@@ -134,6 +136,8 @@ const Warning = (props: WarningProps) => {
         ...warning,
         statusLkey: '9766179572884232',
         resolvedAt: Date.now()
+        , resolvedBy: authSlice.user?.login
+
       }).unwrap();
       dispatch(notify('Resolved Successfully'));
       setShowPrev(false);
@@ -141,6 +145,8 @@ const Warning = (props: WarningProps) => {
       setOpenConfirmResolvedModel(false);
       setShowPrev(true);
       setWarning({ ...newApVisitWarning });
+      dispatch(resetRefetchEncounter());
+      dispatch(setRefetchEncounter(true))
     } catch {
       dispatch(notify('Resolved Failed'));
     }
@@ -155,6 +161,8 @@ const Warning = (props: WarningProps) => {
       setOpenConfirmUndoResolvedModel(false);
       setShowPrev(true);
       setWarning({ ...newApVisitWarning });
+      dispatch(resetRefetchEncounter());
+      dispatch(setRefetchEncounter(true))
     } catch {
       dispatch(notify('Undo Resolved Failed'));
     }
@@ -233,7 +241,59 @@ const Warning = (props: WarningProps) => {
     {
       key: 'notes',
       dataKey: 'notes',
-      title: <Translate>Notes</Translate>,
+      title: <Translate>Notes </Translate>,
+      expandable: true
+    },
+
+    {
+      key: 'createdByAt',
+      title: 'Created By/At',
+      dataKey: 'createdByAt',
+      width: 220,
+      expandable: true,
+
+      render: (row: any) => (
+        <>
+          {row.createdBy}
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
+        </>
+      )
+    },
+    {
+      key: 'resolvedByAt',
+      title: 'Resolved By/At',
+      dataKey: 'resolvedByAt',
+      width: 220,
+      expandable: true,
+      render: (row: any) => (
+        <>
+          {row.resolvedBy}
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(row.resolvedAt)}</span>
+        </>
+      )
+
+    },
+    {
+      key: 'deletedByAt',
+      title: 'Cancelled By/At',
+      dataKey: 'deletedByAt',
+      width: 220,
+      expandable: true,
+      render: (row: any) => (
+        <>
+          {row.deletedBy}
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(row.deletedAt)}</span>
+        </>
+      )
+
+    },
+    {
+      key: 'cancellationReason',
+      dataKey: 'cancellationReason',
+      title: <Translate>Cancellation Reason</Translate>,
       expandable: true
     }
   ].filter(Boolean);
