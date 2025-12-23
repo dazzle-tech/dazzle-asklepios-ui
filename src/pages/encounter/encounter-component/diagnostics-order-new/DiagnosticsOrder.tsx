@@ -29,7 +29,7 @@ import {
 } from 'rsuite';
 import TransferList from './TransferTestList';
 import './styles.less';
-import { formatDateWithoutSeconds } from '@/utils';
+import { addFilterToListRequest, formatDateWithoutSeconds } from '@/utils';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
@@ -55,12 +55,13 @@ import CancellationModal from '@/components/CancellationModal';
 import { useLocation } from 'react-router-dom';
 import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
 import PatientPrevTests from './PatientPrevTests';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery ,useGetDiagnosticsTestLaboratoryListQuery,useGetDiagnosticsTestRadiologyListQuery} from '@/services/setupService';
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
 import { newApDrugOrderMedications } from '@/types/model-types-constructor';
 import SampleModal from '@/pages/lab-module/SampleModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { add } from 'lodash';
 
 const DiagnosticsOrder = props => {
   const location = useLocation();
@@ -109,6 +110,9 @@ const DiagnosticsOrder = props => {
   const [reson, setReson] = useState({ cancellationReason: '' });
   const [openTestsModal, setOpenTestsModal] = useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [searchType, setSearchType] = React.useState({type:''});
+
+  const [search, setSearch] = useState({testName:'',type:'' ,category:''});
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [recallFavoriteModal, setRecallFavoriteModal] = useState(false);
   const [preTestAssessmentModal, setPreTestAssessmentModal] = useState(false);
@@ -132,7 +136,6 @@ const DiagnosticsOrder = props => {
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
 
   const handleOpenAttachmentModal = () => {
-    console.log('Diagnostic order test for attachment:', orderTest);
     setAttachmentsModalOpen(true);
   };
   const [orderMedication, setOrderMedication] = useState<any>({
@@ -143,7 +146,25 @@ const DiagnosticsOrder = props => {
     ...initialListRequest,
     pageSize: 1000
   });
+    const [listTestSearchRequest, setListTestSearchRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 1000
+  });
   const { data: testsList, isFetching } = useGetDiagnosticsTestListQuery(listTestRequest);
+  const  { data: testsSearchList, isFetching: isFetchingSearch } = useGetDiagnosticsTestListQuery(listTestSearchRequest);
+ 
+
+  const [labRequest, setLabRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 1000
+  });
+  const [radRequest, setRadRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 1000
+  });
+  const { data: labTestsList ,isFetching: isLabTestsLoading } = useGetDiagnosticsTestLaboratoryListQuery(labRequest);
+  const { data: radiologyTestsList,isFetching: isRadiologyTestsLoading } = useGetDiagnosticsTestRadiologyListQuery(radRequest);
+ 
   const [leftItems, setLeftItems] = useState([]);
   const [selectedTestsList, setSelectedTestsList] = useState([]);
   const [listOrdersRequest, setListOrdersRequest] = useState<ListRequest>({
@@ -201,6 +222,16 @@ const DiagnosticsOrder = props => {
     refetch: orderTestRefetch,
     isLoading: loadTests
   } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
+ const tableLoading =
+  loadTests ||
+  isFetchingSearch ||
+  (search.category &&
+    (search.type === '862810597620632'
+      ? isLabTestsLoading
+      : search.type === '862828331135792'
+      ? isRadiologyTestsLoading
+      : false));
+
   const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
   const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
   const [openDetailsModel, setOpenDetailsModel] = useState(false);
@@ -212,6 +243,7 @@ const DiagnosticsOrder = props => {
   const { data: diagTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
   const { data: labCategoriesLovResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
   const { data: radCategoriesLovResponse } = useGetLovValuesByCodeQuery('RAD_CATEGORIES');
+  
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
     'MED_ORDER_ADMIN_NSTRUCTIONS'
   );
@@ -223,8 +255,99 @@ const DiagnosticsOrder = props => {
   };
   const filteredOrders =
     ordersList?.object?.filter(item => item.statusLkey === '1804482322306061') ?? [];
+//Effects
 
-  // Effects
+useEffect(() => {
+  setSearch(prev => ({ ...prev, category: '' }));
+}, [search.type]);
+
+
+useEffect(() => {
+  setListTestSearchRequest(prev => {
+    let next: ListRequest = { ...prev, pageSize: 1000, pageNumber: 1 };
+
+   
+    next = {
+      ...next,
+      filters: next.filters.filter(
+        f => f.fieldName !== 'test_name' && f.fieldName !== 'test_type_lkey'
+      ),
+      ignore: false
+    };
+
+    const name = search.testName?.trim();
+    if (name) {
+      next = addFilterToListRequest('test_name', 'containsIgnoreCase', name, next);
+    }
+
+    const type = search.type?.trim?.() ?? search.type;
+    if (type) {
+      next = addFilterToListRequest('test_type_lkey', 'match', type, next);
+    }
+
+    return next;
+  });
+}, [search.testName, search.type]);
+
+useEffect(() => {
+
+  setLabRequest(prev => ({
+    ...prev,
+    filters: prev.filters.filter(f => f.fieldName !== 'category_lkey'),
+    ignore: false,
+    pageNumber: 1,
+    pageSize: 1000
+  }));
+  setRadRequest(prev => ({
+    ...prev,
+    filters: prev.filters.filter(f => f.fieldName !== 'category_lkey'),
+    ignore: false,
+    pageNumber: 1,
+    pageSize: 1000
+  }));
+
+  if (!search.category) return;
+
+  if (search.type === '862810597620632') {
+    setLabRequest(prev => addFilterToListRequest('category_lkey', 'match', search.category, prev));
+  } else if (search.type === '862828331135792') {
+    setRadRequest(prev => addFilterToListRequest('category_lkey', 'match', search.category, prev));
+  }
+}, [search.type, search.category]);
+
+
+useEffect(() => {
+  if (!testsSearchList?.object) return;
+
+  const all = testsSearchList.object;
+  let selected = all;
+
+  if (search.category) {
+    if (search.type === '862810597620632') {
+      const labKeys = new Set((labTestsList?.object ?? []).map(x => x.testKey));
+      selected = all.filter(t => labKeys.has(t.key));
+    } else if (search.type === '862828331135792') {
+      const radKeys = new Set((radiologyTestsList?.object ?? []).map(x => x.testKey));
+      selected = all.filter(t => radKeys.has(t.key));
+    }
+  }
+
+  const value =
+    selected.length === 0 ? '(-1)' : selected.map(t => `(${t.key})`).join(' ');
+
+  setListOrdersTestRequest(prev =>
+    addFilterToListRequest('test_key', 'in', value, prev)
+  );
+}, [
+  testsSearchList,
+  labTestsList,
+  radiologyTestsList,
+  search.type,
+  search.category
+]);
+
+
+
   useEffect(() => {
     if (testsList?.object) {
       setLeftItems(testsList.object);
@@ -232,23 +355,25 @@ const DiagnosticsOrder = props => {
     }
   }, [openTestsModal, testsList]);
 
-  useEffect(() => {
-    if (searchTerm.trim() !== '') {
-      setListRequest({
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'test_name',
-            operator: 'containsIgnoreCase',
-            value: searchTerm
-          }
-        ]
-      });
-    } else {
-      setListRequest({ ...initialListRequest, pageSize: 1000 });
-    }
-  }, [searchTerm]);
+ useEffect(() => {
+  setListRequest(prev => {
+    let next: ListRequest = { ...initialListRequest, pageSize: 1000, pageNumber: 1 };
 
+    const name = searchTerm?.trim();
+    if (name) {
+      next = addFilterToListRequest('test_name', 'containsIgnoreCase', name, next);
+    }
+
+    const type = searchType?.type?.trim();
+    if (type) {
+      next = addFilterToListRequest('test_type_lkey', 'match', type, next);
+    }
+
+    return next;
+  });
+}, [searchTerm, searchType.type]);
+
+ 
   useEffect(() => {
     const draftOrder = ordersList?.object?.find(order => order.saveDraft === true);
 
@@ -931,8 +1056,8 @@ const handleSubmitPres = async () => {
                 fieldName="testName"
                 fieldType="text"
                 fieldLabel="Test Name"
-                record={''}
-                setRecord={{}}
+                record={search}
+                setRecord={setSearch}
               />
             </Form>
             {/* Type */}
@@ -945,28 +1070,15 @@ const handleSubmitPres = async () => {
                 selectDataLabel="lovDisplayVale"
                 fieldLabel="Type"
                 selectDataValue="key"
-                record={{ orderId: orders.orderId }}
-                setRecord={value => setOrders({ ...orders, orderId: value.orderId })}
+                record={search}
+                setRecord={setSearch}
                 searchable={false}
               />
             </Form>
 
-            {/* Catalog */}
-            <Form>
-              <MyInput
-                fieldName="catalog"
-                fieldType="select"
-                record={{ catalog: selectedCatalog }}
-                setRecord={rec => setSelectedCatalog(rec.catalog)}
-                selectData={[]}
-                selectDataLabel="name"
-                selectDataValue="key"
-                width={120}
-                searchable={false}
-              />
-            </Form>
 
             {/* Category */}
+            {search.type && (
             <Form>
               <MyInput
                 fieldName="category"
@@ -974,55 +1086,23 @@ const handleSubmitPres = async () => {
                 fieldLabel="Category"
                 width={120}
                 selectData={
-                  orders.type === 'Laboratory'
+                  search.type === '862810597620632'
                     ? labCategoriesLovResponse?.object ?? []
-                    : orders.type === 'Radiology'
+                    : search.type === '862828331135792'
                     ? radCategoriesLovResponse?.object ?? []
                     : []
                 }
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
-                record={{ category: orders.category }}
-                setRecord={rec => setOrders({ ...orders, category: rec.category })}
+                record={search}
+                setRecord={setSearch}
                 searchable={false}
               />
-            </Form>
+            </Form>)}
 
-            {/* Proposed Execution Date */}
-            <Form fluid>
-              <MyInput
-                fieldName="proposedExecutionDate"
-                fieldType="datetime"
-                record={{ proposedExecutionDate }}
-                setRecord={rec => setProposedExecutionDate(rec.proposedExecutionDate)}
-                width={220}
-                fieldLabel={<Translate>Proposed Execution Date</Translate>}
-              />
-            </Form>
+           
 
-            {/* Execution Number */}
-            <Form>
-              <MyInput
-                width={120}
-                fieldName="executionNumber"
-                fieldType="text"
-                fieldLabel="Execution Number"
-                record={{ executionNumber }}
-                setRecord={value => setExecutionNumber(value.executionNumber)}
-              />
-            </Form>
-
-            {/* Approval Number */}
-            <Form>
-              <MyInput
-                width={120}
-                fieldName="approvalNumber"
-                fieldType="text"
-                fieldLabel="Approval Number"
-                record={{ approvalNumber }}
-                setRecord={value => setApprovalNumber(value.approvalNumber)}
-              />
-            </Form>
+         
           </div>
 
           {/* Third Row - Action Buttons */}
@@ -1084,7 +1164,7 @@ const handleSubmitPres = async () => {
             columns={tableColumns}
             sortColumn={listOrdersRequest.sortBy}
             sortType={listOrdersRequest.sortType}
-            loading={loadTests}
+            loading={tableLoading}
             onSortChange={(sortBy, sortType) => {
               setListOrdersRequest({ ...listOrdersRequest, sortBy, sortType });
             }}
@@ -1167,6 +1247,9 @@ const handleSubmitPres = async () => {
             setRightItems={setSelectedTestsList}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            searchType={searchType}
+            setSearchType={setSearchType}
+            isFetching={isFetching}
           />
         }
       />

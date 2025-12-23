@@ -21,7 +21,6 @@ const PatientPrevTests = patient => {
     refetch: orderTestRefetch,
     isLoading: loadTests
   } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
-  console.log('orderTestList', orderTestList?.object);
 
   const tableColumns = [
     {
