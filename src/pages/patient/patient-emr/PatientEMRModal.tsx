@@ -58,6 +58,7 @@ import ProceduresTable from './emr-tables/ProceduresTable';
 import RadiologyTable from './emr-tables/RadiologyTable';
 import VaccinationTable from './emr-tables/VaccinationTable';
 import './styles.less';
+import SectionContainer from '@/components/SectionsoContainer';
 
 const { getHeight } = DOMHelper;
 
@@ -251,6 +252,12 @@ const isSelected = (rowData: any) => {
     if (enc) setLocalEncounter(enc);
   }, [enc]);
 
+  useEffect(() => {
+  if (activeSectionCard) {
+    setActiveCard(null);
+  }
+}, [activeSectionCard]);
+
   return (
     <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
       <div className="emr-content">
@@ -350,6 +357,19 @@ const isSelected = (rowData: any) => {
               }
             />
           </div>
+
+          <div className="animation-emr-card-patient-emr">
+                  <EMRCard
+                    number={0}
+                    footerText="All"
+                    icon={faBarsProgress}
+                    backgroundColor="black"
+                    width={170}
+                    height={100}
+                    onClick={() => setActiveCard(activeCard === 'all' ? null : 'all')}
+                  />
+          </div>
+
         </div>
 
         <div className="emr-main-row-handle">
@@ -648,6 +668,102 @@ const isSelected = (rowData: any) => {
             </div>
           )}
         </div>
+
+
+        {activeCard === 'all' && (
+          <div className="emr-all-scroll-wrapper">
+            <div className="emr-all-sections">
+
+              {/* ================= HISTORY ================= */}
+              <SectionContainer
+                title={<Translate>Patient History</Translate>}
+                content={<PatientHistory toShowData={true} patient={localPatient} />}
+              />
+
+              {/* ================= VISITS ================= */}
+              <SectionContainer
+                title={<Translate>Appointments</Translate>}
+                content={<AppointmentsTable />}
+              />
+
+              <SectionContainer
+                title={<Translate>Clinic Visits</Translate>}
+                content={<ClinicVisitsTable patient={localPatient} />}
+              />
+
+              <SectionContainer
+                title={<Translate>Emergency Visits</Translate>}
+                content={<EmergencyTable patient={localPatient} />}
+              />
+
+              {/* ================= CLINICAL ================= */}
+              <SectionContainer
+                title={<Translate>Consultations</Translate>}
+                content={<ConsultationsTable patient={localPatient} />}
+              />
+
+              <SectionContainer
+                title={<Translate>Procedures</Translate>}
+                content={<ProceduresTable patient={localPatient} />}
+              />
+
+              <SectionContainer
+                title={<Translate>Operations</Translate>}
+                content={<OperationsTable />}
+              />
+
+              {/* ================= DIAGNOSTICS ================= */}
+              <SectionContainer
+                title={<Translate>Laboratory</Translate>}
+                content={<LaboratoryTable patient={localPatient} />}
+              />
+
+              <SectionContainer
+                title={<Translate>Radiology</Translate>}
+                content={<RadiologyTable patient={localPatient} />}
+              />
+
+              {/* ================= TREATMENT ================= */}
+              <SectionContainer
+                title={<Translate>Current Medications</Translate>}
+                content={<CurrentMedicationsTable patient={localPatient} />}
+              />
+
+              <SectionContainer
+                title={<Translate>Vaccinations</Translate>}
+                content={<VaccinationTable patient={localPatient} />}
+              />
+
+              {/* ================= DOCUMENTATION ================= */}
+              <SectionContainer
+                title={<Translate>Clinical Reports</Translate>}
+                content={<ClinicalReportsTable />}
+              />
+
+              <SectionContainer
+                title={<Translate>Attachments</Translate>}
+                content={<AttachmentsTable localPatient={localPatient} />}
+              />
+
+              {/* ================= SERVICES ================= */}
+              <SectionContainer
+                title={<Translate>Applied Services</Translate>}
+                content={<AppliedServicesTable patient={localPatient} />}
+              />
+
+              <SectionContainer
+                title={<Translate>Dental Charts</Translate>}
+                content={<DentalChartsTable />}
+              />
+
+              <SectionContainer
+                title={<Translate>Ledger Account</Translate>}
+                content={<LedgerAccountTable />}
+              />
+
+            </div>
+          </div>
+        )}
 
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
