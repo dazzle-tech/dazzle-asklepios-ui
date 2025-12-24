@@ -6,7 +6,8 @@ import {
   faHeadset,
   faNoteSticky,
   faRepeat,
-  faStethoscope
+  faStethoscope,
+  faUserDoctor
 } from '@fortawesome/free-solid-svg-icons';
 import { faSun } from '@fortawesome/free-solid-svg-icons';
 import { faMoon } from '@fortawesome/free-solid-svg-icons';
@@ -221,7 +222,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
           </div>
         </Dropdown.Item>
 
-        {/* الخيار الجديد للبوابة */}
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
@@ -365,7 +365,10 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
       localStorage.clear();
 
-      navigate('/login');
+      dispatch({ type: 'auth/logout' }); 
+
+      
+      navigate('/login', { replace: true });
     };
 
     useEffect(() => {
@@ -414,12 +417,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         {(selectedDepartment?.facilityName ||
           authSlice?.tenant?.selectedFacility?.name ||
           authSlice?.tenant?.selectedFacility?.facilityName) && (
-          <span style={{ fontSize: '12px', color: '#6c757d' }}>
-            {selectedDepartment?.facilityName ??
-              authSlice?.tenant?.selectedFacility?.name ??
-              authSlice?.tenant?.selectedFacility?.facilityName}
-          </span>
-        )}
+            <span style={{ fontSize: '12px', color: '#6c757d' }}>
+              {selectedDepartment?.facilityName ??
+                authSlice?.tenant?.selectedFacility?.name ??
+                authSlice?.tenant?.selectedFacility?.facilityName}
+            </span>
+          )}
       </div>
       <Divider style={{ margin: 0 }} />
       {isLoadingDepartments ? (
@@ -433,7 +436,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               defaultDepartmentEntity?.id != null
                 ? defaultDepartmentEntity.id === dept.id
                 : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                  defaultDepartmentEntity?.facilityId === dept.facilityId;
+                defaultDepartmentEntity?.facilityId === dept.facilityId;
             const isActive =
               selectedDepartment?.departmentId === dept.departmentId &&
               selectedDepartment?.facilityId === dept.facilityId;
@@ -518,7 +521,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   return (
     <>
-      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
+      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{ flexDirection: direction === "LTR" ? "row" : "row-reverse" }}>
         {width >= 930 ? (
           <>
             <Tooltip title="Customize Dashboard">
@@ -554,7 +557,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               >
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
-                  icon={faStethoscope}
+                  icon={faUserDoctor}
                 />
               </IconButton>
             </Tooltip>

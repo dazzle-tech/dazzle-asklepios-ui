@@ -3,16 +3,14 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { faCheckDouble, faUser } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
-import React from 'react';
+import React, { useState } from 'react';
 import { Form } from 'rsuite';
-
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AccessRole from './AccessRole';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
-const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
-
+const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProceed, setCanProceed}) => {
 
 
   const jobRoles=useEnumOptions("JobRole");
@@ -40,7 +38,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
                 required
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
               />
 
               <MyInput
@@ -48,13 +46,13 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
                 required
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
-              <MyInput fieldName="login" required record={user} setRecord={setUser} width={250} />
+              <MyInput fieldName="login" required record={user} setRecord={setUser} width={'13vw'} />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldLabel="Job Role"
                 fieldType="select"
                 fieldName="jobRole"
@@ -75,7 +73,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
                 selectDataValue="value"
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
                 searchable={false}
               />
               <MyInput
@@ -84,17 +82,17 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
                 fieldName="birthDate"
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
-              <MyInput fieldName="email" required record={user} setRecord={setUser} width={250} />
+              <MyInput fieldName="email" required record={user} setRecord={setUser} width={'13vw'} />
               <MyInput
                 fieldName="phoneNumber"
                 required
                 record={user}
                 setRecord={setUser}
-                width={250}
+                width={'13vw'}
               />
             </div>
             <MyInput
@@ -103,7 +101,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
               required
               record={user}
               setRecord={setUser}
-              width={width > 600 ? 520 : 250}
+              width={'13vw'}
             />
           </Form>
         );
@@ -127,6 +125,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave }) => {
         {
           title: 'User Info',
           icon: <FontAwesomeIcon icon={faUser} />,
+          disabledNext: !canProceed,
           // disabledNext: !user.id,
           footer: (
             <>

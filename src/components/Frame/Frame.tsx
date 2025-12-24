@@ -132,6 +132,8 @@ const Frame = (props: FrameProps) => {
   const departmentsReady = !isLoadingDepartments && !isFetchingDepartments;
   const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
   const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
+  const drawerOffset = expand ? drawerWidth : collapsedWidth;
+
   const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
     userId as number,
     {
@@ -216,7 +218,7 @@ const Frame = (props: FrameProps) => {
                 defaultDepartmentEntity?.id != null
                   ? defaultDepartmentEntity.id === dept.id
                   : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                    defaultDepartmentEntity?.facilityId === dept.facilityId;
+                  defaultDepartmentEntity?.facilityId === dept.facilityId;
               const isActive =
                 selectedDepartment?.departmentId === dept.departmentId &&
                 selectedDepartment?.facilityId === dept.facilityId;
@@ -430,8 +432,8 @@ const Frame = (props: FrameProps) => {
                     ? 'rotate(180deg)'
                     : 'rotate(0deg)'
                   : expand
-                  ? 'rotate(deg)'
-                  : 'rotate(180deg)', // arrow rotation
+                    ? 'rotate(0deg)'
+                    : 'rotate(180deg)', // arrow rotation
               transition: 'transform 0.3s ease'
             }}
           />
@@ -466,8 +468,8 @@ const Frame = (props: FrameProps) => {
                 authSlice.tenant && authSlice.tenant.tenantLogoPath
                   ? authSlice.tenant.tenantLogoPath
                   : mode === 'light'
-                  ? Logo
-                  : DLogo
+                    ? Logo
+                    : DLogo
               }
             />
           )}
@@ -515,7 +517,7 @@ const Frame = (props: FrameProps) => {
 
             {/* Search input */}
             {expand && (
-              <Form className="search-field search-form" fluid style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
+              <Form className="search-field search-form" fluid style={{ flexDirection: direction === "LTR" ? "row" : "row-reverse" }}>
                 <div className="search-input-wrapper">
                   <MyInput
                     fieldName="screen"
@@ -530,11 +532,15 @@ const Frame = (props: FrameProps) => {
                   onClick={() => setExpandAllSubmenus(!expandAllSubmenus)}
                   prefixIcon={() => (
                     <ArrowForwardIosIcon
-                      className={classNames('expand-all-icon', {
-                        'expand-all-icon-expanded': expandAllSubmenus,
-                        'expand-all-icon-collapsed': !expandAllSubmenus
-                      })}
+                      sx={{
+                        transform:
+                          direction === 'LTR'
+                            ? (expand ? 'rotate(180deg)' : 'rotate(0deg)')
+                            : (expand ? 'rotate(0deg)' : 'rotate(180deg)'),
+                        transition: 'transform 0.3s ease'
+                      }}
                     />
+
                   )}
                 ></MyButton>
               </Form>
@@ -648,7 +654,7 @@ const Frame = (props: FrameProps) => {
                                   justifyContent: expand ? 'flex-start' : 'center',
                                   flexDirection: direction === 'RTL' ? 'row-reverse' : 'row',
                                   gap: 1.5,
-                                  '& .MuiListItemText-primary': { fontSize: '0.65rem', textAlign: direction === "LTR" ? 'left' : 'right'},
+                                  '& .MuiListItemText-primary': { fontSize: '0.65rem', textAlign: direction === "LTR" ? 'left' : 'right' },
                                   '& svg': {
                                     fontSize: '16px',
                                     marginRight: '6px',
@@ -779,6 +785,8 @@ const Frame = (props: FrameProps) => {
             setExpand={setExpand}
             setExpandNotes={setExpandNotes}
             expandNotes={expandNotes}
+            drawerOffset={drawerOffset}
+            direction={direction}
           />
           <Content>
             <Stack

@@ -54,7 +54,7 @@ const AddEditAllergens = ({ open, setOpen, width, allergens, setAllergens, handl
       actionButtonLabel={allergens?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Allergens Info', icon: <MdSick /> }]}
-      size={width > 600 ? '36vw' : '70vw'}
+      size={'40vw'}
     />
   );
 };

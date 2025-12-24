@@ -21,7 +21,8 @@ export const newApUser: modelTypes.ApUser = {
   birthDate: null,
   gender: null,
   jobDescription: null,
-  jobRole: null
+  jobRole: null,
+  admin: false,
 };
 
 // ------------------- Candidate -------------------
@@ -849,27 +850,27 @@ export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTem
 
 // ------------------- Sticky Notes -------------------
 export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM = {
-  id: undefined,
-  userId: undefined,
-  note: '',
-  priority: '',
-  priorityOrder: 0,
-  color: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: '',
-  lastModifiedDate: null
+    id: undefined,
+    userId: undefined,
+    note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'',
+    createdBy: '',
+    createdDate: null,
+    lastModifiedBy: '',
+    lastModifiedDate: null,
+    patientId: undefined
 };
 
 export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
-  userId: undefined,
-  note: '',
-  priority: '',
-  priorityOrder: 0,
-  color: '--note-purple'
-};
-
-// ------------------- Price List Item -------------------
+    userId: undefined,
+     note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'--note-purple',
+    patientId: undefined
+}
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,
@@ -1240,3 +1241,24 @@ export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredH
     lastModifiedBy: null,
     lastModifiedDate: null
   };
+export const newPriceListAttribute: modelTypes.PriceListAttribute = {
+  id:undefined,
+  priceListId: undefined,
+  attributeType:null, // PriceAttributes enum as string
+  attribute: null,
+  price: null ,// or string if you prefer BigDecimal string
+  isActive: true
+}
+
+export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
+  id: undefined,
+  name: '',
+  description: '',
+  address: '',
+  contactName: '',
+  contactAddress: '',
+  contactEmail: '',
+  contactMobile: '',
+  contactLandNumber: '',
+  taxValue: undefined
+};

@@ -22,6 +22,8 @@ interface PrivacySecurityTabProps {
   setLocalPatient: (patient: Patient) => void;
   validationResult: any;
 }
+import '../styles.less';
+import AddVerification from './AddVerification';
 
 const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   localPatient,
@@ -112,7 +114,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         setLocalPatient={setLocalPatient}
         validationResult={validationResult}
       />
-
       {/* Security Access Level */}
       <Form layout="inline" className="btn-fileds-style">
         <MyInput
@@ -127,7 +128,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
         />
-
         <MyButton
           onClick={() => setVerificationModalOpen(true)}
           disabled={!localPatient.id}
@@ -146,7 +146,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             <Loader content=" Loading HIPAA data..." />
           </div>
         )}
-
         <div className="covg-content">
           <MyInput
             column

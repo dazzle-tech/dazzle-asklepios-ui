@@ -23,6 +23,7 @@ export interface ApUser {
   gender?: string | null;
   jobDescription?: string | null;
   jobRole?: string | null;
+  admin?: boolean;
 }
 
 export interface Candidate {
@@ -1093,7 +1094,45 @@ export interface PriceList {
   description?: string | null;
   isActive?: boolean;
   createdDate?: Date | null;
-  lastModifiedDate?: Date | null;
+  lastModifiedDate?: Date | null;}
+  
+export interface ReportTemplate{
+  id?:number;
+  name:string;
+  templateValue:string;
+  isActive:boolean
+}
+
+
+export interface DiagnosticTestReportTemplate{
+  id: number,
+  diagnosticTest: string,
+  name: string,
+  templateValue: string,
+  isActive: boolean,
+}
+
+export interface UserStickyNotesResponseVM{
+    id: number
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string
+    createdBy: string
+    createdDate: Date,
+    lastModifiedBy: string,
+    lastModifiedDate: Date,
+    patientId: number
+}
+
+export interface UserStickyNotesCreateVM{
+    userId: number,
+    note: string
+    priority: string,
+    priorityOrder: number,
+    color:string,
+    patientId: string
 }
 
 export interface PriceListItem {
@@ -1482,4 +1521,26 @@ export interface PatientDocument {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+}
+
+export interface PriceListAttribute {
+  id?: number | null;
+  priceListId: number | null;
+  attributeType: string; // PriceAttributes enum as string
+  attribute: string;
+  price: number; // or string if you prefer BigDecimal string
+  isActive?: boolean;
+}
+
+export interface OrganizationDefinition {
+  id?: number;
+  name?: string;
+  description?: string;
+  address?: string;
+  contactName?: string;
+  contactAddress?: string;
+  contactEmail?: string;
+  contactMobile?: string;
+  contactLandNumber?: string;
+  taxValue?: number;
 }

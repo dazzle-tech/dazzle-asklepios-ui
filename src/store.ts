@@ -63,6 +63,7 @@ import { enumsApi } from '@/services/enumsApi';
 
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
+import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -145,10 +146,9 @@ import { userStickyNotesService } from './services/setup/userStickyNotes/userSti
 import { referralRequestService } from '@/services/encounters/referralRequestService';
 
 import { PayorService } from './services/setup/payer/PayorService';
-import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
-
-import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
-
+import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
+import {priceListAttributesService} from '@/services/billing/PriceListAttributesService';
+import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -246,6 +246,9 @@ export const store = configureStore({
     [departmentService.reducerPath]: departmentService.reducer,
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
+
+    [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
+
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
@@ -348,7 +351,12 @@ export const store = configureStore({
 
     // payer
     [PayorService.reducerPath]: PayorService.reducer,
-    [PayorPlanService.reducerPath]: PayorPlanService.reducer
+
+    [PayorPlanService.reducerPath]: PayorPlanService.reducer,
+
+    [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
+    [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -421,6 +429,7 @@ export const store = configureStore({
       enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
+      organizationDefinitionService.middleware,
       roleService.middleware,
       userRoleService.middleware,
       enumService.middleware,
@@ -514,6 +523,10 @@ export const store = configureStore({
 
       // referral
       referralRequestService.middleware,
+      PayorService.middleware,
+      PayorPlanService.middleware,
+      DischargePlanningService.middleware,
+      priceListAttributesService.middleware,
 
       // payer
       PayorService.middleware,

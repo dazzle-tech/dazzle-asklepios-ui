@@ -6,11 +6,8 @@ import { useSelector } from 'react-redux';
 interface SectionContainerProps {
   title: React.ReactNode;
   content: React.ReactNode;
-
   action?: React.ReactNode;
-
   button?: React.ReactNode;
-
   minHeight?: string | number;
   maxWidth?: string | number;
 }
@@ -31,7 +28,7 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
       className={`container-form-section ${mode === 'dark' ? 'dark' : 'light'}`}
       style={{
         minHeight: minHeight ?? 'auto',
-        maxWidth: maxWidth ?? 'none'
+        maxWidth: maxWidth ?? '100%'
       }}
     >
       <div className="title-div flex-cen-between" style={{flexDirection: direction === "RTL" ? "row-reverse" : "row"}}>
@@ -41,12 +38,17 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
 
       <Divider />
 
-      {content}
+      {/* ===== Content ===== */}
+      <div className="section-content">
+        {content}
+      </div>
 
+      {/* ===== Optional Button ===== */}
       {button && (
         <>
           <Divider />
           <div className="container-of-add-new-button-pre" style={{flexDirection: direction === "RTL" ? "row-reverse" : "row"}}>{button}</div>
+
         </>
       )}
     </div>

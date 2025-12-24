@@ -354,17 +354,19 @@ const iconsForActions = (rowData: any) => (
       }}
     />
 
-    {/* Template */}
-    <MdOutlineDescription
-      className="icons-style"
-      title="Template"
-      size={22}
-      fill="var(--primary-gray)"
-      onClick={() => {
-        setDiagnosticsTest(rowData);
-        setOpenTemplateModal(true);
-      }}
-    />
+    {rowData?.type !== 'LABORATORY' && (
+      <MdOutlineDescription
+        className="icons-style"
+        title="Template"
+        size={22}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setDiagnosticsTest(rowData);
+          setOpenTemplateModal(true);
+        }}
+      />
+    )}
+
 
     {/* Profile or Normal Range */}
     {rowData?.type === "LABORATORY" &&
