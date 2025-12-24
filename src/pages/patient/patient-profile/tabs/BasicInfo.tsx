@@ -1,5 +1,6 @@
 import MyInput from '@/components/MyInput';
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { Form } from 'rsuite';
 
 const BasicInfo = ({
@@ -11,7 +12,7 @@ const BasicInfo = ({
   ageGroupValue,
   patientClassLovQueryResponse
 }) => {
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   return (
     <Form layout="inline" style={{flexDirection: direction === "RTL" ? 'row-reverse' : "row"}}>
       <MyInput

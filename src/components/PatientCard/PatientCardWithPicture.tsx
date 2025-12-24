@@ -20,7 +20,7 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
   arrowDirection = 'left'
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
 
   // Fetch profile picture for this patient

@@ -31,6 +31,7 @@ const MyModal = ({
 }) => {
 
   const [internalStep, setInternalStep] = useState(0);
+  const direction = useSelector(state => state.ui.direction);
   const activeStep = internalStep;
   const updateStep = setInternalStep;
   const mode = useSelector((state: any) => state.ui.mode);
@@ -53,15 +54,16 @@ const MyModal = ({
 
   return (
     <Modal
+      dir = {direction === 'RTL' ? 'rtl' : 'ltr'}
       open={open}
       onClose={handleCancel}
       size={size}
-      className={`${modalClass} ${customClassName} ${mode === 'light' ? 'modal-light' : 'modal-dark'}`}
+      className={`${modalClass} ${customClassName} ${mode === 'light' ? 'modal-light' : 'modal-dark'} ${direction === 'RTL' ? 'rtl' : 'ltr'}`}
     >
       <Modal.Header>
         <Modal.Title>
           {icon && <FontAwesomeIcon icon={icon} className="icon-title-modal" />}
-          {title}
+         <Translate>{title}</Translate>
         </Modal.Title>
       </Modal.Header>
       <Divider className="divider-line" />

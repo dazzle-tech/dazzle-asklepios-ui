@@ -18,6 +18,7 @@ import InsuranceTab from './tabs/InsuranceTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 import NextOfKin from './tabs/NextOfKin/NextOfKin';
+import { useSelector } from 'react-redux';
 
 interface ProfileTabsProps {
   localPatient: Patient;
@@ -34,7 +35,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   refetchAttachmentList,
   setRefetchAttachmentList
 }) => {
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const [ageGroupValue, setAgeGroupValue] = useState<{ ageGroup: string }>({
     ageGroup: ''
   });

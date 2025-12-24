@@ -5,7 +5,9 @@ import { ApPatientInsurance } from '@/types/model-types';
 import { newApPatientInsurance } from '@/types/model-types-constructor';
 import { useGetPatientInsuranceQuery } from '@/services/patientService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useSelector } from 'react-redux';
 const PatientPaymentInfo = ({ localPatient, localEncounter, setLocalEncounter, isReadOnly }) => {
+    const direction = useSelector(state => state.ui.direction);
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const [validationResult, setValidationResult] = useState({});
 
@@ -29,7 +31,7 @@ const PatientPaymentInfo = ({ localPatient, localEncounter, setLocalEncounter, i
     }));
 
     return (
-        <Form fluid layout="inline" className='fields-container'>
+        <Form fluid layout="inline" className='fields-container' dir={direction === 'RTL' ? 'rtl' : 'ltr'}>
             <MyInput
                 vr={validationResult}
                 column

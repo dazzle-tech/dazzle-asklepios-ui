@@ -19,10 +19,11 @@ import { Badge } from 'rsuite';
 import AddExtraDetails from './AddExtraDetails';
 import { useGetCountriesBulkMutation } from '@/services/setup/country/countryService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useSelector } from 'react-redux';
 
 const IDTab = ({ localPatient }) => {
   const dispatch = useAppDispatch();
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
   const [secondaryDocument, setSecondaryDocument] = useState(newPatientDocument);
   const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);

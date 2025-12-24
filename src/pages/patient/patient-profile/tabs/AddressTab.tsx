@@ -36,6 +36,7 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { FaBroom } from 'react-icons/fa6';
 import { FaSave } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 interface AddressTabProps {
   localPatient: any;
@@ -52,7 +53,7 @@ const PAGE_SIZE = 5;
 
 const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
   const dispatch = useAppDispatch();
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const patientId = localPatient?.id;
 
 

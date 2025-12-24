@@ -38,7 +38,7 @@ if (typeof window !== 'undefined') {
 }
 
 const RootWrapper = () => {
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const mode = useSelector((state: any) => state.ui.mode);
 
   // MUI theme

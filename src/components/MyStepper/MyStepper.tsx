@@ -15,6 +15,7 @@ import './styles.less';
 import { styled } from '@mui/material/styles';
 import Translate from "../Translate";
 import { Text } from "rsuite";
+import { useSelector } from "react-redux";
 type OrientationType = 'horizontal' | 'vertical';
 
 interface MyStepperProps {
@@ -31,6 +32,7 @@ const MyStepper: React.FC<MyStepperProps> = ({
   orientation = 'horizontal',
   modalColor = 'var(--primary-blue)',
 }) => {
+  const direction = useSelector(state => state.ui.direction);
     const [width, setWidth] = useState(40);
     const [height, setHeight] = useState(40);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -135,28 +137,50 @@ useEffect(() => {
         },
       }));
 
-    const QontoConnector = styled(StepConnector)(({ theme }) => ({
-        [`&.${stepConnectorClasses.alternativeLabel}`]: {
-          top: 20,
-          left: 'calc(-50% + 25px)',
-          right: 'calc(50% + 25px)',
-        },
+    // const QontoConnector = styled(StepConnector)(({ theme }) => ({
+    //     [`&.${stepConnectorClasses.alternativeLabel}`]: {
+    //       top: 20,
+    //       left: 'calc(-50% + 25px)',
+    //       right: 'calc(50% + 25px)',
+    //     },
        
-        [`& .${stepConnectorClasses.line}`]: {
-          borderColor:'#D9D9D9',
-          borderTopWidth:3,
-          borderRadius: 1,
-          height: 10,
-          ...theme.applyStyles('dark', {
-            borderColor: '#D9D9D9',
-          }),
-        },
-      }));
-      
+    //     [`& .${stepConnectorClasses.line}`]: {
+    //       borderColor:'#D9D9D9',
+    //       borderTopWidth:3,
+    //       borderRadius: 1,
+    //       height: 10,
+    //       ...theme.applyStyles('dark', {
+    //         borderColor: '#D9D9D9',
+    //       }),
+    //     },
+    //   }));
+      const QontoConnector = styled(StepConnector)(({ theme }) => {
+  const isRTL = direction === 'RTL';
+
+  return {
+    [`&.${stepConnectorClasses.alternativeLabel}`]: {
+      top: 20,
+      left: isRTL ? 'calc(50% + 25px)' : 'calc(-50% + 25px)',
+      right: isRTL ? 'calc(-50% + 25px)' : 'calc(50% + 25px)',
+    },
+
+    [`& .${stepConnectorClasses.line}`]: {
+      borderColor: '#D9D9D9',
+      borderTopWidth: 3,
+      borderRadius: 1,
+      height: 10,
+
+      ...theme.applyStyles('dark', {
+        borderColor: '#D9D9D9',
+      }),
+    },
+  };
+});
+
       const connector = orientation === "vertical" ? <VerticalConnector /> : <QontoConnector />
     return (
         <>
-            <Stepper activeStep={activeStep} alternativeLabel={orientation === "vertical" ?false:true} orientation={orientation} connector={connector}>
+            <Stepper style={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} activeStep={activeStep} alternativeLabel={orientation === "vertical" ?false:true} orientation={orientation} connector={connector}>
                 {stepsList.map((step, index) => {
                     const isErrorStep = step.isError;
 
@@ -179,7 +203,7 @@ useEffect(() => {
                                     </Typography>
                                 }
                             >
-                                <Text className="text-value">{step.value}</Text>
+                                <Text className="text-value"><Translate>{step.value}</Translate></Text>
                                 
                             </StepLabel>
                         </Step>

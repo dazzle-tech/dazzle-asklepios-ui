@@ -19,6 +19,7 @@ import { Tabs } from 'rsuite';
 import React, { ReactElement } from 'react';
 import Translate from '../Translate';
 import "./styles.less";
+import { useSelector } from 'react-redux';
 
 interface TabDataItem {
   title: string;
@@ -44,7 +45,7 @@ const MyTab: React.FC<MyTabProps> = ({
   setActiveTab
 }) => {
 
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   if (!Array.isArray(data)) {
     return null;
   }

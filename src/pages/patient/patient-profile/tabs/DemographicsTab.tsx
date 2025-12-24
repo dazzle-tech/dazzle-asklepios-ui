@@ -6,6 +6,7 @@ import { Col, Row, Stack } from 'rsuite';
 import BasicInfo from './BasicInfo';
 import ContactTab from './ContactTab';
 import './styles.less';
+import { useSelector } from 'react-redux';
 
 interface DemographicsTabProps {
   localPatient: Patient;
@@ -28,7 +29,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   ageFormatType,
   ageGroupValue
 }) => {
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
 
   return (
     <Stack>

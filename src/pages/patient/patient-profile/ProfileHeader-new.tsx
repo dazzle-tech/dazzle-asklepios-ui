@@ -34,6 +34,7 @@ import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper }
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
+import { useSelector } from 'react-redux';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -63,7 +64,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setLocalPatient
 }) => {
   const profileImageFileInputRef = useRef(null);
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
@@ -87,7 +88,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   const contentOfMoreIconMenu = (
     <Popover full>
-      <Dropdown.Menu>
+      <Dropdown.Menu dir={direction === 'RTL' ? 'rtl' : 'ltr'}>
         <Dropdown.Item
           disabled={localPatient.id === undefined}
           onClick={() => {
@@ -165,7 +166,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   const contentOfPrintIconMenu = (
     <Popover full>
-      <Dropdown.Menu>
+      <Dropdown.Menu dir={direction === 'RTL' ? 'rtl' : 'ltr'}>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <Translate>Print Information</Translate>
@@ -356,7 +357,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </AvatarGroup>
 
             <div className="button-group-left-align" >
-              <Form style={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} fluid layout="inline" className="registration-header-buttons-section">
+              <div style={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} className="registration-header-buttons-section">
                 <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -426,7 +427,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     }}
                   />
                 )}
-              </Form>
+              </div>
             </div>
           </Form>
         </Stack.Item>

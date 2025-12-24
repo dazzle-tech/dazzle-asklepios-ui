@@ -326,7 +326,7 @@ import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.svg';
 import './styles.less';
-import uiSlice, { setLang, setTranslations } from '@/reducers/uiSlice';
+import uiSlice, { setDirection, setLang, setTranslations } from '@/reducers/uiSlice';
 import { useLoginMutation } from '@/services/authServiceApi';
 import { useDispatch } from 'react-redux';
 import { useLazyGetAccountQuery } from '@/services/accountService';
@@ -481,15 +481,12 @@ const SignIn = () => {
      const selectedObject = langData?.find(
     item => item?.langKey === credentials?.language
   );
-   localStorage.setItem('direction', selectedObject?.direction);
+  //  localStorage.setItem('direction', selectedObject?.direction);
+  dispatch(setDirection(selectedObject?.direction));
    localStorage.setItem('language', credentials.language);
       dispatch(setLang(credentials.language));
   },[credentials.language]);
 
-
-  // useEffect(() => {
-  //   dispatch(setLang(langRecord['lang']));
-  // }, [langRecord]);
 
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>

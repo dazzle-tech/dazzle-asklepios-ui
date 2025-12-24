@@ -16,9 +16,10 @@ import MyTable from '@/components/MyTable';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddFamilyMember from './AddFamilyMember';
+import { useSelector } from 'react-redux';
 const PatientFamilyMembers = ({ localPatient }) => {
     const dispatch = useAppDispatch();
-    const direction = localStorage.getItem('direction');
+    const direction = useSelector(state => state.ui.direction);
     const [relationModalOpen, setRelationModalOpen] = useState(false);
     const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
     const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({ ...newApPatientRelation });

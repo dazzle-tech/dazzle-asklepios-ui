@@ -21,10 +21,11 @@ import {
 } from '@/services/patients/PatientPreferredHealthProfessional';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
+import { useSelector } from 'react-redux';
 
 const PreferredHealthProfessional = ({ patient, isClick }) => {
   const dispatch = useAppDispatch();
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
 
   const [open, setOpen] = useState(false);
   const [editable, setEditable] = useState(false);

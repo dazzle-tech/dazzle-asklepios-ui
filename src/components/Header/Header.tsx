@@ -20,7 +20,7 @@ type HeaderProps = {
 const Header: React.FC<HeaderProps> = ({ expand, setExpand, setExpandNotes, expandNotes }) => {
     type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
    const authSlice = useAppSelector(state => state.auth);
-   const direction = localStorage.getItem('direction');
+   const direction = useSelector(state => state.ui.direction);
    const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
     const globalAllowed = new Set<string>();
     const moduleAllowed = new Map<string, Set<string>>();

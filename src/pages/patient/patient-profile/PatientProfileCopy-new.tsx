@@ -23,6 +23,7 @@ import ProfileHeader from './ProfileHeader-new';
 import ProfileSidebar from './ProfileSidebar-new';
 import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
+import { useSelector } from 'react-redux';
 
 const { getHeight } = DOMHelper;
 
@@ -81,7 +82,7 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
 
 const PatientProfile = () => {
   const dispatch = useAppDispatch();
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const [localVisit] = useState({ ...newApEncounter, discharge: false });
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);

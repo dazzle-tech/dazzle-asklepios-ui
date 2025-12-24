@@ -49,7 +49,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   setRefetchData
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
-  const directionOfPage = localStorage.getItem('direction');
+  const directionOfPage = useSelector(state => state.ui.direction);
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
   const [searchKeyword, setSearchKeyword] = useState('');
 
@@ -178,7 +178,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                   )}
 
                   <div className="patient-search-container">
-                    <Form fluid style={{flexDirection: direction === "RTL" ? 'row-reverse' : "row"}}>
+                    <Form fluid style={{ flexDirection: direction === "RTL" ? 'row-reverse' : "row" }}>
                       <MyInput
                         fieldType="select"
                         fieldName="searchCriteria"
@@ -207,8 +207,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
                     {/* التعديل فقط هنا */}
                     {selectedCriterion === 'dob' ? (
-                      <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                      <div dir={directionOfPage === 'RTL' ? 'rtl' : 'ltr'} style={{ display: 'flex', gap: 8, width: '100%' }}>
                         <DatePicker
+                          dir={directionOfPage === 'RTL' ? 'rtl' : 'ltr'}
                           format="dd-MM-yyyy"
                           placeholder="Select Date of Birth"
                           style={{ flex: 1 }}
@@ -235,17 +236,38 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         </Button>
                       </div>
                     ) : (
+
                       <InputGroup inside>
-                        <Input
-                          placeholder="Search Patients"
-                          value={searchKeyword}
-                          onChange={val => setSearchKeyword(val)}
-                          onKeyDown={e => e.key === 'Enter' && search(0)}
-                        />
-                        <InputGroup.Button onClick={() => search(0)}>
-                          <SearchIcon />
-                        </InputGroup.Button>
+                        {directionOfPage === 'RTL' ? (
+                          <>
+                            <InputGroup.Button onClick={() => search(0)}>
+                              <SearchIcon />
+                            </InputGroup.Button>
+
+                            <Input
+                              dir={directionOfPage === 'RTL' ? 'rtl' : 'ltr'}
+                              placeholder="Search Patients"
+                              value={searchKeyword}
+                              onChange={val => setSearchKeyword(val)}
+                              onKeyDown={e => e.key === 'Enter' && search(0)}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <Input
+                              placeholder="Search Patients"
+                              value={searchKeyword}
+                              onChange={val => setSearchKeyword(val)}
+                              onKeyDown={e => e.key === 'Enter' && search(0)}
+                            />
+
+                            <InputGroup.Button onClick={() => search(0)}>
+                              <SearchIcon />
+                            </InputGroup.Button>
+                          </>
+                        )}
                       </InputGroup>
+
                     )}
                   </div>
 

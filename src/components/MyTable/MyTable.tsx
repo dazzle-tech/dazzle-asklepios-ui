@@ -22,6 +22,13 @@ import './styles.less';
 import { useSelector } from 'react-redux';
 import Translate from '../Translate';
 
+
+import {
+  KeyboardArrowLeft,
+  KeyboardArrowRight
+} from '@mui/icons-material';
+import { useTranslate } from '../Translate/useTranslate';
+
 export interface ColumnConfig {
   key: string;
   title: ReactNode;
@@ -71,7 +78,8 @@ const MyTable: React.FC<MyTableProps> = ({
   onPageChange,
   onRowsPerPageChange
 }) => {
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
+  const translate = useTranslate();
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const mode = useSelector((state: any) => state.ui.mode);
   const visibleColumns = columns.filter(col => !col.expandable);
@@ -92,20 +100,64 @@ const MyTable: React.FC<MyTableProps> = ({
         </Typography>
       </TableCell>
     </TableRow>
-  );
+  ); function CustomPaginationActions(props) {
+    const { count, page, rowsPerPage, onPageChange } = props;
+
+    const handleBack = (event) => {
+      onPageChange(event, page - 1);
+    };
+
+    const handleNext = (event) => {
+      onPageChange(event, page + 1);
+    };
+    if (direction === 'RTL') {
+      return (
+        <Box className='container-of-pagination-icons'>
+          <IconButton onClick={handleNext} disabled={page >= Math.ceil(count / rowsPerPage) - 1} title={translate('Go to next page')}>
+            <KeyboardArrowLeft />
+          </IconButton>
+
+          <IconButton
+            onClick={handleBack}
+            disabled={page === 0}
+            title={translate('Go to previous page')}
+          >
+            <KeyboardArrowRight />
+          </IconButton>
+        </Box>
+      );
+    }
+    else {
+      return (
+        <Box className='container-of-pagination-icons'>
+          <IconButton onClick={handleBack} disabled={page === 0} title={translate('Go to previous page')}>
+            <KeyboardArrowLeft />
+          </IconButton>
+
+          <IconButton
+            onClick={handleNext}
+            disabled={page >= Math.ceil(count / rowsPerPage) - 1}
+            title={translate('Go to next page')}
+          >
+            <KeyboardArrowRight />
+          </IconButton>
+        </Box>
+      );
+    }
+  }
 
   return (
-    <Box className={`my-table-wrapper ${mode === 'light' ? 'light' : 'dark'}`}>
-      {filters && <Box sx={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} className="my-table-filters">{filters}</Box>}
+    <Box className={`my-table-wrapper ${mode}`}>
+      {filters && <Box sx={{ direction: direction === 'RTL' ? 'rtl' : 'ltr' }} className="my-table-filters">{filters}</Box>}
 
-      {tableButtons && <Box sx={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} className="my-table-buttons-wrapper">{tableButtons}</Box>}
+      {tableButtons && <Box sx={{ direction: direction === 'RTL' ? 'rtl' : 'ltr' }} className="my-table-buttons-wrapper">{tableButtons}</Box>}
       <Box className="my-table-content-wrapper">
         <TableContainer
           component={Paper}
           sx={{ maxHeight: height, overflowY: 'auto', direction: direction === 'RTL' ? 'rtl' : 'ltr' }}
           className="my-table-container"
         >
-          <Table stickyHeader size="small">
+          <Table stickyHeader size="small" className={`${direction === 'RTL' ? 'rtl' : 'ltr'}`}>
             <TableHead className="my-table-header">
               <TableRow >
                 {expandableColumns.length > 0 && <TableCell />}
@@ -143,11 +195,11 @@ const MyTable: React.FC<MyTableProps> = ({
                           col.align === 'center'
                             ? 'center'
                             : col.align === 'right'
-                            ? 'flex-end'
-                            : 'flex-start'
+                              ? 'flex-end'
+                              : 'flex-start'
                         }
                       >
-                       <Translate>{col.title}</Translate>
+                        <Translate>{col.title}</Translate>
                         {sortIcon}
                       </Box>
                     </TableCell>
@@ -232,7 +284,7 @@ const MyTable: React.FC<MyTableProps> = ({
                                         align={col.align || (direction === 'RTL' ? 'right' : 'left')}
                                         sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
                                       >
-                                       <Translate>{col.title}</Translate>
+                                        <Translate>{col.title}</Translate>
                                       </TableCell>
                                     ))}
                                   </TableRow>
@@ -269,7 +321,38 @@ const MyTable: React.FC<MyTableProps> = ({
             onPageChange={onPageChange!}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={onRowsPerPageChange!}
-            rowsPerPageOptions={[5,10, 15,20, 30]}
+            rowsPerPageOptions={[5, 10, 15, 20, 30]}
+            labelRowsPerPage={
+              direction === 'RTL' ? (
+                <>
+                  : <Translate>Rows per page</Translate>
+                </>
+              ) : (
+                <>
+                  <Translate>Rows per page</Translate> :
+                </>
+              )
+            }
+            ActionsComponent={CustomPaginationActions}
+            labelDisplayedRows={({ from, to, count }) =>
+              direction === 'RTL' ? (
+                <>
+                  <span dir="ltr">{count}</span>
+                  {' '}
+                  <Translate>of</Translate>
+                  {' '}
+                  <span dir="ltr">{from}–{to}</span>
+                </>
+              ) : (
+                <>
+                  <span dir="ltr">{from}–{to}</span>
+                  {' '}
+                  <Translate>of</Translate>
+                  {' '}
+                  <span dir="ltr">{count}</span>
+                </>
+              )
+            }
           />
         )}
       </Box>

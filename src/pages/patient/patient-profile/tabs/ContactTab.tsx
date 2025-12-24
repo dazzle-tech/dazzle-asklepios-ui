@@ -4,6 +4,7 @@ import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useSelector } from 'react-redux';
 
 interface ContactTabProps {
   localPatient: Patient;
@@ -19,7 +20,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
   const { data: preferredWayOfContactLovQueryResponse } =
     useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');

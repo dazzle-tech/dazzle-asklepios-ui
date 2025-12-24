@@ -134,7 +134,7 @@ const MyInput = ({
   const translate = useTranslate();
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.ui);
-   const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const recognitionRef = useRef<any>(null);
   const [recording, setRecording] = useState(false);
 
@@ -307,8 +307,8 @@ const MyInput = ({
         return (
           <Toggle
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
-            checkedChildren={props.checkedLabel || 'Yes'}
-            unCheckedChildren={props.unCheckedLabel || 'No'}
+            checkedChildren={props.checkedLabel ? <Translate>{props.checkedLabel}</Translate> : <Translate>Yes</Translate> }
+            unCheckedChildren={props.unCheckedLabel ? <Translate>{props.unCheckedLabel}</Translate> : <Translate>No</Translate>}
             disabled={props.disabled}
             checked={record[fieldName]}
             onChange={handleValueChange}

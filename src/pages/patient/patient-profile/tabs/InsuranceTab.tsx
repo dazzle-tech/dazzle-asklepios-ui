@@ -19,12 +19,13 @@ import { Badge } from 'rsuite';
 import InsuranceModal from '../InsuranceModal';
 import SpecificCoverageModa from '../SpecificCoverageModa';
 import './styles.less';
+import { useSelector } from 'react-redux';
 interface InsuranceTabProps {
   localPatient: Patient;
 }
 const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const dispatch = useAppDispatch();
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const [selectedInsurance, setSelectedInsurance] = useState<ApPatientInsurance | null>();
   const [InsuranceModalOpen, setInsuranceModalOpen] = useState(false);
   const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);

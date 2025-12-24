@@ -10,9 +10,10 @@ import { MdDelete } from 'react-icons/md';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddEditNextOfKin from './AddEditNextOfKin';
+import { useSelector } from 'react-redux';
 const NextOfKin = ({ patient, isClick }) => {
   const dispatch = useAppDispatch();
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const [open, setOpen] = useState(false);
   const [nextOfKin, setNextOfKin] = useState({});
   const [id, setId] = useState(5);

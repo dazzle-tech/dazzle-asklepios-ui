@@ -3,6 +3,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { Form } from 'rsuite';
 interface ExtraDetailsTabProps {
   localPatient: Patient;
@@ -14,7 +15,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
   setLocalPatient,
   validationResult
 }) => {
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   // Fetch LOV data for various fields
   const { data: maritalStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MARI_STATUS');
   const { data: nationalityLovQueryResponse } = useGetLovValuesByCodeQuery('NAT');

@@ -15,6 +15,7 @@ import {
 import { newPatientHIPAA } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { useSelector } from 'react-redux';
 
 interface PrivacySecurityTabProps {
   localPatient: Patient;
@@ -28,7 +29,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   validationResult
 }) => {
   const dispatch = useAppDispatch();
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
   const toaster = useToaster();
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
   const [hippa, setHippa] = useState({ ...newPatientHIPAA });
@@ -43,8 +44,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
     isError: isHipaaError,
     isFetching: hipaaLoading
   } = useGetPatientHIPAAQuery({ patientId: localPatient.id! }, { skip: !localPatient.id });
-
-  console.log(hipaaData);
 
   const [createHIPAA, { isLoading: creating }] = useCreatePatientHIPAAMutation();
   const [updateHIPAA, { isLoading: updating }] = useUpdatePatientHIPAAMutation();
@@ -105,7 +104,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   };
 
   return (
-    <div className="tab-main-container" dir={direction === "RTL" ? "rtl" : "ltr"}>
+    <div className="tab-main-container" dir={direction === 'RTL' ? 'rtl' : 'ltr'}>
       <AddVerification
         open={verificationModalOpen}
         setOpen={setVerificationModalOpen}
@@ -188,17 +187,49 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             record={hippa}
             setRecord={setHippa}
           />
+        </div>
+      </Form>
 
-          {/* ======== SAVE HIPAA BUTTON ======== */}
-          <MyButton
-            className="ml-3"
-            appearance="primary"
-            loading={creating || updating}
-            prefixIcon={() => <CheckRound />}
-            onClick={handleSaveHIPAA}
-          >
-            Save HIPAA
-          </MyButton>
+      <Form layout="inline" fluid>
+        <h5 className="border-top">GDPR</h5>
+        <div className="covg-content">
+          <MyInput
+            column
+            vr={validationResult}
+            fieldType="checkbox"
+            fieldLabel="Notice of Privacy Practices"
+            fieldName="noticeOfPrivacyPractice"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          />
+          <MyInput
+            column
+            vr={validationResult}
+            fieldType="date"
+            showLabel={false}
+            fieldName="noticeOfPrivacyPracticeDate"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          />
+          <Divider className="divider-line-vertical" vertical />
+          <MyInput
+            vr={validationResult}
+            column
+            fieldType="checkbox"
+            fieldLabel="Privacy Authorization"
+            fieldName="privacyAuthorization"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          />
+          <MyInput
+            vr={validationResult}
+            column
+            fieldType="date"
+            showLabel={false}
+            fieldName="privacyAuthorizationDate"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          />
         </div>
       </Form>
     </div>
