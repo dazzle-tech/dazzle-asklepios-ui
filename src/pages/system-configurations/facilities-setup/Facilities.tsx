@@ -23,6 +23,7 @@ import { Box } from '@mui/material';
 import AddEditFacility from './AddEditFacility';
 import DepartmentsTab from './tabs/DepartmentsTab';
 import RolesTab from './tabs/RolesTab';
+import UsersTab from './tabs/UsersTab';
 import './styles.less';
 const Facilities = () => {
 
@@ -370,6 +371,11 @@ const Facilities = () => {
               {
                 title: 'Roles',
                 content: <RolesTab facility={facility} />,
+                disabled: !facility?.id,
+              },
+              {
+                title: 'Users',
+                content: <UsersTab facility={facility} />,
                 disabled: !facility?.id,
               },
             ]}
