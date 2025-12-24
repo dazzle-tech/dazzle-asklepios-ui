@@ -198,7 +198,7 @@ const Claimscreen = () => {
     </div>
   );
 
-  return (
+  return (<div className='claims-main-page-container-handle'>
     <Panel>
         {filters()}
 
@@ -215,8 +215,8 @@ const Claimscreen = () => {
     </Tabs.Tab>
   </Tabs>
 
-</Panel>
-  );
+    </Panel>
+  </div>);
 };
 
 export default Claimscreen;

@@ -4,21 +4,64 @@ import Section from '@/components/Section';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './styles.less';
 import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
+import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+import ApproveClaimModal from './ApproveClaimModal';
 
 interface OpenClaimModalProps {
   claim: any;
 }
 
+const SECTION_CONFIG = [
+  {
+    id: 'visit-info',
+    title: 'Visit Information',
+    fields: [
+      ['Encounter ID', 'encounterId'],
+      ['Mode of Admission', 'modeOfAdmission'],
+      ['Discharge Type', 'dischargeType'],
+      ['Admission Date / Time', 'admissionDateTime'],
+      ['Discharge Date / Time', 'dischargeDateTime'],
+      ['Triage Date / Time', 'triageDateTime'],
+      ['Start Treatment Date / Time', 'startTreatmentDateTime'],
+      ['Patient Status', 'patientStatus'],
+      ['Encounter Referral Number', 'encounterReferralNumber'],
+      ['HIO Visit ID', 'hioVisitId']
+    ]
+  },
+  {
+    id: 'coding-details',
+    title: 'Visit Coding Details',
+    fields: [
+      ['Claim ID', 'claimId'],
+      ['Encounter Type', 'encounterType'],
+      ['Suggested Coding Mode', 'suggestedCodingMode'],
+      ['Payment Type', 'paymentType'],
+      ['Insurance Name', 'insuranceName'],
+      ['Advance Balance', 'advanceBalance'],
+      ['Outstanding Balance', 'outstandingBalance']
+    ]
+  },
+  {
+    id: 'financial-summary',
+    title: 'Encounter Services & Financial Summary',
+    fields: [
+      ['Service Code', 'serviceCode'],
+      ['Service Name', 'serviceName'],
+      ['Beneficiary Coverage Amount', 'beneficiaryCoverageAmount'],
+      ['Personal Contribution Amount', 'personalContributionAmount'],
+      ['Total Claim Reimbursement Amount', 'totalClaimReimbursementAmount'],
+      ['Paid Amount', 'paidAmount']
+    ]
+  }
+];
+
 const OpenClaimModal = ({ claim }: OpenClaimModalProps) => {
   if (!claim) return null;
 
+  const [sections, setSections] = useState(SECTION_CONFIG);
   const [localPatient] = useState({});
-
-  const [sections, setSections] = useState<string[]>([
-    'visit-info',
-    'coding-details',
-    'financial-summary'
-  ]);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -30,183 +73,29 @@ const OpenClaimModal = ({ claim }: OpenClaimModalProps) => {
     setSections(items);
   };
 
-    const renderSection = (id: string) => {
-      switch (id) {
-        case 'visit-info':
-          return (
-            <Section
-              title={<Translate>Visit Information</Translate>}
-              setOpen={() => {}}
-              rightLink={null}
-              openedContent={null}
-              content={
-                <div className="section-grid">
-                  <div className="field-row">
-                    <span className="label">Encounter ID</span>
-                    <span className="value">{claim.encounterId}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Mode of Admission</span>
-                    <span className="value">{claim.modeOfAdmission}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Discharge Type</span>
-                    <span className="value">{claim.dischargeType}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Admission Date / Time</span>
-                    <span className="value">{claim.admissionDateTime}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Discharge Date / Time</span>
-                    <span className="value">{claim.dischargeDateTime}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Triage Date / Time</span>
-                    <span className="value">{claim.triageDateTime}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Start Treatment Date / Time</span>
-                    <span className="value">{claim.startTreatmentDateTime}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Patient Status</span>
-                    <span className="value">{claim.patientStatus}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Encounter Referral Number</span>
-                    <span className="value">{claim.encounterReferralNumber}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">HIO Visit ID</span>
-                    <span className="value">{claim.hioVisitId}</span>
-                  </div>
-                </div>
-              }
-            />
-          );
-
-        case 'coding-details':
-          return (
-            <Section
-              title={<Translate>Visit Coding Details</Translate>}
-              setOpen={() => {}}
-              rightLink={null}
-              openedContent={null}
-              content={
-                <div className="section-grid">
-                  <div className="field-row">
-                    <span className="label">Claim ID</span>
-                    <span className="value">{claim.claimId}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Encounter Type</span>
-                    <span className="value">{claim.encounterType}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Suggested Coding Mode</span>
-                    <span className="value">{claim.suggestedCodingMode}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Payment Type</span>
-                    <span className="value">{claim.paymentType}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Insurance Name</span>
-                    <span className="value">{claim.insuranceName}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Advance Balance</span>
-                    <span className="value">{claim.advanceBalance}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Outstanding Balance</span>
-                    <span className="value">{claim.outstandingBalance}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Encounter Details Report</span>
-                    <span className="value">
-                      {claim.encounterDetailsReport ? 'Available' : '-'}
-                    </span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Encounter Summary Report</span>
-                    <span className="value">
-                      {claim.encounterSummaryReport ? 'Available' : '-'}
-                    </span>
-                  </div>
-                </div>
-              }
-            />
-          );
-
-        case 'financial-summary':
-          return (
-            <Section
-              title={<Translate>Encounter Services & Financial Summary</Translate>}
-              setOpen={() => {}}
-              rightLink={null}
-              openedContent={null}
-              content={
-                <div className="section-grid">
-                  <div className="field-row">
-                    <span className="label">Service Code</span>
-                    <span className="value">{claim.serviceCode}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Service Name</span>
-                    <span className="value">{claim.serviceName}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Beneficiary Coverage Amount</span>
-                    <span className="value">{claim.beneficiaryCoverageAmount}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Personal Contribution Amount</span>
-                    <span className="value">{claim.personalContributionAmount}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Total Claim Reimbursement Amount</span>
-                    <span className="value">{claim.totalClaimReimbursementAmount}</span>
-                  </div>
-
-                  <div className="field-row">
-                    <span className="label">Paid Amount</span>
-                    <span className="value balance">{claim.paidAmount}</span>
-                  </div>
-                </div>
-              }
-            />
-          );
-
-        default:
-          return null;
+  const renderSection = (section: any) => (
+    <Section
+      key={section.id}
+      title={<Translate>{section.title}</Translate>}
+      setOpen={() => {}}
+      rightLink={null}
+      openedContent={null}
+      content={
+        <div className="section-grid">
+          {section.fields.map(([label, key]: any) => (
+            <div className="field-row" key={key}>
+              <span className="label">{label}</span>
+              <span className="value">{claim?.[key] ?? '-'}</span>
+            </div>
+          ))}
+        </div>
       }
-    };
+    />
+  );
 
-  return (
+  return (<>
     <div className="open-claim-layout">
+      <div className='modal-content-main-container'> 
       <div className="claim-content">
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="claim-sections" direction="horizontal">
@@ -216,28 +105,22 @@ const OpenClaimModal = ({ claim }: OpenClaimModalProps) => {
                 {...provided.droppableProps}
                 className="claim-dashboard-dnd-wrapper"
               >
-                {sections.map((id, index) => (
-                  <Draggable draggableId={id} index={index} key={id}>
-                    {(provided, snapshot) => {
-                      const style = {
-                        ...provided.draggableProps.style,
-                        transition: snapshot.isDropAnimating
-                          ? 'transform 0.15s ease-out'
-                          : provided.draggableProps.style?.transition,
-                      };
-
-                      return (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="claim-dashboard-dnd-item"
-                          style={style}
-                        >
-                          {renderSection(id)}
-                        </div>
-                      );
-                    }}
+                {sections.map((section, index) => (
+                  <Draggable
+                    key={section.id}
+                    draggableId={section.id}
+                    index={index}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="claim-dashboard-dnd-item"
+                      >
+                        {renderSection(section)}
+                      </div>
+                    )}
                   </Draggable>
                 ))}
                 {provided.placeholder}
@@ -247,11 +130,62 @@ const OpenClaimModal = ({ claim }: OpenClaimModalProps) => {
         </DragDropContext>
       </div>
 
+        <div className="claim-actions-bar">
+          <MyButton
+            appearance="primary"
+            onClick={() => setApproveModalOpen(true)}
+          >
+            Approve
+          </MyButton>
+
+
+          <MyButton appearance="ghost" disabled>
+            Approved Details
+          </MyButton>
+
+          <MyButton appearance="ghost" disabled>
+            Generate Invoice
+          </MyButton>
+
+          <MyButton appearance="default">
+            Show Invoices
+          </MyButton>
+        </div>
+</div>
       <div className="patient-side-wrapper">
         <PatientSide patient={localPatient} encounter={localPatient} />
       </div>
     </div>
-  );
+
+<MyModal
+  open={approveModalOpen}
+  setOpen={setApproveModalOpen}
+  title={"Approval Information"}
+  size="40vw"
+  bodyheight="80vh"
+  hideBack
+  hideActionBtn
+  content={<ApproveClaimModal />}
+  footerButtons={
+    <>
+      <MyButton appearance="ghost">
+        Load XML
+      </MyButton>
+
+      <MyButton appearance="default">
+        Save
+      </MyButton>
+
+      <MyButton appearance="primary">
+      Approve
+      </MyButton>
+    </>
+  }
+/>
+
+
+
+  </>);
 };
 
 export default OpenClaimModal;

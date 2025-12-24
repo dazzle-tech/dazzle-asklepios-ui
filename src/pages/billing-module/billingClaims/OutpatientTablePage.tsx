@@ -13,6 +13,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
 import OpenClaimModal from './OpenClaimModal';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
+import { AttachmentUploadModal } from '@/components/AttachmentModals';
 
 const OutpatientTablePage = () => {
 
@@ -46,6 +48,12 @@ const OutpatientTablePage = () => {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [openClaimModal, setOpenClaimModal] = useState(false);
     const [selectedClaim, setSelectedClaim] = useState<any>(null);
+    const [showPatientRecordsModal, setShowPatientRecordsModal] = useState(false);
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+    const [attachmentContext, setAttachmentContext] = useState<{
+    referenceId?: number | string;
+    attachmentType?: string;
+    }>({});
 
 
 
@@ -91,8 +99,10 @@ const OutpatientTablePage = () => {
             <div>
             <MyButton
                 size="small"
-                onClick={() => setDeleteOpen(true)}
-            >
+                onClick={() => {
+                    setSelectedClaim(row);
+                    setOpenClaimModal(true);
+                }}>
                 <FaPlay size={18} />
             </MyButton>
             </div>
@@ -100,13 +110,20 @@ const OutpatientTablePage = () => {
 
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>Attachment</Tooltip>}>
             <div>
-            <MyButton
+                <MyButton
                 size="small"
                 backgroundColor="black"
-                onClick={() => setTestsOpen(true)}
-            >
+                onClick={() => {
+                    setAttachmentContext({
+                    referenceId: row.encounterNumber,
+                    attachmentType: 'CLAIM'
+                    });
+                    setAttachmentsModalOpen(true);
+                }}
+                >
                 <FaPaperclip size={17} />
-            </MyButton>
+                </MyButton>
+
             </div>
         </Whisper>
 
@@ -115,7 +132,7 @@ const OutpatientTablePage = () => {
             <MyButton
                 size="small"
                 backgroundColor="violet"
-                onClick={() => setTestsOpen(true)}
+                onClick={() => setShowPatientRecordsModal(true)}
             >
                 <FaFileWaveform size={17} />
             </MyButton>
@@ -216,6 +233,30 @@ const OutpatientTablePage = () => {
             content={
                 <OpenClaimModal claim={selectedClaim} />
             }
+            />
+
+
+      <MyModal
+        open={showPatientRecordsModal}
+        setOpen={setShowPatientRecordsModal}
+        title="Patient Records"
+        size="70vw"
+        bodyheight="83vh"
+        content={<PatientEMRModal />}
+        hideBack={true}
+        actionButtonLabel="Save"
+      />
+
+
+            <AttachmentUploadModal
+            isOpen={attachmentsModalOpen}
+            setIsOpen={setAttachmentsModalOpen}
+            actionType="add"
+            attachmentSource={attachmentContext.referenceId}
+            attatchmentType={attachmentContext.attachmentType}
+            refecthData={() => {
+                console.log('Attachments refreshed');
+            }}
             />
 
 
