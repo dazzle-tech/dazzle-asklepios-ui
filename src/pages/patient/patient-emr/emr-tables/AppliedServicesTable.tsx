@@ -38,14 +38,14 @@ const AppliedServicesTable = ({patient}) => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
- 
-  
+
+
 const [nurseServiceProductListRequest, setNurseServiceProductListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
       filters: [
         { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-      
+
       ],
       pageSize: 100,
     });
@@ -67,17 +67,17 @@ const authSlice = useAppSelector((state) => state.auth);
         size: 500,
         sort: 'id,asc',
       });
-      
-     
-      
+
+
+
         const getProductById = (id?: number | string) =>
           products.find((p) => String(p.Id) === String(id));
-      
+
         const getBrandById = (id?: number | string) =>
           brands.find((b) => String(b.id) === String(id));
-      
+
         // ---- Actions ----
-      
+
   const products: InventoryProduct[] = inventoryProductsResponse?.data ?? [];
   const brands: BrandMedication[] = brandMedicationList?.data ?? [];
   const services = serviceListResponse?.data ?? [];
@@ -101,20 +101,20 @@ const authSlice = useAppSelector((state) => state.auth);
               if (rowData?.categoryLkey === PRODUCT_CATEGORY_LKEY) {
                 const product = getProductById(rowData?.warehouseProductId);
                 if (!product) return rowData?.name;
-      
+
                 if (product.type === 'MEDICATION' && product.brandId) {
                   const brand = getBrandById(product.brandId);
                   return <span>{brand?.name ?? product?.name}</span>;
                 }
-      
+
                 return <span>{product?.name}</span>;
               }
-      
+
               if (rowData?.categoryLkey === SERVICE_CATEGORY_LKEY) {
                 const service = services?.find((s) => s.id === rowData?.serviceId);
                 return <span>{service?.name ?? rowData?.name}</span>;
               }
-      
+
               return rowData?.name;
             },
           },
@@ -126,31 +126,31 @@ const authSlice = useAppSelector((state) => state.auth);
                 const service = services?.find((s) => s.id === rowData?.serviceId);
                 return service?.category ?? '';
               }
-      
+
               if (rowData?.categoryLkey === PRODUCT_CATEGORY_LKEY) {
                 const product = getProductById(rowData?.warehouseProductId);
                 if (!product) return rowData?.type ?? '';
                 if (product?.type === 'MEDICATION') return 'Medication';
                 return product?.type;
               }
-      
+
               return rowData?.type ?? '';
             },
           },
           { key: 'quantity', title: 'Quantity',
             render: (rowData) => rowData?.quantity
-            
+
            },
 
-       
+
         ];
 
 
 
   const { data: nurseServiceProductListResponse, refetch } =
     useGetNurseServiceProductListQuery(nurseServiceProductListRequest);
-    
-       const sortedData = [...nurseServiceProductListResponse?.object].sort((a, b) => {
+
+       const sortedData = [...(nurseServiceProductListResponse?.object || [])].sort((a, b) => {
     const aValue = a[sortColumn];
     const bValue = b[sortColumn];
     if (aValue === bValue) return 0;
@@ -171,11 +171,11 @@ useEffect(() => {
 
 
   return (
-    
+
       <MyTable
             data={paginatedData ?? []}
             columns={columns}
-   
+
       loading={false}
       sortColumn={sortColumn}
       sortType={sortType}

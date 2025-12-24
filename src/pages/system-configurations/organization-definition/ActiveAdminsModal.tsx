@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import ChildModal from '@/components/ChildModal';
-import { useGetActiveAdminsQuery } from '@/services/userService';
+// import { useGetActiveAdminsQuery } from '@/services/userService';
 import { FaUserShield } from 'react-icons/fa';
 
 interface ActiveAdminsModalProps {
@@ -12,10 +12,10 @@ interface ActiveAdminsModalProps {
 
 const ActiveAdminsModal: React.FC<ActiveAdminsModalProps> = ({ open, onClose }) => {
   const [showChild, setShowChild] = useState<boolean>(false);
-  const { data: activeAdmins, isLoading: isLoadingAdmins } = useGetActiveAdminsQuery(
-    { page: 0, size: 100 },
-    { skip: !open }
-  );
+  // const { data: activeAdmins, isLoading: isLoadingAdmins } = useGetActiveAdminsQuery(
+  //   { page: 0, size: 100 },
+  //   { skip: !open }
+  // );
 
   // Table columns
   const adminTableColumns = [
@@ -52,12 +52,12 @@ const ActiveAdminsModal: React.FC<ActiveAdminsModalProps> = ({ open, onClose }) 
       case 0:
         return (
           <div>
-            <MyTable
-              height={400}
-              data={Array.isArray(activeAdmins) ? activeAdmins : []}
-              columns={adminTableColumns}
-              loading={isLoadingAdmins}
-            />
+            {/*<MyTable*/}
+            {/*  height={400}*/}
+            {/*  data={Array.isArray(activeAdmins) ? activeAdmins : []}*/}
+            {/*  columns={adminTableColumns}*/}
+            {/*  loading={isLoadingAdmins}*/}
+            {/*/>*/}
           </div>
         );
       default:

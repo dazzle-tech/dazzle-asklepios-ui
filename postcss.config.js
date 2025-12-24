@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const plugins = [
+  require('@tailwindcss/postcss'),
   require('autoprefixer'),
   require('cssnano')({
     preset: [

@@ -70,7 +70,7 @@ export const conjureValuesFromList = (
   const keys = keysString?.split(",").map(k => k.trim());
   const values = keys?.map(key => {
     const found = list?.find(record => record.key === key);
-    return found ? found[preferredField] : key; 
+    return found ? found[preferredField] : key;
   });
 
   return values.join(", ");
@@ -207,45 +207,66 @@ export const calculateAge = birthdate => {
     return yearsDiff;
   }
 };
-export const calculateAgeFormat=dateOfBirth=> {
-  const today = new Date();
-  const dob = new Date(dateOfBirth);
+export const calculateAgeFormat = (input: string | number | Date): string => {
+  if (!input) {
+    return '';
+  }
 
+  const today = new Date();
+  const dob = input instanceof Date ? input : new Date(input);
+
+  // Validate date
   if (isNaN(dob.getTime())) {
-    return ''; 
+    return '';
+  }
+
+  // Don't calculate age for future dates
+  if (dob > today) {
+    return '';
   }
 
   let years = today.getFullYear() - dob.getFullYear();
   let months = today.getMonth() - dob.getMonth();
-
   let days = today.getDate() - dob.getDate();
-  if (months < 0 || (months === 0 && days < 0)) {
+
+  // Adjust for negative days
+  if (days < 0) {
+    months--;
+    // Get days in the previous month
+    const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, dob.getDate());
+    const diffTime = today.getTime() - prevMonth.getTime();
+    days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  // Adjust for negative months
+  if (months < 0) {
     years--;
     months += 12;
   }
-  if (days < 0) {
-    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 0);
-    days += lastMonth.getDate(); 
-    months--;
-  }
-  const totalDays = (years * 365) + (months * 30) + days; 
 
-  let ageString = '';
+  // Handle newborns (0 years, 0 months, 0 days)
+  if (years === 0 && months === 0 && days === 0) {
+    return '0d';
+  }
+
+  // Build age string
+  const parts: string[] = [];
 
   if (years > 0) {
-    ageString += `${years}y `;
+    parts.push(`${years}y`);
   }
 
   if (months > 0) {
-    ageString += `${months}m `;
+    parts.push(`${months}m`);
   }
 
   if (days > 0) {
-    ageString += `${days}d`;
+    parts.push(`${days}d`);
   }
 
-  return ageString.trim();  
-}
+  return parts.join(' ');
+};
+
 export const convertStyleToObject = styleString => {
   const styleObject = {};
   styleString.split(';').forEach(item => {
@@ -262,9 +283,15 @@ export const convertStyleToObject = styleString => {
   return styleObject;
 };
 
-export const formatDate = date => {
+export const formatDate = (input: string | number | Date) => {
+  const date = input instanceof Date ? input : new Date(input);
+
+  if (isNaN(date.getTime())) {
+   return null;
+  }
+
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Adding 1 to month because months are 0-based
+  const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
@@ -292,7 +319,7 @@ export function formatDateWithoutSeconds(dateString) {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true 
+    hour12: true
   });
 }
 
@@ -300,11 +327,11 @@ export const formatEnumString = (input: string): string => {
   if (!input) return '';
 
   return input
-    .split('_')                          
-    .map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() 
+    .split('_')
+    .map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     )
-    .join(' ');                         
+    .join(' ');
 };
 
 export const formatControlledEnumLabel = (code?: string | null): string => {
