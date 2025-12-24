@@ -640,16 +640,16 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   name: '',
   description: null,
   type: '',
-  departmentId: 0,
-  facilityId: 0
+  departmentId: undefined,
+  facilityId: undefined
 };
 
 export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   name: '',
   description: null,
   type: '',
-  departmentId: 0,
-  facilityId: 0
+  departmentId: undefined,
+  facilityId: undefined
 };
 export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
   id: 0,
