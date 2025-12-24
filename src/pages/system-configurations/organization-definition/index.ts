@@ -1,4 +1,6 @@
-import OrganizationDefinition from '.';
+
+import OrganizationDefinition from './organization-definition';
+
 
 export default OrganizationDefinition;
 

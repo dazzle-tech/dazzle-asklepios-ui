@@ -68,7 +68,12 @@ const ActiveAdminsModal: React.FC<ActiveAdminsModalProps> = ({ open, onClose }) 
   return (
     <ChildModal
       open={open}
-      setOpen={onClose}
+      setOpen={(value: boolean) => {
+        if (!value) {
+          onClose();
+        }
+      }}
+
       showChild={showChild}
       setShowChild={setShowChild}
       hideActionBtn

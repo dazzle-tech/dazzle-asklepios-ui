@@ -10,8 +10,10 @@ interface UsersTabProps {
 }
 
 const UsersTab: React.FC<UsersTabProps> = ({ facility }) => {
-  const { data: users, isFetching } = useGetUsersByFacilityQuery(facility?.id as number, {
-    skip: !facility?.id,
+
+  const facilityId = facility?.id ? Number(facility.id) : 0;
+  const { data: users, isFetching } = useGetUsersByFacilityQuery(facilityId, {
+    skip: !facility?.id || isNaN(facilityId),
   });
 
   const tableColumns = [
