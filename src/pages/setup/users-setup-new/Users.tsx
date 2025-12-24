@@ -286,6 +286,14 @@ const totalCount = usersResponse?.length ?? 0;
       title: <Translate>Phone Number</Translate>,
       flexGrow: 4
     },
+    {
+      key: 'admin',
+      title: <Translate>Admin</Translate>,
+      flexGrow: 2,
+      render: rowData => {
+        return rowData?.admin ? 'True' : 'False';
+      }
+    },
     // {
     //   key: 'jobRoleLvalue',
     //   title: <Translate>job Role</Translate>,

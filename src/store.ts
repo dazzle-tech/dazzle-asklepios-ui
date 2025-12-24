@@ -36,6 +36,7 @@ import callReducer from './store/callSlice';
 import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
+import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -208,6 +209,7 @@ export const store = configureStore({
 
     [facilityService.reducerPath]: facilityService.reducer,
     [departmentService.reducerPath]: departmentService.reducer,
+    [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -353,6 +355,7 @@ export const store = configureStore({
       enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
+      organizationDefinitionService.middleware,
       roleService.middleware,
       userRoleService.middleware,
       enumService.middleware,

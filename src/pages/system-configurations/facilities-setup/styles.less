@@ -1,0 +1,49 @@
+
+.container-of-two-fields-facility {
+    display: flex;
+    gap: 20px;
+  }
+
+  .container-of-header-actions-facility{
+    display: flex;
+    justify-content: space-between;
+    @media (max-width: 750px) {
+      flex-direction: column;
+      margin-bottom: 9px;
+    }
+  }
+
+  /* Grid أساسي */
+.facility-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* الحقول */
+.field-half {
+  width: 100%;
+}
+
+.field-full {
+  grid-column: span 2;
+  width: 100%;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .facility-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .facility-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-full {
+    grid-column: span 1;
+  }
+}

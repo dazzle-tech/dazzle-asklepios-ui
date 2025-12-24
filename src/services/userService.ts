@@ -9,6 +9,35 @@
       getUser: builder.query({
         query: (_: void) => '/api/admin/users',
       }),
+    deleteUser: builder.mutation({
+      query: (login) => ({
+        url: `/api/admin/users/${login}`,
+        method: 'DELETE',
+      }),
+    }),
+    updateUser: builder.mutation({
+      query: (user) => ({
+        url: '/api/admin/users',
+        method: 'PUT',
+        body: user,
+      }),
+    }),
+    getActiveAdmins: builder.query({
+      query: (pageable?: { page?: number; size?: number; sort?: string }) => {
+        const params = new URLSearchParams();
+        if (pageable?.page !== undefined) {
+          params.append('page', pageable.page.toString());
+        }
+        if (pageable?.size !== undefined) {
+          params.append('size', pageable.size.toString());
+        }
+        if (pageable?.sort) {
+          params.append('sort', pageable.sort);
+        }
+        const queryString = params.toString();
+        return `/api/admin/users/admins/active${queryString ? `?${queryString}` : ''}`;
+      },
+    }),
       getUsersBasic: builder.query({
     query: ({
       page = 0,
@@ -19,7 +48,6 @@
       name,
     }) => {
       const params = new URLSearchParams();
-
       params.append('page', String(page));
       params.append('size', String(size));
       params.append('sort', sort);
@@ -42,20 +70,6 @@
           body: user,
         }),
       }),
-      deleteUser: builder.mutation({
-        query: (login) => ({
-          url: `/api/admin/users/${login}`,
-          method: 'DELETE',
-        }),
-      }),
-      updateUser: builder.mutation({
-        query: (user) => ({
-          url: '/api/admin/users',
-          method: 'PUT',
-          body: user,
-        }),
-      }),
-
       searchUsers: builder.query({
         query: ({
           filter,
@@ -111,7 +125,6 @@
           },
         }),
       }),
-
 
       // ==== Duplication Candidates APIs ====
       getDuplicationCandidates: builder.query({

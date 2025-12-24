@@ -153,7 +153,7 @@ import Departments from './pages/setup/departments-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
 import Diagnostic from './pages/setup/diagnostics-tests-definition';
 import DVM from './pages/setup/dvm-setup';
-import Facilities from './pages/setup/facilities-setup';
+import Facilities from './pages/system-configurations/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
 import Lov from './pages/setup/lov-setup';
@@ -177,7 +177,7 @@ import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import UOMGroup from './pages/setup/uom-group-new';
 import Users from './pages/setup/users-setup';
-import UsersNew from './pages/setup/users-setup-new';
+import UsersNew from './pages/system-configurations/users-setup-new';
 import Vaccine from './pages/setup/vaccine-setup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
@@ -209,6 +209,7 @@ import PayerSetup from './pages/setup/payer-setup';
 import CountrySetup from './pages/setup/country-setup/CountrySetup';
 import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
 import Claimscreen from './pages/billing-module/billingClaims/Claims';
+import OrganizationDefinition from './pages/system-configurations/organization-definition';
 
 
 
@@ -477,6 +478,7 @@ useEffect(() => {
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="country-setup" element={<CountrySetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
+              <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
   <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>

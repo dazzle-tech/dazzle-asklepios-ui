@@ -19,6 +19,7 @@ export interface ApUser {
   gender?: string | null;
   jobDescription?: string | null;
   jobRole?: string | null;
+  admin?: boolean;
 }
 
 
@@ -1320,4 +1321,17 @@ export interface PriceListAttribute {
   attribute: string;
   price: number; // or string if you prefer BigDecimal string
   isActive?: boolean;
+}
+
+export interface OrganizationDefinition {
+  id?: number;
+  name?: string;
+  description?: string;
+  address?: string;
+  contactName?: string;
+  contactAddress?: string;
+  contactEmail?: string;
+  contactMobile?: string;
+  contactLandNumber?: string;
+  taxValue?: number;
 }
