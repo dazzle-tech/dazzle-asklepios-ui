@@ -222,7 +222,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
           </div>
         </Dropdown.Item>
 
-        {/* الخيار الجديد للبوابة */}
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
