@@ -420,10 +420,6 @@ const GenericMedications = () => {
 
     {
       key: "roa", title: <Translate>ROA</Translate>, flexGrow: 3,
-      // render: (rowData) => conjureValuesFromList(
-      //   roaEnumOptions,
-      //   rowData.roa,
-      //   "lovDisplayVale")
      render: rowData => <p>{formatEnumString(rowData?.roa)}</p>,
     },
     { key: "isActive", title: <Translate>Status</Translate>, flexGrow: 2, render: (r: BrandMedication) => (r.isActive ? "Active" : "Inactive") },

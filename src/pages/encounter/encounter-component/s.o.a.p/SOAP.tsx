@@ -27,15 +27,40 @@ import SectionContainer from '@/components/SectionsoContainer';
 import PatientPlan from '../../medical-notes-and-assessments/patient-plan';
 import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
 import MyTab from '@/components/MyTab';
+import { useGetEncounterByIdQuery } from '@/services/encounterService';
+import { showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
   const location = useLocation();
 
+
+const encounterKey = props.encounter?.key || location.state?.encounter?.key;
+
+    const {
+      data: encounterFromServer,
+      isLoading,
+      isFetching
+    } = useGetEncounterByIdQuery(encounterKey, {
+      skip: !encounterKey,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true
+    });
+
+
+
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-  const [localEncounter, setLocalEncounter] = useState({ ...encounter });
+const [localEncounter, setLocalEncounter] = useState<any>(
+  props.encounter || location.state?.encounter || {}
+);
+
+useEffect(() => {
+  if (encounterFromServer) {
+    setLocalEncounter(encounterFromServer);
+  }
+}, [encounterFromServer]);
 
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
 
@@ -84,15 +109,6 @@ const SOAP = props => {
       latestpainlevelLkey: null
     });
 
-  useEffect(() => {
-    if (saveEncounterChangesMutation.status === 'fulfilled') {
-      // Merge response with current local state to preserve fields that might not be in the response
-      setLocalEncounter(prev => ({
-        ...saveEncounterChangesMutation.data,
-        // Preserve planInstructionsNote if not in response or if response has empty/null value
-      }));
-    }
-  }, [saveEncounterChangesMutation]);
 
   useEffect(() => {
     setPatientObservationSummary(prevSummary => ({
@@ -114,14 +130,17 @@ const SOAP = props => {
     }));
   }, [currentObservationSummary]);
 
-  const saveChanges = async () => {
-    try {
-      await saveEncounterChanges(localEncounter).unwrap();
-      dispatch(notify({ msg: '  Saved Successfully', sev: 'success' }));
-    } catch (error) {
-      dispatch(notify('Save Failed'));
-    }
-  };
+const saveChanges = async () => {
+  try {
+    const updatedEncounter = await saveEncounterChanges(localEncounter).unwrap();
+    setLocalEncounter(updatedEncounter);
+
+    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+  } catch {
+    dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
+  }
+};
+
 
   const tabData = [
     {
@@ -245,6 +264,19 @@ const SOAP = props => {
       )
     }
   ];
+
+useEffect(() => {
+  if (isLoading || isFetching) {
+    dispatch(showSystemLoader());
+  } else {
+    dispatch(hideSystemLoader());
+  }
+
+  return () => {
+    dispatch(hideSystemLoader());
+  };
+}, [isLoading, isFetching, dispatch]);
+
 
   return (
     <div className="patient-summary-container">
