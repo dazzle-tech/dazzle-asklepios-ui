@@ -9,17 +9,23 @@ const DiagnosticsResult = props => {
   const location = useLocation();
   const authSlice = useAppSelector(state => state.auth);
   const patient = props.patient || location.state?.patient;
-
+  const encounter = props.encounter || location.state?.encounter;
   const tabData = [
-    {title: "Results", content: <Result patient={patient} user={authSlice.user.key} />},
-    {title: "Reports", content: <Reports patient={patient} user={authSlice.user.key} />},
-    {title: "Laboratory Result Comparison", content: <LaboratoryResultComparison patient={patient} />}
+    { title: 'Results', content: <Result patient={patient} user={authSlice.user.key} /> },
+    {
+      title: 'Reports',
+      content: <Reports patient={patient} user={authSlice.user.key} encounter={encounter} />
+    },
+    {
+      title: 'Laboratory Result Comparison',
+      content: <LaboratoryResultComparison patient={patient} />
+    }
   ];
 
-  return (<>
-    <MyTab 
-     data={tabData}
-    />
-  </>);
+  return (
+    <>
+      <MyTab data={tabData} />
+    </>
+  );
 };
 export default DiagnosticsResult;

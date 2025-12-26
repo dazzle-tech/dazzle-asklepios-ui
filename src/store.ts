@@ -97,16 +97,17 @@ import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 import { PriceListService } from './services/billing/PriceListService';
-import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
+import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
 import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
 import { PriceListItemService } from './services/billing/PriceListItemService';
 import { BillingService } from './services/billing/BillingService';
-import { referralRequestService } from "@/services/encounters/referralRequestService";
+import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
-import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
+import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
+import { prescriptionPService } from './services/setup/prescriptionPService';
+import { radiologyReportApi } from './services/setup/radiologyReportApi';
 
-import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -263,7 +264,7 @@ export const store = configureStore({
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
 
     // billing
-    [BillingService.reducerPath]: BillingService.reducer, 
+    [BillingService.reducerPath]: BillingService.reducer,
 
     [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
@@ -295,13 +296,13 @@ export const store = configureStore({
     [resultReportApi.reducerPath]: resultReportApi.reducer,
 
     // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
-   // Visit Duration
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
+    // Visit Duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
     // Price List
     [PriceListService.reducerPath]: PriceListService.reducer,
 
-   // Templates
+    // Templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
     // Price List Item
@@ -311,7 +312,8 @@ export const store = configureStore({
     [PayorService.reducerPath]: PayorService.reducer,
     [PayorPlanService.reducerPath]: PayorPlanService.reducer,
 
-    [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
+    [prescriptionPService.reducerPath]: prescriptionPService.reducer,
+    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -419,8 +421,8 @@ export const store = configureStore({
       referralRequestService.middleware,
       PayorService.middleware,
       PayorPlanService.middleware,
-      DischargePlanningService.middleware,
-
+      prescriptionPService.middleware,
+      radiologyReportApi.middleware
     ])
 });
 

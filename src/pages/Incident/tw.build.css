@@ -618,7 +618,7 @@
 
     @media (min-width:96rem) {
         .container {
-            max-width: 96rem
+            max-width: 100%
         }
     }
 

@@ -4,7 +4,7 @@ import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import {
   useGetCustomeInstructionsQuery,
@@ -18,7 +18,7 @@ import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescri
 import { ApPrescription, ApPrescriptionMedications } from '@/types/model-types';
 import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { conjureValueBasedOnIDFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -35,7 +35,10 @@ import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNur
 import UrgencyButton from '../drug-order/UrgencyButton';
 import DetailsModal from './DetailsModal';
 import PrescriptionPreview from './PrescriptionPreview';
+import { useGeneratePrescriptionPdfMutation } from '@/services/setup/prescriptionPService';
 import './styles.less';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { faPrint } from '@fortawesome/free-solid-svg-icons';
 
 const Prescription = props => {
   const location = useLocation();
@@ -49,9 +52,20 @@ const Prescription = props => {
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
   const [showCanceled, setShowCanceled] = useState(true);
-  const [prescription,setPrescription]=useState<ApPrescription>({...newApPrescription});
-  const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
-
+  const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
+  const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+  const authSlice = useAppSelector(state => state.auth);
+  const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+  const facilityName = conjureValueBasedOnIDFromList(
+    facilityListResponse ?? [],
+    selectedFacility?.id,
+    'name'
+  );
   const [customeinst, setCustomeinst] = useState({
     dose: null,
     unit: null,
@@ -61,9 +75,11 @@ const Prescription = props => {
 
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
-  const { data: genericMedicationListResponse } =
-    useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
-
+  const { data: genericMedicationListResponse } = useGetAllBrandMedicationsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
 
   const {
     data: prescriptions,
@@ -92,6 +108,7 @@ const Prescription = props => {
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] = useState(null);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
@@ -132,9 +149,7 @@ const Prescription = props => {
       };
 
       setFavoriteMedications(prev => [...prev, medicationToAdd]);
-      dispatch(
-        notify({ msg: `${medicationToAdd.name} added to favorites`, type: 'success' })
-      );
+      dispatch(notify({ msg: `${medicationToAdd.name} added to favorites`, type: 'success' }));
     }
   };
 
@@ -164,6 +179,10 @@ const Prescription = props => {
 
   const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] =
     useSavePrescriptionMedicationMutation();
+
+  const [generatePrescriptionPdf, { isLoading: isGeneratingPdf }] =
+    useGeneratePrescriptionPdfMutation();
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -196,19 +215,19 @@ const Prescription = props => {
 
   const [isdraft, setIsDraft] = useState(
     prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
-      ?.saveDraft 
+      ?.saveDraft
   );
 
   // Effects
-    useEffect(() => {
-      if (preKeyRecord.preKey !== null) return;
+  useEffect(() => {
+    if (preKeyRecord.preKey !== null) return;
 
-      const foundDraft = prescriptions?.object?.find(p => p.saveDraft === true);
+    const foundDraft = prescriptions?.object?.find(p => p.saveDraft === true);
 
-      if (foundDraft?.key) {
-        setPreKeyRecord({ preKey: foundDraft.key });
-      }
-    }, [prescriptions]);
+    if (foundDraft?.key) {
+      setPreKeyRecord({ preKey: foundDraft.key });
+    }
+  }, [prescriptions]);
 
   useEffect(() => {
     setListRequest(prev => ({
@@ -327,12 +346,12 @@ const Prescription = props => {
       dispatch(notify({ msg: 'All Medication Deleted Successfully', sev: 'success' }));
       setOpenCancellation(false);
       medicRefetch()
-        .then(() => { })
-        .catch(error => { });
+        .then(() => {})
+        .catch(error => {});
 
       medicRefetch()
-        .then(() => { })
-        .catch(error => { });
+        .then(() => {})
+        .catch(error => {});
 
       setSelectedRows([]);
     } catch (error) {
@@ -354,6 +373,7 @@ const Prescription = props => {
       setPreKeyRecord({ preKey: null });
       preRefetch().then(() => '');
       medicRefetch().then(() => '');
+      setSummaryModalOpen(false);
     } catch (error) {
       console.error('Error saving prescription or medications:', error);
     }
@@ -388,7 +408,7 @@ const Prescription = props => {
         dispatch(notify({ msg: 'Saved Draft successfully', sev: 'success' }));
         setIsDraft(true);
       });
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const cancleDraft = async () => {
@@ -400,7 +420,7 @@ const Prescription = props => {
         dispatch(notify({ msg: 'Draft Cancelled', sev: 'success' }));
         setIsDraft(false);
       });
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const handleSavePrescription = async () => {
@@ -441,8 +461,6 @@ const Prescription = props => {
       handleCleare();
       setOpenDetailsModal(true);
       setOpenToAdd(true);
-
-    
     } catch (error) {
       dispatch(notify({ msg: 'Failed to complete actions', type: 'error' }));
     }
@@ -488,7 +506,6 @@ const Prescription = props => {
           const generic = predefinedInstructionsListResponse?.data?.find(
             item => item.id === Number(rowData.instructions)
           );
-       
 
           if (generic) {
           } else {
@@ -497,8 +514,8 @@ const Prescription = props => {
           return [
             generic?.dose ?? '',
             formatEnumString(generic?.unit) ?? '',
-            formatEnumString(generic?.rout) ?? '',   // ✅ route
-            formatEnumString(generic?.frequency) ?? '',
+            formatEnumString(generic?.rout) ?? '',
+            formatEnumString(generic?.frequency) ?? ''
           ]
             .filter(v => v != null && String(v).trim() !== '')
             .join(', ');
@@ -601,7 +618,7 @@ const Prescription = props => {
         return (
           <MdAttachFile
             size={20}
-            fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+            fill={rowData?.key ? 'var(--primary-gray)' : '#ccc'}
             onClick={() => {
               if (rowData?.key) {
                 setSelectedMedicationForAttachments(rowData);
@@ -681,10 +698,45 @@ const Prescription = props => {
       pageNumber: 1 // reset to first page
     });
   };
+  const handleGeneratePrescriptionPdf = async () => {
+    try {
+      if (!patient || !encounter || !preKeyRecord.preKey) {
+        dispatch(notify({ msg: 'Missing patient, encounter or prescription', type: 'error' }));
+        return;
+      }
 
+      const blob = await generatePrescriptionPdf({
+        patient,
+        encounter,
+        prescriptionKey: preKeyRecord.preKey,
+        genericMedicationList: genericMedicationListResponse?.data ?? [],
 
+        facilityName: facilityName,
+        authenticatedUserName: `${authSlice?.user?.firstName} ${authSlice?.user?.lastName}`,
+        authenticatedUserEmail: authSlice?.user?.email
+      }).unwrap();
 
-  
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = `Prescription_${preKeyRecord.preKey}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+    
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.message || 'Failed to generate prescription PDF',
+          type: 'error'
+        })
+      );
+    }
+  };
+
   return (
     <>
       <div className="bt-div">
@@ -728,16 +780,18 @@ const Prescription = props => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => { }}
+              setRecord={() => {}}
               width={110}
             />
           </Form>
           <UrgencyButton />
-          <MyButton loading={isLoadingPrescriptions}
-          >Validate With</MyButton>
+          <MyButton loading={isLoadingPrescriptions}>Validate With</MyButton>
           {/* <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton> */}
-          <MyButton onClick={handleNewPrescriptionAndAddMedication} prefixIcon={() => <PlusIcon />}
-          loading={isLoadingPrescriptions}>
+          <MyButton
+            onClick={handleNewPrescriptionAndAddMedication}
+            prefixIcon={() => <PlusIcon />}
+            loading={isLoadingPrescriptions}
+          >
             Add Medication
           </MyButton>
           <MyButton
@@ -749,20 +803,28 @@ const Prescription = props => {
           </MyButton>
           <MyButton
             loading={isLoadingPrescriptions}
-            onClick={handleSubmitPres}
+            onClick={() => {
+              handleSubmitPres();
+              setSummaryModalOpen(true);
+            }}
             disabled={
               preKeyRecord['preKey']
                 ? prescriptions?.object?.find(
-                  prescription => prescription.key === preKeyRecord['preKey']
-                )?.statusLkey === '1804482322306061'
+                    prescription => prescription.key === preKeyRecord['preKey']
+                  )?.statusLkey === '1804482322306061'
                 : true
             }
-            prefixIcon={() => <CheckIcon />
-            }
+            prefixIcon={() => <CheckIcon />}
           >
             Sign & Submit Order
           </MyButton>
         </div>
+        <MyButton
+          onClick={handleGeneratePrescriptionPdf}
+          loading={isGeneratingPdf}
+          disabled={!preKeyRecord['preKey']}
+          prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+        ></MyButton>
       </div>
       <Divider />
 
@@ -832,7 +894,7 @@ const Prescription = props => {
         preKey={preKeyRecord['preKey']}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => { }}
+        setOrderMedication={() => {}}
         drugKey={null}
         editing={false}
       />
@@ -953,18 +1015,26 @@ const Prescription = props => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${selectedMedicationForAttachments ? genericMedicationListResponse?.data?.find(
-          item => item.id === selectedMedicationForAttachments.genericMedicationsId
-        )?.name || 'Medication' : 'Medication'}`}
+        title={`Attachments - ${
+          selectedMedicationForAttachments
+            ? genericMedicationListResponse?.data?.find(
+                item => item.id === selectedMedicationForAttachments.genericMedicationsId
+              )?.name || 'Medication'
+            : 'Medication'
+        }`}
         size="lg"
         hideActionBtn={true}
         content={
           <EncounterAttachment
             localEncounter={encounter}
             source="PRESCRIPTION_ORDER_ATTACHMENT"
-            sourceId={selectedMedicationForAttachments?.key ? Number(selectedMedicationForAttachments.key) : undefined}
+            sourceId={
+              selectedMedicationForAttachments?.key
+                ? Number(selectedMedicationForAttachments.key)
+                : undefined
+            }
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />
