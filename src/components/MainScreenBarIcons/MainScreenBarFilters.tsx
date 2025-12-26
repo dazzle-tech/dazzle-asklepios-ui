@@ -25,7 +25,7 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [record, setRecord] = useState<Record<string, any>>({eventKey: ""});
-   const direction = localStorage.getItem('direction');
+   const direction = useSelector(state => state.ui.direction);
 
 
   const [width, setWidth] = useState<number>(window.innerWidth);

@@ -54,6 +54,7 @@ import {
 import { conjureValueBasedOnIDFromList } from '@/utils';
 import { UserDepartment } from '@/types/model-types-new';
 import Translate from '../Translate';
+import { useSelector } from 'react-redux';
 
 const { getHeight, on } = DOMHelper;
 
@@ -80,7 +81,7 @@ const collapsedWidth = 60;
 
 const Frame = (props: FrameProps) => {
   const { navs, mode } = props;
-  const direction = localStorage.getItem('direction');
+  const direction = useSelector(state => state.ui.direction);
 
   // State variables
   const [expand, setExpand] = useState(false); // sidebar expanded or not

@@ -1,12 +1,14 @@
 import React from 'react';
-import type { ApPatient } from '@/types/model-types';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { Patient } from '@/types/model-types-new';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useSelector } from 'react-redux';
 
 interface ContactTabProps {
-  localPatient: ApPatient;
-  setLocalPatient: (patient: ApPatient) => void;
+  localPatient: Patient;
+  setLocalPatient: (patient: Patient) => void;
   validationResult: any;
 }
 const ContactTab: React.FC<ContactTabProps> = ({
@@ -15,21 +17,25 @@ const ContactTab: React.FC<ContactTabProps> = ({
   validationResult
 }) => {
   // Fetch LOV data for various fields
-  const { data: preferredWayOfContactLovQueryResponse } = useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+  const { data: preferredWayOfContactLovQueryResponse } =
+    useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+  const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
+  const direction = useSelector(state => state.ui.direction);
   const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
 
   return (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid style={{flexDirection: direction === "RTL" ? 'row-reverse' : "row"}}>
       <MyInput
         vr={validationResult}
         column
         required
-        fieldName="phoneNumber"
+        fieldName="primaryMobileNumber"
         fieldLabel="Primary Mobile Number"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -39,14 +45,16 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldLabel="Receive SMS"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Secondary Mobile Number"
-        fieldName="secondaryMobileNumber"
+        fieldName="secondMobileNumber"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -54,6 +62,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="homePhone"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -61,6 +70,21 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="workPhone"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
+      />
+      <MyInput
+        vr={validationResult}
+        column
+        fieldLabel="Native Language"
+        fieldType="select"
+        fieldName="nativeLanguage"
+        selectData={primaryLangLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        searchable={false}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -68,6 +92,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="email"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -77,32 +102,22 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldLabel="Receive Email"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
+
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Preferred Way of Contact"
         fieldType="select"
-        fieldName="preferredContactLkey"
-        selectData={preferredWayOfContactLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        fieldName="preferredWayOfContact"
+        selectData={preferredWayOfContactEnum ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Native Language"
-        fieldType="select"
-        fieldName="primaryLanguageLkey"
-        selectData={primaryLangLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -110,13 +125,14 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="emergencyContactName"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Emergency Contact Relation"
         fieldType="select"
-        fieldName="emergencyContactRelationLkey"
+        fieldName="emergencyContactRelation"
         selectData={relationsLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -124,6 +140,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         searchable={false}
         menuMaxHeight={200}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -131,19 +148,21 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="emergencyContactPhone"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Role"
         fieldType="select"
-        fieldName="roleLkey"
+        fieldName="role"
         selectData={roleLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        width={170}
       />
     </Form>
   );

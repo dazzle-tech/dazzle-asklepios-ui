@@ -3,7 +3,7 @@ import { BaseQuery } from '@/newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
 type Id = number | string;
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+type PagedParams = { page: number; size: number; sort?: string };
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -29,6 +29,15 @@ export const countryService = createApi({
     getCountries: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/country',
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Country']
+    }),
+
+    getActiveCountries: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/country/active',
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -66,7 +75,7 @@ export const countryService = createApi({
       query: ({ id, ...body }) => ({
         url: `/api/setup/country/${id}`,
         method: 'PUT',
-        body: { id, ...body } // FIX: include ID in the body
+        body: { id, ...body }
       }),
       invalidatesTags: ['Country']
     }),
@@ -77,6 +86,15 @@ export const countryService = createApi({
         method: 'PATCH'
       }),
       invalidatesTags: ['Country']
+    }),
+
+
+    getCountriesBulk: builder.mutation({
+      query: (ids: number[]) => ({
+        url: '/api/setup/country/bulk',
+        method: 'POST',
+        body: ids
+      })
     })
   })
 });
@@ -84,11 +102,19 @@ export const countryService = createApi({
 export const {
   useGetCountriesQuery,
   useLazyGetCountriesQuery,
+
+  useGetActiveCountriesQuery,
+  useLazyGetActiveCountriesQuery,
+
   useGetCountryByNameQuery,
   useLazyGetCountryByNameQuery,
+
   useGetCountryByCodeQuery,
   useLazyGetCountryByCodeQuery,
+
   useAddCountryMutation,
   useUpdateCountryMutation,
-  useToggleCountryActiveMutation
+  useToggleCountryActiveMutation,
+
+  useGetCountriesBulkMutation
 } = countryService;

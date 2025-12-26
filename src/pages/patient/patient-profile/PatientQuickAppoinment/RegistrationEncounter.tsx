@@ -14,9 +14,11 @@ import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQue
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useSelector } from 'react-redux';
+import Translate from '@/components/Translate';
 
 const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, localPatient }) => {
   const mode = useSelector((state: any) => state.ui.mode);
+  const direction = useSelector(state => state.ui.direction);
   const [validationResult] = useState({});
   // const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
   const [newOrFollowup, setNewOrFollowup] = useState({ state: true });
@@ -396,42 +398,9 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
       }
     }
   }, [visitSequenceEncountersResponse]);
-
   return (
     <Form fluid layout="inline" className="fields-container">
       {/* Active Filters Tags */}
-      {activeFilters.length > 0 && (
-        <div style={{ 
-          width: '100%', 
-          marginBottom: '16px',
-          display: 'flex',
-          gap: '10px',
-          flexWrap: 'wrap',
-          padding: '8px',
-          backgroundColor: mode === 'light' ? '#f8f9fa' : '#434343ff',
-          borderRadius: '12px',
-          border: '1px solid var(--rs-border-primary)'
-        }}>
-          {activeFilters.map((filter, index) => (
-            <Tag
-              key={`${filter.type}-${index}`}
-              closable
-              onClose={() => handleRemoveFilter(filter.type)}
-              style={{
-                padding: '6px 12px',
-                fontSize: '13px',
-                backgroundColor: mode === 'light' ? '#e9ecef' : '#5a5a5a',
-                color: mode === 'light' ? '#495057' : '#ffffff',
-                border: '1px solid var(--rs-border-primary)',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
-            >
-              <strong>{filter.label}:</strong> {filter.value}
-            </Tag>
-          ))}
-        </div>
-      )}
 
       <MyInput
         vr={validationResult}
@@ -632,7 +601,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         record={localEncounter}
       />
       <div style={{ width: '100%', marginTop: '1rem' }}>
-        <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Encounter Information</div>
+        <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}><Translate>Encounter Information</Translate></div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
           <MyInput
             vr={validationResult}

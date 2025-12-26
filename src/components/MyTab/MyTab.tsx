@@ -19,6 +19,7 @@ import { Tabs } from 'rsuite';
 import React, { ReactElement } from 'react';
 import Translate from '../Translate';
 import "./styles.less";
+import { useSelector } from 'react-redux';
 
 interface TabDataItem {
   title: string;
@@ -44,6 +45,7 @@ const MyTab: React.FC<MyTabProps> = ({
   setActiveTab
 }) => {
 
+  const direction = useSelector(state => state.ui.direction);
   if (!Array.isArray(data)) {
     return null;
   }
@@ -64,7 +66,8 @@ const MyTab: React.FC<MyTabProps> = ({
             defaultActiveKey,
           })}
       appearance={appearance}
-      className={`tabs-style ${className}`}
+      // style={{flexDirection: direction === "LTR" ? "row" : "row-reverse" }}
+      className={`tabs-style ${className} ${direction}`}
     >
       {data.map((item, index) => (
           <Tabs.Tab key={index} eventKey={(index + 1) + ""} title={<Translate>{item.title}</Translate>} disabled={item.disabled ? item.disabled : false}>

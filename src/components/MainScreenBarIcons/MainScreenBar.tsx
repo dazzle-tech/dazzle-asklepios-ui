@@ -18,7 +18,7 @@ import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
 import NoticeIcon from '@rsuite/icons/Notice';
 import { FaEarthAmericas } from 'react-icons/fa6';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import ChatScreen from '../ChatScreen/ChatScreen';
 import './style.less';
 import MyAppointmentScreen from '../MyAppointmentScreen/MyAppointmentScreen';
@@ -43,7 +43,7 @@ import { setUser, setSelectedDepartment } from '@/reducers/authSlice';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppSelector } from '@/hooks';
 import { useChangeLangMutation } from '@/services/uiService';
-import { setLang, setMode } from '@/reducers/uiSlice';
+import { setDirection, setLang, setMode } from '@/reducers/uiSlice';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 import { formatEnumString, conjureValueBasedOnIDFromList } from '@/utils';
@@ -59,7 +59,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
-  const direction = localStorage.getItem('direction');
+   const direction = useSelector(state => state.ui.direction);
   const authSlice = useAppSelector(state => state.auth);
   const toast = useCallback(
     (msg: string) => {
@@ -326,6 +326,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                     item => item?.langKey === lang?.langKey
                   );
                   localStorage.setItem('direction', selectedObject?.direction);
+                  dispatch(setDirection(selectedObject?.direction));
                   localStorage.setItem('language', selectedObject?.langKey);
                 }}
               >
@@ -623,7 +624,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         )}
         {(width > 500 || !displaySearch) && (
           <>
-            <Whisper placement="bottomEnd" trigger="click" speaker={renderDepartmentsSpeaker}>
+            <Whisper placement={direction === 'RTL' ? "bottomStart" : "bottomEnd"} trigger="click" speaker={renderDepartmentsSpeaker}>
               <span>
                 <Tooltip title="Switch Department">
                   <IconButton size="small">
@@ -636,6 +637,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               </span>
             </Whisper>
             <Whisper
+              key={direction}
               placement="bottomEnd"
               trigger="click"
               ref={trigger}
@@ -646,7 +648,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               </IconButton>
             </Whisper>
             <Whisper
-              placement="bottomEnd"
+              placement={direction === 'RTL' ? "bottomStart" : "bottomEnd"}
               trigger="click"
               ref={trigger}
               speaker={renderNoticeSpeaker}
@@ -660,7 +662,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             </Whisper>
             <Divider style={{ height: '31px', fontSize: '4px' }} vertical />
             <Whisper
-              placement="bottomEnd"
+              placement={direction === 'RTL' ? "bottomStart" : "bottomEnd"}
               trigger="click"
               ref={trigger}
               speaker={renderAdminSpeaker}

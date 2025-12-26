@@ -1,21 +1,20 @@
-import React from 'react';
-import type { ApPatient } from '@/types/model-types';
-import { Col, Row, Stack, Text } from 'rsuite';
 import SectionContainer from '@/components/SectionsoContainer';
-import ContactTab from './ContactTab';
-import AddressTab from './AddressTab';
-import BasicInfo from './BasicInfo';
-import DocumentInfo from './DocumentInfo';
 import Translate from '@/components/Translate';
+import { Patient } from '@/types/model-types-new';
+import React from 'react';
+import { Col, Row, Stack } from 'rsuite';
+import BasicInfo from './BasicInfo';
+import ContactTab from './ContactTab';
+import './styles.less';
+import { useSelector } from 'react-redux';
 
 interface DemographicsTabProps {
-  localPatient: ApPatient;
-  setLocalPatient: (patient: ApPatient) => void;
+  localPatient: Patient;
+  setLocalPatient: (patient: Patient) => void;
   validationResult: any;
-  genderLovQueryResponse: any;
-  docTypeLovQueryResponse: any;
+  genderEnum: any;
+  patientDocumentEnum: any;
   countryLovQueryResponse: any;
-  bloodGroupLovQueryResponse: any;
   patientClassLovQueryResponse: any;
   ageFormatType: { ageFormat: string };
   ageGroupValue: { ageGroup: string };
@@ -25,77 +24,91 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult,
-  genderLovQueryResponse,
-  docTypeLovQueryResponse,
-  countryLovQueryResponse,
+  genderEnum,
   patientClassLovQueryResponse,
   ageFormatType,
   ageGroupValue
 }) => {
+  const direction = useSelector(state => state.ui.direction);
 
   return (
     <Stack>
       <Stack.Item grow={1}></Stack.Item>
       <Stack.Item grow={15}>
         <Row gutter={15} className="d">
-          <Col md={12}>
-            <Row>
-              <SectionContainer
-                title={<Translate>Basic Information</Translate>}
-                content={
-                  <BasicInfo
-                    validationResult={validationResult}
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    genderLovQueryResponse={genderLovQueryResponse}
-                    ageFormatType={ageFormatType}
-                    ageGroupValue={ageGroupValue}
-                    patientClassLovQueryResponse={patientClassLovQueryResponse}
+          {direction === 'RTL' ? (
+            <>
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Translate>Contact</Translate>}
+                    content={
+                      <ContactTab
+                        localPatient={localPatient}
+                        setLocalPatient={setLocalPatient}
+                        validationResult={validationResult}
+                      />
+                    }
                   />
-                }
-              />
-            </Row>
-            <Row>
-              <SectionContainer
-                title={<Translate>Document</Translate>}
-                content={
-                  <DocumentInfo
-                    validationResult={validationResult}
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    docTypeLovQueryResponse={docTypeLovQueryResponse}
-                    countryLovQueryResponse={countryLovQueryResponse}
+                </Row>
+              </Col>
+
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Translate>Basic Information</Translate>}
+                    content={
+                      <BasicInfo
+                        validationResult={validationResult}
+                        localPatient={localPatient}
+                        setLocalPatient={setLocalPatient}
+                        genderEnum={genderEnum}
+                        ageFormatType={ageFormatType}
+                        ageGroupValue={ageGroupValue}
+                        patientClassLovQueryResponse={patientClassLovQueryResponse}
+                      />
+                    }
                   />
-                }
-              />
-            </Row>
-          </Col>
-          <Col md={12}>
-            <Row>
-              <SectionContainer
-                title={<Translate>Contact</Translate>}
-                content={
-                  <ContactTab
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    validationResult={validationResult}
+                </Row>
+              </Col>
+            </>
+          ) : (
+            <>
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Translate>Basic Information</Translate>}
+                    content={
+                      <BasicInfo
+                        validationResult={validationResult}
+                        localPatient={localPatient}
+                        setLocalPatient={setLocalPatient}
+                        genderEnum={genderEnum}
+                        ageFormatType={ageFormatType}
+                        ageGroupValue={ageGroupValue}
+                        patientClassLovQueryResponse={patientClassLovQueryResponse}
+                      />
+                    }
                   />
-                }
-              />
-            </Row>
-            <Row>
-              <SectionContainer
-                title={<Translate>Address</Translate>}
-                content={
-                  <AddressTab
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    validationResult={validationResult}
+                </Row>
+              </Col>
+
+              <Col md={12}>
+                <Row>
+                  <SectionContainer
+                    title={<Translate>Contact</Translate>}
+                    content={
+                      <ContactTab
+                        localPatient={localPatient}
+                        setLocalPatient={setLocalPatient}
+                        validationResult={validationResult}
+                      />
+                    }
                   />
-                }
-              />
-            </Row>
-          </Col>
+                </Row>
+              </Col>
+            </>
+          )}
         </Row>
       </Stack.Item>
     </Stack>

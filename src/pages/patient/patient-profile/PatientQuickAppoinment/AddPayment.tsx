@@ -10,7 +10,9 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import { Checkbox } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useSelector } from 'react-redux';
 const AddPayment = ({ isReadOnly }) => {
+    const direction = useSelector(state => state.ui.direction);
     const [paymentMethodSelected, setPaymentMethodSelected] = useState(null);
     const [validationResult] = useState({});
 
@@ -64,7 +66,7 @@ const AddPayment = ({ isReadOnly }) => {
 
     return (
         <div className='payment-method-container'>
-            <Form layout="inline" fluid className='fields-container'>
+            <Form layout="inline" fluid className='fields-container' dir={direction === 'RTL' ? 'rtl' : 'ltr'}>
                 <MyInput
                     vr={validationResult}
                     column

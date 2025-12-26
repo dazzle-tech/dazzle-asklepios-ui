@@ -1,7 +1,7 @@
 import { uiService } from '@/services/uiService';
 import { createSlice } from '@reduxjs/toolkit';
 const savedLang = localStorage.getItem('lang') || 'en';
-
+const savedDirection = localStorage.getItem('direction') || 'LTR';
 // Be defensive when reading from localStorage in case it’s corrupted
 let savedTranslations: Record<string, string> = {};
 try {
@@ -17,6 +17,7 @@ const initialState = {
   lang: savedLang,
   mode: 'light',
   translations: savedTranslations,
+  direction: savedDirection,
   // {
 
     // pt: { // اللغة البرتغالية
@@ -262,6 +263,16 @@ export const uiSlice = createSlice({
         console.error('Unable to persist translations:', e);
       }
   },
+   // Persist direction (LTR/RTL)
+    setDirection: (state, action) => {
+      state.direction = action.payload;
+      try {
+        localStorage.setItem('direction', action.payload);
+      } catch (e) {
+        // Optional: handle quota errors gracefully
+        console.error('Unable to persist translations:', e);
+      }
+  },
   },
   extraReducers: builder => {
     /* changeLang */
@@ -274,5 +285,5 @@ export const uiSlice = createSlice({
     );
   }
 });
-export const { setMode, setLang, setTranslations } = uiSlice.actions;
+export const { setMode, setLang, setTranslations, setDirection } = uiSlice.actions;
 export default uiSlice;

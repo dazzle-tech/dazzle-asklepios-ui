@@ -16,8 +16,10 @@ import MyTable from '@/components/MyTable';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddFamilyMember from './AddFamilyMember';
+import { useSelector } from 'react-redux';
 const PatientFamilyMembers = ({ localPatient }) => {
     const dispatch = useAppDispatch();
+    const direction = useSelector(state => state.ui.direction);
     const [relationModalOpen, setRelationModalOpen] = useState(false);
     const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
     const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({ ...newApPatientRelation });
@@ -112,7 +114,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
     );
     return (
         <div className="tab-main-container">
-            <div className="tab-content-btns">
+            <div className="tab-content-btns" dir={direction === "RTL" ? "rtl" : "ltr"}>
                 <MyButton
                     onClick={handleNewRelative}
                     disabled={!localPatient.key}

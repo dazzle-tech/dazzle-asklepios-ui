@@ -18,8 +18,10 @@ import { formatDateWithoutSeconds, formatEnumString, conjureValueBasedOnKeyFromL
 import { PatientAttachment as PatientAttachmentType, EncounterAttachment } from '@/types/model-types-new';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
+import { useSelector } from 'react-redux';
 
 const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAttachmentList }) => {
+    const direction = useSelector(state => state.ui.direction);
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState<PatientAttachmentType | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -359,7 +361,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
     }, [refetchAttachmentList, setRefetchAttachmentList]);
     return (
         <div className="tab-main-container">
-            <div className="tab-content-btns">
+            <div className="tab-content-btns" dir={direction === "RTL" ? "rtl" : "ltr"}>
                 <MyButton
                     onClick={handleAddNewAttachment}
                     disabled={!localPatient?.id && !localPatient?.key}

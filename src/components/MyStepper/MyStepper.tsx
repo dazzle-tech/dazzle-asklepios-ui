@@ -11,7 +11,9 @@ import {
   stepConnectorClasses,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Text } from 'rsuite';
+import Translate from "../Translate";
+import { Text } from "rsuite";
+import { useSelector } from "react-redux";
 import './styles.less';
 
 type OrientationType = 'horizontal' | 'vertical';
@@ -29,13 +31,43 @@ const MyStepper: React.FC<MyStepperProps> = ({
   orientation = 'horizontal',
   modalColor = 'var(--primary-blue)',
 }) => {
-  /* =========================
-     Custom Step Icon
-  ========================= */
-  const CustomStepIcon = (props: any) => {
-    const { active, completed, error, icon, iconsMap } = props;
-    const stepData = iconsMap[icon];
-    const customIcon = stepData?.customIcon;
+  const direction = useSelector(state => state.ui.direction);
+    const [width, setWidth] = useState(40);
+    const [height, setHeight] = useState(40);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    
+useEffect(() => {
+  const handleResize = () => {
+    const w = window.innerWidth;
+    setWindowWidth(w);
+      if (w <= 400) {
+      setWidth(24);
+      setHeight(24);
+    }
+      if (w <= 500) {
+      setWidth(26);
+      setHeight(26);
+    }
+     if (w <= 550) {
+      setWidth(28);
+      setHeight(28);
+    }
+    if (w <= 620) {
+      setWidth(31);
+      setHeight(31);
+    }
+    if (w <= 700) {
+      setWidth(34);
+      setHeight(34);
+    } else if (w <= 800) {
+      setWidth(37);
+      setHeight(37);
+    } else {
+      setWidth(40);
+      setHeight(40);
+    }
+  };
+
 
     const backgroundColor = error
       ? 'error.main'
@@ -46,43 +78,52 @@ const MyStepper: React.FC<MyStepperProps> = ({
       : '#fff';
 
     const iconColor = error || completed || active ? '#fff' : '#888';
+    // const QontoConnector = styled(StepConnector)(({ theme }) => ({
+    //     [`&.${stepConnectorClasses.alternativeLabel}`]: {
+    //       top: 20,
+    //       left: 'calc(-50% + 25px)',
+    //       right: 'calc(50% + 25px)',
+    //     },
+       
+    //     [`& .${stepConnectorClasses.line}`]: {
+    //       borderColor:'#D9D9D9',
+    //       borderTopWidth:3,
+    //       borderRadius: 1,
+    //       height: 10,
+    //       ...theme.applyStyles('dark', {
+    //         borderColor: '#D9D9D9',
+    //       }),
+    //     },
+    //   }));
+      const QontoConnector = styled(StepConnector)(({ theme }) => {
+  const isRTL = direction === 'RTL';
 
-    return (
-      <Box
-        sx={{
-          border: `2px dashed ${modalColor}`,
-          padding: '4px',
-          borderRadius: '50%',
-          display: 'inline-flex',
-        }}
-      >
-        <Box
-          sx={{
-            width: { xs: 32, sm: 32, md: 34, lg: 38, xl: 40 },
-            height: { xs: 32, sm: 32, md: 34, lg: 38, xl: 40 },
-            borderRadius: '50%',
-            backgroundColor,
-            color: iconColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            border: !active && !completed && !error ? '1px solid #ccc' : 'none',
-          }}
-        >
-          {error ? (
-            <ReportProblemIcon fontSize="small" />
-          ) : completed ? (
-            <Check fontSize="small" />
-          ) : customIcon ? (
-            customIcon
-          ) : (
-            icon
-          )}
-        </Box>
-      </Box>
-    );
+  return {
+    [`&.${stepConnectorClasses.alternativeLabel}`]: {
+      top: 20,
+      left: isRTL ? 'calc(50% + 25px)' : 'calc(-50% + 25px)',
+      right: isRTL ? 'calc(-50% + 25px)' : 'calc(50% + 25px)',
+    },
+
+    [`& .${stepConnectorClasses.line}`]: {
+      borderColor: '#D9D9D9',
+      borderTopWidth: 3,
+      borderRadius: 1,
+      height: 10,
+
+      ...theme.applyStyles('dark', {
+        borderColor: '#D9D9D9',
+      }),
+    },
   };
+});
+
+      const connector = orientation === "vertical" ? <VerticalConnector /> : <QontoConnector />
+    return (
+        <>
+            <Stepper style={{direction: direction === 'RTL' ? 'rtl' : 'ltr'}} activeStep={activeStep} alternativeLabel={orientation === "vertical" ?false:true} orientation={orientation} connector={connector}>
+                {stepsList.map((step, index) => {
+                    const isErrorStep = step.isError;
 
   /* =========================
      Connectors
@@ -96,18 +137,26 @@ const MyStepper: React.FC<MyStepperProps> = ({
     },
   }));
 
-  const HorizontalConnector = styled(StepConnector)(() => ({
-    [`&.${stepConnectorClasses.alternativeLabel}`]: {
-      top: 16,
-    },
-    [`& .${stepConnectorClasses.line}`]: {
-      borderTopWidth: 3,
-      borderColor: '#D9D9D9',
-      borderRadius: 1,
-      marginLeft: 4,
-      marginRight: 4,
-    },
-  }));
+                    return (
+                        <Step key={step.key}>
+                            <StepLabel
+                              StepIconComponent={(props) => (
+                                  <CustomStepIcon {...props} iconsMap={iconsMap} modalColor={modalColor} />
+                              )}
+                                error={isErrorStep}
+                                optional={
+                                    <Typography variant="caption" color="text.secondary">
+                                        {step.description}
+                                    </Typography>
+                                }
+                            >
+                                <Text className="text-value"><Translate>{step.value}</Translate></Text>
+                                
+                            </StepLabel>
+                        </Step>
+                    );
+                })}
+            </Stepper>
 
   const connector =
     orientation === 'vertical' ? <VerticalConnector /> : <HorizontalConnector />;

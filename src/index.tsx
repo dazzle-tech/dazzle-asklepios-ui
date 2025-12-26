@@ -38,6 +38,7 @@ if (typeof window !== 'undefined') {
 }
 
 const RootWrapper = () => {
+  const direction = useSelector(state => state.ui.direction);
   const mode = useSelector((state: any) => state.ui.mode);
 
   // MUI theme
@@ -61,7 +62,7 @@ const RootWrapper = () => {
       <CssBaseline />
       <RSuiteProvider theme={mode === 'dark' ? 'dark' : 'light'}>
         <StyledThemeProvider theme={styledTheme}>
-          <div className={`${mode === 'light' ? 'light' : 'dark'}`}>
+          <div className={`${mode} ${direction === 'RTL' ? 'rtl' : 'ltr'}`}>
             <App />
           </div>
         </StyledThemeProvider>
