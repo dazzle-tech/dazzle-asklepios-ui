@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Panel,
   Form,
@@ -34,25 +34,25 @@ const Claimscreen = () => {
   const divContent = (
     "Claims"
   );
+
+useEffect(() => {
   dispatch(setPageCode('ProductList'));
-  dispatch(setDivContent(divContent));
+  dispatch(setDivContent('Claims'));
+}, [dispatch]);
 
 
   const [selectedRow, setSelectedRow] = useState<any>(null);
   const [filter, setFilter] = useState<any>({});
   const [openActionsMenu, setOpenActionsMenu] = useState(false);
 
-  const { data: departmentListResponse } = useGetDepartmentsQuery({
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  });
 
-  const departmentOptions =
-    departmentListResponse?.data?.map(dep => ({
-      label: dep.name,
-      value: dep.id
-    })) ?? [];
+const STATUSOPTIONS = [
+  { label: 'Pending', value: 'PENDING' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Completed', value: 'COMPLETED' },
+  { label: 'Rejected', value: 'REJECTED' }
+];
+
 
   const content = (<>
     <div className="advanced-filters">
@@ -63,7 +63,7 @@ const Claimscreen = () => {
           fieldLabel="Coding Status"
           fieldName="department"
           fieldType="checkPicker"
-          selectData={departmentOptions}
+          selectData={STATUSOPTIONS}
           selectDataLabel="label"
           selectDataValue="value"
           record={filter}
@@ -75,7 +75,7 @@ const Claimscreen = () => {
           fieldLabel="Claim Billing Mode"
           fieldName="department"
           fieldType="checkPicker"
-          selectData={departmentOptions}
+          selectData={STATUSOPTIONS}
           selectDataLabel="label"
           selectDataValue="value"
           record={filter}
@@ -87,7 +87,7 @@ const Claimscreen = () => {
           fieldLabel="Assigned"
           fieldName="department"
           fieldType="checkPicker"
-          selectData={departmentOptions}
+          selectData={STATUSOPTIONS}
           selectDataLabel="label"
           selectDataValue="value"
           record={filter}
@@ -116,7 +116,7 @@ const Claimscreen = () => {
           fieldLabel="Encounter Billing Mode"
           fieldName="department"
           fieldType="checkPicker"
-          selectData={departmentOptions}
+          selectData={STATUSOPTIONS}
           selectDataLabel="label"
           selectDataValue="value"
           record={filter}
@@ -156,7 +156,7 @@ const Claimscreen = () => {
         fieldLabel="Department"
         fieldName="department"
         fieldType="checkPicker"
-        selectData={departmentOptions}
+        selectData={STATUSOPTIONS}
         selectDataLabel="label"
         selectDataValue="value"
         record={filter}
@@ -168,7 +168,7 @@ const Claimscreen = () => {
         fieldLabel="Encounter Status"
         fieldName="department"
         fieldType="checkPicker"
-        selectData={departmentOptions}
+        selectData={STATUSOPTIONS}
         selectDataLabel="label"
         selectDataValue="value"
         record={filter}
@@ -181,7 +181,7 @@ const Claimscreen = () => {
         fieldLabel="insurance"
         fieldName="department"
         fieldType="checkPicker"
-        selectData={departmentOptions}
+        selectData={STATUSOPTIONS}
         selectDataLabel="label"
         selectDataValue="value"
         record={filter}
