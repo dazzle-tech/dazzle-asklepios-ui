@@ -107,6 +107,9 @@ import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
 import { prescriptionPService } from './services/setup/prescriptionPService';
 import { radiologyReportApi } from './services/setup/radiologyReportApi';
+import {clinicalSummaryService} from '@/services/ai-services/summarizationService';
+import {clinicalRecommendationsService} from '@/services/ai-services/clinicalRecommendationsService';
+import {medicationTestOrdersValidationService } from '@/services/ai-services/medicationTestOrdersValidationApi';
 
 export const store = configureStore({
   reducer: {
@@ -313,7 +316,13 @@ export const store = configureStore({
     [PayorPlanService.reducerPath]: PayorPlanService.reducer,
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
-    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer
+    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
+
+        //AI Services
+    [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer, 
+    [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
+    [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -422,7 +431,10 @@ export const store = configureStore({
       PayorService.middleware,
       PayorPlanService.middleware,
       prescriptionPService.middleware,
-      radiologyReportApi.middleware
+      radiologyReportApi.middleware,
+      clinicalSummaryService.middleware,
+      clinicalRecommendationsService.middleware,
+      medicationTestOrdersValidationService.middleware,
     ])
 });
 

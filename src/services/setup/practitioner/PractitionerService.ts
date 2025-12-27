@@ -146,13 +146,26 @@ export const PractitionerService = createApi({
       ],
     }),
 
-    // 🔹 Toggle active status
     togglePractitionerActive: builder.mutation({
       query: (id) => ({
         url: `/api/setup/practitioner/${id}/toggle-active`,
         method: "PATCH",
       }),
       invalidatesTags: ["Practitioner"],
+    }),
+    getPractitionerByUserId: builder.query<any, number>({
+      query: (userId) => ({
+        url: `/api/setup/practitioner/by-user/${userId}`,
+        method: "GET",
+      }),
+      providesTags: ["Practitioner"],
+    }),
+   existsPractitionerByUserId: builder.query<boolean, number>({
+      query: (userId) => ({
+        url: `/api/setup/practitioner/exists-by-user/${userId}`,
+        method: "GET",
+      }),
+      providesTags: ["Practitioner"],
     }),
   }),
 });
@@ -170,4 +183,8 @@ export const {
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
+  useGetPractitionerByUserIdQuery,
+  useLazyGetPractitionerByUserIdQuery,
+  useExistsPractitionerByUserIdQuery,
+  useLazyExistsPractitionerByUserIdQuery,
 } = PractitionerService;

@@ -60,6 +60,8 @@ import {
   useGetDiagnosticsTestLaboratoryListQuery,
   useGetDiagnosticsTestRadiologyListQuery
 } from '@/services/setupService';
+import PatientHistorySummaryModal from './PatientHistorySummaryModal';
+
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
 import { newApDrugOrderMedications } from '@/types/model-types-constructor';
 import SampleModal from '@/pages/lab-module/SampleModal';
@@ -235,8 +237,9 @@ const DiagnosticsOrder = props => {
       (search.type === '862810597620632'
         ? isLabTestsLoading
         : search.type === '862828331135792'
-        ? isRadiologyTestsLoading
-        : false));
+          ? isRadiologyTestsLoading
+          : false));
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
   const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
@@ -727,7 +730,63 @@ const DiagnosticsOrder = props => {
   const joinValuesFromArray = values => {
     return values.filter(Boolean).join(', ');
   };
+  const buildDiagnosticsSummaryPayload = (
+    patient: any,
+    encounter: any,
+    orderTests: any[] = []
+  ) => {
+    const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
 
+    const patientInfo = {
+      mrn: toStr(patient?.patientMrn),
+      fullName: toStr(patient?.fullName || patient?.patientFullName),
+      gender: toStr(patient?.genderLvalue?.lovDisplayVale || patient?.genderLvalue?.valueCode),
+      dob: toStr(patient?.dob),
+    };
+
+    const encounterInfo = {
+      visitId: toStr(encounter?.visitId),
+      visitType: toStr(encounter?.visitTypeLvalue?.lovDisplayVale),
+      plannedStartDate: toStr(encounter?.plannedStartDate),
+      chiefComplaint: toStr(encounter?.chiefComplaint),
+      patientAge: toStr(encounter?.patientAge),
+      diagnosis: toStr(encounter?.diagnosis),
+    };
+
+    // Each row as a single string "exactly like table data (human readable)"
+    const testsAsStrings: string[] = orderTests.map((row: any) => {
+      const parts = [
+        `Order Type: ${toStr(row?.test?.testTypeLvalue?.lovDisplayVale)}`,
+        `Test Name: ${toStr(row?.test?.testName)}`,
+        `Internal Code: ${toStr(row?.test?.internalCode)}`,
+        `Status: ${toStr(row?.statusLvalue?.lovDisplayVale || row?.statusLkey)}`,
+        `Reason: ${toStr(row?.reasonLvalue?.lovDisplayVale || row?.reasonLkey)}`,
+        `Priority: ${toStr(row?.priorityLvalue?.lovDisplayVale || row?.priorityLkey)}`,
+        `Notes: ${toStr(row?.notes)}`,
+        `Cancellation Reason: ${toStr(row?.cancellationReason)}`,
+      ];
+
+      return parts
+        .map(s => s.trim())
+        .filter(s => !s.endsWith(':') && !s.endsWith(': '))
+        .join(' | ');
+    });
+
+    return {
+      patient: patientInfo,
+      encounter: encounterInfo,
+      complain: toStr(encounter?.chiefComplaint), // explicit field as requested
+      diagnosis: {
+        value: toStr(encounter?.diagnosis),
+      },
+      tests: testsAsStrings,
+    };
+  };
+  const payload = buildDiagnosticsSummaryPayload(
+    patient,
+    encounter,
+    orderTestList?.object ?? []
+  );
   const tableColumns = [
     {
       key: 'check',
@@ -1083,8 +1142,8 @@ const DiagnosticsOrder = props => {
                     search.type === '862810597620632'
                       ? labCategoriesLovResponse?.object ?? []
                       : search.type === '862828331135792'
-                      ? radCategoriesLovResponse?.object ?? []
-                      : []
+                        ? radCategoriesLovResponse?.object ?? []
+                        : []
                   }
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
@@ -1110,8 +1169,9 @@ const DiagnosticsOrder = props => {
             </MyButton>
             {/* Sign and Submit */}
             <MyButton
-              onClick={handleSubmitPres}
-              disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
+              onClick={() => {
+                setSummaryModalOpen(true);
+              }} disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
               prefixIcon={() => <CheckIcon />}
             >
               Sign & Submit
@@ -1219,7 +1279,7 @@ const DiagnosticsOrder = props => {
             source="DIAGNOSTIC_ORDER_ATTACHMENT"
             sourceId={orderTest?.key ? Number(orderTest.key) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />
@@ -1403,7 +1463,15 @@ const DiagnosticsOrder = props => {
         edit={edit}
         onSave={handleSaveTest}
       />
-
+      <PatientHistorySummaryModal
+        open={summaryModalOpen}
+        setOpen={setSummaryModalOpen}
+        patient={patient}
+        encounter={encounter}
+        edit={edit}
+        handleSave={handleSubmitPres}
+        payload={payload}
+      />
       <MyModal
         open={missingDeptModalOpen}
         setOpen={setMissingDeptModalOpen}
