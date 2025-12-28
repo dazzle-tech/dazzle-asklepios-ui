@@ -49,7 +49,7 @@ export const medicationTestOrdersValidationService = createApi({
   endpoints: builder => ({
     validateMedication: builder.mutation<ValidationResponse, MedicationValidationRequest>({
       query: (body) => ({
-        url: '/api/ai/v1/medication-test-orders/validate/medication',
+        url: '/api/ai/v1/medication-test-orders-validation/validate/medication',
         method: 'POST',
         body,
       }),
@@ -57,7 +57,7 @@ export const medicationTestOrdersValidationService = createApi({
 
     validateTests: builder.mutation<ValidationResponse, TestValidationRequest>({
       query: (body) => ({
-        url: '/api/ai/v1/medication-test-orders/validate/tests',
+        url: '/api/ai/v1/medication-test-orders-validation/validate/tests',
         method: 'POST',
         body,
       }),
@@ -66,7 +66,7 @@ export const medicationTestOrdersValidationService = createApi({
     // optional health endpoint (if your backend provides it)
     health: builder.query<any, void>({
       query: () => ({
-        url: '/api/ai/v1/medication-test-orders/health',
+        url: '/api/ai/v1/medication-test-orders-validation/health',
         method: 'GET',
       }),
     }),
