@@ -110,6 +110,11 @@ import {priceListAttributesService} from '@/services/billing/PriceListAttributes
 import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { formTemplateService } from './services/setup/formTemplateService';
 import { FormEntriesService } from './services/setup/formEntriesService';
+import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
+import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
+import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
+import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
+import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -321,6 +326,14 @@ export const store = configureStore({
 
     [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
     [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
+
+    [prescriptionPService.reducerPath]: prescriptionPService.reducer,
+    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
+
+        //AI Services
+    [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer, 
+    [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
+    [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -433,6 +446,11 @@ export const store = configureStore({
       PayorPlanService.middleware,
       DischargePlanningService.middleware,
       priceListAttributesService.middleware,
+      prescriptionPService.middleware,
+      radiologyReportApi.middleware,
+      clinicalSummaryService.middleware,
+      clinicalRecommendationsService.middleware,
+      medicationTestOrdersValidationService.middleware,
 
     ])
 });

@@ -62,7 +62,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             vr={validationResult}
             fieldType="checkbox"
             fieldLabel="Notice of Privacy Practices"
-            fieldName="noticeOfPrivacyPractice"
+            fieldName="gdprNoticeOfPrivacyPractice"
             record={localPatient}
             setRecord={setLocalPatient}
           />
@@ -71,7 +71,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             vr={validationResult}
             fieldType="date"
             showLabel={false}
-            fieldName="noticeOfPrivacyPracticeDate"
+            fieldName="gdprNoticeOfPrivacyPracticeDate"
             record={localPatient}
             setRecord={setLocalPatient}
           />
@@ -81,7 +81,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             column
             fieldType="checkbox"
             fieldLabel="Privacy Authorization"
-            fieldName="privacyAuthorization"
+            fieldName="gdprPrivacyAuthorization"
             record={localPatient}
             setRecord={setLocalPatient}
           />
@@ -90,7 +90,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             column
             fieldType="date"
             showLabel={false}
-            fieldName="privacyAuthorizationDate"
+            fieldName="gdprPrivacyAuthorizationDate"
             record={localPatient}
             setRecord={setLocalPatient}
           />
