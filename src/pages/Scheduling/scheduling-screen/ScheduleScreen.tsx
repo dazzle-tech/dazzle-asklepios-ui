@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState,useMemo } from 'react';
 import { Calendar as BigCalendar, Views, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -76,6 +76,7 @@ const ScheduleScreen = () => {
   const [totalAppointmentsText, setTotalAppointmentsText] = useState<string>();
   const [calendarDate, setCalendarDate] = useState<Date>(null);
   const [finalAppointments, setFinalAppointments] = useState();
+  const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
 
   const ResourceTypeEnum = useEnumOptions("ResourceType");
 
@@ -147,9 +148,10 @@ const ScheduleScreen = () => {
         resource => selectedResourceType?.resourcesType.includes(resource.resourceTypeLkey)
       );
       setFilteredResourcesList(filtered);
-    } else if (!selectedResourceType) {
-      setFilteredResourcesList([]);
-    }
+      } else {
+        setFilteredResourcesList(resourcesWithAvailabilityResponse?.object ?? []);
+      }
+
   }, [resourcesWithAvailabilityResponse, selectedResourceType?.resourcesType]);
   useEffect(() => {
     if (selectedSlot) {
@@ -233,6 +235,33 @@ const ScheduleScreen = () => {
       setFinalAppointments(updatedAppointments);
     }
   }, [visibleAppointments, attachments]);
+
+    const appointmentResourceKeys = new Set(
+      (finalAppointments ?? []).map(e => e.resourceId).filter(Boolean)
+    );
+
+const dayIndex = currentCalendarDate.getDay();
+
+const availabilityResourceKeys = useMemo(() => {
+  return new Set(
+    (resourcesWithAvailabilityResponse?.object ?? [])
+      .filter(r =>
+        r.availability?.some(a => a.dayOfWeek === dayIndex)
+      )
+      .map(r => r.key)
+  );
+}, [resourcesWithAvailabilityResponse, dayIndex]);
+
+
+const visibleResources =
+  currentView === 'day'
+    ? (finalResourceLit ?? []).filter(
+        r =>
+          appointmentResourceKeys.has(r.key) ||
+          availabilityResourceKeys.has(r.key)
+      )
+    : finalResourceLit;
+
 
   const handleChangeAppointment = () => {
     setAppointment(selectedEvent.appointmentData);
@@ -529,34 +558,35 @@ const ScheduleScreen = () => {
   const minTime = new Date();
   minTime.setHours(8, 0, 0);
 
-  useEffect(() => {
-    const selectedKeys = selectedResources?.resourceKey;
-    const selectedTypeKey = selectedResourceType?.key;
+    useEffect(() => {
+      const all = resourcesWithAvailabilityResponse?.object ?? [];
+      let list = all;
 
-    let finalList = filteredResourcesList;
+      // Resource Type filter
+      if (selectedResourceType?.resourcesType?.length) {
+        list = list.filter(r =>
+          selectedResourceType.resourcesType.includes(r.resourceTypeLkey)
+        );
+      }
 
-    if (selectedTypeKey) {
-      finalList = finalList.filter(resource => resource.resourceTypeLkey === selectedTypeKey);
-    }
+      // Specific Resources filter
+      if (
+        Array.isArray(selectedResources?.resourceKey) &&
+        selectedResources.resourceKey.length
+      ) {
+        list = list.filter(r =>
+          selectedResources.resourceKey.includes(r.key)
+        );
+      }
 
-    if (Array.isArray(selectedKeys) && selectedKeys.length > 0) {
-      finalList = finalList.filter(resource => selectedKeys.includes(resource.key));
-    }
+      setFinalResourceLit(list);
+    }, [
+      resourcesWithAvailabilityResponse,
+      selectedResourceType,
+      selectedResources
+    ]);
 
-    if (!finalList || finalList.length === 0) {
-      finalList = resourcesWithAvailabilityResponse?.object || [];
-    }
 
-    // ──────────────────────────── RESOURCES & AVAILABILITY LOGGING ────────────────────────────
-   
-
-    setFinalResourceLit(finalList);
-  }, [
-    selectedResources,
-    selectedResourceType,
-    filteredResourcesList,
-    resourcesWithAvailabilityResponse
-  ]);
 
 
   const hexToRgba = (hex, alpha = 0.1) => {
@@ -650,15 +680,21 @@ const ScheduleScreen = () => {
       r => r.key === resourceId
     );
 
+
+
     if (currentResource && currentResource.availability) {
-      const jsDay = date.getDay(); // JavaScript day: 0=Sunday, 6=Saturday
-      const apiDay = (jsDay + 1) % 7; // Convert to API day: 0=Saturday, 1=Sunday, etc.
+      const jsDay = date.getDay(); // 0 Sunday → 6 Saturday
+      const apiDay = jsDay;
       const currentMinutes = date.getHours() * 60 + date.getMinutes();
       const isAvailable =
         currentResource?.availability?.some(period => {
           const startMinutes = period.startHour * 60 + (period.startMinute || 0);
           const endMinutes = period.endHour * 60 + (period.endMinute || 0);
-
+            console.log('Julia availability', currentResource.resourceName, {
+              jsDay,
+              apiDay,
+              availability: currentResource.availability
+            });
           const match =
             period.dayOfWeek === apiDay &&
             currentMinutes >= startMinutes &&
@@ -670,6 +706,7 @@ const ScheduleScreen = () => {
         return {};
       }
     }
+
 
     return { style: defaultShadedStyle };
   };
@@ -886,13 +923,16 @@ const ScheduleScreen = () => {
           </div>
 
           <BigCalendar
-            date={calendarDate}
-            onNavigate={date => setCalendarDate(date)}
+            date={currentCalendarDate}
+            onNavigate={date => {
+              setCalendarDate(date);
+              setCurrentCalendarDate(date);
+            }}
             className={`my-calendar ${currentView}`}
             style={{ height: '73vh' }}
             min={minTime}
             {...(currentView === 'day' && {
-              resources: finalResourceLit ?? [],
+              resources: visibleResources  ?? [],
               resourceIdAccessor: 'key',
               resourceTitleAccessor: 'resourceName'
             })}
@@ -910,7 +950,7 @@ const ScheduleScreen = () => {
 
                 if (currentResource && currentResource.availability) {
                   const jsDay = slotInfo.start.getDay();
-                  const apiDay = (jsDay + 1) % 7;
+                  const apiDay = jsDay;
                   const currentMinutes =
                     slotInfo.start.getHours() * 60 + slotInfo.start.getMinutes();
 
