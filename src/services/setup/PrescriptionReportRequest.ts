@@ -1,7 +1,33 @@
+import { prescriptionInstructions } from './../../types/model-types-new';
+// ============================================================================
+// FILE: prescriptionPService.ts  (UPDATED - send instruction lists like frontend)
+// ============================================================================
+
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery } from '@/api';
 
 /* ========= Request DTO ========= */
+/* ========= Request DTO ========= */
+
+export interface LovValueDTO {
+  lovDisplayVale?: string; 
+}
+
+export interface PredefinedInstructionDTO {
+  id: number;              // inst.id
+  dose?: string | number;  // inst.dose
+  unit?: string;           // inst.unit (enum string)
+  rout?: string;           // inst.rout (enum string)
+  frequency?: string;      // inst.frequency (enum string)
+}
+
+export interface CustomInstructionDTO {
+  prescriptionMedicationsKey: string; // row.key
+  dose?: string | number;
+  unitLvalue?: LovValueDTO;           // ci.unitLvalue.lovDisplayVale
+  frequencyLvalue?: LovValueDTO;      // ci.frequencyLvalue.lovDisplayVale
+}
+
 export interface PrescriptionReportRequest {
   patient: {
     key: string;
@@ -20,6 +46,13 @@ export interface PrescriptionReportRequest {
     id: number;
     name: string;
   }>;
+
+  predefinedInstructions?: PredefinedInstructionDTO[];
+  customInstructions?: CustomInstructionDTO[];
+
+  facilityName?: string;
+  authenticatedUserName?: string;
+  authenticatedUserEmail?: string;
 }
 
 /* ========= API ========= */

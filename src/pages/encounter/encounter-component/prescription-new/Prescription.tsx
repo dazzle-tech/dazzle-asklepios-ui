@@ -803,7 +803,9 @@ const Prescription = (props: any) => {
         genericMedicationList: genericMedicationListResponse?.data ?? [],
         facilityName: facilityName,
         authenticatedUserName: `${authSlice?.user?.firstName} ${authSlice?.user?.lastName}`,
-        authenticatedUserEmail: authSlice?.user?.email
+        authenticatedUserEmail: authSlice?.user?.email,
+        predefinedInstructions: predefinedInstructionsListResponse?.data ?? [],    
+        customInstructions: customeInstructions?.object ?? [],                     
       }).unwrap();
 
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
@@ -867,16 +869,16 @@ const Prescription = (props: any) => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => {}}
+              setRecord={() => { }}
               width={110}
             />
           </Form>
         </div>
 
-        
+
 
         <div className={clsx('bt-right', { 'disabled-panel': edit })}>
-          
+
 
           <UrgencyButton />
 
