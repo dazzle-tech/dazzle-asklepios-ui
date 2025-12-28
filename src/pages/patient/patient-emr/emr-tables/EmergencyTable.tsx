@@ -11,48 +11,44 @@ import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/d
 import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 
-
-const EmergencyTable = ({patient}) => {
+const EmergencyTable = ({ patient }) => {
   const [sortColumn, setSortColumn] = useState('dateTime');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  
 
+  const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    sortBy: 'plannedStartDate',
+    sortType: 'desc',
+    filters: [
+      {
+        fieldName: 'patient_key',
+        operator: 'match',
+        value: patient.key || undefined
+      },
+      {
+        fieldName: 'resource_type_lkey',
+        operator: 'match',
+        value: 'EMERGENCY'
+      }
+    ],
+    pageSize: 15
+  });
 
-    const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
-      ...initialListRequest,
-      sortBy: 'plannedStartDate',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient.key || undefined
-        }
-        ,
-        {
-          fieldName: 'resource_type_lkey',
-          operator: 'match',
-          value: 'EMERGENCY'
-        }
-      ],
-      pageSize: 15
-    });
-  
-      const {
-        data: visiterHistoryResponse,
-        refetch: refetchEncounter,
-        isFetching
-      } = useGetEncountersQuery(visitHistoryListRequest, {
-        refetchOnMountOrArgChange: true, // Refetch when component mounts or arguments change
-        refetchOnFocus: true // Refetch when window regains focus
-      });
-      
-      useEffect(() => {
-        refetchEncounter();
-      }, [patient]);
-      const sortedData = [...visiterHistoryResponse?.object].sort((a, b) => {
+  const {
+    data: visiterHistoryResponse,
+    refetch: refetchEncounter,
+    isFetching
+  } = useGetEncountersQuery(visitHistoryListRequest, {
+    refetchOnMountOrArgChange: true, // Refetch when component mounts or arguments change
+    refetchOnFocus: true // Refetch when window regains focus
+  });
+
+  useEffect(() => {
+    refetchEncounter();
+  }, [patient]);
+  const sortedData = [...visiterHistoryResponse?.object].sort((a, b) => {
     const aValue = a[sortColumn];
     const bValue = b[sortColumn];
     if (aValue === bValue) return 0;
@@ -94,39 +90,38 @@ const EmergencyTable = ({patient}) => {
     return map;
   }, [allDepartments]);
 
+  // Create a practitioner lookup map by key
+  const practitionerMap = useMemo(() => {
+    if (!practitionersResponse?.data) return {};
+    const map = {};
+    practitionersResponse.data.forEach(practitioner => {
+      if (practitioner.key) map[practitioner.key] = practitioner;
+      if (practitioner.id) map[practitioner.id] = practitioner;
+    });
+    return map;
+  }, [practitionersResponse]);
 
-   // Create a practitioner lookup map by key
-   const practitionerMap = useMemo(() => {
-     if (!practitionersResponse?.data) return {};
-     const map = {};
-     practitionersResponse.data.forEach(practitioner => {
-       if (practitioner.key) map[practitioner.key] = practitioner;
-       if (practitioner.id) map[practitioner.id] = practitioner;
-     });
-     return map;
-   }, [practitionersResponse]);
- 
-   // Create a resource lookup map by key
-   const resourceMap = useMemo(() => {
-     if (!resourcesResponse?.data) return {};
-     const map = {};
-     resourcesResponse.data.forEach(resource => {
-       if (resource.key) map[resource.key] = resource;
-       if (resource.id) map[resource.id] = resource;
-     });
-     return map;
-   }, [resourcesResponse]);
- 
-   // Create a diagnostic test lookup map by key
-   const diagnosticTestMap = useMemo(() => {
-     if (!diagnosticTestsResponse?.data) return {};
-     const map = {};
-     diagnosticTestsResponse.data.forEach(test => {
-       if (test.key) map[test.key] = test;
-       if (test.id) map[test.id] = test;
-     });
-     return map;
-   }, [diagnosticTestsResponse]);
+  // Create a resource lookup map by key
+  const resourceMap = useMemo(() => {
+    if (!resourcesResponse?.data) return {};
+    const map = {};
+    resourcesResponse.data.forEach(resource => {
+      if (resource.key) map[resource.key] = resource;
+      if (resource.id) map[resource.id] = resource;
+    });
+    return map;
+  }, [resourcesResponse]);
+
+  // Create a diagnostic test lookup map by key
+  const diagnosticTestMap = useMemo(() => {
+    if (!diagnosticTestsResponse?.data) return {};
+    const map = {};
+    diagnosticTestsResponse.data.forEach(test => {
+      if (test.key) map[test.key] = test;
+      if (test.id) map[test.id] = test;
+    });
+    return map;
+  }, [diagnosticTestsResponse]);
   const tableColumns = [
     {
       key: 'visitId',
@@ -157,11 +152,11 @@ const EmergencyTable = ({patient}) => {
       render: (rowData: any) => {
         const departmentKey = rowData?.departmentKey;
         const department = departmentKey ? departmentMap[departmentKey] : null;
-        
+
         if (department) {
           return department.name;
         }
-        
+
         return '';
       }
     },
@@ -179,46 +174,47 @@ const EmergencyTable = ({patient}) => {
       flexGrow: 4,
       render: (rowData: any) => {
         // Get resource from resource map
-        const resourceKey = rowData?.resourceKey ;
+        const resourceKey = rowData?.resourceKey;
         const resource = resourceKey ? resourceMap[resourceKey] : null;
-        
+
         if (!resource) {
           return '';
         }
-        
+
         let displayName = resource.resourceKey || '';
         const resourceType = resource.resourceType;
         const lookupKey = resource.resourceKey;
-        
+
         // Based on resource type, look up the appropriate name
         if (resourceType === 'PRACTITIONER') {
           const practitioner = lookupKey ? practitionerMap[lookupKey] : null;
-          
+
           if (practitioner) {
-            displayName = practitioner.practitionerFullName || 
-                         `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
+            displayName =
+              practitioner.practitionerFullName ||
+              `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
           }
-        } 
-        else if (['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)) {
+        } else if (
+          ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)
+        ) {
           const department = lookupKey ? departmentMap[lookupKey] : null;
-          
+
           if (department) {
             displayName = department.name;
           }
-        }
-        else if (['MEDICAL_TEST'].includes(resourceType)) {
+        } else if (['MEDICAL_TEST'].includes(resourceType)) {
           const diagnosticTest = lookupKey ? diagnosticTestMap[lookupKey] : null;
-          
+
           if (diagnosticTest) {
             displayName = diagnosticTest.name;
           }
         }
-        
+
         // Final fallback
         if (!displayName) {
           displayName = resource.resourceKey || 'Unknown Resource';
         }
-        
+
         return displayName;
       }
     },
@@ -240,7 +236,6 @@ const EmergencyTable = ({patient}) => {
           ? rowData.encounterStatusLvalue.lovDisplayVale
           : rowData.encounterStatusLkey
     },
-  
 
     {
       key: 'visitTypeLvalue',
@@ -302,25 +297,33 @@ const EmergencyTable = ({patient}) => {
     }
   ];
 
-useEffect(() => {
-  setVisitHistoryListRequest(prev => ({
-    ...prev!,
-    filters: [
-      { fieldName: "patient_key", operator: "match", value: patient?.key }
-    ],
-    pageNumber: 1,
-  }));
-}, [patient?.key]);
-
-
+  useEffect(() => {
+    setVisitHistoryListRequest({
+      ...initialListRequest,
+      sortBy: 'plannedStartDate',
+      sortType: 'desc',
+      filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: patient.key || undefined
+        },
+        {
+          fieldName: 'resource_type_lkey',
+          operator: 'match',
+          value: 'EMERGENCY'
+        }
+      ],
+      pageNumber: 1
+    });
+  }, [patient?.key]);
 
   return (
     <MyTable
-            data={paginatedData?? []}
-            columns={tableColumns}
-            height={580}
-            loading={isFetching}
-      
+      data={paginatedData ?? []}
+      columns={tableColumns}
+      height={580}
+      loading={isFetching}
       sortColumn={sortColumn}
       sortType={sortType}
       onSortChange={(col, type) => {
