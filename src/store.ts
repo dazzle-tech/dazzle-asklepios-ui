@@ -108,6 +108,7 @@ import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
 import {priceListAttributesService} from '@/services/billing/PriceListAttributesService';
 import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
+import { systemConfigurationService } from './services/setup/systemConfiguration/systemConfigurationService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -315,6 +316,9 @@ export const store = configureStore({
 
     [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
     [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
+
+    [systemConfigurationService.reducerPath]: systemConfigurationService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -425,7 +429,7 @@ export const store = configureStore({
       PayorPlanService.middleware,
       DischargePlanningService.middleware,
       priceListAttributesService.middleware,
-
+      systemConfigurationService.middleware
     ])
 });
 

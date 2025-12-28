@@ -612,7 +612,7 @@ export interface DiagnosticTestCoding {
   procedureId?: number | null;
   codeType: string | null;
   codeId: string;
-  createdBy:string
+  createdBy: string
   createdDate: Date,
   lastModifiedBy: string,
   lastModifiedDate: Date,
@@ -700,7 +700,7 @@ export interface BrandMedication {
   isActive?: boolean;
   uomGroupId?: number;
   uomGroupUnitId?: number;
-  hasActiveIngredient?:boolean;
+  hasActiveIngredient?: boolean;
 }
 export interface Substitute {
   brandId: number;
@@ -918,7 +918,7 @@ export interface CommunityArea {
 }
 export interface VisitDuration {
   id?: number;
-  visitType: string | null;        
+  visitType: string | null;
   durationInMinutes: number | null;
   resourceSpecific?: boolean;
   createdBy?: string | null;
@@ -927,7 +927,7 @@ export interface VisitDuration {
   lastModifiedDate?: Date | null;
 
 }
- export interface PriceList {
+export interface PriceList {
   id?: number;
   facilityId?: number | null;
   facilityIds?: number[] | null; // for create/update
@@ -939,17 +939,18 @@ export interface VisitDuration {
   description?: string | null;
   isActive?: boolean;
   createdDate?: Date | null;
-  lastModifiedDate?: Date | null;}
-  
-export interface ReportTemplate{
-  id?:number;
-  name:string;
-  templateValue:string;
-  isActive:boolean
+  lastModifiedDate?: Date | null;
+}
+
+export interface ReportTemplate {
+  id?: number;
+  name: string;
+  templateValue: string;
+  isActive: boolean
 }
 
 
-export interface DiagnosticTestReportTemplate{
+export interface DiagnosticTestReportTemplate {
   id: number,
   diagnosticTest: string,
   name: string,
@@ -957,27 +958,27 @@ export interface DiagnosticTestReportTemplate{
   isActive: boolean,
 }
 
-export interface UserStickyNotesResponseVM{
-    id: number
-    userId: number,
-    note: string
-    priority: string,
-    priorityOrder: number,
-    color:string
-    createdBy: string
-    createdDate: Date,
-    lastModifiedBy: string,
-    lastModifiedDate: Date,
-    patientId: number
+export interface UserStickyNotesResponseVM {
+  id: number
+  userId: number,
+  note: string
+  priority: string,
+  priorityOrder: number,
+  color: string
+  createdBy: string
+  createdDate: Date,
+  lastModifiedBy: string,
+  lastModifiedDate: Date,
+  patientId: number
 }
 
-export interface UserStickyNotesCreateVM{
-    userId: number,
-    note: string
-    priority: string,
-    priorityOrder: number,
-    color:string,
-    patientId: string
+export interface UserStickyNotesCreateVM {
+  userId: number,
+  note: string
+  priority: string,
+  priorityOrder: number,
+  color: string,
+  patientId: string
 }
 
 export interface PriceListItem {
@@ -1026,7 +1027,7 @@ export interface BillingInvoiceCreateVM {
 }
 
 export interface BillingInvoiceUpdateVM {
-  id: number; 
+  id: number;
   facilityId?: number;
   patientKey?: string | null;
   encounterKey?: string | null;
@@ -1054,30 +1055,30 @@ export interface BillingInvoiceResponseVM {
   lastModifiedDate?: string | null;
 }
 
-  export interface Payor {
-    id?: number;
-    code: string;
-    name: string;
-    category: string | null;
-    address?: string;
-    phone?: string;
-    email?: string;
-    contractManagerContact?: string;
-    startDate?: Date | string | null;
-    expiryDate?: Date | string | null;
-    renewable: boolean;
-    allowPartialCoverage: boolean;
-    acceptCopay: boolean;
-    acceptDeductibles: boolean;
-    allowPackagePricing: boolean;
-    allowDrgBilling: boolean;
-    forcePreApproval: boolean;
-    isActive: boolean;
-    createdDate?: Date | null;
-    lastModifiedDate?: Date | null;
-  }
+export interface Payor {
+  id?: number;
+  code: string;
+  name: string;
+  category: string | null;
+  address?: string;
+  phone?: string;
+  email?: string;
+  contractManagerContact?: string;
+  startDate?: Date | string | null;
+  expiryDate?: Date | string | null;
+  renewable: boolean;
+  allowPartialCoverage: boolean;
+  acceptCopay: boolean;
+  acceptDeductibles: boolean;
+  allowPackagePricing: boolean;
+  allowDrgBilling: boolean;
+  forcePreApproval: boolean;
+  isActive: boolean;
+  createdDate?: Date | null;
+  lastModifiedDate?: Date | null;
+}
 
-  export interface PayorPlan {
+export interface PayorPlan {
   id?: number;
   payorId: number;
   name: string;
@@ -1087,7 +1088,7 @@ export interface BillingInvoiceResponseVM {
   lastModifiedDate?: Date | string | null;
 }
 
-  export interface PayorPlanItem {
+export interface PayorPlanItem {
   id?: number;
   payorId: number;
   itemType: string;
@@ -1147,7 +1148,7 @@ export interface PatientPaymentCreateVM {
   paymentType: string | null;
   paymentMethod: string | null;
 
-  paymentDate: string; 
+  paymentDate: string;
   amount: number | string;
 
   currency?: string | null;
@@ -1219,10 +1220,10 @@ export interface PaymentAllocationResponseVM {
 
 export interface PatientAccountSummaryVM {
   patientKey: string;
-  freeBalance: number | string;     
-  outstandingBalance: number | string; 
-  totalInvoiced: number | string;     
-  totalPaid: number | string;       
+  freeBalance: number | string;
+  outstandingBalance: number | string;
+  totalInvoiced: number | string;
+  totalPaid: number | string;
 }
 
 export interface BillingItem {
@@ -1294,7 +1295,7 @@ export interface Country {
 }
 export interface CountryDistrict {
   id?: number;
-  countryId: number;   
+  countryId: number;
   name: string;
   code: string;
   isActive?: boolean;
@@ -1302,14 +1303,14 @@ export interface CountryDistrict {
 
 export interface DistrictCommunity {
   id?: number;
-  districtId: number;  
+  districtId: number;
   name: string;
   isActive?: boolean;
 }
 
 export interface CommunityArea {
   id?: number;
-  communityId: number; 
+  communityId: number;
   name: string;
   isActive?: boolean;
 }
@@ -1334,4 +1335,36 @@ export interface OrganizationDefinition {
   contactMobile?: string;
   contactLandNumber?: string;
   taxValue?: number;
+}
+
+export interface ConfigurationCreateVM {
+  facilityId?: number;
+  key: string,
+  value: string,
+  valueType: string,
+  referenceType: string,
+  description: string,
+  isActive?: boolean
+}
+
+export interface ConfigurationUpdateVM {
+  id: number,
+  facilityId?: number;
+  key: string,
+  value: string,
+  valueType: string,
+  referenceType: string,
+  description: string,
+  isActive?: boolean
+}
+
+export interface Configuration {
+  id: number,
+  facilityId?: number;
+  key: string,
+  value: string,
+  valueType: string,
+  referenceType: string,
+  description: string,
+  isActive?: boolean
 }
