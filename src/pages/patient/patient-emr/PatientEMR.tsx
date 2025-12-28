@@ -67,9 +67,15 @@ type PatientEMRProps = {
   inModal?: boolean;
   patient?: ApPatient;
   encounter?: any;
+  hideProfileSidebar?: boolean; // ✅ جديد
 };
 
-const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encounter: enc }) => {
+const PatientEMR: React.FC<PatientEMRProps> = ({
+  inModal = false,
+  patient,
+  encounter: enc,
+  hideProfileSidebar
+}) => {
   const [expand, setExpand] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -245,7 +251,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
       }));
     }
   }, [localPatient, dispatch]);
-
   useEffect(() => {
     return () => {
       if (!inModal) {
@@ -277,6 +282,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
               onClick={() =>
                 setActiveSectionCard(activeSectionCard === 'history' ? null : 'history')
               }
+              active={activeSectionCard === 'history'}
             />
           </div>
 
@@ -289,6 +295,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
               width={170}
               height={100}
               onClick={() => setActiveSectionCard(activeSectionCard === 'visits' ? null : 'visits')}
+              active={activeSectionCard === 'visits'}
             />
           </div>
 
@@ -303,6 +310,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
               onClick={() =>
                 setActiveSectionCard(activeSectionCard === 'clinical' ? null : 'clinical')
               }
+              active={activeSectionCard === 'clinical'}
             />
           </div>
 
@@ -317,6 +325,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
               onClick={() =>
                 setActiveSectionCard(activeSectionCard === 'diagnostics' ? null : 'diagnostics')
               }
+              active={activeSectionCard === 'diagnostics'}
             />
           </div>
 
@@ -331,6 +340,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
               onClick={() =>
                 setActiveSectionCard(activeSectionCard === 'treatment' ? null : 'treatment')
               }
+              active={activeSectionCard === 'treatment'}
             />
           </div>
 
@@ -345,6 +355,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
               onClick={() =>
                 setActiveSectionCard(activeSectionCard === 'documents' ? null : 'documents')
               }
+              active={activeSectionCard === 'documents'}
             />
           </div>
 
@@ -359,6 +370,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
               onClick={() =>
                 setActiveSectionCard(activeSectionCard === 'services' ? null : 'services')
               }
+              active={activeSectionCard === 'services'}
             />
           </div>
 
@@ -399,10 +411,9 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() =>
-                    setActiveCard(
-                      activeCard === 'pastmedicalhistory' ? null : 'pastmedicalhistory'
-                    )
+                    setActiveCard(activeCard === 'pastmedicalhistory' ? null : 'pastmedicalhistory')
                   }
+                  active={activeCard === 'pastmedicalhistory'}
                 />
               </div>
             </div>
@@ -421,6 +432,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   onClick={() =>
                     setActiveCard(activeCard === 'appointments' ? null : 'appointments')
                   }
+                  active={activeCard === 'appointments'}
                 />
               </div>
 
@@ -435,6 +447,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   onClick={() =>
                     setActiveCard(activeCard === 'clinicvisits' ? null : 'clinicvisits')
                   }
+                  active={activeCard === 'clinicvisits'}
                 />
               </div>
 
@@ -447,6 +460,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'inpatient' ? null : 'inpatient')}
+                  active={activeCard === 'inpatient'}
                 />
               </div>
 
@@ -458,6 +472,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   backgroundColor="var(--card-blue)"
                   width={150}
                   height={100}
+                  active={activeCard === 'emergency'}
                   onClick={() => setActiveCard(activeCard === 'emergency' ? null : 'emergency')}
                 />
               </div>
@@ -471,6 +486,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'daycase' ? null : 'daycase')}
+                  active={activeCard === 'daycase'}
                 />
               </div>
             </div>
@@ -489,6 +505,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   onClick={() =>
                     setActiveCard(activeCard === 'consultations' ? null : 'consultations')
                   }
+                  active={activeCard === 'consultations'}
                 />
               </div>
 
@@ -503,6 +520,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   onClick={() =>
                     setActiveCard(activeCard === 'nurseassessments' ? null : 'nurseassessments')
                   }
+                  active={activeCard === 'nurseassessments'}
                 />
               </div>
 
@@ -515,6 +533,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'procedures' ? null : 'procedures')}
+                  active={activeCard === 'procedures'}
                 />
               </div>
 
@@ -527,6 +546,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'operations' ? null : 'operations')}
+                  active={activeCard === 'operations'}
                 />
               </div>
             </div>
@@ -543,6 +563,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'laboratory' ? null : 'laboratory')}
+                  active={activeCard === 'laboratory'}
                 />
               </div>
 
@@ -555,6 +576,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'radiology' ? null : 'radiology')}
+                  active={activeCard === 'radiology'}
                 />
               </div>
 
@@ -567,6 +589,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'pathology' ? null : 'pathology')}
+                  active={activeCard === 'pathology'}
                 />
               </div>
             </div>
@@ -583,6 +606,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'medications' ? null : 'medications')}
+                  active={activeCard === 'medications'}
                 />
               </div>
 
@@ -595,6 +619,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'vaccines' ? null : 'vaccines')}
+                  active={activeCard === 'vaccines'}
                 />
               </div>
             </div>
@@ -611,6 +636,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'reports' ? null : 'reports')}
+                  active={activeCard === 'reports'}
                 />
               </div>
 
@@ -623,6 +649,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   width={150}
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'attachments' ? null : 'attachments')}
+                  active={activeCard === 'attachments'}
                 />
               </div>
             </div>
@@ -641,6 +668,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   onClick={() =>
                     setActiveCard(activeCard === 'appliedservices' ? null : 'appliedservices')
                   }
+                  active={activeCard === 'appliedservices'}
                 />
               </div>
 
@@ -655,6 +683,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   onClick={() =>
                     setActiveCard(activeCard === 'dentalcharts' ? null : 'dentalcharts')
                   }
+                  active={activeCard === 'dentalcharts'}
                 />
               </div>
 
@@ -669,6 +698,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
                   onClick={() =>
                     setActiveCard(activeCard === 'ledgeraccount' ? null : 'ledgeraccount')
                   }
+                  active={activeCard === 'ledgeraccount'}
                 />
               </div>
             </div>
@@ -778,41 +808,45 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
 
-        {activeCard === 'clinicvisits' && <ClinicVisitsTable  patient={localPatient}/>}
+        {activeCard === 'clinicvisits' && <ClinicVisitsTable patient={localPatient} />}
         {/* {activeCard === 'inpatient' && <InpatientTable />} */}
         {/* {activeCard === 'daycase' && <DayCaseTable />} */}
-        {activeCard === 'emergency' && <EmergencyTable  patient={localPatient}/>}
+        {activeCard === 'emergency' && <EmergencyTable patient={localPatient} />}
         {/* {activeCard === 'nurseassessments' && <NurseAssessmentsTable />} */}
-        {activeCard === 'procedures' && <ProceduresTable patient={localPatient}/>}
+        {activeCard === 'procedures' && <ProceduresTable patient={localPatient} />}
         {activeCard === 'operations' && <OperationsTable />}
-        {activeCard === 'consultations' && <ConsultationsTable patient={localPatient}/>}
-        {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient}  />}
-        {activeCard === 'radiology' && <RadiologyTable patient={localPatient}/>}
+        {activeCard === 'consultations' && <ConsultationsTable patient={localPatient} />}
+        {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient} />}
+        {activeCard === 'radiology' && <RadiologyTable patient={localPatient} />}
         {/* {activeCard === 'pathology' && <PathologyTable />} */}
         {activeCard === 'medications' && <CurrentMedicationsTable patient={localPatient} />}
-        {activeCard === 'vaccines' && <VaccinationTable  patient={localPatient}/>}
+        {activeCard === 'vaccines' && <VaccinationTable patient={localPatient} />}
         {activeCard === 'reports' && <ClinicalReportsTable />}
         {activeCard === 'attachments' && <AttachmentsTable localPatient={localPatient} />}
-        {activeCard === 'appliedservices' && <AppliedServicesTable patient={localPatient}/>}
+        {activeCard === 'appliedservices' && <AppliedServicesTable patient={localPatient} />}
         {activeCard === 'dentalcharts' && <DentalChartsTable />}
         {activeCard === 'ledgeraccount' && <LedgerAccountTable />}
-        {activeCard === 'pastmedicalhistory' && <PatientHistory toShowData={true} patient={localPatient}/>}
+        {activeCard === 'pastmedicalhistory' && (
+          <PatientHistory toShowData={true} patient={localPatient} />
+        )}
       </div>
 
       <div className="emr-right">
         <div className="patient-side-main-container-handle">
           <PatientSide patient={localPatient} encounter={encounter} />
         </div>
-        <div className="profile-sidebar-main-container-handle">
-          <ProfileSidebar
-            expand={expand}
-            setExpand={setExpand}
-            windowHeight={windowHeight}
-            setLocalPatient={setLocalPatient}
-            setRefetchData={setRefetchData}
-            refetchData={refetchData}
-          />
-        </div>
+        {!hideProfileSidebar && (
+          <div className="profile-sidebar-main-container-handle">
+            <ProfileSidebar
+              expand={expand}
+              setExpand={setExpand}
+              windowHeight={windowHeight}
+              setLocalPatient={setLocalPatient}
+              setRefetchData={setRefetchData}
+              refetchData={refetchData}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

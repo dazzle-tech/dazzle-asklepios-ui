@@ -831,7 +831,7 @@ const Prescription = (props: any) => {
       {uniqueBrandIds.map((id: string) => (
         <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
       ))}      <div className="bt-div">
-        <div style={{ width: '500px' }}>
+        <div style={{ width: '500px', display: 'flex', flexDirection: 'row', gap: '6px' }}>
           <Form fluid>
             <MyInput
               placeholder="Prescription"
@@ -845,21 +845,19 @@ const Prescription = (props: any) => {
               showLabel={false}
             />
           </Form>
-        </div>
 
-        <div className="icon-style">
-          <FaFilePrescription size={18} />
-        </div>
-
-        <div>
-          <div className="prescripton-word-style">Prescription</div>
-          <div className="prescripton-number-style">
-            {prescriptions?.object?.find((p: any) => p.key === preKeyRecord['preKey'])
-              ?.prescriptionId || '_'}
+          <div className="icon-style">
+            <FaFilePrescription size={18} />
           </div>
-        </div>
+          <div>
+            <div className="prescripton-word-style">Prescription</div>
+            <div className="prescripton-number-style">
+              {prescriptions?.object?.find(
+                prescription => prescription.key === preKeyRecord['preKey']
+              )?.prescriptionId || '_'}
+            </div>
+          </div>
 
-        <div className={clsx('bt-right', { 'disabled-panel': edit })}>
           <Form fluid>
             <MyInput
               fieldName=""
@@ -869,10 +867,16 @@ const Prescription = (props: any) => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => { }}
+              setRecord={() => {}}
               width={110}
             />
           </Form>
+        </div>
+
+        
+
+        <div className={clsx('bt-right', { 'disabled-panel': edit })}>
+          
 
           <UrgencyButton />
 
