@@ -23,12 +23,10 @@ import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
 import { formatDateWithoutSeconds } from "@/utils";
-
+import './styles.less';
 const TelephonicConsultation = (props) => {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('user') || 'null');
-  console.log("user");
-  console.log(user);
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
@@ -60,8 +58,6 @@ const TelephonicConsultation = (props) => {
   });
 
   const { data, isLoading } = useGetTelephonicConsultationOrdersListQuery(listRequest);
-  console.log("data");
-  console.log(data);
   const { data: practitionerListResponse } = useGetAllPractitionersQuery({
     page: 0,
     size: 9999,
@@ -183,7 +179,11 @@ const TelephonicConsultation = (props) => {
       key: "consultationContent",
       title: "Consultation Content",
       flexGrow: 4,
-      render: (row) => row.consultationContent
+      render: (row) => (
+        <div className="consultation-content-container" >
+          {row.consultationContent}
+        </div>
+      )
     },
     {
       key: "attachments",
@@ -262,7 +262,7 @@ const TelephonicConsultation = (props) => {
             ...item,
             isValid: false,
             deletedAt: Date.now(),
-            deletedBy: user?.login ,
+            deletedBy: user?.firstName + " " + user?.lastName,
             cancellationReason: consultationOrder?.cancellationReason,
           }).unwrap()
         )
