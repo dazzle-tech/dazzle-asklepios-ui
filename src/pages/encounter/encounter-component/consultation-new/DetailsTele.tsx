@@ -118,7 +118,6 @@ const payload = {
       handleClear();
       setOpen(false);
     } catch (error) {
-      console.error("SAVE ERROR => ", error);
       dispatch(notify("Save Failed"));
     }
   };
