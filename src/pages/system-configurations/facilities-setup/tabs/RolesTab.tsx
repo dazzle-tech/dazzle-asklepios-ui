@@ -27,7 +27,7 @@ const RolesTab: React.FC<RolesTabProps> = ({ facility }) => {
               title={'Screens & Permissions'}
               content={
                 selected ? (
-                  <RoleScreens roleId={selected.id} />
+                  <RoleScreens key={selected.id} roleId={selected.id} />
                 ) : (
                   <div className="empty">
                     No role selected. Use the left list to add or choose a role.
