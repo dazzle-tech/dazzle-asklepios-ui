@@ -22,7 +22,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Col, Form, Row, Slider } from 'rsuite';
 import './styles.less';
@@ -38,7 +38,25 @@ type ObservationsProps = {
   encounter?: ApEncounter;
   edit?: boolean;
 };
+function mergeSetter<T extends Record<string, any>>(
+  setState: React.Dispatch<React.SetStateAction<T>>
+) {
+  return (next: any) => {
+    if (typeof next === 'function') {
+      setState(prev => {
+        const computed = next(prev);
+        if (computed && typeof computed === 'object') return { ...prev, ...computed };
+        return prev;
+      });
+      return;
+    }
 
+    if (next && typeof next === 'object') {
+      setState(prev => ({ ...prev, ...next }));
+      return;
+    }
+  };
+}
 const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
   const location = useLocation();
   const state = location.state || {};
@@ -48,13 +66,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   const dispatch = useAppDispatch();
 
-  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient });
+  const [localPatient] = useState<ApPatient>({ ...patient });
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...(encounter as any) });
-
+const setLocalEncounterSafe = useMemo(() => mergeSetter(setLocalEncounter), []);
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
-  const { data: numbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
-  const { data: encounterPriorityLovQueryResponse } =
-    useGetLovValuesByCodeQuery('ENC_PRIORITY');
+   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
@@ -68,17 +84,14 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     respiratoryRate: 0
   });
 
-  const [saveObservationSummary, saveObservationsMutation] =
-    useSaveObservationSummaryMutation();
+const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
   const [saveEncounter] = useSaveEncounterChangesMutation();
   const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
 
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
-  const [readOnly, setReadOnly] = useState(false);
-
-  const [painLevel, setPainLevel] = useState({latestpainlevel : 0});
-
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false); // <== ADDED
+  const [readOnly] = useState(false);
+ const [painLevel, setPainLevel] = useState({ latestpainlevel: 0 });
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const getTrackColor = (value: number): string => {
     if (value === 0) return 'transparent';
@@ -104,16 +117,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     ...patientLastVisitObservationsListRequest
   });
 
-  const lastObservationSummary =
-    getObservationSummaries?.object?.length > 0
-      ? getObservationSummaries.object[0]
-      : null;
-
-  const lastencounterop =
+  const lastObservationSummary =getObservationSummaries?.object?.length > 0 ? getObservationSummaries.object[0] : null;
+    const lastencounterop =
     getObservationSummaries?.object?.length > 0
       ? getObservationSummaries.object.findLast(
-          (item: ApPatientObservationSummary) =>
-            item.visitKey === encounter?.key
+          (item: ApPatientObservationSummary) => item.visitKey === encounter?.key
         )
       : null;
 
@@ -139,7 +147,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     },
     { skip: !patient?.dob }
   );
-
+ const setPatientObservationSummarySafe = useMemo(
+    () => mergeSetter(setPatientObservationSummary),
+    []
+  );
   useEffect(() => {
     if (lastencounterop) {
       setPatientObservationSummary({
@@ -158,16 +169,17 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0,
       respiratoryRate: patientObservationSummary.latestrespiratoryrate || 0
     }));
-  }, [patientObservationSummary]);
-
+ }, [
+    patientObservationSummary.latestbpSystolic,
+    patientObservationSummary.latestbpDiastolic,
+    patientObservationSummary.latestheartrate,
+    patientObservationSummary.latesttemperature,
+    patientObservationSummary.latestoxygensaturation,
+    patientObservationSummary.latestrespiratoryrate
+  ]);
   useEffect(() => {
-    if (
-      saveObservationsMutation &&
-      saveObservationsMutation.status === 'fulfilled'
-    ) {
-      setPatientObservationSummary(
-        saveObservationsMutation.data as ApPatientObservationSummary
-      );
+    if (saveObservationsMutation && saveObservationsMutation.status === 'fulfilled') {
+      setPatientObservationSummary(saveObservationsMutation.data as ApPatientObservationSummary);
     }
   }, [saveObservationsMutation]);
 
@@ -175,25 +187,31 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     if (localEncounter?.encounterStatusLkey === '91109811181900') {
       setIsEncounterStatusClosed(true);
     }
+    else {
+      setIsEncounterStatusClosed(false);
+    }
   }, [localEncounter?.encounterStatusLkey]);
 
   useEffect(() => {
     const { latestweight, latestheight } = patientObservationSummary;
     if (latestweight && latestheight) {
-      const calculatedBmi = (
-        latestweight /
-        (latestheight / 100) ** 2
-      ).toFixed(2);
-      const calculatedBsa = Math.sqrt(
-        (latestweight * latestheight) / 3600
-      ).toFixed(2);
+    const calculatedBmi = (latestweight / (latestheight / 100) ** 2).toFixed(2);
+      const calculatedBsa = Math.sqrt((latestweight * latestheight) / 3600).toFixed(2);
       setBmi(calculatedBmi);
       setBsa(calculatedBsa);
     } else {
       setBmi('');
       setBsa('');
     }
-  }, [patientObservationSummary]);
+    }, [patientObservationSummary.latestweight, patientObservationSummary.latestheight]);
+
+  useEffect(() => {
+    if (patientObservationSummary?.latestpainlevel != null) {
+      setPainLevel({
+        latestpainlevel: patientObservationSummary.latestpainlevel as number
+      });
+    }
+  }, [patientObservationSummary.latestpainlevel]);
 
   const handleSave = async () => {
     try {
@@ -260,7 +278,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     setPatientObservationSummary({
       ...newApPatientObservationSummary,
       latestpainlevelLkey: null
-    });
+  } as any);
+    setPainLevel({ latestpainlevel: 0 });
+    setBmi('');
+    setBsa('');
   };
 
   const handleGenerateReport = async () => {
@@ -342,7 +363,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                             disabled={isEncounterStatusClosed || readOnly}
                             fieldType="textarea"
                             record={patientObservationSummary}
-                            setRecord={setPatientObservationSummary}
+                            setRecord={setPatientObservationSummarySafe}
                           />
                         </Col>
                       </Row>
@@ -356,7 +377,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                             disabled={isEncounterStatusClosed || readOnly}
                             fieldType="textarea"
                             record={patientObservationSummary}
-                            setRecord={setPatientObservationSummary}
+                             setRecord={setPatientObservationSummarySafe}
                           />
                         </Col>
                       </Row>
@@ -386,7 +407,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
                             record={localEncounter}
-                            setRecord={setLocalEncounter}
+                            setRecord={setLocalEncounterSafe}
                             disabled={isEncounterStatusClosed || readOnly}
                             searchable={false}
                           />
@@ -434,7 +455,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           disabled={isEncounterStatusClosed || readOnly}
                           fieldType="number"
                           record={patientObservationSummary}
-                          setRecord={setPatientObservationSummary}
+                         setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
 
@@ -459,7 +480,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           disabled={isEncounterStatusClosed || readOnly}
                           fieldType="number"
                           record={patientObservationSummary}
-                          setRecord={setPatientObservationSummary}
+                         setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
 
@@ -485,7 +506,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           disabled={isEncounterStatusClosed || readOnly}
                           fieldType="number"
                           record={patientObservationSummary}
-                          setRecord={setPatientObservationSummary}
+                          setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
 
@@ -513,7 +534,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           selectDataLabel="lovDisplayVale"
                           selectDataValue="key"
                           record={patientObservationSummary}
-                          setRecord={setPatientObservationSummary}
+                           setRecord={setPatientObservationSummarySafe}
                           searchable={false}
                         />
                       </Col>
@@ -524,7 +545,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           <div className="slider-class" style={{ position: 'relative' }}>
                             <Slider
                               value={painLevel.latestpainlevel}
-                              onChange={value => setPainLevel({latestpainlevel: value as number})}
+                               onChange={value =>
+                                setPainLevel({ latestpainlevel: value as number })
+                              }
                               min={0}
                               max={10}
                               step={1}
@@ -558,7 +581,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                           fieldLabel="Pain Description"
                           fieldName="latestpaindescription"
                           record={patientObservationSummary}
-                          setRecord={setPatientObservationSummary}
+                         setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
                     </Row>
@@ -583,7 +606,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               fieldLabel="Hearing Test"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
@@ -599,7 +622,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                            setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
 
@@ -613,7 +636,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                             setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
 
@@ -627,7 +650,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
@@ -643,7 +666,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                             setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
 
@@ -657,7 +680,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
 
@@ -671,7 +694,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                             setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
@@ -698,7 +721,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               fieldName="latestFallRisk"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                             setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
@@ -712,7 +735,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               fieldType="textarea"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                             setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
@@ -726,7 +749,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                               fieldType="textarea"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                              setRecord={setPatientObservationSummary}
+                             setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
