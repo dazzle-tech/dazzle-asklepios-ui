@@ -9,32 +9,34 @@ import { TitleWithIcon } from '@/components/Charts/DynamicTableChart/TitleWithIc
 import DynamicMainTableChart from '@/components/Charts/DynamicTableChart/DynamicMainTableChart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icons';
-import MyButton from '@/components/MyButton/MyButton';
-import { useNavigate } from 'react-router-dom';
 import './styles.less';
 import { useSelector } from 'react-redux';
+
 const Dashboard = () => {
   const dispatch = useAppDispatch();
-  const mode = useSelector((state) => state.ui.mode);
-   const navigate = useNavigate();
+  const mode = useSelector((state: any) => state.ui.mode);
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
   useEffect(() => {
-    const divContent = "Dashboard";
     dispatch(setPageCode('Dashboard'));
-    dispatch(setDivContent(divContent));
+    dispatch(setDivContent('Dashboard'));
 
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
+      dispatch(setDivContent(''));
     };
   }, [dispatch]);
 
+  const tableAlignments = isRTL ? ['right', 'left'] : ['left', 'right'];
+
   return (
-    <Panel className={mode === 'dark' ? 'dashboard-dark' : ''}>
+    <Panel
+      className={mode === 'dark' ? 'dashboard-dark' : ''}
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       <FlexboxGrid>
-        <MyButton   onClick={() => navigate("form")}>
-          Form Analytics
-        </MyButton>
 
         {/* Bar Chart */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
@@ -44,10 +46,8 @@ const Dashboard = () => {
             className="margin-bottom-10"
           >
             <DynamicBarChart
-              title=""
               selectable
-              refreshButton={false}
-              multiColumns={true}
+              multiColumns
               colors={['#3498db', '#2ecc71', '#e74c3c']}
               chartData={[
                 { label: 'Mon', Admissions: 45, Discharges: 38, Emergency: 66 },
@@ -70,15 +70,13 @@ const Dashboard = () => {
             className="margin-bottom-10"
           >
             <DynamicPieChart
-              title=""
-              selectable={true}
-              refreshButton={false}
+              selectable
               width={350}
               height={347}
               colors={['#2264E5', '#93C6FA', '#FF6384', '#FFCE56', '#4BC0C0', '#663399']}
               chartData={[
                 { label: 'ICU', value: 13 },
-                { label: 'Sergery', value: 5 },
+                { label: 'Surgery', value: 5 },
                 { label: 'Cardiology', value: 9 },
                 { label: 'Pediatrics', value: 12 },
                 { label: 'Others', value: 6 },
@@ -88,7 +86,6 @@ const Dashboard = () => {
           </Panel>
         </FlexboxGrid.Item>
 
-        {/* Diagnoses Table */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel>
             <DynamicMainTableChart
@@ -111,13 +108,12 @@ const Dashboard = () => {
               showHeader={false}
               columns={['name', 'value']}
               columnWidths={['70%', '30%']}
-              alignments={['left', 'right']}
-              showPercentage={true}
+              alignments={tableAlignments}
+              showPercentage
             />
           </Panel>
         </FlexboxGrid.Item>
 
-        {/* Medications Table */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel>
             <DynamicMainTableChart
@@ -133,16 +129,16 @@ const Dashboard = () => {
                 { name: 'Metformin', value: 342, percentage: '23.0%', trend: 'up' },
                 { name: 'Lisinopril', value: 298, percentage: '20.1%', trend: 'down' },
                 { name: 'Atorvastatin', value: 267, percentage: '18.0%', trend: 'up' },
-                { name: 'Ambolipine', value: 231, percentage: '15.6%', trend: 'down' },
+                { name: 'Amlodipine', value: 231, percentage: '15.6%', trend: 'down' },
                 { name: 'Amoxicillin', value: 189, percentage: '12.7%', trend: 'up' },
                 { name: 'Omeprazole', value: 156, percentage: '10.5%', trend: 'down' }
               ]}
+              showHeader={false}
               columns={['name', 'value']}
               columnWidths={['70%', '30%']}
-              alignments={['left', 'right']}
-              showPercentage={true}
-              showTrend={true}
-              showHeader={false}
+              alignments={tableAlignments}
+              showPercentage
+              showTrend
             />
           </Panel>
         </FlexboxGrid.Item>
@@ -169,8 +165,8 @@ const Dashboard = () => {
               showHeader={false}
               columns={['name', 'value']}
               columnWidths={['70%', '30%']}
-              alignments={['left', 'right']}
-              showPercentage={true}
+              alignments={tableAlignments}
+              showPercentage
             />
           </Panel>
         </FlexboxGrid.Item>

@@ -49,7 +49,7 @@ const AddEditCheckList = ({ open, setOpen, checklist, setChecklist, width }) => 
           icon: <GrTestDesktop />
         }
       ]}
-      size={width > 600 ? '36vw' : '70vw'}
+      size={"40vw"}
     />
   );
 };

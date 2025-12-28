@@ -19,6 +19,7 @@ export interface ApUser {
   gender?: string | null;
   jobDescription?: string | null;
   jobRole?: string | null;
+  admin?: boolean;
 }
 
 
@@ -966,7 +967,8 @@ export interface UserStickyNotesResponseVM{
     createdBy: string
     createdDate: Date,
     lastModifiedBy: string,
-    lastModifiedDate: Date
+    lastModifiedDate: Date,
+    patientId: number
 }
 
 export interface UserStickyNotesCreateVM{
@@ -974,7 +976,8 @@ export interface UserStickyNotesCreateVM{
     note: string
     priority: string,
     priorityOrder: number,
-    color:string
+    color:string,
+    patientId: string
 }
 
 export interface PriceListItem {
@@ -1344,4 +1347,16 @@ export interface FormEntryCreateVM {
   facilityId: number;
   departmentId: number;
   dataJson: string; 
+}
+export interface OrganizationDefinition {
+  id?: number;
+  name?: string;
+  description?: string;
+  address?: string;
+  contactName?: string;
+  contactAddress?: string;
+  contactEmail?: string;
+  contactMobile?: string;
+  contactLandNumber?: string;
+  taxValue?: number;
 }

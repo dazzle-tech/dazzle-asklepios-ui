@@ -25,7 +25,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
           <Form fluid>
             <div className="form-container">
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Supplier Name"
                 fieldName={'supplierName'}
@@ -34,7 +34,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 required
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Supplier Code"
                 fieldName={'supplierCode'}
@@ -44,7 +44,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
               />
 
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="Approved Category"
                 fieldName="approvedCategory"
@@ -55,7 +55,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={''}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="Supplier Type"
                 fieldName="supplierType"
@@ -76,7 +76,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
           <Form fluid>
             <div className="form-container">
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="Country"
                 fieldName={'country'}
@@ -93,7 +93,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="State/Province"
                 fieldName={'state'}
@@ -109,7 +109,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="City"
                 fieldName={'city'}
@@ -125,7 +125,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Street Name"
                 fieldName={'streetName'}
@@ -140,7 +140,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
           <Form fluid>
             <div className="form-container">
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Email"
                 fieldName={'Email'}
@@ -148,7 +148,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Primary Phone Number"
                 fieldName={'primaryPhoneNumber'}
@@ -156,7 +156,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Second Phone Number"
                 fieldName={'secondPhoneNumber'}
@@ -164,7 +164,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Website"
                 fieldName={'website'}
@@ -172,7 +172,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Emargency Contact Name"
                 fieldName={'emargencyContactName'}
@@ -180,7 +180,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Emargency Contact Phone"
                 fieldName={'emargencyContactPhone'}
@@ -203,7 +203,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
           <Form fluid>
             <div className="form-container">
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="Payment Terms"
                 fieldName={'paymentTerms'}
@@ -214,7 +214,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="Currency"
                 fieldName={'currency'}
@@ -225,7 +225,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="number"
                 fieldLabel="Lead Time"
                 fieldName={'leadTime'}
@@ -233,7 +233,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="Purchase Price list"
                 fieldName={'purchasePriceList'}
@@ -248,7 +248,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="number"
                 fieldLabel="Credit Limit"
                 fieldName={'creditLimit'}
@@ -256,7 +256,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="Default Warehouse"
                 fieldName={'defaultWarehouse'}
@@ -278,7 +278,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
           <Form fluid>
             <div className="form-container">
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Supplier Account Code"
                 fieldName={'supplierAccountCode'}
@@ -286,7 +286,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="text"
                 fieldLabel="Tax ID"
                 fieldName={'taxId'}
@@ -294,7 +294,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="select"
                 fieldLabel="Invoice Currency"
                 fieldName={'invoiceCurrency'}
@@ -305,7 +305,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="number"
                 fieldLabel="Retention Percentage"
                 fieldName="retentionPercentage"
@@ -313,7 +313,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="multyPicker"
                 fieldLabel="Allowed Payment Methods"
                 fieldName="allowedPaymentMethods"
@@ -328,7 +328,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
                 setRecord={setRecord}
               />
               <MyInput
-                width={250}
+                width={'13vw'}
                 fieldType="checkbox"
                 fieldLabel="Invoice Approach Required"
                 fieldName="invoiceApproachRequired"

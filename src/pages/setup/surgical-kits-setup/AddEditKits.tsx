@@ -38,7 +38,7 @@ const AddEditKits = ({ open, setOpen, width, surgicalKits, setSurgicalKits, hand
       actionButtonLabel={surgicalKits?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Surgical Kits Info', icon: <FontAwesomeIcon icon={faScissors} /> }]} 
-      size={width > 600 ? '36vw' : '70vw'}
+      size={'40vw'}
     />
   );
 };
