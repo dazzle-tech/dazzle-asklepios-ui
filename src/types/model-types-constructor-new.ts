@@ -1104,3 +1104,29 @@ export const newPriceListAttribute: modelTypes.PriceListAttribute = {
   price: null ,// or string if you prefer BigDecimal string
   isActive: true
 }
+
+export const newFormTemplate: modelTypes.FormTemplate = {
+  id: undefined,
+  name: null,
+  description: null,
+  facilityId: null,
+  departmentId: null,
+  formJson: null
+};
+
+export const newFormEntry: modelTypes.FormEntry = {
+  id: undefined,
+  title: null,
+  templateId: null,
+  facilityId: null,
+  departmentId:null,
+  dataJson: null
+}
+
+export const newFormEntryCreateVM: modelTypes.FormEntryCreateVM ={
+  title: null,
+  templateId: null,
+  facilityId: null,
+  departmentId: null,
+  dataJson: null
+}

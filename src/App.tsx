@@ -1,3 +1,4 @@
+import "./surveyjs-license";
 import { useLoadTenantQuery } from '@/services/authService';
 import { Icon } from '@rsuite/icons';
 import { BlockUI } from 'primereact/blockui';
@@ -209,6 +210,12 @@ import PayerSetup from './pages/setup/payer-setup';
 import CountrySetup from './pages/setup/country-setup/CountrySetup';
 import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
 import Form from './pages/dashboard/Form';
+import FormTemplates from './pages/form-template/FormTemplate';
+import FormTemplateBuilderPage from './pages/form-template/FormTemplateBuilderPage';
+import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseScreen';
+import "survey-core/survey-core.min.css";
+import "survey-creator-core/survey-creator-core.min.css";
+
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -646,7 +653,10 @@ const App = () => {
               <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
               <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
               <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
-              <Route path="form" element={<Form />} />
+              <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
+              <Route path="form-template" element={<FormTemplates />} />
+              <Route path="new" element={<FormTemplateBuilderPage />} />
+              <Route path=":id" element={<FormTemplateBuilderPage />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

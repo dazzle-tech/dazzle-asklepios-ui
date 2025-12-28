@@ -1319,3 +1319,29 @@ export interface PriceListAttribute {
   price: number; // or string if you prefer BigDecimal string
   isActive?: boolean;
 }
+
+export interface FormTemplate {
+  id?: number | null;
+  name: string | null;
+  description?: string | null;
+  facilityId: number | null;
+  departmentId: number | null;
+  formJson: string | null; 
+}
+
+export interface FormEntry {
+  id?: number | null;
+  title: string | null;
+  templateId: number | null;
+  facilityId: number | null;
+  departmentId: number | null;
+  dataJson: string | null;
+}
+
+export interface FormEntryCreateVM {
+  title: string;
+  templateId: number;
+  facilityId: number;
+  departmentId: number;
+  dataJson: string; 
+}
