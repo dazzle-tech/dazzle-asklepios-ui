@@ -2877,6 +2877,10 @@ export interface ApPatient {
 	countryId:string;
 	bloodGroupLkey:string;
 	genderLkey:string;
+	gdprNoticeOfPrivacyPractice:boolean;
+	gdprNoticeOfPrivacyPracticeDate:Date;
+	gdprPrivacyAuthorization:boolean;
+	gdprPrivacyAuthorizationDate:Date;
 } 
 
 export interface ApPatientAddresses { 
