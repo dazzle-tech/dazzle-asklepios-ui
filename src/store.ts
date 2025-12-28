@@ -108,6 +108,8 @@ import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
 import {priceListAttributesService} from '@/services/billing/PriceListAttributesService';
 import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
+import { formTemplateService } from './services/setup/formTemplateService';
+import { FormEntriesService } from './services/setup/formEntriesService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -228,6 +230,10 @@ export const store = configureStore({
 
     // Translation slice
     [translationService.reducerPath]: translationService.reducer,
+
+     // Form slice
+    [formTemplateService.reducerPath]: formTemplateService.reducer,
+    [FormEntriesService.reducerPath]: FormEntriesService.reducer,
 
     //service
     [serviceService.reducerPath]: serviceService.reducer,
@@ -366,6 +372,8 @@ export const store = configureStore({
       MedicationCategoriesClassService.middleware,
       languageService.middleware,
       translationService.middleware,
+      formTemplateService.middleware,
+      FormEntriesService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
       ResourceService.middleware,

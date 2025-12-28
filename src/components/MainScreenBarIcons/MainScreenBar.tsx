@@ -3,6 +3,8 @@ import {
   faCalendarDays,
   faChartColumn,
   faCommentDots,
+  faFile,
+  faFileLines,
   faHeadset,
   faNoteSticky,
   faRepeat,
@@ -202,6 +204,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
+         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faFileLines} />
+             Customize Form
+          </div>
+        </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faChartColumn} />
@@ -523,6 +531,17 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{ flexDirection: direction === "LTR" ? "row" : "row-reverse" }}>
         {width >= 930 ? (
           <>
+           <Tooltip title="Customize Form">
+              <IconButton size="small">
+                <FontAwesomeIcon
+                  className="header-screen-bar-icon-size-handle"
+                  icon={faFileLines}
+                     onClick={() => {
+                  navigate('/form-template-use');
+                }}
+                />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Customize Dashboard">
               <IconButton size="small">
                 <FontAwesomeIcon

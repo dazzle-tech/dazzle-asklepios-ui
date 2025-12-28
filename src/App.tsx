@@ -210,6 +210,11 @@ import CountrySetup from './pages/setup/country-setup/CountrySetup';
 import CountryDistrictPage from './pages/setup/country-setup/district-country/CountryDistrictPage';
 import Claimscreen from './pages/billing-module/billingClaims/Claims';
 import OrganizationDefinition from './pages/system-configurations/organization-definition';
+import FormTemplates from './pages/form-template/FormTemplate';
+import FormTemplateBuilderPage from './pages/form-template/FormTemplateBuilderPage';
+import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseScreen';
+import "survey-core/survey-core.min.css";
+import "survey-creator-core/survey-creator-core.min.css";
 
 
 
@@ -711,6 +716,10 @@ useEffect(() => {
               <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
               <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
               <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
+              <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
+              <Route path="form-template" element={<FormTemplates />} />
+              <Route path="new" element={<FormTemplateBuilderPage />} />
+              <Route path=":id" element={<FormTemplateBuilderPage />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
