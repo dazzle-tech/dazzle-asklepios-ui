@@ -16,6 +16,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 
 const TransferTestList = ({
+  open,
   leftItems = [],
   rightItems = [],
   setLeftItems,
@@ -149,6 +150,15 @@ useEffect(() => {
   const filteredLeft = left.filter(item =>
     (item.testName ?? '').toLowerCase().includes((searchTerm ?? '').toLowerCase())
   );
+
+useEffect(() => {
+  if (!open) return;
+  setChecked([]);
+  setLeft(leftItems || []);
+  setRight(rightItems || []);
+  setSearchTerm('');
+  setSearchType({});
+}, [open]);
 
   return (
     <Row>

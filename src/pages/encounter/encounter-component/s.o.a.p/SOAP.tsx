@@ -133,12 +133,10 @@ const SOAP = props => {
               title={
                 <>
                   Chief Complaint
-                  <MyButton size="small" onClick={saveChanges}>
-                    Save
-                  </MyButton>
+
                 </>
               }
-              content={
+              content={<>
                 <Form fluid>
                   <MyInput
                     width="100%"
@@ -150,18 +148,19 @@ const SOAP = props => {
                     setRecord={setLocalEncounter}
                   />
                 </Form>
-              }
+              </>}
+              button={<MyButton size="small" onClick={saveChanges}>
+                    Save
+                      </MyButton>}
             />
             <SectionContainer
               title={
                 <>
                   Assessment
-                  <MyButton size="small" onClick={saveChanges}>
-                    Save
-                  </MyButton>
+
                 </>
               }
-              content={
+              content={<>
                 <Form fluid>
                   <MyInput
                     width="100%"
@@ -174,7 +173,10 @@ const SOAP = props => {
                     setRecord={setLocalEncounter}
                   />
                 </Form>
-              }
+              </>}
+              button={<MyButton size="small" onClick={saveChanges}>
+                    Save
+                      </MyButton>}
             />
           </div>
           <SectionContainer
@@ -184,19 +186,20 @@ const SOAP = props => {
           <div className="last-section-clinical-visit">
             <div className="half-width-section">
               <SectionContainer
+              button={<MyButton size="small" onClick={saveChanges}>
+                    Save
+                  </MyButton>}
                 title={
                   <>
                     Plan
-                    <MyButton size="small" onClick={saveChanges}>
-                      Save
-                    </MyButton>
                   </>
                 }
-                content={
+                content={<>
+
                   <Form fluid>
                     <PatientPlan patient={patient}  localEncounter={localEncounter} setLocalEncounter={setLocalEncounter}/>
                   </Form>
-                }
+                </>}
               />
             </div>
             <div className="half-width-section">
@@ -218,32 +221,32 @@ const SOAP = props => {
     {
       title: 'Physical Examination & Findings',
       content: <ReviewOfSystems patient={patient} encounter={encounter} edit={edit} />
-    },
-    {
-      title: 'Physical Examination & Findings BY Image',
-      content: (
-        <>
-          {' '}
-          {(patientAgeGroupResponse?.object?.key === '5945922992301153' ||
-            patientAgeGroupResponse?.object?.key === '1790407842882435' ||
-            patientAgeGroupResponse?.object?.key === '5946401407873394' ||
-            patientAgeGroupResponse?.object?.key === '1375554380483561' ||
-            patientAgeGroupResponse?.object?.key === '5945877765605378') &&
-            (patient?.genderLkey === '1' ? (
-              <img className="image-style" src={ChildBoy} />
-            ) : (
-              <img className="image-style" src={ChildGirl} />
-            ))}
-          {(patientAgeGroupResponse?.object?.key === '1790428129203615' ||
-            patientAgeGroupResponse?.object?.key === '1790525617633551') &&
-            (patient?.genderLkey === '1' ? (
-              <img className="image-style" src={Male} />
-            ) : (
-              <img className="image-style" src={Female} />
-            ))}{' '}
-        </>
-      )
     }
+    // {
+    //   title: 'Physical Examination & Findings BY Image',
+    //   content: (
+    //     <>
+    //       {' '}
+    //       {(patientAgeGroupResponse?.object?.key === '5945922992301153' ||
+    //         patientAgeGroupResponse?.object?.key === '1790407842882435' ||
+    //         patientAgeGroupResponse?.object?.key === '5946401407873394' ||
+    //         patientAgeGroupResponse?.object?.key === '1375554380483561' ||
+    //         patientAgeGroupResponse?.object?.key === '5945877765605378') &&
+    //         (patient?.genderLkey === '1' ? (
+    //           <img className="image-style" src={ChildBoy} />
+    //         ) : (
+    //           <img className="image-style" src={ChildGirl} />
+    //         ))}
+    //       {(patientAgeGroupResponse?.object?.key === '1790428129203615' ||
+    //         patientAgeGroupResponse?.object?.key === '1790525617633551') &&
+    //         (patient?.genderLkey === '1' ? (
+    //           <img className="image-style" src={Male} />
+    //         ) : (
+    //           <img className="image-style" src={Female} />
+    //         ))}{' '}
+    //     </>
+    //   )
+    // }
   ];
 
   return (
