@@ -1,217 +1,4 @@
-// import Translate from '@/components/Translate';
-// import React, { useEffect, useState } from 'react';
-// import { Panel, Form } from 'rsuite';
-// import { MdModeEdit, MdDelete } from 'react-icons/md';
-// import { FaUndo } from 'react-icons/fa';
-// import AddOutlineIcon from '@rsuite/icons/AddOutline';
 
-// import MyTable from '@/components/MyTable';
-// import MyButton from '@/components/MyButton/MyButton';
-// import MyInput from '@/components/MyInput';
-// import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-
-// import {
-//   useGetConfigurationsQuery,
-//   useAddConfigurationMutation,
-//   useUpdateConfigurationMutation
-// }  from '@/services/setup/systemConfiguration/systemConfigurationService'
-// import { Configuration } from '@/types/model-types-new';
-// import { useAppDispatch } from '@/hooks';
-// import { notify } from '@/utils/uiReducerActions';
-// import AddEditConfiguration from './AddEditConfiguration';
-
-// const SystemConfiguration = () => {
-//   const dispatch = useAppDispatch();
-
-//   const [popupOpen, setPopupOpen] = useState(false);
-//   const [confirmOpen, setConfirmOpen] = useState(false);
-//   const [actionType, setActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
-
-//   const [selectedConfig, setSelectedConfig] = useState<Configuration | null>(null);
-
-//   const [paginationParams, setPaginationParams] = useState({
-//     page: 0,
-//     size: 10,
-//     sort: 'id,asc',
-//     timestamp: Date.now()
-//   });
-
-//   /** Fetch list */
-//   const {
-//     data: configurationResponse,
-//     isFetching,
-//     refetch
-//   } = useGetConfigurationsQuery(paginationParams);
-
-//   /** Mutations */
-//   const [addConfiguration] = useAddConfigurationMutation();
-//   const [updateConfiguration] = useUpdateConfigurationMutation();
-
-//   const totalCount = configurationResponse?.totalCount ?? 0;
-
-//   /** Table actions */
-//   const iconsForActions = (rowData: Configuration) => (
-//     <div className="container-of-icons">
-//       <MdModeEdit
-//         className="icons-style"
-//         size={22}
-//         onClick={() => {
-//           setSelectedConfig(rowData);
-//           setPopupOpen(true);
-//         }}
-//       />
-
-//       {rowData?.isActive  ? (
-//         <MdDelete
-//           className="icons-style"
-//           size={22}
-//           onClick={() => {
-//             setSelectedConfig(rowData);
-//             setActionType('deactivate');
-//             setConfirmOpen(true);
-//           }}
-//         />
-//       ) : (
-//         <FaUndo
-//           className="icons-style"
-//           size={20}
-//           onClick={() => {
-//             setSelectedConfig(rowData);
-//             setActionType('reactivate');
-//             setConfirmOpen(true);
-//           }}
-//         />
-//       )}
-//     </div>
-//   );
-
-//   /** Table columns */
-//   const tableColumns = [
-//     {
-//       key: 'key',
-//       title: <Translate>Key</Translate>
-//     },
-//     {
-//       key: 'value',
-//       title: <Translate>Value</Translate>
-//     },
-//     {
-//       key: 'facilityId',
-//       title: <Translate>Facility</Translate>,
-//       render: (rowData: Configuration) =>
-//         rowData.facilityId ? rowData.facilityId : 'Organization'
-//     },
-//     {
-//       key: 'status',
-//       title: <Translate>Status</Translate>,
-//       render: (rowData: Configuration) =>
-//         rowData?.isActive ? 'Active' : 'Inactive'
-//     },
-//     {
-//       key: 'icons',
-//       title: '',
-//       flexGrow: 2,
-//       render: iconsForActions
-//     }
-//   ];
-
-//   /** Save handler */
-//   const handleSave = (config: Configuration) => {
-//     const action = config.id
-//       ? updateConfiguration({ id: config.id, body: config })
-//       : addConfiguration(config);
-
-//     action
-//       .unwrap()
-//       .then(() => {
-//         dispatch(notify({ msg: 'Configuration saved successfully', sev: 'success' }));
-//         setPopupOpen(false);
-//         refetch();
-//       })
-//       .catch(() => {
-//         dispatch(notify({ msg: 'Failed to save configuration', sev: 'error' }));
-//       });
-//   };
-
-//   /** Activate / Deactivate */
-//   const handleStatusChange = () => {
-//     if (!selectedConfig) return;
-
-//     updateConfiguration({
-//       id: selectedConfig.id,
-//       body: {
-//         ...selectedConfig,
-//         isActive: actionType === 'deactivate' ? false : true  //baaaaaaaaaaaack
-//       }
-//     })
-//       .unwrap()
-//       .then(() => {
-//         dispatch(
-//           notify({
-//             msg:
-//               actionType === 'deactivate'
-//                 ? 'Configuration deactivated'
-//                 : 'Configuration activated',
-//             sev: 'success'
-//           })
-//         );
-//         setConfirmOpen(false);
-//         refetch();
-//       });
-//   };
-
-//   return (
-//     <Panel>
-//       <MyTable
-//         height={450}
-//         data={configurationResponse?.data ?? []}
-//         loading={isFetching}
-//         columns={tableColumns}
-//         page={paginationParams.page}
-//         rowsPerPage={paginationParams.size}
-//         totalCount={totalCount}
-//         onPageChange={(_, page) =>
-//           setPaginationParams({ ...paginationParams, page })
-//         }
-//         onRowsPerPageChange={e =>
-//           setPaginationParams({
-//             ...paginationParams,
-//             size: parseInt(e.target.value, 10),
-//             page: 0
-//           })
-//         }
-//         tableButtons={
-//           <MyButton
-//             prefixIcon={() => <AddOutlineIcon />}
-//             onClick={() => {
-//               setSelectedConfig(null);
-//               setPopupOpen(true);
-//             }}
-//           >
-//             Add New
-//           </MyButton>
-//         }
-//       />
-
-//       <AddEditConfiguration
-//         open={popupOpen}
-//         setOpen={setPopupOpen}
-//         configuration={selectedConfig}
-//         onSave={handleSave}
-//       />
-
-//       <DeletionConfirmationModal
-//         open={confirmOpen}
-//         setOpen={setConfirmOpen}
-//         itemToDelete="Configuration"
-//         actionButtonFunction={handleStatusChange}
-//         actionType={actionType}
-//       />
-//     </Panel>
-//   );
-// };
-
-// export default SystemConfiguration;
 
 import React, { useState, useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
@@ -233,15 +20,21 @@ import { Configuration } from '@/types/model-types-new';
 import { MdDelete } from 'react-icons/md';
 import { MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
+import { isAction } from '@reduxjs/toolkit';
+import { formatEnumString } from '@/utils';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
 
 const SystemConfiguration = () => {
   const dispatch = useAppDispatch();
   const [selectedConfig, setSelectedConfig] = useState<Configuration | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
-  const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
+  const [openConfirmDeactivateReactivate, setOpenConfirmDeactivateReactivate] = useState(false);
   const [filterRecord, setFilterRecord] = useState({ filter: '', value: '' });
   const [filteredList, setFilteredList] = useState<Configuration[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [stateOfDeleteModal, setStateOfDeleteModal] = useState("deactivate");
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -251,54 +44,209 @@ const SystemConfiguration = () => {
   });
 
   const { data: configListResponse, refetch, isFetching } = useGetConfigurationsQuery(paginationParams);
-
+  const [updateConfiguration] = useUpdateConfigurationMutation();
   // Header page setup
   dispatch(setPageCode('SystemConfiguration'));
   dispatch(setDivContent('System Configuration'));
 
   const totalCount = isFiltered ? filteredList.length : configListResponse?.totalCount ?? 0;
+  // class name for selected row
+  const isSelected = rowData => {
+    if (rowData && selectedConfig && rowData?.id === selectedConfig?.id) {
+      return 'selected-row';
+    } else return '';
+  };
 
-   // Icons column (Edit, reactive/Deactivate)
-    const iconsForActions = rowData => (
-      <div className="container-of-icons">
-        <MdModeEdit
+  // Icons column (Edit, reactive/Deactivate)
+  const iconsForActions = rowData => (
+    <div className="container-of-icons">
+      <MdModeEdit
+        className="icons-style"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setPopupOpen(true)}
+      />
+      {rowData?.isActive ? (
+        <MdDelete
           className="icons-style"
-          title="Edit"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            // setPriceList(rowData);
+            setStateOfDeleteModal("deactivate");
+            setOpenConfirmDeactivateReactivate(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-style"
+          title="Activate"
           size={24}
           fill="var(--primary-gray)"
-          
+          onClick={() => {
+            // setPriceList(rowData);
+            setStateOfDeleteModal("reactivate");
+            setOpenConfirmDeactivateReactivate(true);
+          }}
         />
-        {rowData?.isActive ? (
-          <MdDelete
-            className="icons-style"
-            title="Deactivate"
-            size={24}
-            fill="var(--primary-pink)"
-          />
-        ) : (
-          <FaUndo
-            className="icons-style"
-            title="Activate"
-            size={24}
-            fill="var(--primary-gray)"
-          />
-        )}
-      </div>
-    );
+      )}
+    </div>
+  );
   const tableColumns = [
-    { key: 'key', title: 'Key' },
-    { key: 'value', title: 'Value' },
-    { key: 'description', title: 'Description' },
-     {
+    {
+      key: 'facilityId',
+      title: 'Facility',
+      render: (rowData: Configuration) => <p>{rowData?.facility?.name}</p>
+    },
+    {
+      key: 'key',
+      title: 'Key',
+      render: (rowData: Configuration) => (
+        <span>{formatEnumString(rowData.key)}</span>
+      ),
+    },
+    {
+      key: 'valueType',
+      title: 'Value Type',
+      render: (rowData: Configuration) => (
+        <span>{formatEnumString(rowData.valueType)}</span>
+      ),
+    },
+    { key: 'value',
+      title: 'Value'
+    },
+    { key: 'referenceType',
+      title: 'Reference Type',
+      render: (rowData: Configuration) => (
+        <span>{formatEnumString(rowData.referenceType)}</span>
+      ),
+    },
+    {
       key: 'icons',
       title: '',
       render: rowData => iconsForActions(rowData)
     }
   ];
 
+  const filters = () => (
+      <div className='my-table-filters'>
+      <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      {/* <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      /> */}
+        <MyInput
+          fieldName="value"
+          //  width={350}
+          // fieldType="select"
+          // selectData={departmentListResponse ?? []}
+          // selectDataLabel="name"
+          // selectDataValue="id"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          // menuMaxHeight={150}
+          showLabel={false}
+          placeholder='Search'
+          // searchable={false}
+        />
+      
+      {/* <MyButton
+        color="var(--deep-blue)"
+        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+        width="80px"
+      >
+        Search
+      </MyButton> */}
+    </Form>
+  
+            <AdvancedSearchFilters
+          searchFilter={true}
+          content={<Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={[]}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+        <MyInput
+          fieldName="value"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+        />
+      
+    </Form>}
+        />
+      </div>
+    );
+
   const handleNew = () => {
     setSelectedConfig(null);
     setPopupOpen(true);
+  };
+
+  const handleDeactivateReactivate = () => {
+    if (stateOfDeleteModal === 'reactivate') {
+      const toUpdate = {
+        id: selectedConfig.id,
+        key: selectedConfig.key,
+        value: selectedConfig.value,
+        valueType: selectedConfig.valueType,
+        referenceType: selectedConfig.referenceType,
+        description: selectedConfig.description,
+        facilityId: Number(selectedConfig?.facility?.id),
+        isActive: true,
+      };
+      updateConfiguration({ id: selectedConfig.id, body: toUpdate })
+        .unwrap()
+        .then(() => { dispatch(notify({ msg: 'Configuration updated successfully', sev: 'success' })); refetch() })
+        .catch(() => dispatch(notify({ msg: 'Failed to update configuration', sev: 'error' })));
+    }
+    else {
+      const toUpdate = {
+        id: selectedConfig.id,
+        key: selectedConfig.key,
+        value: selectedConfig.value,
+        valueType: selectedConfig.valueType,
+        referenceType: selectedConfig.referenceType,
+        description: selectedConfig.description,
+        facilityId: Number(selectedConfig?.facility?.id),
+        isActive: false,
+      };
+      updateConfiguration({ id: selectedConfig.id, body: toUpdate })
+        .unwrap()
+        .then(() => { dispatch(notify({ msg: 'Configuration updated successfully', sev: 'success' })); refetch() })
+        .catch(() => dispatch(notify({ msg: 'Failed to update configuration', sev: 'error' })));
+    }
+    setOpenConfirmDeactivateReactivate(false);
   };
 
   useEffect(() => {
@@ -310,13 +258,9 @@ const SystemConfiguration = () => {
 
   return (
     <Panel>
-      <div style={{ marginBottom: 10 }}>
-        <MyButton color="var(--deep-blue)" onClick={handleNew} width="120px">
-          Add New
-        </MyButton>
-      </div>
 
       <MyTable
+        rowClassName={isSelected}
         height={450}
         totalCount={totalCount}
         data={isFiltered ? filteredList : configListResponse?.data ?? []}
@@ -327,6 +271,19 @@ const SystemConfiguration = () => {
         rowsPerPage={paginationParams.size}
         onPageChange={(e, newPage) => setPaginationParams({ ...paginationParams, page: newPage })}
         onRowsPerPageChange={e => setPaginationParams({ ...paginationParams, size: Number(e.target.value), page: 0 })}
+        filters={filters()}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>
+        }
       />
 
       <AddEditConfiguration
@@ -336,11 +293,11 @@ const SystemConfiguration = () => {
       />
 
       <DeletionConfirmationModal
-        open={openConfirmDelete}
-        setOpen={setOpenConfirmDelete}
+        open={openConfirmDeactivateReactivate}
+        setOpen={setOpenConfirmDeactivateReactivate}
         itemToDelete="Configuration"
-        actionButtonFunction={() => {}}
-        actionType="delete"
+        actionButtonFunction={handleDeactivateReactivate}
+        actionType={stateOfDeleteModal}
       />
     </Panel>
   );

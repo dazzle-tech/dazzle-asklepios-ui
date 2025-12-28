@@ -1147,7 +1147,7 @@ export const newConfigurationUpdateVM: modelTypes.ConfigurationUpdateVM = {
 
   export const newConfiguration: modelTypes.Configuration = {
   id: undefined,
-  facilityId: undefined,
+  facility: undefined,
   key: '',
   value: '',
   valueType: '',

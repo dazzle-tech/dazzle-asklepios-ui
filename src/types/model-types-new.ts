@@ -1360,7 +1360,7 @@ export interface ConfigurationUpdateVM {
 
 export interface Configuration {
   id: number,
-  facilityId?: number;
+  facility?: Facility;
   key: string,
   value: string,
   valueType: string,

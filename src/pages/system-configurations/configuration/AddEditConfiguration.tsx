@@ -1,97 +1,3 @@
-// import React from 'react';
-// import { Form } from 'rsuite';
-// import MyModal from '@/components/MyModal/MyModal';
-// import MyInput from '@/components/MyInput';
-// import { Configuration } from '@/types/model-types-new';
-// import { GrCatalog } from 'react-icons/gr';
-// import { useEnumOptions } from '@/services/enumsApi';
-// import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-
-// const AddEditConfiguration = ({
-//     open,
-//     setOpen,
-//     configuration,
-//     onSave
-// }) => {
-//     const [record, setRecord] = React.useState<Configuration>(
-//         configuration ?? { key: '', value: '', facilityId: null }
-//     );
-//     console.log("record");
-//     console.log(record);
-
-//     const configurationValueTypeEnumList = useEnumOptions('ConfigurationValueType');
-//     // Fetch Facilities list response
-//     const { data: facilityListResponse, refetch: refetchFacility, isFetching } = useGetAllFacilitiesQuery({});
-
-//     React.useEffect(() => {
-//         if (configuration) setRecord(configuration);
-//     }, [configuration]);
-
-//     return (
-//         <MyModal
-//             open={open}
-//             setOpen={setOpen}
-//             title={record?.id ? 'Edit Configuration' : 'New Configuration'}
-//             actionButtonLabel={record?.id ? 'Save' : 'Create'}
-//             actionButtonFunction={() => onSave(record)}
-//             position="right"
-//             steps={[
-//                 {
-//                     title: 'Configuration Info',
-//                     icon: <GrCatalog />
-//                 }
-//             ]}
-//             content={() => (
-//                 <Form fluid>
-//                     <MyInput
-//                         fieldName="key"
-//                         fieldLabel="Key"
-//                         record={record}
-//                         setRecord={setRecord}
-//                     />
-
-//                     <MyInput
-//                         fieldName="valueType"
-//                         fieldType="select"
-//                         selectData={configurationValueTypeEnumList ?? []}
-//                         selectDataLabel="label"
-//                         selectDataValue="value"
-//                         record={record}
-//                         setRecord={setRecord}
-//                         searchable={false}
-//                     />
-//                     <MyInput
-//                         fieldName="value"
-//                         fieldLabel="Value"
-//                         fieldType='number'
-//                         record={record}
-//                         setRecord={setRecord}
-//                     />
-//                     {/* <MyInput
-//                         fieldName="facilityId"
-//                         fieldLabel="Facility ID"
-//                         fieldType="number"
-//                         record={record}
-//                         setRecord={setRecord}
-//                     /> */}
-//                     <MyInput
-//                         fieldLabel="Facility"
-//                         selectData={facilityListResponse ?? []}
-//                         fieldType="select"
-//                         selectDataLabel="name"
-//                         selectDataValue="id"
-//                         fieldName="facilityId"
-//                         record={record}
-//                         setRecord={setRecord}
-//                     />
-//                 </Form>
-//             )}
-//         />
-//     );
-// };
-
-// export default AddEditConfiguration;
-
 
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
@@ -117,6 +23,7 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
     const dispatch = useAppDispatch();
     const [createVM, setCreateVM] = useState<ConfigurationCreateVM>({ ...newConfigurationCreateVM });
     const [updateVM, setUpdateVM] = useState<ConfigurationUpdateVM>({ ...newConfigurationUpdateVM });
+    const valueType = configuration?.id ? updateVM.valueType : createVM.valueType;
     const [openConfirmationMessage, setOpenConfirmationMessage] = useState<boolean>(false);
     const [addConfiguration] = useAddConfigurationMutation();
     const [updateConfiguration] = useUpdateConfigurationMutation();
@@ -128,15 +35,22 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
     useEffect(() => {
         if (configuration?.id) {
             setUpdateVM({
+                id: configuration.id,
                 key: configuration.key,
                 value: configuration.value,
-                description: configuration.description
+                valueType: configuration.valueType,
+                referenceType: configuration.referenceType,
+                description: configuration.description,
+                facilityId: Number(configuration?.facility?.id),
+                isActive:  configuration?.isActive
             });
         }
     }, [configuration]);
 
+    
+
     const handleClickSave = () => {
-         if (!configuration?.id){
+         if (configuration?.id){
            if(!updateVM.facilityId){
              setOpenConfirmationMessage(true);
            }
@@ -156,7 +70,7 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
 
     const handleSave = () => {
         setOpen(false);
-
+        setOpenConfirmationMessage(false);
         if (!configuration?.id) {
             console.log("in if 1");
             console.log("createVM");
@@ -167,7 +81,7 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                     setCreateVM({ ...newConfigurationCreateVM });
                     dispatch(notify({ msg: 'Configuration added successfully', sev: 'success' }));
                 })
-                .catch(() => dispatch(notify({ msg: 'Failed to add configuration', sev: 'error' })));
+                .catch((e) => { dispatch(notify({ msg: 'Failed to add configuration', sev: 'error' })); console.log("erroer"); console.log(e); } );
         } else {
               console.log("in else 1");
             console.log("updateVM");
@@ -179,14 +93,14 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
         }
     };
 
-    useEffect(() => {
-        if (configuration?.id) {
-            setUpdateVM({ ...updateVM, value: '' });
-        }
-        else {
-            setCreateVM({ ...createVM, value: '' });
-        }
-    }, [createVM.valueType, updateVM.valueType])
+    // useEffect(() => {
+    //     if (configuration?.id) {
+    //         setUpdateVM({ ...updateVM, value: '' });
+    //     }
+    //     else {
+    //         setCreateVM({ ...createVM, value: '' });
+    //     }
+    // }, [createVM.valueType, updateVM.valueType])
 
     return (
         <MyModal
@@ -224,7 +138,6 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                         selectDataValue="value"
                         record={configuration?.id ? updateVM : createVM}
                         setRecord={configuration?.id ? setUpdateVM : setCreateVM}
-                        disabled={configuration?.id ? true : false}
                         searchable={false}
                         required
                     />
@@ -235,12 +148,13 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                         selectDataLabel="label"
                         selectDataValue="value"
                         record={configuration?.id ? updateVM : createVM}
-                        setRecord={configuration?.id ? setUpdateVM : setCreateVM}
+                        // setRecord={configuration?.id ? setUpdateVM : setCreateVM}
+                         setRecord={(value) => configuration?.id ? setUpdateVM({...updateVM, valueType: value.valueType, value: ""}) : setCreateVM({...createVM, valueType: value.valueType, value: ""})}
                         disabled={configuration?.id ? true : false}
                         searchable={false}
                         required
                     />
-                    {(createVM.valueType === 'INTEGER' || createVM.valueType === 'DECIMAL') ? (
+                    {(valueType === 'INTEGER' || valueType === 'DECIMAL') ? (
                         <MyInput
                             fieldName="value"
                             fieldLabel="Value"
@@ -249,7 +163,7 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                             setRecord={configuration?.id ? setUpdateVM : setCreateVM}
                             required
                         />)
-                        : (createVM.valueType === 'BOOLEAN') ? (<MyInput
+                        : (valueType === 'BOOLEAN') ? (<MyInput
                             fieldName="value"
                             fieldLabel="Value"
                             fieldType='checkbox'
@@ -271,13 +185,13 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                         selectDataValue="value"
                         record={configuration?.id ? updateVM : createVM}
                         setRecord={configuration?.id ? setUpdateVM : setCreateVM}
-                        disabled={configuration?.id ? true : false}
                         searchable={false}
                         required
                     />
                     <MyInput
                         fieldName="description"
                         fieldLabel="Description"
+                        fieldType='textarea'
                         record={configuration?.id ? updateVM : createVM}
                         setRecord={configuration?.id ? setUpdateVM : setCreateVM}
                     />
