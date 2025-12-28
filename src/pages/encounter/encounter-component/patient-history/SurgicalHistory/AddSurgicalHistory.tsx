@@ -20,21 +20,31 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const [openOtherField, setOpenOtherField] = useState({ open: false });
   const [openImplantsField, setOpenImplantsField] = useState({ open: false });
 
-  useEffect(() => {
-    if (initialData) {
-      setRecord(initialData);
+    useEffect(() => {
+      if (initialData) {
+        setRecord({
+          ...initialData,
+          adverseReactionsToAnesthesiaLkey:
+            typeof initialData.adverseReactionsToAnesthesiaLkey === 'string'
+              ? initialData.adverseReactionsToAnesthesiaLkey.split(',')
+              : Array.isArray(initialData.adverseReactionsToAnesthesiaLkey)
+                ? initialData.adverseReactionsToAnesthesiaLkey
+                : []
+        });
 
-      setOpenOtherField({ open: initialData.other ?? false });
-      setOpenImplantsField({ open: initialData.isImplantsOrDevices ?? false });
-    } else {
-      setRecord({
-        ...newApPatientSurgicalHistory,
-        patientKey: patient?.key,
-      });
-      setOpenOtherField({ open: false });
-      setOpenImplantsField({ open: false });
-    }
-  }, [initialData, patient]);
+        setOpenOtherField({ open: initialData.other ?? false });
+        setOpenImplantsField({ open: initialData.isImplantsOrDevices ?? false });
+      } else {
+        setRecord({
+          ...newApPatientSurgicalHistory,
+          patientKey: patient?.key,
+          adverseReactionsToAnesthesiaLkey: []
+        });
+
+        setOpenOtherField({ open: false });
+        setOpenImplantsField({ open: false });
+      }
+    }, [initialData, patient]);
 
   const { data: complicationsLov } = useGetLovValuesByCodeQuery("PROC_COMPLIC");
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery("ANESTH_TYPES");
@@ -57,9 +67,14 @@ const handleSave = () => {
       : "",
     anesthesiaTypeLkey: record.anesthesiaTypeLkey || null,
     complicationsLkey: record.complicationsLkey || null,
-    adverseReactionsToAnesthesiaLkey:
-      record.adverseReactionsToAnesthesiaLkey || null,
+adverseReactionsToAnesthesiaLkey:
+  record.adverseReactionsToAnesthesiaLkey?.length
+    ? record.adverseReactionsToAnesthesiaLkey.join(',')
+    : null,
+
   };
+
+  console.log("PayLoad",payload);
 
   saveSurgicalHistory(payload)
     .unwrap()
@@ -143,18 +158,18 @@ const handleSave = () => {
         setRecord={setRecord}
       />
 
-      <MyInput
-        width={200}
-        column
-        fieldLabel="Adverse Reactions"
-        fieldType="select"
-        fieldName="adverseReactionsToAnesthesiaLkey"
-        selectData={adverseLov?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={record}
-        setRecord={setRecord}
-      />
+        <MyInput
+          width={200}
+          column
+          fieldLabel="Adverse Reactions"
+          fieldType="checkPicker"
+          fieldName="adverseReactionsToAnesthesiaLkey"
+          selectData={adverseLov?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={record}
+          setRecord={setRecord}
+        />
 
       <MyInput
         width={200}

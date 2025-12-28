@@ -3356,7 +3356,7 @@ export interface ApPatientSurgicalHistory {
 	otherDesc:string;
 	anesthesiaTypeLkey:string;
 	complicationsLkey:string;
-	adverseReactionsToAnesthesiaLkey:string;
+	adverseReactionsToAnesthesiaLkey?: string[];
 	isImplantsOrDevices:boolean;
 	implantsOrDevicesDescription:string;
 	createdBy:string;

@@ -236,7 +236,7 @@ useEffect(() => {
 
       <Text className="main-info-patient-side">
         <FontAwesomeIcon icon={faIdCard} className="icon-color" />{' '}
-        <span className="section-title-patient-side">Documentss Information</span>
+        <span className="section-title-patient-side">Document Information</span>
       </Text>
       <br />
 
@@ -276,7 +276,7 @@ useEffect(() => {
 
       <Text className="main-info-patient-side">
         <FaWeight className="icon-color" />{' '}
-        <span className="section-title-patient-side">Physical Measurements</span>
+        <span className="section-title-patient-side">Measurements</span>
       </Text>
       <div className="details-sections">
         <br />

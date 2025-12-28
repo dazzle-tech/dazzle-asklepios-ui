@@ -1292,6 +1292,7 @@ const DiagnosticsOrder = props => {
         size="50vw"
         content={
           <TransferList
+            open={openTestsModal}
             leftItems={leftItems}
             rightItems={selectedTestsList}
             setLeftItems={setLeftItems}
@@ -1302,6 +1303,7 @@ const DiagnosticsOrder = props => {
             setSearchType={setSearchType}
             isFetching={isFetching}
           />
+
         }
       />
 
