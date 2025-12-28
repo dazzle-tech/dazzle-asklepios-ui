@@ -28,10 +28,14 @@ const RoleScreens = ({ roleId }: { roleId: number }) => {
 
   const [selected, setSelected] = useState<Permission[]>([]);
 
+  // Reset selected state when roleId changes
   useEffect(() => {
-    if (initialPermissions?.length) {
-      setSelected(initialPermissions);
-    }
+    setSelected([]);
+  }, [roleId]);
+
+  // Update selected state when initialPermissions changes
+  useEffect(() => {
+    setSelected(initialPermissions || []);
   }, [initialPermissions]);
 
   const togglePermission = (screenCode: string, operation: string) => {
