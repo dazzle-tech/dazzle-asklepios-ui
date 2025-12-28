@@ -215,8 +215,7 @@ import FormTemplateBuilderPage from './pages/form-template/FormTemplateBuilderPa
 import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseScreen';
 import "survey-core/survey-core.min.css";
 import "survey-creator-core/survey-creator-core.min.css";
-
-
+import Logo from './images/eWaveLogocopy.svg';
 
 type BackendMenuItem = { screen?: string | null };
 
@@ -398,9 +397,16 @@ useEffect(() => {
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
-      <div
-        style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}
-      ></div>
+       <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
+        <img
+          style={{ height: '40px', width: '110px' }}
+          src={Logo}
+
+        />
+       
+      </div>
+
+   
       <div
         id="blocker-error"
         style={{
