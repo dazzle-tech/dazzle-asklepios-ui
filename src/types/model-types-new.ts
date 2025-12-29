@@ -968,7 +968,7 @@ export interface UserStickyNotesResponseVM{
     createdDate: Date,
     lastModifiedBy: string,
     lastModifiedDate: Date,
-    patientId: number
+    patientId: string
 }
 
 export interface UserStickyNotesCreateVM{
