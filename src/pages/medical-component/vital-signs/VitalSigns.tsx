@@ -61,7 +61,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
           <MyInput
             width="100%"
             fieldType="select"
-            fieldName="measurementSiteLkey"
+            fieldName="measurementLkey"
             selectData={BPMeasurmentLov?.object ?? []}
             selectDataLabel="lovDisplayVale"
             selectDataValue="key"
@@ -119,7 +119,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
             <MyInput
               fieldLabel="Note"
               width="100%"
-              fieldName="latestnotes"
+              fieldName="notes"
               fieldType="textarea"
               record={object}
               setRecord={setObject}

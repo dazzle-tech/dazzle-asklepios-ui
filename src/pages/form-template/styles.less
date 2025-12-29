@@ -24,3 +24,33 @@ surveyjs-scope {
 .form-template-row > :not(button) {
   flex: 1 1 240px;      
 }
+.survey-scope {
+/* Apply to DefaultV2 root */
+.sd-root-modern, .survey-scope {
+  --sjs-primary-backcolor: #0B3A6A;        /* navy */
+  --sjs-primary-backcolor-dark: #072B4E;   /* hover */
+  --sjs-primary-backcolor-light: #D6E7F7;  /* light highlight */
+  --sjs-primary-forecolor: #ffffff;
+
+  --sjs-secondary-backcolor: #2563EB;      /* blue */
+  --sjs-secondary-forecolor: #ffffff;
+
+  --sjs-border-default: #CBD5E1;
+  --sjs-general-backcolor: #ffffff;
+  --sjs-general-forecolor: #0F172A;
+}
+
+/* Extra force for buttons (if some buttons still look plain) */
+.sd-root-modern .sd-btn,
+.survey-scope .sd-btn {
+  background-color: #0B3A6A !important;
+  color: #fff !important;
+  border-color: #0B3A6A !important;
+}
+.sd-root-modern .sd-btn:hover,
+.survey-scope .sd-btn:hover {
+  background-color: #072B4E !important;
+  border-color: #072B4E !important;
+}
+
+}

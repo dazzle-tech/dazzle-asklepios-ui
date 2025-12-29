@@ -406,7 +406,7 @@ const Encounter = () => {
             title="AI Assistant"
           >
             <FontAwesomeIcon icon={faRobot} />
-            <span className="ai-badge">AI</span>
+            <span className="ai-badge-2">AI</span>
           </button>
 
           {!isAiDragging && <div className="draggable-pulse" />}

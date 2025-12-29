@@ -73,7 +73,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}`,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return false;
@@ -137,7 +137,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
           return `• ${label}: ${normalizeMsg(fe.message)}`;
         });
 
-        dispatch(notify({ msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix, sev: 'error' }));
+        dispatch(notify({ msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix, sev: 'warning' }));
         return;
       }
 

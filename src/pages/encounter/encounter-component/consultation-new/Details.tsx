@@ -1,26 +1,25 @@
-
-import React, { useState, useEffect } from 'react';
-import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
-import MyInput from '@/components/MyInput';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal';
-import MyButton from '@/components/MyButton/MyButton';
-import { Form } from 'rsuite';
-import { useSaveConsultationOrdersMutation } from '@/services/encounterService';
-import { newApConsultationOrder } from '@/types/model-types-constructor';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom, faPaperclip, faRobot } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { useLazyGetActivePractitionersBySubSpecialtyQuery } from '@/services/setup/practitioner/PractitionerService';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
-import clsx from 'clsx';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
+import { useAppDispatch } from '@/hooks';
+import { useSaveConsultationOrdersMutation } from '@/services/encounterService';
+import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useLazyGetActivePractitionersBySubSpecialtyQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newApConsultationOrder } from '@/types/model-types-constructor';
+import { notify } from '@/utils/uiReducerActions';
+import { faBroom, faPaperclip, faRobot } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
+import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 
+import Translate from '@/components/Translate';
 import { useGetSpecialtyConsultationMutation } from '@/services/ai-services/clinicalRecommendationsService';
-import { el } from 'date-fns/locale';
 
 const Details = ({
   patient,
@@ -58,20 +57,14 @@ const Details = ({
   const [localAiSummary, setLocalAiSummary] = useState<string | null>(null);
   const [specialtyName, setSpecialtyName] = useState<string | null>(null);
 
-  // ✅ NEW: AI mutation
+  // NEW: AI mutation
   const [
     getSpecialtyConsultation,
     { data: aiConsultationData, isLoading: aiLoading, error: aiError }
   ] = useGetSpecialtyConsultationMutation();
 
-  // ✅ NEW: text to show in panel
-  const aiSummary =
-    localAiSummary ??
-    (aiConsultationData as any)?.summary ??
-    (aiConsultationData as any)?.Summary ??
-    (aiConsultationData as any)?.object?.summary ??
-    null;
-
+  // NEW: text to show in panel
+  const aiSummary = localAiSummary;
 
   const handleOpenAttachmentModal = () => {
     setShowAttachmentModal(true);
@@ -103,14 +96,14 @@ const Details = ({
       dispatch(
         notify({
           msg: `Please fill the following required fields:\n${lines.join('\n')}`,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return false;
     }
 
     if (!consultationOrders?.departmentKey && !consultationOrders?.preferredConsultantKey) {
-      dispatch(notify({ msg: 'Please select at least Department or Consultant', sev: 'error' }));
+      dispatch(notify({ msg: 'Please select at least Department or Consultant', sev: 'warning' }));
       return false;
     }
 
@@ -119,7 +112,10 @@ const Details = ({
       !consultationOrders?.preferredConsultantKey
     ) {
       dispatch(
-        notify({ msg: 'Please select a Consultant when Consultant Specialty is filled', sev: 'error' })
+        notify({
+          msg: 'Please select a Consultant when Consultant Specialty is filled',
+          sev: 'warning'
+        })
       );
       return false;
     }
@@ -164,9 +160,9 @@ const Details = ({
       handleClear();
       setShowAiPanel(false);
       setLocalAiSummary(null);
+      setSpecialtyName(null);
     }
   }, [open]);
-
 
   // Load practitioners when consultantSpecialtyLkey exists (for edit mode)
   useEffect(() => {
@@ -181,10 +177,7 @@ const Details = ({
   useEffect(() => {
     if (!specialtyName) return;
 
-    const specialtyApi = specialtyName
-      .toLowerCase()
-      .replace(/\s+/g, ' ')
-      .trim();
+    const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
 
     setLocalAiSummary(null);
     getSpecialtyConsultation({
@@ -199,6 +192,20 @@ const Details = ({
         setLocalAiSummary(null);
       });
   }, [specialtyName, getSpecialtyConsultation, patient?.key, encounter?.key]);
+
+  useEffect(() => {
+    if (!open) {
+      setShowAiPanel(false);
+      setLocalAiSummary(null);
+      setSpecialtyName(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    setShowAiPanel(false);
+    setLocalAiSummary(null);
+    setSpecialtyName(null);
+  }, [consultationOrders?.key]);
 
   return (
     <>
@@ -238,7 +245,7 @@ const Details = ({
           >
             <div className="main-details-consultion-page-container">
               <SectionContainer
-                title={'Choose Consultant'}
+                title={<Translate>Choose Consultant</Translate>}
                 content={
                   <div className="consultion-details-modal-handle-position">
                     <MyInput
@@ -270,7 +277,9 @@ const Details = ({
                       disabled={editing || !consultationOrders?.facilityKey}
                       fieldType="select"
                       fieldLabel="Department"
-                      selectData={Array.isArray(departmentListResponse) ? departmentListResponse : []}
+                      selectData={
+                        Array.isArray(departmentListResponse) ? departmentListResponse : []
+                      }
                       selectDataLabel="name"
                       selectDataValue="id"
                       fieldName={'departmentKey'}
@@ -294,8 +303,10 @@ const Details = ({
                         selectDataValue="key"
                         fieldName={'consultantSpecialtyLkey'}
                         record={consultationOrders}
-
                         setRecord={value => {
+                          setLocalAiSummary(null);
+                          setShowAiPanel(false);
+
                           setConsultationOrder({ ...value, preferredConsultantKey: null });
 
                           if (value.consultantSpecialtyLkey) {
@@ -305,7 +316,9 @@ const Details = ({
                               size: 100
                             });
 
-                            const selected = (consultantSpecialtyLovQueryResponse?.object ?? []).find(
+                            const selected = (
+                              consultantSpecialtyLovQueryResponse?.object ?? []
+                            ).find(
                               (x: any) => String(x.key) === String(value.consultantSpecialtyLkey)
                             );
 
@@ -320,8 +333,6 @@ const Details = ({
                             setLocalAiSummary(null);
                           }
                         }}
-
-
                       />
 
                       <button
@@ -334,15 +345,18 @@ const Details = ({
                             dispatch(
                               notify({
                                 msg: 'Please select Consultant Specialty first.',
-                                sev: 'info'
+                                sev: 'warning'
                               })
                             );
                             return;
                           }
 
                           if (!aiSummary) {
-                            const selected = (consultantSpecialtyLovQueryResponse?.object ?? []).find(
-                              (x: any) => String(x.key) === String(consultationOrders.consultantSpecialtyLkey)
+                            const selected = (
+                              consultantSpecialtyLovQueryResponse?.object ?? []
+                            ).find(
+                              (x: any) =>
+                                String(x.key) === String(consultationOrders.consultantSpecialtyLkey)
                             );
 
                             const specialtyDisplay = String(selected?.lovDisplayVale ?? '').trim();
@@ -350,7 +364,7 @@ const Details = ({
                               dispatch(
                                 notify({
                                   msg: 'Specialty name not found. Please re-select Consultant Specialty.',
-                                  sev: 'info'
+                                  sev: 'warning'
                                 })
                               );
                               return;
@@ -363,12 +377,10 @@ const Details = ({
 
                           setShowAiPanel(prev => !prev);
                         }}
-
                       >
                         <FontAwesomeIcon icon={faRobot} />
                         <span className="ai-badge">AI</span>
                       </button>
-
                     </div>
 
                     <MyInput
@@ -393,7 +405,7 @@ const Details = ({
               />
 
               <SectionContainer
-                title={'Details'}
+                title={<Translate>Details</Translate>}
                 content={
                   <div className="consultion-details-modal-handle-position">
                     <MyInput
@@ -460,7 +472,7 @@ const Details = ({
               />
 
               <SectionContainer
-                title={'Notes & Documentation'}
+                title={<Translate>Notes & Documentation</Translate>}
                 content={
                   <div className="text-area-positions-detail-consultion">
                     <MyInput
@@ -501,10 +513,9 @@ const Details = ({
             <Diagnosis patient={patient} encounter={encounter} />
 
             {showAiPanel && (
-              <div className="ai-panel-center">
-                <div className="ai-panel">
-                  <div className="ai-panel-header">Specialty Recommendations</div>
-
+              <SectionContainer
+                title={<Translate>Specialty Recommendations</Translate>}
+                content={
                   <div className="ai-panel-body">
                     {aiLoading && (
                       <div className="ai-spinner-container">
@@ -518,10 +529,9 @@ const Details = ({
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
+                }
+              />
             )}
-
           </div>
         }
       />
@@ -530,7 +540,7 @@ const Details = ({
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
         encounterId={encounter?.id || encounter?.key}
-        refetchData={() => { }}
+        refetchData={() => {}}
         source="CONSULTATION_ORDER_ATTACHMENT"
         sourceId={consultationOrders?.key ? Number(consultationOrders.key) : 0}
       />

@@ -349,6 +349,30 @@ const EncounterList = () => {
     });
   };
 
+    const renderWithTooltip = (text: string, limit = 20) => {
+      if (!text) return '-';
+
+      const isLong = text.length > limit;
+      const shortText = isLong ? text.slice(0, limit) + '...' : text;
+
+      if (!isLong) return shortText;
+
+      return (
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={
+            <Tooltip style={{ maxWidth: 400, whiteSpace: 'pre-wrap' }}>
+              {text}
+            </Tooltip>
+          }
+        >
+          <span style={{ cursor: 'pointer' }}>{shortText}</span>
+        </Whisper>
+      );
+    };
+
+
   const tableColumns = [
     {
       key: 'queueNumber',
@@ -402,13 +426,13 @@ const EncounterList = () => {
     },
     {
       key: 'chiefComplaint',
-      title: 'CHIEF COMPLAIN',
-      render: rowData => rowData?.chiefComplaint
+      title: 'CHIEF COMPLAINT',
+      render: rowData => renderWithTooltip(rowData?.chiefComplaint, 20)
     },
     {
       key: 'diagnosis',
       title: 'DIAGNOSIS',
-      render: rowData => rowData?.diagnosis
+      render: rowData => renderWithTooltip(rowData?.diagnosis, 20)
     },
     {
       key: 'hasPrescription',

@@ -1120,3 +1120,12 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   contactLandNumber: '',
   taxValue: undefined
 };
+
+export const newFormTemplate: modelTypes.FormTemplate = {
+  id: undefined,
+  name: null,
+  description: null,
+  facilityId: null,
+  departmentId: null,
+  formJson: null
+}

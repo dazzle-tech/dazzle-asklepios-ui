@@ -53,11 +53,11 @@ const EditEntryModal = ({ open, setOpen, template, entry, onSaved }: any) => {
         if (!entry?.id) return;
 
         if (!title.trim()) {
-            dispatch(notify({ msg: 'Title is required', sev: 'error' }));
+            dispatch(notify({ msg: 'Title is required', sev: 'warning' }));
             return;
         }
         if (!surveyModel) {
-            dispatch(notify({ msg: 'Form is not ready', sev: 'error' }));
+            dispatch(notify({ msg: 'Form is not ready', sev: 'warning' }));
             return;
         }
 
@@ -96,7 +96,11 @@ const EditEntryModal = ({ open, setOpen, template, entry, onSaved }: any) => {
             <Divider />
 
             <div style={{ height: '70vh', overflow: 'auto', border: '1px solid #eef3f9', borderRadius: 14, padding: 12 }}>
-                {!surveyModel ? <div>No form json found.</div> : <Survey model={surveyModel} />}
+                {!surveyModel ? <div>No form json found.</div> :
+                    <div className="survey-scope">
+                        <Survey model={surveyModel} />
+                    </div>
+                }
             </div>
         </div>
     );

@@ -166,12 +166,14 @@ const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => 
   return (
     <div className="medical-container-div">
       <SectionContainer
+        button={<>
+        { !toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+              Add
+            </MyButton>}
+            </>}
         title={
           <>
             Patient's Problems
-          { !toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
-              Add
-            </MyButton>}
           </>
         }
         content={
