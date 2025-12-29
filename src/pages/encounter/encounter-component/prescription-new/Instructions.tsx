@@ -109,7 +109,19 @@ const Instructions = ({
     if (selectedOption === OPTION_PREDEFINED) setInst(selectedPreDefine?.id);
   }, [selectedPreDefine, selectedOption, setInst]);
 
-  /* ---------- render ---------- */
+useEffect(() => {
+  if (selectedOption !== OPTION_CUSTOM) return;
+
+  if (!roaOptions.length) return;
+
+  setCustomeinst((prev: any) => {
+    const current = String(prev?.roa ?? '').trim();
+    const stillValid = current && roaOptions.some(o => o.value === current);
+    if (stillValid) return prev;
+
+    return { ...prev, roa: roaOptions[0].value };
+  });
+}, [selectedOption, roaOptions, setCustomeinst]);
   return (
     <>
       {/* -------- Custom Instruction -------- */}
