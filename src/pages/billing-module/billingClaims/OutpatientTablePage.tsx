@@ -226,7 +226,7 @@ const OutpatientTablePage = () => {
             open={openClaimModal}
             setOpen={setOpenClaimModal}
             title="Open Claim"
-            size="90vw"
+            size="75vw"
             bodyheight="100vh"
             hideBack
             hideActionBtn
