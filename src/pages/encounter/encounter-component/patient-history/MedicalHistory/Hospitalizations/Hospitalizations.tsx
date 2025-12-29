@@ -186,11 +186,13 @@ const Hospitalizations = ({ patient, encounter, edit ,
         title={
           <>
             Hospitalizations
-          {!toShowData&&  <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
-              Add
-            </MyButton>}
           </>
         }
+        button={<>
+        {!toShowData&&  <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+              Add
+        </MyButton>}
+        </>}
         content={
           <>
             <MyTable
