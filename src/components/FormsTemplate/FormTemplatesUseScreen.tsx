@@ -113,24 +113,6 @@ const FormTemplatesUseScreen = () => {
     }
   };
 
-  const handlePrint = async (entryRow: any) => {
-    try {
-      if (!selectedTemplate?.id) return;
-      const full = await ensureTemplateLoaded();
-
-      // open print window and render survey preview (not json)
-      const html = buildPrintHtml(full?.formJson, entryRow?.dataJson, entryRow?.title);
-      const w = window.open('', '_blank', 'width=1100,height=800');
-      if (!w) return;
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-    } catch (e) {
-      console.error(e);
-      dispatch(notify({ msg: 'Failed to print', sev: 'error' }));
-    }
-  };
-
   const isTemplateSelected = (rowData: any) => (rowData?.id === selectedTemplate?.id ? 'selected-row' : '');
 
   // TEMPLATE TABLE columns
@@ -182,13 +164,6 @@ const FormTemplatesUseScreen = () => {
             fill="var(--primary-gray)"
             className="icons-style"
             onClick={() => handleOpenEdit(row)}
-          />
-          <MdPrint
-            title="Print"
-            size={22}
-            fill="var(--primary-gray)"
-            className="icons-style"
-            onClick={() => handlePrint(row)}
           />
         </div>
       )
@@ -272,56 +247,4 @@ const FormTemplatesUseScreen = () => {
 
 export default FormTemplatesUseScreen;
 
-/** Print HTML (Survey preview, not json) */
-function buildPrintHtml(formJsonStr: string, dataJsonStr: string, title: string) {
-  // NOTE: we render via surveyjs in print window (CDN)
-  // If your project blocks CDN, tell me and I’ll do iframe + internal rendering instead.
-  const safeTitle = escapeHtml(title ?? 'Form');
 
-  return `
-  <html>
-    <head>
-      <title>${safeTitle}</title>
-      <meta charset="utf-8" />
-      <style>
-        body { font-family: Arial, sans-serif; padding: 18px; }
-        h2 { margin: 0 0 12px 0; }
-        .box { border:1px solid #e6edf5; border-radius:12px; padding:14px; }
-      </style>
-
-      <script src="https://unpkg.com/survey-core/survey.core.min.js"></script>
-      <script src="https://unpkg.com/survey-js-ui/survey-js-ui.min.js"></script>
-      <link rel="stylesheet" href="https://unpkg.com/survey-core/defaultV2.min.css" />
-    </head>
-    <body>
-      <h2>${safeTitle}</h2>
-      <div class="box">
-        <div id="surveyContainer"></div>
-      </div>
-
-      <script>
-        const formJson = ${JSON.stringify(formJsonStr ? JSON.parse(formJsonStr) : {})};
-        const dataJson = ${JSON.stringify(dataJsonStr ? JSON.parse(dataJsonStr) : {})};
-
-        const model = new SurveyCore.Model(formJson);
-        model.data = dataJson;
-        model.mode = "display";
-        model.showNavigationButtons = false;
-        model.showCompletedPage = false;
-
-        SurveyUI.Survey({ model: model }, document.getElementById("surveyContainer"));
-
-        window.onload = () => window.print();
-      </script>
-    </body>
-  </html>`;
-}
-
-function escapeHtml(str: string) {
-  return String(str)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}

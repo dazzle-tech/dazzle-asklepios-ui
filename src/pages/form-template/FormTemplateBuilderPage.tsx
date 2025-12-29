@@ -18,10 +18,10 @@ import {
 } from '@/services/setup/formTemplateService';
 
 import { useGetDepartmentByFacilityQuery, useGetDepartmentsQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-
+import defaultV2Theme from "survey-core/themes";
 import './styles.less';
 import { SurveyCreator, SurveyCreatorComponent } from "survey-creator-react";
+
 const FormTemplateBuilderPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -67,12 +67,12 @@ const FormTemplateBuilderPage = () => {
       showLogicTab: true,
       isAutoSave: false,
     });
+     c.survey?.applyTheme(defaultV2Theme.DefaultLight); 
     setCreator(c);
 
     return () => setCreator(null);
   }, []);
 
-  // Load template if edit mode
   useEffect(() => {
     if (!creator) return;
     if (!templateId) {
@@ -306,7 +306,9 @@ const FormTemplateBuilderPage = () => {
           {!creator ? (
             <div style={{ padding: 12 }}>Loading builder…</div>
           ) : (
+            <div className="survey-scope">
             <SurveyCreatorComponent creator={creator} />
+              </div>
           )}
         </div>
       </div>
