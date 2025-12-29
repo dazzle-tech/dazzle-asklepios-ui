@@ -206,75 +206,97 @@ const DetailsModal = ({
     }
   }, [openToAdd]);
 
+
+  const handleSaveMedication = async () => {
+    if (!preKey) {
+      dispatch(notify({ msg: 'Prescription not linked. Try again', sev: 'warning' }));
+      return;
+    }
+
+    if (!selectedGeneric) {
+      dispatch(notify({ msg: 'Please Select Brand', sev: 'warning' }));
+      return;
+    }
+
+    if (!prescriptionMedication.instructionsTypeLkey) {
+      dispatch(notify({ msg: 'Please Select Instruction type', sev: 'warning' }));
+      return;
+    }
+
+    const tagcompine = joinValuesFromArray(tags);
+
+    try {
+      await savePrescriptionMedication({
+        ...prescriptionMedication,
+        key: editingKey ?? prescriptionMedication?.key,
+        patientKey: patient.key,
+        visitKey: encounter.key,
+        prescriptionKey: preKey,
+        genericMedicationsId: selectedGeneric.id,
+        parametersToMonitor: tagcompine,
+        statusLkey: '164797574082125',
+        instructions: inst,
+        dose: selectedOption === '3010606785535008' ? customeinst?.dose : null,
+        frequencyLkey: selectedOption === '3010606785535008' ? customeinst?.frequency : null,
+        unitLkey: selectedOption === '3010606785535008' ? customeinst?.unit : null,
+        roaLkey: selectedOption === '3010606785535008' ? customeinst?.roa : null,
+        administrationInstructions: instr,
+        indicationIcd: indicationsDescription
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+
+      await Promise.all([medicRefetch(), refetchCo()]);
+
+      handleCleare();
+    } catch (error: any) {
+      console.error('Save failed:', error);
+
+      let errorMessage = 'Save failed';
+
+      if (error?.data) {
+        if (typeof error.data === 'string') {
+          errorMessage = error.data;
+        } else if (error.data?.message) {
+          errorMessage = error.data.message;
+        }
+      }
+
+      dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+    }
+  };
+
+
+  useEffect(() => {
+    setEditDuration(prescriptionMedication.chronicMedication);
+    setPrescriptionMedications(prev => ({
+      ...prev,
+      duration: null,
+      durationTypeLkey: null
+    }));
+  }, [prescriptionMedication.chronicMedication]);
+
+  useEffect(() => {
+    if (indicationsIcd.indicationIcd) {
+      setindicationsDescription(prevadminInstructions => {
+        const currentIcd = icdListResponseLoading?.object?.find(
+          item => item.key === indicationsIcd.indicationIcd
+        );
+
+        if (!currentIcd) return prevadminInstructions;
+
+        const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+
+        return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
+      });
+    }
+  }, [indicationsIcd.indicationIcd]);
+
   const joinValuesFromArray = values => {
     return values?.filter(Boolean)?.join(', ');
   };
 
-  const handleSaveMedication = async () => {
-    if (preKey === null) {
-      dispatch(notify({ msg: 'Prescription not linked. Try again', sev: 'warning' }));
-      return;
-    } else {
-      if (selectedGeneric !== null) {
-        if (prescriptionMedication.instructionsTypeLkey != null) {
-          const tagcompine = joinValuesFromArray(tags);
-          try {
-            const Response = await savePrescriptionMedication({
-              ...prescriptionMedication,
-              key: editingKey ?? prescriptionMedication?.key,
-              patientKey: patient.key,
-              visitKey: encounter.key,
-              prescriptionKey: preKey,
-              genericMedicationsId: selectedGeneric?.id,
-              parametersToMonitor: tagcompine,
-              statusLkey: '164797574082125',
-              instructions: inst,
-              dose: selectedOption === '3010606785535008' ? customeinst?.dose : null,
-              frequencyLkey: selectedOption === '3010606785535008' ? customeinst?.frequency : null,
-              unitLkey: selectedOption === '3010606785535008' ? customeinst?.unit : null,
-              roaLkey: selectedOption === '3010606785535008' ? customeinst?.roa : null,
-              administrationInstructions: instr,
-              indicationIcd: indicationsDescription
-            }).unwrap();
 
-            dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-
-            await Promise.all([
-              medicRefetch(),
-              refetchCo()
-            ]);
-
-            handleCleare();
-            // setOpen(false);
-          }
-
-          catch (error: any) {
-            console.error('Save failed:', error);
-
-            let errorMessage = 'Save failed';
-
-            // RTK Query error handling
-            if (error?.data) {
-              if (typeof error.data === 'string') {
-                errorMessage = error.data;
-              } else if (error.data?.message) {
-                errorMessage = error.data.message;
-              }
-            }
-
-            dispatch(notify({ msg: errorMessage, sev: 'warning' }));
-          }
-
-
-
-        } else {
-          dispatch(notify({ msg: 'Please Select Instruction type ', sev: 'warning' }));
-        }
-      } else {
-        dispatch(notify({ msg: 'Please Select Brand ', sev: 'warning' }));
-      }
-    }
-  };
   const handleCleare = () => {
     if (editingKey) return;
     setPrescriptionMedications({
@@ -334,46 +356,7 @@ const DetailsModal = ({
     // setOpenDetailsModel(true);
     // setOpenToAdd(true);
   };
-  const addToFavorites = rowData => {
-    const alreadyExists = favoriteMedications.some(
-      item => item.genericMedicationsKey === rowData.genericMedicationsKey
-    );
-
-    if (alreadyExists) {
-      setFavoriteMedications(prev =>
-        prev.filter(item => item.genericMedicationsKey !== rowData.genericMedicationsKey)
-      );
-      const genericMedication = genericMedicationListResponse?.find(
-        item => item.id === rowData.genericMedicationsKey
-      );
-      const medicationName = genericMedication ? genericMedication.name : 'Medication';
-      dispatch(
-        notify({
-          msg: `${medicationName} removed from favorites`,
-          type: 'info'
-        })
-      );
-    } else {
-      const genericMedication = genericMedicationListResponse?.find(
-        item => item.id === rowData.genericMedicationsKey
-      );
-
-      const medicationToAdd = {
-        ...rowData,
-        genericName: genericMedication ? genericMedication.name : 'Unnamed Medication',
-        administrationInstructions: rowData.administrationInstructions,
-        parametersToMonitor: rowData.parametersToMonitor || rowData.parametersToMonitorKey
-      };
-
-      setFavoriteMedications(prev => [...prev, medicationToAdd]);
-      dispatch(
-        notify({
-          msg: `${medicationToAdd.genericName} added to favorites`,
-          type: 'success'
-        })
-      );
-    }
-  };
+ 
   const handleAddNewAttachment = () => {
     const sourceIdValue = prescriptionMedication?.key ? Number(prescriptionMedication.key) : 0;
     setCapturedSourceId(sourceIdValue);

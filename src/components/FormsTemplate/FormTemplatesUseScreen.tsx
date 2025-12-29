@@ -143,8 +143,19 @@ const FormTemplatesUseScreen = () => {
   // ENTRIES TABLE columns (✅ 3 icons: View + Edit + Print)
   const entriesColumns = [
     { key: 'title', title: <Translate>Title</Translate>, flexGrow: 6 },
-    { key: 'createdBy', title: <Translate>Created By</Translate>, flexGrow: 3, render: (r: any) => r.createdBy ?? '-' },
-    { key: 'createdDate', title: <Translate>Created Date</Translate>, flexGrow: 3, render: (r: any) => r.createdDate ?? '-' },
+  {
+    key: 'createdByAt',
+    title: 'Created By\\At',
+    dataKey: 'createdByAt',
+    width: 200,
+    render: (row: any) => (
+      <>
+        {row.createdBy}
+        <br />
+        <span className="date-table-style">{row.createdDate}</span>
+      </>
+    )
+  },
     {
       key: 'icons',
       title: '',
@@ -246,5 +257,3 @@ const FormTemplatesUseScreen = () => {
 };
 
 export default FormTemplatesUseScreen;
-
-
