@@ -1043,6 +1043,7 @@ const SystemConfiguration = () => {
   const [openConfirmDeactivateReactivate, setOpenConfirmDeactivateReactivate] = useState(false);
   const [stateOfDeleteModal, setStateOfDeleteModal] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [width, setWidth] = useState<number>(window.innerWidth);
 
   // Pagination
   const [paginationParams, setPaginationParams] = useState({ page: 0, size: 5, sort: 'id,asc', timestamp: Date.now() });
@@ -1057,7 +1058,7 @@ const SystemConfiguration = () => {
   // Data
   const { data: configListResponse, refetch, isFetching } = useGetConfigurationsQuery(paginationParams);
   const [updateConfiguration] = useUpdateConfigurationMutation();
-  
+
   // Lazy Queries for server-side filtering
   const [fetchByValueType] = useLazyFilterByValueTypeQuery();
   const [fetchByReferenceType] = useLazyFilterByReferenceTypeQuery();
@@ -1286,7 +1287,12 @@ const SystemConfiguration = () => {
       setPaginationParams({ ...paginationParams, size: newSize, page: 0 });
     }
   };
-
+// Effects
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   return (
     <Panel>
       <MyTable
@@ -1297,8 +1303,10 @@ const SystemConfiguration = () => {
         loading={isFetching}
         columns={tableColumns}
         onRowClick={rowData => setSelectedConfig(rowData)}
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
+
+        page={isFiltered ? filterPagination.page : paginationParams.page}
+        rowsPerPage={isFiltered ? filterPagination.size : paginationParams.size}
+
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         filters={filters()}
@@ -1311,7 +1319,7 @@ const SystemConfiguration = () => {
         }
       />
 
-      <AddEditConfiguration open={popupOpen} setOpen={setPopupOpen} configuration={selectedConfig} />
+      <AddEditConfiguration open={popupOpen} setOpen={setPopupOpen} configuration={selectedConfig} width={width}/>
 
       <DeletionConfirmationModal
         open={openConfirmDeactivateReactivate}
