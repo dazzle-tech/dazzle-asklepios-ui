@@ -90,7 +90,8 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       smokeQuitDate: record.smokeQuitDate ? new Date(record.smokeQuitDate).getTime() : 0,
       alcoholSinceWhen: record.alcoholSinceWhen ? new Date(record.alcoholSinceWhen).getTime() : 0,
     };
-
+    let errorMsg = "";
+    // if(payload.con)
     saveSocialHistory(payload)
       .unwrap()
       .then(() => {

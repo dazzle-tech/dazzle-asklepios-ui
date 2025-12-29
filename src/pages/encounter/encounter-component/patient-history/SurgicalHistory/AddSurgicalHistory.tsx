@@ -20,31 +20,31 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const [openOtherField, setOpenOtherField] = useState({ open: false });
   const [openImplantsField, setOpenImplantsField] = useState({ open: false });
 
-    useEffect(() => {
-      if (initialData) {
-        setRecord({
-          ...initialData,
-          adverseReactionsToAnesthesiaLkey:
-            typeof initialData.adverseReactionsToAnesthesiaLkey === 'string'
-              ? initialData.adverseReactionsToAnesthesiaLkey.split(',')
-              : Array.isArray(initialData.adverseReactionsToAnesthesiaLkey)
-                ? initialData.adverseReactionsToAnesthesiaLkey
-                : []
-        });
+  useEffect(() => {
+    if (initialData) {
+      setRecord({
+        ...initialData,
+        adverseReactionsToAnesthesiaLkey:
+          typeof initialData.adverseReactionsToAnesthesiaLkey === 'string'
+            ? initialData.adverseReactionsToAnesthesiaLkey.split(',')
+            : Array.isArray(initialData.adverseReactionsToAnesthesiaLkey)
+              ? initialData.adverseReactionsToAnesthesiaLkey
+              : []
+      });
 
-        setOpenOtherField({ open: initialData.other ?? false });
-        setOpenImplantsField({ open: initialData.isImplantsOrDevices ?? false });
-      } else {
-        setRecord({
-          ...newApPatientSurgicalHistory,
-          patientKey: patient?.key,
-          adverseReactionsToAnesthesiaLkey: []
-        });
+      setOpenOtherField({ open: initialData.other ?? false });
+      setOpenImplantsField({ open: initialData.isImplantsOrDevices ?? false });
+    } else {
+      setRecord({
+        ...newApPatientSurgicalHistory,
+        patientKey: patient?.key,
+        adverseReactionsToAnesthesiaLkey: []
+      });
 
-        setOpenOtherField({ open: false });
-        setOpenImplantsField({ open: false });
-      }
-    }, [initialData, patient]);
+      setOpenOtherField({ open: false });
+      setOpenImplantsField({ open: false });
+    }
+  }, [initialData, patient]);
 
   const { data: complicationsLov } = useGetLovValuesByCodeQuery("PROC_COMPLIC");
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery("ANESTH_TYPES");
@@ -52,50 +52,77 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
 
   const [saveSurgicalHistory] = useSavePatientSurgicalHistoryMutation();
 
-const handleSave = () => {
-  const payload = {
-    ...record,
-    patientKey: patient?.key,
-    dateOfSurgery: record.dateOfSurgery
-      ? new Date(record.dateOfSurgery).getTime()
-      : null,
-    other: openOtherField.open,
-    isImplantsOrDevices: openImplantsField.open,
-    otherDesc: openOtherField.open ? record.otherDesc : "",
-    implantsOrDevicesDescription: openImplantsField.open
-      ? record.implantsOrDevicesDescription
-      : "",
-    anesthesiaTypeLkey: record.anesthesiaTypeLkey || null,
-    complicationsLkey: record.complicationsLkey || null,
-adverseReactionsToAnesthesiaLkey:
-  record.adverseReactionsToAnesthesiaLkey?.length
-    ? record.adverseReactionsToAnesthesiaLkey.join(',')
-    : null,
+  const handleSave = () => {
+    const payload = {
+      ...record,
+      patientKey: patient?.key,
+      dateOfSurgery: record.dateOfSurgery
+        ? new Date(record.dateOfSurgery).getTime()
+        : null,
+      other: openOtherField.open,
+      isImplantsOrDevices: openImplantsField.open,
+      otherDesc: openOtherField.open ? record.otherDesc : "",
+      implantsOrDevicesDescription: openImplantsField.open
+        ? record.implantsOrDevicesDescription
+        : "",
+      anesthesiaTypeLkey: record.anesthesiaTypeLkey || null,
+      complicationsLkey: record.complicationsLkey || null,
+      adverseReactionsToAnesthesiaLkey:
+        record.adverseReactionsToAnesthesiaLkey?.length
+          ? record.adverseReactionsToAnesthesiaLkey.join(',')
+          : null,
 
-  };
+    };
 
-  console.log("PayLoad",payload);
+    let errorMsg = "";
+    if (!payload.surgery) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Surgery Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Surgery Can`t be empty"
+    }
+    if (!payload.dateOfSurgery) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Date Of Surgery Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Date Of Surgery Can`t be empty"
+    }
+    if (!payload.facility) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Facility Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Facility Can`t be empty"
+    }
+    if (!payload.anesthesiaTypeLkey) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Anesthesia Type Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Anesthesia Type Can`t be empty"
+    }
+    if(!errorMsg){
+    saveSurgicalHistory(payload)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: "Saved successfully", sev: "success" }));
 
-  saveSurgicalHistory(payload)
-    .unwrap()
-    .then(() => {
-      dispatch(notify({ msg: "Saved successfully", sev: "success" }));
 
+        setRecord({
+          ...newApPatientSurgicalHistory,
+          patientKey: patient?.key,
+        });
 
-      setRecord({
-        ...newApPatientSurgicalHistory,
-        patientKey: patient?.key,
+        setOpenOtherField({ open: false });
+        setOpenImplantsField({ open: false });
+
+        setOpen(false);
+      })
+      .catch(() => {
+        dispatch(notify({ msg: "Save failed", sev: "error" }));
       });
-
-      setOpenOtherField({ open: false });
-      setOpenImplantsField({ open: false });
-
-      setOpen(false);
-    })
-    .catch(() => {
-      dispatch(notify({ msg: "Save failed", sev: "error" }));
-    });
-};
+    }else{
+       dispatch(notify({ msg: errorMsg, sev: "warning" }));
+    }
+  };
 
   const content = (
     <Form fluid layout="inline" className="fields-container">
@@ -158,18 +185,18 @@ adverseReactionsToAnesthesiaLkey:
         setRecord={setRecord}
       />
 
-        <MyInput
-          width={200}
-          column
-          fieldLabel="Adverse Reactions"
-          fieldType="checkPicker"
-          fieldName="adverseReactionsToAnesthesiaLkey"
-          selectData={adverseLov?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={record}
-          setRecord={setRecord}
-        />
+      <MyInput
+        width={200}
+        column
+        fieldLabel="Adverse Reactions"
+        fieldType="checkPicker"
+        fieldName="adverseReactionsToAnesthesiaLkey"
+        selectData={adverseLov?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={record}
+        setRecord={setRecord}
+      />
 
       <MyInput
         width={200}
