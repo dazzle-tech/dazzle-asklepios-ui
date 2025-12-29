@@ -21,7 +21,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
   return (
     <div style={width ? { width } : {}}>
       <Form fluid>
-        <div className="fill-last-readings-main-position">
+        {/* <div className="fill-last-readings-main-position">
           <Whisper placement="top" trigger="hover" speaker={<Tooltip>Fill Last Readings</Tooltip>}>
             <IconButton
               icon={<FontAwesomeIcon icon={faClockRotateLeft} />}
@@ -30,7 +30,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
               appearance="subtle"
             />
           </Whisper>
-        </div>
+        </div> */}
         <div className="vital-signs-handle-position-row">
           <MyInput
             width="100%"

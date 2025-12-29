@@ -885,7 +885,7 @@ const Prescription = (props: any) => {
         <div className={clsx('bt-right', { 'disabled-panel': edit })}>
           <UrgencyButton />
 
-          <MyButton loading={isLoadingPrescriptions}>Validate With</MyButton>
+          <MyButton loading={isLoadingPrescriptions}>Validate with Gallon Reasoner</MyButton>
 
           <MyButton
             onClick={handleNewPrescriptionAndAddMedication}
