@@ -173,7 +173,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}`,
-          sev: 'error',
+          sev: 'warning',
         })
       );
       return false;
