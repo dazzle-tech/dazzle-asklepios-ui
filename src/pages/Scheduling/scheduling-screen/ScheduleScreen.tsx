@@ -269,11 +269,17 @@ const visibleResources =
     setActionsModalOpen(false);
   };
 
-  const handleViewAppointment = () => {
-    setAppointment(selectedEvent.appointmentData);
-    setModalOpen(true);
-    setActionsModalOpen(false);
-    setShowAppointmentOnly(true);
+  const handleViewAppointment = (appointmentDataToView = null) => {
+    const dataToView = appointmentDataToView || selectedEvent?.appointmentData;
+    if (dataToView) {
+      // Ensure selectedEvent is set with the appointment data
+      const eventToSet = selectedEvent ? { ...selectedEvent, appointmentData: dataToView } : { appointmentData: dataToView };
+      setSelectedEvent(eventToSet);
+      setAppointment(dataToView);
+      setModalOpen(true);
+      setActionsModalOpen(false);
+      setShowAppointmentOnly(true);
+    }
   };
   useEffect(() => {
     if (filteredMonth) {
@@ -1040,7 +1046,7 @@ const visibleResources =
         selectedSlot={selectedSlot}
       />
       <AppointmentActionsModal
-        viewAppointment={() => handleViewAppointment()}
+        viewAppointment={(appointmentData) => handleViewAppointment(appointmentData)}
         editAppointment={() => handleChangeAppointment()}
         onStatusChange={refitchAppointments}
         isActionsModalOpen={ActionsModalOpen}
