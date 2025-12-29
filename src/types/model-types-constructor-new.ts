@@ -818,7 +818,7 @@ export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM 
     createdDate: null,
     lastModifiedBy: '',
     lastModifiedDate: null,
-    patientId: undefined
+    patientId: ''
 };
 
 export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
