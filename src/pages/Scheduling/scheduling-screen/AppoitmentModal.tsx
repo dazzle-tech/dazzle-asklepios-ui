@@ -920,7 +920,7 @@ const AppointmentModal = ({
           </div>
         }
         rightTitle="Add Appointment"
-        rightBodyNoScroll={!showMore}
+        rightBodyNoScroll={false}
         rightContent={
           <div className="appointment-wrapper">
             <div className="appointment-content-wrapper">
