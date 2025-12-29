@@ -312,6 +312,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	facilityKey:undefined,
 	resourceTypeLkey:undefined,
 	resourceKey:undefined,
+	departmentKey:undefined,
 	visitTypeLkey:undefined,
 	durationLkey:undefined,
 	appointmentStart:'',
