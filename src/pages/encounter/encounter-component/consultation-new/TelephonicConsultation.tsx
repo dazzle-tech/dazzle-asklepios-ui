@@ -166,7 +166,7 @@ const TelephonicConsultation = (props) => {
       flexGrow: 2,
       render: (row) => {
         const physician = physicians.find(item => item?.id === row?.physician);
-        return <p>{physician?.firstName + " " + physician.lastName}</p>
+        return <p>{physician?.firstName + " " + physician?.lastName}</p>
       }
     },
     {
