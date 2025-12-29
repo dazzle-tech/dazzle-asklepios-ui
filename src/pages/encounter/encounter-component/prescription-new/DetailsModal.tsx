@@ -74,6 +74,7 @@
     const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
     const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
+    const [editingKey, setEditingKey] = useState<string | null>(null);
 
     const { data: genericMedicationListResponse } =
       useSearchBrandMedicationsByNameOrActiveQuery({ keyword: searchKeyword });
@@ -113,6 +114,10 @@
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] =
       useSavePrescriptionMedicationMutation();
       
+        useEffect(() => {
+          if (open) setEditingKey(prescriptionMedication?.key ?? null);
+        }, [open]);
+
       useEffect(() => {
         if (prescriptionMedication.key != null && Brand) {
 
@@ -160,14 +165,14 @@
       }
     }, [searchKeywordicd]);
 
-    useEffect(() => {
-      setEditDuration(prescriptionMedication.chronicMedication);
-      setPrescriptionMedications({
-        ...prescriptionMedication,
-        duration: null,
-        durationTypeLkey: null
-      });
-    }, [prescriptionMedication.chronicMedication]);
+      useEffect(() => {
+        setEditDuration(prescriptionMedication.chronicMedication);
+        setPrescriptionMedications(prev => ({
+          ...prev,
+          duration: null,
+          durationTypeLkey: null
+        }));
+      }, [prescriptionMedication.chronicMedication]);
 
     useEffect(() => {
         if (indicationsIcd.indicationIcd) {
@@ -185,9 +190,6 @@
       }
     }, [indicationsIcd.indicationIcd]);
 
-    useEffect(() => {
-      setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption });
-    }, [selectedOption]);
 
     useEffect(() => {
     
@@ -196,6 +198,8 @@
         handleCleare();
       }
     }, [open]);
+
+
     useEffect(() => {
       if (openToAdd) {
         handleCleare();
@@ -215,22 +219,23 @@
           if (prescriptionMedication.instructionsTypeLkey != null) {
             const tagcompine = joinValuesFromArray(tags);
             try {
-              await savePrescriptionMedication({
-                ...prescriptionMedication,
-                patientKey: patient.key,
-                visitKey: encounter.key,
-                prescriptionKey: preKey,
-                genericMedicationsId: selectedGeneric?.id,
-                parametersToMonitor: tagcompine,
-                statusLkey: '164797574082125',
-                instructions: inst,
-                dose: selectedOption === '3010606785535008' ? customeinst?.dose : null,
-                frequencyLkey: selectedOption === '3010606785535008' ? customeinst?.frequency : null,
-                unitLkey: selectedOption === '3010606785535008' ? customeinst?.unit : null,
-                roaLkey: selectedOption === '3010606785535008' ? customeinst?.roa : null,
-                administrationInstructions: instr,
-                indicationIcd: indicationsDescription
-              }).unwrap();
+                  await savePrescriptionMedication({
+                    ...prescriptionMedication,
+                    key: editingKey ?? prescriptionMedication?.key,
+                    patientKey: patient.key,
+                    visitKey: encounter.key,
+                    prescriptionKey: preKey,
+                    genericMedicationsId: selectedGeneric?.id,
+                    parametersToMonitor: tagcompine,
+                    statusLkey: '164797574082125',
+                    instructions: inst,
+                    dose: selectedOption === '3010606785535008' ? customeinst?.dose : null,
+                    frequencyLkey: selectedOption === '3010606785535008' ? customeinst?.frequency : null,
+                    unitLkey: selectedOption === '3010606785535008' ? customeinst?.unit : null,
+                    roaLkey: selectedOption === '3010606785535008' ? customeinst?.roa : null,
+                    administrationInstructions: instr,
+                    indicationIcd: indicationsDescription
+                  }).unwrap();
 
               dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
 
@@ -253,26 +258,29 @@
         }
       }
     };
-    const handleCleare = () => {
-      setPrescriptionMedications({
-        ...newApPrescriptionMedications,
-        durationTypeLkey: null,
-        administrationInstructions: null,
-        instructionsTypeLkey: null,
-        genericSubstitute: false,
-        chronicMedication: false,
-        refillIntervalUnitLkey: null,
-        indicationUseLkey: null
-      });
+      const handleCleare = () => {
+        if (editingKey) return;
+        setPrescriptionMedications({
+          ...newApPrescriptionMedications,
+          durationTypeLkey: null,
+          administrationInstructions: null,
+          instructionsTypeLkey: null,
+          genericSubstitute: false,
+          chronicMedication: false,
+          refillIntervalUnitLkey: null,
+          indicationUseLkey: null
+        });
 
-      setSelectedGeneric(null);
-      setindicationsDescription(null);
-      setSelectedOption(null);
-      setInstruc(null);
-      setCustomeinst({ dose: null, frequency: null, unit: null, roa: null });
-      setTags([]);
-      setSearchKeyword('');
-    };
+        setSelectedGeneric(null);
+        setindicationsDescription(null);
+        setSelectedOption(null);
+        setInstruc(null);
+        setCustomeinst({ dose: null, frequency: null, unit: null, roa: null });
+        setTags([]);
+        setSearchKeyword('');
+      };
+
+
     const handleItemClick = Generic => {
       setSelectedGeneric(Generic);
       setSearchKeyword('');
@@ -483,13 +491,15 @@
                               inline
                               name="radio-group"
                               disabled={preKey != null ? false : true}
-                              onChange={value => {
-                                setSelectedOption(String(value));
-                                setPrescriptionMedications({
-                                  ...prescriptionMedication,
-                                  instructionsTypeLkey: String(value)
-                                });
+                              onChange={(value) => {
+                                const v = String(value);
+                                setSelectedOption(v);
+                                setPrescriptionMedications(prev => ({
+                                  ...prev,
+                                  instructionsTypeLkey: v
+                                }));
                               }}
+
                             >
                               {instructionTypeQueryResponse?.object?.map((instruction, index) => (
                                 <Radio key={index} value={instruction.key}>
