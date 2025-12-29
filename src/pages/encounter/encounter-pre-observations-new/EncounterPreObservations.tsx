@@ -1,10 +1,6 @@
-// NurseStation.tsx  (layout page like Encounter but for nurse sheets)
-// - Uses same MedicalSheets config
-// - No scope filtering
-// - Drawer left + routing via <Outlet />
-// - Filters by backend nurseSheets hook only
-
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Col,
   Divider,
@@ -12,66 +8,30 @@ import {
   Form,
   List,
   Panel,
-  Row,
-  Tooltip,
-  Whisper,
+  Row
 } from "rsuite";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 
+import BackButton from "@/components/BackButton/BackButton";
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import Translate from "@/components/Translate";
-import BackButton from "@/components/BackButton/BackButton";
 import PatientSide from "../encounter-main-info-section/PatienSide";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
-  faBaby,
-  faBed,
-  faBraille,
-  faCapsules,
-  faChartLine,
   faCheckDouble,
-  faClockRotateLeft,
-  faComment,
-  faDesktop,
-  faDroplet,
-  faEarListen,
-  faEye,
-  faFileLines,
-  faFilePrescription,
-  faFileWaveform,
-  faG,
-  faHandDots,
-  faHeartPulse,
-  faLeaf,
-  faNotesMedical,
-  faPersonDotsFromLine,
-  faPersonFallingBurst,
-  faPersonWalking,
-  faPills,
-  faRightFromBracket,
-  faSuitcaseMedical,
-  faStethoscope,
-  faSyringe,
-  faTooth,
-  faTriangleExclamation,
-  faUserDoctor,
-  faUserPlus,
-  faVials,
+  faClockRotateLeft
 } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FaSearch } from "react-icons/fa";
-import { GiKidneys } from "react-icons/gi";
 
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import { notify, showSystemLoader, hideSystemLoader } from "@/utils/uiReducerActions";
+import { hideSystemLoader, notify, showSystemLoader } from "@/utils/uiReducerActions";
 
+import { MedicalSheets } from "@/config/modules-config";
 import { useCompleteEncounterMutation } from "@/services/encounterService";
 import { useGetNurseMedicalSheetsByDepartmentQuery } from "@/services/MedicalSheetsService";
-import { MedicalSheets } from "@/config/modules-config";
 
 import "./styles.less";
 
