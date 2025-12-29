@@ -128,7 +128,6 @@
             const instruc = customeInstructions?.object?.find(
               item => item.prescriptionMedicationsKey === prescriptionMedication.key
             );
-
             setCustomeinst({
               dose: instruc?.dose,
               unit: instruc?.unitLkey,
@@ -227,7 +226,7 @@
                 dose: selectedOption === '3010606785535008' ? customeinst?.dose : null,
                 frequencyLkey: selectedOption === '3010606785535008' ? customeinst?.frequency : null,
                 unitLkey: selectedOption === '3010606785535008' ? customeinst?.unit : null,
-                roaLkey: selectedOption === '3010606785535008' ? customeinst?.roa : null,
+                roaLkey: customeinst?.roa ? customeinst?.roa : null,
                 administrationInstructions: instr,
                 indicationIcd: indicationsDescription
               }).unwrap();
