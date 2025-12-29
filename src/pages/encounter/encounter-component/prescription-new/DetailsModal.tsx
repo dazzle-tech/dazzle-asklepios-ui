@@ -133,16 +133,15 @@ const DetailsModal = ({
           item => item.prescriptionMedicationsKey === prescriptionMedication.key
         );
 
-        setCustomeinst({
-          dose: instruc?.dose,
-          unit: instruc?.unitLkey,
-          frequency: instruc?.frequencyLkey,
-          roa: instruc?.roaLkey
-        });
+        setCustomeinst(prev => ({
+          dose: prev?.dose ?? instruc?.dose ?? null,
+          unit: prev?.unit ?? instruc?.unitLkey ?? null,
+          frequency: prev?.frequency ?? instruc?.frequencyLkey ?? null,
+          roa: prev?.roa ?? instruc?.roaLkey ?? null
+        }));
       }
     }
-  }, [prescriptionMedication, Brand, customeInstructions]);
-
+  }, [prescriptionMedication, Brand]);
   useEffect(() => {
     if (searchKeywordicd.trim() !== '') {
       setIcdListRequest({
@@ -218,6 +217,7 @@ const DetailsModal = ({
         if (prescriptionMedication.instructionsTypeLkey != null) {
           const tagcompine = joinValuesFromArray(tags);
           try {
+
             await savePrescriptionMedication({
               ...prescriptionMedication,
               patientKey: patient.key,
@@ -936,7 +936,7 @@ const DetailsModal = ({
         isOpen={attachmentsModalOpen}
         setIsOpen={setAttachmentsModalOpen}
         encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}}
+        refetchData={() => { }}
         source="PRESCRIPTION_ORDER_ATTACHMENT"
         sourceId={capturedSourceId}
       />
