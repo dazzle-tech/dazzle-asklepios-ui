@@ -194,6 +194,7 @@ const AddEditConfiguration: React.FC<Props> = ({ open, setOpen, configuration, w
                         fieldType='textarea'
                         record={configuration?.id ? updateVM : createVM}
                         setRecord={configuration?.id ? setUpdateVM : setCreateVM}
+                        required
                     />
                     <DeletionConfirmationModal
                         open={openConfirmationMessage}

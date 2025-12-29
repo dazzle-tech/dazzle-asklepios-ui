@@ -11,14 +11,15 @@ const AdvancedSearchFilters = ({
   searchFilter = true,
   clearOnClick = () => {},
   searchOnClick = () => {},
-  content = null
+  content = null,
+  ...props
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(props.showAdvanced ?? false);
 
   return (
     <>
       <div className="bt-right-group">
-        <MyButton appearance="ghost" onClick={() => setShowAdvanced(!showAdvanced)} prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}>
+        <MyButton appearance="ghost" onClick={() => {setShowAdvanced(!showAdvanced); if(props.setShowAdvanced) props.setShowAdvanced(!props.showAdvanced)}} prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}>
           Advance
         </MyButton>
 
