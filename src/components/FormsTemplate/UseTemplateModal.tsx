@@ -50,11 +50,11 @@ const UseTemplateModal = ({
 
 
         if (!entryTitle?.trim()) {
-            dispatch(notify({ msg: 'Title is required', sev: 'error' }));
+            dispatch(notify({ msg: 'Title is required', sev: 'warning' }));
             return;
         }
         if (!data || Object.keys(data).length === 0) {
-            dispatch(notify({ msg: 'Please fill the form before saving', sev: 'error' }));
+            dispatch(notify({ msg: 'Please fill the form before saving', sev: 'warning' }));
             return;
         }
 

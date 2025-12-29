@@ -53,11 +53,11 @@ const EditEntryModal = ({ open, setOpen, template, entry, onSaved }: any) => {
         if (!entry?.id) return;
 
         if (!title.trim()) {
-            dispatch(notify({ msg: 'Title is required', sev: 'error' }));
+            dispatch(notify({ msg: 'Title is required', sev: 'warning' }));
             return;
         }
         if (!surveyModel) {
-            dispatch(notify({ msg: 'Form is not ready', sev: 'error' }));
+            dispatch(notify({ msg: 'Form is not ready', sev: 'warning' }));
             return;
         }
 

@@ -155,13 +155,16 @@ const handleDelete = (row) => {
   return (
     <div className="medical-container-div">
       <SectionContainer
-        title={
-          <>
-            Family History
-         {! toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+      button={<>
+               {! toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
               Add
             </MyButton>
         }
+        </>}
+        title={
+          <>
+            Family History
+
           </>
         }
         content={

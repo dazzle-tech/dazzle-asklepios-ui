@@ -101,7 +101,8 @@ const Prescription = (props: any) => {
   const [favoriteMedications, setFavoriteMedications] = useState<any[]>([]);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] = useState<any>(null);
+  const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] =
+    useState<any>(null);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   const { data: genericMedicationListResponse } = useGetAllBrandMedicationsQuery({
@@ -168,7 +169,7 @@ const Prescription = (props: any) => {
     prescriptions?.object?.find((p: any) => p.key === preKeyRecord['preKey'])?.saveDraft
   );
 
-  // ===================== ✅ aggregation helpers (IMPORTANT: defined BEFORE payload) =====================
+  // aggregation helpers (IMPORTANT: defined BEFORE payload)
   const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
 
   const getMedicationName = (brandMedications: any[] = [], id: any) =>
@@ -231,7 +232,11 @@ const Prescription = (props: any) => {
         (x: any) => String(x.prescriptionMedicationsKey) === String(row?.key)
       );
 
-      return [toStr(ci?.dose), toStr(ci?.unitLvalue?.lovDisplayVale), toStr(ci?.frequencyLvalue?.lovDisplayVale)]
+      return [
+        toStr(ci?.dose),
+        toStr(ci?.unitLvalue?.lovDisplayVale),
+        toStr(ci?.frequencyLvalue?.lovDisplayVale)
+      ]
         .map(s => s.trim())
         .filter(Boolean)
         .join(', ');
@@ -287,9 +292,11 @@ const Prescription = (props: any) => {
         `ICD-10: ${toStr(row?.indicationIcd)}`
       ];
 
-      return parts.map(s => s.trim()).filter(Boolean).join(' | ');
+      return parts
+        .map(s => s.trim())
+        .filter(Boolean)
+        .join(' | ');
     });
-
 
     return {
       patient: patientInfo,
@@ -501,8 +508,8 @@ const Prescription = (props: any) => {
 
       dispatch(notify({ msg: 'All Medication Deleted Successfully', sev: 'success' }));
       setOpenCancellation(false);
-      medicRefetch().catch(() => { });
-      medicRefetch().catch(() => { });
+      medicRefetch().catch(() => {});
+      medicRefetch().catch(() => {});
       setSelectedRows([]);
     } catch (error) {
       dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
@@ -622,7 +629,6 @@ const Prescription = (props: any) => {
             item => item.id === Number(rowData.instructions)
           );
 
-
           if (generic) {
           } else {
             console.warn('No matching generic found for key:', rowData.instructions);
@@ -630,8 +636,8 @@ const Prescription = (props: any) => {
           return [
             generic?.dose ?? '',
             formatEnumString(generic?.unit) ?? '',
-            formatEnumString(generic?.rout) ?? '',   // ✅ route
-            formatEnumString(generic?.frequency) ?? '',
+            formatEnumString(generic?.rout) ?? '', // route
+            formatEnumString(generic?.frequency) ?? ''
           ]
             .filter(v => v != null && String(v).trim() !== '')
             .join(', ');
@@ -804,8 +810,8 @@ const Prescription = (props: any) => {
         facilityName: facilityName,
         authenticatedUserName: `${authSlice?.user?.firstName} ${authSlice?.user?.lastName}`,
         authenticatedUserEmail: authSlice?.user?.email,
-        predefinedInstructions: predefinedInstructionsListResponse?.data ?? [],    
-        customInstructions: customeInstructions?.object ?? [],                     
+        predefinedInstructions: predefinedInstructionsListResponse?.data ?? [],
+        customInstructions: customeInstructions?.object ?? []
       }).unwrap();
 
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
@@ -832,7 +838,8 @@ const Prescription = (props: any) => {
     <>
       {uniqueBrandIds.map((id: string) => (
         <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
-      ))}      <div className="bt-div">
+      ))}{' '}
+      <div className="bt-div">
         <div style={{ width: '500px', display: 'flex', flexDirection: 'row', gap: '6px' }}>
           <Form fluid>
             <MyInput
@@ -869,20 +876,16 @@ const Prescription = (props: any) => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => { }}
+              setRecord={() => {}}
               width={110}
             />
           </Form>
         </div>
 
-
-
         <div className={clsx('bt-right', { 'disabled-panel': edit })}>
-
-
           <UrgencyButton />
 
-          <MyButton loading={isLoadingPrescriptions}>Validate With</MyButton>
+          <MyButton loading={isLoadingPrescriptions}>Validate with Gallon Reasoner</MyButton>
 
           <MyButton
             onClick={handleNewPrescriptionAndAddMedication}
@@ -906,7 +909,7 @@ const Prescription = (props: any) => {
             disabled={
               preKeyRecord['preKey']
                 ? prescriptions?.object?.find((p: any) => p.key === preKeyRecord['preKey'])
-                  ?.statusLkey === '1804482322306061'
+                    ?.statusLkey === '1804482322306061'
                 : true
             }
             prefixIcon={() => <CheckIcon />}
@@ -922,9 +925,7 @@ const Prescription = (props: any) => {
           prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
         ></MyButton>
       </div>
-
       <Divider />
-
       <div className="bt-div">
         <div className="bt-right">
           <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
@@ -932,7 +933,6 @@ const Prescription = (props: any) => {
           </Checkbox>
         </div>
       </div>
-
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
@@ -954,7 +954,6 @@ const Prescription = (props: any) => {
           onRowsPerPageChange={handleRowsPerPageChange}
         />
       </div>
-
       {selectedPreviewMedication && (
         <div className="mt-4">
           <PrescriptionPreview
@@ -973,7 +972,6 @@ const Prescription = (props: any) => {
           />
         </div>
       )}
-
       <DetailsModal
         edit={edit}
         open={openDetailsModal}
@@ -985,11 +983,10 @@ const Prescription = (props: any) => {
         preKey={preKeyRecord['preKey']}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => { }}
+        setOrderMedication={() => {}}
         drugKey={null}
         editing={false}
       />
-
       <CancellationModal
         open={openCancellation}
         setOpen={setOpenCancellation}
@@ -999,7 +996,6 @@ const Prescription = (props: any) => {
         withReason={false}
         title={'Cancellation'}
       />
-
       <PatientHistorySummaryModal
         patient={patient}
         encounter={encounter}
@@ -1008,7 +1004,6 @@ const Prescription = (props: any) => {
         setOpen={setSummaryModalOpen}
         handleSave={handleSubmitPres}
       />
-
       <MyModal
         open={openFavoritesModal}
         setOpen={setOpenFavoritesModal}
@@ -1097,16 +1092,16 @@ const Prescription = (props: any) => {
           </div>
         }
       />
-
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${selectedMedicationForAttachments
-          ? genericMedicationListResponse?.data?.find(
-            (item: any) => item.id === selectedMedicationForAttachments.genericMedicationsId
-          )?.name || 'Medication'
-          : 'Medication'
-          }`}
+        title={`Attachments - ${
+          selectedMedicationForAttachments
+            ? genericMedicationListResponse?.data?.find(
+                (item: any) => item.id === selectedMedicationForAttachments.genericMedicationsId
+              )?.name || 'Medication'
+            : 'Medication'
+        }`}
         size="lg"
         hideActionBtn={true}
         content={
@@ -1119,7 +1114,7 @@ const Prescription = (props: any) => {
                 : undefined
             }
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />
@@ -1132,7 +1127,6 @@ const Prescription = (props: any) => {
         handleSave={handleSubmitPres}
         medicationValidationPayload={payload}
       />
-
       <AllergyFloatingButton patientKey={patient?.key} />
     </>
   );

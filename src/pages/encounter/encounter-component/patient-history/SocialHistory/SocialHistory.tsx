@@ -78,7 +78,6 @@ const SocialHistory = ({ patient, edit,
     { key: "typeOfAlcohol", title: "TYPE OF ALCOHOL" },
   ...(!toShowData ? [
     {
-      key: "actions",
         key: "actions",
         title: "",
         flexGrow: 1,

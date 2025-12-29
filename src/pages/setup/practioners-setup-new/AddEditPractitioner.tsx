@@ -110,7 +110,7 @@ const AddEditPractitioner = ({
       dispatch(
         notify({
           msg: messages.join(', '),
-          sev: 'error',
+          sev: 'warning',
         })
       );
 

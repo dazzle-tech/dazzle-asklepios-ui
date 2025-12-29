@@ -11,15 +11,16 @@ import {
   useGetResourceWithDetailsQuery,
   useSaveAppointmentMutation
 } from '@/services/appointmentService';
-import { useGetAllResourcesQuery, useGetResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
+import { useGetAllResourcesQuery, useGetResourcesByTypeQuery, useGetResourceByIdQuery } from '@/services/setup/resource/ResourceService';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPatientsQuery } from '@/services/patientService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { ApAppointment, ApAttachment, ApPatient } from '@/types/model-types';
 import { newApAppointment, newApPatient } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import { addFilterToListRequest, fromCamelCaseToDBName, conjureValueBasedOnKeyFromListOfValues } from '@/utils';
 import { DAYS, DayValue, mapJsDayToCustom } from '@/utils/dayMapping';
 import { notify } from '@/utils/uiReducerActions';
 import { faBan, faBolt, faListCheck, faUpload, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -48,6 +49,9 @@ import SliceBox from './SliceBox';
 import SectionContainer from '@/components/SectionsoContainer';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import { useEnumOptions } from '@/services/enumsApi';
+import PatientSearchBar from './PatientSearchBar';
+import PatientCardWithPicture from '@/components/PatientCard/PatientCardWithPicture';
+import { Box, Skeleton } from '@mui/material';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
 const AppointmentModal = ({
@@ -77,7 +81,7 @@ const AppointmentModal = ({
   useEffect(() => {
     if (appointmentData) {
       setAppointment(appointmentData);
-      setLocalPatient(appointmentData?.patient);
+      setLocalPatient(appointmentData?.patient || newApPatient);
     } else {
       setAppointment(newApAppointment);
       setLocalPatient(newApPatient);
@@ -85,6 +89,11 @@ const AppointmentModal = ({
   }, [appointmentData]);
 
   useEffect(() => {
+    // Don't override appointment data if we're viewing an existing appointment
+    if (appointmentData && showOnly) {
+      return;
+    }
+    
     if (selectedSlot?.resourceKey) {
       setAppointment(prev => ({
         ...prev,
@@ -102,7 +111,8 @@ const AppointmentModal = ({
           facilityKey: facility?.id || facility?.facilityKey || null
         }));
       }
-    } else {
+    } else if (!appointmentData) {
+      // Only clear if we don't have appointmentData (i.e., creating new appointment)
       setAppointment(prev => ({
         ...prev,
         resourceKey: null,
@@ -110,7 +120,7 @@ const AppointmentModal = ({
         facilityKey: null
       }));
     }
-  }, [selectedSlot, resourcesListResponse, facility]);
+  }, [selectedSlot, resourcesListResponse, facility, appointmentData, showOnly]);
 
   useEffect(() => {
     if (selectedSlot?.start) {
@@ -155,6 +165,11 @@ const AppointmentModal = ({
     }
   );
 
+  // Fetch the selected resource to get its resourceKey (similar to PatientQuickAppointment)
+  const { data: selectedResource } = useGetResourceByIdQuery(appointment?.resourceKey, {
+    skip: !appointment?.resourceKey
+  });
+
   const { data: resourcesByTypeResponse } = useGetResourcesByTypeQuery(
     {
       resourceType: appointment?.resourceTypeLkey,
@@ -175,7 +190,8 @@ const AppointmentModal = ({
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [patientSearchTarget, setPatientSearchTarget] = useState('primary'); // primary, relation, etc..
-  const [searchResultVisible, setSearchResultVisible] = useState(false);
+  const [patientSearchModalOpen, setPatientSearchModalOpen] = useState(false);
+  const [dateValue, setDateValue] = useState<Date | null>(null);
   const [patientAge, setPatientAge] = useState({ patientAge: null });
   const [reRenderModal, setReRenderModal] = useState(true);
   const [instructionKey, setInstructionsKey] = useState();
@@ -225,10 +241,16 @@ const AppointmentModal = ({
   useEffect(() => {
     if (appointmentData?.appointmentStart) {
       const date = new Date(appointmentData?.appointmentStart);
+      setSelectedDate(date);
       setSelectedYear(date.getFullYear());
       setSelectedMonth(date.getMonth());
       setSelectedMonthDay(date.getDate());
       setSelectedTime(date);
+      
+      // Set the day of week for the date picker
+      const jsDay = date.getDay();
+      const customDay = mapJsDayToCustom(jsDay);
+      setOpenDay(customDay);
     }
   }, [appointmentData?.appointmentStart]);
 
@@ -381,7 +403,37 @@ const AppointmentModal = ({
   });
 
   const { data: facilityListResponse, isLoading: isGettingFacilities, isFetching: isFetchingFacilities } = useGetAllFacilitiesQuery({});
+  
+  // Fetch departments for PRACTITIONER resource type
+  const { data: departmentListResponse } = useGetAppointableDepartmentsQuery({
+    facilityId: appointment?.facilityKey,
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  }, {
+    skip: !appointment?.facilityKey
+  });
 
+  // Fetch departments for PROCEDURE resource type (DAY_CASE)
+  const { data: dayCaseDepartmentListResponse } = useGetAppointableDepartmentByTypeQuery({
+    type: 'DAY_CASE',
+    facilityId: appointment?.facilityKey,
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  }, {
+    skip: !appointment?.facilityKey
+  });
+  
+  // Normalize facilityKey to string for proper matching
+  const normalizedAppointment = useMemo(() => {
+    if (!appointment) return appointment;
+    return {
+      ...appointment,
+      facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey
+    };
+  }, [appointment]);
+  
   const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation();
 
   useEffect(() => {
@@ -447,6 +499,8 @@ const AppointmentModal = ({
   const { data: procedureLevelQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
   const { data: reminderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('REMINDER_TYP');
   const { data: durationLovQueryResponse } = useGetLovValuesByCodeQuery('APNTMNT_DURATION');
+  const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
+  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const [isSideSearchOpen, setIsSideSearchOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState();
 
@@ -475,8 +529,20 @@ const AppointmentModal = ({
     } else if (patientSearchTarget === 'relation') {
     }
     // refetchPatients({ ...listRequest, clearResults: true });
-    setSearchResultVisible(false);
+    setSearchKeyword('');
+    setDateValue(null);
   };
+
+  // Reset search keyword when criterion changes
+  React.useEffect(() => {
+    setSearchKeyword('');
+    setDateValue(null);
+    // Reset list to show all patients when clearing filters
+    setListRequest({
+      ...initialListRequest,
+      ignore: true
+    });
+  }, [selectedCriterion]);
 
   const closeModal = () => {
     onClose();
@@ -507,58 +573,44 @@ const AppointmentModal = ({
     { label: 'Document Number', value: 'documentNo' },
     { label: 'Full Name', value: 'fullName' },
     { label: 'Archiving Number', value: 'archivingNumber' },
-    { label: 'Primary Phone Number', value: 'mobileNumber' },
+    { label: 'Primary Phone Number', value: 'phoneNumber' },
     { label: 'Date of Birth', value: 'dob' }
   ];
 
   const search = target => {
-    setIsSideSearchOpen(true);
     setPatientSearchTarget(target);
-    const needsMinLen = selectedCriterion !== 'dob';
-    if (searchKeyword && (!needsMinLen || searchKeyword.length >= 3) && selectedCriterion) {
+    
+    let searchValue = searchKeyword;
+    
+    if (selectedCriterion === 'dob' && dateValue) {
+      try {
+        // Format date safely
+        const year = dateValue.getFullYear();
+        const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+        const day = String(dateValue.getDate()).padStart(2, '0');
+        searchValue = `${year}-${month}-${day}`;
+      } catch (error) {
+        console.error('Invalid date:', error);
+        return;
+      }
+    }
+
+    if ((searchKeyword && searchKeyword.length >= 3 && selectedCriterion !== 'dob') || 
+        (selectedCriterion === 'dob' && dateValue && searchValue)) {
       setListRequest({
         ...listRequest,
         ignore: false,
         filters: [
           {
             fieldName: fromCamelCaseToDBName(selectedCriterion),
-            operator: 'containsIgnoreCase',
-            value: searchKeyword
+            operator: selectedCriterion === 'dob' ? 'equals' : 'containsIgnoreCase',
+            value: searchValue
           }
         ]
       });
     }
   };
 
-  const conjurePatientSearchBar = target => {
-    return (
-      <div style={{ width: '100%' }}>
-        <Form layout="inline" fluid>
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              gap: '12px',
-              alignItems: 'flex-end'
-            }}
-          >
-            {/* Search Criteria + Search Patients */}
-            <SearchPatientCriteria
-              record={{
-                searchByField: selectedCriterion, // always string
-                patientName: searchKeyword || ''
-              }}
-              setRecord={newRecord => {
-                setSelectedCriterion(newRecord?.searchByField); // it will be string
-                setSearchKeyword(newRecord?.patientName);
-              }}
-              onSearchClick={() => search(target)}
-            />
-          </div>
-        </Form>
-      </div>
-    );
-  };
 
   const calculateAge = (dateOfBirth: Date | string): number | undefined => {
     if (dateOfBirth) {
@@ -723,6 +775,7 @@ const AppointmentModal = ({
     patientKey: normalizeToString(payload?.patientKey),
     facilityKey: normalizeToString(payload?.facilityKey),
     resourceKey: normalizeToString(payload?.resourceKey),
+    departmentKey: normalizeToString(payload?.departmentKey),
 
     reminderLkey: normalizeToString(payload?.reminderLkey),
     durationLkey: normalizeToString(payload?.durationLkey),
@@ -730,20 +783,91 @@ const AppointmentModal = ({
     resourceTypeLkey: normalizeToString(payload?.resourceTypeLkey)
   });
 
+  const validateRequiredFields = () => {
+    const missingFields: string[] = [];
+    
+    if (!localPatient?.key) {
+      missingFields.push('Patient');
+    }
+    if (!appointment?.facilityKey) {
+      missingFields.push('Facility');
+    }
+    if (!appointment?.resourceTypeLkey) {
+      missingFields.push('Resource Type');
+    }
+    if (!appointment?.resourceKey) {
+      missingFields.push('Resource');
+    }
+    if (!appointment?.visitTypeLkey) {
+      missingFields.push('Visit Type');
+    }
+    // Validate appointment date 
+    // Check if date is set via DatePicker (selectedDate) or fallback date fields
+    // Also check if time slices are selected (which implies a date context exists)
+    const hasDate = selectedDate || (selectedYear && selectedMonth !== null && selectedMonthDay);
+    const hasTimeSlices = selectedSlices && selectedSlices.length > 0;
+    
+    // If time slices are selected, we can use current date as fallback, so don't require selectedDate
+    // But if no slices and no date, then date is required
+    if (!hasDate && !hasTimeSlices) {
+      missingFields.push('Appointment Date');
+    }
+    
+    // Validate appointment time (need either selectedTime or selectedSlices)
+    // Only check time if we have a date or time slices are selected
+    if (hasDate && !selectedTime && !hasTimeSlices) {
+      missingFields.push('Appointment Time');
+    }
+    // Validate department for PRACTITIONER and PROCEDURE resource types
+    if ((appointment?.resourceTypeLkey === '2039534205961578' || 
+         appointment?.resourceTypeLkey === 'PRACTITIONER' || 
+         appointment?.resourceTypeLkey === '2039548173192779' ||
+         appointment?.resourceTypeLkey === 'PROCEDURE') && 
+        !appointment?.departmentKey) {
+      missingFields.push('Department');
+    }
+    
+    if (missingFields.length > 0) {
+      const lines = missingFields.map(field => `• ${field}: is required`);
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines.join('\n')}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+    return true;
+  };
+
   const handleSaveAppointment = () => {
+    // Validate required fields first
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     let finalResourceKey = appointment.resourceKey;
 
     if (!finalResourceKey) {
-      const selectedResource = resourcesWithNames.find(
+      const selectedResourceFromList = resourcesWithNames.find(
         (r: any) => r.key === appointment.resourceKey || r.resourceKey === appointment.resourceKey
       );
-      finalResourceKey = selectedResource?.resourceKey || selectedResource?.key;
+      finalResourceKey = selectedResourceFromList?.resourceKey || selectedResourceFromList?.key;
     }
 
     // Calculate appointmentStart and appointmentEnd
     // Try to use selectedSlices first, fallback to selectedDate/selectedTime
     const appointmentStart = calculateAppointmentDate(0, true);
     const appointmentEnd = calculateAppointmentDate(selectedDuration, true);
+
+    // Check if the resource type is department-based (similar to PatientQuickAppointment)
+    const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointment?.resourceTypeLkey);
+    
+    // For department-based resources, use the resourceKey from the selected resource as departmentKey
+    // For other resources, use the departmentKey as is
+    const departmentKeyToSave = isDepartmentBasedResource 
+      ? selectedResource?.resourceKey 
+      : appointment.departmentKey;
 
     const appointmentToSave = {
       ...appointment,
@@ -755,6 +879,7 @@ const AppointmentModal = ({
       selectedSlices: selectedSlices ?? [],
       appointmentDate: selectedDate,
       resourceKey: finalResourceKey,
+      departmentKey: departmentKeyToSave ? String(departmentKeyToSave) : departmentKeyToSave,
       facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey
     };
 
@@ -892,8 +1017,13 @@ const AppointmentModal = ({
   const [modalKey, setModalKey] = useState(0);
 
   const handleDayClick = day => {
-    setOpenDay(openDay === day ? null : day);
-    setSelectedDate(null);
+    const isDeselecting = openDay === day;
+    setOpenDay(isDeselecting ? null : day);
+    // Don't clear selectedDate when selecting a day - keep the date if it was already selected
+    // Only clear if deselecting the day and no time slices are selected
+    if (isDeselecting && (!selectedSlices || selectedSlices.length === 0)) {
+      setSelectedDate(null);
+    }
   };
   const [openDay, setOpenDay] = useState<DayValue | null>(null);
 
@@ -928,21 +1058,33 @@ const AppointmentModal = ({
                 {from === 'Schedule' && (
                   <Panel>
                     <div className="show-grid">
-                      <div className="flex-container">
-                        <div style={{ flex: 5, padding: 2 }}>{conjurePatientSearchBar('primary')}</div>
-                        <div className="input-wrapper" style={{ flex: 1 }}>
-                          <div style={{ flexShrink: 0, marginTop: '10px' }}>
-                            <MyButton
-                              appearance="ghost"
-                              className="quick-patient-button"
-                              onClick={() => setQuickPatientModalOpen(true)}
-                              prefixIcon={() => <FontAwesomeIcon icon={faBolt} className="quick-patient-icon" />}
-                            >
-                              Quick Patient
-                            </MyButton>
-
-                            <QuickPatient open={quickPatientModalOpen} setOpen={() => setQuickPatientModalOpen(false)} setPatient={setLocalPatient} />
-                          </div>
+                      <div className="flex-container" style={{ alignItems: 'flex-end', gap: '5px' }}>
+                        <div style={{ flex: 1 }}>
+                          <MyButton
+                            appearance="ghost"
+                            onClick={() => {
+                              setQuickPatientModalOpen(false);
+                              setPatientSearchModalOpen(true);
+                            }}
+                            prefixIcon={() => <FontAwesomeIcon icon={faUser} />}
+                            style={{ width: '100%' }}
+                          >
+                            {localPatient?.fullName ? 'Change Patient' : 'Select Patient'}
+                          </MyButton>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <MyButton
+                            appearance="ghost"
+                            onClick={() => {
+                              setPatientSearchModalOpen(false);
+                              setQuickPatientModalOpen(true);
+                            }}
+                            prefixIcon={() => <FontAwesomeIcon icon={faBolt} className="quick-patient-icon" />}
+                            style={{ width: '100%' }}
+                          >
+                            Quick Patient
+                          </MyButton>
+                          <QuickPatient open={quickPatientModalOpen} setOpen={() => setQuickPatientModalOpen(false)} setPatient={setLocalPatient} />
                         </div>
                       </div>
                     </div>
@@ -973,9 +1115,17 @@ const AppointmentModal = ({
                               <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
                                 {/* {localPatient?.genderLkey} */}
                                 <FontAwesomeIcon icon={faUser} />
-                                {`${localPatient?.genderLvalue?.lovDisplayVale || 'N/A'}${
-                                  patientAge?.patientAge ? `, ${patientAge.patientAge}y old` : ''
-                                }`}
+                                {(() => {
+                                  const genderKey = localPatient?.gender_lkey || localPatient?.genderLkey;
+                                  const genderDisplay = genderKey && genderLovQueryResponse?.object
+                                    ? conjureValueBasedOnKeyFromListOfValues(
+                                        genderLovQueryResponse.object,
+                                        genderKey,
+                                        'lovDisplayVale'
+                                      ) || 'N/A'
+                                    : 'N/A';
+                                  return `${genderDisplay}${patientAge?.patientAge ? `, ${patientAge.patientAge}y old` : ''}`;
+                                })()}
                               </p>
 
                               <p style={{ fontSize: '12px', color: '#A1A9B8' }}>{localPatient?.patientMrn ? `#${localPatient.patientMrn}` : ''}</p>
@@ -994,18 +1144,33 @@ const AppointmentModal = ({
                             <Divider style={{ height: '50px' }} vertical />
                             <div className="input-wrapper" style={{ flex: 1 }}>
                               <p style={{ fontSize: '10px', color: '#A1A9B8' }}>Document Type</p>
-                              {localPatient?.documentTypeLvalue?.lovDisplayVale || '-'}
+                              {(() => {
+                                const docTypeKey = localPatient?.document_type_lkey || localPatient?.documentTypeLkey;
+                                return docTypeKey && docTypeLovQueryResponse?.object
+                                  ? conjureValueBasedOnKeyFromListOfValues(
+                                      docTypeLovQueryResponse.object,
+                                      docTypeKey,
+                                      'lovDisplayVale'
+                                    ) || '-'
+                                  : '-';
+                              })()}
                             </div>
                             <div className="input-wrapper" style={{ flex: 1 }}>
                               <div className="input-wrapper" style={{ flex: 1 }}>
                                 <p style={{ fontSize: '10px', color: '#A1A9B8' }}>Document No</p>
-                                {localPatient?.documentNo || '-'}
+                                {(() => {
+                                  const docNo = localPatient?.document_no || localPatient?.documentNo;
+                                  return docNo || '-';
+                                })()}
                               </div>
                             </div>
                             <div className="input-wrapper" style={{ flex: 1 }}>
                               <div className="input-wrapper" style={{ flex: 1 }}>
                                 <p style={{ fontSize: '10px', color: '#A1A9B8' }}>Mobile Number</p>
-                                {localPatient?.mobileNumber || '-'}
+                                {(() => {
+                                  const mobileValue = localPatient?.mobile_number || localPatient?.mobileNumber || localPatient?.phoneNumber;
+                                  return mobileValue || '-';
+                                })()}
                               </div>
                             </div>
                             <div className="input-wrapper" style={{ flex: 1 }}>
@@ -1048,15 +1213,16 @@ const AppointmentModal = ({
                                 width={'100%'}
                                 column
                                 fieldLabel="Facility"
-                                selectData={facilityListResponse ?? []}
+                                selectData={facilityListResponse?.map(f => ({ ...f, id: String(f.id) })) ?? []}
                                 fieldType="select"
                                 selectDataLabel="name"
                                 selectDataValue="id"
                                 fieldName="facilityKey"
                                 disabled={showOnly}
-                                record={appointment}
+                                record={normalizedAppointment || appointment}
                                 setRecord={setAppointment}
                                 searchable={false}
+                                required
                               />
                             </div>
                           </div>
@@ -1079,6 +1245,7 @@ const AppointmentModal = ({
                                 record={appointment}
                                 setRecord={setAppointment}
                                 searchable={false}
+                                required
                               />
                             </div>
                             <div className="input-wrapper" style={{ flex: 3 }}>
@@ -1094,8 +1261,49 @@ const AppointmentModal = ({
                                 fieldName="resourceKey"
                                 record={appointment}
                                 setRecord={setAppointment}
+                                required
                               />
                             </div>
+                            {/* Department field for PRACTITIONER resource type */}
+                            {(appointment?.resourceTypeLkey === '2039534205961578' || appointment?.resourceTypeLkey === 'PRACTITIONER') ? (
+                              <div className="input-wrapper" style={{ flex: 3 }}>
+                                <MyInput
+                                  width={'15vw'}
+                                  vr={validationResult}
+                                  column
+                                  fieldType="select"
+                                  fieldLabel="Department"
+                                  fieldName="departmentKey"
+                                  selectData={departmentListResponse?.data ?? []}
+                                  selectDataLabel="name"
+                                  selectDataValue="id"
+                                  record={appointment}
+                                  setRecord={setAppointment}
+                                  disabled={showOnly}
+                                  required
+                                />
+                              </div>
+                            ) : null}
+                            {/* Department field for PROCEDURE resource type */}
+                            {(appointment?.resourceTypeLkey === '2039548173192779' || appointment?.resourceTypeLkey === 'PROCEDURE') ? (
+                              <div className="input-wrapper" style={{ flex: 3 }}>
+                                <MyInput
+                                  width={'15vw'}
+                                  vr={validationResult}
+                                  column
+                                  fieldType="select"
+                                  fieldLabel="Department"
+                                  fieldName="departmentKey"
+                                  selectData={dayCaseDepartmentListResponse?.data ?? []}
+                                  selectDataLabel="name"
+                                  selectDataValue="id"
+                                  record={appointment}
+                                  setRecord={setAppointment}
+                                  disabled={showOnly}
+                                  required
+                                />
+                              </div>
+                            ) : null}
                             <div className="input-wrapper" style={{ flex: 3 }}>
                               <MyInput
                                 width={'15vw'}
@@ -1111,6 +1319,7 @@ const AppointmentModal = ({
                                 setRecord={setAppointment}
                                 disabled={showOnly}
                                 searchable={false}
+                                required
                               />
                             </div>
                           </div>
@@ -1553,117 +1762,49 @@ const AppointmentModal = ({
         }
       ></AdvancedModal>
 
+      {/* Patient Search Modal */}
       <Drawer
-        size="lg"
-        placement={'left'}
-        open={searchResultVisible}
+        size={300}
+        placement={'right'}
+        open={patientSearchModalOpen}
         onClose={() => {
-          setSearchResultVisible(false);
+          setPatientSearchModalOpen(false);
         }}
       >
         <Drawer.Header>
-          <Drawer.Title>Patient List - Search Results</Drawer.Title>
-          <Drawer.Actions>{conjurePatientSearchBar(patientSearchTarget)}</Drawer.Actions>
+          <Drawer.Title><Translate>Search Patient</Translate></Drawer.Title>
         </Drawer.Header>
-        <Drawer.Body>
-          <small>
-            * <Translate>Click to select patient</Translate>
-          </small>
-          <Table
-            height={600}
-            sortColumn={listRequest.sortBy}
-            sortType={listRequest.sortType}
-            onSortColumn={(sortBy, sortType) => {
-              if (sortBy)
-                setListRequest({
-                  ...listRequest,
-                  sortBy,
-                  sortType
-                });
+        <Drawer.Body style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
+          <style>{`
+            .rs-picker-menu {
+              z-index: 1050 !important;
+            }
+            .rs-picker-select-menu {
+              z-index: 1050 !important;
+            }
+          `}</style>
+          <PatientSearchBar
+            selectedCriterion={selectedCriterion}
+            searchKeyword={searchKeyword}
+            dateValue={dateValue}
+            onCriterionChange={(criterion) => {
+              setSelectedCriterion(criterion as typeof selectedCriterion);
             }}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
-            cellBordered
-            onRowClick={rowData => {
-              handleSelectPatient(rowData);
-              setSearchKeyword(null);
+            onSearchKeywordChange={setSearchKeyword}
+            onDateValueChange={setDateValue}
+            onSearch={() => {
+              search('primary');
             }}
-            data={patientListResponse?.object ?? []}
-          >
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('fullName', e)} />
-                <Translate>Patient Name</Translate>
-              </HeaderCell>
-              <Cell dataKey="fullName" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('mobileNumber', e)} />
-                <Translate>Mobile Number</Translate>
-              </HeaderCell>
-              <Cell dataKey="mobileNumber" />
-            </Column>
-            <Column sortable flexGrow={2}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('genderLkey', e)} />
-                <Translate>Gender</Translate>
-              </HeaderCell>
-              <Cell dataKey="genderLvalue.lovDisplayVale" />
-            </Column>
-            <Column sortable flexGrow={2}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('patientMrn', e)} />
-                <Translate>Mrn</Translate>
-              </HeaderCell>
-              <Cell dataKey="patientMrn" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('documentNo', e)} />
-                <Translate>Document No</Translate>
-              </HeaderCell>
-              <Cell dataKey="documentNo" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('archivingNumber', e)} />
-                <Translate>Archiving Number</Translate>
-              </HeaderCell>
-              <Cell dataKey="archivingNumber" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('dob', e)} />
-                <Translate>Date of Birth</Translate>
-              </HeaderCell>
-              <Cell dataKey="dob" />
-            </Column>
-          </Table>
-          <div style={{ padding: 20 }}>
-            <Pagination
-              prev
-              next
-              first
-              last
-              ellipsis
-              boundaryLinks
-              maxButtons={5}
-              size="xs"
-              layout={['limit', '|', 'pager']}
-              limitOptions={[5, 15, 30]}
-              limit={listRequest.pageSize}
-              activePage={listRequest.pageNumber}
-              onChangePage={pageNumber => {
-                setListRequest({ ...listRequest, pageNumber });
-              }}
-              onChangeLimit={pageSize => {
-                setListRequest({ ...listRequest, pageSize });
-              }}
-              total={patientListResponse?.extraNumeric ?? 0}
-            />
-          </div>
+            expand={true}
+            patientListResponse={patientListResponse}
+            isFetchingPatients={isFetchingPatients}
+            onSelectPatient={(patient) => {
+              handleSelectPatient(patient);
+              setSearchKeyword('');
+              setPatientSearchModalOpen(false);
+            }}
+            showCloseButton={false}
+          />
         </Drawer.Body>
       </Drawer>
     </div>

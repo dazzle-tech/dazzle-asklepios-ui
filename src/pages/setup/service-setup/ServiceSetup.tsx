@@ -197,7 +197,7 @@ const ServiceSetup: React.FC = () => {
     const effectiveFacilityId = Number(resolvedFacilityIdRaw);
 
     if (!Number.isFinite(effectiveFacilityId)) {
-      dispatch(notify({ msg: 'Please select a facility.', sev: 'error' }));
+      dispatch(notify({ msg: 'Please select a facility.', sev: 'warning' }));
       return;
     }
 

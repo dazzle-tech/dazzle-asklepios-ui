@@ -1,5 +1,3 @@
-// src/pages/medical-component/observations/Observations.tsx
-
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
@@ -22,15 +20,16 @@ import { notify } from '@/utils/uiReducerActions';
 import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Col, Form, Row, Slider } from 'rsuite';
+import { useOutletContext } from 'react-router-dom';
+
 import './styles.less';
 
 export type ObservationsRef = {
   handleSave: () => void;
   handleClear: () => void;
-  handleGenerateReport: () => void;
 };
 
 type ObservationsProps = {
@@ -68,9 +67,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   const [localPatient] = useState<ApPatient>({ ...patient });
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...(encounter as any) });
-const setLocalEncounterSafe = useMemo(() => mergeSetter(setLocalEncounter), []);
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
-   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
@@ -80,18 +78,23 @@ const setLocalEncounterSafe = useMemo(() => mergeSetter(setLocalEncounter), []);
     heartRate: 0,
     temperature: 0,
     oxygenSaturation: 0,
-    measurementSiteLkey: '',
-    respiratoryRate: 0
+    respiratoryRate: 0,
+    measurementLkey: '',
+    notes: ''
   });
 
-const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
+  type NurseOutletContext = {
+    observationsRef?: React.MutableRefObject<ObservationsRef | null>;
+  };
+
+  const { observationsRef } = useOutletContext<NurseOutletContext>();
+
+  const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
   const [saveEncounter] = useSaveEncounterChangesMutation();
-  const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
 
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly] = useState(false);
- const [painLevel, setPainLevel] = useState({ latestpainlevel: 0 });
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [painLevel, setPainLevel] = useState({ latestpainlevel: 0 });
 
   const getTrackColor = (value: number): string => {
     if (value === 0) return 'transparent';
@@ -117,8 +120,9 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
     ...patientLastVisitObservationsListRequest
   });
 
-  const lastObservationSummary =getObservationSummaries?.object?.length > 0 ? getObservationSummaries.object[0] : null;
-    const lastencounterop =
+  const lastObservationSummary =
+    getObservationSummaries?.object?.length > 0 ? getObservationSummaries.object[0] : null;
+  const lastencounterop =
     getObservationSummaries?.object?.length > 0
       ? getObservationSummaries.object.findLast(
           (item: ApPatientObservationSummary) => item.visitKey === encounter?.key
@@ -138,7 +142,9 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
       latestweight: null,
       latestheight: null,
       latestheadcircumference: null,
-      latestpainlevelLkey: null
+      latestpainlevelLkey: null,
+      measurementLkey: null,
+      notes: ''
     });
 
   const { data: patientAgeGroupResponse } = useGetAgeGroupValueQuery(
@@ -147,7 +153,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
     },
     { skip: !patient?.dob }
   );
- const setPatientObservationSummarySafe = useMemo(
+  const setPatientObservationSummarySafe = useMemo(
     () => mergeSetter(setPatientObservationSummary),
     []
   );
@@ -167,15 +173,19 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
       heartRate: patientObservationSummary.latestheartrate || 0,
       temperature: patientObservationSummary.latesttemperature || 0,
       oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0,
-      respiratoryRate: patientObservationSummary.latestrespiratoryrate || 0
+      respiratoryRate: patientObservationSummary.latestrespiratoryrate || 0,
+      measurementLkey: patientObservationSummary.measurementLkey || '',
+      notes: patientObservationSummary.notes || ''
     }));
- }, [
+  }, [
     patientObservationSummary.latestbpSystolic,
     patientObservationSummary.latestbpDiastolic,
     patientObservationSummary.latestheartrate,
     patientObservationSummary.latesttemperature,
     patientObservationSummary.latestoxygensaturation,
-    patientObservationSummary.latestrespiratoryrate
+    patientObservationSummary.latestrespiratoryrate,
+    patientObservationSummary.measurementLkey,
+    patientObservationSummary.notes
   ]);
   useEffect(() => {
     if (saveObservationsMutation && saveObservationsMutation.status === 'fulfilled') {
@@ -186,8 +196,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
   useEffect(() => {
     if (localEncounter?.encounterStatusLkey === '91109811181900') {
       setIsEncounterStatusClosed(true);
-    }
-    else {
+    } else {
       setIsEncounterStatusClosed(false);
     }
   }, [localEncounter?.encounterStatusLkey]);
@@ -195,7 +204,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
   useEffect(() => {
     const { latestweight, latestheight } = patientObservationSummary;
     if (latestweight && latestheight) {
-    const calculatedBmi = (latestweight / (latestheight / 100) ** 2).toFixed(2);
+      const calculatedBmi = (latestweight / (latestheight / 100) ** 2).toFixed(2);
       const calculatedBsa = Math.sqrt((latestweight * latestheight) / 3600).toFixed(2);
       setBmi(calculatedBmi);
       setBsa(calculatedBsa);
@@ -203,7 +212,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
       setBmi('');
       setBsa('');
     }
-    }, [patientObservationSummary.latestweight, patientObservationSummary.latestheight]);
+  }, [patientObservationSummary.latestweight, patientObservationSummary.latestheight]);
 
   useEffect(() => {
     if (patientObservationSummary?.latestpainlevel != null) {
@@ -235,27 +244,24 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
         platestbpSystolic: lastObservationSummary?.latestbpSystolic || null,
         platestbpDiastolic: lastObservationSummary?.latestbpDiastolic || null,
         platestheartrate: lastObservationSummary?.latestheartrate || null,
-        platestrespiratoryrate:
-          lastObservationSummary?.latestrespiratoryrate || null,
-        platestoxygensaturation:
-          lastObservationSummary?.latestoxygensaturation || null,
+        platestrespiratoryrate: lastObservationSummary?.latestrespiratoryrate || null,
+        platestoxygensaturation: lastObservationSummary?.latestoxygensaturation || null,
         platestweight:
-          lastObservationSummary?.latestweight ||
-          lastObservationSummary?.platestweight,
+          lastObservationSummary?.latestweight || lastObservationSummary?.platestweight,
         platestheight:
-          lastObservationSummary?.latestheight ||
-          lastObservationSummary?.platestheight,
+          lastObservationSummary?.latestheight || lastObservationSummary?.platestheight,
         platestheadcircumference:
           lastObservationSummary?.latestheadcircumference ||
           lastObservationSummary?.platestheadcircumference,
         platestnotes: lastObservationSummary?.latestnotes || '',
-        platestpaindescription:
-          lastObservationSummary?.latestpaindescription || '',
-        platestpainlevelLkey:
-          lastObservationSummary?.latestpainlevelLkey || '',
+        platestpaindescription: lastObservationSummary?.latestpaindescription || '',
+        platestpainlevelLkey: lastObservationSummary?.latestpainlevelLkey || '',
         platestbmi: lastObservationSummary?.latestbmi,
         page: lastObservationSummary?.age,
-        latestpainlevel: painLevel.latestpainlevel as any
+        latestpainlevel: painLevel.latestpainlevel as any,
+        priorityLkey: patientObservationSummary.priorityLkey,
+        notes: vital.notes,
+        measurementLkey: vital.measurementLkey
       }).unwrap();
 
       if (encounter.chiefComplaint !== localEncounter.chiefComplaint) {
@@ -263,14 +269,10 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
       }
 
       dispatch(setRefetchPatientSide(true));
-      dispatch(
-        notify({ msg: 'Saved Successfully', sev: 'success' })
-      );
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
       console.error('Error while saving observation summary:', error);
-      dispatch(
-        notify({ msg: 'Error occurred while saving', sev: 'error' })
-      );
+      dispatch(notify({ msg: 'Error occurred while saving', sev: 'error' }));
     }
   };
 
@@ -278,72 +280,40 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
     setPatientObservationSummary({
       ...newApPatientObservationSummary,
       latestpainlevelLkey: null
-  } as any);
+    } as any);
     setPainLevel({ latestpainlevel: 0 });
     setBmi('');
     setBsa('');
   };
 
-  const handleGenerateReport = async () => {
-    setIsGeneratingReport(true);
-    try {
-      const blob = await generateNurseReport({
-        patient: localPatient,
-        encounter: localEncounter
-      }).unwrap();
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `nurse-summary-${localEncounter.key}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error(
-        'Error generating nurse summary report:',
-        error
-      );
-      dispatch(
-        notify({
-          msg: 'Error while generating report',
-          sev: 'error'
-        })
-      );
-    } finally {
-      setIsGeneratingReport(false);
-    }
-  };
-
-  useImperativeHandle(ref, () => ({
-    handleSave,
-    handleClear,
-    handleGenerateReport
-  }));
- useEffect(() => {
+  useEffect(() => {
     if (patientObservationSummary?.latestpainlevel != null) {
       setPainLevel({
         latestpainlevel: patientObservationSummary.latestpainlevel as number
       });
     }
   }, [patientObservationSummary]);
+
+  //
+  useEffect(() => {
+    if (!observationsRef) return;
+
+    observationsRef.current = {
+      handleSave,
+      handleClear
+    };
+
+    return () => {
+      observationsRef.current = null;
+    };
+  }, [observationsRef]);
+
   return (
     <div ref={ref as any} className={clsx('basuc-div', { 'disabled-panel': edit })}>
       <Form fluid>
-        <Row className="action-row" >
+        <Row className="action-row">
           <Col>
             <MyButton onClick={handleSave}>Save</MyButton>
-          </Col>
-
-          <Col>
-            <MyButton
-              onClick={handleGenerateReport}
-              loading={isGeneratingReport}
-              disabled={isGeneratingReport}
-            >
-              Generate Report
-            </MyButton>
           </Col>
         </Row>
 
@@ -377,7 +347,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                             disabled={isEncounterStatusClosed || readOnly}
                             fieldType="textarea"
                             record={patientObservationSummary}
-                             setRecord={setPatientObservationSummarySafe}
+                            setRecord={setPatientObservationSummarySafe}
                           />
                         </Col>
                       </Row>
@@ -402,12 +372,12 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                             width="100%"
                             fieldLabel="Priority"
                             fieldType="select"
-                            fieldName="encounterPriorityLkey"
+                            fieldName="priorityLkey"
                             selectData={encounterPriorityLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
-                            record={localEncounter}
-                            setRecord={setLocalEncounterSafe}
+                            record={patientObservationSummary}
+                            setRecord={setPatientObservationSummary}
                             disabled={isEncounterStatusClosed || readOnly}
                             searchable={false}
                           />
@@ -455,7 +425,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                           disabled={isEncounterStatusClosed || readOnly}
                           fieldType="number"
                           record={patientObservationSummary}
-                         setRecord={setPatientObservationSummarySafe}
+                          setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
 
@@ -480,7 +450,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                           disabled={isEncounterStatusClosed || readOnly}
                           fieldType="number"
                           record={patientObservationSummary}
-                         setRecord={setPatientObservationSummarySafe}
+                          setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
 
@@ -534,7 +504,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                           selectDataLabel="lovDisplayVale"
                           selectDataValue="key"
                           record={patientObservationSummary}
-                           setRecord={setPatientObservationSummarySafe}
+                          setRecord={setPatientObservationSummarySafe}
                           searchable={false}
                         />
                       </Col>
@@ -545,9 +515,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                           <div className="slider-class" style={{ position: 'relative' }}>
                             <Slider
                               value={painLevel.latestpainlevel}
-                               onChange={value =>
-                                setPainLevel({ latestpainlevel: value as number })
-                              }
+                              onChange={value => setPainLevel({ latestpainlevel: value as number })}
                               min={0}
                               max={10}
                               step={1}
@@ -581,7 +549,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                           fieldLabel="Pain Description"
                           fieldName="latestpaindescription"
                           record={patientObservationSummary}
-                         setRecord={setPatientObservationSummarySafe}
+                          setRecord={setPatientObservationSummarySafe}
                         />
                       </Col>
                     </Row>
@@ -622,7 +590,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                            setRecord={setPatientObservationSummarySafe}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
 
@@ -636,7 +604,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                             setRecord={setPatientObservationSummarySafe}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
 
@@ -666,7 +634,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                             setRecord={setPatientObservationSummarySafe}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
 
@@ -694,7 +662,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                               unCheckedLabel="negative"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                             setRecord={setPatientObservationSummarySafe}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
@@ -721,7 +689,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                               fieldName="latestFallRisk"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                             setRecord={setPatientObservationSummarySafe}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
@@ -735,7 +703,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                               fieldType="textarea"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                             setRecord={setPatientObservationSummarySafe}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
@@ -749,7 +717,7 @@ const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSum
                               fieldType="textarea"
                               record={patientObservationSummary}
                               disabled={isEncounterStatusClosed || readOnly}
-                             setRecord={setPatientObservationSummarySafe}
+                              setRecord={setPatientObservationSummarySafe}
                             />
                           </Col>
                         </Row>
