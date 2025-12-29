@@ -96,14 +96,14 @@ const Details = ({
       dispatch(
         notify({
           msg: `Please fill the following required fields:\n${lines.join('\n')}`,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return false;
     }
 
     if (!consultationOrders?.departmentKey && !consultationOrders?.preferredConsultantKey) {
-      dispatch(notify({ msg: 'Please select at least Department or Consultant', sev: 'error' }));
+      dispatch(notify({ msg: 'Please select at least Department or Consultant', sev: 'warning' }));
       return false;
     }
 
@@ -114,7 +114,7 @@ const Details = ({
       dispatch(
         notify({
           msg: 'Please select a Consultant when Consultant Specialty is filled',
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return false;
@@ -345,7 +345,7 @@ const Details = ({
                             dispatch(
                               notify({
                                 msg: 'Please select Consultant Specialty first.',
-                                sev: 'info'
+                                sev: 'warning'
                               })
                             );
                             return;
@@ -364,7 +364,7 @@ const Details = ({
                               dispatch(
                                 notify({
                                   msg: 'Specialty name not found. Please re-select Consultant Specialty.',
-                                  sev: 'info'
+                                  sev: 'warning'
                                 })
                               );
                               return;
