@@ -11,11 +11,12 @@ import {
   useGetResourceWithDetailsQuery,
   useSaveAppointmentMutation
 } from '@/services/appointmentService';
-import { useGetAllResourcesQuery, useGetResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
+import { useGetAllResourcesQuery, useGetResourcesByTypeQuery, useGetResourceByIdQuery } from '@/services/setup/resource/ResourceService';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPatientsQuery } from '@/services/patientService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { ApAppointment, ApAttachment, ApPatient } from '@/types/model-types';
 import { newApAppointment, newApPatient } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -163,6 +164,11 @@ const AppointmentModal = ({
       skip: !selectedSlot?.resourceKey && !selectedSlot?.resourceId && !appointment?.resourceKey
     }
   );
+
+  // Fetch the selected resource to get its resourceKey (similar to PatientQuickAppointment)
+  const { data: selectedResource } = useGetResourceByIdQuery(appointment?.resourceKey, {
+    skip: !appointment?.resourceKey
+  });
 
   const { data: resourcesByTypeResponse } = useGetResourcesByTypeQuery(
     {
@@ -397,6 +403,27 @@ const AppointmentModal = ({
   });
 
   const { data: facilityListResponse, isLoading: isGettingFacilities, isFetching: isFetchingFacilities } = useGetAllFacilitiesQuery({});
+  
+  // Fetch departments for PRACTITIONER resource type
+  const { data: departmentListResponse } = useGetAppointableDepartmentsQuery({
+    facilityId: appointment?.facilityKey,
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  }, {
+    skip: !appointment?.facilityKey
+  });
+
+  // Fetch departments for PROCEDURE resource type (DAY_CASE)
+  const { data: dayCaseDepartmentListResponse } = useGetAppointableDepartmentByTypeQuery({
+    type: 'DAY_CASE',
+    facilityId: appointment?.facilityKey,
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  }, {
+    skip: !appointment?.facilityKey
+  });
   
   // Normalize facilityKey to string for proper matching
   const normalizedAppointment = useMemo(() => {
@@ -748,6 +775,7 @@ const AppointmentModal = ({
     patientKey: normalizeToString(payload?.patientKey),
     facilityKey: normalizeToString(payload?.facilityKey),
     resourceKey: normalizeToString(payload?.resourceKey),
+    departmentKey: normalizeToString(payload?.departmentKey),
 
     reminderLkey: normalizeToString(payload?.reminderLkey),
     durationLkey: normalizeToString(payload?.durationLkey),
@@ -755,20 +783,91 @@ const AppointmentModal = ({
     resourceTypeLkey: normalizeToString(payload?.resourceTypeLkey)
   });
 
+  const validateRequiredFields = () => {
+    const missingFields: string[] = [];
+    
+    if (!localPatient?.key) {
+      missingFields.push('Patient');
+    }
+    if (!appointment?.facilityKey) {
+      missingFields.push('Facility');
+    }
+    if (!appointment?.resourceTypeLkey) {
+      missingFields.push('Resource Type');
+    }
+    if (!appointment?.resourceKey) {
+      missingFields.push('Resource');
+    }
+    if (!appointment?.visitTypeLkey) {
+      missingFields.push('Visit Type');
+    }
+    // Validate appointment date 
+    // Check if date is set via DatePicker (selectedDate) or fallback date fields
+    // Also check if time slices are selected (which implies a date context exists)
+    const hasDate = selectedDate || (selectedYear && selectedMonth !== null && selectedMonthDay);
+    const hasTimeSlices = selectedSlices && selectedSlices.length > 0;
+    
+    // If time slices are selected, we can use current date as fallback, so don't require selectedDate
+    // But if no slices and no date, then date is required
+    if (!hasDate && !hasTimeSlices) {
+      missingFields.push('Appointment Date');
+    }
+    
+    // Validate appointment time (need either selectedTime or selectedSlices)
+    // Only check time if we have a date or time slices are selected
+    if (hasDate && !selectedTime && !hasTimeSlices) {
+      missingFields.push('Appointment Time');
+    }
+    // Validate department for PRACTITIONER and PROCEDURE resource types
+    if ((appointment?.resourceTypeLkey === '2039534205961578' || 
+         appointment?.resourceTypeLkey === 'PRACTITIONER' || 
+         appointment?.resourceTypeLkey === '2039548173192779' ||
+         appointment?.resourceTypeLkey === 'PROCEDURE') && 
+        !appointment?.departmentKey) {
+      missingFields.push('Department');
+    }
+    
+    if (missingFields.length > 0) {
+      const lines = missingFields.map(field => `• ${field}: is required`);
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines.join('\n')}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+    return true;
+  };
+
   const handleSaveAppointment = () => {
+    // Validate required fields first
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     let finalResourceKey = appointment.resourceKey;
 
     if (!finalResourceKey) {
-      const selectedResource = resourcesWithNames.find(
+      const selectedResourceFromList = resourcesWithNames.find(
         (r: any) => r.key === appointment.resourceKey || r.resourceKey === appointment.resourceKey
       );
-      finalResourceKey = selectedResource?.resourceKey || selectedResource?.key;
+      finalResourceKey = selectedResourceFromList?.resourceKey || selectedResourceFromList?.key;
     }
 
     // Calculate appointmentStart and appointmentEnd
     // Try to use selectedSlices first, fallback to selectedDate/selectedTime
     const appointmentStart = calculateAppointmentDate(0, true);
     const appointmentEnd = calculateAppointmentDate(selectedDuration, true);
+
+    // Check if the resource type is department-based (similar to PatientQuickAppointment)
+    const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointment?.resourceTypeLkey);
+    
+    // For department-based resources, use the resourceKey from the selected resource as departmentKey
+    // For other resources, use the departmentKey as is
+    const departmentKeyToSave = isDepartmentBasedResource 
+      ? selectedResource?.resourceKey 
+      : appointment.departmentKey;
 
     const appointmentToSave = {
       ...appointment,
@@ -780,6 +879,7 @@ const AppointmentModal = ({
       selectedSlices: selectedSlices ?? [],
       appointmentDate: selectedDate,
       resourceKey: finalResourceKey,
+      departmentKey: departmentKeyToSave ? String(departmentKeyToSave) : departmentKeyToSave,
       facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey
     };
 
@@ -917,8 +1017,13 @@ const AppointmentModal = ({
   const [modalKey, setModalKey] = useState(0);
 
   const handleDayClick = day => {
-    setOpenDay(openDay === day ? null : day);
-    setSelectedDate(null);
+    const isDeselecting = openDay === day;
+    setOpenDay(isDeselecting ? null : day);
+    // Don't clear selectedDate when selecting a day - keep the date if it was already selected
+    // Only clear if deselecting the day and no time slices are selected
+    if (isDeselecting && (!selectedSlices || selectedSlices.length === 0)) {
+      setSelectedDate(null);
+    }
   };
   const [openDay, setOpenDay] = useState<DayValue | null>(null);
 
@@ -1117,6 +1222,7 @@ const AppointmentModal = ({
                                 record={normalizedAppointment || appointment}
                                 setRecord={setAppointment}
                                 searchable={false}
+                                required
                               />
                             </div>
                           </div>
@@ -1139,6 +1245,7 @@ const AppointmentModal = ({
                                 record={appointment}
                                 setRecord={setAppointment}
                                 searchable={false}
+                                required
                               />
                             </div>
                             <div className="input-wrapper" style={{ flex: 3 }}>
@@ -1154,8 +1261,49 @@ const AppointmentModal = ({
                                 fieldName="resourceKey"
                                 record={appointment}
                                 setRecord={setAppointment}
+                                required
                               />
                             </div>
+                            {/* Department field for PRACTITIONER resource type */}
+                            {(appointment?.resourceTypeLkey === '2039534205961578' || appointment?.resourceTypeLkey === 'PRACTITIONER') ? (
+                              <div className="input-wrapper" style={{ flex: 3 }}>
+                                <MyInput
+                                  width={'15vw'}
+                                  vr={validationResult}
+                                  column
+                                  fieldType="select"
+                                  fieldLabel="Department"
+                                  fieldName="departmentKey"
+                                  selectData={departmentListResponse?.data ?? []}
+                                  selectDataLabel="name"
+                                  selectDataValue="id"
+                                  record={appointment}
+                                  setRecord={setAppointment}
+                                  disabled={showOnly}
+                                  required
+                                />
+                              </div>
+                            ) : null}
+                            {/* Department field for PROCEDURE resource type */}
+                            {(appointment?.resourceTypeLkey === '2039548173192779' || appointment?.resourceTypeLkey === 'PROCEDURE') ? (
+                              <div className="input-wrapper" style={{ flex: 3 }}>
+                                <MyInput
+                                  width={'15vw'}
+                                  vr={validationResult}
+                                  column
+                                  fieldType="select"
+                                  fieldLabel="Department"
+                                  fieldName="departmentKey"
+                                  selectData={dayCaseDepartmentListResponse?.data ?? []}
+                                  selectDataLabel="name"
+                                  selectDataValue="id"
+                                  record={appointment}
+                                  setRecord={setAppointment}
+                                  disabled={showOnly}
+                                  required
+                                />
+                              </div>
+                            ) : null}
                             <div className="input-wrapper" style={{ flex: 3 }}>
                               <MyInput
                                 width={'15vw'}
@@ -1171,6 +1319,7 @@ const AppointmentModal = ({
                                 setRecord={setAppointment}
                                 disabled={showOnly}
                                 searchable={false}
+                                required
                               />
                             </div>
                           </div>

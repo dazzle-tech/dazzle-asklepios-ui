@@ -311,6 +311,7 @@ export interface ApAppointment {
 	facilityKey:string;
 	resourceTypeLkey:string;
 	resourceKey:string;
+	departmentKey:string;
 	visitTypeLkey:string;
 	durationLkey:string;
 	appointmentStart:string;
