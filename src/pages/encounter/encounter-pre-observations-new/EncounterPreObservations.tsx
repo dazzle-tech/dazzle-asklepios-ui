@@ -1,39 +1,29 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import {
-  Col,
-  Divider,
-  Drawer,
-  Form,
-  List,
-  Panel,
-  Row
-} from "rsuite";
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Divider, Drawer, Form, List, Panel } from 'rsuite';
 
-import BackButton from "@/components/BackButton/BackButton";
-import MyButton from "@/components/MyButton/MyButton";
-import MyInput from "@/components/MyInput";
-import Translate from "@/components/Translate";
-import PatientSide from "../encounter-main-info-section/PatienSide";
+import BackButton from '@/components/BackButton/BackButton';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import Translate from '@/components/Translate';
+import PatientSide from '../encounter-main-info-section/PatienSide';
 
-import {
-  faArrowLeft,
-  faCheckDouble,
-  faClockRotateLeft
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FaSearch } from "react-icons/fa";
+import { faArrowLeft, faCheckDouble, faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FaSearch } from 'react-icons/fa';
 
-import { useAppDispatch, useAppSelector } from "@/hooks";
-import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import { hideSystemLoader, notify, showSystemLoader } from "@/utils/uiReducerActions";
+import { useAppDispatch } from '@/hooks';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
-import { MedicalSheets } from "@/config/modules-config";
-import { useCompleteEncounterMutation } from "@/services/encounterService";
-import { useGetNurseMedicalSheetsByDepartmentQuery } from "@/services/MedicalSheetsService";
+import { MedicalSheets } from '@/config/modules-config';
+import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
-import "./styles.less";
+import './styles.less';
+import { useGenerateNurseSummaryReportMutation } from '@/services/observationService';
+import { ApPatient } from '@/types/model-types';
 
 const NurseStation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -43,75 +33,62 @@ const NurseStation = () => {
   const location = useLocation();
   const propsData = location.state;
 
-  const authSlice = useAppSelector((state) => state.auth);
-
   const [localEncounter, setLocalEncounter] = useState<any>({
-    ...propsData?.encounter,
+    ...propsData?.encounter
   });
 
-  const [searchTerm, setSearchTerm] = useState({ term: "" });
+  const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [edit, setEdit] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
 
-  // Nurse sheets from backend (different hook than encounter)
-   const departmentKeyToUse = localEncounter?.departmentKey || '5001';
-  const { data: nurseSheets = [] } =
-    useGetNurseMedicalSheetsByDepartmentQuery(departmentKeyToUse);
-  // allowed codes from backend
+  // Nurse sheets
+  const departmentKeyToUse = localEncounter?.departmentKey || '5001';
+  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(departmentKeyToUse);
+
   const allowedSheetCodes = useMemo(
     () => new Set((nurseSheets ?? []).map((s: any) => s.medicalSheet)),
     [nurseSheets]
   );
 
-  // visible sheets (NO scope)
   const visibleSheets = useMemo(() => {
-    return MedicalSheets
-      .filter((ms) => allowedSheetCodes.has(ms.code))
-      .filter((ms) =>
-        ms.name.toLowerCase().includes(searchTerm.term.toLowerCase())
-      );
+    return MedicalSheets.filter(ms => allowedSheetCodes.has(ms.code)).filter(ms =>
+      ms.name.toLowerCase().includes(searchTerm.term.toLowerCase())
+    );
   }, [allowedSheetCodes, searchTerm.term]);
 
-  // headers map for nurse station routes
   const headersMap = useMemo(() => {
     const map: any = {};
-    MedicalSheets.forEach((ms) => {
-      const fullPath = `/nurse-station/${ms.path.startsWith("/") ? ms.path.slice(1) : ms.path}`;
+    MedicalSheets.forEach(ms => {
+      const fullPath = `/nurse-station/${ms.path.startsWith('/') ? ms.path.slice(1) : ms.path}`;
       map[fullPath] = ms.name;
     });
     return map;
   }, []);
 
-  const [currentHeader, setCurrentHeader] = useState<string>("Nurse Station");
-
   useEffect(() => {
-    const header = headersMap[location.pathname] || "Nurse Dashboard";
-    setCurrentHeader(header);
+    const header = headersMap[location.pathname] || 'Nurse Dashboard';
 
-    dispatch(setPageCode("Nurse_Station"));
+    dispatch(setPageCode('Nurse_Station'));
     dispatch(setDivContent(`Nurse Station > ${header}`));
 
     return () => {
-      dispatch(setPageCode(""));
-      dispatch(setDivContent(" "));
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(' '));
     };
   }, [location.pathname, headersMap, dispatch]);
 
-  // encounter edit/closed logic (same as before)
   useEffect(() => {
     if (!propsData?.encounter) {
-      navigate("/encounter-list");
+      navigate('/encounter-list');
       return;
     }
-    setEdit(
-      propsData?.edit ||
-        localEncounter?.encounterStatusLvalue?.valueCode === "CLOSED"
-    );
+    setEdit(propsData?.edit || localEncounter?.encounterStatusLvalue?.valueCode === 'CLOSED');
   }, [propsData, localEncounter]);
 
-  // complete encounter
-  const [completeEncounter, completeEncounterMutation] =
-    useCompleteEncounterMutation();
+  // Complete encounter
+  const [completeEncounter] = useCompleteEncounterMutation();
 
   const handleCompleteEncounter = async () => {
     try {
@@ -122,16 +99,15 @@ const NurseStation = () => {
 
       dispatch(
         notify({
-          msg: "Completed Successfully",
-          sev: "success",
+          msg: 'Completed Successfully',
+          sev: 'success'
         })
       );
     } catch (error) {
-      console.error("Encounter completion error:", error);
       dispatch(
         notify({
-          msg: "An error occurred while completing the encounter",
-          sev: "error",
+          msg: 'An error occurred while completing the encounter',
+          sev: 'error'
         })
       );
     } finally {
@@ -140,19 +116,46 @@ const NurseStation = () => {
   };
 
   const handleGoBack = () => {
-    navigate("/encounter-list");
+    navigate('/encounter-list');
+  };
+
+  const handleGenerateReport = async (): Promise<void> => {
+    try {
+      const blob = await generateNurseReport({
+        patient: localEncounter?.patientObject as ApPatient,
+        encounter: localEncounter
+      }).unwrap();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `nurse-summary-${localEncounter.key}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Error while generating report',
+          sev: 'error'
+        })
+      );
+      throw error;
+    }
   };
 
   return (
     <div className="container">
-      {/* Top bar */}
+      {/* LEFT SIDE */}
       <div className="left-box">
         <Panel>
+          {/* TOP BAR */}
           <div className="container-bt">
             <div className="left">
               <BackButton onClick={handleGoBack} text="To Encounters list" />
               <MyButton
-                backgroundColor={"var(--primary-gray)"}
+                backgroundColor={'var(--primary-gray)'}
                 onClick={() => navigate(-1)}
                 prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
               />
@@ -161,23 +164,34 @@ const NurseStation = () => {
                 <MyInput
                   width="100%"
                   placeholder="Medical Sheets"
-                  fieldName={"term"}
+                  fieldName="term"
                   record={searchTerm}
                   setRecord={setSearchTerm}
                   showLabel={false}
                   enterClick={() => setIsDrawerOpen(true)}
                   rightAddon={
-                    <FaSearch
-                      className="icons-style-2"
-                      onClick={() => setIsDrawerOpen(true)}
-                    />
+                    <FaSearch className="icons-style-2" onClick={() => setIsDrawerOpen(true)} />
                   }
                 />
               </Form>
             </div>
 
             <div className="right">
-              {/* example actions if needed */}
+              <MyButton
+                loading={isGeneratingReport}
+                disabled={isGeneratingReport}
+                onClick={async () => {
+                  try {
+                    setIsGeneratingReport(true);
+                    await handleGenerateReport();
+                  } finally {
+                    setIsGeneratingReport(false);
+                  }
+                }}
+              >
+                Generate Report
+              </MyButton>
+
               {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
                 <MyButton
                   disabled={edit}
@@ -193,84 +207,43 @@ const NurseStation = () => {
 
           <Divider />
 
-          {/* Drawer list */}
+          {/* DRAWER */}
           <Drawer
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
             placement="left"
-            style={{ zIndex: 999999999999 }}
-            className={`drawer-style ${mode === "light" ? "light" : "dark"}`}
+            className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
           >
-            <Drawer.Header className="header-drawer">
-              <Drawer.Title className="title-drawer">
-                Nurse Station Sheets
-              </Drawer.Title>
+            <Drawer.Header>
+              <Drawer.Title>Nurse Station Sheets</Drawer.Title>
             </Drawer.Header>
 
-            <Drawer.Body className="drawer-body">
-              <Form fluid>
-                <Row>
-                  <Col md={24}>
-                    <MyInput
-                      width="100%"
-                      placeholder="Search screens..."
-                      fieldName={"term"}
-                      record={searchTerm}
-                      setRecord={setSearchTerm}
-                      showLabel={false}
-                      rightAddon={
-                        <FaSearch style={{ color: "var(--primary-gray)" }} />
-                      }
-                    />
-                  </Col>
-                </Row>
-              </Form>
-
-              <List hover className="drawer-list-style">
-                {/* Dashboard entry */}
+            <Drawer.Body>
+              <List hover>
                 <List.Item
-                  className="drawer-item return-button"
                   onClick={() => {
-                    navigate("/nurse-station", { state: location.state });
+                    navigate('/nurse-station', { state: location.state });
                     setIsDrawerOpen(false);
                   }}
                 >
-                  <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
-                  <Translate>Dashboard</Translate>
+                  <FontAwesomeIcon icon={faClockRotateLeft} /> Dashboard
                 </List.Item>
 
                 {visibleSheets.map(({ code, name, icon, path }) => {
-                  const clean = path.startsWith("/") ? path.slice(1) : path;
+                  const clean = path.startsWith('/') ? path.slice(1) : path;
                   const fullPath = `/nurse-station/${clean}`;
 
                   return (
-                    <List.Item
-                      key={code}
-                      className="drawer-item"
-                      onClick={() => {
-                        setIsDrawerOpen(false);
-                        navigate(fullPath, {
-                          state: {
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit,
-                          },
-                        });
-                      }}
-                    >
+                    <List.Item key={code}>
                       <Link
                         to={fullPath}
                         state={{
                           patient: propsData.patient,
                           encounter: propsData.encounter,
-                          edit,
+                          edit
                         }}
-                        className="inherit-link"
                       >
-                        {icon}
-                        <span className="margin-left-10">
-                          <Translate>{name}</Translate>
-                        </span>
+                        {icon} {name}
                       </Link>
                     </List.Item>
                   );
@@ -279,7 +252,7 @@ const NurseStation = () => {
             </Drawer.Body>
           </Drawer>
 
-          {/* Content body */}
+          {/* CONTENT */}
           <div className="content-with-sticky">
             <div className="main-content-area">
               <Outlet
@@ -287,7 +260,7 @@ const NurseStation = () => {
                   patient: propsData?.patient,
                   encounter: propsData?.encounter,
                   edit,
-                  setLocalEncounter,
+                  setLocalEncounter
                 }}
               />
             </div>
@@ -295,13 +268,9 @@ const NurseStation = () => {
         </Panel>
       </div>
 
-      {/* Right box with PatientSide */}
+      {/* RIGHT SIDE */}
       <div className="right-box">
-        <PatientSide
-          patient={propsData?.patient}
-          encounter={propsData?.encounter}
-          edit={edit}
-        />
+        <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
       </div>
     </div>
   );

@@ -20,15 +20,16 @@ import { notify } from '@/utils/uiReducerActions';
 import { faChildReaching, faPerson } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Col, Form, Row, Slider } from 'rsuite';
+import { useOutletContext } from 'react-router-dom';
+
 import './styles.less';
 
 export type ObservationsRef = {
   handleSave: () => void;
   handleClear: () => void;
-  handleGenerateReport: () => void;
 };
 
 type ObservationsProps = {
@@ -66,7 +67,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   const [localPatient] = useState<ApPatient>({ ...patient });
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...(encounter as any) });
-  const setLocalEncounterSafe = useMemo(() => mergeSetter(setLocalEncounter), []);
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
@@ -83,14 +83,18 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     notes: ''
   });
 
+  type NurseOutletContext = {
+    observationsRef?: React.MutableRefObject<ObservationsRef | null>;
+  };
+
+  const { observationsRef } = useOutletContext<NurseOutletContext>();
+
   const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
   const [saveEncounter] = useSaveEncounterChangesMutation();
-  const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
 
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly] = useState(false);
   const [painLevel, setPainLevel] = useState({ latestpainlevel: 0 });
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const getTrackColor = (value: number): string => {
     if (value === 0) return 'transparent';
@@ -282,40 +286,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     setBsa('');
   };
 
-  const handleGenerateReport = async () => {
-    setIsGeneratingReport(true);
-    try {
-      const blob = await generateNurseReport({
-        patient: localPatient,
-        encounter: localEncounter
-      }).unwrap();
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `nurse-summary-${localEncounter.key}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error generating nurse summary report:', error);
-      dispatch(
-        notify({
-          msg: 'Error while generating report',
-          sev: 'error'
-        })
-      );
-    } finally {
-      setIsGeneratingReport(false);
-    }
-  };
-
-  useImperativeHandle(ref, () => ({
-    handleSave,
-    handleClear,
-    handleGenerateReport
-  }));
   useEffect(() => {
     if (patientObservationSummary?.latestpainlevel != null) {
       setPainLevel({
@@ -323,22 +293,27 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       });
     }
   }, [patientObservationSummary]);
+
+  //
+  useEffect(() => {
+    if (!observationsRef) return;
+
+    observationsRef.current = {
+      handleSave,
+      handleClear
+    };
+
+    return () => {
+      observationsRef.current = null;
+    };
+  }, [observationsRef]);
+
   return (
     <div ref={ref as any} className={clsx('basuc-div', { 'disabled-panel': edit })}>
       <Form fluid>
         <Row className="action-row">
           <Col>
             <MyButton onClick={handleSave}>Save</MyButton>
-          </Col>
-
-          <Col>
-            <MyButton
-              onClick={handleGenerateReport}
-              loading={isGeneratingReport}
-              disabled={isGeneratingReport}
-            >
-              Generate Report
-            </MyButton>
           </Col>
         </Row>
 
@@ -401,7 +376,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                             selectData={encounterPriorityLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
-                           record={patientObservationSummary}
+                            record={patientObservationSummary}
                             setRecord={setPatientObservationSummary}
                             disabled={isEncounterStatusClosed || readOnly}
                             searchable={false}
