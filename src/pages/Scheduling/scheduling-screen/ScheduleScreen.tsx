@@ -57,6 +57,8 @@ const ScheduleScreen = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [ActionsModalOpen, setActionsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [viewAppointmentData, setViewAppointmentData] = useState(null);
+  const isOpeningViewModalRef = useRef(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedStartDate, setSelectedStartDate] = useState();
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
@@ -272,13 +274,21 @@ const visibleResources =
   const handleViewAppointment = (appointmentDataToView = null) => {
     const dataToView = appointmentDataToView || selectedEvent?.appointmentData;
     if (dataToView) {
+      // Set ref flag to prevent clearing selectedEvent when actions modal closes
+      isOpeningViewModalRef.current = true;
+      // Store appointment data separately so it doesn't get cleared
+      setViewAppointmentData(dataToView);
       // Ensure selectedEvent is set with the appointment data
       const eventToSet = selectedEvent ? { ...selectedEvent, appointmentData: dataToView } : { appointmentData: dataToView };
       setSelectedEvent(eventToSet);
       setAppointment(dataToView);
-      setModalOpen(true);
-      setActionsModalOpen(false);
       setShowAppointmentOnly(true);
+      setActionsModalOpen(false);
+      // Use setTimeout to ensure state updates complete before opening modal
+      setTimeout(() => {
+        setModalOpen(true);
+        isOpeningViewModalRef.current = false;
+      }, 10);
     }
   };
   useEffect(() => {
@@ -696,11 +706,6 @@ const visibleResources =
         currentResource?.availability?.some(period => {
           const startMinutes = period.startHour * 60 + (period.startMinute || 0);
           const endMinutes = period.endHour * 60 + (period.endMinute || 0);
-            console.log('Julia availability', currentResource.resourceName, {
-              jsDay,
-              apiDay,
-              availability: currentResource.availability
-            });
           const match =
             period.dayOfWeek === apiDay &&
             currentMinutes >= startMinutes &&
@@ -1036,14 +1041,14 @@ const visibleResources =
         from={'Schedule'}
         isOpen={modalOpen}
         onClose={() => {
-          setModalOpen(false), setShowAppointmentOnly(false);
+          setModalOpen(false), setShowAppointmentOnly(false), setViewAppointmentData(null);
         }}
-        appointmentData={selectedEvent?.appointmentData}
+        appointmentData={viewAppointmentData || selectedEvent?.appointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
         onSave={refitchAppointments}
         showOnly={showAppointmentOnly}
-        selectedSlot={selectedSlot}
+        selectedSlot={showAppointmentOnly ? null : selectedSlot}
       />
       <AppointmentActionsModal
         viewAppointment={(appointmentData) => handleViewAppointment(appointmentData)}
@@ -1051,7 +1056,12 @@ const visibleResources =
         onStatusChange={refitchAppointments}
         isActionsModalOpen={ActionsModalOpen}
         onActionsModalClose={() => {
-          setSelectedEvent(null), setActionsModalOpen(false), setAppointment(null);
+          // Don't clear selectedEvent if we're opening the view modal
+          if (!isOpeningViewModalRef.current) {
+            setSelectedEvent(null);
+            setAppointment(null);
+          }
+          setActionsModalOpen(false);
         }}
         appointment={selectedEvent}
       />
