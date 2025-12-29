@@ -127,7 +127,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             <MyButton width="250px" disabled={["No-Show", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} color="blue" appearance="primary">
                 No-show
             </MyButton>
-            <MyButton width="250px" onClick={() => viewAppointment()} color="cyan" appearance="primary">
+            <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
             </MyButton>
             <MyButton width="250px" disabled={["Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">
