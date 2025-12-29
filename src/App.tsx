@@ -213,6 +213,7 @@ import OrganizationDefinition from './pages/system-configurations/organization-d
 import FormTemplates from './pages/form-template/FormTemplate';
 import FormTemplateBuilderPage from './pages/form-template/FormTemplateBuilderPage';
 import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseScreen';
+import AvailabilityTemplatePage from './pages/setup/availability_template';
 import "survey-core/survey-core.min.css";
 import "survey-creator-core/survey-creator-core.min.css";
 import Logo from './images/eWaveLogocopy.svg';
@@ -353,6 +354,14 @@ useEffect(() => {
       icon: <Icon as={MdDashboard} />,
       title: 'Dashboard',
       to: '/'
+    });
+
+    // Always show Availability Templates (bypass permissions)
+    navsTemp.push({
+      eventKey: 'nav:availability-templates',
+      icon: <Icon as={icons.FaCalendarDays} />,
+      title: 'Availability Templates',
+      to: '/availability-template'
     });
 
     const lookups = buildPermissionLookup(authSlice?.menu as BackendMenuItem[]);
@@ -726,6 +735,7 @@ useEffect(() => {
               <Route path="form-template" element={<FormTemplates />} />
               <Route path="new" element={<FormTemplateBuilderPage />} />
               <Route path=":id" element={<FormTemplateBuilderPage />} />
+              <Route path="availability-template" element={<AvailabilityTemplatePage />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
