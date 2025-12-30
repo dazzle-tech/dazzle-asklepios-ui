@@ -71,6 +71,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             ? resourceKeyToUse 
             : (data?.departmentKey || localAppointmentData?.departmentKey);
 
+
         const visit = {
             ...localEncounter,
             patientAge: data?.patient?.dob ? calculateAgeFormat(data.patient.dob) + '' : '',
@@ -82,6 +83,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             visitTypeLkey: data?.visitTypeLkey || localAppointmentData?.visitTypeLkey,
             resourceKey: resourceKeyToUse,
             departmentKey: departmentKeyToSave ? String(departmentKeyToSave) : departmentKeyToSave
+
         }
         
         saveEncounter(visit)
@@ -112,6 +114,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleConfirm = () => {
         const appointmentData = appointment?.appointmentData || localAppointmentData
+
         changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed", reasonLkey: null, otherReason: null })
             .unwrap()
             .then(() => {
@@ -123,6 +126,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 // Save encounter after appointment is confirmed
                 // Use localAppointmentData which is properly set and has the resourceKey
                 handleSaveVisit(localAppointmentData || appointmentData)
+
             })
             .catch((error) => {
                 console.error('Error confirming appointment:', error);
