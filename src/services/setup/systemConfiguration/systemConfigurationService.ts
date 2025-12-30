@@ -264,5 +264,6 @@ export const {
   useFilterByReferenceTypeQuery,
   useLazyFilterByValueTypeQuery,
   useLazyFilterByReferenceTypeQuery,
+  useLazyQuickSearchConfigurationsQuery
   // useLazyGetConfigurationByKeyQuery
 } = systemConfigurationService;
