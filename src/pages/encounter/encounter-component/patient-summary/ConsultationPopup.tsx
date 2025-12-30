@@ -69,6 +69,11 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
   useEffect(() => {
+    if (!data) return;
+    setAllDepartments(data ?? []);
+  }, [data]);
+
+  useEffect(() => {
     if (!consultationData?.toFacilityId) return;
 
     getDepartments({
@@ -104,7 +109,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
       render: row => {
         return (
           <span>
-            {conjureValueBasedOnKeyFromList(getDepartments?.data ?? [], row.toDepartmentId, 'name')}
+            {conjureValueBasedOnKeyFromList(allDepartments ?? [], row.toDepartmentId, 'name')}
           </span>
         );
       }
