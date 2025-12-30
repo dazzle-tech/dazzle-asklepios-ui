@@ -62,23 +62,26 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         // Check if the resource type is department-based (similar to PatientQuickAppointment)
         const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(data?.resourceTypeLkey);
         
-        // For department-based resources, use the resourceKey from the selected resource as departmentKey
+        // Get resourceKey - use data.resourceKey or fallback to localAppointmentData.resourceKey
+        const resourceKeyToUse = data?.resourceKey || localAppointmentData?.resourceKey;
+        
+        // For department-based resources, use the resourceKey as departmentKey
         // For other resources, use the departmentKey as is (or null if not set)
         const departmentKeyToSave = isDepartmentBasedResource 
-            ? selectedResource?.resourceKey 
-            : data?.departmentKey;
+            ? resourceKeyToUse 
+            : (data?.departmentKey || localAppointmentData?.departmentKey);
 
         const visit = {
             ...localEncounter,
-            patientAge: data?.patient.dob ? calculateAgeFormat(data.patient.dob) + '' : '',
-            patientKey: data?.patient.key,
-            patientFullName: data?.patient.fullName,
+            patientAge: data?.patient?.dob ? calculateAgeFormat(data.patient.dob) + '' : '',
+            patientKey: data?.patient?.key,
+            patientFullName: data?.patient?.fullName,
             encounterStatusLkey: "91063195286200",
             plannedStartDate: data?.appointmentStart,
-            resourceTypeLkey: data?.resourceTypeLkey,
-            visitTypeLkey: data?.visitTypeLkey,
-            resourceKey: data.resourceKey,
-            departmentKey: departmentKeyToSave
+            resourceTypeLkey: data?.resourceTypeLkey || localAppointmentData?.resourceTypeLkey,
+            visitTypeLkey: data?.visitTypeLkey || localAppointmentData?.visitTypeLkey,
+            resourceKey: resourceKeyToUse,
+            departmentKey: departmentKeyToSave ? String(departmentKeyToSave) : departmentKeyToSave
         }
         
         saveEncounter(visit)
@@ -108,7 +111,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     }, [localAppointmentData])
 
     const handleConfirm = () => {
-        const appointmentData = appointment?.appointmentData
+        const appointmentData = appointment?.appointmentData || localAppointmentData
         changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed", reasonLkey: null, otherReason: null })
             .unwrap()
             .then(() => {
@@ -118,7 +121,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 setLocalEncounter({ ...newApEncounter, discharge: false })
                 
                 // Save encounter after appointment is confirmed
-                handleSaveVisit(appointment?.appointmentData)
+                // Use localAppointmentData which is properly set and has the resourceKey
+                handleSaveVisit(localAppointmentData || appointmentData)
             })
             .catch((error) => {
                 console.error('Error confirming appointment:', error);
