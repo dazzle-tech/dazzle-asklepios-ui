@@ -80,7 +80,17 @@ const AppointmentModal = ({
 
   useEffect(() => {
     if (appointmentData) {
-      setAppointment(appointmentData);
+      // For department-based resources (CLINIC, etc.), ensure departmentKey is set from resourceKey if not present
+      const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointmentData?.resourceTypeLkey);
+      const departmentKey = isDepartmentBasedResource && !appointmentData?.departmentKey
+        ? appointmentData?.resourceKey
+        : appointmentData?.departmentKey;
+      
+      // Don't convert to string here - keep original type, will be normalized later
+      setAppointment({
+        ...appointmentData,
+        departmentKey: departmentKey
+      });
       setLocalPatient(appointmentData?.patient || newApPatient);
     } else {
       setAppointment(newApAppointment);
@@ -425,14 +435,58 @@ const AppointmentModal = ({
     skip: !appointment?.facilityKey
   });
   
-  // Normalize facilityKey to string for proper matching
+  // Normalize facilityKey and departmentKey to string for proper matching
   const normalizedAppointment = useMemo(() => {
     if (!appointment) return appointment;
+    
+    // For department field, we need to match the department's id
+    // Check if departmentKey exists in the department list and get the matching id
+    let normalizedDepartmentKey = appointment.departmentKey;
+    
+    if (appointment.departmentKey !== null && appointment.departmentKey !== undefined && appointment.departmentKey !== '') {
+      // For PRACTITIONER resource type
+      if (appointment.resourceTypeLkey === '2039534205961578' || appointment.resourceTypeLkey === 'PRACTITIONER') {
+        const matchingDept = departmentListResponse?.data?.find(
+          dept => {
+            const deptIdStr = String(dept.id);
+            const deptKeyStr = dept.key ? String(dept.key) : null;
+            const apptDeptKeyStr = String(appointment.departmentKey);
+            return deptIdStr === apptDeptKeyStr || deptKeyStr === apptDeptKeyStr;
+          }
+        );
+        if (matchingDept) {
+          // Use the department's id, but ensure it matches the type expected by the select field
+          normalizedDepartmentKey = matchingDept.id;
+        } else {
+          normalizedDepartmentKey = appointment.departmentKey;
+        }
+      }
+      // For PROCEDURE resource type
+      else if (appointment.resourceTypeLkey === '2039548173192779' || appointment.resourceTypeLkey === 'PROCEDURE') {
+        const matchingDept = dayCaseDepartmentListResponse?.data?.find(
+          dept => {
+            const deptIdStr = String(dept.id);
+            const deptKeyStr = dept.key ? String(dept.key) : null;
+            const apptDeptKeyStr = String(appointment.departmentKey);
+            return deptIdStr === apptDeptKeyStr || deptKeyStr === apptDeptKeyStr;
+          }
+        );
+        if (matchingDept) {
+          normalizedDepartmentKey = matchingDept.id;
+        } else {
+          normalizedDepartmentKey = appointment.departmentKey;
+        }
+      } else {
+        normalizedDepartmentKey = appointment.departmentKey;
+      }
+    }
+    
     return {
       ...appointment,
-      facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey
+      facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey,
+      departmentKey: normalizedDepartmentKey
     };
-  }, [appointment]);
+  }, [appointment, departmentListResponse, dayCaseDepartmentListResponse]);
   
   const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation();
 
@@ -1282,7 +1336,7 @@ const AppointmentModal = ({
                                   selectData={departmentListResponse?.data ?? []}
                                   selectDataLabel="name"
                                   selectDataValue="id"
-                                  record={appointment}
+                                  record={normalizedAppointment || appointment}
                                   setRecord={setAppointment}
                                   disabled={showOnly}
                                   required
@@ -1302,7 +1356,7 @@ const AppointmentModal = ({
                                   selectData={dayCaseDepartmentListResponse?.data ?? []}
                                   selectDataLabel="name"
                                   selectDataValue="id"
-                                  record={appointment}
+                                  record={normalizedAppointment || appointment}
                                   setRecord={setAppointment}
                                   disabled={showOnly}
                                   required
