@@ -11,6 +11,7 @@ import {
   useSaveTeleConsultationMutation
 } from '@/services/encounterService';
 import {
+  useGetDepartmentByFacilityQuery,
   useLazyGetActiveDepartmentByFacilityListQuery
 } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
@@ -18,12 +19,14 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApTeleConsultation } from '@/types/model-types-constructor';
 import { initialListRequestId } from '@/types/types';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { notify } from '@/utils/uiReducerActions';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
+import { de } from 'date-fns/locale';
 
 interface ConsultationPopupProps {
   open: boolean;
@@ -69,6 +72,11 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
   useEffect(() => {
+    if (!data) return;
+    setAllDepartments(data ?? []);
+  }, [data]);
+
+  useEffect(() => {
     if (!consultationData?.toFacilityId) return;
 
     getDepartments({
@@ -104,7 +112,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
       render: row => {
         return (
           <span>
-            {conjureValueBasedOnKeyFromList(getDepartments?.data ?? [], row.toDepartmentId, 'name')}
+            {conjureValueBasedOnKeyFromList(allDepartments ?? [], row.toDepartmentId, 'name')}
           </span>
         );
       }
@@ -353,7 +361,7 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
       </Form>
       <div className="flex-end-5">
         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faSave} />} onClick={handleSave}>
-          Save & Submit
+          Save&Submit
         </MyButton>
       </div>
       {/* Orders */}
