@@ -200,10 +200,36 @@ const ScheduleScreen = () => {
     { label: 'Completed', color: '#93C5FD' }
   ];
 
+  // Filter appointments based on selected resources
+  const filteredAppointments = useMemo(() => {
+    const hasResourceTypeFilter = selectedResourceType?.resourcesType?.length > 0;
+    // Handle selectedResources - it can be an array or an object with resourceKey property
+    const selectedResourceKeys = Array.isArray(selectedResources) 
+      ? (selectedResources.length > 0 ? selectedResources : null)
+      : (selectedResources as any)?.resourceKey;
+    const hasResourceFilter = selectedResourceKeys && 
+      Array.isArray(selectedResourceKeys) && 
+      selectedResourceKeys.length > 0;
+    
+    if (!hasResourceTypeFilter && !hasResourceFilter) {
+      // No filters applied, show all appointments
+      return appointmentsData;
+    }
+    
+    // Filter appointments to only show those matching the selected resources
+    const filteredResourceKeys = new Set(
+      (finalResourceLit ?? []).map(r => r.key)
+    );
+    
+    return appointmentsData.filter(event => 
+      filteredResourceKeys.has(event.resourceId)
+    );
+  }, [appointmentsData, finalResourceLit, selectedResourceType, selectedResources]);
+
   const visibleAppointments =
     currentView === 'agenda' || showCanceled
-      ? appointmentsData
-      : appointmentsData.filter(event => !event.hidden);
+      ? filteredAppointments
+      : filteredAppointments.filter(event => !event.hidden);
 
   const appointmn =
     visibleAppointments?.map(appt => appt.appointmentData?.patient?.key).filter(Boolean) || [];
@@ -238,6 +264,11 @@ const ScheduleScreen = () => {
     }
   }, [visibleAppointments, attachments]);
 
+    // Get resource keys from filtered resources only
+    const filteredResourceKeys = new Set(
+      (finalResourceLit ?? []).map(r => r.key)
+    );
+
     const appointmentResourceKeys = new Set(
       (finalAppointments ?? []).map(e => e.resourceId).filter(Boolean)
     );
@@ -246,21 +277,23 @@ const dayIndex = currentCalendarDate.getDay();
 
 const availabilityResourceKeys = useMemo(() => {
   return new Set(
-    (resourcesWithAvailabilityResponse?.object ?? [])
+    (finalResourceLit ?? [])
       .filter(r =>
         r.availability?.some(a => a.dayOfWeek === dayIndex)
       )
       .map(r => r.key)
   );
-}, [resourcesWithAvailabilityResponse, dayIndex]);
+}, [finalResourceLit, dayIndex]);
 
 
 const visibleResources =
   currentView === 'day'
     ? (finalResourceLit ?? []).filter(
         r =>
-          appointmentResourceKeys.has(r.key) ||
-          availabilityResourceKeys.has(r.key)
+          // Only show resources that match the filter AND have appointments or availability
+          filteredResourceKeys.has(r.key) &&
+          (appointmentResourceKeys.has(r.key) ||
+          availabilityResourceKeys.has(r.key))
       )
     : finalResourceLit;
 
