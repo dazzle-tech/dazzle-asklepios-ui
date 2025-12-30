@@ -225,7 +225,7 @@ const Tests = forwardRef<unknown, Props>(
       if (samplesList?.object?.length > 0) {
         try {
           const Response = await saveTest({
-            ...test,
+            ...rowData,
             processingStatusLkey: '6055074111734636',
             acceptedAt: Date.now()
           }).unwrap();
@@ -233,8 +233,8 @@ const Tests = forwardRef<unknown, Props>(
           await saveNewResult({
             ...newApDiagnosticOrderTestsResult,
             orderKey: order.key,
-            orderTestKey: test.key,
-            medicalTestKey: test.testKey,
+            orderTestKey: rowData.key,
+            medicalTestKey: rowData.testKey,
             patientKey: order.patient.key,
             visitKey: order.encounter.key,
             statusLkey: '6055029972709625'
@@ -454,10 +454,11 @@ const Tests = forwardRef<unknown, Props>(
             <HStack spacing={10}>
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Accept</Tooltip>}>
                 <CheckRoundIcon
-                  onClick={() =>
+                  onClick={() =>{
+                    setTest(rowData) ;
                     (rowData.processingStatusLkey === '6055029972709625' ||
                       rowData.processingStatusLkey === '6055207372976955') &&
-                    handleAcceptTest(rowData)
+                    handleAcceptTest(rowData)}
                   }
                   style={{
                     fontSize: '1em',
@@ -477,9 +478,10 @@ const Tests = forwardRef<unknown, Props>(
               </Whisper>
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accepted</Tooltip>}>
                 <ReloadIcon
-                  onClick={() =>
+                  onClick={() =>{
+                    setTest(rowData) ;
                     rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED' &&
-                    handleUndoAcceptTest(rowData)
+                    handleUndoAcceptTest(rowData)}
                   }
                   style={{
                     fontSize: '1em',
@@ -498,9 +500,10 @@ const Tests = forwardRef<unknown, Props>(
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject</Tooltip>}>
                 <WarningRoundIcon
                   onClick={() =>
+                  { setTest(rowData) ;
                     (rowData.processingStatusLkey === '6055029972709625' ||
                       rowData.processingStatusLkey === '6055207372976955') &&
-                    setOpenRejectedModal(true)
+                    setOpenRejectedModal(true)}
                   }
                   style={{
                     fontSize: '1em',
