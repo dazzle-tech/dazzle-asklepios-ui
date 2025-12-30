@@ -580,6 +580,11 @@ const AppointmentModal = ({
   const search = target => {
     setPatientSearchTarget(target);
     
+    // Return early if selectedCriterion is null or undefined
+    if (!selectedCriterion) {
+      return;
+    }
+    
     let searchValue = searchKeyword;
     
     if (selectedCriterion === 'dob' && dateValue) {
@@ -863,10 +868,10 @@ const AppointmentModal = ({
     // Check if the resource type is department-based (similar to PatientQuickAppointment)
     const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointment?.resourceTypeLkey);
     
-    // For department-based resources, use the resourceKey from the selected resource as departmentKey
+    // For department-based resources, use the resourceKey (finalResourceKey) as departmentKey
     // For other resources, use the departmentKey as is
     const departmentKeyToSave = isDepartmentBasedResource 
-      ? selectedResource?.resourceKey 
+      ? finalResourceKey 
       : appointment.departmentKey;
 
     const appointmentToSave = {
