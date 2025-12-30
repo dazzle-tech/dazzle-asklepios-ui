@@ -12,8 +12,7 @@ import { AttachmentUploadModal } from '@/components/AttachmentModals';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector } from '@/hooks';
-
-const COMPLETED_STATUS_KEY = '91109811181900'; 
+import { formatDateWithoutSeconds } from '@/utils';
 
 const OutpatientTablePage = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -52,16 +51,28 @@ const OutpatientTablePage = () => {
     return `CLM-${String(n).padStart(6, '0')}`;
   };
 
-  const getTimeSince = (dateTime?: string) => {
-    if (!dateTime) return '-';
-    const start = new Date(dateTime).getTime();
-    const now = Date.now();
-    const diffMs = now - start;
+  const parseDateSafe = (v?: string) => {
+    if (!v) return null;
+    const normalized = v.includes('T') ? v : v.replace(' ', 'T');
+    const d = new Date(normalized);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const getTimeSinceEncounter = (encounterDateTime?: string) => {
+    const startDate = parseDateSafe(encounterDateTime);
+    if (!startDate) return '-';
+
+    const now = new Date();
+    const diffMs = now.getTime() - startDate.getTime();
     if (diffMs < 0) return '-';
-    const minutes = Math.floor(diffMs / (1000 * 60));
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    return `${days}D:${hours % 24}H:${minutes % 60}m`;
+
+    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const totalHours = Math.floor(totalMinutes / 60);
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    const minutes = totalMinutes % 60;
+
+    return `${days}D:${hours}H:${minutes}m`;
   };
 
   const getBaseFilters = () => {
@@ -80,20 +91,19 @@ const OutpatientTablePage = () => {
           .map(key => `(${key})`)
           .join(' ')
       },
-        {
+      {
         fieldName: 'encounter_status_lkey',
         operator: 'in',
         value: ['91109811181900'].map(key => `(${key})`).join(' ')
       }
     ];
 
-
     return baseFilters;
   };
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    ignore: false, 
+    ignore: false,
     filters: []
   });
 
@@ -102,10 +112,9 @@ const OutpatientTablePage = () => {
       ...prev,
       ignore: false,
       pageNumber: 1,
-      pageSize: 200, 
+      pageSize: 200,
       filters: getBaseFilters()
     }));
-   
   }, []);
 
   const { data: encounterListResponse, isLoading, isFetching, error } = useGetEncountersQuery(
@@ -113,78 +122,39 @@ const OutpatientTablePage = () => {
     { skip: false }
   );
 
-  // --------- transform encounters -> your table rows ----------
-//   const data = useMemo(() => {
-//     const encounters = encounterListResponse?.object ?? [];
+  const data = useMemo(() => {
+    const encounters = encounterListResponse?.object ?? [];
 
-//     // ✅ فلترة completed على الفرونت
-//     const completedEncounters = encounters.filter((enc: any) => {
-//       return enc?.encounterStatusLvalue?.key === COMPLETED_STATUS_KEY;
-//       // إذا عندكم valueCode:
-//       // return enc?.encounterStatusLvalue?.valueCode === 'COMPLETED';
-//     });
+    return encounters.map((enc: any, index: number) => {
+      const key = enc?.key ?? enc?.visitId ?? index;
+      const patientObj = enc?.patientObject ?? {};
 
-//     return completedEncounters.map((enc: any, index: number) => {
-//       const key = enc?.key ?? enc?.visitId ?? index;
-//       const patientObj = enc?.patientObject ?? {};
+      const claimIsCompleted = (hashToInt(`claim-${key}`) % 100) < 30;
+      const codingStatus = claimIsCompleted ? 'COMPLETED' : 'NEW';
 
-//       return {
-//         id: key,
+      return {
+        id: key,
 
-//         // extra fields
-//         claimId: generateClaimId(key),
-//         patientsFinances: seededNumber(`fin-${key}`, 1, 999, 0),
-//         accountingBalance: seededNumber(`bal-${key}`, 0, 2000, 2),
+        claimId: generateClaimId(key),
+        patientsFinances: seededNumber(`fin-${key}`, 1, 999, 0),
+        accountingBalance: seededNumber(`bal-${key}`, 0, 2000, 2),
 
-//         codingStatus: 'COMPLETED',
-//         encounterStatus: enc?.encounterStatusLvalue?.lovDisplayVale ?? '-',
+        codingStatus,
 
-//         encounterNumber: enc?.visitId ?? enc?.encounterNumber ?? String(key),
-//         patientId: patientObj?.patientMrn ?? patientObj?.key ?? '-',
-//         patientFullName: patientObj?.fullName ?? '-',
-//         department: enc?.departmentObject?.name ?? enc?.departmentName ?? '-',
-//         assigned: enc?.practitionerObject?.fullName ?? enc?.doctorName ?? '-',
-//         encounterDateTime: enc?.plannedStartDate ?? '-',
-//         dischargeDateTime: enc?.dischargeDateTime ?? '',
+        encounterStatus: enc?.encounterStatusLvalue?.lovDisplayVale ?? '-',
+        encounterNumber: enc?.visitId ?? enc?.encounterNumber ?? String(key),
+        patientId: patientObj?.patientMrn ?? patientObj?.key ?? '-',
+        patientFullName: patientObj?.fullName ?? '-',
+        department: enc?.departmentObject?.name ?? enc?.departmentName ?? '-',
+        assigned: enc?.practitionerObject?.fullName ?? enc?.doctorName ?? '-',
 
-//         originalEncounter: enc
-//       };
-//     });
-//   }, [encounterListResponse]);
+        encounterDateTime: enc?.plannedStartDate ?? '-',
+        dischargeDateTime: enc?.dischargeDateTime ?? '',
 
-const data = useMemo(() => {
-  const encounters = encounterListResponse?.object ?? [];
-
-  return encounters.map((enc: any, index: number) => {
-    const key = enc?.key ?? enc?.visitId ?? index;
-    const patientObj = enc?.patientObject ?? {};
-
-    const claimIsCompleted = (hashToInt(`claim-${key}`) % 100) < 30; 
-    const codingStatus = claimIsCompleted ? 'COMPLETED' : 'NEW';
-
-    return {
-      id: key,
-
-      claimId: generateClaimId(key),
-      patientsFinances: seededNumber(`fin-${key}`, 1, 999, 0),
-      accountingBalance: seededNumber(`bal-${key}`, 0, 2000, 2),
-
-      //NEW or COMPLETED
-      codingStatus,
-
-      encounterStatus: enc?.encounterStatusLvalue?.lovDisplayVale ?? '-',
-      encounterNumber: enc?.visitId ?? enc?.encounterNumber ?? String(key),
-      patientId: patientObj?.patientMrn ?? patientObj?.key ?? '-',
-      patientFullName: patientObj?.fullName ?? '-',
-      department: enc?.departmentObject?.name ?? enc?.departmentName ?? '-',
-      assigned: enc?.practitionerObject?.fullName ?? enc?.doctorName ?? '-',
-      encounterDateTime: enc?.plannedStartDate ?? '-',
-      dischargeDateTime: enc?.dischargeDateTime ?? '',
-
-      originalEncounter: enc
-    };
-  });
-}, [encounterListResponse]);
+        originalEncounter: enc
+      };
+    });
+  }, [encounterListResponse]);
 
   const iconsForActions = (row: any) => {
     const startDisabled = row.codingStatus === 'COMPLETED';
@@ -198,6 +168,10 @@ const data = useMemo(() => {
               backgroundColor="light-blue"
               disabled={!startDisabled}
               onClick={() => {
+                 const enc = row.originalEncounter;
+                const pat = enc?.patientObject ?? null;
+                setEmrEncounter(enc);
+                setEmrPatient(pat);
                 setSelectedClaim(row);
                 setOpenClaimModal(true);
               }}
@@ -218,6 +192,10 @@ const data = useMemo(() => {
               disabled={startDisabled}
               onClick={() => {
                 if (startDisabled) return;
+                 const enc = row.originalEncounter;
+                const pat = enc?.patientObject ?? null;
+                setEmrEncounter(enc);
+                setEmrPatient(pat);
                 setSelectedClaim(row);
                 setOpenClaimModal(true);
               }}
@@ -280,9 +258,15 @@ const data = useMemo(() => {
           placement="top"
           speaker={
             <Tooltip>
-              <div><b>Patient ID:</b> {row.patientId}</div>
-              <div><b>Department:</b> {row.department}</div>
-              <div><b>Assigned:</b> {row.assigned}</div>
+              <div>
+                <b>Patient ID:</b> {row.patientId}
+              </div>
+              <div>
+                <b>Department:</b> {row.department}
+              </div>
+              <div>
+                <b>Assigned:</b> {row.assigned}
+              </div>
             </Tooltip>
           }
         >
@@ -292,12 +276,17 @@ const data = useMemo(() => {
     },
     { key: 'encounterDateTime', title: 'Encounter Date / Time' },
     { key: 'codingStatus', title: 'Claim Status' },
-    { key: 'dischargeDateTime', title: 'Complete Date / Time' },
+    {
+      key: 'encounterDateTime',
+      title: 'Complete Date / Time'
+    },
+
     {
       key: 'timeSinceDischarge',
-      title: 'Time Since Discharge',
-      render: (row: any) => getTimeSince(row.dischargeDateTime)
+      title: 'Time Since Complete',
+      render: (row: any) => getTimeSinceEncounter(row.encounterDateTime)
     },
+
     { key: 'encounterStatus', title: 'Encounter Status' },
     { key: 'actions', title: 'Actions', render: (row: any) => iconsForActions(row) }
   ];
@@ -315,22 +304,16 @@ const data = useMemo(() => {
             border: '1px solid #ffc107',
             borderRadius: 4
           }}
-        >
-        </div>
+        ></div>
       )}
 
-      <MyTable
+    <MyTable
         height={450}
         data={data}
         columns={columns}
         rowClassName={rowClassName}
         onRowClick={row => setSelectedRow(row)}
         loading={isLoading || isFetching}
-        tableButtons={
-          <MyButton prefixIcon={() => <AddOutlineIcon />}>
-            Add New
-          </MyButton>
-        }
       />
 
       <MyModal
@@ -341,7 +324,12 @@ const data = useMemo(() => {
         bodyheight="100vh"
         hideBack
         hideActionBtn
-        content={<OpenClaimModal claim={selectedClaim} />}
+        content={
+          emrPatient && emrEncounter ? (
+        <OpenClaimModal claim={selectedClaim} patient={emrPatient} encounter={emrEncounter} />
+        ) : (
+          <div style={{ padding: 16 }}>No patient or encounter selected.</div>
+        )}
       />
 
       <MyModal
