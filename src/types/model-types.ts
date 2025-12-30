@@ -311,6 +311,7 @@ export interface ApAppointment {
 	facilityKey:string;
 	resourceTypeLkey:string;
 	resourceKey:string;
+	departmentKey:string;
 	visitTypeLkey:string;
 	durationLkey:string;
 	appointmentStart:string;
@@ -535,12 +536,9 @@ export interface ApConsultationOrder {
 	visitKey:string;
 	consultantSpecialtyLkey:string;
 	cityLkey:string;
-	facilityKey:string;
-	departmentKey:string;
 	preferredConsultantKey:string;
 	consultationMethodLkey:string;
 	consultationTypeLkey:string;
-	priorityLkey:string;
 	consultationContent:string;
 	notes:string;
 	statusLkey:string;
@@ -2877,6 +2875,10 @@ export interface ApPatient {
 	countryId:string;
 	bloodGroupLkey:string;
 	genderLkey:string;
+	gdprNoticeOfPrivacyPractice:boolean;
+	gdprNoticeOfPrivacyPracticeDate:Date;
+	gdprPrivacyAuthorization:boolean;
+	gdprPrivacyAuthorizationDate:Date;
 } 
 
 export interface ApPatientAddresses { 
@@ -3206,6 +3208,9 @@ export interface ApPatientObservationSummary {
 	latestCognitiveCheck:string;
 	platestCognitiveCheck:string;
 	reasonOfVisit:string;
+	notes:string;
+	priorityLkey:string;
+	measurementLkey:string;
 } 
 
 export interface ApPatientPlan { 
@@ -3352,7 +3357,7 @@ export interface ApPatientSurgicalHistory {
 	otherDesc:string;
 	anesthesiaTypeLkey:string;
 	complicationsLkey:string;
-	adverseReactionsToAnesthesiaLkey:string;
+	adverseReactionsToAnesthesiaLkey?: string[];
 	isImplantsOrDevices:boolean;
 	implantsOrDevicesDescription:string;
 	createdBy:string;
@@ -4772,28 +4777,5 @@ export interface ApWarehouseUser {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
-} 
-
-export interface AppUser { 
-	id:;
-	login:string;
-	passwordHash:string;
-	firstName:string;
-	lastName:string;
-	email:string;
-	imageUrl:string;
-	activated:boolean;
-	langKey:string;
-	resetKey:string;
-	createdBy:string;
-	createdDate:;
-	resetDate:;
-	lastModifiedBy:string;
-	lastModifiedDate:;
-	phoneNumber:string;
-	birthDate:Date;
-	gender:string;
-	jobRole:string;
-	securityAccessLeve:string;
 } 
 

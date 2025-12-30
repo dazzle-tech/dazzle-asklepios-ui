@@ -15,7 +15,7 @@ import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/securi
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import { faBroom, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckIcon from '@rsuite/icons/Check';
 import SearchIcon from '@rsuite/icons/Search';
@@ -24,6 +24,7 @@ import React, { useEffect, useState } from 'react';
 import { Dropdown, Form } from 'rsuite';
 import PatientOrder from '../diagnostics-order';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
+import { AttachmentUploadModal } from '@/components/AttachmentModals';
 
 import './styles.less';
 
@@ -39,6 +40,7 @@ const Details = ({
 }) => {
   const [openOrderModel, setOpenOrderModel] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const dispatch = useAppDispatch();
   const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
@@ -151,6 +153,10 @@ const Details = ({
     }
   }, [procedure.currentDepartment]);
 
+  const handleOpenAttachmentModal = () => {
+    setShowAttachmentModal(true);
+  };
+
   const handleClear = () => {
     setProcedure({
       ...newApProcedure,
@@ -203,6 +209,13 @@ const Details = ({
           <div className="footer-buttons">
             <MyButton onClick={handleClear} prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>
               Clear
+            </MyButton>
+            <MyButton
+              onClick={handleOpenAttachmentModal}
+              prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
+              disabled={!procedure?.key}
+            >
+              Attachments
             </MyButton>
             <MyButton
               appearance="ghost"
@@ -462,6 +475,15 @@ const Details = ({
         size={'full'}
         title="Add Order"
         content={<PatientOrder edit={edit} patient={patient} encounter={encounter} />}
+      />
+
+      <AttachmentUploadModal
+        isOpen={showAttachmentModal}
+        setIsOpen={setShowAttachmentModal}
+        encounterId={encounter?.id || encounter?.key}
+        refetchData={() => {}}
+        source="PROCEDURE_REQUEST_ATTACHMENT"
+        sourceId={procedure?.key ? Number(procedure.key) : 0}
       />
     </>
   );

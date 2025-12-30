@@ -18,13 +18,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { update } from "lodash";
 import React, { useEffect, useState } from "react";
 import { Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
+
 const Results = ({ setEncounter, setPatient, user }) => {
     const dispatch = useAppDispatch();
     const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [showReview, setShowReview] = useState(true);
     const [showAbnormal, setShowAbnormal] = useState(false);
-
+    const [selectedResultKey, setSelectedResultKey] = useState<string | null>(null);
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
     const [dateFilter, setDateFilter] = useState({
         fromDate: null,
@@ -41,11 +42,10 @@ const Results = ({ setEncounter, setPatient, user }) => {
     const [saveResult, saveResultMutation] = useSaveDiagnosticOrderTestResultMutation();
     const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
     const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
-    const isResultSelected = rowData => {
-        if (rowData && result && rowData.key === result.key) {
-            return 'selected-row';
-        } else return '';
-    };
+
+    const isResultSelected = (rowData) =>
+    rowData?.key === selectedResultKey ? 'selected-row' : '';
+
     const [listResultResponse, setListResultResponse] = useState<ListRequest>({
         ...initialListRequest,
         sortBy: "createdAt",
@@ -369,38 +369,50 @@ const Results = ({ setEncounter, setPatient, user }) => {
             },
         },
         {
-            key: "action",
-            title: <Translate>ACTION</Translate>,
-            flexGrow: 3,
-            fullText: true,
-            render: (rowData: any) => {
-                return (
+        key: "action",
+        title: <Translate>ACTION</Translate>,
+        flexGrow: 3,
+        render: (rowData: any) => {
+            const isReviewed = !!rowData.reviewAt;
 
-                    <HStack spacing={5}>
+            return (
+            <HStack spacing={5}>
+                <Whisper placement="top" speaker={<Tooltip>Review</Tooltip>}>
+                    <FontAwesomeIcon
+                    icon={faStar}
+                    style={{
+                        fontSize: '1em',
+                        cursor: 'pointer',
+                        color: rowData.reviewAt ? '#e0a500' : '#343434'
+                    }}
+                    onClick={async (e) => {
+                    e.stopPropagation();
 
-                        <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Review</Tooltip>}
-                        >
-                            <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }}
-                                onClick={async () => {
-                                    try {
-                                        await saveResult({ ...result, reviewAt: Date.now(), reviewBy: user }).unwrap();
-                                        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                        resultFetch();
-                                    }
-                                    catch (error) {
-                                        dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                                    }
-                                }} />
-                        </Whisper>
+                    // 1️⃣ حدده فورًا (UI)
+                    setSelectedResultKey(rowData.key);
+                    setResult(rowData);
 
-                    </HStack>
+                    try {
+                        // 2️⃣ ابعث rowData نفسه
+                        await saveResult({
+                        ...rowData,          // ✅ هون الصح
+                        reviewAt: Date.now(),
+                        reviewBy: user?.key
+                        }).unwrap();
 
+                        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                        resultFetch();
+                    } catch (error) {
+                        dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
+                    }
+                    }}
 
-                );
-            },
+                    />
+
+                </Whisper>
+            </HStack>
+            );
+        }
         },
         {
             key: "",
@@ -446,7 +458,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 <MyInput
                     column
                     width={180}
-                    fieldType="datetime"
+                    fieldType="date"
                     fieldLabel="Approval From Date"
                     fieldName="fromDate"
                     record={dateFilter}
@@ -455,7 +467,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 <MyInput
                     width={180}
                     column
-                    fieldType="datetime"
+                    fieldType="date"
                     fieldLabel="Approval To Date"
                     fieldName="toDate"
                     record={dateFilter}
@@ -464,7 +476,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 <MyInput
                     column
                     width={180}
-                    fieldType="datetime"
+                    fieldType="date"
                     fieldLabel="Order From Date"
                     fieldName="fromDate"
                     record={dateOrderFilter}
@@ -473,7 +485,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 <MyInput
                     width={180}
                     column
-                    fieldType="datetime"
+                    fieldType="date"
                     fieldLabel="Order To Date"
                     fieldName="toDate"
                     record={dateOrderFilter}
@@ -501,6 +513,23 @@ const Results = ({ setEncounter, setPatient, user }) => {
             </Form>
         <AdvancedSearchFilters searchFilter={true}/></>);
     };
+
+
+useEffect(() => {
+  if (!selectedResultKey || !resultsList?.object) return;
+
+  const stillExists = resultsList.object.find(
+    r => r.key === selectedResultKey
+  );
+
+  if (!stillExists) {
+    setSelectedResultKey(null);
+    setResult({ ...newApDiagnosticOrderTestsResult });
+  } else {
+    setResult(stillExists);
+  }
+}, [resultsList]);
+
     return (
         <>
             <MyTable
@@ -509,7 +538,8 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 data={resultsList?.object || []}
                 loading={featchingTest}
                 onRowClick={rowData => {
-                    setResult(rowData);
+                setResult(rowData);
+                setSelectedResultKey(rowData.key);
                 }}
                 rowClassName={isResultSelected}
                 height={250}

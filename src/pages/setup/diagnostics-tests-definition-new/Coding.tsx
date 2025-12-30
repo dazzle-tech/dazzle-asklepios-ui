@@ -29,6 +29,7 @@ import {
 import type { DiagnosticTestCoding } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEnumOptions } from '@/services/enumsApi';
+import { formatEnumString } from '@/utils';
 
 type CodingProps = {
   open: boolean;
@@ -123,11 +124,33 @@ const Coding: React.FC<CodingProps> = ({ open, setOpen, diagnosticsTest }) => {
   );
 
 
- const codingType=useEnumOptions('MedicalCodeType')
+  const codingType = useEnumOptions('MedicalCodeType', {
+    labelOverrides: {
+      CPT_CODES: 'CPT codes',
+      CDT_CODES: 'CDT codes',
+      ICD10_CODES: 'ICD-10 codes',
+      LOINC_CODES: 'LOINC',
+    },
+  });
+
+
+const codingTypeMap = React.useMemo(() => {
+  return (codingType ?? []).reduce((acc: any, cur: any) => {
+    acc[cur.value] = cur.label;
+    return acc;
+  }, {});
+}, [codingType]);
+
+
   const tableColumns = [
     {
       key: 'codeType',
-      title:"Code Type"
+      title: 'Code Type',
+      render: (rowData: DiagnosticTestCoding) => (
+        <span>
+          {codingTypeMap[rowData.codeType] ?? rowData.codeType}
+        </span>
+      ),
     },
     {
       key: 'codeId',

@@ -1,4 +1,3 @@
-// src/components/Allergies/Allergies.tsx  (نفس كودك + فقط تأكيد على dispatch عند الإضافة في DetailsModal)
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';

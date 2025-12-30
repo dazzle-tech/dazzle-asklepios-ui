@@ -28,7 +28,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 
-// ✅ preview component
+// preview component
 import PreviewConsultation from './PreviewConsultation';
 
 const NormalConsultation = (props: any) => {
@@ -56,7 +56,9 @@ const NormalConsultation = (props: any) => {
 
   // Response modal states
   const [openResponseModal, setOpenResponseModal] = useState(false);
-  const [selectedConsultation, setSelectedConsultation] = useState<ApConsultationOrder | null>(null);
+  const [selectedConsultation, setSelectedConsultation] = useState<ApConsultationOrder | null>(
+    null
+  );
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -311,9 +313,9 @@ const NormalConsultation = (props: any) => {
         title: <Translate>VIEW RESPONSE</Translate>,
         flexGrow: 1,
         render: (rowData: any) => (
-          <IoIosMore 
-            size={22} 
-            fill={rowData?.viewResponse ? "var(--primary-gray)" : "#ccc"}
+          <IoIosMore
+            size={22}
+            fill={rowData?.viewResponse ? 'var(--primary-gray)' : '#ccc'}
             onClick={() => {
               if (rowData?.viewResponse) {
                 handleOpenResponseModal(rowData);
@@ -331,7 +333,7 @@ const NormalConsultation = (props: any) => {
           return (
             <MdAttachFile
               size={20}
-              fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+              fill={rowData?.key ? 'var(--primary-gray)' : '#ccc'}
               onClick={() => {
                 if (rowData?.key) {
                   setConsultationOrder(rowData);
@@ -491,7 +493,9 @@ const NormalConsultation = (props: any) => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${(consultationOrders as any)?.consultantSpecialtyLvalue?.lovDisplayVale || 'Consultation'}`}
+        title={`Attachments - ${
+          (consultationOrders as any)?.consultantSpecialtyLvalue?.lovDisplayVale || 'Consultation'
+        }`}
         size="lg"
         hideActionBtn={true}
         content={

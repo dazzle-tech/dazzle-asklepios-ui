@@ -16,6 +16,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 
 const TransferTestList = ({
+  open,
   leftItems = [],
   rightItems = [],
   setLeftItems,
@@ -38,9 +39,24 @@ const TransferTestList = ({
     setLeft(leftItems || []);
   }, [leftItems]);
 
-  useEffect(() => {
-    setRight(rightItems || []);
-  }, [rightItems]);
+useEffect(() => {
+  if (!rightItems) return;
+
+  setRight(prev => {
+
+    if (prev.length > 0 && rightItems.length === 0) {
+      return prev;
+    }
+    const prevKeys = prev.map(i => i.key).sort().join(',');
+    const nextKeys = rightItems.map(i => i.key).sort().join(',');
+
+    if (prevKeys === nextKeys) {
+      return prev;
+    }
+
+    return rightItems;
+  });
+}, [rightItems]);
 
   const intersection = (array1: any[], array2: any[]) => array1.filter(value => array2.includes(value));
   const not = (array1: any[], array2: any[]) =>
@@ -134,6 +150,15 @@ const TransferTestList = ({
   const filteredLeft = left.filter(item =>
     (item.testName ?? '').toLowerCase().includes((searchTerm ?? '').toLowerCase())
   );
+
+useEffect(() => {
+  if (!open) return;
+  setChecked([]);
+  setLeft(leftItems || []);
+  setRight(rightItems || []);
+  setSearchTerm('');
+  setSearchType({});
+}, [open]);
 
   return (
     <Row>

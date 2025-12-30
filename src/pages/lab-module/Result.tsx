@@ -745,7 +745,9 @@ const Result = forwardRef<unknown, ResultProps>(
               <FontAwesomeIcon
                 icon={faComment}
                 style={{ fontSize: '1em' }}
-                onClick={() => setOpenNoteResultModal(true)}
+                onClick={() => {
+                  setResult(rowData);
+                  setOpenNoteResultModal(true)}}
               />
             </HStack>
           );
@@ -798,7 +800,9 @@ const Result = forwardRef<unknown, ResultProps>(
               <FontAwesomeIcon
                 icon={faDiagramPredecessor}
                 style={{ fontSize: '1em' }}
-                onClick={() => setOpenComparisonModal(true)}
+                onClick={() => {
+                  setResult(rowData);
+                  setOpenComparisonModal(true)}}
               />
             </HStack>
           );
@@ -1078,6 +1082,7 @@ const Result = forwardRef<unknown, ResultProps>(
           setTest={setTest}
           fetchTest={fetchTest}
           fecthSample={fecthSample}
+          fetchAllTests={fetchAllTests}
         />
         <LogResult open={openLogModal} setOpen={setOpenLogModal} result={result} />
         <MyModal

@@ -154,6 +154,20 @@ export const PractitionerService = createApi({
       }),
       invalidatesTags: ["Practitioner"],
     }),
+    getPractitionerByUserId: builder.query<any, number>({
+      query: (userId) => ({
+        url: `/api/setup/practitioner/by-user/${userId}`,
+        method: "GET",
+      }),
+      providesTags: ["Practitioner"],
+    }),
+    existsPractitionerByUserId: builder.query<boolean, number>({
+      query: (userId) => ({
+        url: `/api/setup/practitioner/exists-by-user/${userId}`,
+        method: "GET",
+      }),
+      providesTags: ["Practitioner"],
+    }),
   }),
 });
 
@@ -170,4 +184,8 @@ export const {
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
+  useGetPractitionerByUserIdQuery,
+  useLazyGetPractitionerByUserIdQuery,
+  useExistsPractitionerByUserIdQuery,
+  useLazyExistsPractitionerByUserIdQuery,
 } = PractitionerService;

@@ -811,17 +811,17 @@ export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTem
 };
 
 export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM = {
-  id: undefined,
-  userId: undefined,
-  note: '',
-  priority: '',
-  priorityOrder: 0,
-  color: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: '',
-  lastModifiedDate: null,
-  patientId: undefined
+    id: undefined,
+    userId: undefined,
+    note: '',
+    priority: '',
+    priorityOrder: 0,
+    color:'',
+    createdBy: '',
+    createdDate: null,
+    lastModifiedBy: '',
+    lastModifiedDate: null,
+    patientId: ''
 };
 
 export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
@@ -1154,4 +1154,13 @@ export const newConfigurationUpdateVM: modelTypes.ConfigurationUpdateVM = {
   referenceType: '',
   description: '',
   isActive: undefined
+}
+  
+export const newFormTemplate: modelTypes.FormTemplate = {
+  id: undefined,
+  name: null,
+  description: null,
+  facilityId: null,
+  departmentId: null,
+  formJson: null
 }

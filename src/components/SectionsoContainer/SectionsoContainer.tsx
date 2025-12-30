@@ -1,7 +1,8 @@
 import React from 'react';
 import './styles.less';
-import { Divider } from 'rsuite';
+import { Divider, Form } from 'rsuite';
 import { useSelector } from 'react-redux';
+import Translate from '../Translate';
 
 interface SectionContainerProps {
   title: React.ReactNode;
@@ -31,25 +32,21 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
       }}
     >
       {/* ===== Header ===== */}
-      <div className="title-div">
-        <div className="title-text">{title}</div>
+      <Form className="title-div">
+        <Translate className="title-text">{title}</Translate>
         {action && <div className="title-action">{action}</div>}
-      </div>
+      </Form>
 
       <Divider />
 
       {/* ===== Content ===== */}
-      <div className="section-content">
-        {content}
-      </div>
+      <div className="section-content">{content}</div>
 
       {/* ===== Optional Button ===== */}
       {button && (
         <>
           <Divider />
-          <div className="container-of-add-new-button-pre">
-            {button}
-          </div>
+          <div className="container-of-add-new-button-pre">{button}</div>
         </>
       )}
     </div>

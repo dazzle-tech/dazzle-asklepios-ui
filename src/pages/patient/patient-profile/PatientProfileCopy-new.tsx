@@ -130,7 +130,7 @@ const handleSave = async () => {
     dispatch(
       notify({
         msg: `Please fill the following required fields: ${missingFields.join(', ')}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;

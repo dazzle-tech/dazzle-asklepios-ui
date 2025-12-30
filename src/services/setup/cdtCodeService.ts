@@ -23,7 +23,6 @@ export type CdtImportResult = {
   conflicts: CdtConflict[];
 };
 
-
 export type CdtSyncResult = {
   beforeCount: number;
   added: number;
@@ -39,10 +38,10 @@ export type ServiceSetup = {
   active?: boolean;
 };
 
-const mapPaged = (response: any[], meta): PagedResult<any> => {
+const mapPaged = <T>(response: T[], meta: any): PagedResult<T> => {
   const headers = meta?.response?.headers;
   return {
-    data: response,
+    data: response ?? [],
     totalCount: Number(headers?.get("X-Total-Count") ?? 0),
     links: parseLinkHeader(headers?.get("Link")),
   };
@@ -128,12 +127,15 @@ export const cdtCodeService = createApi({
       providesTags: (_res, _err, cdtId) => [{ type: "CDT_LINKS", id: cdtId }],
     }),
 
-    getLinkedServiceDetails: builder.query<ServiceSetup[], number>({
-      query: (cdtId) => ({
+   
+    getLinkedServiceDetails: builder.query<PagedResult<ServiceSetup>, { cdtId: number } & PagedParams>({
+      query: ({ cdtId, page, size, sort = "id,asc" }) => ({
         url: `/api/setup/cdt/${cdtId}/services/details`,
         method: "GET",
+        params: { page, size, sort },
       }),
-      providesTags: (_res, _err, cdtId) => [{ type: "CDT_LINKS", id: cdtId }],
+      transformResponse: mapPaged<ServiceSetup>,
+      providesTags: (_res, _err, { cdtId }) => [{ type: "CDT_LINKS", id: cdtId }],
     }),
 
     syncLinkedServices: builder.mutation<CdtSyncResult, { cdtId: number; serviceIds: number[] }>({
