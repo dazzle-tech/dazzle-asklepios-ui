@@ -55,12 +55,10 @@ const Prescription = (props: any) => {
   const authSlice = useAppSelector(state => state.auth);
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
 
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
   const [showCanceled, setShowCanceled] = useState(true);
   const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
-
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
   const facilityName = conjureValueBasedOnIDFromList(
     facilityListResponse ?? [],
@@ -122,11 +120,14 @@ const Prescription = (props: any) => {
       { fieldName: 'visit_key', operator: 'match', value: encounter?.key }
     ]
   });
-
+  
   const filteredPrescriptions =
     prescriptions?.object?.filter((item: any) => item.statusLkey === '1804482322306061') ?? [];
 
   const [preKeyRecord, setPreKeyRecord] = useState<{ preKey: any }>({ preKey: null });
+useEffect(() => {
+    setPrescription(prescriptions?.object?.find((p: any) => p.key === preKeyRecord['preKey']) || { ...newApPrescription });
+  }, [prescriptions, preKeyRecord]);
 
   const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>({
     ...newApPrescriptionMedications,
@@ -519,7 +520,7 @@ const Prescription = (props: any) => {
   const handleSubmitPres = async () => {
     try {
       await savePrescription({
-        ...prescriptions?.object?.find((p: any) => p.key === preKeyRecord['preKey']),
+        ...prescription,
         statusLkey: '1804482322306061',
         saveDraft: false,
         submittedAt: Date.now()

@@ -9,15 +9,17 @@ import { formatEnumString } from '@/utils';
 import React from 'react';
 import { FlexboxGrid } from 'rsuite';
 const PrescriptionDetails = ({ customeInstructions, prescription }) => {
+
   const { data: genericMedicationListResponse } = useGetAllBrandMedicationsQuery({
     page: 0,
     size: 1000,
     sort: 'id,asc'
   });
   const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({
-    page: 1,
+    page: 0,
     size: 1000
   });
+
   const {
     data: prescriptionMedications,
     isLoading: isLoadingPrescriptionMedications,
@@ -44,6 +46,8 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
   const joinValuesFromArray = values => {
     return values.filter(Boolean).join(', ');
   };
+
+
   const tableColumns = [
     {
       key: 'genericMedicationsKey',
@@ -58,60 +62,63 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
     },
     {
       key: 'instructions',
+      dataKey: '',
       title: 'Instructions',
       flexGrow: 3,
       render: (rowData: any) => {
-        /* ===== Predefined ===== */
-        if (rowData.instructionsTypeLkey === '3010591042600262') {
-          const generic = predefinedInstructionsListResponse?.data?.find(
-            item => item.id === Number(rowData.instructions)
+        const type = String(rowData?.instructionsTypeLkey ?? '');
+
+        // Pre-defined
+        // Pre-defined 
+        if (type === '3010591042600262') { const inst = (predefinedInstructionsListResponse?.data ?? []).find((x: any) => Number(x.id) === Number(rowData?.instructions)); if (!inst) return '-'; return [inst?.dose, formatEnumString(inst?.unit), formatEnumString(inst?.rout), formatEnumString(inst?.frequency)].map(v => (v == null ? '' : String(v).trim())).filter(Boolean).join(', '); }
+        // ✅ Manual (free text)
+        if (type === '3010573499898196') {
+          return rowData?.instructions ? String(rowData.instructions).trim() : '-';
+        }
+
+        // ✅ Custom
+        if (type === '3010606785535008') {
+          const rowMedKey = String(
+            rowData?.prescriptionMedicationsKey ??
+            rowData?.prescriptionMedicationKey ??
+            rowData?.prescriptionMedicationId ??
+            rowData?.id ??
+            rowData?.key
           );
 
-          if (!generic) {
-            return 'No predefined instructions';
-          }
-
-          const value = [
-            generic.dose,
-            formatEnumString(generic.unit),
-            formatEnumString(generic.rout),
-            formatEnumString(generic.frequency)
-          ]
-            .filter(v => v && String(v).trim() !== '')
-            .join(', ');
-
-          return value || 'No predefined instructions';
-        }
-
-        /* ===== Free text ===== */
-        if (rowData.instructionsTypeLkey === '3010573499898196') {
-          return rowData.instructions || 'No instructions';
-        }
-
-        /* ===== Custom ===== */
-        if (rowData.instructionsTypeLkey === '3010606785535008') {
-          const custom = customeInstructions?.object?.find(
-            item => item.prescriptionMedicationsKey === rowData.key
+          const matches = (customeInstructions ?? []).filter(
+            (x: any) => String(x?.prescriptionMedicationsKey) === rowMedKey
           );
 
-          if (!custom) {
-            return 'No custom instructions';
-          }
+          const pickBest = (arr: any[]) => {
+            const score = (ci: any) => {
+              let s = 0;
+              if (ci?.dose != null && String(ci?.dose).trim() !== '') s += 2;
+              if (ci?.unitLvalue?.lovDisplayVale) s += 2;
+              if (ci?.frequencyLvalue?.lovDisplayVale) s += 2;
+              if (ci?.roaLvalue?.lovDisplayVale) s += 1;
+              const t = Number(ci?.updatedAt ?? ci?.createdAt ?? 0);
+              return s * 1_000_000_000_000 + t;
+            };
+            return arr.reduce((best, cur) => (!best || score(cur) > score(best) ? cur : best), null);
+          };
 
-          const value = [
-            custom.dose,
-            custom.unitLvalue?.lovDisplayVale,
-            custom.frequencyLvalue?.lovDisplayVale
-          ]
-            .filter(v => v && String(v).trim() !== '')
+          const ci = pickBest(matches);
+
+          const txt = [ci?.dose, ci?.unitLvalue?.lovDisplayVale, ci?.frequencyLvalue?.lovDisplayVale]
+            .map(v => (v == null ? '' : String(v).trim()))
+            .filter(Boolean)
             .join(', ');
 
-          return value || 'No custom instructions';
+          return txt || '-';
         }
+
+
 
         return '-';
       }
-    },
+    }
+    ,
     {
       key: '',
       title: <Translate>Instructions Type</Translate>,
