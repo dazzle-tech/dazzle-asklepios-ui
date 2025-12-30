@@ -659,7 +659,12 @@ useEffect(() => {
             customeInstructions?.object?.find(
               item => item.prescriptionMedicationsKey === rowData.key
             )?.frequencyLvalue.lovDisplayVale
-          );
+          )+","+
+          formatEnumString(
+            customeInstructions?.object?.find(
+              item => item.prescriptionMedicationsKey === rowData.key
+            )?.roaLkey)
+          ;
         }
 
         return 'no';
