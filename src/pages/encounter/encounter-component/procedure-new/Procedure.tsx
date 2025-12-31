@@ -264,22 +264,8 @@ const Referrals = (props: any) => {
         key: 'procedureName',
         dataKey: 'procedureName',
         title: <Translate>Procedure Name</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const list = proceduresDefinitions?.data ?? [];
-
-          console.log('rowData.procedureNameId:', rowData?.procedureNameId);
-          console.log('pd ids:', list.map((pd: any) => pd.id));
-
-          const match = list.find((pd: any) => {
-            console.log('compare:', pd.id, '===', rowData?.procedureNameId, '=>', pd.id === rowData?.procedureNameId);
-            return pd.id === rowData?.procedureNameId;
-          });
-
-          console.log('match:', match);
-
-          return match?.name || ' ';
-        }
+        flexGrow: 1
+       
 
 
       },
