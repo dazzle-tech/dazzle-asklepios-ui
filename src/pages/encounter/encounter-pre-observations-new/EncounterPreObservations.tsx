@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Divider, Drawer, Form, List, Panel } from 'rsuite';
+import { Col, Divider, Drawer, Form, List, Panel, Row } from 'rsuite';
 
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
@@ -212,21 +212,39 @@ const NurseStation = () => {
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
             placement="left"
+            style={{ zIndex: 999999999999 }}
             className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
           >
-            <Drawer.Header>
+            <Drawer.Header className="header-drawer">
               <Drawer.Title>Nurse Station Sheets</Drawer.Title>
             </Drawer.Header>
 
-            <Drawer.Body>
-              <List hover>
+            <Drawer.Body className="drawer-body">
+              <Form fluid>
+                <Row>
+                  <Col md={24}>
+                    <MyInput
+                      width="100%"
+                      placeholder="Search screens..."
+                      fieldName={'term'}
+                      record={searchTerm}
+                      setRecord={setSearchTerm}
+                      showLabel={false}
+                      rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
+                    />
+                  </Col>
+                </Row>
+              </Form>
+              <List hover className="drawer-list-style">
                 <List.Item
+                 className="drawer-item return-button"
                   onClick={() => {
                     navigate('/nurse-station', { state: location.state });
                     setIsDrawerOpen(false);
                   }}
                 >
-                  <FontAwesomeIcon icon={faClockRotateLeft} /> Dashboard
+                  <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
+                  <Translate>Dashboard</Translate>
                 </List.Item>
 
                 {visibleSheets.map(({ code, name, icon, path }) => {
@@ -234,7 +252,19 @@ const NurseStation = () => {
                   const fullPath = `/nurse-station/${clean}`;
 
                   return (
-                    <List.Item key={code}>
+                    <List.Item key={code}
+                      className="drawer-item"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        navigate(fullPath, {
+                          state: {
+                            patient: propsData.patient,
+                            encounter: propsData.encounter,
+                            edit
+                          }
+                        });
+                      }}
+                    >
                       <Link
                         to={fullPath}
                         state={{
@@ -242,8 +272,12 @@ const NurseStation = () => {
                           encounter: propsData.encounter,
                           edit
                         }}
+                        className="inherit-link"
                       >
-                        {icon} {name}
+                        {icon}
+                        <span className="margin-left-10">
+                          <Translate>{name}</Translate>
+                        </span>
                       </Link>
                     </List.Item>
                   );
