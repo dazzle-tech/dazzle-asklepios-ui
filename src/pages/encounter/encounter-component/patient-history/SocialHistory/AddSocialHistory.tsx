@@ -77,6 +77,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   }, [initialData, patient]);
 
   const handleSave = () => {
+    
     const payload = {
       ...record,
       patientKey: patient?.key,
@@ -86,10 +87,24 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       alcoholConsumption: openAlcohol.open,
       substanceUse: openSubstance.open,
 
-      smokeStartDate: record.smokeStartDate ? new Date(record.smokeStartDate).getTime() : 0,
-      smokeQuitDate: record.smokeQuitDate ? new Date(record.smokeQuitDate).getTime() : 0,
-      alcoholSinceWhen: record.alcoholSinceWhen ? new Date(record.alcoholSinceWhen).getTime() : 0,
+      smokeStartDate: openSmoker.open && record.smokeStartDate
+        ? new Date(record.smokeStartDate).getTime()
+        : 0,
+
+      smokeQuitDate: openPrevSmoker.open && record.smokeQuitDate
+        ? new Date(record.smokeQuitDate).getTime()
+        : 0,
+
+      alcoholSinceWhen: openAlcohol.open && record.alcoholSinceWhen
+        ? new Date(record.alcoholSinceWhen).getTime()
+        : 0,
+
+      typeOfAlcohol: openAlcohol.open ? record.typeOfAlcohol : "",
+
+      routeLkey: openSubstance.open ? record.routeLkey : null,
+      frequencyLkey: openSubstance.open ? record.frequencyLkey : null
     };
+
     let errorMsg = "";
     // if(payload.con)
     saveSocialHistory(payload)
@@ -290,6 +305,48 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
 
     </Form>
   );
+
+    useEffect(() => {
+      if (!openSmoker.open) {
+        setRecord(prev => ({
+          ...prev,
+          smokeStartDate: null,
+          cigaretteAmount: 0,
+          cigaretteType: ""
+        }));
+      }
+    }, [openSmoker.open]);
+
+    useEffect(() => {
+      if (!openPrevSmoker.open) {
+        setRecord(prev => ({
+          ...prev,
+          smokeQuitDate: null
+        }));
+      }
+    }, [openPrevSmoker.open]);
+
+    useEffect(() => {
+      if (!openAlcohol.open) {
+        setRecord(prev => ({
+          ...prev,
+          typeOfAlcohol: "",
+          alcoholSinceWhen: null
+        }));
+      }
+    }, [openAlcohol.open]);
+
+    useEffect(() => {
+      if (!openSubstance.open) {
+        setRecord(prev => ({
+          ...prev,
+          routeLkey: null,
+          frequencyLkey: null
+        }));
+      }
+    }, [openSubstance.open]);
+
+
 
   return (
     <MyModal
