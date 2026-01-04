@@ -16,7 +16,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetUserQuery } from '@/services/userService';
 import { AppUser } from '@/types/model-types';
 import MyButton from '@/components/MyButton/MyButton';
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetAppointableDepartmentsQuery, useGetDepartmentsQuery } from '@/services/security/departmentService';
 import {
   useCreatePractitionerDepartmentMutation,
   useDeletePractitionerDepartmentMutation,
@@ -41,14 +41,28 @@ const AddEditPractitioner = ({
   const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: '' });
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [localSelection, setLocalSelection] = useState({ selectedDepartment: null });
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
   // Facilities
   const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
   const [deptPage, setDeptPage] = useState(0);
-  const { data: deptResponse, isFetching: loadingDepartments } = useGetDepartmentsQuery({
+  
+const {
+  data: deptResponse,
+  isFetching: loadingDepartments,
+  refetch: refetchDepartments,
+} = useGetAppointableDepartmentsQuery(
+  {
+    facilityId: practitioner?.facilityId,
     page: deptPage,
-    size: 3,
-  });
+    size: 10,
+  },
+  {
+    skip: !practitioner?.facilityId,
+  }
+);
+
+
 
 
   // Practitioner Departments API
@@ -79,7 +93,6 @@ const AddEditPractitioner = ({
 
   
 
-  const [allDepartments, setAllDepartments] = useState([]);
 
   useEffect(() => {
     if (deptResponse?.data) {
@@ -167,7 +180,7 @@ setSearchResultVisible(true);
         return (
           <Form fluid>
             {/* User Search */}
-
+      <div className='first-case-modal-container-handle'>
           <SectionContainer title="Facility"
           content={<>
           <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
@@ -336,8 +349,6 @@ setSearchResultVisible(true);
             }
           />
 
-
-
           <SectionContainer title="Medical License Information"
           content={<>             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
                       
@@ -381,25 +392,26 @@ setSearchResultVisible(true);
             </div></>}/>
 
 
-
+        </div>
           </Form>
         );
 
       case 1:
         return (
-          <Form layout="inline" fluid>
+          <Form fluid>
             {/* Department Linking */}
             <MyInput
               fieldType="selectPagination"
               fieldLabel="Add Department"
               fieldName="selectedDepartment"
-              selectData={allDepartments} 
+              selectData={allDepartments ?? []} 
               selectDataLabel="name"
               selectDataValue="id"
               record={localSelection}
               setRecord={setLocalSelection}
               searchable
               width={520}
+              disabled={loadingDepartments}
               hasMore={deptResponse?.links?.next?true:false} 
               onFetchMore={() => {
                 if (deptResponse?.links?.next) {
@@ -408,11 +420,6 @@ setSearchResultVisible(true);
                 }
               }}
             />
-
-
-
-
-
             <MyButton
              
               disabled={!practitioner?.id || !localSelection.selectedDepartment}
@@ -437,12 +444,10 @@ setSearchResultVisible(true);
             >
               Link
             </MyButton>
-
             {practitioner?.id && (
               <div style={{ marginTop: 16 }}>
                 <Translate>Linked Departments:</Translate>
                 <MyTable
-                  height={300}
                   data={linkedDepartments ?? []}
                   columns={[
                     { key: 'departmentName', title: 'Department Name' },
@@ -518,6 +523,8 @@ setSearchResultVisible(true);
     </Form>
   );
 
+
+
   return (
     <ChildModal
       actionButtonLabel={practitioner?.id ? 'Save' : 'Create'}
@@ -539,8 +546,8 @@ setSearchResultVisible(true);
       ]}
       childTitle="User List - Search Results"
       childContent={conjureFormContentOfChildModal}
-      mainSize="40vw"
-      childSize="40vw"
+      mainSize={width > 1200 ? '40vw' : '75vw'}
+      childSize="55vw"
     />
   );
 };

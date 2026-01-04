@@ -134,50 +134,54 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             });
     }
 
-    const handleNonShow = () => {
-        changeAppointmentStatus({ ...localAppointmentData, appointmentStatus: "No-Show", otherReason: otherReason?.otherReason, reasonLkey: reasonKey?.reasonLkey })
-            .unwrap()
-            .then(() => {
-                dispatch(notify({ msg: 'Appointment Status has been changed Successfully', sev: 'success' }));
-                onStatusChange()
-                onActionsModalClose()
-                setResonModal(false)
-                setResonType(null)
-                setOtherReason(null)
-                setResonKey(null)
-                setLocalEncounter({ ...newApEncounter, discharge: false })
-            })
-            .catch((error) => {
-                console.error('Error changing appointment status to No-Show:', error);
-                if (error?.status === 422) {
-                    // Validation error - already handled by the mutation
-                } else {
-                    dispatch(notify({ msg: 'An error occurred while changing the appointment status', sev: 'warn' }));
-                }
-            });
-    }
+const handleNonShow = () => {
+  const payload = {
+    ...localAppointmentData,
+    appointmentStatus: 'No-Show',
+    reasonLkey: reasonKey?.reasonLkey,
+    otherReason: otherReason?.otherReason
+  };
 
-    const handleCancel = () => {
-        const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Canceled", otherReason: otherReason?.otherReason, reasonLkey: reasonKey?.reasonLkey })
-            .unwrap()
-            .then(() => {
-                dispatch(notify({ msg: 'Appointment has been canceled Successfully', sev: 'success' }));
-                onStatusChange()
-                onActionsModalClose()
-                setResonType(null)
-                setOtherReason(null)
-                setResonKey(null)
-            })
-            .catch((error) => {
-                console.error('Error canceling appointment:', error);
-                if (error?.status === 422) {
-                    // Validation error - already handled by the mutation
-                } else {
-                    dispatch(notify({ msg: 'An error occurred while canceling the appointment', sev: 'warn' }));
-                }
-            });
-    }
+  console.log('🚨 NO-SHOW PAYLOAD', payload);
+
+  changeAppointmentStatus(payload)
+    .unwrap()
+    .then(() => {
+      dispatch(notify({ msg: 'Appointment Status has been changed Successfully', sev: 'success' }));
+      onStatusChange();
+      onActionsModalClose();
+      setResonModal(false);
+      setResonType(null);
+      setOtherReason(null);
+      setResonKey(null);
+    });
+};
+
+
+const handleCancel = () => {
+  const appointmentData = appointment?.appointmentData;
+
+  const payload = {
+    ...appointmentData,
+    appointmentStatus: 'Canceled',
+    reasonLkey: reasonKey?.reasonLkey,
+    otherReason: otherReason?.otherReason
+  };
+
+  console.log('🚨 CANCEL PAYLOAD', payload);
+
+  changeAppointmentStatus(payload)
+    .unwrap()
+    .then(() => {
+      dispatch(notify({ msg: 'Appointment has been canceled Successfully', sev: 'success' }));
+      onStatusChange();
+      onActionsModalClose();
+      setResonType(null);
+      setOtherReason(null);
+      setResonKey(null);
+    });
+};
+
 
 
     const handleChangeAction = () => {
