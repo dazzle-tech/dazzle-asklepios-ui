@@ -1,0 +1,100 @@
+.template-summary-card {
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f7f9fc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  font-size: 13px;
+  width: 100%;
+
+
+  .card-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    color: #fff;
+    font-weight: 600;
+
+    background: #4c7ef3;
+  }
+
+  .card-title {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 70px;
+  }
+
+  .card-actions {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 6px;
+
+    button {
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.18);
+    }
+  }
+
+
+  .card-body {
+    padding: 8px 10px;
+    background: #eef2f7;
+
+    .card-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .label {
+        color: #6b7280;
+        min-width: 90px;
+      }
+
+      .value {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
+
+      &.muted {
+        .value {
+          color: #374151;
+        }
+      }
+    }
+  }
+
+
+  &.department-pool {
+    .card-header {
+      background: linear-gradient(135deg, #4f8df5, #3b6fd8);
+    }
+  }
+
+  &.practitioner {
+    .card-header {
+      background: linear-gradient(135deg, #6aa84f, #4f8a38);
+    }
+  }
+
+  &.resource {
+    .card-header {
+      background: linear-gradient(135deg, #8e7cc3, #6a5aa8);
+    }
+  }
+}

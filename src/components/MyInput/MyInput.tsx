@@ -377,18 +377,15 @@ const MyInput = ({
         return (
           <Form.Control
             className="custom-time-input"
-            style={
-              {
-                width: props?.width ?? 145,
-                '--custom-time-input': `${props?.height ?? 30}px`
-              } as React.CSSProperties
-            }
+            style={{
+              width: props?.width ?? 145,
+              '--custom-time-input': `${props?.height ?? 30}px`
+            } as React.CSSProperties}
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? record[fieldName] : null}
             accepter={TimePicker}
+            value={record?.[fieldName] ?? null}
             onChange={handleValueChange}
-            onClean={() => handleValueChange(null)}
             placeholder={props.placeholder}
             format="HH:mm"
             cleanable
@@ -398,8 +395,6 @@ const MyInput = ({
             onClose={() => setIsTimeOpen(false)}
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
-            container={resolveContainer()}
-            hideMinutes={props?.hideMinutes ? props?.hideMinutes : false}
           />
         );
 

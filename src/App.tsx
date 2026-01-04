@@ -217,6 +217,7 @@ import AvailabilityTemplatePage from './pages/setup/availability_template';
 import "survey-core/survey-core.min.css";
 import "survey-creator-core/survey-creator-core.min.css";
 import Logo from './images/eWaveLogocopy.svg';
+import AvailabilityTemplatePageNew from './pages/setup/availability-template-new';
 
 type BackendMenuItem = { screen?: string | null };
 
@@ -474,7 +475,9 @@ useEffect(() => {
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="my-consultations" element={<MyConsultations />} />
-              <Route path="patient-profile-old" element={<PatientProfile />} />              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
+              <Route path="availability-templates-new" element={<AvailabilityTemplatePageNew />} />
+              <Route path="patient-profile-old" element={<PatientProfile />} />
+              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
