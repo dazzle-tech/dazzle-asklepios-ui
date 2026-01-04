@@ -47,17 +47,16 @@ const PatientProfile = () => {
   const [refetchData, setRefetchData] = useState(false);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
-  const [openBedsideRegistrations,setOpenBedsideRegistrations] = useState<boolean>(false);
-  const [openRegistrationWarningsSummary,setOpenRegistrationWarningsSummary] = useState<boolean>(false);
-  const [openBulkRegistrationModal,setOpenBulkRegistrationModal] = useState<boolean>(false);
-  const [openViewPriceListModal,setOpenBViewPriceListModal] = useState<boolean>(false);
+  const [openBedsideRegistrations, setOpenBedsideRegistrations] = useState<boolean>(false);
+  const [openRegistrationWarningsSummary, setOpenRegistrationWarningsSummary] =
+    useState<boolean>(false);
+  const [openBulkRegistrationModal, setOpenBulkRegistrationModal] = useState<boolean>(false);
+  const [openViewPriceListModal, setOpenBViewPriceListModal] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
   const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
   // Page header setup
-  const divContent = (
-    "Patient Registration"
-  );
+  const divContent = 'Patient Registration';
 
   // Handle save patient
   // const handleSave = async () => {
@@ -96,58 +95,57 @@ const PatientProfile = () => {
   //   } catch (error) {
   //   }
   // };
-// Add this validation function before handleSave in PatientProfile component
+  // Add this validation function before handleSave in PatientProfile component
 
-const validateRequiredFields = () => {
-  const errors = [];
-  
-  // Check required fields
-  if (!localPatient.firstName) {
-    errors.push('First Name');
-  }
-  if (!localPatient.lastName) {
-    errors.push('Last Name');
-  }
-  if (!localPatient.genderLkey) {
-    errors.push('Gender');
-  }
-  if (!localPatient.dob) {
-    errors.push('DOB');
-  }
-  if (!localPatient.phoneNumber) {
-    errors.push('Primary Mobile Number');
-  }
-  
-  return errors;
-};
+  const validateRequiredFields = () => {
+    const errors = [];
 
-// Update handleSave function to include validation
-const handleSave = async () => {
-  // Validate required fields
-  const missingFields = validateRequiredFields();
-  
-  if (missingFields.length > 0) {
-    dispatch(
-      notify({
-        msg: `Please fill the following required fields: ${missingFields.join(', ')}`,
-        sev: 'warning'
-      })
-    );
-    return;
-  }
+    // Check required fields
+    if (!localPatient.firstName) {
+      errors.push('First Name');
+    }
+    if (!localPatient.lastName) {
+      errors.push('Last Name');
+    }
+    if (!localPatient.genderLkey) {
+      errors.push('Gender');
+    }
+    if (!localPatient.dob) {
+      errors.push('DOB');
+    }
+    if (!localPatient.phoneNumber) {
+      errors.push('Primary Mobile Number');
+    }
 
-  try {
-    await savePatient({
-      ...localPatient,
-      incompletePatient: false,
-      unknownPatient: false
-    }).unwrap();
+    return errors;
+  };
 
-    setRefetchData(true);
-    dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-  } catch (error) {
-  }
-};
+  // Update handleSave function to include validation
+  const handleSave = async () => {
+    // Validate required fields
+    const missingFields = validateRequiredFields();
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill the following required fields: ${missingFields.join(', ')}`,
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      await savePatient({
+        ...localPatient,
+        incompletePatient: false,
+        unknownPatient: false
+      }).unwrap();
+
+      setRefetchData(true);
+      dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+    } catch (error) {}
+  };
 
   // Handle clear patient data
   const handleClear = () => {
@@ -298,23 +296,17 @@ const handleSave = async () => {
           setQuickAppointmentModel={setQuickAppointmentModel}
         />
       )}
-      <BedsideRegistrationsModal 
-      open={openBedsideRegistrations}
-      setOpen={setOpenBedsideRegistrations}
-      setLocalPatient={setLocalPatient}
+      <BedsideRegistrationsModal
+        open={openBedsideRegistrations}
+        setOpen={setOpenBedsideRegistrations}
+        setLocalPatient={setLocalPatient}
       />
       <RegistrationWarningsSummary
-      open={openRegistrationWarningsSummary}
-      setOpen={setOpenRegistrationWarningsSummary}
+        open={openRegistrationWarningsSummary}
+        setOpen={setOpenRegistrationWarningsSummary}
       />
-      <BulkRegistration
-      open={openBulkRegistrationModal}
-      setOpen={setOpenBulkRegistrationModal}
-      />
-      <ViewPriceList
-      open={openViewPriceListModal}
-      setOpen={setOpenBViewPriceListModal}
-      />
+      <BulkRegistration open={openBulkRegistrationModal} setOpen={setOpenBulkRegistrationModal} />
+      <ViewPriceList open={openViewPriceListModal} setOpen={setOpenBViewPriceListModal} />
       <PatientDuplicate
         open={openPatientsDuplicateModal}
         setOpen={setOpenPatientsDuplicateModal}

@@ -34,7 +34,6 @@ const InsuranceModal = ({
   const [relationsList, setRelationsList] = useState<any[]>();
   const dispatch = useAppDispatch();
 
-  // لتفادي مسح الـ plan عند أول تحميل edit
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>(undefined);
 
   // Payor pagination state
@@ -80,7 +79,6 @@ const InsuranceModal = ({
     setPayorPage(0);
   }, [payorSearchKeyword]);
 
-  // عند تغيير الـ Payor:
   useEffect(() => {
     const currentPayorId = patientInsurance?.insuranceProviderLkey
       ? Number(patientInsurance.insuranceProviderLkey)
@@ -91,7 +89,6 @@ const InsuranceModal = ({
     // reset plans list
     setPlanPage(0);
 
-    // لو فيه payor سابق نمسح الـ plan
     if (prevPayorId !== undefined) {
       setPatientInsurance(prev => ({
         ...prev,
