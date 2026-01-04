@@ -241,8 +241,7 @@ useEffect(() => {
           setOpen(false);
 
         } catch (error: any) {
-          console.error('Save failed:', error);
-
+          
           let errorMessage = 'Save failed';
           if (error?.data) {
             if (typeof error.data === 'string') errorMessage = error.data;
