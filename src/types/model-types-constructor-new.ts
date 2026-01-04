@@ -1148,7 +1148,7 @@ export const newPatientDocument: modelTypes.PatientDocument = {
 
 export const newPatient: modelTypes.Patient = {
   id: undefined,
-  mrn: '',
+  medicalRecordNumber: '',
 
   firstName: '',
   secondName: '',

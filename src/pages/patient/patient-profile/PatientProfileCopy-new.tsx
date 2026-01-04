@@ -63,7 +63,7 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
 
   if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
 
-  if (errorKey === 'unique.mrn') return 'A patient with the same MRN already exists.' + traceId;
+  if (errorKey === 'unique.patient_practitioner_facility') return 'A patient with the same medical record number already exists.' + traceId;
 
   if (errorKey === 'db.constraint')
     return detail || 'Database constraint violated while saving or updating patient.' + traceId;
@@ -330,7 +330,6 @@ const PatientProfile = () => {
               dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
               setOpenPatientsDuplicateModal(false);
 
-              // تنفيذ البحث بعد حفظ المريض من modal
               if (searchRef.current) {
                 setTimeout(() => {
                   searchRef.current?.();

@@ -217,7 +217,7 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   const keyMap = {
     'payload.required': 'Patient payload is required.',
     notfound: 'Patient not found.',
-    'unique.mrn': 'A patient with the same MRN already exists.',
+    'unique.medical_record_number': 'A patient with the same medical record number already exists.',
     'db.constraint': 'Database constraint violated while saving/updating patient.'
   };
 

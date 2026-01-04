@@ -940,7 +940,7 @@ export interface CommunityArea {
 export interface Patient {
   id?: number;
 
-  mrn?: string | null;
+  medicalRecordNumber?: string | null;
 
   firstName: string;
   secondName?: string | null;

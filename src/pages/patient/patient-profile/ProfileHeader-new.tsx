@@ -265,7 +265,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setPatientImageUrl('');
     setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
-
+   console.log("localPatient=================>",localPatient);
   return (
     <>
       <Stack>
@@ -311,7 +311,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </div>
                 <span className="patient-mrn">
                   {localPatient.id != undefined && `# `}
-                  {localPatient?.mrn}
+                  {localPatient?.medicalRecordNumber}
                 </span>
               </div>
               <div className="status-icons-container">

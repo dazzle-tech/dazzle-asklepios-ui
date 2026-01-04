@@ -51,19 +51,23 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
-    getPatientsByMrn: builder.query<PagedResult<modelTypes.Patient>, { mrn: string } & PagedParams>(
-      {
-        query: ({ mrn, page, size, sort = 'id,asc' }) => ({
-          url: `/api/patient/patients/by-mrn/${encodeURIComponent(mrn)}`,
-          params: { page, size, sort }
-        }),
-        transformResponse: mapPaged,
-        providesTags: res =>
-          res
-            ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
-            : ['Patient']
-      }
-    ),
+    getPatientsByMedicalRecordNumber: builder.query<
+      PagedResult<modelTypes.Patient>,
+      { medicalRecordNumber: string } & PagedParams
+    >({
+      query: ({ medicalRecordNumber, page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/patients/by-medicalRecordNumber/${encodeURIComponent(
+          medicalRecordNumber
+        )}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: res =>
+        res
+          ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
+          : ['Patient']
+    }),
+
 
     getPatientsByArchivingNumber: builder.query<
       PagedResult<modelTypes.Patient>,
@@ -204,8 +208,8 @@ export const {
   useLazyGetPatientsQuery,
 
   // filters
-  useGetPatientsByMrnQuery,
-  useLazyGetPatientsByMrnQuery,
+  useGetPatientsByMedicalRecordNumberQuery,
+  useLazyGetPatientsByMedicalRecordNumberQuery,
   useGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByArchivingNumberQuery,
   useGetPatientsByPrimaryPhoneQuery,
