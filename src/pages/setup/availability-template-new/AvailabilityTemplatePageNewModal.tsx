@@ -12,6 +12,7 @@ import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/d
 import { VscNotebookTemplate } from "react-icons/vsc";
 import { title } from 'process';
 import MyTab from '@/components/MyTab';
+import { FaPlus } from "react-icons/fa";
 
 const days = [
   'Sunday',
@@ -374,7 +375,10 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
         </div>
       </div>
 
-      <Divider />
+      {/* <Divider /> */}
+      <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+      <MyButton prefixIcon={() =>  <FaPlus />}>Add Channel</MyButton>
+        </div>
 
       <AvailabilityDayGrid
         step={record.step}
