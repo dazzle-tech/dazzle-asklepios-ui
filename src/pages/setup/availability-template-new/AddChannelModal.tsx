@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Form, CheckboxGroup, Checkbox } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import './AddChannelModal.less';
+import MyModal from '@/components/MyModal/MyModal';
+import Translate from '@/components/Translate';
 
 type ChannelForm = {
   name: string;
@@ -11,6 +13,7 @@ type ChannelForm = {
   capacity: number;
   services?: string[];
   color?: string;
+ 
 };
 
 const channelTypeOptions = [
@@ -26,15 +29,30 @@ const serviceOptions = [
 
 const AddChannelModal = ({
   record,
-  setRecord
+  setRecord,
+   open,
+  setOpen,
+  // width,
+  // resource,
+  // setResource,
+  // handleAddNew,
+  // handleUpdate,
 }: {
-  record: ChannelForm;
-  setRecord: (r: Partial<ChannelForm>) => void;
+  record: any;
+  setRecord: any;
+   open: boolean;
+  setOpen: any
 }) => {
-  return (
-    <Form fluid className="add-channel-form">
+   const [currentColor, setCurrentColor] = useState(record?.color);
+  // Modal content
+    const conjureFormContent = (stepNumber = 0) => {
+      switch (stepNumber) {
+        case 0:
+          return (
+             <Form fluid className="add-channel-form">
 
-      <MyInput
+       
+       <MyInput
         column
         fieldName="name"
         fieldType="text"
@@ -42,10 +60,8 @@ const AddChannelModal = ({
         record={record}
         setRecord={setRecord}
         required
+        width="100%"
       />
-
-
-      <div className="block">
         <MyInput
           column
           fieldName="type"
@@ -56,45 +72,20 @@ const AddChannelModal = ({
           selectData={channelTypeOptions}
           selectDataLabel="label"
           selectDataValue="value"
+           width="100%"
           required
         />
-        <div className="help-text">
-          Book into pool; assign practitioner near appointment time.
-        </div>
-      </div>
+       
 
-      <div className="two-cols">
-        <MyInput
-          column
-          fieldName="facility"
-          label="Facility"
-          record={record}
-          setRecord={setRecord}
-        />
-        <MyInput
-          column
-          fieldName="department"
-          label="Department"
-          record={record}
-          setRecord={setRecord}
-        />
-      </div>
+      
 
-      <MyInput
-        column
-        fieldName="capacity"
-        label="Capacity"
-        fieldType="number"
-        record={record}
-        setRecord={setRecord}
-        required
-      />
+      
 
       <div className="block">
-        <div className="label">
+        {/* <div className="label">
           Services Allowed <span className="muted">(optional)</span>
-        </div>
-
+        </div> */}
+        <Translate>Services Allowed(optional):</Translate>
         <CheckboxGroup
           inline
           value={record.services ?? []}
@@ -111,33 +102,73 @@ const AddChannelModal = ({
       </div>
 
       <div className="block">
-        <div className="label">Channel Color</div>
+        <Translate>Channel Color</Translate> 
 
         <div className="color-picker-row">
             <input
             type="color"
-            value={record.color ?? '#4C7EF3'}
+            value={currentColor}
             onChange={e => {
                 const nextColor = e.target.value;
-                console.log('[AddChannelModal] picked color:', nextColor);
-                setRecord({ color: nextColor });
+                setCurrentColor(nextColor);
             }}
             />
+            
 
-
-          <div
+          {/* <div
             className="color-preview"
             style={{ background: record.color ?? '#4C7EF3' }}
-          />
+          /> */}
 
-          <span className="color-hint">
-            Used to visually identify this channel in the schedule.
-          </span>
+         
         </div>
+        
       </div>
-
+      <div className="help-text">
+          Book into pool; assign practitioner near appointment time.
+        </div>
     </Form>
-  );
+          );
+        default:
+          return null;
+      }
+    };
+
+  return( 
+    <MyModal
+                open={open}
+                setOpen={setOpen}
+                title="Add Channel"
+                size="xs"
+               content={conjureFormContent}
+                actionButtonLabel="Add"
+                // isDisabledActionBtn={
+                //     !channelForm.name?.trim() || channelForm.capacity < 1
+                // }
+                actionButtonFunction={() => {
+                    // const payload = {
+                    //     name: channelForm.name.trim(),
+                    //     color: channelForm.color
+                    // };
+
+                    // console.log('[AvailabilityDayGrid] onAddChannel payload:', payload);
+
+                    // onAddChannel(payload);
+
+                    // setChannelForm({
+                    //     name: '',
+                    //     type: 'DEPARTMENT_POOL',
+                    //     facility: '',
+                    //     department: '',
+                    //     capacity: 1,
+                    //     color: '#4C7EF3'
+                    // });
+
+                    // setOpenAddChannel(false);
+                }}
+
+            />
+  )
 };
 
 export default AddChannelModal;

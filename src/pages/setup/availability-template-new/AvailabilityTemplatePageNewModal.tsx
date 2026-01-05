@@ -13,6 +13,9 @@ import { VscNotebookTemplate } from "react-icons/vsc";
 import { title } from 'process';
 import MyTab from '@/components/MyTab';
 import { FaPlus } from "react-icons/fa";
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+import AddChannelModal from './AddChannelModal';
 
 const days = [
   'Sunday',
@@ -59,66 +62,39 @@ type ChannelsByDay = {
   [dayIndex: number]: Channel[];
 };
 
-const minutesFromDate = (date: Date) => date.getHours() * 60 + date.getMinutes();
 
-const getDaysBetween = (from: Date, to: Date) => {
-  const days: number[] = [];
-  const d = new Date(from);
 
-  while (d <= to) {
-    days.push(d.getDay());
-    d.setDate(d.getDate() + 1);
-  }
 
-  return Array.from(new Set(days));
+
+
+type EditAvailabilityTemplateModalNewProps = {
+  template: any;
+  templatesData: any;
+  setTemplatesData: any
 };
 
-
-const parseLocalDateTime = (value: any): Date | null => {
-  if (!value) return null;
-
-  if (value instanceof Date) return value;
-
-  if (typeof value === 'string') {
-    const [datePart, timePart] = value.trim().split(' ');
-    if (!datePart || !timePart) return null;
-
-    const [dd, mm, yyyy] = datePart.split('-').map(Number);
-    const [HH, MM] = timePart.split(':').map(Number);
-
-    if (
-      [dd, mm, yyyy, HH, MM].some(n => Number.isNaN(n)) ||
-      !dd || !mm || !yyyy
-    ) {
-      return null;
+const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNewProps> = ({ template, templatesData, setTemplatesData }) => {
+  const [record, setRecord] = useState<any>(
+    {
+      name: '',
+      facilityId: null,
+      departmentId: null,
+      effectiveFrom: null,
+      effectiveTo: null,
+      status: 'DRAFT',
+      step: 60,
+      slotsBefore: 5,
     }
+  );
 
-    return new Date(yyyy, mm - 1, dd, HH, MM, 0, 0);
-  }
-
-  return null;
-};
-
-
-const EditAvailabilityTemplateModalNew: React.FC = () => {
-  const [record, setRecord] = useState<any>({
-    name: '',
-    facilityId: null,
-    departmentId: null,
-    effectiveFrom: null,
-    effectiveTo: null,
-    status: 'DRAFT',
-    step: 60,
-    slotsBefore: 5
-  });
-
+  const dispatch = useAppDispatch();
   const [activeDay, setActiveDay] = useState(0);
 
 
 
   const [availability, setAvailability] = useState<AvailabilityByDay>({});
   const [openPreview, setOpenPreview] = useState(false);
-  const [openPublishModal, setOpenPublishModal] = useState(false);
+  const [openAddChannelModal, setOpenAddChannelModal] = useState(false);
   const [publishChannelId, setPublishChannelId] = useState<string | null>(null);
   const [channelsByDay, setChannelsByDay] = useState<ChannelsByDay>({});
   const {
@@ -127,23 +103,46 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
     isFetching: isFetchingFacilities
   } = useGetAllFacilitiesQuery({});
   const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
-      {
-        facilityId: record?.facilityId
-      },
-      {
-        skip: !record?.facilityId
-      }
-    );
- 
-    const tabData = () => {
-      let arr = [];
-      {days.map((day, index) => (
-         
-            arr.push({title: day, content:""})
-          ))}
-          return arr;
+    {
+      facilityId: record?.facilityId
+    },
+    {
+      skip: !record?.facilityId
     }
-    
+  );
+
+  const tabData = () => {
+    let arr = [];
+    {
+      days.map((day, index) => (
+
+        arr.push({
+          title: day, content:
+            <>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: "2px" }}>
+                <MyButton onClick={() => setOpenAddChannelModal(true)} prefixIcon={() => <FaPlus />}>Add Channel</MyButton>
+              </div>
+              <AvailabilityDayGrid
+                step={120}
+                activeDay={activeDay}
+                setActiveDay={setActiveDay}
+                channels={channelsByDay[activeDay] ?? []}
+                availability={availability}
+                setAvailability={setAvailability}
+                onAddChannel={handleAddChannel}
+                onRemoveChannel={handleRemoveChannel}
+                channelsDummyData={record?.channelsData?.[day] ?? []}
+                templatesData={templatesData}
+                setTemplatesData={setTemplatesData}
+                template={record}
+              />
+            </>
+        })
+      ))
+    }
+    return arr;
+  }
+
 
   const handleAddChannel = ({ name, color }: { name: string; color?: string }) => {
     const trimmedName = name?.trim();
@@ -169,67 +168,67 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
     }));
   };
 
-  const handlePublish = (targetChannelId: string) => {
-    const channel =
-      (channelsByDay[activeDay] ?? []).find(c => c.id === targetChannelId);
-    if (!channel) return;
+  const handlePublish = () => {
+    // 1️⃣ نحدد الـ id جديد (بافتراض آخر id + 1)
+    const newId = (templatesData.length + 1).toString();
 
-    const from = parseLocalDateTime(record.effectiveFrom);
-    const to = parseLocalDateTime(record.effectiveTo);
+    // 2️⃣ نعمل object جديد للـ template
+    const newTemplate = { ...record, id: newId };
+    //  {
+    //   id: newId,
+    //   facilityId: 1, // أو خليها من اختيارك
+    //   departmentId: selectedDepartment.id,
+    //   description: `${selectedDepartment.name} - Template #${newId}`,
+    //   availability_json: '{}',
+    //   is_valid: true,
+    //   name: `template${newId}`,
+    //   step: 60,
+    //   effectiveFromDate: new Date(), // ممكن تخليها اختيار
+    //   effectiveFromHour: new Date('1970-01-01T08:00'),
+    //   effectiveToDate: new Date(),
+    //   effectiveToHour: new Date('1970-01-01T16:00'),
+    //   slotsBeforeAfter: 5,
+    //   channelsData: {} as Record<string, any[]> // راح نملأها تحت
+    // };
 
-    if (!from || !to || from >= to) {
-      console.warn('INVALID EFFECTIVE RANGE');
-      return;
-    }
+    // 3️⃣ نحدد الأيام
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-    const dayIndex = from.getDay();
-
-    const poolStart =
-      from.getHours() * 60 + from.getMinutes();
-
-    const poolEnd =
-      to.getHours() * 60 + to.getMinutes();
-
-    setAvailability(prev => {
-      const dayData = prev[dayIndex] ?? [];
-
-      const channelData =
-        dayData.find(c => c.channelId === channel.id) ?? {
-          channelId: channel.id,
-          intervals: []
-        };
-
-      const normalIntervals = channelData.intervals.filter(
-        i => i.type === 'NORMAL'
-      );
-
-      return {
-        ...prev,
-        [dayIndex]: [
-          ...dayData.filter(c => c.channelId !== channel.id),
-          {
-            channelId: channel.id,
-            intervals: [
-              {
-                id: crypto.randomUUID(),
-                start: poolStart,
-                end: poolEnd,
-                type: 'POOL',
-                meta: {
-                  name: record.name,
-                  capacity: normalIntervals.length || 1,
-                  step: record.step,
-                  slotsBefore: record.slotsBefore,
-                  color: channel.color
-                }
-              },
-              ...normalIntervals
-            ]
-          }
-        ]
-      };
+    // 4️⃣ لكل يوم نحط channel واحد للـ department
+    daysOfWeek.forEach(day => {
+      newTemplate.channelsData[day] = [
+        {
+          id: 1,
+          channelName: 'General Clinic',
+          type: 'Department Pool',
+          capacity: '3 concurrent',
+          allowedServices: ['service1, service2'],
+          color: '#6982F0',
+          intervals: [
+            // { id: `int-${newId}-${day}`, startTime: "09:00", endTime: "12:00", slotDuration: "30 minutes" }
+          ]
+        }
+      ];
     });
+
+    // 5️⃣ نضيفه على الـ templates array
+    setTemplatesData(prev => [...prev, newTemplate]);
+    setRecord(newTemplate);
+
+    // console.log("New template published!", newTemplate);
+    dispatch(
+      notify({
+        msg: 'Added Successfully',
+        sev: 'success',
+      })
+    );
   };
+
+
+  // Effects
+  useEffect(() => {
+    setRecord(template);
+  }, [template]);
 
   return (
     <div className="availability-template-modal">
@@ -270,22 +269,22 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
           />
 
           <MyButton appearance="ghost" color="#525252" prefixIcon={() => <VscNotebookTemplate />
-}>
+          }>
             Copy from template
           </MyButton>
         </div>
 
         <div className="template-header2">
           <MyInput
-            fieldName="effectiveFrom"
+            fieldName="effectiveFromDate"
             fieldType="date"
             fieldLabel="Effective From Date"
             record={record}
             setRecord={setRecord}
             width="12vw"
           />
-           <MyInput
-            fieldName="effectiveFrom"
+          <MyInput
+            fieldName="effectiveFromHour"
             fieldType="time"
             fieldLabel="Effective From Hour"
             record={record}
@@ -294,15 +293,15 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
           />
 
           <MyInput
-            fieldName="effectiveTo"
+            fieldName="effectiveToDate"
             fieldType="date"
             fieldLabel="Effective To Date"
             record={record}
             setRecord={setRecord}
             width="12vw"
           />
-           <MyInput
-            fieldName="effectiveTo"
+          <MyInput
+            fieldName="effectiveToHour"
             fieldType="time"
             fieldLabel="Effective To Hour"
             record={record}
@@ -351,7 +350,7 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
       <Divider />
 
       <div className="days-header">
-        <MyTab 
+        <MyTab
           data={tabData()}
         />
 
@@ -366,8 +365,9 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
 
           <MyButton
             appearance="primary"
-            onClick={() => setOpenPublishModal(true)}
-          // onClick={() => handlePublish(publishChannelId)}
+            // onClick={() => setOpenPublishModal(true)}
+            disabled={record?.id ? true : false}
+            onClick={() => handlePublish()}
           >
             Publish new version
           </MyButton>
@@ -375,21 +375,6 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
         </div>
       </div>
 
-      {/* <Divider /> */}
-      <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-      <MyButton prefixIcon={() =>  <FaPlus />}>Add Channel</MyButton>
-        </div>
-
-      <AvailabilityDayGrid
-        step={record.step}
-        activeDay={activeDay}
-        setActiveDay={setActiveDay}
-        channels={channelsByDay[activeDay] ?? []}
-        availability={availability}
-        setAvailability={setAvailability}
-        onAddChannel={handleAddChannel}
-        onRemoveChannel={handleRemoveChannel}
-      />
 
       <PreviewAvailabilityModal
         open={openPreview}
@@ -401,39 +386,11 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
       />
 
 
-      <MyModal
-        open={openPublishModal}
-        setOpen={setOpenPublishModal}
-        title="Publish New Version"
-        size="30vw"
-        content={
-          <Form fluid>
-            <MyInput
-              fieldName="publishChannel"
-              fieldType="select"
-              label="Publish on Channel"
-              record={{ publishChannel: publishChannelId }}
-              setRecord={(r: any) => setPublishChannelId(r.publishChannel)}
-              selectData={(channelsByDay[activeDay] ?? []).map(c => ({
-                label: c.name,
-                value: c.id
-              }))}
-
-              selectDataLabel="label"
-              selectDataValue="value"
-              placeholder="Select channel"
-              width="100%"
-            />
-          </Form>
-        }
-        actionButtonLabel="Publish"
-        isDisabledActionBtn={!publishChannelId}
-        actionButtonFunction={() => {
-          if (!publishChannelId) return;
-
-          handlePublish(publishChannelId);
-          setOpenPublishModal(false);
-        }}
+      <AddChannelModal
+        open={openAddChannelModal}
+        setOpen={setOpenAddChannelModal}
+        record=''
+        setRecord=''
       />
 
 

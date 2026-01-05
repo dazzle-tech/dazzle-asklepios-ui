@@ -3,6 +3,7 @@ import { Form, Checkbox, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import './AddIntervalModal.less';
+import MyModal from '@/components/MyModal/MyModal';
 
 /* ===================== HELPERS ===================== */
 
@@ -23,7 +24,7 @@ type IntervalRecord = {
     end: Date | null;
     applyAllChannels: boolean;
     slotDuration: number;
-    startStep: number;
+    strategy: string
 };
 
 /* ===================== COMPONENT ===================== */
@@ -32,120 +33,170 @@ const AddIntervalModal = ({
     step,
     dayLabel = 'Sunday',
     record,
-    setRecord
+    setRecord,
+    open,
+    setOpen
 }: {
     step: number;
     dayLabel?: string;
     record: IntervalRecord;
     setRecord: React.Dispatch<React.SetStateAction<IntervalRecord>>;
+    open: boolean;
+    setOpen: any;
 }) => {
-    return (
-        <Form fluid className="add-interval-modal">
-            <div className="day-title">{dayLabel}</div>
 
-            <h6>
-                <Translate>Interval</Translate>
-            </h6>
+    const conjureFormContent = (stepNumber = 0) => {
+        switch (stepNumber) {
+            case 0:
+                return (
+                    <Form fluid className="add-interval-modal">
+                        <div className="day-title">{dayLabel}</div>
+                        <Divider />
+                        <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                            <h6>
+                                <Translate>Interval</Translate>
+                            </h6>
+                            <Checkbox
+                                checked={record.applyAllChannels}
+                                onChange={(_, checked) =>
+                                    setRecord(prev => ({ ...prev, applyAllChannels: checked }))
+                                }
+                            >
+                                <Translate>Apply to all channels on</Translate> {dayLabel}
+                            </Checkbox>
+                        </div>
+                        <div className="interval-row">
+                            <MyInput
+                                fieldName="start"
+                                fieldType="time"
+                                record={record}
+                                setRecord={setRecord}
+                                fieldLabel='Start Time'
+                                placeholder="Start Time"
+                                width="100%"
+                            />
 
-            <div className="interval-row">
-                <MyInput
-                    fieldName="start"
-                    fieldType="time"
-                    record={record}
-                    setRecord={setRecord}
-                    placeholder="Start Time"
-                    width="100%"
-                />
+                            <MyInput
+                                fieldName="end"
+                                fieldType="time"
+                                record={record}
+                                setRecord={setRecord}
+                                placeholder="End Time"
+                                fieldLabel='End Time'
+                                width="100%"
+                            />
+                        </div>
 
-                <MyInput
-                    fieldName="end"
-                    fieldType="time"
-                    record={record}
-                    setRecord={setRecord}
-                    placeholder="End Time"
-                    width="100%"
-                />
-            </div>
+                        {record.start && record.end && record.end > record.start && (
+                            <div className="interval-duration-bar">
+                                {formatDuration(record.start, record.end)}
+                            </div>
+                        )}
 
-            {record.start && record.end && record.end > record.start && (
-                <div className="interval-duration-bar">
-                    {formatDuration(record.start, record.end)}
-                </div>
-            )}
-
-            <Checkbox
+                        {/* <Checkbox
                 checked={record.applyAllChannels}
                 onChange={(_, checked) =>
                     setRecord(prev => ({ ...prev, applyAllChannels: checked }))
                 }
             >
                 <Translate>Apply to all channels on</Translate> {dayLabel}
-            </Checkbox>
+            </Checkbox> */}
 
-            <Divider />
+                        <Divider />
 
-            <h6>
-                <Translate>Slot Strategy</Translate>
-            </h6>
+                        <h6>
+                            <Translate>Slot Strategy</Translate>
+                        </h6>
 
-            <div className="slot-strategy-row">
-                <MyInput
-                    fieldName="strategy"
-                    showLabel={false}
-                    fieldType="select"
-                    record={{ strategy: 'FIXED' }}
-                    disabled
-                    selectData={[{ label: 'Fixed Duration', value: 'FIXED' }]}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    width="15vw"
-                />
-        <Form fluid layout='inline'>
+                        <div className="slot-strategy-row">
+                             <Form fluid layout='inline'>
+                            <MyInput
+                                fieldName="strategy"
+                                fieldType="select"
+                                record={record}
+                                setRecord={setRecord}
+                                selectData={[{ label: 'Fixed Duration', value: 'FIXED' },{ label: 'As Department Pool', value: 'asDepartmentPool' }]}
+                                selectDataLabel="label"
+                                selectDataValue="value"
+                                width="15vw"
+                            />
+                            {/* <Form fluid layout='inline'> */}
 
-                <MyInput
-                    fieldName="slotDuration"
-                    fieldType="number"
-                    record={record}
-                    setRecord={setRecord}
-                    width={"15vw"}
-                    rightAddon="min"
-                />
-        </Form>
-            </div>
+                                <MyInput
+                                    fieldName="slotDuration"
+                                    fieldType="number"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    width={"15vw"}
+                                    rightAddon="min"
+                                    disabled={record.strategy === "asDepartmentPool"}
+                                />
+                            </Form>
+                        </div>
 
-            <MyInput
-                fieldName="startStep"
-                fieldType="select"
-                record={record}
-                setRecord={setRecord}
-                selectData={[
-                    { label: '5 mins', value: 5 },
-                    { label: '10 mins', value: 10 },
-                    { label: '15 mins', value: 15 }
-                ]}
-                selectDataLabel="label"
-                selectDataValue="value"
-                width={200}
-            />
+                        
 
-            {/* ================= Preview ================= */}
-            <div className="slot-preview">
-                08:00 - 08:30 - 09:00 - … - 12:30
-            </div>
+                        {/* ================= Preview ================= */}
+                        <div className="slot-preview">
+                            08:00 - 08:30 - 09:00 - … - 12:30
+                        </div>
 
-            <Divider />
-            {/* <h6>
-                <Translate>Optional Breaks</Translate>
-            </h6>
+                        <Divider />
 
-            <div className="add-break">
-                + <Translate>Add break</Translate>
-            </div>
+                    </Form>
+                );
+            default:
+                return null;
+        }
+    };
+    return (
+        <MyModal
+            open={open}
+            setOpen={setOpen}
+            title="Add Interval"
+            size="40vw"
+            content={conjureFormContent}
+            actionButtonLabel="Save"
+            // isDisabledActionBtn={
+            //     intervalForm.start === null ||
+            //     intervalForm.end === null ||
+            //     intervalForm.end <= intervalForm.start
+            // }
+            actionButtonFunction={() => {
+                // if (!activeChannelId) return;
 
-            <div className="break-note">
-                <Translate>Breaks subtract from working time.</Translate>
-            </div>  */}
-        </Form>
+                // const { start, end, applyAllChannels } = intervalForm;
+                // if (!start || !end) return;
+
+                // const startMinutes = start.getHours() * 60 + start.getMinutes();
+                // const endMinutes = end.getHours() * 60 + end.getMinutes();
+
+                // const addToChannel = (channelId: string) => {
+                //     const channelData = channels.find(c => c.id === channelId);
+                //     if (!channelData) return;
+
+                //     upsertChannelAvailability(channelId, old => [
+                //         ...old,
+                //         {
+                //             id: crypto.randomUUID(),
+                //             start: startMinutes,
+                //             end: endMinutes,
+                //             type: 'NORMAL'
+                //         }
+
+                //     ]);
+                // };
+
+
+                // if (applyAllChannels) {
+                //     channels.forEach(c => addToChannel(c.id));
+                // } else {
+                //     addToChannel(activeChannelId);
+                // }
+
+                // setOpenAddInterval(false);
+            }}
+        />
     );
 };
 
