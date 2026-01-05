@@ -5,8 +5,10 @@ import AvailabilityTemplateSummaryCard from './AvailabilityTemplateSummaryCard';
 import MyModal from '@/components/MyModal/MyModal';
 import AddIntervalModal from './AddIntervalModal';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Divider, Form } from 'rsuite';
 import AddChannelModal from './AddChannelModal';
+import MyButton from '@/components/MyButton/MyButton';
+import { FaPlus } from "react-icons/fa";
 
 type Channel = {
     id: string;
@@ -145,6 +147,57 @@ const AvailabilityDayGrid = ({
         slotDuration: step,
         startStep: step
     });
+
+    const channelsDummyData = [
+        {
+            id: 1,
+            channelName: "Pediatrics Pool",
+            type: "Department Pool",
+            capacity: "3 concurrent",
+            allowedServices: ["Vaccination", "Follow-up"],
+            color: "#6982F0",
+            intervals: [
+                {
+                    id: "int-101",
+                    startTime: "09:00",
+                    endTime: "12:30",
+                    slotDuration: '30 minutes', // بالدقائق
+                }
+            ]
+        },
+        {
+            id: 2,
+            channelName: "Dr. Emma Johnson",
+            type: "Practitioner",
+            capacity: "1 patient",
+            allowedServices: ["Vaccination", "Follow-up"],
+            color: "#71946C",
+            intervals: [
+                {
+                    id: "int-201",
+                    startTime: "09:00",
+                    endTime: "12:30",
+                    slotDuration: '30 minutes',
+                }
+            ]
+        },
+        {
+            id: 3,
+            channelName: "Exam Room 1",
+            type: "Resource",
+            capacity: "1 concurrent",
+            allowedServices: ["Vaccination", "Consultation"],
+            color: "#8575A1",
+            intervals: [
+                {
+                    id: "int-301",
+                    startTime: "09:00",
+                    endTime: "12:30",
+                    slotDuration: '30 minutes',
+                }
+            ]
+        }
+    ];
 
     const getChannelIntervals = useCallback(
         (channelId: string) =>
@@ -327,16 +380,21 @@ const AvailabilityDayGrid = ({
 
                                             ) : (
                                                 <AvailabilityIntervalCard
-                                                    start={formatMinutes(interval.start)}
-                                                    end={formatMinutes(interval.end)}
-                                                    slotLabel={`${step} minutes`}
-                                                    type={interval.type}
-                                                    color={inheritedColor}
-                                                    onDelete={() =>
-                                                        upsertChannelAvailability(channel.id, old =>
-                                                            old.filter(i => i.id !== interval.id)
-                                                        )
-                                                    }
+                                                    // start={formatMinutes(interval.start)}
+                                                    // end={formatMinutes(interval.end)}
+                                                    // slotLabel={`${step} minutes`}
+                                                    // type={interval.type}
+                                                    // color={inheritedColor}
+                                                    // onDelete={() =>
+                                                    //     upsertChannelAvailability(channel.id, old =>
+                                                    //         old.filter(i => i.id !== interval.id)
+                                                    //     )
+                                                    // }
+                                                    title="Test"
+                                                    type="Department"
+                                                    capacity="2"
+                                                    services={['service1', 'service2']}
+                                                    onSettingsClick={null}
                                                 />
 
                                             )}
@@ -371,10 +429,10 @@ const AvailabilityDayGrid = ({
                                     + Add Interval
                                 </button>
 
-                                    <button
+                                <button
                                     className="channel-footer-btn secondary">
                                     📋 Copy day to
-                                    </button>
+                                </button>
 
 
                             </div>
@@ -383,13 +441,61 @@ const AvailabilityDayGrid = ({
                 })}
 
                 <div
-                    className="channel-column add-channel-column"
-                    onClick={() => setOpenAddChannel(true)}
+                    // className="channel-column add-channel-column"
+                    // onClick={() => setOpenAddChannel(true)}
+                    style={{display: "flex", padding: "5px"}}
                 >
-                    <div className="channel-header add-channel-header">＋ Add Channel</div>
-                    {times.map(t => (
+
+                    <div style={{ display: "flex" }}>
+                        {channelsDummyData.map(t => (
+                            <>
+                                <div key={t.id}
+                                    style={{
+                                        width: "320px",
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px'
+                                    }}
+                                // className="channel-cell add-channel-cell"
+                                ><>
+                                        <AvailabilityTemplateSummaryCard
+                                            title={t.channelName}
+                                            type={t.type}
+                                            capacity={t.capacity}
+                                            services={t.allowedServices}
+                                            backgroundColor={t.color}
+                                        />
+                                        {t?.intervals?.map(interval => (
+                                            // className="channel-cell add-channel-cell"
+
+
+
+
+                                            <AvailabilityIntervalCard
+                                                start={interval.startTime}
+                                                end={interval.endTime}
+                                                slotLabel={interval.slotDuration}
+                                                backgroundColor={t.color}
+                                            // type={interval.}
+                                            />
+                                        ))}
+                                        <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"}>Add Interval</MyButton>
+                                        <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"}>Add Break</MyButton>
+                                        {/* <Divider vertical /> */}
+                                    </>
+                                </div>
+                                {/* <Divider vertical /> */}
+                            </>
+
+                        ))}
+                    </div>
+
+                    {/* <h2>hi</h2> */}
+                    {/* <div className="channel-header add-channel-header">＋ Add Channel</div> */}
+                    {/* {times.map(t => (
                         <div key={t.minutes} className="channel-cell add-channel-cell" />
-                    ))}
+                    ))} */}
+                    {/* <MyButton>Add Channel</MyButton> */}
                 </div>
             </div>
 

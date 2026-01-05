@@ -7,6 +7,9 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import EditAvailabilityTemplateModalNew from './AvailabilityTemplatePageNewModal';
+import AvailabilityIntervalCard from './AvailabilityIntervalCard';
+import AvailabilityTemplateSummaryCard from './AvailabilityTemplateSummaryCard';
+import SlotCard from './SlotCard';
 
 
 const mockAvailabilityTemplates = [
@@ -37,6 +40,7 @@ const AvailabilityTemplatePageNew = () => {
   const [data, setData] = useState(mockAvailabilityTemplates);
   const [record, setRecord] = useState<{ filter?: string; value?: string }>({});
   const [openModal, setOpenModal] = useState(false);
+  const [openTestModal, setOpenTestModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
 
   const columns = [
@@ -121,17 +125,29 @@ const AvailabilityTemplatePageNew = () => {
         data={mockAvailabilityTemplates}
         height={500}
         filters={filters}
-        tableButtons={<MyButton
-                        icon="plus"
-                        appearance="primary"
-                        onClick={() => {
-                          setSelectedTemplate(null);
-                          setOpenModal(true);
-                        }}
-                      >
-                        Add Template
-                      </MyButton>
-                      }
+        tableButtons={
+          <>
+            <MyButton
+              icon="plus"
+              appearance="primary"
+              onClick={() => {
+                setSelectedTemplate(null);
+                setOpenModal(true);
+              }}
+            >
+              Add Template
+            </MyButton>
+            {/* <MyButton
+              icon="plus"
+              appearance="primary"
+              onClick={() => {
+                setOpenTestModal(true);
+              }}
+            >
+              Test Button
+            </MyButton> */}
+          </>
+        }
       />
 
 
@@ -148,6 +164,35 @@ const AvailabilityTemplatePageNew = () => {
         size="70vw"
         content={
           <EditAvailabilityTemplateModalNew />
+        }
+      />
+
+      <MyModal
+        open={openTestModal}
+        setOpen={setOpenTestModal}
+        title="Test"
+        size="70vw"
+        content={
+          <>
+            <AvailabilityTemplateSummaryCard
+              title="Test"
+              type="Department"
+              capacity="2"
+              services={['service1', 'service2']}
+              onSettingsClick={null}
+            />
+            <AvailabilityIntervalCard
+              start="9:00"
+              end="10:00"
+              slotLabel="Test"
+              type='NORMAL'
+
+            />
+            <SlotCard 
+              time="9:30 - 9:40"
+              slots="2"
+             />
+          </>
         }
       />
 

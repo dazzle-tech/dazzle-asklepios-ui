@@ -9,12 +9,19 @@
   display: flex;
   flex-wrap: wrap;
   gap: 1vw;
+  align-items: center;
+}
+.template-header2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1vw;
 }
 
 .days-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  
 }
 
 .days-actions {
@@ -368,3 +375,104 @@
   flex-direction: column;
   gap: 6px;
 }
+
+ .header-of-availability-template-summary-card {
+    // background-color: #6982F0;
+    color: #fff;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center,
+  }
+
+  .availability-template-summary-card{
+    width: 300px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    // background-color: #B2BFEB;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+  .body-of-availability-template-summary-card{
+    padding: 12px;
+    color: #333;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+
+
+  .time-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #9fc5ff, #6fa8ff);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: Arial, sans-serif;
+}
+
+.time-text {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.slots-badge {
+  background-color: #e9f0ff;
+  color: #3b6dcc;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+
+
+
+.services-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.services-text {
+  max-width: 280px;       /* 👈 العرض الثابت */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+// /* ---------- Popup ---------- */
+
+// .services-popup {
+//   position: fixed;
+//   top: 0;
+//   left: 0;
+//   width: 100%;
+//   height: 100%;
+//   background: rgba(0, 0, 0, 0.3);
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   z-index: 1000;
+// }
+
+// .services-popup-content {
+//   background: #fff;
+//   padding: 16px;
+//   border-radius: 8px;
+//   min-width: 250px;
+// }
+
+// .services-popup-content ul {
+//   margin-top: 8px;
+//   padding-left: 18px;
+// }
+
+// .services-popup-content button {
+//   margin-top: 12px;
+// }

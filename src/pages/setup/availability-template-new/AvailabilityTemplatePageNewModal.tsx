@@ -7,6 +7,11 @@ import './styles.less';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
 import PreviewAvailabilityModal from './PreviewAvailabilityModal';
 import MyModal from '@/components/MyModal/MyModal';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { VscNotebookTemplate } from "react-icons/vsc";
+import { title } from 'process';
+import MyTab from '@/components/MyTab';
 
 const days = [
   'Sunday',
@@ -115,6 +120,29 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
   const [openPublishModal, setOpenPublishModal] = useState(false);
   const [publishChannelId, setPublishChannelId] = useState<string | null>(null);
   const [channelsByDay, setChannelsByDay] = useState<ChannelsByDay>({});
+  const {
+    data: facilityListResponse,
+    isLoading: isGettingFacilities,
+    isFetching: isFetchingFacilities
+  } = useGetAllFacilitiesQuery({});
+  const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
+      {
+        facilityId: record?.facilityId
+      },
+      {
+        skip: !record?.facilityId
+      }
+    );
+ 
+    const tabData = () => {
+      let arr = [];
+      {days.map((day, index) => (
+         
+            arr.push({title: day, content:""})
+          ))}
+          return arr;
+    }
+    
 
   const handleAddChannel = ({ name, color }: { name: string; color?: string }) => {
     const trimmedName = name?.trim();
@@ -146,7 +174,7 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
     if (!channel) return;
 
     const from = parseLocalDateTime(record.effectiveFrom);
-    const to   = parseLocalDateTime(record.effectiveTo);
+    const to = parseLocalDateTime(record.effectiveTo);
 
     if (!from || !to || from >= to) {
       console.warn('INVALID EFFECTIVE RANGE');
@@ -209,58 +237,81 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
           <MyInput
             fieldName="name"
             fieldType="text"
-            label="Template Name"
+            fieldLabel="Template Name"
             record={record}
             setRecord={setRecord}
             width="20vw"
           />
-
           <MyInput
+            column
+            fieldLabel="Facility"
+            selectData={facilityListResponse ?? []}
+            fieldType="select"
+            selectDataLabel="name"
+            selectDataValue="id"
             fieldName="facilityId"
-            fieldType="text"
-            label="Facility"
             record={record}
             setRecord={setRecord}
             width="14vw"
           />
 
           <MyInput
+            width="12vw"
             fieldName="departmentId"
-            fieldType="text"
-            label="Department"
+            fieldLabel="Department"
+            fieldType="select"
+            selectData={departmentListResponse ?? []}
+            selectDataLabel="name"
+            selectDataValue="id"
             record={record}
             setRecord={setRecord}
-            width="12vw"
+            menuMaxHeight={200}
           />
 
-          <MyButton appearance="subtle">
+          <MyButton appearance="ghost" color="#525252" prefixIcon={() => <VscNotebookTemplate />
+}>
             Copy from template
           </MyButton>
         </div>
 
-        <div className="template-header">
+        <div className="template-header2">
           <MyInput
             fieldName="effectiveFrom"
-            fieldType="datetime"
-            label="Effective From"
+            fieldType="date"
+            fieldLabel="Effective From Date"
             record={record}
             setRecord={setRecord}
             width="12vw"
+          />
+           <MyInput
+            fieldName="effectiveFrom"
+            fieldType="time"
+            fieldLabel="Effective From Hour"
+            record={record}
+            setRecord={setRecord}
+            width="7vw"
           />
 
           <MyInput
             fieldName="effectiveTo"
-            fieldType="datetime"
-            label="Effective To"
+            fieldType="date"
+            fieldLabel="Effective To Date"
             record={record}
             setRecord={setRecord}
             width="12vw"
           />
-
+           <MyInput
+            fieldName="effectiveTo"
+            fieldType="time"
+            fieldLabel="Effective To Hour"
+            record={record}
+            setRecord={setRecord}
+            width="7vw"
+          />
           <MyInput
             fieldName="status"
             fieldType="select"
-            label="Status"
+            fieldLabel="Status"
             record={record}
             setRecord={setRecord}
             width="10vw"
@@ -275,29 +326,20 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
 
           <MyInput
             fieldName="step"
-            fieldType="select"
-            label="Step"
+            fieldType="number"
+            fieldLabel="Step"
             record={record}
             setRecord={setRecord}
             width="10vw"
-            selectData={[
-              { label: '5 mins', value: 5 },
-              { label: '10 mins', value: 10 },
-              { label: '15 mins', value: 15 },
-              { label: '30 mins', value: 30 },
-              { label: '60 mins', value: 60 }
-            ]}
-            selectDataLabel="label"
-            selectDataValue="value"
+            rightAddon="min"
           />
 
           <MyInput
             fieldName="slotsBefore"
             fieldType="number"
-            label="Slots"
+            fieldLabel="Slots Before/After"
             record={record}
             setRecord={setRecord}
-            leftAddon="Before:"
             leftAddonwidth={"auto"}
             rightAddon="min"
             width="6vw"
@@ -308,18 +350,9 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
       <Divider />
 
       <div className="days-header">
-        <Tabs
-          activeKey={activeDay}
-          onSelect={key => setActiveDay(Number(key))}
-        >
-          {days.map((day, index) => (
-            <Tabs.Tab
-              key={index}
-              eventKey={index}
-              title={<Translate>{day}</Translate>}
-            />
-          ))}
-        </Tabs>
+        <MyTab 
+          data={tabData()}
+        />
 
         <div className="days-actions">
           <MyButton
@@ -333,8 +366,9 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
           <MyButton
             appearance="primary"
             onClick={() => setOpenPublishModal(true)}
+          // onClick={() => handlePublish(publishChannelId)}
           >
-            <Translate>Publish new version</Translate>
+            Publish new version
           </MyButton>
 
         </div>
@@ -342,61 +376,61 @@ const EditAvailabilityTemplateModalNew: React.FC = () => {
 
       <Divider />
 
-        <AvailabilityDayGrid
-          step={record.step}
-          activeDay={activeDay}
-          setActiveDay={setActiveDay}
-          channels={channelsByDay[activeDay] ?? []}
-          availability={availability}
-          setAvailability={setAvailability}
-          onAddChannel={handleAddChannel}
-          onRemoveChannel={handleRemoveChannel}
-        />
-
-        <PreviewAvailabilityModal
-          open={openPreview}
-          onClose={() => setOpenPreview(false)}
-          templateName={record.name}
-          step={record.step}
-          channelsByDay={channelsByDay}
-          availability={availability}
-        />
-
-
-<MyModal
-  open={openPublishModal}
-  setOpen={setOpenPublishModal}
-  title="Publish New Version"
-  size="30vw"
-  content={
-    <Form fluid>
-      <MyInput
-        fieldName="publishChannel"
-        fieldType="select"
-        label="Publish on Channel"
-        record={{ publishChannel: publishChannelId }}
-        setRecord={(r: any) => setPublishChannelId(r.publishChannel)}
-        selectData={(channelsByDay[activeDay] ?? []).map(c => ({
-          label: c.name,
-          value: c.id
-        }))}
-
-        selectDataLabel="label"
-        selectDataValue="value"
-        placeholder="Select channel"
-        width="100%"
+      <AvailabilityDayGrid
+        step={record.step}
+        activeDay={activeDay}
+        setActiveDay={setActiveDay}
+        channels={channelsByDay[activeDay] ?? []}
+        availability={availability}
+        setAvailability={setAvailability}
+        onAddChannel={handleAddChannel}
+        onRemoveChannel={handleRemoveChannel}
       />
-    </Form>
-  }
-  actionButtonLabel="Publish"
-  isDisabledActionBtn={!publishChannelId}
-  actionButtonFunction={() => {
-    if (!publishChannelId) return;
 
-    handlePublish(publishChannelId);
-    setOpenPublishModal(false);
-  }}
-/>
+      <PreviewAvailabilityModal
+        open={openPreview}
+        onClose={() => setOpenPreview(false)}
+        templateName={record.name}
+        step={record.step}
+        channelsByDay={channelsByDay}
+        availability={availability}
+      />
+
+
+      <MyModal
+        open={openPublishModal}
+        setOpen={setOpenPublishModal}
+        title="Publish New Version"
+        size="30vw"
+        content={
+          <Form fluid>
+            <MyInput
+              fieldName="publishChannel"
+              fieldType="select"
+              label="Publish on Channel"
+              record={{ publishChannel: publishChannelId }}
+              setRecord={(r: any) => setPublishChannelId(r.publishChannel)}
+              selectData={(channelsByDay[activeDay] ?? []).map(c => ({
+                label: c.name,
+                value: c.id
+              }))}
+
+              selectDataLabel="label"
+              selectDataValue="value"
+              placeholder="Select channel"
+              width="100%"
+            />
+          </Form>
+        }
+        actionButtonLabel="Publish"
+        isDisabledActionBtn={!publishChannelId}
+        actionButtonFunction={() => {
+          if (!publishChannelId) return;
+
+          handlePublish(publishChannelId);
+          setOpenPublishModal(false);
+        }}
+      />
 
 
     </div>
