@@ -7,6 +7,7 @@ import ChildGirl from '../../../../images/Chart_Child_Girl.svg';
 import Female from '../../../../images/Chart_Female.svg';
 import Male from '../../../../images/Chart_Male.svg';
 import './styles.less';
+import { setCurrentEncounter } from '@/reducers/encounterSlice';
 
 import { useGetAgeGroupValueQuery } from '@/services/patientService';
 import PatientDiagnosis from '../../medical-notes-and-assessments/patient-diagnosis';
@@ -16,7 +17,7 @@ import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 
 import MyButton from '@/components/MyButton/MyButton';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useGetObservationSummariesQuery } from '@/services/observationService';
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { newApPatientObservationSummary } from '@/types/model-types-constructor';
@@ -33,19 +34,20 @@ import { showSystemLoader, hideSystemLoader } from '@/utils/uiReducerActions';
 const SOAP = props => {
   const dispatch = useAppDispatch();
   const location = useLocation();
+const currentEncounter = useAppSelector(s => s.encounter.current);
 
-
+console.log('Current Encounter from Redux:', currentEncounter);
 const encounterKey = props.encounter?.key || location.state?.encounter?.key;
 
-    const {
-      data: encounterFromServer,
-      isLoading,
-      isFetching
-    } = useGetEncounterByIdQuery(encounterKey, {
-      skip: !encounterKey,
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: true
-    });
+    // const {
+    //   data: encounterFromServer,
+    //   isLoading,
+    //   isFetching
+    // } = useGetEncounterByIdQuery(encounterKey, {
+    //   skip: !encounterKey,
+    //   refetchOnMountOrArgChange: true,
+    //   refetchOnFocus: true
+    // });
 
 
 
@@ -56,11 +58,11 @@ const [localEncounter, setLocalEncounter] = useState<any>(
   props.encounter || location.state?.encounter || {}
 );
 
-useEffect(() => {
-  if (encounterFromServer) {
-    setLocalEncounter(encounterFromServer);
-  }
-}, [encounterFromServer]);
+// useEffect(() => {
+//   if (encounterFromServer) {
+//     setLocalEncounter(encounterFromServer);
+//   }
+// }, [encounterFromServer]);
 
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
 
@@ -134,6 +136,7 @@ const saveChanges = async () => {
   try {
     const updatedEncounter = await saveEncounterChanges(localEncounter).unwrap();
     setLocalEncounter(updatedEncounter);
+    dispatch(setCurrentEncounter(updatedEncounter));
 
     dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
   } catch {
@@ -268,17 +271,17 @@ const saveChanges = async () => {
     // }
   ];
 
-useEffect(() => {
-  if (isLoading || isFetching) {
-    dispatch(showSystemLoader());
-  } else {
-    dispatch(hideSystemLoader());
-  }
+// useEffect(() => {
+//   if (isLoading || isFetching) {
+//     dispatch(showSystemLoader());
+//   } else {
+//     dispatch(hideSystemLoader());
+//   }
 
-  return () => {
-    dispatch(hideSystemLoader());
-  };
-}, [isLoading, isFetching, dispatch]);
+//   return () => {
+//     dispatch(hideSystemLoader());
+//   };
+// }, [isLoading, isFetching, dispatch]);
 
 
   return (
