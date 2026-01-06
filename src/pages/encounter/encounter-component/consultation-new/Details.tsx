@@ -137,12 +137,11 @@ const Details = ({
 
       dispatch(notify({ msg: 'saved  Successfully', sev: 'success' }));
       refetchCon()
-        .then(() => {
+        ?.then(() => {
           setOpen(false);
           handleClear();
         })
-        .catch(error => {
-          console.error('Refetch failed:', error);
+        ?.catch(error => {
         });
     } catch (error) {
       dispatch(notify('Save Failed'));
@@ -235,7 +234,7 @@ const Details = ({
             </MyButton>
           </div>
         }
-        rightTitle="Add Consultation"
+        rightTitle="Add Consultationn"
         rightContent={
           <Form
             fluid

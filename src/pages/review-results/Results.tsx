@@ -44,7 +44,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
     const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
 
     const isResultSelected = (rowData) =>
-    rowData?.key === selectedResultKey ? 'selected-row' : '';
+        rowData?.key === selectedResultKey ? 'selected-row' : '';
 
     const [listResultResponse, setListResultResponse] = useState<ListRequest>({
         ...initialListRequest,
@@ -279,43 +279,44 @@ const Results = ({ setEncounter, setPatient, user }) => {
             flexGrow: 2,
             fullText: true,
             render: (rowData: any) => {
-                if (rowData.normalRangeKey) {
-                    if (rowData.normalRange?.resultTypeLkey == "6209578532136054") {
-                        return (
-                            joinValuesFromArray(rowData.normalRange?.lovList) +
-                            " " +
-                            labDetails?.resultUnitLvalue?.lovDisplayVale || ""
-                        );
-                    }
-                    else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
-                        if (rowData.normalRange?.normalRangeTypeLkey == "6221150241292558") {
-                            return (
-                                rowData.normalRange?.rangeFrom +
-                                "_" +
-                                rowData.normalRange?.rangeTo +
-                                " " +
-                                labDetails?.resultUnitLvalue?.lovDisplayVale
-                            );
-                        } else if (rowData.normalRange?.normalRangeTypeLkey == "6221162489019880") {
-                            return (
-                                "Less Than " +
-                                rowData.normalRange?.rangeFrom +
-                                " " +
-                                labDetails?.resultUnitLvalue?.lovDisplayVale
-                            );
-                        } else if (rowData.normalRange?.normalRangeTypeLkey == "6221175556193180") {
-                            return (
-                                "More Than " +
-                                rowData.normalRange?.rangeTo +
-                                " " +
-                                labDetails?.resultUnitLvalue?.lovDisplayVale
-                            );
-                        }
-                    }
-                } else {
-                    return "Normal Range Not Defined";
+                 console.log("rowData",rowData);
+                if (!rowData.normalRangeKey) return "Normal Range Not Defined";
+
+                const unit =
+                    laboratoryList?.object
+                        ?.find((item: any) =>{ 
+                        //    console.log("item.testKey",item.testKey);
+                        //    console.log("rowData.testKey",rowData.test?.key);
+                          return  String(item.testKey) === String(rowData.test?.testKey)})
+                        ?.resultUnitLvalue
+                        ?.lovDisplayVale ?? ""; 
+
+                const withUnit = (text: string) => `${text} ${unit}`.trim();
+
+                if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
+                    return withUnit(joinValuesFromArray(rowData.normalRange?.lovList ?? []));
                 }
-            },
+
+                if (rowData.normalRange?.resultTypeLkey === "6209569237704618") {
+                    const from = rowData.normalRange?.rangeFrom ?? "";
+                    const to = rowData.normalRange?.rangeTo ?? "";
+
+                    if (rowData.normalRange?.normalRangeTypeLkey === "6221150241292558") {
+                        return withUnit(`${from}_${to}`);
+                    }
+
+                    if (rowData.normalRange?.normalRangeTypeLkey === "6221162489019880") {
+                        return withUnit(`Less Than ${from}`);
+                    }
+
+                    if (rowData.normalRange?.normalRangeTypeLkey === "6221175556193180") {
+                        return withUnit(`More Than ${to}`);
+                    }
+                }
+
+                return ""; // أو "—"
+            }
+
         },
         {
             key: "marker",
@@ -369,50 +370,50 @@ const Results = ({ setEncounter, setPatient, user }) => {
             },
         },
         {
-        key: "action",
-        title: <Translate>ACTION</Translate>,
-        flexGrow: 3,
-        render: (rowData: any) => {
-            const isReviewed = !!rowData.reviewAt;
+            key: "action",
+            title: <Translate>ACTION</Translate>,
+            flexGrow: 3,
+            render: (rowData: any) => {
+                const isReviewed = !!rowData.reviewAt;
 
-            return (
-            <HStack spacing={5}>
-                <Whisper placement="top" speaker={<Tooltip>Review</Tooltip>}>
-                    <FontAwesomeIcon
-                    icon={faStar}
-                    style={{
-                        fontSize: '1em',
-                        cursor: 'pointer',
-                        color: rowData.reviewAt ? '#e0a500' : '#343434'
-                    }}
-                    onClick={async (e) => {
-                    e.stopPropagation();
+                return (
+                    <HStack spacing={5}>
+                        <Whisper placement="top" speaker={<Tooltip>Review</Tooltip>}>
+                            <FontAwesomeIcon
+                                icon={faStar}
+                                style={{
+                                    fontSize: '1em',
+                                    cursor: 'pointer',
+                                    color: rowData.reviewAt ? '#e0a500' : '#343434'
+                                }}
+                                onClick={async (e) => {
+                                    e.stopPropagation();
 
-                    // 1️⃣ حدده فورًا (UI)
-                    setSelectedResultKey(rowData.key);
-                    setResult(rowData);
+                                    // 1️⃣ حدده فورًا (UI)
+                                    setSelectedResultKey(rowData.key);
+                                    setResult(rowData);
 
-                    try {
-                        // 2️⃣ ابعث rowData نفسه
-                        await saveResult({
-                        ...rowData,          // ✅ هون الصح
-                        reviewAt: Date.now(),
-                        reviewBy: user?.key
-                        }).unwrap();
+                                    try {
+                                        // 2️⃣ ابعث rowData نفسه
+                                        await saveResult({
+                                            ...rowData,          // ✅ هون الصح
+                                            reviewAt: Date.now(),
+                                            reviewBy: user?.key
+                                        }).unwrap();
 
-                        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                        resultFetch();
-                    } catch (error) {
-                        dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
-                    }
-                    }}
+                                        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                        resultFetch();
+                                    } catch (error) {
+                                        dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
+                                    }
+                                }}
 
-                    />
+                            />
 
-                </Whisper>
-            </HStack>
-            );
-        }
+                        </Whisper>
+                    </HStack>
+                );
+            }
         },
         {
             key: "",
@@ -511,24 +512,24 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 </Checkbox>
 
             </Form>
-        <AdvancedSearchFilters searchFilter={true}/></>);
+            <AdvancedSearchFilters searchFilter={true} /></>);
     };
 
 
-useEffect(() => {
-  if (!selectedResultKey || !resultsList?.object) return;
+    useEffect(() => {
+        if (!selectedResultKey || !resultsList?.object) return;
 
-  const stillExists = resultsList.object.find(
-    r => r.key === selectedResultKey
-  );
+        const stillExists = resultsList.object.find(
+            r => r.key === selectedResultKey
+        );
 
-  if (!stillExists) {
-    setSelectedResultKey(null);
-    setResult({ ...newApDiagnosticOrderTestsResult });
-  } else {
-    setResult(stillExists);
-  }
-}, [resultsList]);
+        if (!stillExists) {
+            setSelectedResultKey(null);
+            setResult({ ...newApDiagnosticOrderTestsResult });
+        } else {
+            setResult(stillExists);
+        }
+    }, [resultsList]);
 
     return (
         <>
@@ -538,8 +539,8 @@ useEffect(() => {
                 data={resultsList?.object || []}
                 loading={featchingTest}
                 onRowClick={rowData => {
-                setResult(rowData);
-                setSelectedResultKey(rowData.key);
+                    setResult(rowData);
+                    setSelectedResultKey(rowData.key);
                 }}
                 rowClassName={isResultSelected}
                 height={250}

@@ -122,7 +122,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'FLACC Neonates Pain Assessment', code: 'FLACC_NEONATES_PAIN_ASSESSMENT', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/FLACC-neonates-pain-assessment' },
   { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
   { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" },
-  { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
+  // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
   { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
   { name: "Chief Complain", code: "CHIEF_COMPLAIN", icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: "/chief-complain" },
   { name: "Physical Examination", code: "PHYSICAL_EXAMINATION", icon: <FontAwesomeIcon icon={faHeartbeat} className="icon" />, path: "/physical-examination" },

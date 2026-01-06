@@ -79,6 +79,10 @@ const ScheduleScreen = () => {
   const [calendarDate, setCalendarDate] = useState<Date>(null);
   const [finalAppointments, setFinalAppointments] = useState();
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
+  const [reasonViewRecord, setReasonViewRecord] = useState({
+    reason: '',
+    otherReason: ''
+  });
 
   const ResourceTypeEnum = useEnumOptions("ResourceType");
 
@@ -160,18 +164,50 @@ const ScheduleScreen = () => {
       setSelectedStartDate(selectedSlot?.slots[0]);
     }
   }, [selectedSlot]);
-  const handleSelectEvent = event => {
-    setSelectedEvent(event);
-    if (
-      event?.appointmentData?.appointmentStatus === 'Canceled' ||
-      event?.appointmentData?.appointmentStatus === 'No-Show'
-    ) {
-      setShowReasonModal(true);
-      return;
-    }
 
-    setActionsModalOpen(true);
-  };
+const { data: noShowResonLovQueryResponse } =
+  useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
+
+const { data: cancelResonLovQueryResponse } =
+  useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
+
+
+
+const handleSelectEvent = event => {
+  const freshEvent =
+    finalAppointments?.find(e => e.id === event.id) || event;
+
+  setSelectedEvent(freshEvent);
+
+  const status = freshEvent?.appointmentData?.appointmentStatus;
+
+  if (status === 'Canceled' || status === 'No-Show') {
+    const reasonKey = freshEvent?.appointmentData?.reasonLkey;
+
+    const reasonLovList =
+      status === 'Canceled'
+        ? cancelResonLovQueryResponse?.object
+        : noShowResonLovQueryResponse?.object;
+
+    const matchedReason = reasonLovList?.find(
+      r => r.key === reasonKey
+    );
+
+    setReasonViewRecord({
+      reason: matchedReason?.lovDisplayVale || '',
+      otherReason: freshEvent?.appointmentData?.otherReason || ''
+    });
+
+    setShowReasonModal(true);
+    return;
+  }
+
+  setActionsModalOpen(true);
+};
+
+
+
+
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
@@ -1122,36 +1158,40 @@ const visibleResources =
         </Drawer.Body>
       </Drawer>
 
-      <Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
-        <Modal.Header></Modal.Header>
+<Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
+  <Modal.Header />
+  <Modal.Body>
 
-        <Modal.Body>
-          <br />
-          <br />
+    <Form fluid layout="inline">
 
-          <Form layout="inline">
-            <div>
-              <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                Reason
-              </label>
-              <Input
-                value={selectedEvent?.appointmentData?.reasonLvalue?.lovDisplayVale ?? null}
-                width={350}
-              />
-            </div>
-            <br />
-            <div>
-              <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                Other Reason
-              </label>
-              <Input value={selectedEvent?.appointmentData.otherReason} width={350} />
-            </div>
-          </Form>
+      <MyInput
+        width={350}
+        column
+        fieldLabel="Reason"
+        fieldName="reason"
+        record={reasonViewRecord}
+        setRecord={setReasonViewRecord}
+        disabled
+      />
 
-          <br />
-          <br />
-        </Modal.Body>
-      </Modal>
+      <MyInput
+        width={350}
+        column
+        fieldLabel="Other Reason"
+        fieldName="otherReason"
+        fieldType="textarea"
+        rows={3}
+        record={reasonViewRecord}
+        setRecord={setReasonViewRecord}
+        disabled
+      />
+
+    </Form>
+
+  </Modal.Body>
+</Modal>
+
+
 
       <MyModal
         open={appRequestModalOpen}

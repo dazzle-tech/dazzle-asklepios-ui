@@ -146,15 +146,25 @@ const Details = ({
     }
   }, [procedure?.facilityKey, getDepartmentsByFacility]);
 
-  useEffect(() => {
-    getProcedureByFacility({
-      facilityId: authSlice?.selectedDepartment.facilityId,
-      page: procedurePage,
-      size: 20,
-      sort: 'name,asc',
-    });
+  // useEffect(() => {
+  //   getProcedureByFacility({
+  //     facilityId: authSlice?.selectedDepartment.facilityId,
+  //     page: procedurePage,
+  //     size: 20,
+  //     sort: 'name,asc',
+  //   });
 
-  }, [authSlice?.selectedDepartment.facilityId])
+  // }, [authSlice?.selectedDepartment.facilityId]);
+  useEffect(() => {
+  getProcedureByFacility({
+    facilityId: authSlice?.selectedDepartment.facilityId,
+    category: procedure.categoryKey, // optional
+    page: procedurePage,
+    size: 20,
+    sort: 'name,asc',
+  });
+}, [authSlice?.selectedDepartment.facilityId, procedure.categoryKey, procedurePage]);
+
 
   useEffect(() => {
     if (procedure.currentDepartment) {
@@ -277,8 +287,9 @@ const Details = ({
                           record={procedure}
                           setRecord={setProcedure}
                         />
-                   
-                        <MyInput
+                    
+                        { procedure?.categoryKey &&
+                          <MyInput
                           column
                           width={"100%"}
                           fieldLabel="Procedure Name"
@@ -295,7 +306,7 @@ const Details = ({
                           hasMore={hasMoreProcedures}
                           onFetchMore={handleLoadMoreProcedures}
                           placeholder="Select Procedure..."
-                        />
+                        />}
                         <MyInput
                           disabled={editing}
                           width="100%"

@@ -336,10 +336,10 @@ useEffect(() => {
     unitLov
   ]);
 
-  useEffect(() => {
-    console.log('PRESCRIPTION_SUMMARY_PAYLOAD =>', payload);
-    console.log('PRESCRIPTION_SUMMARY_PAYLOAD_JSON =>\n', JSON.stringify(payload, null, 2));
-  }, [payload]);
+  // useEffect(() => {
+  //   console.log('PRESCRIPTION_SUMMARY_PAYLOAD =>', payload);
+  //   console.log('PRESCRIPTION_SUMMARY_PAYLOAD_JSON =>\n', JSON.stringify(payload, null, 2));
+  // }, [payload]);
 
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;

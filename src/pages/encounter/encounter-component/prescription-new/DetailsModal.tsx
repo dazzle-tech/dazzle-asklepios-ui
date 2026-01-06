@@ -241,7 +241,11 @@ useEffect(() => {
           setOpen(false);
 
         } catch (error: any) {
-          console.error('Save failed:', error);
+          
+          console.log('Save prescription medication error:', error);
+          if(error?.originalStatus === 409){ 
+            return;
+           }
 
           let errorMessage = 'Save failed';
           if (error?.data) {

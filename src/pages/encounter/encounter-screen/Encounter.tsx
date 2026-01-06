@@ -51,7 +51,7 @@ const Encounter = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
-  console.log("props",propsData);
+  
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
   // const outletPatient = propsData?.patient;
