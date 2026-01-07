@@ -1,10 +1,11 @@
-import React from 'react';
-import { Form, Checkbox, Divider } from 'rsuite';
+import React, { useEffect, useState } from 'react';
+import { Form, Checkbox, Divider, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import './AddIntervalModal.less';
 import MyModal from '@/components/MyModal/MyModal';
-
+import MyButton from '@/components/MyButton/MyButton';
+import { FaPlus } from "react-icons/fa";
 /* ===================== HELPERS ===================== */
 
 const formatDuration = (start: Date, end: Date) => {
@@ -20,8 +21,8 @@ const formatDuration = (start: Date, end: Date) => {
 /* ===================== TYPES ===================== */
 
 type IntervalRecord = {
-    start: Date | null;
-    end: Date | null;
+    start: string;
+    end: string;
     applyAllChannels: boolean;
     slotDuration: number;
     strategy: string
@@ -44,7 +45,50 @@ const AddIntervalModal = ({
     open: boolean;
     setOpen: any;
 }) => {
+    // const [record, setRecord] = useState({});
+    const timeToMinutes = (timeStr: string) => {
+        const [hrs, mins] = timeStr?.split(':').map(Number);
+        return hrs * 60 + mins;
+    };
 
+    const minutesToTime = (totalMinutes: number) => {
+        const h = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+        const m = (totalMinutes % 60).toString().padStart(2, '0');
+        return `${h}:${m}`;
+    };
+    function formatTime(date: Date) {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+    const slotDuration = 30;
+    const slotBeforeAfter = 5;
+    const [slots, setSlots] = useState([]);
+    useEffect(() => {
+        if (record.start && record.end) {
+            const slotsList = [];
+            const intervalStartMins = timeToMinutes(formatTime(record.start));
+            const intervalEndMins = timeToMinutes(formatTime(record.end));
+
+            const totalSlotDuration = slotDuration + (slotBeforeAfter * 2);
+
+            let currentPointer = intervalStartMins - slotBeforeAfter;
+
+            while (currentPointer + totalSlotDuration <= intervalEndMins + slotBeforeAfter) {
+                const slotStart = currentPointer;
+                const slotEnd = currentPointer + totalSlotDuration;
+
+                slotsList.push({
+                    displayTime: `${minutesToTime(slotStart)} - ${minutesToTime(slotEnd)}`,
+                });
+
+                currentPointer = slotEnd;
+            }
+            setSlots(slotsList);
+        }
+
+    }, [record?.start, record?.end]);
+    const [displayAddBreakFields, setDisplayAddBreakFields] = useState<boolean>(false);
     const conjureFormContent = (stepNumber = 0) => {
         switch (stepNumber) {
             case 0:
@@ -52,7 +96,7 @@ const AddIntervalModal = ({
                     <Form fluid className="add-interval-modal">
                         <div className="day-title">{dayLabel}</div>
                         <Divider />
-                        <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <h6>
                                 <Translate>Interval</Translate>
                             </h6>
@@ -92,16 +136,6 @@ const AddIntervalModal = ({
                                 {formatDuration(record.start, record.end)}
                             </div>
                         )}
-
-                        {/* <Checkbox
-                checked={record.applyAllChannels}
-                onChange={(_, checked) =>
-                    setRecord(prev => ({ ...prev, applyAllChannels: checked }))
-                }
-            >
-                <Translate>Apply to all channels on</Translate> {dayLabel}
-            </Checkbox> */}
-
                         <Divider />
 
                         <h6>
@@ -109,18 +143,17 @@ const AddIntervalModal = ({
                         </h6>
 
                         <div className="slot-strategy-row">
-                             <Form fluid layout='inline'>
-                            <MyInput
-                                fieldName="strategy"
-                                fieldType="select"
-                                record={record}
-                                setRecord={setRecord}
-                                selectData={[{ label: 'Fixed Duration', value: 'FIXED' },{ label: 'As Department Pool', value: 'asDepartmentPool' }]}
-                                selectDataLabel="label"
-                                selectDataValue="value"
-                                width="15vw"
-                            />
-                            {/* <Form fluid layout='inline'> */}
+                            <Form fluid layout='inline'>
+                                <MyInput
+                                    fieldName="strategy"
+                                    fieldType="select"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    selectData={[{ label: 'Fixed Duration', value: 'FIXED' }, { label: 'As Department Pool', value: 'asDepartmentPool' }]}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
+                                    width="15vw"
+                                />
 
                                 <MyInput
                                     fieldName="slotDuration"
@@ -134,15 +167,46 @@ const AddIntervalModal = ({
                             </Form>
                         </div>
 
-                        
+
 
                         {/* ================= Preview ================= */}
                         <div className="slot-preview">
-                            08:00 - 08:30 - 09:00 - … - 12:30
+                            {(() => {
+                                if (!slots || slots.length === 0) {
+                                    return 'select a start and end time to display available slots';
+                                }
+                                return slots.map(s => s.displayTime).join(' , ');
+                            })()}
                         </div>
 
-                        <Divider />
 
+                        <Divider />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <MyButton prefixIcon={() => <FaPlus />} onClick={() => setDisplayAddBreakFields(!displayAddBreakFields)}>Add Break</MyButton>
+                        </div>
+                        {displayAddBreakFields && (
+                            <div className="interval-row">
+                                <MyInput
+                                    fieldName="startBreak"
+                                    fieldType="time"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    fieldLabel='Start Time Break'
+                                    placeholder="Start Time Break"
+                                    width="100%"
+                                />
+
+                                <MyInput
+                                    fieldName="endBreak"
+                                    fieldType="time"
+                                    record={record}
+                                    setRecord={setRecord}
+                                    placeholder="End Time Break"
+                                    fieldLabel='End Time Break'
+                                    width="100%"
+                                />
+                            </div>
+                        )}
                     </Form>
                 );
             default:
@@ -157,61 +221,11 @@ const AddIntervalModal = ({
             size="40vw"
             content={conjureFormContent}
             actionButtonLabel="Save"
-            // isDisabledActionBtn={
-            //     intervalForm.start === null ||
-            //     intervalForm.end === null ||
-            //     intervalForm.end <= intervalForm.start
-            // }
             actionButtonFunction={() => {
-                // if (!activeChannelId) return;
 
-                // const { start, end, applyAllChannels } = intervalForm;
-                // if (!start || !end) return;
-
-                // const startMinutes = start.getHours() * 60 + start.getMinutes();
-                // const endMinutes = end.getHours() * 60 + end.getMinutes();
-
-                // const addToChannel = (channelId: string) => {
-                //     const channelData = channels.find(c => c.id === channelId);
-                //     if (!channelData) return;
-
-                //     upsertChannelAvailability(channelId, old => [
-                //         ...old,
-                //         {
-                //             id: crypto.randomUUID(),
-                //             start: startMinutes,
-                //             end: endMinutes,
-                //             type: 'NORMAL'
-                //         }
-
-                //     ]);
-                // };
-
-
-                // if (applyAllChannels) {
-                //     channels.forEach(c => addToChannel(c.id));
-                // } else {
-                //     addToChannel(activeChannelId);
-                // }
-
-                // setOpenAddInterval(false);
             }}
         />
     );
 };
 
 export default AddIntervalModal;
-
-
-
-
-
-
-
-
-
-
-
-
-
-

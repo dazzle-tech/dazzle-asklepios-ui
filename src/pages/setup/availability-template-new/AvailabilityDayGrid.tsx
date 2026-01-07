@@ -17,11 +17,12 @@ type Channel = {
 };
 
 type IntervalForm = {
-    start: Date | null;
-    end: Date | null;
+    start: string;
+    end: string;
     applyAllChannels: boolean;
     slotDuration: number;
     startStep: number;
+    strategy: string;
 };
 
 type Interval = {
@@ -88,7 +89,8 @@ const AvailabilityDayGrid = ({
     channelsDummyData,
     templatesData,
     setTemplatesData,
-    template
+    template,
+    day
 }: {
     step: number;
     activeDay: number;
@@ -101,7 +103,8 @@ const AvailabilityDayGrid = ({
     channelsDummyData: any[],
     templatesData: any[],
     setTemplatesData: any,
-    template: any
+    template: any,
+    day: string
 }) => {
 
     const times = useMemo(() => generateDayTimes(step), [step]);
@@ -121,64 +124,15 @@ const AvailabilityDayGrid = ({
    
 
     const [intervalForm, setIntervalForm] = useState<IntervalForm>({
-        start: null,
-        end: null,
+        start: '',
+        end: '',
         applyAllChannels: false,
         slotDuration: step,
-        startStep: step
+        startStep: step,
+        strategy: '',
     });
 
-    // const channelsDummyData = [
-    //     {
-    //         id: 1,
-    //         channelName: "Pediatrics Pool",
-    //         type: "Department Pool",
-    //         capacity: "3 concurrent",
-    //         allowedServices: ["Vaccination", "Follow-up"],
-    //         color: "#6982F0",
-    //         intervals: [
-    //             {
-    //                 id: "int-101",
-    //                 startTime: "09:00",
-    //                 endTime: "12:30",
-    //                 slotDuration: '30 minutes', // بالدقائق
-    //             }
-    //         ]
-    //     },
-    //     {
-    //         id: 2,
-    //         channelName: "Dr. Emma Johnson",
-    //         type: "Practitioner",
-    //         capacity: "1 patient",
-    //         allowedServices: ["Vaccination", "Follow-up"],
-    //         color: "#71946C",
-    //         intervals: [
-    //             {
-    //                 id: "int-201",
-    //                 startTime: "09:00",
-    //                 endTime: "12:30",
-    //                 slotDuration: '30 minutes',
-    //             }
-    //         ]
-    //     },
-    //     {
-    //         id: 3,
-    //         channelName: "Exam Room 1",
-    //         type: "Resource",
-    //         capacity: "1 concurrent",
-    //         allowedServices: ["Vaccination", "Consultation"],
-    //         color: "#8575A1",
-    //         intervals: [
-    //             {
-    //                 id: "int-301",
-    //                 startTime: "09:00",
-    //                 endTime: "12:30",
-    //                 slotDuration: '30 minutes',
-    //             }
-    //         ]
-    //     }
-    // ];
-
+  
     
 
     const upsertChannelAvailability = useCallback(
@@ -202,27 +156,7 @@ const AvailabilityDayGrid = ({
         [activeDay, setAvailability]
     );
 
-    const addInterval = (channelId: string) => {
-        const start = 10 * 60;
-        const end = 11 * 60;
-
-        upsertChannelAvailability(channelId, old => {
-            if (old.some(i => overlaps({ start, end }, i))) return old;
-
-            return [
-                ...old,
-                {
-                    id: crypto.randomUUID(),
-                    start,
-                    end,
-                    type: 'NORMAL'
-                }
-            ];
-        });
-    };
-
-    const cellHeight = 36;
-    const headerOffset = 36;
+   
 
     
    
@@ -268,11 +202,6 @@ const AvailabilityDayGrid = ({
                                             backgroundColor={t.color}
                                         />
                                         {t?.intervals?.map(interval => (
-                                            // className="channel-cell add-channel-cell"
-
-
-
-
                                             <AvailabilityIntervalCard
                                                 start={interval.startTime}
                                                 end={interval.endTime}
@@ -281,7 +210,6 @@ const AvailabilityDayGrid = ({
                                             />
                                         ))}
                                         <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"} onClick={() => setOpenAddInterval(true)}>Add Interval</MyButton>
-                                        <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"}>Add Break</MyButton>
                                     </>
                                 </div>
                             </>
@@ -290,74 +218,14 @@ const AvailabilityDayGrid = ({
                     </div>
                 </div>
             </div>
-
-
-            {/* <MyModal
-                open={openAddInterval}
-                setOpen={setOpenAddInterval}
-                title="Add Interval"
-                size="40vw"
-                content={
-                    <AddIntervalModal
-                        step={step}
-                        record={intervalForm}
-                        setRecord={setIntervalForm}
-                    />
-                }
-                actionButtonLabel="Save"
-                isDisabledActionBtn={
-                    intervalForm.start === null ||
-                    intervalForm.end === null ||
-                    intervalForm.end <= intervalForm.start
-                }
-                actionButtonFunction={() => {
-                    if (!activeChannelId) return;
-
-                    const { start, end, applyAllChannels } = intervalForm;
-                    if (!start || !end) return;
-
-                    const startMinutes = start.getHours() * 60 + start.getMinutes();
-                    const endMinutes = end.getHours() * 60 + end.getMinutes();
-
-                    const addToChannel = (channelId: string) => {
-                        const channelData = channels.find(c => c.id === channelId);
-                        if (!channelData) return;
-
-                        upsertChannelAvailability(channelId, old => [
-                            ...old,
-                            {
-                                id: crypto.randomUUID(),
-                                start: startMinutes,
-                                end: endMinutes,
-                                type: 'NORMAL'
-                            }
-
-                        ]);
-                    };
-
-
-                    if (applyAllChannels) {
-                        channels.forEach(c => addToChannel(c.id));
-                    } else {
-                        addToChannel(activeChannelId);
-                    }
-
-                    setOpenAddInterval(false);
-                }}
-            /> */}
             <AddIntervalModal
                 step={step}
                 record={intervalForm}
                 setRecord={setIntervalForm}
                 open={openAddInterval}
                 setOpen={setOpenAddInterval}
+                day={day}
             />
-
-
-
-
-
-
             <AddChannelModal
                 open={openAddChannel}
                 setOpen={setOpenAddChannel}
@@ -366,9 +234,6 @@ const AvailabilityDayGrid = ({
                     setChannelForm(prev => ({ ...prev, ...partial }))
                 }
             />
-
-
-
 
         </div>
     );

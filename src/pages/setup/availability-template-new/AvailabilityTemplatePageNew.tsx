@@ -10,6 +10,8 @@ import EditAvailabilityTemplateModalNew from './AvailabilityTemplatePageNewModal
 import AvailabilityIntervalCard from './AvailabilityIntervalCard';
 import AvailabilityTemplateSummaryCard from './AvailabilityTemplateSummaryCard';
 import SlotCard from './SlotCard';
+import DateNavigator from './DateNavigator';
+import WarningMessage from './WarningMessage';
 
 
 const mockAvailabilityTemplates = [
@@ -487,6 +489,10 @@ const AvailabilityTemplatePageNew = () => {
             <SlotCard
               time="9:30 - 9:40"
               slots="2"
+              status="New"
+            />
+            <WarningMessage
+             message='Warning war'
             />
           </>
         }

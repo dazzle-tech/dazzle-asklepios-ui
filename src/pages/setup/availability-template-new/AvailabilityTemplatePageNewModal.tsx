@@ -16,6 +16,7 @@ import { FaPlus } from "react-icons/fa";
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import AddChannelModal from './AddChannelModal';
+import AddExceptionModal from './AddExceptionModal';
 
 const days = [
   'Sunday',
@@ -95,6 +96,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
   const [availability, setAvailability] = useState<AvailabilityByDay>({});
   const [openPreview, setOpenPreview] = useState(false);
   const [openAddChannelModal, setOpenAddChannelModal] = useState(false);
+  const [openAddExceptionModal,setOpenAddExceptionModal] = useState<boolean>(false);
   const [publishChannelId, setPublishChannelId] = useState<string | null>(null);
   const [channelsByDay, setChannelsByDay] = useState<ChannelsByDay>({});
   const {
@@ -135,6 +137,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
                 templatesData={templatesData}
                 setTemplatesData={setTemplatesData}
                 template={record}
+                day={day}
               />
             </>
         })
@@ -174,22 +177,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
 
     // 2️⃣ نعمل object جديد للـ template
     const newTemplate = { ...record, id: newId };
-    //  {
-    //   id: newId,
-    //   facilityId: 1, // أو خليها من اختيارك
-    //   departmentId: selectedDepartment.id,
-    //   description: `${selectedDepartment.name} - Template #${newId}`,
-    //   availability_json: '{}',
-    //   is_valid: true,
-    //   name: `template${newId}`,
-    //   step: 60,
-    //   effectiveFromDate: new Date(), // ممكن تخليها اختيار
-    //   effectiveFromHour: new Date('1970-01-01T08:00'),
-    //   effectiveToDate: new Date(),
-    //   effectiveToHour: new Date('1970-01-01T16:00'),
-    //   slotsBeforeAfter: 5,
-    //   channelsData: {} as Record<string, any[]> // راح نملأها تحت
-    // };
+   
 
     // 3️⃣ نحدد الأيام
     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -357,11 +345,19 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
         <div className="days-actions">
           <MyButton
             appearance="subtle"
+            disabled={record?.id ? false : true}
             onClick={() => setOpenPreview(true)}
           >
             <Translate>Preview slots</Translate>
           </MyButton>
-
+           
+           <MyButton
+            appearance="primary"
+            disabled={record?.id ? false : true}
+            onClick={() => setOpenAddExceptionModal(true)}
+          >
+            <Translate>Add Exception</Translate>
+          </MyButton>
 
           <MyButton
             appearance="primary"
@@ -383,6 +379,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
         step={record.step}
         channelsByDay={channelsByDay}
         availability={availability}
+        slotsBeforeAfter={template.slotsBeforeAfter ?? 5}
       />
 
 
@@ -393,6 +390,11 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
         setRecord=''
       />
 
+    <AddExceptionModal 
+     open={openAddExceptionModal}
+     setOpen={setOpenAddExceptionModal}
+     template={{}}
+    />
 
     </div>
   );
