@@ -1,0 +1,186 @@
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { BaseQuery } from '@/newApi';
+import {
+  DiagnosticOrder,
+  DiagnosticOrderCreateDTO,
+  DiagnosticOrderUpdateDTO,
+} from '@/types/model-types-new';
+
+/* ===================== TYPES ===================== */
+
+type PageableParams = {
+  page?: number;
+  size?: number;
+  sort?: string;
+};
+
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+};
+
+/* ===================== SERVICE ===================== */
+
+export const diagnosticOrderService = createApi({
+  reducerPath: 'diagnosticOrderApi',
+  baseQuery: BaseQuery,
+  tagTypes: ['DiagnosticOrder'],
+  endpoints: builder => ({
+
+    /* -------------------------------------------------
+     * CRUD
+     * ------------------------------------------------- */
+
+    createDiagnosticOrder: builder.mutation<
+      DiagnosticOrder,
+      DiagnosticOrderCreateDTO
+    >({
+      query: body => ({
+        url: '/api/patient/diagnostic-orders',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['DiagnosticOrder'],
+    }),
+
+    updateDiagnosticOrder: builder.mutation<
+      DiagnosticOrder,
+      { id: number; body: DiagnosticOrderUpdateDTO }
+    >({
+      query: ({ id, body }) => ({
+        url: `/api/patient/diagnostic-orders/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'DiagnosticOrder', id },
+      ],
+    }),
+
+    getDiagnosticOrderById: builder.query<DiagnosticOrder, number>({
+      query: id => ({
+        url: `/api/patient/diagnostic-orders/${id}`,
+        method: 'GET',
+      }),
+      providesTags: (_r, _e, id) => [
+        { type: 'DiagnosticOrder', id },
+      ],
+    }),
+
+    deleteDiagnosticOrder: builder.mutation<void, number>({
+      query: id => ({
+        url: `/api/patient/diagnostic-orders/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['DiagnosticOrder'],
+    }),
+
+    /* -------------------------------------------------
+     * LEGACY LIST ENDPOINTS
+     * ------------------------------------------------- */
+
+    getOrdersByPatient: builder.query<
+      PagedResult<DiagnosticOrder>,
+      { patientId: number; status?: string } & PageableParams
+    >({
+      query: ({ patientId, ...params }) => ({
+        url: `/api/patient/patients/${patientId}/diagnostic-orders`,
+        method: 'GET',
+        params,
+      }),
+      transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
+        data: response ?? [],
+        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0),
+      }),
+      providesTags: (_r, _e, { patientId }) => [
+        { type: 'DiagnosticOrder', id: `patient-${patientId}` },
+      ],
+    }),
+
+    getOrdersByEncounter: builder.query<
+      PagedResult<DiagnosticOrder>,
+      { encounterId: number; status?: string } & PageableParams
+    >({
+      query: ({ encounterId, ...params }) => ({
+        url: `/api/patient/encounters/${encounterId}/diagnostic-orders`,
+        method: 'GET',
+        params,
+      }),
+      transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
+        data: response ?? [],
+        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0),
+      }),
+      providesTags: (_r, _e, { encounterId }) => [
+        { type: 'DiagnosticOrder', id: `encounter-${encounterId}` },
+      ],
+    }),
+
+    getOrdersByPatientAndEncounter: builder.query<
+      PagedResult<DiagnosticOrder>,
+      { patientId: number; encounterId: number; status?: string } & PageableParams
+    >({
+      query: ({ patientId, encounterId, ...params }) => ({
+        url: `/api/patient/patients/${patientId}/encounters/${encounterId}/diagnostic-orders`,
+        method: 'GET',
+        params,
+      }),
+      transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
+        data: response ?? [],
+        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0),
+      }),
+      providesTags: (_r, _e, { patientId, encounterId }) => [
+        { type: 'DiagnosticOrder', id: `patient-${patientId}-encounter-${encounterId}` },
+      ],
+    }),
+
+    /* -------------------------------------------------
+     * FILTER (modern endpoint)
+     * ------------------------------------------------- */
+
+    filterDiagnosticOrders: builder.query<
+      PagedResult<DiagnosticOrder>,
+      Record<string, any> & PageableParams
+    >({
+      query: params => ({
+        url: '/api/patient/diagnostic-orders',
+        method: 'GET',
+        params,
+      }),
+      transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
+        data: response ?? [],
+        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0),
+      }),
+      providesTags: ['DiagnosticOrder'],
+    }),
+
+    /* -------------------------------------------------
+     * ACTIONS
+     * ------------------------------------------------- */
+
+    submitDiagnosticOrder: builder.mutation<DiagnosticOrder, number>({
+      query: id => ({
+        url: `/api/patient/diagnostic-orders/${id}/submit`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, id) => [
+        { type: 'DiagnosticOrder', id },
+      ],
+    }),
+
+  }),
+});
+
+/* ===================== HOOKS ===================== */
+
+export const {
+  useCreateDiagnosticOrderMutation,
+  useUpdateDiagnosticOrderMutation,
+  useGetDiagnosticOrderByIdQuery,
+  useDeleteDiagnosticOrderMutation,
+  useGetOrdersByPatientQuery,
+  useGetOrdersByEncounterQuery,
+  useGetOrdersByPatientAndEncounterQuery,
+  useFilterDiagnosticOrdersQuery,
+  useLazyFilterDiagnosticOrdersQuery,
+  useSubmitDiagnosticOrderMutation,
+} = diagnosticOrderService;

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Input, InputGroup, Text } from 'rsuite';
+import { Dropdown, Input, InputGroup } from 'rsuite';
 import ArrowDownIcon from '@rsuite/icons/ArrowDown';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
 import './styles.less';
-import MyLabel from '@/components/MyLabel';
 const TestDropdown = ({  handleItemClick, disabled ,flag,setFlag,openTest,setOpenTests }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -67,13 +66,12 @@ const TestDropdown = ({  handleItemClick, disabled ,flag,setFlag,openTest,setOpe
             >
                 {testsList && testsList?.object?.map(test => (
                     <Dropdown.Item
-                        key={test.key}
-                        eventKey={test.key}
+                        key={test.id ?? test.key}
+                        eventKey={test.id ?? test.key}
                         onClick={() => handleItemClick(test)}
-
                     >
-                        <span style={{ marginRight: "19px" }}>{test.testName}</span>
-                        <span>{test?.testTypeLvalue?.lovDisplayVale}</span>
+                        <span style={{ marginRight: "19px" }}>{test.testName ?? test.name}</span>
+                        <span>{test?.testTypeLvalue?.lovDisplayVale ?? test?.type ?? test?.testTypeLkey}</span>
                     </Dropdown.Item>
                 ))}
             </Dropdown.Menu>

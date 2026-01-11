@@ -1,5 +1,5 @@
-import { tr } from "date-fns/locale";
 import * as modelTypes from "./model-types-new";
+
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
   login: '',
@@ -1129,3 +1129,62 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   departmentId: null,
   formJson: null
 }
+
+export const newDiagnosticOrder: modelTypes.DiagnosticOrder = {
+  id: undefined,
+
+  patientId: undefined,
+  encounterId: undefined,
+
+  status: modelTypes.DiagnosticStatus.NEW,
+
+  submittedBy: undefined,
+  submittedDate: undefined,
+
+  isUrgent: false,
+
+  labStatus: modelTypes.DiagnosticStatus.NEW,
+  radStatus: modelTypes.DiagnosticStatus.NEW,
+};
+
+export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
+  id: undefined,
+
+  patientId: undefined,
+  encounterId: undefined,
+
+  orderId: undefined,
+  testId: undefined,
+
+  receivedDepartmentId: undefined,
+
+  reason: undefined,
+  notes: undefined,
+
+  status: modelTypes.DiagnosticOrderTestStatus.NEW,
+  processingStatus: modelTypes.DiagnosticStatus.NEW,
+
+  submitDate: undefined,
+
+  orderType: undefined,
+
+  fromDepartmentId: undefined,
+  fromFacilityId: undefined,
+  toFacilityId: undefined,
+
+  acceptedDate: undefined,
+  rejectedDate: undefined,
+  patientArrivedDate: undefined,
+  readyDate: undefined,
+  approvedDate: undefined,
+  cancelledDate: undefined,
+
+  acceptedBy: undefined,
+  rejectedBy: undefined,
+  rejectedReason: undefined,
+
+  patientArrivedNoteRad: undefined,
+
+  cancellationReason: undefined,
+  cancelledBy: undefined,
+};
