@@ -453,6 +453,18 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
     }
   };
   // Effects
+useEffect(() => {
+  console.log('================ DETAILS STATES ================');
+  console.log('Test Type:', diagnosticsTest?.type);
+  console.log('LAB:', diagnosticTestLaboratory);
+  console.log('RAD:', diagnosticTestRadiology);
+  console.log('PATH:', diagnosticTestPathology);
+}, [
+  diagnosticsTest?.type,
+  diagnosticTestLaboratory,
+  diagnosticTestRadiology,
+  diagnosticTestPathology
+]);
 
 
   return (
