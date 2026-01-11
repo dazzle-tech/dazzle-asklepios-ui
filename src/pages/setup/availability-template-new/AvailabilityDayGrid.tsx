@@ -97,7 +97,6 @@ const AvailabilityDayGrid = ({
         intervals: [],
         slotsBefore: 0
     });
-    console.log("Object", activeChannel)
     const [openAddChannel, setOpenAddChannel] = useState(false);
 
     const [channelForm, setChannelForm] = useState({
@@ -116,7 +115,7 @@ const AvailabilityDayGrid = ({
         start: '',
         end: '',
         applyAllChannels: false,
-        slotDuration: step,
+        slotDuration: template.step,
         startStep: step,
         strategy: '',
     });
@@ -218,6 +217,7 @@ const AvailabilityDayGrid = ({
                     open={openAddInterval}
                     setOpen={setOpenAddInterval}
                     day={day}
+                    template={template}
                 />
                 <AddChannelModal
                 open={openAddChannel}

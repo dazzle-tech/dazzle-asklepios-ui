@@ -36,7 +36,9 @@ const AddIntervalModal = ({
     record,
     setRecord,
     open,
-    setOpen
+    setOpen,
+    day,
+    template
 }: {
     step: number;
     dayLabel?: string;
@@ -44,6 +46,8 @@ const AddIntervalModal = ({
     setRecord: React.Dispatch<React.SetStateAction<IntervalRecord>>;
     open: boolean;
     setOpen: any;
+    day: string;
+    template: any
 }) => {
     // const [record, setRecord] = useState({});
     const timeToMinutes = (timeStr: string) => {
@@ -65,14 +69,23 @@ const AddIntervalModal = ({
     const slotBeforeAfter = 5;
     const [slots, setSlots] = useState([]);
     useEffect(() => {
+        console.log("slotDuration", record?.slotDuration);
+         console.log("start: ", record?.start);
+         console.log("end: ", record?.end);
         if (record.start && record.end) {
+            console.log("in if");
             const slotsList = [];
             const intervalStartMins = timeToMinutes(formatTime(record.start));
             const intervalEndMins = timeToMinutes(formatTime(record.end));
 
-            const totalSlotDuration = slotDuration + (slotBeforeAfter * 2);
+            const totalSlotDuration = Number(record.slotDuration)  + (slotBeforeAfter * 2);
 
             let currentPointer = intervalStartMins - slotBeforeAfter;
+
+            console.log("intervalStartMins: ", intervalStartMins);
+            console.log("intervalEndMins: ", intervalEndMins);
+            console.log("totalSlotDuration: ", totalSlotDuration);
+            console.log("currentPointer: ", currentPointer);
 
             while (currentPointer + totalSlotDuration <= intervalEndMins + slotBeforeAfter) {
                 const slotStart = currentPointer;
@@ -87,7 +100,15 @@ const AddIntervalModal = ({
             setSlots(slotsList);
         }
 
-    }, [record?.start, record?.end]);
+    }, [record?.start, record?.end, record?.slotDuration]);
+    console.log("slots: ", slots);
+
+    useEffect(() => {
+        if(record.strategy === "asDepartmentPool"){
+            setRecord({...record, slotDuration: template.step})
+        }
+    },[record.strategy]);
+
     const [displayAddBreakFields, setDisplayAddBreakFields] = useState<boolean>(false);
     const conjureFormContent = (stepNumber = 0) => {
         switch (stepNumber) {

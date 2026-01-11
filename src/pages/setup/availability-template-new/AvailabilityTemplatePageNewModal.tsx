@@ -182,17 +182,13 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
   };
 
   const handlePublish = () => {
-    // 1️⃣ نحدد الـ id جديد (بافتراض آخر id + 1)
     const newId = (templatesData.length + 1).toString();
 
-    // 2️⃣ نعمل object جديد للـ template
     const newTemplate = { ...record, id: newId };
 
 
-    // 3️⃣ نحدد الأيام
     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-    // 4️⃣ لكل يوم نحط channel واحد للـ department
     daysOfWeek.forEach(day => {
       newTemplate.channelsData[day] = [
         {
@@ -209,11 +205,9 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
       ];
     });
 
-    // 5️⃣ نضيفه على الـ templates array
     setTemplatesData(prev => [...prev, newTemplate]);
     setRecord(newTemplate);
 
-    // console.log("New template published!", newTemplate);
     dispatch(
       notify({
         msg: 'Added Successfully',
