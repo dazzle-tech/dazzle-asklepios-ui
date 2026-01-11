@@ -75,6 +75,16 @@ type EditAvailabilityTemplateModalNewProps = {
 };
 
 const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNewProps> = ({ template, templatesData, setTemplatesData }) => {
+  const [activeChannel, setActiveChannel] = useState({
+          id: 0,
+          channelName: "",
+          type: "Practitioner",
+          capacity: 0,
+          allowedServices: [],
+          color: "",
+          intervals: [],
+          slotsBefore: 0
+      });
   const [record, setRecord] = useState<any>(
     {
       name: '',
@@ -96,7 +106,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
   const [availability, setAvailability] = useState<AvailabilityByDay>({});
   const [openPreview, setOpenPreview] = useState(false);
   const [openAddChannelModal, setOpenAddChannelModal] = useState(false);
-  const [openAddExceptionModal,setOpenAddExceptionModal] = useState<boolean>(false);
+  const [openAddExceptionModal, setOpenAddExceptionModal] = useState<boolean>(false);
   const [publishChannelId, setPublishChannelId] = useState<string | null>(null);
   const [channelsByDay, setChannelsByDay] = useState<ChannelsByDay>({});
   const {
@@ -121,9 +131,9 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
         arr.push({
           title: day, content:
             <>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: "2px" }}>
-                <MyButton onClick={() => setOpenAddChannelModal(true)} prefixIcon={() => <FaPlus />}>Add Channel</MyButton>
-              </div>
+              {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: "2px" }}>
+                <MyButton onClick={() => setOpenAddChannelModal(true)} prefixIcon={() => <FaPlus />} disabled={record?.id ? false : true}>Add Channel</MyButton>
+              </div> */}
               <AvailabilityDayGrid
                 step={120}
                 activeDay={activeDay}
@@ -177,7 +187,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
 
     // 2️⃣ نعمل object جديد للـ template
     const newTemplate = { ...record, id: newId };
-   
+
 
     // 3️⃣ نحدد الأيام
     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -350,8 +360,8 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
           >
             <Translate>Preview slots</Translate>
           </MyButton>
-           
-           <MyButton
+
+          <MyButton
             appearance="primary"
             disabled={record?.id ? false : true}
             onClick={() => setOpenAddExceptionModal(true)}
@@ -382,19 +392,11 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
         slotsBeforeAfter={template.slotsBeforeAfter ?? 5}
       />
 
-
-      <AddChannelModal
-        open={openAddChannelModal}
-        setOpen={setOpenAddChannelModal}
-        record=''
-        setRecord=''
+      <AddExceptionModal
+        open={openAddExceptionModal}
+        setOpen={setOpenAddExceptionModal}
+        template={{}}
       />
-
-    <AddExceptionModal 
-     open={openAddExceptionModal}
-     setOpen={setOpenAddExceptionModal}
-     template={{}}
-    />
 
     </div>
   );

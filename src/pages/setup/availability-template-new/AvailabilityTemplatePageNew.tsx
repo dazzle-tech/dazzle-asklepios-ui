@@ -40,17 +40,19 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-101", startTime: "09:00", endTime: "12:30", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 2,
         channelName: "Dr. Emma Johnson",
         type: "Practitioner",
-        capacity: "1 patient",
+        capacity: "1 concurrent",
         allowedServices: ["Consultation"],
         color: "#71946C",
         intervals: [
           { id: "int-102", startTime: "10:00", endTime: "14:00", slotDuration: "20 minutes" },
         ],
+        resources: []
       },
       {
         id: 3,
@@ -62,28 +64,31 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-103", startTime: "08:30", endTime: "12:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },],
       Monday: [{
         id: 4,
         channelName: "Orthodontics Pool",
         type: "Department Pool",
-        capacity: "2 concurrent",
+        capacity: "1 concurrent",
         allowedServices: ["Braces Check"],
         color: "#F08A5D",
         intervals: [
           { id: "int-201", startTime: "09:00", endTime: "13:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 5,
         channelName: "Dr. Michael Smith",
         type: "Practitioner",
-        capacity: "1 patient",
+        capacity: "1 concurrent",
         allowedServices: ["Surgery Consultation"],
         color: "#6A9FB5",
         intervals: [
           { id: "int-202", startTime: "11:00", endTime: "15:00", slotDuration: "40 minutes" },
         ],
+        resources: []
       },
       {
         id: 6,
@@ -95,6 +100,7 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-203", startTime: "08:00", endTime: "12:00", slotDuration: "15 minutes" },
         ],
+        resources: []
       },],
       Tuesday: [{
         id: 7,
@@ -106,17 +112,19 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-301", startTime: "07:30", endTime: "11:30", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 8,
         channelName: "Dr. Sarah Lee",
         type: "Practitioner",
-        capacity: "1 patient",
+        capacity: "1 concurrent",
         allowedServices: ["Follow-up"],
         color: "#3D5A80",
         intervals: [
           { id: "int-302", startTime: "12:00", endTime: "16:00", slotDuration: "20 minutes" },
         ],
+        resources: []
       },
       {
         id: 9,
@@ -128,6 +136,7 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-303", startTime: "09:30", endTime: "13:30", slotDuration: "30 minutes" },
         ],
+        resources: []
       },],
       Wednesday: [{
         id: 10,
@@ -139,17 +148,19 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-401", startTime: "08:00", endTime: "12:00", slotDuration: "60 minutes" },
         ],
+        resources: []
       },
       {
         id: 11,
         channelName: "Dr. Ahmed Khaled",
         type: "Practitioner",
-        capacity: "1 patient",
+        capacity: "1 concurrent",
         allowedServices: ["Minor Surgery"],
         color: "#4A4E69",
         intervals: [
           { id: "int-402", startTime: "12:30", endTime: "16:30", slotDuration: "60 minutes" },
         ],
+        resources: []
       },
       {
         id: 12,
@@ -161,6 +172,7 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-403", startTime: "08:00", endTime: "16:00", slotDuration: "60 minutes" },
         ],
+        resources: []
       },],
       Thursday: [{
         id: 13,
@@ -172,17 +184,19 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-501", startTime: "09:00", endTime: "13:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 14,
         channelName: "Dr. Lina Hassan",
         type: "Practitioner",
-        capacity: "1 patient",
+        capacity: "1 concurrent",
         allowedServices: ["Skin Treatment"],
         color: "#F2CC8F",
         intervals: [
           { id: "int-502", startTime: "13:30", endTime: "17:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 15,
@@ -194,28 +208,31 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-503", startTime: "09:00", endTime: "17:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },],
       Friday: [{
         id: 16,
         channelName: "Dental Pool",
         type: "Department Pool",
-        capacity: "3 concurrent",
+        capacity: "1 concurrent",
         allowedServices: ["Cleaning"],
         color: "#577590",
         intervals: [
           { id: "int-601", startTime: "08:00", endTime: "12:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 17,
         channelName: "Dr. Noor Ali",
         type: "Practitioner",
-        capacity: "1 patient",
+        capacity: "1 concurrent",
         allowedServices: ["Cleaning"],
         color: "#43AA8B",
         intervals: [
           { id: "int-602", startTime: "12:30", endTime: "16:30", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 18,
@@ -227,6 +244,7 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-603", startTime: "08:00", endTime: "16:30", slotDuration: "30 minutes" },
         ],
+        resources: []
       },],
       Saturday: [{
         id: 19,
@@ -238,17 +256,19 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-701", startTime: "09:00", endTime: "12:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 20,
         channelName: "Dr. Omar Saleh",
         type: "Practitioner",
-        capacity: "1 patient",
+        capacity: "1 concurrent",
         allowedServices: ["ENT Consultation"],
         color: "#CDB4DB",
         intervals: [
           { id: "int-702", startTime: "12:30", endTime: "16:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },
       {
         id: 21,
@@ -260,6 +280,7 @@ const mockAvailabilityTemplates = [
         intervals: [
           { id: "int-703", startTime: "09:00", endTime: "16:00", slotDuration: "30 minutes" },
         ],
+        resources: []
       },]
     }
   },
@@ -475,7 +496,7 @@ const AvailabilityTemplatePageNew = () => {
             <AvailabilityTemplateSummaryCard
               title="Test"
               type="Department"
-              capacity="2"
+              capacity='test'
               services={['service1', 'service2']}
               onSettingsClick={null}
             />

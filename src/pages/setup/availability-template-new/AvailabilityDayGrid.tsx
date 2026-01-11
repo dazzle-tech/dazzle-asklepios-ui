@@ -25,30 +25,8 @@ type IntervalForm = {
     strategy: string;
 };
 
-type Interval = {
-    id: string;
-    start: number;
-    end: number;
-    type?: 'NORMAL' | 'BREAK' | 'POOL';
-    meta?: {
-        name: string;
-        capacity: number;
-        step: number;
-        slotsBefore: number;
-        color?: string;
-    };
 
-};
 
-type ChannelForm = {
-    name: string;
-    type: 'DEPARTMENT_POOL' | 'PRACTITIONER';
-    facility?: string;
-    department?: string;
-    capacity: number;
-    color?: string;
-
-};
 
 type ChannelAvailability = {
     channelId: string;
@@ -109,19 +87,30 @@ const AvailabilityDayGrid = ({
 
     const times = useMemo(() => generateDayTimes(step), [step]);
     const [openAddInterval, setOpenAddInterval] = useState(false);
-    const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
+    const [activeChannel, setActiveChannel] = useState({
+        id: 0,
+        channelName: "",
+        type: "Practitioner",
+        capacity: 0,
+        allowedServices: [],
+        color: "",
+        intervals: [],
+        slotsBefore: 0
+    });
+    console.log("Object", activeChannel)
     const [openAddChannel, setOpenAddChannel] = useState(false);
 
-    const [channelForm, setChannelForm] = useState<ChannelForm>({
-        name: '',
+    const [channelForm, setChannelForm] = useState({
+        // id: '',
+        channelName: '',
         type: 'DEPARTMENT_POOL',
-        facility: '',
-        department: '',
-        capacity: 1,
-        color: '#4C7EF3'
+        capacity: 0,
+        allowedServices: [],
+        color: '',
+        intervals: []
     });
 
-   
+
 
     const [intervalForm, setIntervalForm] = useState<IntervalForm>({
         start: '',
@@ -132,8 +121,8 @@ const AvailabilityDayGrid = ({
         strategy: '',
     });
 
-  
-    
+
+
 
     const upsertChannelAvailability = useCallback(
         (channelId: string, updater: (oldIntervals: Interval[]) => Interval[]) => {
@@ -156,86 +145,93 @@ const AvailabilityDayGrid = ({
         [activeDay, setAvailability]
     );
 
-   
 
-    
-   
 
-   
+
+
+
+
 
     return (
-        <div className="calendar-wrapper">
-            <div className="time-column">
-                <div className="time-header">Time</div>
-                {times.map(t => (
-                    <div key={t.minutes} className="time-cell">
-                        {t.label}
-                    </div>
-                ))}
+        <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: "2px" }}>
+                <MyButton onClick={() => setOpenAddChannel(true)} prefixIcon={() => <FaPlus />} disabled={template?.id ? false : true}>Add Channel</MyButton>
             </div>
+            <div className="calendar-wrapper">
+                <div className="time-column">
+                    <div className="time-header">Time</div>
+                    {times.map(t => (
+                        <div key={t.minutes} className="time-cell">
+                            {t.label}
+                        </div>
+                    ))}
+                </div>
 
-            <div className="channels-wrapper">
+                <div className="channels-wrapper">
 
-                <div
-                    // className="channel-column add-channel-column"
-                    // onClick={() => setOpenAddChannel(true)}
-                    style={{ display: "flex", padding: "5px" }}
-                >
+                    <div
+                        // className="channel-column add-channel-column"
+                        // onClick={() => setOpenAddChannel(true)}
+                        style={{ display: "flex", padding: "5px" }}
+                    >
 
-                    <div style={{ display: "flex" }}>
-                        {channelsDummyData.map(t => (
-                            <>
-                                <div key={t.id}
-                                    style={{
-                                        width: "320px",
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '8px'
-                                    }}
-                                // className="channel-cell add-channel-cell"
-                                ><>
-                                        <AvailabilityTemplateSummaryCard
-                                            title={t.channelName}
-                                            type={t.type}
-                                            capacity={t.capacity}
-                                            services={t.allowedServices}
-                                            backgroundColor={t.color}
-                                        />
-                                        {t?.intervals?.map(interval => (
-                                            <AvailabilityIntervalCard
-                                                start={interval.startTime}
-                                                end={interval.endTime}
-                                                slotLabel={interval.slotDuration}
+                        <div style={{ display: "flex" }}>
+                            {channelsDummyData.map(t => (
+                                <>
+                                    <div key={t.id}
+                                        style={{
+                                            width: "320px",
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '8px'
+                                        }}
+                                    // className="channel-cell add-channel-cell"
+                                    ><>
+                                            <AvailabilityTemplateSummaryCard
+                                                title={t.channelName}
+                                                type={t.type}
+                                                capacity={t.capacity}
+                                                services={t.allowedServices}
                                                 backgroundColor={t.color}
                                             />
-                                        ))}
-                                        <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"} onClick={() => setOpenAddInterval(true)}>Add Interval</MyButton>
-                                    </>
-                                </div>
-                            </>
+                                            {t?.intervals?.map(interval => (
+                                                <AvailabilityIntervalCard
+                                                    start={interval.startTime}
+                                                    end={interval.endTime}
+                                                    slotLabel={interval.slotDuration}
+                                                    backgroundColor={t.color}
+                                                />
+                                            ))}
+                                            <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"} onClick={() => setOpenAddInterval(true)}>Add Interval</MyButton>
+                                        </>
+                                    </div>
+                                </>
 
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <AddIntervalModal
-                step={step}
-                record={intervalForm}
-                setRecord={setIntervalForm}
-                open={openAddInterval}
-                setOpen={setOpenAddInterval}
-                day={day}
-            />
-            <AddChannelModal
+                <AddIntervalModal
+                    step={step}
+                    record={intervalForm}
+                    setRecord={setIntervalForm}
+                    open={openAddInterval}
+                    setOpen={setOpenAddInterval}
+                    day={day}
+                />
+                <AddChannelModal
                 open={openAddChannel}
                 setOpen={setOpenAddChannel}
-                record={channelForm}
-                setRecord={(partial) =>
-                    setChannelForm(prev => ({ ...prev, ...partial }))
-                }
+                record={activeChannel}
+                setRecord={setActiveChannel}
+                templatesData={templatesData}
+                setTemplatesData={setTemplatesData}
+                template={template}
+                day={day}
             />
 
-        </div>
+            </div>
+        </>
     );
 };
 

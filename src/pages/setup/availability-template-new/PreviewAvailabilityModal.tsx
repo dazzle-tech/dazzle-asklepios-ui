@@ -200,10 +200,6 @@ const PreviewAvailabilityCalendar: React.FC<Props> = ({ open, onClose, templateN
         setCurrentData(dataForDate);
     }, [currentDate]);
 
-    useEffect(() => {
-        console.log("currentData");
-        console.log(currentData);
-    }, [currentData]);
 
     const generateDayTimes = (step: number) => {
         const times: { label: string; minutes: number }[] = [];
