@@ -9,6 +9,7 @@ type DepartmentPoolCardProps = {
   title: string;
   type: string;
   capacity: string;
+  departmentCapacity: string;
   services: string[];
   onSettingsClick?: () => void;
   backgroundColor?: string;
@@ -18,6 +19,7 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
   title,
   type,
   capacity,
+  departmentCapacity,
   services,
   onSettingsClick,
   backgroundColor = "#6982F0"
@@ -46,9 +48,9 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
         <span style={styles.title}>{title}</span>
 
         <div style={{ display: 'flex', gap: '5px' }}>
-          <IoSettingsSharp onClick={onSettingsClick} />
-          <CiSquareMinus />
-          <FaRegEdit />
+          <IoSettingsSharp onClick={onSettingsClick} className='icons-style'/>
+          <CiSquareMinus className='icons-style'/>
+          <FaRegEdit className='icons-style'/>
         </div>
       </div>
 
@@ -59,7 +61,11 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
         </div>
 
         <div>
-          <strong>Capacity:</strong> {capacity}
+          <strong>Parallel Capacity:</strong> {capacity}
+        </div>
+
+         <div>
+          <strong>Department Capacity:</strong> {departmentCapacity}
         </div>
 
  <Whisper placement="top" trigger="click" speaker={<Tooltip>{services.join(', ')}</Tooltip>}>

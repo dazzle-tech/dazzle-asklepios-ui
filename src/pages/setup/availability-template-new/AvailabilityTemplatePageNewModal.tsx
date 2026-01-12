@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Divider, Form } from 'rsuite';
+import { Tabs, Divider, Form, RadioGroup, Radio, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
@@ -15,8 +15,11 @@ import MyTab from '@/components/MyTab';
 import { FaPlus } from "react-icons/fa";
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
-import AddChannelModal from './AddChannelModal';
+import AddRoomModal from './AddRoomModal';
 import AddExceptionModal from './AddExceptionModal';
+import SectionContainer from '@/components/SectionsoContainer';
+import { useGetAllServicesQuery } from '@/services/setup/serviceService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 
 const days = [
   'Sunday',
@@ -76,15 +79,15 @@ type EditAvailabilityTemplateModalNewProps = {
 
 const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNewProps> = ({ template, templatesData, setTemplatesData }) => {
   const [activeChannel, setActiveChannel] = useState({
-          id: 0,
-          channelName: "",
-          type: "Practitioner",
-          capacity: 0,
-          allowedServices: [],
-          color: "",
-          intervals: [],
-          slotsBefore: 0
-      });
+    id: 0,
+    channelName: "",
+    type: "Practitioner",
+    capacity: 0,
+    allowedServices: [],
+    color: "",
+    intervals: [],
+    slotsBefore: 0
+  });
   const [record, setRecord] = useState<any>(
     {
       name: '',
@@ -123,6 +126,11 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
     }
   );
 
+  const { data: servicesList, isFetching, refetch } = useGetAllServicesQuery({});
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery({});
+  console.log("practitionerListResponse");
+  console.log(practitionerListResponse);
+
   const tabData = () => {
     let arr = [];
     {
@@ -131,9 +139,6 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
         arr.push({
           title: day, content:
             <>
-              {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: "2px" }}>
-                <MyButton onClick={() => setOpenAddChannelModal(true)} prefixIcon={() => <FaPlus />} disabled={record?.id ? false : true}>Add Channel</MyButton>
-              </div> */}
               <AvailabilityDayGrid
                 step={120}
                 activeDay={activeDay}
@@ -143,7 +148,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
                 setAvailability={setAvailability}
                 onAddChannel={handleAddChannel}
                 onRemoveChannel={handleRemoveChannel}
-                channelsDummyData={record?.channelsData?.[day] ?? []}
+                // channelsDummyData={record?.channelsData?.[day] ?? []}
                 templatesData={templatesData}
                 setTemplatesData={setTemplatesData}
                 template={record}
@@ -224,6 +229,11 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
 
   return (
     <div className="availability-template-modal">
+      <SectionContainer
+       title="Main Information"
+       content={
+         <>
+      
       <Form fluid>
         <div className="template-header">
           <MyInput
@@ -337,7 +347,160 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
             width="6vw"
           />
         </div>
+
+
       </Form>
+     
+      </>
+       }
+      />
+       <Row>
+        <Col md={12}>
+          <SectionContainer
+            title="Department Details"
+            content={
+              <>
+                <Form fluid>
+                  <Row>
+                    <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    fieldType="select"
+                    fieldName="defaultService"
+                    selectData={servicesList?.data ?? []}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    record={record}
+                    setRecord={setRecord}
+                  />
+                  </Col>
+                  <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    fieldType="number"
+                    fieldName="numberOfResources"
+                    record={record}
+                    setRecord={setRecord}
+                  />
+                  </Col>
+                  </Row>
+                  <Row>
+                    <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    fieldType="check"
+                    fieldName="requirePractitioner"
+                    record={record}
+                    setRecord={setRecord}
+                    showLabel={false}
+                  />
+                  </Col>
+                  {record['requirePractitioner'] && (
+                    <Col md={12}>
+                    <MyInput
+                      width="100%"
+                      fieldType="select"
+                      fieldName="defaultPractitioner"
+                      selectData={practitionerListResponse?.data ?? []}
+                      selectDataLabel="firstName"
+                      selectDataValue="id"
+                      record={record}
+                      setRecord={setRecord}
+                    />
+                    </Col>
+                  )}
+                  </Row>
+                  <Row>
+                    <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    fieldType="check"
+                    fieldName="requireBilling"
+                    record={record}
+                    setRecord={setRecord}
+                    showLabel={false}
+                  />
+                  </Col>
+                  <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    fieldType="check"
+                    fieldName="requirePreAssesment"
+                    record={record}
+                    setRecord={setRecord}
+                    showLabel={false}
+                  />
+                  </Col>
+                  </Row>
+                </Form>
+              </>
+            }
+          />
+        </Col>
+        <Col md={12}>
+          <SectionContainer
+            title="Finantial Requirements"
+            content={
+              <Form fluid layout='inline'>
+
+                <RadioGroup
+                  inline
+                >
+                  <Radio value="insurance">Insurance</Radio>
+                  <Radio value="cashe">Cashe</Radio>
+                  <Radio value="both">Both</Radio>
+                </RadioGroup>
+
+              </Form>
+            }
+          />
+        </Col>
+      </Row>
+
+      <SectionContainer
+        title="Days"
+        content={
+          <Form fluid layout='inline'>
+            {days.map((day) => (
+              <MyInput
+                key={day}
+                width="13vw"
+                fieldName="showCompleted"
+                fieldType="check"
+                record=""
+                setRecord={() => { }}
+                fieldLabel={day}
+                showLabel={false}
+              />
+            ))}
+          </Form>
+        }
+      />
+
+    
+      <SectionContainer
+        title="Appointment Requirements"
+        content={
+          <Form fluid layout='inline'>
+            <MyInput
+              width="100%"
+              fieldType="check"
+              fieldName="canBookingFromPatientPortal"
+              record={record}
+              setRecord={setRecord}
+              showLabel={false}
+            />
+            <MyInput
+              width="100%"
+              fieldType="check"
+              fieldName="requireConfirmation"
+              record={record}
+              setRecord={setRecord}
+              showLabel={false}
+            />
+          </Form>
+        }
+      />
 
       <Divider />
 
@@ -345,6 +508,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
         <MyTab
           data={tabData()}
         />
+
 
         <div className="days-actions">
           <MyButton
@@ -374,6 +538,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
 
         </div>
       </div>
+
 
 
       <PreviewAvailabilityModal

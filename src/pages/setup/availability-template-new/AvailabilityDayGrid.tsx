@@ -6,7 +6,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import AddIntervalModal from './AddIntervalModal';
 import MyInput from '@/components/MyInput';
 import { Divider, Form } from 'rsuite';
-import AddChannelModal from './AddChannelModal';
+import AddRoomModal from './AddRoomModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaPlus } from "react-icons/fa";
 
@@ -24,9 +24,6 @@ type IntervalForm = {
     startStep: number;
     strategy: string;
 };
-
-
-
 
 type ChannelAvailability = {
     channelId: string;
@@ -47,14 +44,6 @@ const generateDayTimes = (step: number) => {
     return times;
 };
 
-
-
-
-const overlaps = (a: { start: number; end: number }, b: { start: number; end: number }) =>
-    a.start < b.end && b.start < a.end;
-
-
-
 const AvailabilityDayGrid = ({
     step,
     activeDay,
@@ -64,7 +53,7 @@ const AvailabilityDayGrid = ({
     setAvailability,
     onAddChannel,
     onRemoveChannel,
-    channelsDummyData,
+    // channelsDummyData,
     templatesData,
     setTemplatesData,
     template,
@@ -78,13 +67,23 @@ const AvailabilityDayGrid = ({
     setAvailability: React.Dispatch<React.SetStateAction<AvailabilityByDay>>;
     onAddChannel: (data: { name: string; color?: string }) => void;
     onRemoveChannel: (id: string) => void;
-    channelsDummyData: any[],
+    // channelsDummyData: any[],
     templatesData: any[],
     setTemplatesData: any,
     template: any,
     day: string
 }) => {
 
+    const [channelsDummyData, setChannelsDummyData] = useState([]);
+    useEffect(() => {
+        if (!template?.id) return;
+
+        const freshTemplate = templatesData.find(t => t.id === template.id);
+
+        setChannelsDummyData(
+            freshTemplate?.channelsData?.[day] ?? []
+        );
+    }, [templatesData, template?.id, day]);
     const times = useMemo(() => generateDayTimes(step), [step]);
     const [openAddInterval, setOpenAddInterval] = useState(false);
     const [activeChannel, setActiveChannel] = useState({
@@ -97,17 +96,8 @@ const AvailabilityDayGrid = ({
         intervals: [],
         slotsBefore: 0
     });
-    const [openAddChannel, setOpenAddChannel] = useState(false);
-
-    const [channelForm, setChannelForm] = useState({
-        // id: '',
-        channelName: '',
-        type: 'DEPARTMENT_POOL',
-        capacity: 0,
-        allowedServices: [],
-        color: '',
-        intervals: []
-    });
+    const [openAddRoom, setOpenAddRoom] = useState(false);
+    const [channelToAddInterval, setChannelToAddInterval] = useState({});
 
 
 
@@ -123,27 +113,7 @@ const AvailabilityDayGrid = ({
 
 
 
-    const upsertChannelAvailability = useCallback(
-        (channelId: string, updater: (oldIntervals: Interval[]) => Interval[]) => {
-            setAvailability(prev => {
-                const dayData = prev[activeDay] ?? [];
-                const existing = dayData.find(c => c.channelId === channelId);
-
-                const oldIntervals = existing?.intervals ?? [];
-                const nextIntervals = updater(oldIntervals);
-
-                return {
-                    ...prev,
-                    [activeDay]: [
-                        ...dayData.filter(c => c.channelId !== channelId),
-                        { channelId, intervals: nextIntervals }
-                    ]
-                };
-            });
-        },
-        [activeDay, setAvailability]
-    );
-
+  
 
 
 
@@ -154,7 +124,7 @@ const AvailabilityDayGrid = ({
     return (
         <>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: "2px" }}>
-                <MyButton onClick={() => setOpenAddChannel(true)} prefixIcon={() => <FaPlus />} disabled={template?.id ? false : true}>Add Channel</MyButton>
+                <MyButton onClick={() => setOpenAddRoom(true)} prefixIcon={() => <FaPlus />} disabled={template?.id ? false : true}>Add Room</MyButton>
             </div>
             <div className="calendar-wrapper">
                 <div className="time-column">
@@ -190,6 +160,7 @@ const AvailabilityDayGrid = ({
                                                 title={t.channelName}
                                                 type={t.type}
                                                 capacity={t.capacity}
+                                                departmentCapacity={t.departmentCapacity}
                                                 services={t.allowedServices}
                                                 backgroundColor={t.color}
                                             />
@@ -201,7 +172,8 @@ const AvailabilityDayGrid = ({
                                                     backgroundColor={t.color}
                                                 />
                                             ))}
-                                            <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"} onClick={() => setOpenAddInterval(true)}>Add Interval</MyButton>
+
+                                            <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"} onClick={() => { setChannelToAddInterval(t); setOpenAddInterval(true) }}>Add Interval</MyButton>
                                         </>
                                     </div>
                                 </>
@@ -218,17 +190,21 @@ const AvailabilityDayGrid = ({
                     setOpen={setOpenAddInterval}
                     day={day}
                     template={template}
+                    templatesData={templatesData}
+                    setTemplatesData={setTemplatesData}
+                    channel={channelToAddInterval}
                 />
-                <AddChannelModal
-                open={openAddChannel}
-                setOpen={setOpenAddChannel}
-                record={activeChannel}
-                setRecord={setActiveChannel}
-                templatesData={templatesData}
-                setTemplatesData={setTemplatesData}
-                template={template}
-                day={day}
-            />
+                <AddRoomModal
+                    open={openAddRoom}
+                    setOpen={setOpenAddRoom}
+                    record={activeChannel}
+                    setRecord={setActiveChannel}
+                    templatesData={templatesData}
+                    setTemplatesData={setTemplatesData}
+                    template={template}
+                    day={day}
+
+                />
 
             </div>
         </>

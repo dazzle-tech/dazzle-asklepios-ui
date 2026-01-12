@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Form, Checkbox, CheckboxGroup } from 'rsuite';
+import { Form, Checkbox, CheckboxGroup, RadioGroup, Radio, Text } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import './AddChannelModal.less';
+import './AddRoomModal.less';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaPlus, FaTrash } from "react-icons/fa";
+import SectionContainer from '@/components/SectionsoContainer';
 
 type ChannelForm = {
   id: number;
@@ -22,8 +23,8 @@ type ChannelForm = {
 };
 
 const channelTypeOptions = [
-  { label: 'Department Pool', value: 'DEPARTMENT_POOL' },
-  { label: 'Practitioner', value: 'PRACTITIONER' }
+  { label: 'Practitioner', value: 'PRACTITIONER' },
+  { label: 'Other', value: 'Other' }
 ];
 
 const serviceOptions = [
@@ -32,7 +33,7 @@ const serviceOptions = [
   { label: 'Consultation', value: 'CONSULTATION' }
 ];
 
-const AddChannelModal = ({
+const AddRoomModal = ({
   record,
   setRecord,
   open,
@@ -53,7 +54,16 @@ const AddChannelModal = ({
 }) => {
 
   const [currentColor, setCurrentColor] = useState(record?.color || '#000000');
-  const [newResource, setNewResource] = useState({additionalResource: ''});
+  const [newResource, setNewResource] = useState({ additionalResource: '' });
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+  ];
 
   const columns = [
     {
@@ -79,14 +89,14 @@ const AddChannelModal = ({
   const conjureFormContent = () => (
     <Form fluid className="add-channel-form">
 
-      <Checkbox
+      {/* <Checkbox
         checked={record.applyAllDays || false}
         onChange={(_, checked) => {
           setRecord(prev => ({ ...prev, applyAllDays: checked }));
         }}
       >
         <Translate>Apply on all days</Translate>
-      </Checkbox>
+      </Checkbox> */}
 
       <MyInput
         column
@@ -124,6 +134,16 @@ const AddChannelModal = ({
         width={60}
       />
 
+      <MyInput
+        column
+        fieldName="parallelCapacity"
+        fieldType="number"
+        record={record}
+        setRecord={setRecord}
+        width="100%"
+      />
+
+          
       <div className="block">
         <Translate>Services Allowed (optional):</Translate>
         <CheckboxGroup
@@ -155,8 +175,9 @@ const AddChannelModal = ({
           />
         </div>
       </div>
-       
-       <br/>
+
+      <br />
+
       <div className="block">
         <Translate>Resources (optional):</Translate>
         <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
@@ -173,7 +194,7 @@ const AddChannelModal = ({
                 ...prev,
                 resources: [...(prev.resources || []), newResource['additionalResource'].trim()]
               }));
-              setNewResource({additionalResource: ''});
+              setNewResource({ additionalResource: '' });
             }}
           >
             Add
@@ -186,6 +207,83 @@ const AddChannelModal = ({
           columns={columns}
         />
       </div>
+       <div style={{display: 'flex', flexDirection: 'column'}}>
+      <Text>Days</Text>
+      <RadioGroup
+        inline
+        value={record?.days}
+        onChange={(value) =>
+          setRecord((prev: any) => ({
+            ...prev,
+            days: value
+          }))
+        }
+      >
+        <Radio value="default">Default</Radio>
+        <Radio value="specificDays">Specific Days</Radio>
+      </RadioGroup>
+      </div>
+      {(record['days']) === 'specificDays' && (
+      <SectionContainer
+        title="Days"
+        content={
+          <Form fluid layout='inline'>
+            {days.map((day) => (
+              <MyInput
+                key={day}
+                width="13vw"
+                fieldName="day"
+                fieldType="check"
+                record=""
+                setRecord={() => { }}
+                fieldLabel={day}
+                showLabel={false}
+              />
+            ))}
+          </Form>
+        }
+      />
+      )}
+
+      <SectionContainer
+        title="Finantial Requirements"
+        content={
+          <Form fluid layout='inline'>
+
+            <RadioGroup
+              inline
+            >
+              <Radio value="insurance">Insurance</Radio>
+              <Radio value="cashe">Cashe</Radio>
+              <Radio value="both">Both</Radio>
+            </RadioGroup>
+
+          </Form>
+        }
+      />
+      <SectionContainer
+        title="Appointment Requirements"
+        content={
+          <Form fluid layout='inline'>
+            <MyInput
+              width="100%"
+              fieldType="check"
+              fieldName="canBookingFromPatientPortal"
+              record={record}
+              setRecord={setRecord}
+              showLabel={false}
+            />
+            <MyInput
+              width="100%"
+              fieldType="check"
+              fieldName="requireConfirmation"
+              record={record}
+              setRecord={setRecord}
+              showLabel={false}
+            />
+          </Form>
+        }
+      />
 
       <div className="help-text">
         Book into pool; assign practitioner near appointment time.
@@ -197,7 +295,7 @@ const AddChannelModal = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Add Channel"
+      title="Add Room"
       size="xs"
       content={conjureFormContent}
       actionButtonLabel="Add"
@@ -213,7 +311,7 @@ const AddChannelModal = ({
 
         const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-        if (record.applyAllDays) {
+        // if (record.applyAllDays) {
           daysOfWeek.forEach(d => {
             if (!updatedTemplate.channelsData[d]) updatedTemplate.channelsData[d] = [];
             const newChannel: ChannelForm = {
@@ -226,7 +324,7 @@ const AddChannelModal = ({
             };
             updatedTemplate.channelsData[d].push(newChannel);
           });
-        } else {
+        // } else {
           if (!updatedTemplate.channelsData[day]) updatedTemplate.channelsData[day] = [];
           const newChannel: ChannelForm = {
             ...record,
@@ -236,7 +334,7 @@ const AddChannelModal = ({
             resources: record.resources || []
           };
           updatedTemplate.channelsData[day].push(newChannel);
-        }
+        // }
 
         updatedTemplates[templateIndex] = updatedTemplate;
         setTemplatesData(updatedTemplates);
@@ -257,4 +355,4 @@ const AddChannelModal = ({
   );
 };
 
-export default AddChannelModal;
+export default AddRoomModal;

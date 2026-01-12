@@ -256,6 +256,7 @@ const PreviewAvailabilityCalendar: React.FC<Props> = ({ open, onClose, templateN
                                             title={t.channelName}
                                             type={t.type}
                                             capacity={t.capacity}
+                                            departmentCapacity={t.departmentCapacity}
                                             services={t.allowedServices}
                                             backgroundColor={t.color}
                                         />

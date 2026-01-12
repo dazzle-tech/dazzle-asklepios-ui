@@ -29,16 +29,18 @@ const mockAvailabilityTemplates = [
     effectiveToDate: new Date('2026-01-15'),
     effectiveToHour: new Date('1970-01-01T16:00'),
     slotsBeforeAfter: 5,
+    days: [],
     channelsData: {
       Sunday: [{
         id: 1,
         channelName: "Pediatrics Pool",
         type: "Department Pool",
         capacity: "3 concurrent",
+        departmentCapacity: '5 patients',
         allowedServices: ["Vaccination", "Follow-up"],
         color: "#6982F0",
         intervals: [
-          { id: "int-101", startTime: "09:00", endTime: "12:30", slotDuration: "30 minutes" },
+          { id: "int-101", startTime: "09:00", endTime: "12:30", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03"},
         ],
         resources: []
       },
@@ -47,10 +49,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dr. Emma Johnson",
         type: "Practitioner",
         capacity: "1 concurrent",
+        departmentCapacity: '4 patients',
         allowedServices: ["Consultation"],
         color: "#71946C",
         intervals: [
-          { id: "int-102", startTime: "10:00", endTime: "14:00", slotDuration: "20 minutes" },
+          { id: "int-102", startTime: "10:00", endTime: "14:00", slotDuration: "20 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -59,10 +62,11 @@ const mockAvailabilityTemplates = [
         channelName: "Exam Room 1",
         type: "Resource",
         capacity: "1 concurrent",
+        departmentCapacity: '3 patients',
         allowedServices: ["Consultation"],
         color: "#8575A1",
         intervals: [
-          { id: "int-103", startTime: "08:30", endTime: "12:00", slotDuration: "30 minutes" },
+          { id: "int-103", startTime: "08:30", endTime: "12:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },],
@@ -71,10 +75,11 @@ const mockAvailabilityTemplates = [
         channelName: "Orthodontics Pool",
         type: "Department Pool",
         capacity: "1 concurrent",
+        departmentCapacity: '6 patients',
         allowedServices: ["Braces Check"],
         color: "#F08A5D",
         intervals: [
-          { id: "int-201", startTime: "09:00", endTime: "13:00", slotDuration: "30 minutes" },
+          { id: "int-201", startTime: "09:00", endTime: "13:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -83,10 +88,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dr. Michael Smith",
         type: "Practitioner",
         capacity: "1 concurrent",
+        departmentCapacity: '7 patients',
         allowedServices: ["Surgery Consultation"],
         color: "#6A9FB5",
         intervals: [
-          { id: "int-202", startTime: "11:00", endTime: "15:00", slotDuration: "40 minutes" },
+          { id: "int-202", startTime: "11:00", endTime: "15:00", slotDuration: "40 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -95,10 +101,11 @@ const mockAvailabilityTemplates = [
         channelName: "X-Ray Room",
         type: "Resource",
         capacity: "1 concurrent",
+        departmentCapacity: '6 patients',
         allowedServices: ["X-Ray"],
         color: "#B83B5E",
         intervals: [
-          { id: "int-203", startTime: "08:00", endTime: "12:00", slotDuration: "15 minutes" },
+          { id: "int-203", startTime: "08:00", endTime: "12:00", slotDuration: "15 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },],
@@ -107,10 +114,11 @@ const mockAvailabilityTemplates = [
         channelName: "Preventive Care Pool",
         type: "Department Pool",
         capacity: "4 concurrent",
+        departmentCapacity: '2 patients',
         allowedServices: ["Cleaning", "Check-up"],
         color: "#4ECDC4",
         intervals: [
-          { id: "int-301", startTime: "07:30", endTime: "11:30", slotDuration: "30 minutes" },
+          { id: "int-301", startTime: "07:30", endTime: "11:30", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -119,10 +127,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dr. Sarah Lee",
         type: "Practitioner",
         capacity: "1 concurrent",
+        departmentCapacity: '8 patients',
         allowedServices: ["Follow-up"],
         color: "#3D5A80",
         intervals: [
-          { id: "int-302", startTime: "12:00", endTime: "16:00", slotDuration: "20 minutes" },
+          { id: "int-302", startTime: "12:00", endTime: "16:00", slotDuration: "20 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -131,10 +140,11 @@ const mockAvailabilityTemplates = [
         channelName: "Exam Room 2",
         type: "Resource",
         capacity: "1 concurrent",
+        departmentCapacity: '6 patients',
         allowedServices: ["Consultation"],
         color: "#9A8C98",
         intervals: [
-          { id: "int-303", startTime: "09:30", endTime: "13:30", slotDuration: "30 minutes" },
+          { id: "int-303", startTime: "09:30", endTime: "13:30", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },],
@@ -143,10 +153,11 @@ const mockAvailabilityTemplates = [
         channelName: "Surgery Pool",
         type: "Department Pool",
         capacity: "1 concurrent",
+        departmentCapacity: '6 patients',
         allowedServices: ["Minor Surgery"],
         color: "#22223B",
         intervals: [
-          { id: "int-401", startTime: "08:00", endTime: "12:00", slotDuration: "60 minutes" },
+          { id: "int-401", startTime: "08:00", endTime: "12:00", slotDuration: "60 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -155,10 +166,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dr. Ahmed Khaled",
         type: "Practitioner",
         capacity: "1 concurrent",
+        departmentCapacity: '7 patients',
         allowedServices: ["Minor Surgery"],
         color: "#4A4E69",
         intervals: [
-          { id: "int-402", startTime: "12:30", endTime: "16:30", slotDuration: "60 minutes" },
+          { id: "int-402", startTime: "12:30", endTime: "16:30", slotDuration: "60 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -167,10 +179,11 @@ const mockAvailabilityTemplates = [
         channelName: "Operating Room 1",
         type: "Resource",
         capacity: "1 concurrent",
+        departmentCapacity: '4 patients',
         allowedServices: ["Minor Surgery"],
         color: "#C9ADA7",
         intervals: [
-          { id: "int-403", startTime: "08:00", endTime: "16:00", slotDuration: "60 minutes" },
+          { id: "int-403", startTime: "08:00", endTime: "16:00", slotDuration: "60 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },],
@@ -179,10 +192,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dermatology Pool",
         type: "Department Pool",
         capacity: "2 concurrent",
+        departmentCapacity: '5 patients',
         allowedServices: ["Skin Check"],
         color: "#81B29A",
         intervals: [
-          { id: "int-501", startTime: "09:00", endTime: "13:00", slotDuration: "30 minutes" },
+          { id: "int-501", startTime: "09:00", endTime: "13:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -191,10 +205,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dr. Lina Hassan",
         type: "Practitioner",
         capacity: "1 concurrent",
+        departmentCapacity: '8 patients',
         allowedServices: ["Skin Treatment"],
         color: "#F2CC8F",
         intervals: [
-          { id: "int-502", startTime: "13:30", endTime: "17:00", slotDuration: "30 minutes" },
+          { id: "int-502", startTime: "13:30", endTime: "17:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -203,10 +218,11 @@ const mockAvailabilityTemplates = [
         channelName: "Treatment Room",
         type: "Resource",
         capacity: "1 concurrent",
+        departmentCapacity: '4 patients',
         allowedServices: ["Skin Treatment"],
         color: "#E07A5F",
         intervals: [
-          { id: "int-503", startTime: "09:00", endTime: "17:00", slotDuration: "30 minutes" },
+          { id: "int-503", startTime: "09:00", endTime: "17:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },],
@@ -215,10 +231,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dental Pool",
         type: "Department Pool",
         capacity: "1 concurrent",
+        departmentCapacity: '6 patients',
         allowedServices: ["Cleaning"],
         color: "#577590",
         intervals: [
-          { id: "int-601", startTime: "08:00", endTime: "12:00", slotDuration: "30 minutes" },
+          { id: "int-601", startTime: "08:00", endTime: "12:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -227,10 +244,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dr. Noor Ali",
         type: "Practitioner",
         capacity: "1 concurrent",
+        departmentCapacity: '7 patients',
         allowedServices: ["Cleaning"],
         color: "#43AA8B",
         intervals: [
-          { id: "int-602", startTime: "12:30", endTime: "16:30", slotDuration: "30 minutes" },
+          { id: "int-602", startTime: "12:30", endTime: "16:30", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -239,10 +257,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dental Room 1",
         type: "Resource",
         capacity: "1 concurrent",
+        departmentCapacity: '3 patients',
         allowedServices: ["Cleaning"],
         color: "#F94144",
         intervals: [
-          { id: "int-603", startTime: "08:00", endTime: "16:30", slotDuration: "30 minutes" },
+          { id: "int-603", startTime: "08:00", endTime: "16:30", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },],
@@ -251,10 +270,11 @@ const mockAvailabilityTemplates = [
         channelName: "ENT Pool",
         type: "Department Pool",
         capacity: "2 concurrent",
+        departmentCapacity: '8 patients',
         allowedServices: ["ENT Consultation"],
         color: "#90DBF4",
         intervals: [
-          { id: "int-701", startTime: "09:00", endTime: "12:00", slotDuration: "30 minutes" },
+          { id: "int-701", startTime: "09:00", endTime: "12:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -263,10 +283,11 @@ const mockAvailabilityTemplates = [
         channelName: "Dr. Omar Saleh",
         type: "Practitioner",
         capacity: "1 concurrent",
+        departmentCapacity: '9 patients',
         allowedServices: ["ENT Consultation"],
         color: "#CDB4DB",
         intervals: [
-          { id: "int-702", startTime: "12:30", endTime: "16:00", slotDuration: "30 minutes" },
+          { id: "int-702", startTime: "12:30", endTime: "16:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -275,10 +296,11 @@ const mockAvailabilityTemplates = [
         channelName: "ENT Room",
         type: "Resource",
         capacity: "1 concurrent",
+        departmentCapacity: '4 patients',
         allowedServices: ["ENT Consultation"],
         color: "#FFC8DD",
         intervals: [
-          { id: "int-703", startTime: "09:00", endTime: "16:00", slotDuration: "30 minutes" },
+          { id: "int-703", startTime: "09:00", endTime: "16:00", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },]
@@ -298,6 +320,7 @@ const mockAvailabilityTemplates = [
     effectiveToDate: new Date('2026-02-10'),
     effectiveToHour: new Date('1970-01-01T16:00'),
     slotsBeforeAfter: 7,
+    days: [],
   },
   {
     id: '3',
@@ -313,6 +336,7 @@ const mockAvailabilityTemplates = [
     effectiveToDate: new Date('2026-03-20'),
     effectiveToHour: new Date('1970-01-01T16:00'),
     slotsBeforeAfter: 10,
+    days: [],
   }
 ];
 

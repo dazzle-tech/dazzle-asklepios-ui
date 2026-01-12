@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Checkbox, Divider, Row } from 'rsuite';
+import { Form, Checkbox, Divider, Row, CheckboxGroup } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import './AddIntervalModal.less';
@@ -25,7 +25,10 @@ type IntervalRecord = {
     end: string;
     applyAllChannels: boolean;
     slotDuration: number;
-    strategy: string
+    strategy: string;
+    startBreak: string;
+    endBreak: string
+
 };
 
 /* ===================== COMPONENT ===================== */
@@ -38,7 +41,10 @@ const AddIntervalModal = ({
     open,
     setOpen,
     day,
-    template
+    template,
+    templatesData,
+    setTemplatesData,
+    channel
 }: {
     step: number;
     dayLabel?: string;
@@ -47,7 +53,10 @@ const AddIntervalModal = ({
     open: boolean;
     setOpen: any;
     day: string;
-    template: any
+    template: any;
+    templatesData: any;
+    setTemplatesData: any;
+    channel: any;
 }) => {
     // const [record, setRecord] = useState({});
     const timeToMinutes = (timeStr: string) => {
@@ -68,24 +77,21 @@ const AddIntervalModal = ({
     const slotDuration = 30;
     const slotBeforeAfter = 5;
     const [slots, setSlots] = useState([]);
+    const serviceOptions = [
+  { label: 'Vaccination', value: 'VACCINATION' },
+  { label: 'Follow-up', value: 'FOLLOW_UP' },
+  { label: 'Consultation', value: 'CONSULTATION' }
+];
     useEffect(() => {
-        console.log("slotDuration", record?.slotDuration);
-         console.log("start: ", record?.start);
-         console.log("end: ", record?.end);
         if (record.start && record.end) {
-            console.log("in if");
             const slotsList = [];
             const intervalStartMins = timeToMinutes(formatTime(record.start));
             const intervalEndMins = timeToMinutes(formatTime(record.end));
 
-            const totalSlotDuration = Number(record.slotDuration)  + (slotBeforeAfter * 2);
+            const totalSlotDuration = Number(record.slotDuration) + (slotBeforeAfter * 2);
 
             let currentPointer = intervalStartMins - slotBeforeAfter;
 
-            console.log("intervalStartMins: ", intervalStartMins);
-            console.log("intervalEndMins: ", intervalEndMins);
-            console.log("totalSlotDuration: ", totalSlotDuration);
-            console.log("currentPointer: ", currentPointer);
 
             while (currentPointer + totalSlotDuration <= intervalEndMins + slotBeforeAfter) {
                 const slotStart = currentPointer;
@@ -101,13 +107,12 @@ const AddIntervalModal = ({
         }
 
     }, [record?.start, record?.end, record?.slotDuration]);
-    console.log("slots: ", slots);
 
     useEffect(() => {
-        if(record.strategy === "asDepartmentPool"){
-            setRecord({...record, slotDuration: template.step})
+        if (record.strategy === "asDepartmentPool") {
+            setRecord({ ...record, slotDuration: template.step })
         }
-    },[record.strategy]);
+    }, [record.strategy]);
 
     const [displayAddBreakFields, setDisplayAddBreakFields] = useState<boolean>(false);
     const conjureFormContent = (stepNumber = 0) => {
@@ -150,6 +155,19 @@ const AddIntervalModal = ({
                                 fieldLabel='End Time'
                                 width="100%"
                             />
+                        </div>
+                        <div className="block">
+                            <Translate>Services Allowed (optional):</Translate>
+                            <CheckboxGroup
+                                inline
+                                
+                            >
+                                {serviceOptions.map(s => (
+                                    <Checkbox key={s.value} value={s.value}>
+                                        {s.label}
+                                    </Checkbox>
+                                ))}
+                            </CheckboxGroup>
                         </div>
 
                         {record.start && record.end && record.end > record.start && (
@@ -234,7 +252,64 @@ const AddIntervalModal = ({
                 return null;
         }
     };
+
+    const handleSave = () => {
+        const newInterval = {
+            id: `int-${Date.now()}`,
+            startTime: formatTime(record.start),
+            endTime: formatTime(record.end),
+            // startTime: record.start,
+            // endTime: record.end,
+            slotDuration: `${record.slotDuration} minutes`,
+            strategy: record.strategy,
+            // startBreak: record?.startBreak,
+            // endBreak: record?.endBreak,
+            startBreak: '02:00',
+            endBreak: '03:00',
+        };
+        console.log("newInterval", newInterval);
+        setTemplatesData((prev: any[]) =>
+            prev.map(tpl => {
+                if (tpl.id !== template.id) { return tpl; console.log("in if 1") }
+
+                return {
+                    ...tpl,
+                    channelsData: {
+                        ...tpl.channelsData,
+                        [day]: tpl.channelsData[day].map((ch: any) => {
+                            if (record.applyAllChannels || ch.id == channel.id) {
+                                console.log("in if 2")
+                                return {
+                                    ...ch,
+                                    intervals: [...ch.intervals, newInterval],
+                                };
+                            }
+                            return ch;
+                        }),
+                    },
+                };
+            })
+        );
+        console.log("after set");
+        setOpen(false);
+    };
+    useEffect(() => {
+        console.log("TemplatesData: ", templatesData);
+    }, [templatesData])
+
+
     return (
+        // <MyModal
+        //     open={open}
+        //     setOpen={setOpen}
+        //     title="Add Interval"
+        //     size="40vw"
+        //     content={conjureFormContent}
+        //     actionButtonLabel="Save"
+        //     actionButtonFunction={() => {
+
+        //     }}
+        // />
         <MyModal
             open={open}
             setOpen={setOpen}
@@ -242,9 +317,7 @@ const AddIntervalModal = ({
             size="40vw"
             content={conjureFormContent}
             actionButtonLabel="Save"
-            actionButtonFunction={() => {
-
-            }}
+            actionButtonFunction={handleSave}
         />
     );
 };
