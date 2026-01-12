@@ -242,7 +242,7 @@ const PatientChronicMedication = ({ patient, title = null }) => {
             predefinedInstructionsListResponse={predefinedInstructionsListResponse}
             customeInstructions={customeInstructions}
             joinValuesFromArray={joinValuesFromArray}
-            modalTitle="Last 24-h Medications" />
+            modalTitle="Patient Chronic Medication" />
       }
     />
   );
