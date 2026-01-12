@@ -21,15 +21,29 @@ const FullViewTable = ({
 
 
   const medicationColumns = [
+    // {
+    //   key: 'brandName',
+    //   title: 'Medication Brand Name',
+    //      render: (rowData: any) => {
+    //     return genericMedicationListResponse?.data?.find(
+    //       item => item.id === rowData.genericMedicationsId
+    //     )?.name;
+    //   }
+    // },
     {
-      key: 'brandName',
-      title: 'Medication Brand Name',
-         render: (rowData: any) => {
-        return genericMedicationListResponse?.data?.find(
-          item => item.id === rowData.genericMedicationsId
-        )?.name;
-      }
-    },
+  key: 'medicationBrandName',
+  title: 'MEDICATION BRAND NAME',
+  render: (rowData: any) => {
+    const id = rowData.genericMedicationsKey;
+
+    const item = genericMedicationListResponse?.data?.find(item => {
+   
+      return item.id === id;
+    });
+
+    return item?.name || '-';
+  }
+},
     // don't remove this commented code, may be needed later
     
     // {
