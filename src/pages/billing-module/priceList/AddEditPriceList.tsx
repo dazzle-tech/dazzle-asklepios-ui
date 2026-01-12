@@ -211,6 +211,7 @@ const AddEditPriceList = ({
       title={priceList?.id ? "Edit Price List" : "New Price List"}
       actionButtonFunction={handleSave}
       content={() => conjureFormContent()}
+      position="right"
       steps={[
         {
           title: "Price List Details",

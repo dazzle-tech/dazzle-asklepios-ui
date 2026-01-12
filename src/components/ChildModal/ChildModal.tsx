@@ -50,18 +50,6 @@ const ChildModal = ({
   const subChildRight = mainWidth + childWidth + (GAP * 2);
 
   useEffect(() => {
-    if (showChild) {
-      const childModal = document.querySelector('.child-right-modal');
-      if (childModal instanceof HTMLElement) {
-        childModal.style.position = 'fixed';
-        childModal.style.top = '0px';
-        childModal.style.right = `${childRight}px`;
-        childModal.style.zIndex = '1051';
-      }
-    }
-  }, [showChild, childRight]);
-
-  useEffect(() => {
     if (showSubChild) {
       const subChildModal = document.querySelector('.sub-child-right-modal');
       if (subChildModal instanceof HTMLElement) {
@@ -72,6 +60,30 @@ const ChildModal = ({
       }
     }
   }, [showSubChild, subChildRight]);
+
+    useEffect(() => {
+      if (!showChild) return;
+
+      const mainModal = document.querySelector(
+        '.rsuite-modal-wrapper .rsuite-modal'
+      ) as HTMLElement;
+
+      const childModal = document.querySelector(
+        '.child-right-modal'
+      ) as HTMLElement;
+
+      if (!mainModal || !childModal) return;
+
+      const mainRect = mainModal.getBoundingClientRect();
+
+      const leftOffset = mainRect.left - childModal.offsetWidth - GAP;
+
+      childModal.style.position = 'fixed';
+      childModal.style.top = '0px';
+      childModal.style.left = `${leftOffset}px`;
+      childModal.style.right = 'auto';
+      childModal.style.zIndex = '1051';
+    }, [showChild]);
 
   return (
     <>
