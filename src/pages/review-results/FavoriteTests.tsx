@@ -1,16 +1,16 @@
-import Translate from '@/components/Translate';
-import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
-import { faFlask, faMicroscope, faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
-import { Col, Grid, Panel, Row, Tooltip, Whisper } from 'rsuite';
+import { Grid, Row, Col, Panel, HStack, Tooltip, Whisper, Button, Divider } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faStar as faStarSolid, faFlask, faMicroscope } from '@fortawesome/free-solid-svg-icons';
+import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
+import Translate from '@/components/Translate';
 
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import {
   useAddFavoriteDiagnosticTestMutation,
   useDeleteFavoriteDiagnosticTestMutation,
   useGetFavoriteDiagnosticTestsByUserQuery
 } from '@/services/favoriteDiagnosticTestService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 import { DiagnosticTest } from '@/types/model-types-new';
 
@@ -31,26 +31,17 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
   });
 
   const { data: diagnodticsTestList, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
-
-  const { data: favorites } = useGetFavoriteDiagnosticTestsByUserQuery(
-    { userId: user },
-    { skip: !user }
-  );
-
+  const { data: favorites } = useGetFavoriteDiagnosticTestsByUserQuery({ userId: user });
   const [addFavorite] = useAddFavoriteDiagnosticTestMutation();
   const [deleteFavorite] = useDeleteFavoriteDiagnosticTestMutation();
 
   const allTests: DiagnosticTest[] = diagnodticsTestList?.data ?? [];
 
   useEffect(() => {
-    setFavoriteTestIds([]);
-  }, [user]);
-
-  useEffect(() => {
-    if (favorites && user) {
+    if (favorites) {
       setFavoriteTestIds(favorites.map(f => f.testId));
     }
-  }, [favorites, user]);
+  }, [favorites]);
 
   const toggleFavorite = async (testId: number) => {
     const isFavorite = favoriteTestIds.includes(testId);
@@ -83,7 +74,6 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
         <Row gutter={20}>
           {allTests.map((test, index) => {
             const isFavorite = test.id !== undefined && favoriteTestIds.includes(test.id);
-
             const gradient = gradients[index % gradients.length];
 
             return (
@@ -107,7 +97,7 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
                       <FontAwesomeIcon
                         icon={isFavorite ? faStarSolid : faStarRegular}
                         color={isFavorite ? 'white' : '#b0b0b0'}
-                        style={{ fontSize: 18 }}
+                        style={{ fontSize: 15 }}
                       />
                     </div>
                   </Whisper>
@@ -119,7 +109,6 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
                       <div className="test-type">
                         <Translate>Type</Translate>: {test.type}
                       </div>
-
                       {test.internalCode && (
                         <div className="test-code">
                           <Translate>Code</Translate>: {test.internalCode}
