@@ -98,16 +98,16 @@ import { visitDurationService } from './services/setup/visitDurationService';
 import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 import { PriceListService } from './services/billing/PriceListService';
-import { ReportTemplateService } from "./services/setup/report-template/reportTemplateService";
+import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
 import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
 import { PriceListItemService } from './services/billing/PriceListItemService';
 import { BillingService } from './services/billing/BillingService';
-import { referralRequestService } from "@/services/encounters/referralRequestService";
+import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
-import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
-import {priceListAttributesService} from '@/services/billing/PriceListAttributesService';
-import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
+import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
+import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
+import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { formTemplateService } from './services/setup/formTemplateService';
 import { FormEntriesService } from './services/setup/formEntriesService';
 import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
@@ -115,6 +115,7 @@ import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
+import { favoriteDiagnosticTestService } from './services/favoriteDiagnosticTestService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -236,7 +237,7 @@ export const store = configureStore({
     // Translation slice
     [translationService.reducerPath]: translationService.reducer,
 
-     // Form slice
+    // Form slice
     [formTemplateService.reducerPath]: formTemplateService.reducer,
     [FormEntriesService.reducerPath]: FormEntriesService.reducer,
 
@@ -276,7 +277,7 @@ export const store = configureStore({
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
 
     // billing
-    [BillingService.reducerPath]: BillingService.reducer, 
+    [BillingService.reducerPath]: BillingService.reducer,
 
     [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
     [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
@@ -308,13 +309,13 @@ export const store = configureStore({
     [resultReportApi.reducerPath]: resultReportApi.reducer,
 
     // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,   
-   // Visit Duration
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
+    // Visit Duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
     // Price List
     [PriceListService.reducerPath]: PriceListService.reducer,
 
-   // Templates
+    // Templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
     // Price List Item
@@ -330,12 +331,14 @@ export const store = configureStore({
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
 
-        //AI Services
-    [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer, 
+    //AI Services
+    [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
-    [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
+    [medicationTestOrdersValidationService.reducerPath]:
+      medicationTestOrdersValidationService.reducer,
+    [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer
   },
-  // @ts-ignore
+
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware().concat([
       idParsingService.middleware,
@@ -451,7 +454,7 @@ export const store = configureStore({
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
-
+      favoriteDiagnosticTestService.middleware
     ])
 });
 

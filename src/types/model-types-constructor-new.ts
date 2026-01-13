@@ -1122,3 +1122,9 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   departmentId: null,
   formJson: null
 };
+
+export const newFavoriteDiagnosticTest: modelTypes.FavoriteDiagnosticTest = {
+  id: undefined,
+  userId: undefined,
+  testId: undefined
+};
