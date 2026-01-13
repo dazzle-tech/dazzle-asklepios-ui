@@ -940,6 +940,9 @@ const DiagnosticsOrder = props => {
       fullText: true,
       render: rowData => {
         const rowId = rowData.id ?? rowData.key;
+        const isLaboratory =
+          rowData.orderType === 'LABORATORY' ||
+          rowData.test?.type === 'LABORATORY';
 
         const isInFavorites = favoriteMedications.some(
           item => item.__rowId === rowId
@@ -979,16 +982,23 @@ const DiagnosticsOrder = props => {
             </Whisper>
 
             {/*  */}
-            <Whisper placement="top" speaker={<Tooltip>Collect Sample</Tooltip>}>
-              <HStack spacing={10}>
-                <FontAwesomeIcon
-                  icon={faVialCircleCheck}
-                  className="icons-styles"
-                  color="var(--primary-gray)"
-                  onClick={() => setOpenSampleModal(true)}
-                />
-              </HStack>
-            </Whisper>
+            {isLaboratory && (
+              <Whisper placement="top" speaker={<Tooltip>Collect Sample</Tooltip>}>
+                <HStack spacing={10}>
+                  <FontAwesomeIcon
+                    icon={faVialCircleCheck}
+                    className="icons-styles"
+                    color="var(--primary-gray)"
+                    onClick={() => {
+                      setOrderTest(rowData);
+                      setTest(rowData.test);
+                      setOpenSampleModal(true);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </HStack>
+              </Whisper>
+            )}
             {/*  */}
             <Whisper placement="top" speaker={<Tooltip>Test card</Tooltip>}>
               <HStack spacing={10}>

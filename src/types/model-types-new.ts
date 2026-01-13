@@ -393,6 +393,35 @@ export interface DiagnosticTest {
   appointable?: boolean;
 }
 
+export interface DiagnosticOrderTestCollectedSampleDTO {
+  orderId: number;
+  orderTestId: number;
+  unit: string;
+  quantity: number | string;
+  collectedAt: Date | string;
+}
+
+export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
+  orderId: number;
+  orderTestIds: number[];
+  unit: string;
+  quantity: number | string;
+  collectedAt: Date | string;
+}
+
+export interface DiagnosticOrderTestCollectedSampleResponseVM {
+  id: number;
+  orderId: number;
+  orderTestId: number;
+  unit: string;
+  quantity: number | string;
+  collectedAt: string;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
 
 export interface Laboratory {
   id?: number;
@@ -1521,3 +1550,4 @@ export interface DiagnosticOrderTestRejectDTO {
 export interface DiagnosticOrderTestCancelDTO {
   cancellationReason: string;
 }
+

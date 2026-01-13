@@ -117,7 +117,7 @@ import { clinicalRecommendationsService } from './services/ai-services/clinicalR
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 import { diagnosticOrderService } from './services/diagnosic-order/diagnosticOrderService';
 import { diagnosticOrderTestService } from './services/diagnosic-order/diagnosticOrderTestService';
-
+import { diagnosticOrderTestCollectedSampleService } from './services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -339,6 +339,7 @@ export const store = configureStore({
     [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
         [diagnosticOrderService.reducerPath]: diagnosticOrderService.reducer,
     [diagnosticOrderTestService.reducerPath]: diagnosticOrderTestService.reducer,
+    [diagnosticOrderTestCollectedSampleService.reducerPath]: diagnosticOrderTestCollectedSampleService.reducer,
 
   },
   // @ts-ignore
@@ -459,6 +460,7 @@ export const store = configureStore({
       medicationTestOrdersValidationService.middleware,
       diagnosticOrderTestService.middleware,
       diagnosticOrderService.middleware,
+      diagnosticOrderTestCollectedSampleService.middleware,
     ])
 });
 

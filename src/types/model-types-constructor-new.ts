@@ -287,6 +287,35 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   appointable: false,
 };
 
+export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO = {
+  orderId: 0,
+  orderTestId: 0,
+  unit: '',
+  quantity: 0,
+  collectedAt: '',
+};
+
+export const newDiagnosticOrderTestCollectedSampleBulkSame: modelTypes.DiagnosticOrderTestCollectedSampleBulkSameDTO = {
+  orderId: 0,
+  orderTestIds: [],
+  unit: '',
+  quantity: 0,
+  collectedAt: '',
+};
+
+export const newDiagnosticOrderTestCollectedSampleResponse: modelTypes.DiagnosticOrderTestCollectedSampleResponseVM = {
+  id: 0,
+  orderId: 0,
+  orderTestId: 0,
+  unit: '',
+  quantity: 0,
+  collectedAt: '',
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+
 export const newLaboratory: modelTypes.Laboratory = {
   id: null,
   testId: undefined,
