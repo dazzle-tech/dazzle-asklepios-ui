@@ -78,7 +78,9 @@ const Details = ({
       facilityKey: null,
       departmentKey: null,
       consultantSpecialtyLkey: null,
-      preferredConsultantKey: null
+      preferredConsultantKey: null,
+      approvalNumber: '',
+      extraDocumentation: ''
     });
   };
 
@@ -205,6 +207,9 @@ const Details = ({
     setLocalAiSummary(null);
     setSpecialtyName(null);
   }, [consultationOrders?.key]);
+
+console.log('BEFORE SAVE', consultationOrders);
+
 
   return (
     <>
@@ -486,7 +491,7 @@ const Details = ({
                     <MyInput
                       width={'12vw'}
                       disabled={editing}
-                      fieldName="extra documentation"
+                      fieldName="extraDocumentation"
                       rows={6}
                       fieldType="textarea"
                       record={consultationOrders}

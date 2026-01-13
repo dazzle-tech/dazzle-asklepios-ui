@@ -255,7 +255,6 @@ const Details = ({
             >
               Order Related Tests
             </MyButton>
-            <MyButton appearance="ghost">Devices & Implants</MyButton>
           </div>
         }
         rightTitle="Procedure"

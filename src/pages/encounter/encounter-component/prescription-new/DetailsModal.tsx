@@ -417,7 +417,7 @@ useEffect(() => {
                           {/* Medication Search */}
                           <div className="prescription-search-wrapper">
                             <div className='prescription-search-button-position-handle'>
-                              <InputGroup inside className="input-search-p select-issue">
+                              <InputGroup inside className="input-search-p">
                                 <Input
                                   placeholder={'Medication Name'}
                                   value={searchKeyword}
@@ -430,11 +430,17 @@ useEffect(() => {
 
                               <div className="prescription-button-wrapper">
                                 <MyButton
-                                  radius={'25px'}
+                                  radius="25px"
                                   appearance="ghost"
-                                  color="#808099"
                                   onClick={() => setOpenSubstitutesModel(true)}
-                                  prefixIcon={() => <FontAwesomeIcon icon={faRightLeft} />}
+                                  color={
+                                    prescriptionMedication?.chronicMedication
+                                      ? '#1675E0'
+                                      : '#808099'
+                                  }
+                                  prefixIcon={() => (
+                                    <FontAwesomeIcon icon={faRightLeft} />
+                                  )}
                                 />
                               </div>
                             </div>
@@ -548,6 +554,7 @@ useEffect(() => {
                               setRecord={setPrescriptionMedications}
                               searchable={false}
                             />
+                            <div style={{marginBottom:'1.5vw'}}>
                             <MyInput
                               disabled={preKey != null ? false : true}
                               width={120}
@@ -556,7 +563,7 @@ useEffect(() => {
                               fieldName="chronicMedication"
                               record={prescriptionMedication}
                               setRecord={setPrescriptionMedications}
-                            />
+                            /></div>
                           </div>
                         </div>
 
@@ -581,16 +588,17 @@ useEffect(() => {
                               record={prescriptionMedication}
                               setRecord={setPrescriptionMedications}
                             />
-
-                            <MyInput
-                              disabled={preKey != null ? false : true}
-                              width={140}
-                              fieldLabel="Brand Substitute Allowed"
-                              fieldType="checkbox"
-                              fieldName="genericSubstitute"
-                              record={prescriptionMedication}
-                              setRecord={setPrescriptionMedications}
-                            />
+                              <div style={{marginBottom:'1.5vw'}}>
+                                <MyInput
+                                  disabled={preKey != null ? false : true}
+                                  width={140}
+                                  fieldLabel="Brand Substitute Allowed"
+                                  fieldType="checkbox"
+                                  fieldName="genericSubstitute"
+                                  record={prescriptionMedication}
+                                  setRecord={setPrescriptionMedications}
+                                />
+                              </div>
                           </div>
                         </div>
                       </div>
