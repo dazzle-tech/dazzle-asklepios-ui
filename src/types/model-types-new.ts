@@ -1355,3 +1355,14 @@ export interface OrganizationDefinition {
   contactLandNumber?: string;
   taxValue?: number;
 }
+
+export interface FavoriteDiagnosticTest {
+  id?: number;
+  userId?: number;
+  testId?: number;
+}
+
+export interface FavoriteDiagnosticTestCreateDTO {
+  userId: number;
+  testId: number;
+}
