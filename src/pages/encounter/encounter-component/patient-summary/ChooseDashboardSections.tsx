@@ -196,7 +196,7 @@ const ChooseDashboardSections = ({
      setDisplays({...displays, c1: true, c2: true, c3: true, c4: true, c5: true, c7: true, c8: true, c11: true, c12: true});
     else
      setDisplays({...displays, c1: false, c2: false, c3: false, c4: false, c5: false, c7: false, c8: false, c11: false, c12: false});
-
+    console.log("effect");
   },[selectedAll]);
   return (
     <MyModal
