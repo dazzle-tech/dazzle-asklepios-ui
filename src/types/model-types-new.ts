@@ -391,10 +391,38 @@ export interface DiagnosticTest {
   isProfile?: boolean;
   appointable?: boolean;
 
-  // 🔴 REQUIRED FOR LABORATORY
   defaultProfileResultType?: string;
   defaultProfileResultUnit?: string;
 }
+export interface DiagnosticOrderTestCollectedSampleDTO {
+  orderId: number;
+  orderTestId: number;
+  unit: string;
+  quantity: number | string;
+  collectedAt: Date | string;
+}
+
+export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
+  orderId: number;
+  orderTestIds: number[];
+  unit: string;
+  quantity: number | string;
+  collectedAt: Date | string;
+}
+
+export interface DiagnosticOrderTestCollectedSampleResponseVM {
+  id: number;
+  orderId: number;
+  orderTestId: number;
+  unit: string;
+  quantity: number | string;
+  collectedAt: string;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
 
 export interface Laboratory {
   id?: number;
@@ -1360,3 +1388,166 @@ export interface FavoriteDiagnosticTestCreateDTO {
   userId: number;
   testId: number;
 }
+export enum DiagnosticStatus {
+  NEW = 'NEW',
+  SUBMITTED = 'SUBMITTED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum DiagnosticOrderTestStatus {
+  NEW = 'NEW',
+  SUBMITTED = 'SUBMITTED',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+  READY = 'READY',
+  APPROVED = 'APPROVED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum TestType {
+  LAB = 'LAB',
+  RAD = 'RAD',
+}
+
+export interface AuditingEntity {
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+}
+
+export interface DiagnosticOrder extends AuditingEntity {
+  id?: number;
+  patientId?: number;
+  encounterId?: number;
+  saveDraft?: boolean;
+  status?: DiagnosticStatus;
+  submittedBy?: string;
+  submittedDate?: string;
+  isUrgent?: boolean;
+  labStatus?: DiagnosticStatus;
+  radStatus?: DiagnosticStatus;
+}
+
+export interface DiagnosticOrderTest extends AuditingEntity {
+  id?: number;
+
+  patientId?: number;
+  encounterId?: number;
+
+  orderId?: number;
+  testId?: number;
+
+  receivedDepartmentId?: number;
+
+  reason?: string;
+  notes?: string;
+
+  processingStatus?: DiagnosticStatus;
+
+  submitDate?: string;
+
+  orderType?: TestType;
+
+  fromDepartmentId?: number;
+  fromFacilityId?: number;
+  toFacilityId?: number;
+
+  /* ===== Status & lifecycle ===== */
+
+  status?: DiagnosticOrderTestStatus;
+
+  acceptedDate?: string;
+  rejectedDate?: string;
+  patientArrivedDate?: string;
+  readyDate?: string;
+  approvedDate?: string;
+  cancelledDate?: string;
+
+  acceptedBy?: string;
+  rejectedBy?: string;
+  rejectedReason?: string;
+
+  patientArrivedNoteRad?: string;
+
+  cancellationReason?: string;
+  cancelledBy?: string;
+}
+
+export interface DiagnosticOrderCreateDTO {
+  patientId: number;
+  encounterId: number;
+
+  status?: DiagnosticStatus;
+
+  saveDraft?: boolean;
+
+  submittedBy?: string;
+  submittedDate?: string;
+
+  isUrgent?: boolean;
+
+  labStatus?: DiagnosticStatus;
+  radStatus?: DiagnosticStatus;
+}
+
+export interface DiagnosticOrderUpdateDTO {
+  id: number;
+  patientId: number;
+  encounterId: number;
+
+  status?: DiagnosticStatus;
+  saveDraft?: boolean;
+
+  submittedBy?: string;
+  submittedDate?: string;
+
+  isUrgent?: boolean;
+}
+
+export interface DiagnosticOrderSubmitDTO {
+  submittedBy?: string;
+  submittedDate?: string;
+}
+
+export interface DiagnosticOrderTestCreateDTO {
+  patientId: number;
+  encounterId: number;
+
+  orderId: number;
+  testId: number;
+
+  receivedDepartmentId?: number;
+  reason?: string;
+  notes?: string;
+
+  processingStatus?: DiagnosticStatus;
+
+  submitDate?: string;
+
+  orderType?: TestType;
+
+  fromDepartmentId?: number;
+  fromFacilityId?: number;
+  toFacilityId?: number;
+}
+
+export interface DiagnosticOrderTestUpdateDTO extends DiagnosticOrderTestCreateDTO {
+  id: number;
+  status?: DiagnosticOrderTestStatus;
+  cancellationReason?: string;
+  rejectedReason?: string;
+  acceptedBy?: string;
+  rejectedBy?: string;
+}
+
+export interface DiagnosticOrderTestRejectDTO {
+  rejectedReason: string;
+}
+
+export interface DiagnosticOrderTestCancelDTO {
+  cancellationReason: string;
+}
+

@@ -6,10 +6,10 @@ import MyInput from '@/components/MyInput';
 import { faVials } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetDepartmentListByTypeQuery } from '@/services/setupService';
 import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
 import clsx from 'clsx';
-import { useGetDepartmentByTypeQuery, useLazyGetDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useGetDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 const DetailsModal = ({
@@ -22,8 +22,8 @@ const DetailsModal = ({
   order,
   edit
 }) => {
-  const [actionType, setActionType] = useState(null);
-  const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
+  const [actionType] = useState(null);
+  const [requestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
   const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
 
@@ -31,9 +31,15 @@ const DetailsModal = ({
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
   const { data: timeUnitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
    const [deptPage, setDeptPage] = useState(0);
-  const { data: receivedLabList } = useGetDepartmentByTypeQuery({ type: receivedType ,
-        page: deptPage,
-    size: 3,});
+  const { data: receivedLabList } = useGetDepartmentByTypeQuery(
+    receivedType
+      ? {
+          type: receivedType,
+          page: deptPage,
+          size: 3
+        }
+      : skipToken
+  );
 
   const {
     data: fetchAttachmentByKeyResponce,
@@ -44,15 +50,16 @@ const DetailsModal = ({
     refetch
   } = useFetchAttachmentByKeyQuery(
     { key: requestedPatientAttacment },
-    { skip: !requestedPatientAttacment || !order.key }
+    { skip: !requestedPatientAttacment || (!order?.id && !order?.key) }
   );
 
   useEffect(() => {
-    if (test?.testTypeLkey == '862810597620632') {
+    const testType = test?.testTypeLkey ?? test?.type;
+    if (testType === '862810597620632' || testType === 'LABORATORY') {
       setReceivedType('LABORATORY');
-    } else if (test?.testTypeLkey == '862828331135792') {
+    } else if (testType === '862828331135792' || testType === 'RADIOLOGY') {
       setReceivedType('RADIOLOGY');
-    } else if (test?.testTypeLkey == '862842242812880') {
+    } else if (testType === '862842242812880' || testType === 'PATHOLOGY') {
       setReceivedType('PATHOLOGY');
     } else {
       setReceivedType('');
@@ -79,6 +86,15 @@ const DetailsModal = ({
     // Initialize repeat checkbox state based on orderTest data
     setIsRepeatEnabled(!!orderTest?.isRepeat);
   }, [orderTest?.isRepeat]);
+
+  useEffect(() => {
+    if (orderTest?.receivedLabId && !orderTest?.receivedDepartmentId) {
+      setOrderTest(prev => ({
+        ...prev,
+        receivedDepartmentId: orderTest.receivedLabId
+      }));
+    }
+  }, [orderTest?.receivedLabId, orderTest?.receivedDepartmentId, setOrderTest]);
 
   const handleDownload = async attachment => {
     try {
@@ -131,6 +147,15 @@ const DetailsModal = ({
     }));
   };
 
+  const statusValue =
+    orderTest?.status ?? orderTest?.statusLkey ?? orderTest?.statusLvalue?.valueCode;
+  const isEditable =
+    !edit && (statusValue === 'NEW' || statusValue === 'DIAG_ORDER_STAT_NEW');
+
+  const testTypeLabel =
+    test?.testTypeLvalue?.lovDisplayVale ?? test?.type ?? test?.testTypeLkey ?? '';
+  const testNameLabel = test?.testName ?? test?.name ?? '';
+
 
   return (
     <>
@@ -139,15 +164,13 @@ const DetailsModal = ({
         setOpen={setOpenDetailsModel}
         title="Add Test Details"
         actionButtonFunction={handleSaveTest}
-        isDisabledActionBtn={
-          edit ? true : orderTest?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'
-        }
+        isDisabledActionBtn={!isEditable}
         position="right"
         bodyheight="60vh"
         size="35vw"
         steps={[
           {
-            title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''),
+            title: `${testTypeLabel} - ${testNameLabel}`,
             icon: <FontAwesomeIcon icon={faVials} />
           }
         ]}
@@ -190,7 +213,7 @@ const DetailsModal = ({
                   <MyInput
                     fieldType="selectPagination"
                     fieldLabel="Add Department"
-                    fieldName="receivedLabId"
+                    fieldName="receivedDepartmentId"
                     selectData={allDepartments}
                     selectDataLabel="name"
                     selectDataValue="id"

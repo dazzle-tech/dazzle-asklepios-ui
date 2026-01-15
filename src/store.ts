@@ -116,6 +116,9 @@ import { clinicalSummaryService } from './services/ai-services/clinicalSummarySe
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 import { favoriteDiagnosticTestService } from './services/favoriteDiagnosticTestService';
+import { diagnosticOrderService } from './services/diagnosic-order/diagnosticOrderService';
+import { diagnosticOrderTestService } from './services/diagnosic-order/diagnosticOrderTestService';
+import { diagnosticOrderTestCollectedSampleService } from './services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -336,7 +339,12 @@ export const store = configureStore({
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
-    [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer
+    [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
+    [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
+    [diagnosticOrderService.reducerPath]: diagnosticOrderService.reducer,
+    [diagnosticOrderTestService.reducerPath]: diagnosticOrderTestService.reducer,
+    [diagnosticOrderTestCollectedSampleService.reducerPath]: diagnosticOrderTestCollectedSampleService.reducer,
+
   },
 
   middleware: getDefaultMiddleware =>
@@ -454,7 +462,10 @@ export const store = configureStore({
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
-      favoriteDiagnosticTestService.middleware
+      favoriteDiagnosticTestService.middleware,
+      diagnosticOrderTestService.middleware,
+      diagnosticOrderService.middleware,
+      diagnosticOrderTestCollectedSampleService.middleware,
     ])
 });
 
