@@ -936,17 +936,7 @@ const visibleResources =
                 </InputGroup.Button>
                 <Input placeholder="Search For Appointment" />
               </InputGroup> */}
-              <Form>
-                <MyInput
-                  leftAddon={<SearchIcon />}
-                  fieldName="value"
-                  record={recordSearchAppointment}
-                  setRecord={setRecordSearchAppointment}
-                  placeholder="Search For Appointment"
-                  width={320}
-                  showLabel={false}
-                />
-              </Form>
+           
             </div>
 
             {/* Right  */}
