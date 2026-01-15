@@ -311,7 +311,6 @@ export interface ApAppointment {
 	facilityKey:string;
 	resourceTypeLkey:string;
 	resourceKey:string;
-	departmentKey:string;
 	visitTypeLkey:string;
 	durationLkey:string;
 	appointmentStart:string;
@@ -341,6 +340,7 @@ export interface ApAppointment {
 	noShowReasonLkey:string;
 	noShowReasonValue:string;
 	noShowOtherReason:string;
+	departmentKey:string;
 } 
 
 export interface ApAttachment { 
@@ -3357,7 +3357,7 @@ export interface ApPatientSurgicalHistory {
 	otherDesc:string;
 	anesthesiaTypeLkey:string;
 	complicationsLkey:string;
-	adverseReactionsToAnesthesiaLkey?: string[];
+	adverseReactionsToAnesthesiaLkey:string;
 	isImplantsOrDevices:boolean;
 	implantsOrDevicesDescription:string;
 	createdBy:string;
@@ -3754,7 +3754,7 @@ export interface ApPrescriptionMedications {
 
 export interface ApProcedure { 
 	key:string;
-	procedureNameKey:string;
+	procedureNameId:number;
 	procedureId:string;
 	procedureLevelLkey:string;
 	categoryKey:string;

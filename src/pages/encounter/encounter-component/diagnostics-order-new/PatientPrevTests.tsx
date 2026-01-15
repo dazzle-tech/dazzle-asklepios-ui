@@ -1,109 +1,165 @@
+import React, { useMemo, useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useGetDiagnosticOrderTestQuery } from '@/services/encounterService';
-import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState } from 'react';
-const PatientPrevTests = patient => {
-  console;
-  const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.patient?.key
-      }
-    ]
+import { useFilterDiagnosticOrderTestsQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { initialListRequestId } from '@/types/types';
+import { DiagnosticStatus } from '@/types/model-types-new';
+import { Checkbox } from 'rsuite';
+
+const PatientPrevTests = (props: any) => {
+  /* ===================== HELPERS ===================== */
+  const toNumericId = (value: any) => {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === 'number') return value;
+    const n = Number(value);
+    return Number.isNaN(n) ? undefined : n;
+  };
+
+  const patientId = toNumericId(props?.patient?.id ?? props?.patient?.key);
+  const [showCancelled, setShowCancelled] = useState(false);
+
+  /* ===================== PAGINATION (UI STATE) ===================== */
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15
   });
 
-  const {
-    data: orderTestList,
-    refetch: orderTestRefetch,
-    isLoading: loadTests
-  } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
+  /* ===================== ADAPT pagination → listRequest ===================== */
+  const listRequest = useMemo(
+    () => ({
+      ...initialListRequestId,
+      pageNumber: paginationParams.page + 1, // backend is 1-based
+      pageSize: paginationParams.size
+    }),
+    [paginationParams]
+  );
 
+  /* ===================== FETCH ORDER TESTS ===================== */
+  const { data: orderTestResponse, isLoading } =
+    useFilterDiagnosticOrderTestsQuery(
+      patientId
+        ? showCancelled
+          ? {
+            patientId,
+            status: DiagnosticStatus.CANCELLED,
+            listRequest
+          }
+          : {
+            patientId,
+            excludeStatus: DiagnosticStatus.CANCELLED,
+            listRequest
+          }
+        : skipToken
+    );
+
+
+
+  const orderTestList: any[] = Array.isArray(orderTestResponse)
+    ? orderTestResponse
+    : orderTestResponse?.data ??
+    orderTestResponse?.object ??
+    [];
+
+  const totalCount =
+    orderTestResponse?.total ??
+    orderTestResponse?.extraNumeric ??
+    orderTestList.length;
+
+  /* ===================== FETCH ALL TESTS ===================== */
+  const { data: testsResponse } = useGetAllDiagnosticTestsQuery({
+    page: 0,
+    size: 10000
+  });
+
+  const testsList = testsResponse?.data ?? [];
+
+  /* ===================== MAP TESTS ===================== */
+  const testsMap = useMemo(() => {
+    return new Map(testsList.map(t => [t.id, t]));
+  }, [testsList]);
+
+  /* ===================== NORMALIZE ===================== */
+  const normalizedRows = useMemo(() => {
+    return orderTestList.map(orderTest => {
+      const test = testsMap.get(orderTest.testId);
+      return {
+        ...orderTest,
+        test,
+        orderType: orderTest.orderType ?? test?.type
+      };
+    });
+  }, [orderTestList, testsMap]);
+
+  /* ===================== COLUMNS ===================== */
   const tableColumns = [
     {
-      key: 'order Id',
+      key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
       flexGrow: 1,
-      fullText: true,
-      render: rowData => {
-        return rowData.orderId ?? '';
-      }
+      render: row => row.orderId
     },
-
     {
-      key: 'orderTypeLkey',
+      key: 'orderType',
       title: <Translate>ORDER TYPE</Translate>,
       flexGrow: 1,
-      fullText: true,
-      render: rowData => {
-        return rowData.test?.testTypeLvalue?.lovDisplayVale ?? '';
-      }
+      render: row => row.orderType ?? row.test?.type ?? ''
     },
     {
-      key: 'test',
+      key: 'testName',
       title: <Translate>TEST NAME</Translate>,
       flexGrow: 2,
-      fullText: true,
-      render: rowData => rowData.test.testName // or wrap in <span> if needed
+      render: row => row.test?.testName ?? row.test?.name ?? ''
     },
     {
       key: 'internalCode',
-      dataKey: 'internalCode',
       title: <Translate>INTERNAL CODE</Translate>,
       flexGrow: 2,
-      fullText: true,
-      render: rowData => rowData.test.internalCode
+      render: row => row.test?.internalCode ?? row.test?.code ?? ''
     },
     {
-      key: 'processingStatusLkey',
-      dataKey: 'processingStatusLkey',
-      title: <Translate>PROCESSING STATUS</Translate>,
+      key: 'status',
+      title: <Translate>STATUS</Translate>,
       flexGrow: 1,
-      fullText: true,
-      render: rowData =>
-        rowData.processingStatusLvalue
-          ? rowData.processingStatusLvalue?.lovDisplayVale
-          : rowData.processingStatusLkey
+      render: row => row.status ?? ''
     }
   ];
-  const pageIndex = listOrdersTestRequest.pageNumber - 1;
 
-  // how many rows per page:
-  const rowsPerPage = listOrdersTestRequest.pageSize;
-
-  // total number of items in the backend:
-  const totalCount = orderTestList?.extraNumeric ?? 0;
-
-  // handler when the user clicks a new page number:
+  /* ===================== HANDLERS ===================== */
   const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-
-    setListOrdersTestRequest({ ...listOrdersTestRequest, pageNumber: newPage + 1 });
+    setPaginationParams(prev => ({ ...prev, page: newPage }));
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListOrdersTestRequest({
-      ...listOrdersTestRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
+    setPaginationParams(prev => ({
+      ...prev,
+      size: parseInt(event.target.value, 10),
+      page: 0
+    }));
   };
-  return (
-    <>
-      <MyTable
-        data={orderTestList?.object || []}
-        columns={tableColumns}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
-    </>
-  );
+
+  /* ===================== RENDER ===================== */
+  return (<>
+    <Checkbox
+      checked={showCancelled}
+      onChange={(_, checked) => setShowCancelled(checked)}
+    >
+      Show Cancelled
+    </Checkbox>
+
+
+    <MyTable
+      loading={isLoading}
+      data={normalizedRows}
+      columns={tableColumns}
+      page={paginationParams.page}
+      rowsPerPage={paginationParams.size}
+      totalCount={totalCount}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
+    />
+  </>);
 };
+
 export default PatientPrevTests;

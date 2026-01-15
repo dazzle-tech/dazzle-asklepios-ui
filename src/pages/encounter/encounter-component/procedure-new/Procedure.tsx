@@ -23,7 +23,7 @@ import { useLocation } from 'react-router-dom';
 import Details from './Details';
 import Perform from './Perform';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
-
+import { useGetProceduresQuery as useGetAllProceduresQuery } from '@/services/setup/procedure/procedureService';
 const Referrals = (props: any) => {
   const location = useLocation();
 
@@ -34,13 +34,13 @@ const Referrals = (props: any) => {
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
+  const { data: proceduresDefinitions } = useGetAllProceduresQuery({ page: 0, size: 10000, sort: 'id,asc' });
 
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [openPerformModal, setOpenPerformModal] = useState(false);
-    const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
 
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
@@ -265,6 +265,9 @@ const Referrals = (props: any) => {
         dataKey: 'procedureName',
         title: <Translate>Procedure Name</Translate>,
         flexGrow: 1
+       
+
+
       },
       {
         key: 'scheduledDateTime',
@@ -336,8 +339,8 @@ const Referrals = (props: any) => {
           );
         }
       },
-//dont remove this comment 
-//please dont remove this comment
+      //dont remove this comment 
+      //please dont remove this comment
 
       // {
       //   key: 'perform',
@@ -470,8 +473,8 @@ const Referrals = (props: any) => {
                     edit
                       ? true
                       : procedure?.key
-                      ? (procedure?.statusLvalue?.lovCode ?? '') === 'PROC_CANCL'
-                      : true
+                        ? (procedure?.statusLvalue?.lovCode ?? '') === 'PROC_CANCL'
+                        : true
                   }
                   prefixIcon={() => <BlockIcon />}
                 >
@@ -556,7 +559,7 @@ const Referrals = (props: any) => {
             source="PROCEDURE_REQUEST_ATTACHMENT"
             sourceId={procedure?.key ? Number(procedure.key) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />

@@ -1,8 +1,10 @@
-import React, { useRef, useState } from "react";
-import MyModal from "../MyModal/MyModal";
-import MyButton from "../MyButton/MyButton";
-import Translate from "../Translate";
-import "./styles.less";
+import React, { useRef, useState } from 'react';
+import MyModal from '../MyModal/MyModal';
+import MyButton from '../MyButton/MyButton';
+import Translate from '../Translate';
+import { Form } from 'rsuite';
+import { useSelector } from 'react-redux';
+import './styles.less';
 
 type CodesExcelCsvImportModalProps = {
   open: boolean;
@@ -16,17 +18,19 @@ type CodesExcelCsvImportModalProps = {
 const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
   open,
   setOpen,
-  title = "Codes Import",
+  title = 'Codes Import',
   excelTemplateUrl,
-  excelTemplateFileName = "Codes_Template.xlsx",
-  onImport,
+  excelTemplateFileName = 'Codes_Template.xlsx',
+  onImport
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
+  const mode = useSelector((state: any) => state.ui.mode);
+
   const handleDownloadExcelTemplate = () => {
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = excelTemplateUrl;
     link.download = excelTemplateFileName;
     link.click();
@@ -49,12 +53,12 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
     } catch {
     } finally {
       setIsImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   const content = (
-    <div className="codes-import-wrapper">
+    <div className={`codes-import-wrapper ${mode === 'dark' ? 'dark' : 'light'}`}>
       {/* Header */}
       <div className="codes-import-header">
         <div className="codes-import-header-icon">📄</div>
@@ -69,13 +73,13 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
       </div>
 
       {/* How it works */}
-      <div className="codes-import-card codes-import-instructions">
-        <div className="codes-import-card-header">
+      <Form className="codes-import-card codes-import-instructions">
+        <Form className="codes-import-card-header">
           <span className="codes-import-card-icon">i</span>
           <span className="codes-import-card-title">
             <Translate>How it works</Translate>
           </span>
-        </div>
+        </Form>
         <ol className="codes-import-steps">
           <li>
             <Translate>Download the Excel template.</Translate>
@@ -84,18 +88,15 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
             <Translate>Fill in codes data according to the template.</Translate>
           </li>
           <li>
-            <Translate>In Excel, save the file as</Translate>{" "}
-            <span className="codes-import-badge">
-              CSV (Comma delimited) (*.csv)
-            </span>
-            .
+            <Translate>In Excel, save the file as</Translate>{' '}
+            <span className="codes-import-badge">CSV (Comma delimited) (*.csv)</span>.
           </li>
           <li>
             <Translate>Upload the saved .csv file and click Import.</Translate>
           </li>
         </ol>
-      </div>
-    
+      </Form>
+
       {/* Template download button */}
       <div className="codes-import-card">
         <div className="codes-import-buttons">
@@ -114,26 +115,22 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
         </div>
 
         <p className="codes-import-upload-subtext">
-          <Translate>Supports</Translate> <strong>.csv</strong>{" "}
-          <Translate>only. Make sure you saved the Excel as</Translate>{" "}
+          <Translate>Supports</Translate> <strong>.csv</strong>{' '}
+          <Translate>only. Make sure you saved the Excel as</Translate>{' '}
           <strong>CSV (Comma delimited) (*.csv)</strong>.
         </p>
 
         <input
           type="file"
           ref={fileInputRef}
-          style={{ display: "none" }}
+          style={{ display: 'none' }}
           accept=".csv"
           onChange={handleFileChange}
         />
 
         <div className="codes-import-upload-row">
           <div className="codes-import-file-display">
-            {selectedFile ? (
-              selectedFile.name
-            ) : (
-              <Translate>No file selected</Translate>
-            )}
+            {selectedFile ? selectedFile.name : <Translate>No file selected</Translate>}
           </div>
           <MyButton appearance="ghost" onClick={handleClickUpload}>
             <Translate>Choose File</Translate>

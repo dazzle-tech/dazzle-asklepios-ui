@@ -79,6 +79,10 @@ const ScheduleScreen = () => {
   const [calendarDate, setCalendarDate] = useState<Date>(null);
   const [finalAppointments, setFinalAppointments] = useState();
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
+  const [reasonViewRecord, setReasonViewRecord] = useState({
+    reason: '',
+    otherReason: ''
+  });
 
   const ResourceTypeEnum = useEnumOptions("ResourceType");
 
@@ -160,18 +164,50 @@ const ScheduleScreen = () => {
       setSelectedStartDate(selectedSlot?.slots[0]);
     }
   }, [selectedSlot]);
-  const handleSelectEvent = event => {
-    setSelectedEvent(event);
-    if (
-      event?.appointmentData?.appointmentStatus === 'Canceled' ||
-      event?.appointmentData?.appointmentStatus === 'No-Show'
-    ) {
-      setShowReasonModal(true);
-      return;
-    }
 
-    setActionsModalOpen(true);
-  };
+const { data: noShowResonLovQueryResponse } =
+  useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
+
+const { data: cancelResonLovQueryResponse } =
+  useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
+
+
+
+const handleSelectEvent = event => {
+  const freshEvent =
+    finalAppointments?.find(e => e.id === event.id) || event;
+
+  setSelectedEvent(freshEvent);
+
+  const status = freshEvent?.appointmentData?.appointmentStatus;
+
+  if (status === 'Canceled' || status === 'No-Show') {
+    const reasonKey = freshEvent?.appointmentData?.reasonLkey;
+
+    const reasonLovList =
+      status === 'Canceled'
+        ? cancelResonLovQueryResponse?.object
+        : noShowResonLovQueryResponse?.object;
+
+    const matchedReason = reasonLovList?.find(
+      r => r.key === reasonKey
+    );
+
+    setReasonViewRecord({
+      reason: matchedReason?.lovDisplayVale || '',
+      otherReason: freshEvent?.appointmentData?.otherReason || ''
+    });
+
+    setShowReasonModal(true);
+    return;
+  }
+
+  setActionsModalOpen(true);
+};
+
+
+
+
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
@@ -200,10 +236,36 @@ const ScheduleScreen = () => {
     { label: 'Completed', color: '#93C5FD' }
   ];
 
+  // Filter appointments based on selected resources
+  const filteredAppointments = useMemo(() => {
+    const hasResourceTypeFilter = selectedResourceType?.resourcesType?.length > 0;
+    // Handle selectedResources - it can be an array or an object with resourceKey property
+    const selectedResourceKeys = Array.isArray(selectedResources) 
+      ? (selectedResources.length > 0 ? selectedResources : null)
+      : (selectedResources as any)?.resourceKey;
+    const hasResourceFilter = selectedResourceKeys && 
+      Array.isArray(selectedResourceKeys) && 
+      selectedResourceKeys.length > 0;
+    
+    if (!hasResourceTypeFilter && !hasResourceFilter) {
+      // No filters applied, show all appointments
+      return appointmentsData;
+    }
+    
+    // Filter appointments to only show those matching the selected resources
+    const filteredResourceKeys = new Set(
+      (finalResourceLit ?? []).map(r => r.key)
+    );
+    
+    return appointmentsData.filter(event => 
+      filteredResourceKeys.has(event.resourceId)
+    );
+  }, [appointmentsData, finalResourceLit, selectedResourceType, selectedResources]);
+
   const visibleAppointments =
     currentView === 'agenda' || showCanceled
-      ? appointmentsData
-      : appointmentsData.filter(event => !event.hidden);
+      ? filteredAppointments
+      : filteredAppointments.filter(event => !event.hidden);
 
   const appointmn =
     visibleAppointments?.map(appt => appt.appointmentData?.patient?.key).filter(Boolean) || [];
@@ -238,6 +300,11 @@ const ScheduleScreen = () => {
     }
   }, [visibleAppointments, attachments]);
 
+    // Get resource keys from filtered resources only
+    const filteredResourceKeys = new Set(
+      (finalResourceLit ?? []).map(r => r.key)
+    );
+
     const appointmentResourceKeys = new Set(
       (finalAppointments ?? []).map(e => e.resourceId).filter(Boolean)
     );
@@ -246,21 +313,23 @@ const dayIndex = currentCalendarDate.getDay();
 
 const availabilityResourceKeys = useMemo(() => {
   return new Set(
-    (resourcesWithAvailabilityResponse?.object ?? [])
+    (finalResourceLit ?? [])
       .filter(r =>
         r.availability?.some(a => a.dayOfWeek === dayIndex)
       )
       .map(r => r.key)
   );
-}, [resourcesWithAvailabilityResponse, dayIndex]);
+}, [finalResourceLit, dayIndex]);
 
 
 const visibleResources =
   currentView === 'day'
     ? (finalResourceLit ?? []).filter(
         r =>
-          appointmentResourceKeys.has(r.key) ||
-          availabilityResourceKeys.has(r.key)
+          // Only show resources that match the filter AND have appointments or availability
+          filteredResourceKeys.has(r.key) &&
+          (appointmentResourceKeys.has(r.key) ||
+          availabilityResourceKeys.has(r.key))
       )
     : finalResourceLit;
 
@@ -1089,36 +1158,40 @@ const visibleResources =
         </Drawer.Body>
       </Drawer>
 
-      <Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
-        <Modal.Header></Modal.Header>
+<Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
+  <Modal.Header />
+  <Modal.Body>
 
-        <Modal.Body>
-          <br />
-          <br />
+    <Form fluid layout="inline">
 
-          <Form layout="inline">
-            <div>
-              <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                Reason
-              </label>
-              <Input
-                value={selectedEvent?.appointmentData?.reasonLvalue?.lovDisplayVale ?? null}
-                width={350}
-              />
-            </div>
-            <br />
-            <div>
-              <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                Other Reason
-              </label>
-              <Input value={selectedEvent?.appointmentData.otherReason} width={350} />
-            </div>
-          </Form>
+      <MyInput
+        width={350}
+        column
+        fieldLabel="Reason"
+        fieldName="reason"
+        record={reasonViewRecord}
+        setRecord={setReasonViewRecord}
+        disabled
+      />
 
-          <br />
-          <br />
-        </Modal.Body>
-      </Modal>
+      <MyInput
+        width={350}
+        column
+        fieldLabel="Other Reason"
+        fieldName="otherReason"
+        fieldType="textarea"
+        rows={3}
+        record={reasonViewRecord}
+        setRecord={setReasonViewRecord}
+        disabled
+      />
+
+    </Form>
+
+  </Modal.Body>
+</Modal>
+
+
 
       <MyModal
         open={appRequestModalOpen}

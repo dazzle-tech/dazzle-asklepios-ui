@@ -20,6 +20,7 @@ import PainAssessmentSummary from '../nursing-reports-summary/PainAssessmentSumm
 import GeneralAssessmentSummary from '../nursing-reports-summary/GeneralAssessmentSummary';
 import FunctionalAssessmentSummary from '../nursing-reports-summary/FunctionalAssessmentSummary';
 import { useGetUserDashboardComponentsQuery } from '@/services/encounterService';
+// import MedicalTimeline from '../../encounter-screen/MedicalTimeLine';
 
 const PatientSummary = () => {
   const location = useLocation();
@@ -28,7 +29,7 @@ const PatientSummary = () => {
   const [openChooseScreen, setOpenChooseScreen] = useState<boolean>(false);
   const user = JSON.parse(localStorage.getItem('user'));
   const userDashboardComponents = useGetUserDashboardComponentsQuery(user?.id);
-  const [arrOfComponentKeys,setArrOfComponentKeys] = useState([]);
+  const [arrOfComponentKeys, setArrOfComponentKeys] = useState([]);
   const [displays, setDisplays] = useState({
     c1: false,
     c2: false,
@@ -91,42 +92,41 @@ const PatientSummary = () => {
     ]
   });
 
-useEffect(() => {
-  const arr = userDashboardComponents?.data?.object ?? [];
-  const newArr = arr.map(item => item.component_key);
-  if(newArr.length > 0){
-  setArrOfComponentKeys(newArr);
+  useEffect(() => {
+    const arr = userDashboardComponents?.data?.object ?? [];
+    const newArr = arr.map(item => item.component_key);
+    if (newArr.length > 0) {
+      setArrOfComponentKeys(newArr);
 
-  const updatedColumns = Object.fromEntries(
-    Object.entries(columns).map(([colKey, colItems]) => [
-      colKey,
-      colItems.map(item => ({
-        ...item,
-        display: newArr.includes(item.id) 
-      }))
-    ])
-  );
+      const updatedColumns = Object.fromEntries(
+        Object.entries(columns).map(([colKey, colItems]) => [
+          colKey,
+          colItems.map(item => ({
+            ...item,
+            display: newArr.includes(item.id)
+          }))
+        ])
+      );
 
-  setColumns(updatedColumns);
-}
-}, [userDashboardComponents?.data]);
-
+      setColumns(updatedColumns);
+    }
+  }, [userDashboardComponents?.data]);
 
   useEffect(() => {
     setAction(() => () => setOpenChooseScreen(true));
     return () => setAction(() => () => {});
   }, [setAction]);
   useEffect(() => {
-  const arr = userDashboardComponents?.data?.object ?? [];
-  const newArr = arr.map(item => item.component_key);
-  if(newArr.length > 0){
-  setArrOfComponentKeys(newArr);
-  const updated = Object.fromEntries(
-    Object.keys(displays).map(key => [key, newArr.includes(key)])
-  );
-  setDisplays(updated);
-}
-}, [userDashboardComponents?.data]);
+    const arr = userDashboardComponents?.data?.object ?? [];
+    const newArr = arr.map(item => item.component_key);
+    if (newArr.length > 0) {
+      setArrOfComponentKeys(newArr);
+      const updated = Object.fromEntries(
+        Object.keys(displays).map(key => [key, newArr.includes(key)])
+      );
+      setDisplays(updated);
+    }
+  }, [userDashboardComponents?.data]);
 
   // Function triggered after drag ends
   const handleDragEnd = (result: any) => {
@@ -175,7 +175,7 @@ useEffect(() => {
 
   return (
     <>
-      {/* <MedicalTimeline /> */}
+      {/* <MedicalTimeline patient={patient} encounter={encounter} /> */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="patient-summary-container">
           {Object.entries(columns).map(([colId, items]) => (

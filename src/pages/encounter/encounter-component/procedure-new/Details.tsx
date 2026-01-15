@@ -2,7 +2,7 @@ import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useSaveProceduresMutation } from '@/services/procedureService';
 import {
@@ -25,6 +25,7 @@ import { Dropdown, Form } from 'rsuite';
 import PatientOrder from '../diagnostics-order';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
+import { useLazyGetProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
 
 import './styles.less';
 
@@ -38,8 +39,10 @@ const Details = ({
   setOpenDetailsModal,
   proRefetch
 }) => {
+  const authSlice = useAppSelector(state => state.auth);
   const [openOrderModel, setOpenOrderModel] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [procedurePage, setProcedurePage] = useState(0);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const dispatch = useAppDispatch();
   const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
@@ -49,9 +52,9 @@ const Details = ({
   const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
   const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
-  const [getDepartmentsByFacility, { data: departmentListResponse }] = 
+  const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
-
+  const [getProcedureByFacility, { data: procedureByFacility, isLoading: procedureByFacilityLoading }] = useLazyGetProceduresByFacilityQuery();
   const [listRequestPro, setListRequestPro] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -64,10 +67,6 @@ const Details = ({
   });
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
-  const { data: procedureQueryResponse, refetch: profetch } = useGetProcedureListQuery(
-    listRequestPro,
-    { skip: procedure.categoryKey == undefined }
-  );
 
   const [indicationsDescription, setIndicationsDescription] = useState<string>('');
   const [searchKeywordicd, setSearchKeywordicd] = useState('');
@@ -129,12 +128,12 @@ const Details = ({
       filters: [
         ...(procedure?.categoryKey
           ? [
-              {
-                fieldName: 'category_lkey',
-                operator: 'match',
-                value: procedure?.categoryKey
-              }
-            ]
+            {
+              fieldName: 'category_lkey',
+              operator: 'match',
+              value: procedure?.categoryKey
+            }
+          ]
           : [])
       ]
     }));
@@ -147,6 +146,26 @@ const Details = ({
     }
   }, [procedure?.facilityKey, getDepartmentsByFacility]);
 
+  // useEffect(() => {
+  //   getProcedureByFacility({
+  //     facilityId: authSlice?.selectedDepartment.facilityId,
+  //     page: procedurePage,
+  //     size: 20,
+  //     sort: 'name,asc',
+  //   });
+
+  // }, [authSlice?.selectedDepartment.facilityId]);
+  useEffect(() => {
+  getProcedureByFacility({
+    facilityId: authSlice?.selectedDepartment.facilityId,
+    category: procedure.categoryKey, // optional
+    page: procedurePage,
+    size: 20,
+    sort: 'name,asc',
+  });
+}, [authSlice?.selectedDepartment.facilityId, procedure.categoryKey, procedurePage]);
+
+
   useEffect(() => {
     if (procedure.currentDepartment) {
       setProcedure({ ...procedure, departmentKey: null, faciltyLkey: null });
@@ -155,6 +174,15 @@ const Details = ({
 
   const handleOpenAttachmentModal = () => {
     setShowAttachmentModal(true);
+  };
+
+  const hasMoreProcedures = procedureByFacility?.links?.next != null;
+
+
+  const handleLoadMoreProcedures = () => {
+    if (hasMoreProcedures && !procedureByFacilityLoading) {
+      setProcedurePage(prev => prev + 1);
+    }
   };
 
   const handleClear = () => {
@@ -259,18 +287,26 @@ const Details = ({
                           record={procedure}
                           setRecord={setProcedure}
                         />
-                        <MyInput
-                          disabled={editing}
-                          width="100%"
-                          fieldType="select"
+                    
+                        { procedure?.categoryKey &&
+                          <MyInput
+                          column
+                          width={"100%"}
                           fieldLabel="Procedure Name"
-                          selectData={procedureQueryResponse?.object ?? []}
+                          fieldType="selectPagination"
+                          fieldName="procedureNameId"
+                          selectData={procedureByFacility?.data ?? []}
                           selectDataLabel="name"
-                          selectDataValue="key"
-                          fieldName="procedureNameKey"
+                          selectDataValue="id"
                           record={procedure}
                           setRecord={setProcedure}
-                        />
+                          disabled={editing}
+                          searchable={true}
+                          loading={procedureByFacilityLoading}
+                          hasMore={hasMoreProcedures}
+                          onFetchMore={handleLoadMoreProcedures}
+                          placeholder="Select Procedure..."
+                        />}
                         <MyInput
                           disabled={editing}
                           width="100%"
@@ -348,7 +384,7 @@ const Details = ({
                           record={{
                             indicationsDescription: indicationsDescription || procedure.indications
                           }}
-                          setRecord={() => {}}
+                          setRecord={() => { }}
                           rows={4}
                         />
 
@@ -481,7 +517,7 @@ const Details = ({
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
         encounterId={encounter?.id || encounter?.key}
-        refetchData={() => {}}
+        refetchData={() => { }}
         source="PROCEDURE_REQUEST_ATTACHMENT"
         sourceId={procedure?.key ? Number(procedure.key) : 0}
       />

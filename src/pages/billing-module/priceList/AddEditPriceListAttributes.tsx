@@ -12,7 +12,7 @@ import {
     useGetPriceListAttributesByPriceListQuery,
     useCreatePriceListAttributeMutation,
     useUpdatePriceListAttributeMutation,
-    useTogglePriceListAttributeActiveMutation, // ✅ بدل delete
+    useTogglePriceListAttributeActiveMutation,
 } from "@/services/billing/PriceListAttributesService";
 
 import { PriceList, PriceListAttribute } from "@/types/model-types-new";
@@ -158,8 +158,8 @@ const AddEditPriceListAttributes = ({
             const fieldMessages =
                 error?.data?.fieldErrors
                     ?.map((item) => item?.message)
-                    ?.filter(Boolean) // يشيل undefined/null
-                    ?.join(" | ");    // يجمعهم
+                    ?.filter(Boolean) 
+                    ?.join(" | ");  
 
 
             dispatch(

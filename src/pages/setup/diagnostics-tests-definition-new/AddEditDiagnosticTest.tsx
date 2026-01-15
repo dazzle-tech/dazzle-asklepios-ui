@@ -7,11 +7,15 @@ import {
   useCreatePathologyMutation,
   useUpdatePathologyMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
-import { useCreateLaboratoryMutation, useUpdateLaboratoryMutation } from '@/services/setup/diagnosticTest/laboratoryService';
-import { useCreateRadiologyMutation, useUpdateRadiologyMutation } from '@/services/setup/diagnosticTest/radiologyTestService';
 import {
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
+  useCreateLaboratoryMutation,
+  useUpdateLaboratoryMutation
+} from '@/services/setup/diagnosticTest/laboratoryService';
+import {
+  useCreateRadiologyMutation,
+  useUpdateRadiologyMutation
+} from '@/services/setup/diagnosticTest/radiologyTestService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newLaboratory, newPathology, newRadiology } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
@@ -22,21 +26,23 @@ import Laboratory from './Laboratory';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import './styles.less';
-const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsTest, width, handleSave }) => {
-  const dispatch = useAppDispatch();
-  const [diagnosticTestPathology, setDiagnosticTestPathology] = useState(
-    { ...newPathology }
 
-  );
-  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<any>([])
-  const [ageGroupList, setAgeGroupList] = useState<any>([])
+const AddEditDiagnosticTest = ({
+  open,
+  setOpen,
+  diagnosticsTest,
+  setDiagnosticsTest,
+  width,
+  handleSave
+}) => {
+  const dispatch = useAppDispatch();
+  const [diagnosticTestPathology, setDiagnosticTestPathology] = useState({ ...newPathology });
+  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<any>([]);
+  const [ageGroupList, setAgeGroupList] = useState<any>([]);
   const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState({ ...newLaboratory });
 
-  const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState(
-    { ...newRadiology }
-  );
+  const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState({ ...newRadiology });
   const [saveLoading, setSaveLoading] = useState(false);
-
 
   // Fetch diagnostics test type Lov response
 
@@ -44,15 +50,19 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   // Fetch Currency Lov response
 
   const Currency = useEnumCapitalized('Currency');
-  // Fetch Gender 
-  const genders = useEnumOptions('Gender')
+  // Fetch Gender
+  const genders = useEnumOptions('Gender');
   // Fetch Special Population Lov response
   const { data: SpecialPopulationLovQueryResponse } = useGetLovValuesByCodeQuery(
     'SPECIAL_POPULATION_GROUPS'
   );
+  const { data: unitsLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+
   // Fetch Age Group Lov response
 
-  const ageGroups = useEnumOptions('AgeGroupType')
+  const ageGroups = useEnumOptions('AgeGroupType');
+
+  const TestResultType = useEnumOptions('TestResultType');
 
   // save Diagnostics Test Laboratory
 
@@ -66,7 +76,6 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   const [addPathology] = useCreatePathologyMutation();
   const [updatePathology] = useUpdatePathologyMutation();
   // Fetch Diagnostic Test Type details
-
 
   // show details component according to Test type of diagnostic test
   const handleShowComponent = () => {
@@ -104,18 +113,17 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
 
   const handleSaveLab = async () => {
     try {
-
       setOpen(false);
 
       if (diagnosticTestLaboratory.id) {
-
         await updateDiagnosticTest({
           id: diagnosticTestLaboratory.id,
           body: {
             ...diagnosticTestLaboratory,
-            testId: diagnosticsTest?.id,
-          },
+            testId: diagnosticsTest?.id
+          }
         }).unwrap();
+        await handleSave();
 
         dispatch(notify({ msg: 'Laboratory Details Updated Successfully', sev: 'success' }));
       } else {
@@ -144,9 +152,8 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
           testInstructions: diagnosticTestLaboratory.testInstructions,
           category: diagnosticTestLaboratory.category,
           tubeType: diagnosticTestLaboratory.tubeType,
-          timing: diagnosticTestLaboratory.timing,
+          timing: diagnosticTestLaboratory.timing
         }).unwrap();
-
 
         dispatch(notify({ msg: 'Laboratory Details Saved Successfully', sev: 'success' }));
       }
@@ -155,15 +162,12 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
       dispatch(
         notify({
           msg: 'Failed to save Laboratory Details',
-          sev: 'error',
+          sev: 'error'
         })
       );
     } finally {
-
     }
   };
-
-
 
   // handle save radiology details
   const handleSaveRad = async () => {
@@ -175,16 +179,15 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
           id: diagnosticTestRadiology.id,
           body: {
             ...diagnosticTestRadiology,
-            testId: diagnosticsTest?.id,
-          },
+            testId: diagnosticsTest?.id
+          }
         }).unwrap();
 
         dispatch(notify({ msg: 'Radiology Details Updated Successfully', sev: 'success' }));
-      }
-      else {
+      } else {
         await addDiagnosticTestRadiology({
           ...diagnosticTestRadiology,
-          testId: diagnosticsTest?.id,
+          testId: diagnosticsTest?.id
         }).unwrap();
         dispatch(notify({ msg: 'Radiology Details Saved Successfully', sev: 'success' }));
       }
@@ -193,7 +196,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
       dispatch(
         notify({
           msg: 'Failed to save Radiology Details',
-          sev: 'error',
+          sev: 'error'
         })
       );
     } finally {
@@ -210,15 +213,14 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
           id: diagnosticTestPathology.id,
           body: {
             ...diagnosticTestPathology,
-            testId: diagnosticsTest?.id,
-          },
+            testId: diagnosticsTest?.id
+          }
         }).unwrap();
         dispatch(notify({ msg: 'Pathology Details Updated Successfully', sev: 'success' }));
-      }
-      else {
+      } else {
         await addPathology({
           ...diagnosticTestPathology,
-          testId: diagnosticsTest?.id,
+          testId: diagnosticsTest?.id
         }).unwrap();
         dispatch(notify({ msg: 'Pathology Details Saved Successfully', sev: 'success' }));
       }
@@ -227,28 +229,32 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
       dispatch(
         notify({
           msg: 'Failed to save Pathology Details',
-          sev: 'error',
+          sev: 'error'
         })
       );
     } finally {
-
     }
   };
 
   useEffect(() => {
-    setDiagnosticsTest({ ...diagnosticsTest, specialPopulationValues: diagnosticTestSpecialPopulation?.testKey })
-  }, [diagnosticTestSpecialPopulation])
+    setDiagnosticsTest({
+      ...diagnosticsTest,
+      specialPopulationValues: diagnosticTestSpecialPopulation?.testKey
+    });
+  }, [diagnosticTestSpecialPopulation]);
+
   useEffect(() => {
     if (diagnosticsTest?.id) {
       // Fetch existing special population values and set to state
-      setDiagnosticTestSpecialPopulation({ testKey: diagnosticsTest?.specialPopulationValues || [] });
+      setDiagnosticTestSpecialPopulation({
+        testKey: diagnosticsTest?.specialPopulationValues || []
+      });
     }
   }, [diagnosticsTest?.id]);
 
   useEffect(() => {
-    setDiagnosticsTest({ ...diagnosticsTest, ageGroupList: ageGroupList?.ageGroupList })
-  }, [ageGroupList])
-
+    setDiagnosticsTest({ ...diagnosticsTest, ageGroupList: ageGroupList?.ageGroupList });
+  }, [ageGroupList]);
 
   useEffect(() => {
     if (diagnosticsTest?.id) {
@@ -257,6 +263,17 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
     }
   }, [diagnosticsTest?.id]);
 
+  useEffect(() => {
+    if (open && diagnosticsTest?.id && diagnosticsTest?.type === 'LABORATORY') {
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        defaultProfileResultType: diagnosticsTest.defaultProfileResultType ?? null,
+        defaultProfileResultUnit: diagnosticsTest.defaultProfileResultUnit ?? null
+      }));
+    }
+  }, [open, diagnosticsTest?.id]);
+
+  console.log('diagnosticsTest=====>', diagnosticsTest);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -265,7 +282,6 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
           <Form fluid>
             <div className="container-of-two-fields-diagnostic">
               <div className="container-of-field-diagnostic">
-
                 <MyInput
                   required
                   width="%100%"
@@ -289,6 +305,43 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                 />
               </div>
             </div>
+
+            {diagnosticsTest.type === 'LABORATORY' && (
+              <>
+                <br />
+                <div className="container-of-two-fields-diagnostic">
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      required
+                      width="100%"
+                      fieldLabel="Result Type"
+                      fieldType="select"
+                      fieldName="defaultProfileResultType"
+                      selectData={TestResultType ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                    />
+                  </div>
+
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      width="100%"
+                      menuMaxHeight={200}
+                      fieldLabel="Result Unit"
+                      fieldName="defaultProfileResultUnit"
+                      fieldType="select"
+                      selectData={unitsLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
             <br />
             <MyInput
               required
@@ -307,7 +360,6 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                 />
               </div>
               <div className="container-of-field-diagnostic">
-
                 <MyInput
                   width="%100%"
                   fieldLabel="Currency"
@@ -356,7 +408,6 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                     record={diagnosticsTest}
                     setRecord={setDiagnosticsTest}
                   />
-
                 </div>
               )}
             </div>
@@ -431,29 +482,26 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                   setRecord={setDiagnosticsTest}
                 />
               </div>
-              <div className="container-of-field-diagnostic">
-                {diagnosticsTest.type == 'LABORATORY' && (
-                  <MyInput
-                    fieldLabel="Is Laboratory Profile"
-                    width="100%"
-                    fieldName="isProfile"
-                    fieldType="checkbox"
-                    record={diagnosticsTest}
-                    setRecord={setDiagnosticsTest}
-                  />)}
-              </div>
             </div>
-
           </Form>
         );
       case 1:
-        return (
-          handleShowComponent()
-        );
+        return handleShowComponent();
     }
   };
   // Effects
-
+useEffect(() => {
+  console.log('================ DETAILS STATES ================');
+  console.log('Test Type:', diagnosticsTest?.type);
+  console.log('LAB:', diagnosticTestLaboratory);
+  console.log('RAD:', diagnosticTestRadiology);
+  console.log('PATH:', diagnosticTestPathology);
+}, [
+  diagnosticsTest?.type,
+  diagnosticTestLaboratory,
+  diagnosticTestRadiology,
+  diagnosticTestPathology
+]);
 
   return (
     <MyModal
@@ -462,10 +510,10 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
         diagnosticsTest?.type == 'LABORATORY'
           ? handleSaveLab
           : diagnosticsTest?.type == 'RADIOLOGY'
-            ? handleSaveRad
-            : diagnosticsTest?.type == 'PATHOLOGY'
-              ? handleSavePath
-              : () => { }
+          ? handleSaveRad
+          : diagnosticsTest?.type == 'PATHOLOGY'
+          ? handleSavePath
+          : () => {}
       }
       open={open}
       setOpen={setOpen}
