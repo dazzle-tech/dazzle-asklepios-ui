@@ -73,7 +73,6 @@ const CLABSI = () => {
             <div className="safety-bundle-icu-add-btn-wrapper">
               <MyButton
                 prefixIcon={() => <PlusIcon />}
-                onClick={() => console.log("Add CLABSI clicked")}
               >
                 Add
               </MyButton>

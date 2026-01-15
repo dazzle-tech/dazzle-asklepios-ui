@@ -78,7 +78,6 @@ const AddEditPriceListItem = ({ open, setOpen, priceList }: Props) => {
   // fetch services and products
   const { data: servicesData } = useGetAllServicesQuery({ page: 0, size: 1000 });
  const {data:AllProducts}=useGetInventoryProductsQuery({page:0,size:1000});
- console.log('AllProducts',AllProducts);
   const { data: productsData, isFetching: isFetchingProducts } =
     useGetInventoryProductByTypeQuery(
       { type: item.productType, page: 0, size: 1000 },

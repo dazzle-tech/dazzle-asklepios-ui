@@ -203,7 +203,6 @@ const StartedDetails = ({
                         try {
                           save({ ...operation });
                         } catch (error) {
-                          console.log('Error in save');
                         }
                       }}
                     >

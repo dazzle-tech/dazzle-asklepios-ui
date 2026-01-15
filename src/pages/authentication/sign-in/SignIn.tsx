@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
-import Logo from '../../../images/Logo_BLUE_New.svg';
+import Logo from '../../../images/mainPageScreenLogo.svg';
 import './styles.less';
 import uiSlice, { setLang, setTranslations } from '@/reducers/uiSlice';
 import { useLoginMutation } from '@/services/authServiceApi';
@@ -25,7 +25,7 @@ import { store } from '@/store';
 import { enumsApi } from '@/services/enumsApi';
 import { useAppSelector } from '@/hooks';
 import { useGetMenuQuery, useLazyGetMenuQuery } from '@/services/security/UserRoleService';
-import { useGetAllLanguagesQuery} from '@/services/setup/languageService';
+import { useGetAllLanguagesQuery, useGetLanguageByKeyQuery} from '@/services/setup/languageService';
 import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
 import { setTranslate3d } from 'rsuite/esm/List/helper/utils';
 
@@ -42,8 +42,11 @@ const SignIn = () => {
     username: '',
     password: '',
     orgKey: '',
-    language: ''
+    language: '',
+    direction: ''
   });
+
+
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -60,10 +63,11 @@ const SignIn = () => {
     isFetching: langsLoading,
     refetch: refetchLangs
   } = useGetAllLanguagesQuery({});
-
+ 
   const [saveUser] = useSaveUserMutation();
   const [getMenuTrigger] = useLazyGetMenuQuery();
-  // Handle login
+
+  // Handle login 
   const handleLogin = async () => {
     if (!credentials.username || !credentials.password || !credentials.orgKey || !credentials.language) {
       setErrText('Please fill all required fields.');
@@ -107,12 +111,10 @@ const SignIn = () => {
       
 
       const dict = await getDictionary(credentials.language).unwrap(); // { translation_key: value }
-      console.log(dict );
       // optional local cache:
       localStorage.setItem('language', credentials.language);
       dispatch(setLang(credentials.language));
       localStorage.setItem('dict', JSON.stringify(dict));
-      console.log("dict" + dict)
       dispatch(setTranslations(dict));
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
@@ -121,7 +123,6 @@ const SignIn = () => {
       setErrText(' ');
       navigate('/');
     } catch (err: any) {
-      console.error(err);
 
       if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
         setErrText('Invalid username or password.');
@@ -165,9 +166,16 @@ const SignIn = () => {
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
 
+  useEffect(() =>{
+     const selectedObject = langData?.find(
+    item => item?.langKey === credentials?.language
+  );
+   localStorage.setItem('direction', selectedObject?.direction);
+  },[credentials.language]);
+
+
   // useEffect(() => {
   //   dispatch(setLang(langRecord['lang']));
-  //   console.log('lang: ' + langRecord['lang']);
   // }, [langRecord]);
 
   return (
@@ -197,7 +205,7 @@ const SignIn = () => {
                   selectDataValue="langKey"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
                   record={credentials}
-                  setRecord={setCredentials}
+                  setRecord={setCredentials}                  
                   placeholder="Select Language"
                   showLabel={false}
                   searchable={false}

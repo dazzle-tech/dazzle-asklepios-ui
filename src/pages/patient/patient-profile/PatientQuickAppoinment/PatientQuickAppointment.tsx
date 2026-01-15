@@ -56,7 +56,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             dispatch(
                 notify({
                     msg: `Please fix the following fields:\n${lines.join('\n')}`,
-                    sev: 'error'
+                    sev: 'warning'
                 })
             );
             return false;
@@ -90,15 +90,13 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             }).catch((e) => {
 
                 if (e.status === 422) {
-                    console.log("Validation error: Unprocessable Entity", e);
 
                 } else {
-                    console.log("An unexpected error occurred", e);
                     dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
                 }
             });
         } else {
-            dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
+            dispatch(notify({ msg: 'encounter not linked to patient', sev: 'warning' }));
         }
     };
     // Handle Clear Fields

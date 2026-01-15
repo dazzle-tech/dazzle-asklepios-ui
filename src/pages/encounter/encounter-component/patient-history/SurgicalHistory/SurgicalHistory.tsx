@@ -63,12 +63,21 @@ const handleDelete = (row) => {
       });
     })
     .catch((err) => {
-      console.log("Delete Error =>", err);
       dispatch(notify({ msg: "Delete failed", sev: "error" }));
     });
 };
 
 
+const mapKeysToLovLabels = (keys?: string, lovList?: any[]) => {
+  if (!keys || !lovList?.length) return '-';
+
+  const arr = keys.split(',');
+
+  return lovList
+    .filter(lov => arr.includes(lov.key))
+    .map(lov => lov.lovDisplayVale)
+    .join(', ');
+};
 
 
 
@@ -108,10 +117,12 @@ const handleDelete = (row) => {
     title: "ADVERSE REACTIONS",
     flexGrow: 3,
     render: (row) =>
-      advLov?.object?.find(
-        (x) => x.key === row.adverseReactionsToAnesthesiaLkey
-      )?.lovDisplayVale ?? "",
+      mapKeysToLovLabels(
+        row.adverseReactionsToAnesthesiaLkey,
+        advLov?.object
+      ),
   },
+
 
   {
     key: "isImplantsOrDevices",
@@ -174,7 +185,6 @@ const handleDelete = (row) => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = data?.extraNumeric ?? 0;
 
-console.log("Surgical History Data =>", data?.object);
 
   return (
     <div className="medical-container-div">

@@ -38,7 +38,6 @@ const LovValues = ({ lov, goBack, width }) => {
   });
   // Fetch lov values list response
   const { data: lovValueListResponse, isFetching } = useGetLovValuesQuery(listRequest);
-  console.log("Lov v",lovValueListResponse?.object)
   // Save lov value
   const [saveLovValue, saveLovValueMutation] = useSaveLovValueMutation();
   // Pagination values
@@ -82,7 +81,6 @@ const LovValues = ({ lov, goBack, width }) => {
   }, [recordOfFilter]);
 
   useEffect(() => {
-    console.log(lov);
     if (lov && lov.key) {
       setListRequest(addFilterToListRequest('lov_key', 'match', lov.key, listRequest));
     }
@@ -102,14 +100,12 @@ const LovValues = ({ lov, goBack, width }) => {
       const foundDefault = lovValueListResponse.object.find(Default => {
         return Default.isdefault === true;
       });
-      console.log(foundDefault?.key);
       if (foundDefault?.key != null) {
         setIsDefault(true);
       } else {
         setIsDefault(false);
       }
     }
-    console.log(isdefault);
   }, [lovValueListResponse]);
 
   useEffect(() => {
@@ -126,7 +122,6 @@ const LovValues = ({ lov, goBack, width }) => {
   // handle save lov value
   const handleLovValueSave = () => {
     setLovValuePopupOpen(false);
-    console.log('LovValue:', lovValue);
     saveLovValue(lovValue)
       .unwrap()
       .then(() => {

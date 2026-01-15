@@ -10,11 +10,7 @@ const AddEditQuestione = ({ question, setQuestion }) => {
     { value: 'toggle', label: 'Toggle' }
   ];
 
-  // Effects
-  useEffect(() => {
-      console.log("question");
-      console.log(question);
-  },[question]);
+
 
   return (
     <Form fluid>

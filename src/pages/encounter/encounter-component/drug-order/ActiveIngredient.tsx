@@ -41,7 +41,6 @@ const ActiveIngredient = ({ selectedGeneric }) => {
                    value: selectedGeneric?.key || null
                }
            ];
-       console.log(updatedFilters);
            setListGinricRequest((prevRequest) => ({
    
                ...prevRequest,

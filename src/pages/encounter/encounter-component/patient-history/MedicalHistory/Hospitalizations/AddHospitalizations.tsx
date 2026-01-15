@@ -33,18 +33,75 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       data.dateOfAdmission ? new Date(data.dateOfAdmission).getTime() : null
   });
 
-  const save = () => {
-    const payload = normalizePayload(formData);
+  // const validateRequiredFields = () => {
+  //   const requiredFields = [
+  //     { key: 'facility', label: 'Facility' },
+  //     { key: 'reason', label: 'Reason' },
+  //     { key: 'dateOfAdmission', label: 'Date of admission' }
+  //   ];
 
-    saveHospitalization(payload)
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: "Saved successfully", sev: "success" }));
-        setOpen(false);
-      })
-      .catch(() =>
-        dispatch(notify({ msg: "Saving failed", sev: "error" }))
-      );
+  //   const missing = requiredFields.filter(field => {
+  //     const value = (formData as any)[field.key];
+  //     return value === undefined || value === null || value === '';
+  //   });
+
+  //   if (missing.length > 0) {
+  //     const msg =
+  //       missing.length === 1
+  //         ? `Please fill the required field: ${missing[0].label}.`
+  //         : `Please fill the required fields: ${missing.map(f => f.label).join(', ')}.`;
+
+  //     dispatch(
+  //       notify({
+  //         msg,
+  //         sev: 'error'
+  //       })
+  //     );
+
+  //     return false;
+  //   }
+
+  //   return true;
+  // };
+
+  const save = () => {
+    // if (!validateRequiredFields()) {
+    //   return;
+    // }
+    let errorMsg = "";
+    if (!formData.facility) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Facility Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Condition Can`t be empty"
+    }
+    if (!formData.reason) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Reason Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Reason Can`t be empty"
+    }
+    if (!formData.dateOfAdmission) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Date Of Admission Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Date Of Admission Can`t be empty"
+    }
+
+    if (!errorMsg) {
+      const payload = normalizePayload(formData);
+      saveHospitalization(payload)
+        .unwrap()
+        .then(() => {
+          dispatch(notify({ msg: "Saved successfully", sev: "success" }));
+          setOpen(false);
+        })
+        .catch(() =>
+          dispatch(notify({ msg: "Saving failed", sev: "error" }))
+        );
+    }else{
+     dispatch(notify({ msg: errorMsg, sev: "warning" }))
+    }
   };
 
   const content = (
@@ -98,7 +155,8 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       <MyInput
         width={200}
         column
-        fieldLabel="Length of stay"
+        fieldLabel="Length of stay (days)"
+        fieldType="number"
         fieldName="lengthOfStay"
         record={formData}
         setRecord={setFormData}

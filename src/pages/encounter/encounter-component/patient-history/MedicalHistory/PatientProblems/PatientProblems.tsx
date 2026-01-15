@@ -37,7 +37,6 @@ const PatientProblems = ({ patient, encounter, edit,
 
   const { data: patientProblemsData, isLoading } = useGetPatientProblemsQuery(listRequestPatientProblems);
 
-console.log("Patient Problems Data =>", patientProblemsData?.object);
   const isSelected = row => {
     if (row && selectedProblem && row.key === selectedProblem.key) return 'selected-row';
     return '';
@@ -167,12 +166,14 @@ const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => 
   return (
     <div className="medical-container-div">
       <SectionContainer
+        button={<>
+        { !toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+              Add
+            </MyButton>}
+            </>}
         title={
           <>
             Patient's Problems
-          { !toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
-              Add
-            </MyButton>}
           </>
         }
         content={

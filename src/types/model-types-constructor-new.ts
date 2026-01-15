@@ -21,6 +21,7 @@ export const newApUser: modelTypes.ApUser = {
   gender: null,
   jobDescription: null,
   jobRole: null,
+  admin: false,
 };
 
 export const newCandidate: modelTypes.Candidate = {
@@ -639,16 +640,16 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   name: '',
   description: null,
   type: '',
-  departmentId: 0,
-  facilityId: 0
+  departmentId: undefined,
+  facilityId: undefined
 };
 
 export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   name: '',
   description: null,
   type: '',
-  departmentId: 0,
-  facilityId: 0
+  departmentId: undefined,
+  facilityId: undefined
 };
 export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
   id: 0,
@@ -816,7 +817,8 @@ export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM 
     createdBy: '',
     createdDate: null,
     lastModifiedBy: '',
-    lastModifiedDate: null
+    lastModifiedDate: null,
+    patientId: ''
 };
 
 export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
@@ -824,7 +826,8 @@ export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
      note: '',
     priority: '',
     priorityOrder: 0,
-    color:'--note-purple'
+    color:'--note-purple',
+    patientId: undefined
 }
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
@@ -1096,3 +1099,33 @@ export const newDischargePlanning: modelTypes.DischargePlanning = {
 
   isActive: true,
 };
+export const newPriceListAttribute: modelTypes.PriceListAttribute = {
+  id:undefined,
+  priceListId: undefined,
+  attributeType:null, // PriceAttributes enum as string
+  attribute: null,
+  price: null ,// or string if you prefer BigDecimal string
+  isActive: true
+}
+
+export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
+  id: undefined,
+  name: '',
+  description: '',
+  address: '',
+  contactName: '',
+  contactAddress: '',
+  contactEmail: '',
+  contactMobile: '',
+  contactLandNumber: '',
+  taxValue: undefined
+};
+
+export const newFormTemplate: modelTypes.FormTemplate = {
+  id: undefined,
+  name: null,
+  description: null,
+  facilityId: null,
+  departmentId: null,
+  formJson: null
+}

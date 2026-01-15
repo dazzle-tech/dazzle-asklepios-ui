@@ -8,7 +8,7 @@ import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import AdministrativeWarningsModal from './AdministrativeWarning';
-import ScanDocumentModal from './ScanDocumentModal';
+import ScanDocumentModal from '@/pages/patient/patient-profile/ScanDocumentModal';
 import '@/patches/prototypeShield';
 import {
   useGetPatientProfilePictureQuery,
@@ -50,7 +50,7 @@ interface ProfileHeaderProps {
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setOpenBViewPriceListModal: (value: boolean) => void;
-  setLocalPatient: (patient: ApPatient) => void;
+  setLocalPatient: React.Dispatch<React.SetStateAction<ApPatient>>;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -67,7 +67,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenBViewPriceListModal,
   setLocalPatient
 }) => {
-  const authSlice = useAppSelector(state => state.auth); // مستخدم لاحقًا إذا احتجت له
+  const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const [patientImage, setPatientImage] = useState<ApAttachment | undefined>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
@@ -173,8 +173,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
     const secondaryDocumentsArray =
       patientSecondaryDocumentsResponse &&
-        (patientSecondaryDocumentsResponse as any).object &&
-        Array.isArray((patientSecondaryDocumentsResponse as any).object)
+      (patientSecondaryDocumentsResponse as any).object &&
+      Array.isArray((patientSecondaryDocumentsResponse as any).object)
         ? (patientSecondaryDocumentsResponse as any).object
         : [];
 
@@ -243,8 +243,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const normalizeParsedData = (raw: any) => {
-    console.log('NORMALIZING RAW OCR DATA:', raw);
-
     return {
       firstName:
         raw.firstName ||
@@ -276,11 +274,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const handleIdParsed = (parsedData: any) => {
-    console.log('ID Parsed Data RAW:', parsedData);
-
     const normalized = normalizeParsedData(parsedData);
-
-    console.log('ID NORMALIZED:', normalized);
 
     const updatedPatient: Partial<ApPatient> = { ...localPatient };
 
@@ -431,11 +425,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   <Translate>Clear</Translate>
                 </MyButton>
 
-                <MyButton
-                  appearance="ghost"
-                  disabled={!localPatient.key}
-                  onClick={handleNewVisit}
-                >
+                <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
                   <Translate>Quick Appointment</Translate>
                 </MyButton>
 
@@ -447,13 +437,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 {/* More Menu */}
                 <Whisper
                   trigger="click"
-                   open={openMoreMenu}
+                  open={openMoreMenu}
                   onClose={() => setOpenMoreMenu(false)}
                   placement="bottom"
                   speaker={
                     <Popover full>
                       <Dropdown.Menu>
-
                         <Dropdown.Item
                           disabled={localPatient.key === undefined}
                           onClick={() => {
@@ -483,7 +472,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                           </div>
                         </Dropdown.Item>
 
-                        <Dropdown.Item onClick={() => {setOpenMoreMenu(false); setOpenBViewPriceListModal(true);}}>
+                        <Dropdown.Item
+                          onClick={() => {
+                            setOpenMoreMenu(false);
+                            setOpenBViewPriceListModal(true);
+                          }}
+                        >
                           <div className="container-of-icon-and-key1">
                             <FontAwesomeIcon icon={faHandHoldingDollar} />
                             <Translate>View Price List</Translate>
@@ -532,7 +526,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                             <Translate>Encounter Transactions</Translate>
                           </div>
                         </Dropdown.Item>
-
                       </Dropdown.Menu>
                     </Popover>
                   }
@@ -543,7 +536,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </MyButton>
                   </span>
                 </Whisper>
-
 
                 {/* Print menu */}
                 <Whisper
@@ -573,10 +565,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </MyButton>
                   </span>
                 </Whisper>
-
-
-
-
               </Form>
             </div>
           </Form>

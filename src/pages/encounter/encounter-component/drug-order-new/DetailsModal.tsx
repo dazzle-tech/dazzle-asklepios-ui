@@ -126,7 +126,6 @@ const DetailsModal = ({
   const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
-  console.log('genericMedicationListResponse', genericMedicationListResponse?.object);
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
     'MED_ORDER_ADMIN_NSTRUCTIONS'
   );
@@ -307,6 +306,7 @@ const DetailsModal = ({
       indicationUseLkey: null,
       pharmacyDepartmentKey: null
     });
+
     setAdminInstructions('');
     setSelectedGeneric(null);
     setSelectedFirstDate(null);
@@ -316,6 +316,7 @@ const DetailsModal = ({
     setIsUnregistered(false);
     setUnregisteredMedicationName('');
   };
+
   const handleSaveMedication = () => {
     try {
       const tagcompine = joinValuesFromArray(tags);
@@ -345,7 +346,6 @@ const DetailsModal = ({
         });
     } catch (error) {
       dispatch(notify({ msg: 'Failed to add', sev: 'error' }));
-      console.log(error);
     }
   };
   const handleSearch = value => {
@@ -363,19 +363,37 @@ const DetailsModal = ({
   // handle add new attachment
   const handleAddNewAttachment = () => {
     const sourceIdValue = orderMedication?.key ? Number(orderMedication.key) : 0;
-    console.log('Capturing sourceId for drug order attachment:', sourceIdValue);
     setCapturedSourceId(sourceIdValue);
     setAttachmentsModalOpen(true);
   };
 
   useEffect(() => {
     if (attachmentsModalOpen) {
-      console.log('Modal is now open - capturedSourceId:', capturedSourceId);
     } else {
       // Reset captured sourceId when modal closes
       setCapturedSourceId(0);
     }
   }, [attachmentsModalOpen]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const list = orderTypeLovQueryResponse?.object;
+    if (!list?.length) return;
+
+    const preMed = list.find(item => item.valueCode === 'DRUG_PREMED');
+    if (!preMed) return;
+
+    setOrderMedication(prev => {
+      if (prev.drugOrderTypeLkey) return prev;
+
+      return {
+        ...prev,
+        drugOrderTypeLkey: preMed.key
+      };
+    });
+  }, [orderTypeLovQueryResponse?.object, open]);
+
   const joinValuesFromArray = values => {
     return values?.filter(Boolean).join(', ');
   };

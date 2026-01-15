@@ -25,6 +25,7 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [record, setRecord] = useState<Record<string, any>>({eventKey: ""});
+   const direction = localStorage.getItem('direction');
 
 
   const [width, setWidth] = useState<number>(window.innerWidth);
@@ -64,7 +65,7 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
   };
 
   return (
-    <div className="main-screen-bar-filters-header-main-container">
+    <div className="main-screen-bar-filters-header-main-container" style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
       {(width > 800 || !displaySearch) && width > 600 && (
         <div>
           <div className="display-flex">
@@ -75,9 +76,9 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
         </div>
       )}
 
-      <div className="main-screen-bar-filters-header">
+      <div className="main-screen-bar-filters-header" >
         <Form fluid layout="inline">
-          <div className="main-screen-bar-buttons-main-container">
+          <div className="main-screen-bar-buttons-main-container" style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
             {width > 800 || displaySearch ? (
               <>
                 <MyInput

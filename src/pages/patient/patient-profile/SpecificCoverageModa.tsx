@@ -58,7 +58,6 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
                 dispatch(notify({msg:'Coverage Saved Successfully',sev: 'success'})),
                 handleClearModalFields()
         });
-        console.log(patientInsuranceCoverage)
 
     }
     // Function handle delete covgInsurance

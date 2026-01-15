@@ -144,7 +144,6 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
             createdAt: null
         }).unwrap().then((result) => {
             setTransaction(result);
-            console.log(result);
             refetch();
             setOpenNextDocument(true);
             dispatch(
@@ -155,9 +154,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
             );
         }).catch((e) => {
             if (e.status === 422) {
-                console.log("Validation error: Unprocessable Entity", e);
             } else {
-                console.log("An unexpected error occurred", e);
                 dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
             }
         });
@@ -169,7 +166,6 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
     //         createdAt: null
     //     }).unwrap().then(() => {
     //         setTransaction(response );
-    //         console.log(response);
     //         refetch();
     //         setOpenNextDocument(true);
     //         dispatch(
@@ -181,20 +177,13 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
     //     }).catch((e) => {
 
     //         if (e.status === 422) {
-    //             console.log("Validation error: Unprocessable Entity", e);
 
     //         } else {
-    //             console.log("An unexpected error occurred", e);
     //             dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
     //         }
     //     });;
 
     // };
-
-    useEffect(() => {
-        console.log("this is a transaction");
-        console.log(transaction);
-    }, [openNextDocument]);
 
     // Handle Go To Patient Profile 
     const goToPatientProfile = () => {
@@ -248,7 +237,6 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
         }
         generateFiveDigitCode();
         setRecordOfWarehouseCode({ transId: transaction?.transI ?? generateCode });
-        console.log(recordOfWarehouseCode);
     }, [transaction?.transId?.length]);
 
     // Main modal content
@@ -415,7 +403,6 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
             ...transProduct,
             inventoryTransactionKey: transaction.key,
         }).unwrap().then((result) => {
-            console.log(result)
             setTransProduct(result);
             refetch();
             refetchTransProductList();
@@ -429,10 +416,8 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
         }).catch((e) => {
 
             if (e.status === 422) {
-                console.log("Validation error: Unprocessable Entity", e);
 
             } else {
-                console.log("An unexpected error occurred", e);
                 dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
             }
         });;

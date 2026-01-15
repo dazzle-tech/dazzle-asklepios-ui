@@ -107,7 +107,6 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
       setFormData((prev) => ({ ...prev, templateValue: htmlContent }));
       setOpen(false);
     } catch (err) {
-      console.log("Report Template Save Error:", err);
       dispatch(
         notify({
           msg: "Failed to save Report Template",

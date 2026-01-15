@@ -11,8 +11,8 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 
 const AddPatientProblem = ({ open, setOpen, initialData, patient
-  
- }) => {
+
+}) => {
 
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState(newApPatientProblems);
@@ -40,33 +40,56 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient
   // -----------------------------
   const [savePatientProblem] = useSavePatientProblemMutation();
 
-const normalizePayload = (data) => ({
-  ...data,
-  dateOfDiagnosis:
-    data.dateOfDiagnosis ? new Date(data.dateOfDiagnosis).getTime() : null,
+  const normalizePayload = (data) => ({
+    ...data,
+    dateOfDiagnosis:
+      data.dateOfDiagnosis ? new Date(data.dateOfDiagnosis).getTime() : null,
 
-  dateOfResolution:
-    data.dateOfResolution ? new Date(data.dateOfResolution).getTime() : null,
-  sourceOfInformationLkey: data.byPatient ? "By-Patient" : data.sourceOfInformationLkey,
-});
+    dateOfResolution:
+      data.dateOfResolution ? new Date(data.dateOfResolution).getTime() : null,
+    sourceOfInformationLkey: data.byPatient ? "By-Patient" : data.sourceOfInformationLkey,
+  });
 
 
-const save = () => {
-  const payload = normalizePayload(formData);
+  const save = () => {
+    let errorMsg = "";
+    if (!formData.condition) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Condition Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Condition Can`t be empty"
+    }
+    if (!formData.dateOfDiagnosis) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Date Of Diagnosis Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Date Of Diagnosis Can`t be empty"
+    }
+    if (!formData.byPatient) {
+      if(!formData.sourceOfInformationLkey){
+      if (!errorMsg)
+        errorMsg = errorMsg + "Source Of Information Can`t be null"
+      else
+        errorMsg = errorMsg + ", Source Of Information Can`t be empty"
+    }
+    }
+    if (!errorMsg) {
+      const payload = normalizePayload(formData);
 
-  console.log("PAYLOAD SENT >>>", payload);
-
-  savePatientProblem(payload)
-    .unwrap()
-    .then(() => {
-      dispatch(notify({ msg: "Saved successfully", sev: "success" }));
-      setOpen(false);
-    })
-    .catch((err) => {
-      console.error("SAVE ERROR:", err);
-      dispatch(notify({ msg: "Saving failed", sev: "error" }));
-    });
-};
+      savePatientProblem(payload)
+        .unwrap()
+        .then(() => {
+          dispatch(notify({ msg: "Saved successfully", sev: "success" }));
+          setOpen(false);
+        })
+        .catch((err) => {
+          dispatch(notify({ msg: "Saving failed", sev: "error" }));
+        });
+    }
+    else {
+      dispatch(notify({ msg: errorMsg, sev: "warning" }));
+    }
+  };
 
 
   // -----------------------------

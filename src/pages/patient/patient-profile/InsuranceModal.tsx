@@ -4,7 +4,7 @@ import './styles.less';
 import { useAppDispatch } from '@/hooks';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
-import { useGetPayorPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
 import { ApPatientInsurance } from '@/types/model-types';
 import { faShieldHeart } from '@fortawesome/free-solid-svg-icons';
@@ -34,7 +34,6 @@ const InsuranceModal = ({
   const [relationsList, setRelationsList] = useState<any[]>();
   const dispatch = useAppDispatch();
 
-  // لتفادي مسح الـ plan عند أول تحميل edit
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>(undefined);
 
   // Payor pagination state
@@ -61,7 +60,7 @@ const InsuranceModal = ({
     data: plansResponse,
     isLoading: plansLoading,
     isFetching: plansFetching,
-  } = useGetPayorPlansByPayorQuery(
+  } = useGetPlansByPayorQuery(
     {
       payorId: Number(patientInsurance?.insuranceProviderLkey) || 0,
       page: planPage,
@@ -80,7 +79,6 @@ const InsuranceModal = ({
     setPayorPage(0);
   }, [payorSearchKeyword]);
 
-  // عند تغيير الـ Payor:
   useEffect(() => {
     const currentPayorId = patientInsurance?.insuranceProviderLkey
       ? Number(patientInsurance.insuranceProviderLkey)
@@ -91,7 +89,6 @@ const InsuranceModal = ({
     // reset plans list
     setPlanPage(0);
 
-    // لو فيه payor سابق نمسح الـ plan
     if (prevPayorId !== undefined) {
       setPatientInsurance(prev => ({
         ...prev,

@@ -400,7 +400,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
   return (
     <Form fluid layout="inline" className="fields-container">
       {/* Active Filters Tags */}
-      {activeFilters.length > 0 && (
+      {/* {activeFilters.length > 0 && (
         <div style={{ 
           width: '100%', 
           marginBottom: '16px',
@@ -431,7 +431,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
             </Tag>
           ))}
         </div>
-      )}
+      )} */}
 
       <MyInput
         vr={validationResult}

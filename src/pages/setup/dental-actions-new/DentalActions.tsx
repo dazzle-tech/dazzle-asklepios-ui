@@ -154,7 +154,6 @@ const handlePageChange = (event, newPage) => {
         setPopupOpen(false);
 
       } catch (err) {
-        console.log("Dental Action Save Error:", err);
         dispatch(notify({ msg: 'Failed to save Dental Action', sev: 'error' }));
       } finally {
         dispatch(hideSystemLoader());

@@ -39,7 +39,7 @@ const AddEditDepartment = ({
           <Form fluid className='add-edit-department-main-container'>
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
-                width={250}
+                width={"13vw"}
                 fieldLabel="Facility"
                 fieldName="facilityId"
                 required
@@ -52,7 +52,7 @@ const AddEditDepartment = ({
               />
 
               <MyInput
-                width={250}
+                width={"13vw"}
                 fieldName="departmentType"
                 fieldLabel="Department Type"
                 fieldType="select"
@@ -67,14 +67,14 @@ const AddEditDepartment = ({
             </div>
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
             <MyInput
-              width={250}
+              width={"13vw"}
               fieldName="name"
               record={department}
               setRecord={setDepartment}
               required
             />
             <MyInput
-              width={250}
+              width={"13vw"}
               fieldName="departmentCode"
               record={recordOfDepartmentCode}
               setRecord={setRecordOfDepartmentCode}
@@ -85,13 +85,13 @@ const AddEditDepartment = ({
             <Divider />
             <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
-                width={250}
+                width={"13vw"}
                 fieldName="phoneNumber"
                 record={department}
                 setRecord={setDepartment}
               />
               <MyInput
-                width={250}
+                width={"13vw"}
                 fieldName="email"
                 record={department}
                 setRecord={setDepartment}
@@ -111,7 +111,7 @@ const AddEditDepartment = ({
               </Form>
               {department?.appointable ? (
                 <MyInput
-                  width={250}
+                  width={"13vw"}
                   fieldName="encounterType"
                   fieldType="select"
                   fieldLabel="Encounter Type"
@@ -159,7 +159,7 @@ const AddEditDepartment = ({
       actionButtonLabel={department?.id ? 'Save' : 'Create'}
       actionButtonFunction={department?.id ? handleUpdate : handleAddNew}
       steps={[{ title: 'Department Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
-      size={width > 650 ? '38vw' : '27vw'}
+      size="38vw"
     />
   );
 };

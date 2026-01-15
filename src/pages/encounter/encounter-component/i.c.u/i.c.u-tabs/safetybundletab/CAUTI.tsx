@@ -66,7 +66,6 @@ const CAUTI = () => {
             <div className="safety-bundle-icu-add-btn-wrapper">
               <MyButton
                 prefixIcon={() => <PlusIcon />}
-                onClick={() => console.log("Add CAUTI clicked")}
               >
                 Add
               </MyButton>

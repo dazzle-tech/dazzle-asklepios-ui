@@ -66,7 +66,6 @@ const EarlyMobility = () => {
             <div className="safety-bundle-icu-add-btn-wrapper">
               <MyButton
                 prefixIcon={() => <PlusIcon />}
-                onClick={() => console.log("Add Early Mobility clicked")}
               >
                 Add
               </MyButton>

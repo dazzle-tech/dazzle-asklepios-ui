@@ -6,22 +6,24 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { useGetTeleConsultationListQuery, useSaveTeleConsultationMutation } from '@/services/encounterService';
-import { useGetDepartmentByFacilityQuery, useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import {
+  useGetTeleConsultationListQuery,
+  useSaveTeleConsultationMutation
+} from '@/services/encounterService';
+import {
+  useLazyGetActiveDepartmentByFacilityListQuery
+} from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApTeleConsultation } from '@/types/model-types-constructor';
 import { initialListRequestId } from '@/types/types';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { notify } from '@/utils/uiReducerActions';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import PatientHistorySummary from '../patient-history/MedicalHistory/PatientHistorySummary';
-import { de } from 'date-fns/locale';
-
 
 interface ConsultationPopupProps {
   open: boolean;
@@ -30,9 +32,14 @@ interface ConsultationPopupProps {
   encounter: any;
 }
 
-const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, patient, encounter }) => {
+const ConsultationPopup: React.FC<ConsultationPopupProps> = ({
+  open,
+  setOpen,
+  patient,
+  encounter
+}) => {
   const dispatch = useAppDispatch();
-  const authSlice=useAppSelector((state)=>state.auth);
+  const authSlice = useAppSelector(state => state.auth);
   const [consultationData, setConsultationData] = useState({ ...newApTeleConsultation });
   const { data: orders, refetch } = useGetTeleConsultationListQuery({
     ...initialListRequestId,
@@ -47,40 +54,42 @@ const ConsultationPopup: React.FC<ConsultationPopupProps> = ({ open, setOpen, pa
         operator: 'match',
         value: encounter?.key
       }
-    ],
-  })
+    ]
+  });
 
   const [save, saveMutation] = useSaveTeleConsultationMutation();
   //facility & Department - Mock data
-  const { data: facilities } = useGetAllFacilitiesQuery({page:0,size:100});
+  const { data: facilities } = useGetAllFacilitiesQuery({ page: 0, size: 100 });
 
   const [deptPage, setDeptPage] = useState(0);
 
-const [getDepartments, { data, isFetching, error }] =
-  useLazyGetActiveDepartmentByFacilityListQuery();
+  const [getDepartments, { data, isFetching, error }] =
+    useLazyGetActiveDepartmentByFacilityListQuery();
 
-const [allDepartments, setAllDepartments] = useState<any[]>([]);
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
-useEffect(() => {
-  if (!consultationData?.toFacilityId) return;
+  useEffect(() => {
+    if (!data) return;
+    setAllDepartments(data ?? []);
+  }, [data]);
 
-  getDepartments({
-    facilityId: consultationData.toFacilityId,
-  });
-}, [consultationData?.toFacilityId, getDepartments]);
+  useEffect(() => {
+    if (!consultationData?.toFacilityId) return;
 
-useEffect(() => {
-  if (!data) return;
- 
-  setAllDepartments( data?? []); 
-}, [data]);
+    getDepartments({
+      facilityId: consultationData.toFacilityId
+    });
+  }, [consultationData?.toFacilityId, getDepartments]);
 
+  useEffect(() => {
+    if (!data) return;
 
+    setAllDepartments(data ?? []);
+  }, [data]);
 
   // Fetch Sub Specialty Lov list response
   const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
   const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
-
 
   const tableColumns = [
     {
@@ -88,51 +97,53 @@ useEffect(() => {
       title: 'Facility',
       width: 100,
       render: row => {
-        return <span>
-          {conjureValueBasedOnKeyFromList(
-            facilities?? [],
-            row.toFacilityId,
-            'name'
-          )}
-        </span>
+        return (
+          <span>{conjureValueBasedOnKeyFromList(facilities ?? [], row.toFacilityId, 'name')}</span>
+        );
       }
     },
     {
-      key: 'consultantDepartmentId', title: 'Department', width: 100
-      , render: row => {
-        return <span>
-          {conjureValueBasedOnKeyFromList(
-            departments?.data ?? [],
-            row.toDepartmentId,
-            'name'
-          )}
-        </span>
-      }
-
-    },
-    {
-      key: 'specialtyLkey', title: 'Specialty', width: 100
-      ,
+      key: 'consultantDepartmentId',
+      title: 'Department',
+      width: 100,
       render: row => {
-        return <span>
-          {conjureValueBasedOnKeyFromList(
-            subSpecialityLovQueryResponse?.object ?? [],
-            row.specialtyLkey,
-            'lovDisplayVale'
-          )}
-        </span>
+        return (
+          <span>
+            {conjureValueBasedOnKeyFromList(allDepartments ?? [], row.toDepartmentId, 'name')}
+          </span>
+        );
       }
     },
     {
-      key: 'urgencyLkey', title: 'Urgency', width: 80,
+      key: 'specialtyLkey',
+      title: 'Specialty',
+      width: 100,
       render: row => {
-        return <span>
-          {conjureValueBasedOnKeyFromList(
-            priorityLevelLovQueryResponse?.object ?? [],
-            row.urgencyLkey,
-            'lovDisplayVale'
-          )}
-        </span>
+        return (
+          <span>
+            {conjureValueBasedOnKeyFromList(
+              subSpecialityLovQueryResponse?.object ?? [],
+              row.specialtyLkey,
+              'lovDisplayVale'
+            )}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'urgencyLkey',
+      title: 'Urgency',
+      width: 80,
+      render: row => {
+        return (
+          <span>
+            {conjureValueBasedOnKeyFromList(
+              priorityLevelLovQueryResponse?.object ?? [],
+              row.urgencyLkey,
+              'lovDisplayVale'
+            )}
+          </span>
+        );
       }
     },
     { key: 'expectedResponse', title: 'Expected Response', width: 120 },
@@ -140,15 +151,18 @@ useEffect(() => {
       key: 'statusLkey',
       title: 'Status',
 
-
       render: row => {
-
-        return <MyBadgeStatus color={row.statusLvalue?.valueColor} contant={row.statusLvalue?.lovDisplayVale} />;
+        return (
+          <MyBadgeStatus
+            color={row.statusLvalue?.valueColor}
+            contant={row.statusLvalue?.lovDisplayVale}
+          />
+        );
       }
     },
     {
       key: 'createdByAt',
-      title: 'Created By\At',
+      title: 'Created ByAt',
       width: 100,
       expandable: true,
       render: row => (
@@ -166,36 +180,36 @@ useEffect(() => {
   };
 
   const handleSave = () => {
-    console.log("EX", consultationData.expectedResponseTime)
     try {
       const response = save({
-        ...consultationData, patientId: patient.key, encounterId: encounter.key,
+        ...consultationData,
+        patientId: patient.key,
+        encounterId: encounter.key,
         fromDepartmentId: authSlice.selectedDepartment?.departmentId,
         fromFacilityId: authSlice.selectedDepartment?.facilityId,
         createdBy: authSlice.user?.login,
-       
+
         // ToDo status key for ORD_STAT_REQST
         statusLkey: '5959341154465084',
         expectedResponseTime: consultationData.expectedResponseTime
           ? new Date(consultationData.expectedResponseTime).getTime()
-          : null
-        ,
+          : null,
         requestedAt: new Date().getTime()
       }).unwrap();
-      response.then((res) => {
+      response.then(res => {
         dispatch(notify({ sev: 'success', msg: 'Consultation saved successfully' }));
         refetch();
-      })
+      });
     } catch (err) {
       dispatch(notify({ sev: 'error', msg: 'Error saving consultation' }));
-
     }
-  }
+  };
   const handleExpectedResponseChange = (type: string) => {
     setConsultationData(prev => ({
       ...prev,
       expectedResponse: type,
-      expectedResponseTime: type === 'immediate' ? null : new Date(prev.expectedResponseTime).getTime()
+      expectedResponseTime:
+        type === 'immediate' ? null : new Date(prev.expectedResponseTime).getTime()
     }));
   };
 
@@ -230,13 +244,13 @@ useEffect(() => {
                   fieldType="select"
                   record={consultationData}
                   setRecord={setConsultationData}
-                  selectData={facilities?? []}
+                  selectData={facilities ?? []}
                   selectDataLabel="name"
                   selectDataValue="id"
                   width={150}
                   fieldLabel="Consultant Facility"
                 />
-               
+
                 <MyInput
                   fieldType="selectPagination"
                   fieldLabel="Add Department"
@@ -244,11 +258,10 @@ useEffect(() => {
                   selectData={allDepartments}
                   selectDataLabel="name"
                   selectDataValue="id"
-                 record={consultationData}
+                  record={consultationData}
                   setRecord={setConsultationData}
                   searchable
                   width={150}
-                  
                 />
               </div>
               <div className="flex-20">
@@ -344,18 +357,21 @@ useEffect(() => {
         />
       </Form>
       <div className="flex-end-5">
-        <MyButton
-          prefixIcon={() => <FontAwesomeIcon icon={faSave} />}
-          onClick={handleSave}
-        >Save&Submit</MyButton>
-
+        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faSave} />} onClick={handleSave}>
+          Save & Submit
+        </MyButton>
       </div>
       {/* Orders */}
       <SectionContainer
         title="Orders List"
         content={
           <div>
-            <MyTable data={orders?.object ?? []} columns={tableColumns} height={200} loading={false} />
+            <MyTable
+              data={orders?.object ?? []}
+              columns={tableColumns}
+              height={200}
+              loading={false}
+            />
           </div>
         }
       />

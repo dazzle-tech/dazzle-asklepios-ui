@@ -106,6 +106,21 @@ margin-bottom: 20px;
 }
 
 
+.rs-modal-title {
+  font-size: clamp(13px, 1.4vw, 16px) !important;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+
+
+@media (max-width: 576px) {
+  .rs-modal-title {
+    font-size: 13px !important;
+  }
+}
+
+
 // Keep this as the last style in the file to override styles when dark mode is active
 .modal-dark{
   .rs-modal-content {

@@ -24,7 +24,6 @@ const DischargeReadinessAssessment = ({ operation }) => {
       data: data ? data : newApOperationDischargeReadiness
     })
   });
-  console.log('Redin', readinessAssessment);
   // Mutation hook to save the discharge readiness assessment
   const [save] = useSaveDischargeReadinessMutation();
 

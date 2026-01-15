@@ -237,7 +237,6 @@ const AddEditRoom = ({
     setGenderSpecific({ genderSpecific: false });
   };
 
-  console.log("room:", room);
 
   // SAVE
   const handleSave = () => {
@@ -371,7 +370,7 @@ const AddEditRoom = ({
     <Form fluid layout="inline">
       {/* Facility */}
       <MyInput
-        width={250}
+        width={'13vw'}
         column
         fieldLabel="Facility"
         fieldName="facilityKey"
@@ -397,14 +396,14 @@ const AddEditRoom = ({
         record={departmentType}
         setRecord={setDepartmentType}
         menuMaxHeight={200}
-        width={250}
+        width={'13vw'}
         searchable={false}
       />
 
       {
         !isEdit ? (
           <MyInput
-            width={250}
+            width={'13vw'}
             column
             fieldType="selectPagination"
             fieldLabel="Department"
@@ -422,7 +421,7 @@ const AddEditRoom = ({
         ) : (
           normalizedDepartments === undefined ? (
             <MyInput
-              width={250}
+              width={'13vw'}
               column
               fieldType="selectPagination"
               fieldLabel="Department"
@@ -439,7 +438,7 @@ const AddEditRoom = ({
             />
           ) : (
             <MyInput
-              width={250}
+              width={'13vw'}
               column
               fieldType="select"
               fieldLabel="Department"
@@ -463,7 +462,7 @@ const AddEditRoom = ({
       }
 
       <MyInput
-        width={250}
+        width={'13vw'}
         fieldLabel="Name"
         column
         fieldName="name"
@@ -471,7 +470,7 @@ const AddEditRoom = ({
         setRecord={setRoom}
       />
       <MyInput
-        width={250}
+        width={'13vw'}
         fieldLabel="Floor"
         column
         fieldName="floor"
@@ -479,7 +478,7 @@ const AddEditRoom = ({
         setRecord={setRoom}
       />
       <MyInput
-        width={250}
+        width={'13vw'}
         column
         fieldLabel="Location Details"
         fieldType="textarea"
@@ -489,7 +488,7 @@ const AddEditRoom = ({
       />
       <MyInput
         column
-        width={250}
+        width={'13vw'}
         fieldLabel="Type"
         fieldType="select"
         fieldName="typeLkey"
@@ -501,7 +500,7 @@ const AddEditRoom = ({
       />
       <MyInput
         column
-        width={250}
+        width={'13vw'}
         fieldLabel="Gender Specific"
         fieldType="checkbox"
         fieldName="genderSpecific"
@@ -510,7 +509,7 @@ const AddEditRoom = ({
       />
       <MyInput
         column
-        width={250}
+        width={'13vw'}
         fieldLabel="Gender"
         fieldType="select"
         fieldName="genderLkey"

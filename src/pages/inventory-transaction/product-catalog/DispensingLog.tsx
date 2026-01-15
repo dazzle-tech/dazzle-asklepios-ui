@@ -88,7 +88,6 @@ const DispensingLog = ({ selectedProduct }) => {
       ...prevRequest,
       filters: updatedFilters
     }));
-    console.log(warehouseProductListResponseLoading);
   }, [selectedProduct?.key]);
 
   const [productsListRequest, setProductsListRequest] = useState<ListRequest>({

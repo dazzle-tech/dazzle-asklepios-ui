@@ -141,7 +141,7 @@ const AgeGroupSetup: React.FC = () => {
     const effectiveFacilityId = ageGroup.facilityId;
 
     if (!effectiveFacilityId) {
-      dispatch(notify({ msg: 'Please select a facility.', sev: 'error' }));
+      dispatch(notify({ msg: 'Please select a facility.', sev: 'warning' }));
       return;
     }
 
@@ -203,7 +203,7 @@ const AgeGroupSetup: React.FC = () => {
             dispatch(
               notify({
                 msg: 'Age Group added but does not match current filter',
-                sev: 'info'
+                sev: 'warning'
               })
             );
           }

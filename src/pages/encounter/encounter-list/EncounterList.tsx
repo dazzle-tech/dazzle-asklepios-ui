@@ -29,6 +29,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyModal from '@/components/MyModal/MyModal';
 import { useDispatch } from 'react-redux';
+import { useAppSelector } from '@/hooks';
 import ReactDOMServer from 'react-dom/server';
 import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
@@ -50,6 +51,10 @@ const EncounterList = () => {
   const divContent = 'Patients Visit List';
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent(divContent));
+
+  // Get selected department from auth slice
+  const authSlice = useAppSelector(state => state.auth);
+  const selectedDepartment = authSlice.selectedDepartment;
 
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
 
@@ -77,14 +82,20 @@ const EncounterList = () => {
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    ignore: true,
-    filters: [
+  // Helper function to build base filters including department
+  const getBaseFilters = () => {
+    const baseFilters = [
       {
         fieldName: 'resource_type_lkey',
         operator: 'in',
-        value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
+        value: [
+          '2039534205961578',
+          '2039620472612029',
+          '2039516279378421',
+          'PRACTITIONER',
+          'MEDICAL_TEST',
+          'CLINIC'
+        ]
           .map(key => `(${key})`)
           .join(' ')
       },
@@ -93,7 +104,24 @@ const EncounterList = () => {
         operator: 'in',
         value: ['91063195286200', '91084250213000'].map(key => `(${key})`).join(' ')
       }
-    ]
+    ];
+
+    // Add department filter if selectedDepartment is available
+    if (selectedDepartment?.departmentId) {
+      baseFilters.push({
+        fieldName: 'department_key',
+        operator: 'match',
+        value: selectedDepartment.departmentId.toString()
+      });
+    }
+
+    return baseFilters;
+  };
+
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    ignore: true,
+    filters: getBaseFilters()
   });
 
   const {
@@ -101,30 +129,51 @@ const EncounterList = () => {
     isFetching,
     refetch: refetchEncounter,
     isLoading
-  } = useGetEncountersQuery(listRequest);
+  } = useGetEncountersQuery(listRequest, {
+    skip: !selectedDepartment?.departmentId
+  });
+
+  // Helper function to build base filters for today's list (without encounter_status filter)
+  const getBaseFiltersForToday = () => {
+    const baseFilters = [
+      {
+        fieldName: 'resource_type_lkey',
+        operator: 'in',
+        value: [
+          '2039534205961578',
+          '2039620472612029',
+          '2039516279378421',
+          'PRACTITIONER',
+          'MEDICAL_TEST',
+          'CLINIC'
+        ]
+          .map(key => `(${key})`)
+          .join(' ')
+      }
+    ];
+
+    // Add department filter if selectedDepartment is available
+    if (selectedDepartment?.departmentId) {
+      baseFilters.push({
+        fieldName: 'department_key',
+        operator: 'match',
+        value: selectedDepartment.departmentId.toString()
+      });
+    }
+
+    return baseFilters;
+  };
 
   const [listRequestForToday, setListRequestForToday] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true,
-    filters: [
-      {
-        fieldName: 'resource_type_lkey',
-        operator: 'in',
-        value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
-          .map(key => `(${key})`)
-          .join(' ')
-      }
-
-      // {
-      //  fieldName:'planned_start_date',
-      //   operator: 'between',
-      //   value:  formatDate(new Date()) + '_' + formatDate(new Date()),
-      // }
-    ]
+    filters: getBaseFiltersForToday()
   });
 
   const { data: encounterListForTodayResponse, refetch: refetchListForToday } =
-    useGetEncountersQuery(listRequestForToday);
+    useGetEncountersQuery(listRequestForToday, {
+      skip: !selectedDepartment?.departmentId
+    });
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
@@ -148,24 +197,37 @@ const EncounterList = () => {
 
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
+    let updatedRequest = {
+      ...listRequest,
+      filters: getBaseFilters()
+    };
+
     if (dateFilter.fromDate && dateFilter.toDate) {
       const formattedFromDate = formatDate(dateFilter.fromDate);
       const formattedToDate = formatDate(dateFilter.toDate);
-      setListRequest(
-        addFilterToListRequest(
-          'planned_start_date',
-          'between',
-          formattedFromDate + '_' + formattedToDate,
-          listRequest
-        )
+      updatedRequest = addFilterToListRequest(
+        'planned_start_date',
+        'between',
+        formattedFromDate + '_' + formattedToDate,
+        updatedRequest
       );
     } else if (dateFilter.fromDate) {
       const formattedFromDate = formatDate(dateFilter.fromDate);
-      setListRequest(
-        addFilterToListRequest('planned_start_date', 'gte', formattedFromDate, listRequest)
+      updatedRequest = addFilterToListRequest(
+        'planned_start_date',
+        'gte',
+        formattedFromDate,
+        updatedRequest
       );
     } else if (dateFilter.toDate) {
       const formattedToDate = formatDate(dateFilter.toDate);
+      updatedRequest = addFilterToListRequest(
+        'planned_start_date',
+        'lte',
+        formattedToDate,
+        updatedRequest
+      );
+
       setListRequest(
         addFilterToListRequest('planned_start_date', 'lte', formattedToDate, listRequest)
       );
@@ -176,7 +238,14 @@ const EncounterList = () => {
           {
             fieldName: 'resource_type_lkey',
             operator: 'in',
-            value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
+            value: [
+              '2039534205961578',
+              '2039620472612029',
+              '2039516279378421',
+              'PRACTITIONER',
+              'MEDICAL_TEST',
+              'CLINIC'
+            ]
               .map(key => `(${key})`)
               .join(' ')
           },
@@ -188,19 +257,24 @@ const EncounterList = () => {
         ]
       });
     }
+
+    setListRequest(updatedRequest);
   };
 
   const handleCountForToday = () => {
     const formattedFromDate = formatDate(new Date());
     const formattedToDate = formatDate(new Date());
-    setListRequestForToday(
-      addFilterToListRequest(
-        'planned_start_date',
-        'between',
-        formattedFromDate + '_' + formattedToDate,
-        listRequestForToday
-      )
+    let updatedRequest = {
+      ...listRequestForToday,
+      filters: getBaseFiltersForToday()
+    };
+    updatedRequest = addFilterToListRequest(
+      'planned_start_date',
+      'between',
+      formattedFromDate + '_' + formattedToDate,
+      updatedRequest
     );
+    setListRequestForToday(updatedRequest);
   };
 
   const handleGoToVisit = async (encounterData, patientData) => {
@@ -275,6 +349,30 @@ const EncounterList = () => {
     });
   };
 
+    const renderWithTooltip = (text: string, limit = 20) => {
+      if (!text) return '-';
+
+      const isLong = text.length > limit;
+      const shortText = isLong ? text.slice(0, limit) + '...' : text;
+
+      if (!isLong) return shortText;
+
+      return (
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={
+            <Tooltip style={{ maxWidth: 400, whiteSpace: 'pre-wrap' }}>
+              {text}
+            </Tooltip>
+          }
+        >
+          <span style={{ cursor: 'pointer' }}>{shortText}</span>
+        </Whisper>
+      );
+    };
+
+
   const tableColumns = [
     {
       key: 'queueNumber',
@@ -328,17 +426,18 @@ const EncounterList = () => {
     },
     {
       key: 'chiefComplaint',
-      title: 'CHIEF COMPLAIN',
-      render: rowData => rowData?.chiefComplaint
+      title: 'CHIEF COMPLAINT',
+      render: rowData => renderWithTooltip(rowData?.chiefComplaint, 20)
     },
     {
       key: 'diagnosis',
       title: 'DIAGNOSIS',
-      render: rowData => rowData?.diagnosis
+      render: rowData => renderWithTooltip(rowData?.diagnosis, 20)
     },
     {
       key: 'hasPrescription',
       title: 'PRESCRIPTION',
+      width: '60px',
       render: rowData =>
         rowData.hasPrescription ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -349,6 +448,7 @@ const EncounterList = () => {
     {
       key: 'hasOrder',
       title: 'HAS ORDER',
+      width: '60px',
       render: rowData =>
         rowData.hasOrder ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -372,6 +472,7 @@ const EncounterList = () => {
     {
       key: 'status',
       title: 'STATUS',
+      width: 60,
       render: rowData => (
         <MyBadgeStatus
           color={rowData?.encounterStatusLvalue?.valueColor}
@@ -386,6 +487,7 @@ const EncounterList = () => {
     {
       key: 'hasObservation',
       title: 'IS OBSERVED',
+      width: 60,
       render: rowData =>
         rowData.hasObservation ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -404,7 +506,7 @@ const EncounterList = () => {
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
         return (
-          <Form layout="inline" fluid className="nurse-doctor-form">
+          <Form className="actions-row">
             <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
               <div>
                 <MyButton
@@ -510,18 +612,19 @@ const EncounterList = () => {
 
     const formattedToday = formatDate(today);
 
+    const baseFilters = getBaseFilters();
+    baseFilters.push({
+      fieldName: 'planned_start_date',
+      operator: 'between',
+      value: `${formattedToday}_${formattedToday}`
+    });
+
     setListRequest({
       ...initialListRequest,
       pageNumber: 1,
       pageSize: listRequest.pageSize,
       ignore: true,
-      filters: [
-        {
-          fieldName: 'planned_start_date',
-          operator: 'between',
-          value: `${formattedToday}_${formattedToday}`
-        }
-      ]
+      filters: baseFilters
     });
 
     setManualSearchTriggered(true);
@@ -674,6 +777,48 @@ const EncounterList = () => {
     );
   }, [completesVisits]);
 
+  // Update department filter when selectedDepartment changes
+  useEffect(() => {
+    setListRequest(prev => {
+      // Remove existing department_key filter if present
+      const filtersWithoutDepartment = prev.filters.filter(f => f.fieldName !== 'department_key');
+
+      // Add department filter if selectedDepartment is available
+      const updatedFilters = [...filtersWithoutDepartment];
+      if (selectedDepartment?.departmentId) {
+        updatedFilters.push({
+          fieldName: 'department_key',
+          operator: 'match',
+          value: selectedDepartment.departmentId.toString()
+        });
+      }
+
+      return {
+        ...prev,
+        filters: updatedFilters
+      };
+    });
+
+    // Also update listRequestForToday
+    setListRequestForToday(prev => {
+      const filtersWithoutDepartment = prev.filters.filter(f => f.fieldName !== 'department_key');
+
+      const updatedFilters = [...filtersWithoutDepartment];
+      if (selectedDepartment?.departmentId) {
+        updatedFilters.push({
+          fieldName: 'department_key',
+          operator: 'match',
+          value: selectedDepartment.departmentId.toString()
+        });
+      }
+
+      return {
+        ...prev,
+        filters: updatedFilters
+      };
+    });
+  }, [selectedDepartment]);
+
   useEffect(() => {
     handleManualSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -746,6 +891,24 @@ const EncounterList = () => {
       </div>
 
       <Panel>
+        {!selectedDepartment?.departmentId && (
+          <div
+            style={{
+              marginBottom: '16px',
+              padding: '12px 16px',
+              backgroundColor: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '4px',
+              color: '#856404',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span style={{ fontWeight: 'bold' }}>⚠️</span>
+            <span>Please select a department to view encounters.</span>
+          </div>
+        )}
         <MyTable
           filters={filters()}
           // tableButtons={

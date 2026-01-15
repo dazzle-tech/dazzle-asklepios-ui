@@ -139,7 +139,6 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
   };
 
   useEffect(() => {
-    console.log("in effect");
     if (openAddEditRelationPopup && uomRelation?.id)
       setUomRelationUpdated({
         id: uomRelation?.id,
@@ -150,10 +149,6 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
       
   }, [openAddEditRelationPopup]);
 
-  useEffect(() => {
-    console.log("uomRelationUpdated");
-     console.log(uomRelationUpdated);
-  },[uomRelationUpdated]);
   // icons column for relation table
   const iconsForActions = () => (
     <div className="container-of-icons">
@@ -630,7 +625,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         { title: 'UOM Conversion', icon: <FontAwesomeIcon icon={faBoxesPacking} /> }
       ]}
       mainContent={conjureFormContent}
-      mainSize="sm"
+      mainSize="40vw"
     />
   );
 };

@@ -13,9 +13,6 @@ const { data: brandMedicationList } = useGetAllBrandMedicationsQuery({
   sort: "id,asc",
 });
 
-console.log("Brand Medication:", brandMedicationList);
-console.log("Brand Medication Sample:", brandMedicationList?.data?.[0]);
-
 
 useEffect(() => {
   if (product?.type !== "MEDICATION") return;

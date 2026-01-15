@@ -21,9 +21,12 @@ import CancellationModal from "@/components/CancellationModal";
 import { useSaveTelephonicConsultationOrderMutation } from "@/services/encounterService";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
-
+import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
+import { formatDateWithoutSeconds } from "@/utils";
+import './styles.less';
 const TelephonicConsultation = (props) => {
   const location = useLocation();
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
@@ -55,6 +58,16 @@ const TelephonicConsultation = (props) => {
   });
 
   const { data, isLoading } = useGetTelephonicConsultationOrdersListQuery(listRequest);
+  const { data: practitionerListResponse } = useGetAllPractitionersQuery({
+    page: 0,
+    size: 9999,
+    sort: "id,asc",
+  });
+
+  const physicians =
+    practitionerListResponse?.data?.filter(
+      (p) => p.jobRole === "PHYSICIAN"
+    ) ?? [];
 
   const totalCount = data?.extraNumeric ?? 0;
   const pageIndex = listRequest.pageNumber - 1;
@@ -151,7 +164,10 @@ const TelephonicConsultation = (props) => {
       key: "physician",
       title: "Physician",
       flexGrow: 2,
-      render: (row) => row.physicianName || row.physician
+      render: (row) => {
+        const physician = physicians.find(item => item?.id === row?.physician);
+        return <p>{physician?.firstName + " " + physician?.lastName}</p>
+      }
     },
     {
       key: "dateOfCall",
@@ -163,7 +179,11 @@ const TelephonicConsultation = (props) => {
       key: "consultationContent",
       title: "Consultation Content",
       flexGrow: 4,
-      render: (row) => row.consultationContent
+      render: (row) => (
+        <div className="consultation-content-container" >
+          {row.consultationContent}
+        </div>
+      )
     },
     {
       key: "attachments",
@@ -196,7 +216,42 @@ const TelephonicConsultation = (props) => {
           }}
         />
       )
-    }
+    },
+    {
+      key: 'createdAt',
+      title: 'CREATED BY/AT',
+      expandable: true,
+      render: (row) =>
+        row?.createdAt ? (
+          <>
+            {row?.createdBy}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
+          </>
+        ) : (
+          ' '
+        )
+    },
+    {
+      key: 'deletedAt',
+      title: 'CANCELLED BY/AT',
+      expandable: true,
+      render: (row) =>
+        row?.deletedAt ? (
+          <>
+            {row?.deletedBy}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row?.deletedAt)}</span>
+          </>
+        ) : (
+          ' '
+        )
+    },
+    {
+      key: 'cancellationReason',
+      title: 'Cancellation Reason',
+      expandable: true,
+    },
   ];
 
   const handleCancel = async () => {
@@ -207,6 +262,7 @@ const TelephonicConsultation = (props) => {
             ...item,
             isValid: false,
             deletedAt: Date.now(),
+            deletedBy: user?.firstName + " " + user?.lastName,
             cancellationReason: consultationOrder?.cancellationReason,
           }).unwrap()
         )
@@ -286,23 +342,20 @@ const TelephonicConsultation = (props) => {
   );
 
 
-
   useEffect(() => {
     setListRequest(prev => ({
       ...prev,
       filters: [
-        ...(showCanceled
-          ? []
-          : [
-            {
-              fieldName: "is_valid",
-              operator: "equal",
-              value: true
-            }
-          ]),
-
-        { fieldName: "patient_key", operator: "match", value: patient?.key },
-
+        {
+          fieldName: "is_valid",
+          operator: "equal",
+          value: !showCanceled
+        },
+        {
+          fieldName: "patient_key",
+          operator: "match",
+          value: patient?.key
+        }
       ]
     }));
   }, [showCanceled, patient?.key, encounter?.key]);

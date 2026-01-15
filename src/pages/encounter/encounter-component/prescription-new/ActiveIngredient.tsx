@@ -20,7 +20,6 @@ const ActiveIngredient = ({ selectedGeneric }) => {
 
   const listForUI = (brandActives ?? []).map((rel) => {
     const ai = rel.activeIngredient ?? {}; // defensive
-    console.log('rel', rel);
     return {
       relationId: rel.id,
       activeIngredientName: ai.name ?? "",

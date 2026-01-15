@@ -37,6 +37,7 @@ const Practitioners = () => {
   const [practitioner, setPractitioner] = useState<Practitioner>({
     ...newPractitioner,
   });
+  
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditPractitioner, setOpenAddEditPractitioner] =
     useState<boolean>(false);
@@ -204,7 +205,6 @@ const Practitioners = () => {
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
       setPractitioner({ ...Response });
-      console.log(Response);
     } catch (error) {
       console.error("Error updating practitioner:", error);
 
@@ -382,6 +382,10 @@ const Practitioners = () => {
     {
       key: "jobRole", title: <Translate>Job Role</Translate>, flexGrow: 3,
       render: (rowData) => <p>{formatEnumString(rowData?.jobRole)}</p>,
+    },
+    {
+      key:"userId", title:<Translate>Linked to User</Translate>, flexGrow:3,
+      render:(rowData)=><p>{rowData?.userId?"Yes":"No"}</p>
     },
     {
       key: "isActive",

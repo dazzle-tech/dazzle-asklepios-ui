@@ -18,6 +18,7 @@ import { calculateAgeFormat } from "@/utils";
 import MyModal from "@/components/MyModal/MyModal";
 import MyButton from "@/components/MyButton/MyButton";
 import { faClock } from '@fortawesome/free-solid-svg-icons';
+import { useGetResourceByIdQuery } from '@/services/setup/resource/ResourceService';
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
 
@@ -33,29 +34,69 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
     const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter,discharge:false });
 
+    // Fetch the selected resource to get its resourceKey (similar to PatientQuickAppointment)
+    const { data: selectedResource } = useGetResourceByIdQuery(localAppointmentData?.resourceKey, {
+        skip: !localAppointmentData?.resourceKey
+    });
+
     const handleCheckIn = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In", reasonLkey: null, otherReason: null }).then(() => {
-            dispatch(notify('Appointment Checked-In Successfully'));
-            onStatusChange()
-            onActionsModalClose()
-            setLocalEncounter({ ...newApEncounter,discharge:false })
-
-        })
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In", reasonLkey: null, otherReason: null })
+            .unwrap()
+            .then(() => {
+                dispatch(notify({ msg: 'Appointment Checked-In Successfully', sev: 'success' }));
+                onStatusChange()
+                onActionsModalClose()
+                setLocalEncounter({ ...newApEncounter, discharge: false })
+            })
+            .catch((error) => {
+                console.error('Error checking in appointment:', error);
+                if (error?.status === 422) {
+                    // Validation error - already handled by the mutation
+                } else {
+                    dispatch(notify({ msg: 'An error occurred while checking in the appointment', sev: 'warn' }));
+                }
+            });
     }
     const handleSaveVisit = (data) => {
+        // Check if the resource type is department-based (similar to PatientQuickAppointment)
+        const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(data?.resourceTypeLkey);
+        
+        // Get resourceKey - use data.resourceKey or fallback to localAppointmentData.resourceKey
+        const resourceKeyToUse = data?.resourceKey || localAppointmentData?.resourceKey;
+        
+        // For department-based resources, use the resourceKey as departmentKey
+        // For other resources, use the departmentKey as is (or null if not set)
+        const departmentKeyToSave = isDepartmentBasedResource 
+            ? resourceKeyToUse 
+            : (data?.departmentKey || localAppointmentData?.departmentKey);
+
         const visit = {
             ...localEncounter,
-            patientAge: data?.patient.dob ? calculateAgeFormat(data.patient.dob) + '' : '',
-            patientKey: data?.patient.key,
-            patientFullName: data?.patient.fullName,
+            patientAge: data?.patient?.dob ? calculateAgeFormat(data.patient.dob) + '' : '',
+            patientKey: data?.patient?.key,
+            patientFullName: data?.patient?.fullName,
             encounterStatusLkey: "91063195286200",
             plannedStartDate: data?.appointmentStart,
-            resourceTypeLkey: data?.resourceTypeLkey,
-            visitTypeLkey: data?.visitTypeLkey,
-            resourceKey: data.resourceKey
+            resourceTypeLkey: data?.resourceTypeLkey || localAppointmentData?.resourceTypeLkey,
+            visitTypeLkey: data?.visitTypeLkey || localAppointmentData?.visitTypeLkey,
+            resourceKey: resourceKeyToUse,
+            departmentKey: departmentKeyToSave ? String(departmentKeyToSave) : departmentKeyToSave
         }
-        saveEncounter(visit).unwrap();
+        
+        saveEncounter(visit)
+            .unwrap()
+            .then(() => {
+                // Success - encounter saved
+            })
+            .catch((error) => {
+                console.error('Error saving encounter:', error);
+                // Extract error message from API response
+                const errorMessage = error?.data?.message || error?.message || 'An error occurred while saving the encounter';
+                
+                // Always show error message to user, regardless of status code
+                dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+            });
     };
 
     useEffect(() => {
@@ -70,44 +111,77 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     }, [localAppointmentData])
 
     const handleConfirm = () => {
-        const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed", reasonLkey: null, otherReason: null }).then(() => {
-            dispatch(notify('Appointment Confirmed Successfully'));
-            onStatusChange()
-            onActionsModalClose()
-            setLocalEncounter({ ...newApEncounter,discharge:false })
-
-        }).then(() => {
-            handleSaveVisit(appointment?.appointmentData)
-        })
+        const appointmentData = appointment?.appointmentData || localAppointmentData
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed", reasonLkey: null, otherReason: null })
+            .unwrap()
+            .then(() => {
+                dispatch(notify({ msg: 'Appointment Confirmed Successfully', sev: 'success' }));
+                onStatusChange()
+                onActionsModalClose()
+                setLocalEncounter({ ...newApEncounter, discharge: false })
+                
+                // Save encounter after appointment is confirmed
+                // Use localAppointmentData which is properly set and has the resourceKey
+                handleSaveVisit(localAppointmentData || appointmentData)
+            })
+            .catch((error) => {
+                console.error('Error confirming appointment:', error);
+                // Extract error message from API response
+                const errorMessage = error?.data?.message || error?.message || 'An error occurred while confirming the appointment';
+                
+                // Always show error message to user
+                dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+            });
     }
 
-    const handleNonShow = () => {
-        changeAppointmentStatus({ ...localAppointmentData, appointmentStatus: "No-Show", otherReason: otherReason?.otherReason, reasonLkey: reasonKey?.reasonLkey }).then(() => {
-            dispatch(notify('Appointment Status has been changed Successfully'));
-            onStatusChange()
-            onActionsModalClose()
-            setResonModal(false)
-            setResonType(null)
-            setOtherReason(null)
-            setResonKey(null)
-            setLocalEncounter({ ...newApEncounter,discharge:false })
+const handleNonShow = () => {
+  const payload = {
+    ...localAppointmentData,
+    appointmentStatus: 'No-Show',
+    reasonLkey: reasonKey?.reasonLkey,
+    otherReason: otherReason?.otherReason
+  };
+
+  console.log('🚨 NO-SHOW PAYLOAD', payload);
+
+  changeAppointmentStatus(payload)
+    .unwrap()
+    .then(() => {
+      dispatch(notify({ msg: 'Appointment Status has been changed Successfully', sev: 'success' }));
+      onStatusChange();
+      onActionsModalClose();
+      setResonModal(false);
+      setResonType(null);
+      setOtherReason(null);
+      setResonKey(null);
+    });
+};
 
 
-        })
-    }
+const handleCancel = () => {
+  const appointmentData = appointment?.appointmentData;
 
-    const handleCancel = () => {
-        const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Canceled", otherReason: otherReason?.otherReason, reasonLkey: reasonKey?.reasonLkey }).then(() => {
-            dispatch(notify('Appointment has been canceled Successfully'));
-            onStatusChange()
-            onActionsModalClose()
-            setResonType(null)
-            setOtherReason(null)
-            setResonKey(null)
-        })
-    }
+  const payload = {
+    ...appointmentData,
+    appointmentStatus: 'Canceled',
+    reasonLkey: reasonKey?.reasonLkey,
+    otherReason: otherReason?.otherReason
+  };
+
+  console.log('🚨 CANCEL PAYLOAD', payload);
+
+  changeAppointmentStatus(payload)
+    .unwrap()
+    .then(() => {
+      dispatch(notify({ msg: 'Appointment has been canceled Successfully', sev: 'success' }));
+      onStatusChange();
+      onActionsModalClose();
+      setResonType(null);
+      setOtherReason(null);
+      setResonKey(null);
+    });
+};
+
 
 
     const handleChangeAction = () => {
@@ -127,7 +201,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             <MyButton width="250px" disabled={["No-Show", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} color="blue" appearance="primary">
                 No-show
             </MyButton>
-            <MyButton width="250px" onClick={() => viewAppointment()} color="cyan" appearance="primary">
+            <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
             </MyButton>
             <MyButton width="250px" disabled={["Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">

@@ -163,7 +163,6 @@ const ChangePriceListModal = ({
             (record.quantity || 1),
   };
 
-  console.log('updating nurse row', updated);
  saveNurseServiceProduct(updated).unwrap();
     setOpen(false);
   };

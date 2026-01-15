@@ -115,6 +115,7 @@ const Roles = ({ selected, setSelected, facilityId }) => {
                         e.stopPropagation();
                         setEditId(r.id);
                         setEditRole({ ...r });
+                        setSelected(r);
                       }}
                     />
                   </div>

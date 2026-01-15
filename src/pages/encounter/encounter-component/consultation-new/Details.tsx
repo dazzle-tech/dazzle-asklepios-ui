@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
-import MyInput from '@/components/MyInput';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal';
-import MyButton from '@/components/MyButton/MyButton';
-import { Form } from 'rsuite';
-import { useSaveConsultationOrdersMutation } from '@/services/encounterService';
-import { newApConsultationOrder } from '@/types/model-types-constructor';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom, faFile, faPaperclip } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { useLazyGetActivePractitionersBySubSpecialtyQuery } from '@/services/setup/practitioner/PractitionerService';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
-import { initialListRequest, ListRequest } from '@/types/types';
-import clsx from 'clsx';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
+import { useAppDispatch } from '@/hooks';
+import { useSaveConsultationOrdersMutation } from '@/services/encounterService';
+import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useLazyGetActivePractitionersBySubSpecialtyQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newApConsultationOrder } from '@/types/model-types-constructor';
+import { notify } from '@/utils/uiReducerActions';
+import { faBroom, faPaperclip, faRobot } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
+import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
+
+import Translate from '@/components/Translate';
+import { useGetSpecialtyConsultationMutation } from '@/services/ai-services/clinicalRecommendationsService';
 
 const Details = ({
   patient,
@@ -31,15 +33,14 @@ const Details = ({
   edit
 }) => {
   const dispatch = useAppDispatch();
-  const [saveconsultationOrders, saveConsultationOrdersMutation] =
-    useSaveConsultationOrdersMutation();
+  const [saveconsultationOrders] = useSaveConsultationOrdersMutation();
 
   const { data: consultantSpecialtyLovQueryResponse } =
     useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY ');
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
-  const [getDepartmentsByFacility, { data: departmentListResponse }] = 
+  const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
-  const [getPractitionersBySpecialty, { data: practitionerListResponse }] = 
+  const [getPractitionersBySpecialty, { data: practitionerListResponse }] =
     useLazyGetActivePractitionersBySubSpecialtyQuery();
   const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
   const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
@@ -50,6 +51,20 @@ const Details = ({
     ...practitioner,
     fullName: `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim()
   }));
+
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [localAiSummary, setLocalAiSummary] = useState<string | null>(null);
+  const [specialtyName, setSpecialtyName] = useState<string | null>(null);
+
+  // NEW: AI mutation
+  const [
+    getSpecialtyConsultation,
+    { data: aiConsultationData, isLoading: aiLoading, error: aiError }
+  ] = useGetSpecialtyConsultationMutation();
+
+  // NEW: text to show in panel
+  const aiSummary = localAiSummary;
 
   const handleOpenAttachmentModal = () => {
     setShowAttachmentModal(true);
@@ -69,51 +84,37 @@ const Details = ({
 
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
-    
-    if (!consultationOrders?.facilityKey) {
-      missingFields.push('Facility');
-    }
-    if (!consultationOrders?.consultationMethodLkey) {
-      missingFields.push('Consultation Method');
-    }
-    if (!consultationOrders?.consultationTypeLkey) {
-      missingFields.push('Consultation Type');
-    }
-    if (!consultationOrders?.priorityLkey) {
-      missingFields.push('Priority Level');
-    }
-    if (!consultationOrders?.consultationContent) {
-      missingFields.push('Question to Consultant');
-    }
+
+    if (!consultationOrders?.facilityKey) missingFields.push('Facility');
+    if (!consultationOrders?.consultationMethodLkey) missingFields.push('Consultation Method');
+    if (!consultationOrders?.consultationTypeLkey) missingFields.push('Consultation Type');
+    if (!consultationOrders?.priorityLkey) missingFields.push('Priority Level');
+    if (!consultationOrders?.consultationContent) missingFields.push('Question to Consultant');
 
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `• ${field}: is required`);
       dispatch(
         notify({
           msg: `Please fill the following required fields:\n${lines.join('\n')}`,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return false;
     }
 
-    // Check that at least one of Department or Consultant is filled
     if (!consultationOrders?.departmentKey && !consultationOrders?.preferredConsultantKey) {
-      dispatch(
-        notify({
-          msg: 'Please select at least Department or Consultant',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'Please select at least Department or Consultant', sev: 'warning' }));
       return false;
     }
 
-    // Check if Consultant Specialty is filled, then Consultant must be filled
-    if (consultationOrders?.consultantSpecialtyLkey && !consultationOrders?.preferredConsultantKey) {
+    if (
+      consultationOrders?.consultantSpecialtyLkey &&
+      !consultationOrders?.preferredConsultantKey
+    ) {
       dispatch(
         notify({
           msg: 'Please select a Consultant when Consultant Specialty is filled',
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return false;
@@ -123,9 +124,7 @@ const Details = ({
   };
 
   const handleSave = async () => {
-    if (!validateRequiredFields()) {
-      return;
-    }
+    if (!validateRequiredFields()) return;
 
     try {
       await saveconsultationOrders({
@@ -135,21 +134,19 @@ const Details = ({
         statusLkey: '164797574082125',
         createdBy: 'Admin'
       }).unwrap();
+
       dispatch(notify({ msg: 'saved  Successfully', sev: 'success' }));
       refetchCon()
-        .then(() => {
+        ?.then(() => {
           setOpen(false);
           handleClear();
         })
-        .catch(error => {
-          console.error('Refetch failed:', error);
+        ?.catch(error => {
         });
     } catch (error) {
       dispatch(notify('Save Failed'));
     }
   };
-
-  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
 
   // Load departments when facilityKey exists (for edit mode)
   useEffect(() => {
@@ -157,24 +154,64 @@ const Details = ({
       getDepartmentsByFacility({ facilityId: consultationOrders.facilityKey });
     }
   }, [consultationOrders?.facilityKey, open, getDepartmentsByFacility]);
+  useEffect(() => {
+    if (!open) {
+      handleClear();
+      setShowAiPanel(false);
+      setLocalAiSummary(null);
+      setSpecialtyName(null);
+    }
+  }, [open]);
 
   // Load practitioners when consultantSpecialtyLkey exists (for edit mode)
   useEffect(() => {
     if (consultationOrders?.consultantSpecialtyLkey && open) {
-      getPractitionersBySpecialty({ 
+      getPractitionersBySpecialty({
         specialty: consultationOrders.consultantSpecialtyLkey,
         page: 0,
         size: 100
       });
     }
   }, [consultationOrders?.consultantSpecialtyLkey, open, getPractitionersBySpecialty]);
+  useEffect(() => {
+    if (!specialtyName) return;
+
+    const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
+
+    setLocalAiSummary(null);
+    getSpecialtyConsultation({
+      request_id: `req-${patient?.key ?? ''}-${encounter?.key ?? ''}`,
+      specialty: specialtyApi
+    })
+      .unwrap()
+      .then((res: any) => {
+        setLocalAiSummary(res?.summary ?? null);
+      })
+      .catch(() => {
+        setLocalAiSummary(null);
+      });
+  }, [specialtyName, getSpecialtyConsultation, patient?.key, encounter?.key]);
+
+  useEffect(() => {
+    if (!open) {
+      setShowAiPanel(false);
+      setLocalAiSummary(null);
+      setSpecialtyName(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    setShowAiPanel(false);
+    setLocalAiSummary(null);
+    setSpecialtyName(null);
+  }, [consultationOrders?.key]);
 
   return (
     <>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
-        size="75vw"
+        size="78vw"
         leftWidth="40%"
         rightWidth="60%"
         actionButtonFunction={handleSave}
@@ -197,7 +234,7 @@ const Details = ({
             </MyButton>
           </div>
         }
-        rightTitle="Add Consultation"
+        rightTitle="Add Consultationn"
         rightContent={
           <Form
             fluid
@@ -207,10 +244,9 @@ const Details = ({
           >
             <div className="main-details-consultion-page-container">
               <SectionContainer
-                title={'Choose Consultant'}
+                title={<Translate>Choose Consultant</Translate>}
                 content={
                   <div className="consultion-details-modal-handle-position">
-
                     <MyInput
                       width={'12vw'}
                       disabled={editing}
@@ -222,9 +258,11 @@ const Details = ({
                       fieldName={'facilityKey'}
                       record={{
                         ...consultationOrders,
-                        facilityKey: consultationOrders?.facilityKey ? Number(consultationOrders.facilityKey) : undefined
+                        facilityKey: consultationOrders?.facilityKey
+                          ? Number(consultationOrders.facilityKey)
+                          : undefined
                       }}
-                      setRecord={(value) => {
+                      setRecord={value => {
                         setConsultationOrder({ ...value, departmentKey: null });
                         if (value.facilityKey) {
                           getDepartmentsByFacility({ facilityId: value.facilityKey });
@@ -238,38 +276,112 @@ const Details = ({
                       disabled={editing || !consultationOrders?.facilityKey}
                       fieldType="select"
                       fieldLabel="Department"
-                      selectData={Array.isArray(departmentListResponse) ? departmentListResponse : []}
+                      selectData={
+                        Array.isArray(departmentListResponse) ? departmentListResponse : []
+                      }
                       selectDataLabel="name"
                       selectDataValue="id"
                       fieldName={'departmentKey'}
                       record={{
                         ...consultationOrders,
-                        departmentKey: consultationOrders?.departmentKey ? Number(consultationOrders.departmentKey) : undefined
+                        departmentKey: consultationOrders?.departmentKey
+                          ? Number(consultationOrders.departmentKey)
+                          : undefined
                       }}
                       setRecord={setConsultationOrder}
                     />
 
-                    <MyInput
-                      disabled={editing}
-                      width={'12vw'}
-                      fieldType="select"
-                      fieldLabel="Consultant Specialty"
-                      selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      fieldName={'consultantSpecialtyLkey'}
-                      record={consultationOrders}
-                      setRecord={(value) => {
-                        setConsultationOrder({ ...value, preferredConsultantKey: null });
-                        if (value.consultantSpecialtyLkey) {
-                          getPractitionersBySpecialty({ 
-                            specialty: value.consultantSpecialtyLkey,
-                            page: 0,
-                            size: 100
-                          });
-                        }
-                      }}
-                    />
+                    <div className="consultant-specialty-ai">
+                      <MyInput
+                        disabled={editing}
+                        width={'12vw'}
+                        fieldType="select"
+                        fieldLabel="Consultant Specialty"
+                        selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'consultantSpecialtyLkey'}
+                        record={consultationOrders}
+                        setRecord={value => {
+                          setLocalAiSummary(null);
+                          setShowAiPanel(false);
+
+                          setConsultationOrder({ ...value, preferredConsultantKey: null });
+
+                          if (value.consultantSpecialtyLkey) {
+                            getPractitionersBySpecialty({
+                              specialty: value.consultantSpecialtyLkey,
+                              page: 0,
+                              size: 100
+                            });
+
+                            const selected = (
+                              consultantSpecialtyLovQueryResponse?.object ?? []
+                            ).find(
+                              (x: any) => String(x.key) === String(value.consultantSpecialtyLkey)
+                            );
+
+                            const specialtyDisplay = String(selected?.lovDisplayVale ?? '').trim();
+                            if (!specialtyDisplay) return;
+
+                            setSpecialtyName(specialtyDisplay);
+                            setShowAiPanel(true);
+                          } else {
+                            setSpecialtyName(null);
+                            setShowAiPanel(false);
+                            setLocalAiSummary(null);
+                          }
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        className="ai-icon-btn"
+                        disabled={editing}
+                        title="AI Assistant"
+                        onClick={() => {
+                          if (!consultationOrders?.consultantSpecialtyLkey) {
+                            dispatch(
+                              notify({
+                                msg: 'Please select Consultant Specialty first.',
+                                sev: 'warning'
+                              })
+                            );
+                            return;
+                          }
+
+                          if (!aiSummary) {
+                            const selected = (
+                              consultantSpecialtyLovQueryResponse?.object ?? []
+                            ).find(
+                              (x: any) =>
+                                String(x.key) === String(consultationOrders.consultantSpecialtyLkey)
+                            );
+
+                            const specialtyDisplay = String(selected?.lovDisplayVale ?? '').trim();
+                            if (!specialtyDisplay) {
+                              dispatch(
+                                notify({
+                                  msg: 'Specialty name not found. Please re-select Consultant Specialty.',
+                                  sev: 'warning'
+                                })
+                              );
+                              return;
+                            }
+
+                            setSpecialtyName(specialtyDisplay);
+                            setShowAiPanel(true);
+                            return;
+                          }
+
+                          setShowAiPanel(prev => !prev);
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faRobot} />
+                        <span className="ai-badge">AI</span>
+                      </button>
+                    </div>
+
                     <MyInput
                       width={'12vw'}
                       disabled={editing || !consultationOrders?.consultantSpecialtyLkey}
@@ -281,15 +393,18 @@ const Details = ({
                       selectDataValue="id"
                       record={{
                         ...consultationOrders,
-                        preferredConsultantKey: consultationOrders?.preferredConsultantKey ? Number(consultationOrders.preferredConsultantKey) : undefined
+                        preferredConsultantKey: consultationOrders?.preferredConsultantKey
+                          ? Number(consultationOrders.preferredConsultantKey)
+                          : undefined
                       }}
                       setRecord={setConsultationOrder}
                     />
                   </div>
                 }
-              ></SectionContainer>
+              />
+
               <SectionContainer
-                title={'Details'}
+                title={<Translate>Details</Translate>}
                 content={
                   <div className="consultion-details-modal-handle-position">
                     <MyInput
@@ -335,7 +450,8 @@ const Details = ({
                     />
                   </div>
                 }
-              ></SectionContainer>
+              />
+
               <SectionContainer
                 title={'Question to Consultant'}
                 content={
@@ -352,9 +468,10 @@ const Details = ({
                     />
                   </div>
                 }
-              ></SectionContainer>
+              />
+
               <SectionContainer
-                title={'Notes & Documentation'}
+                title={<Translate>Notes & Documentation</Translate>}
                 content={
                   <div className="text-area-positions-detail-consultion">
                     <MyInput
@@ -386,12 +503,37 @@ const Details = ({
                     />
                   </div>
                 }
-              ></SectionContainer>
+              />
             </div>
           </Form>
         }
-        leftContent={<Diagnosis patient={patient} encounter={encounter} />}
-      ></AdvancedModal>
+        leftContent={
+          <div className="left-panel-container">
+            <Diagnosis patient={patient} encounter={encounter} />
+
+            {showAiPanel && (
+              <SectionContainer
+                title={<Translate>Specialty Recommendations</Translate>}
+                content={
+                  <div className="ai-panel-body">
+                    {aiLoading && (
+                      <div className="ai-spinner-container">
+                        <div className="ai-spinner" />
+                      </div>
+                    )}
+
+                    {!aiLoading && !aiError && (
+                      <div style={{ whiteSpace: 'pre-line' }}>
+                        {aiSummary ?? 'Suggestions will appear here'}
+                      </div>
+                    )}
+                  </div>
+                }
+              />
+            )}
+          </div>
+        }
+      />
 
       <AttachmentUploadModal
         isOpen={showAttachmentModal}
@@ -404,4 +546,5 @@ const Details = ({
     </>
   );
 };
+
 export default Details;

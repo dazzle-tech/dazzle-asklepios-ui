@@ -153,7 +153,6 @@ function DashboardTransaction() {
     }
     generateFiveDigitCode();
     setRecordOfWarehouseCode({ transId: transaction?.transId ?? generateCode });
-    console.log(recordOfWarehouseCode);
   }, [transaction?.transId?.length]);
 
   // Products
@@ -287,7 +286,6 @@ function DashboardTransaction() {
       createdAt: null
     }).unwrap().then((result) => {
       setTransaction(result);
-      console.log(result);
       setOpenNext(true);
       dispatch(
         notify({
@@ -297,26 +295,21 @@ function DashboardTransaction() {
       );
     }).catch((e) => {
       if (e.status === 422) {
-        console.log("Validation error: Unprocessable Entity", e);
       } else {
-        console.log("An unexpected error occurred", e);
         dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
       }
     });
   };
   const actionsForItems = rowData => {
     const handleViewTransactions = () => {
-      console.log('View transactions for:', rowData.name);
       // TODO: Implement view transactions logic
     };
 
     const handleAdjustQuantity = () => {
-      console.log('Adjust quantity for:', rowData.name);
       // TODO: Implement adjust quantity logic
     };
 
     const handleProductCard = () => {
-      console.log('Product card for:', rowData.name);
       return(
            <MyModal
               open={openCard}

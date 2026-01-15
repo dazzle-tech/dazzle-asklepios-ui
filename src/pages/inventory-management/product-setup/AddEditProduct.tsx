@@ -76,7 +76,6 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
       setProduct({ ...newInventoryProduct });
     } 
     catch (err: any) {
-      console.log("Save Product Error:", err);
 
       const errorKey = err?.data?.properties?.message;
       const backendTitle = err?.data?.title;
@@ -95,8 +94,6 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
   };
 
 
-console.log("Facility", facility);
-
   // 🔄 Clear Form
   const handleClear = () => {
     setProduct({ ...newInventoryProduct });
@@ -104,8 +101,6 @@ console.log("Facility", facility);
   };
 
   // ------------------ UI CONTENT -----------------------
-
-  console.log(facility?.selectedFacility?.defaultCurrency);
 
   const content = () => (
     <>

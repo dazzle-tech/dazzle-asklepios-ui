@@ -1,11 +1,13 @@
 import React from 'react';
 import './styles.less';
-import { Divider } from 'rsuite';
+import { Divider, Form } from 'rsuite';
 import { useSelector } from 'react-redux';
+import Translate from '../Translate';
 
 interface SectionContainerProps {
   title: React.ReactNode;
   content: React.ReactNode;
+  action?: React.ReactNode;
   button?: React.ReactNode;
   minHeight?: string | number;
   maxWidth?: string | number;
@@ -14,6 +16,7 @@ interface SectionContainerProps {
 const SectionContainer: React.FC<SectionContainerProps> = ({
   title,
   content,
+  action = null,
   button = null,
   minHeight,
   maxWidth
@@ -25,12 +28,21 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
       className={`container-form-section ${mode === 'dark' ? 'dark' : 'light'}`}
       style={{
         minHeight: minHeight ?? 'auto',
-        maxWidth: maxWidth ?? 'none',
+        maxWidth: maxWidth ?? '100%'
       }}
     >
-      <div className={`title-div ${mode === 'dark' ? 'dark' : 'light'}`}>{title}</div>
+      {/* ===== Header ===== */}
+      <Form className="title-div">
+        <Translate className="title-text">{title}</Translate>
+        {action && <div className="title-action">{action}</div>}
+      </Form>
+
       <Divider />
-      {content}
+
+      {/* ===== Content ===== */}
+      <div className="section-content">{content}</div>
+
+      {/* ===== Optional Button ===== */}
       {button && (
         <>
           <Divider />
@@ -41,6 +53,4 @@ const SectionContainer: React.FC<SectionContainerProps> = ({
   );
 };
 
-
 export default SectionContainer;
-

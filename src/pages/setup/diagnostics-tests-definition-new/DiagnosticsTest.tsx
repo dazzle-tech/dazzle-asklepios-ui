@@ -301,9 +301,6 @@ const handleUpdateDiagnosticTest = async () => {
     } else return '';
   };
 
-console.log("Selected Test:", diagnosticsTest);
-
-
   // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
 const iconsForActions = (rowData: any) => (
   <div className="container-of-icons">
@@ -357,17 +354,19 @@ const iconsForActions = (rowData: any) => (
       }}
     />
 
-    {/* Template */}
-    <MdOutlineDescription
-      className="icons-style"
-      title="Template"
-      size={22}
-      fill="var(--primary-gray)"
-      onClick={() => {
-        setDiagnosticsTest(rowData);
-        setOpenTemplateModal(true);
-      }}
-    />
+    {rowData?.type !== 'LABORATORY' && (
+      <MdOutlineDescription
+        className="icons-style"
+        title="Template"
+        size={22}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setDiagnosticsTest(rowData);
+          setOpenTemplateModal(true);
+        }}
+      />
+    )}
+
 
     {/* Profile or Normal Range */}
     {rowData?.type === "LABORATORY" &&

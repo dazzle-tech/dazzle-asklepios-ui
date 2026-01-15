@@ -77,7 +77,6 @@ const IntraoperativeMonitoring = ({ operation, editable }) => {
     const saveOperationSlot = async () => {
         try {
             await saveOperation({ ...operationReq }).unwrap();
-            console.log("saved");
             setIsSaved(true);
             dispatch(notify({ msg: "Interval saved successfully", sev: "success" }));
         } catch (error) {

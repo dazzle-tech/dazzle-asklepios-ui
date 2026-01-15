@@ -59,7 +59,7 @@ const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, 
           icon: <BiQuestionMark />
         }
       ]}
-      size={width > 600 ? '36vw' : '70vw'}
+      size={'40vw'}
     />
   );
 };

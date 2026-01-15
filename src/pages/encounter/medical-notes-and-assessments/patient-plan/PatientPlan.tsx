@@ -13,7 +13,6 @@ const PatientPlan = ({  patient, localEncounter, setLocalEncounter }) => {
 
   const { data: planLovQueryResponse } = useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
 
- console.log("localEncounter", localEncounter);
   
 
   

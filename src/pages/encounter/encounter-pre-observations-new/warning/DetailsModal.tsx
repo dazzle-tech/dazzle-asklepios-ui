@@ -1,7 +1,7 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useSaveWarningsMutation } from '@/services/observationService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApVisitWarning } from '@/types/model-types-constructor';
@@ -11,12 +11,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import clsx from 'clsx';
 import React, { useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
+import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
+
 const DetailsModal = ({
   open,
   setOpen,
   warning,
   setWarning,
-  fetchwarnings,
+  fetchWarnings,
   patient,
   encounter,
   editing,
@@ -30,6 +32,8 @@ const DetailsModal = ({
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
   const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
+  const authSlice = useAppSelector(state => state.auth);
+
   const handleSave = async () => {
     try {
       const Response = await saveWarning({
@@ -37,6 +41,7 @@ const DetailsModal = ({
         patientKey: patient.key,
         visitKey: encounter.key,
         statusLkey: '9766169155908512',
+        createdBy: authSlice.user?.login,
         firstTimeRecorded: warning.firstTimeRecorded
           ? new Date(warning.firstTimeRecorded).getTime()
           : null
@@ -46,7 +51,9 @@ const DetailsModal = ({
 
       //  setShowPrev(false);
       setOpen(false);
-      await fetchwarnings();
+      await fetchWarnings();
+      dispatch(resetRefetchEncounter());
+      dispatch(setRefetchEncounter(true));
 
       handleClear();
       //setShowPrev(true);
