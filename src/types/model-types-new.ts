@@ -427,21 +427,15 @@ export interface Laboratory {
 
 export interface DiagnosticTestProfile {
   id?: number;
-
-  // FK to DiagnosticTest (domain has `test` relation mapped to `test_id`)
   testId?: number;
-
-  // @NotNull in domain
-  name: string;
-
+  name?: string;
   resultUnit?: string;
-
-  // @NotNull in domain
-  resultType: string; // TestResultType (string enum value)
-
-  // domain default = false
+  resultType?: string;
+  listOfValueId?: number | null;
   isDefault?: boolean;
+  isActive?: boolean;
 }
+
 
 export interface Pathology {
   id?: number;

@@ -1,15 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import {
-  useGetDiagnosticsTestLaboratoryListQuery,
-  useGetLovsQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-import { Dropdown, Form, Input, InputGroup } from 'rsuite';
-import './styles.less';
-import { initialListRequest } from '@/types/types';
-import SearchIcon from '@rsuite/icons/Search';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useGetLovsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { initialListRequest } from '@/types/types';
+import React, { useEffect, useState } from 'react';
+import { Form, Input } from 'rsuite';
+import './styles.less';
 
 const AddNormalRange = ({
   diagnosticTestNormalRange,
@@ -17,7 +12,6 @@ const AddNormalRange = ({
   diagnosticsTestProfile
 }) => {
   const [lovCode, setLovCode] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [listLovRequest, setListLovRequest] = useState({ ...initialListRequest, pageSize: 1000 });
 
   const gender = useEnumOptions('Gender');
@@ -36,39 +30,27 @@ const AddNormalRange = ({
     skip: false
   });
 
-  // customise item appears on the list
-  const filteredData = (lovListResponseData?.object ?? []).filter(item =>
-    `${item.lovCode} ${item.lovName}`.toLowerCase().includes(searchKeyword.toLowerCase())
-  );
-
-  // handle search about lov
-  const handleSearch = value => {
-    setSearchKeyword(value);
-  };
-
   // Effects
 
-  useEffect(() => {}, [diagnosticTestNormalRange]);
-
   const resultLovDisplay = (() => {
-    const key = diagnosticTestNormalRange?.resultLov;
+    const key = diagnosticsTestProfile?.listOfValueId;
     if (!key) return '';
 
     if (!lovQueryResponse?.object?.length) return '';
 
     const found = lovQueryResponse.object.find(
-      x => x.key == diagnosticTestNormalRange.resultLov || x.lovCode == lovCode
+      x => x.key == diagnosticsTestProfile.listOfValueId || x.lovCode == lovCode
     );
 
     return found ? `${found.lovCode}, ${found.lovName}` : '';
   })();
 
   useEffect(() => {
-    if (!diagnosticTestNormalRange?.resultLov) return;
+    if (!diagnosticsTestProfile?.listOfValueId) return;
     if (!lovListResponseData?.object?.length) return;
 
     const matched = lovListResponseData.object.find(
-      x => x.key == diagnosticTestNormalRange.resultLov
+      x => x.key == diagnosticsTestProfile?.listOfValueId
     );
 
     if (matched) {
@@ -265,43 +247,6 @@ const AddNormalRange = ({
         )}
       {diagnosticTestNormalRange?.resultType === 'LOV' && (
         <>
-          <div className="container-of-menu-diagnostic">
-            <InputGroup className="search-input-diagnostic" inside>
-              <Input placeholder="Search LOV" value={searchKeyword} onChange={handleSearch} />
-              <InputGroup.Button>
-                <SearchIcon />
-              </InputGroup.Button>
-            </InputGroup>
-            {searchKeyword && (
-              <Dropdown.Menu
-                // className="dropdown-menuresult"
-                className="menu-diagnostic"
-              >
-                {filteredData &&
-                  filteredData.map(mod => (
-                    <Dropdown.Item
-                      key={mod.key}
-                      eventKey={mod.key}
-                      onClick={() => {
-                        setDiagnosticTestNormalRange(prev => ({
-                          ...prev,
-                          resultLov: mod.key,
-                          lovKeys: []
-                        }));
-
-                        setLovCode(mod.lovCode);
-                        setListLovRequest({ ...initialListRequest });
-                        setSearchKeyword('');
-                      }}
-                    >
-                      <span>{mod.lovCode}</span>
-                      <span>{mod.lovName}</span>
-                    </Dropdown.Item>
-                  ))}
-              </Dropdown.Menu>
-            )}
-          </div>
-          <br />
           <Input className="search-result-diagnostic" disabled={true} value={resultLovDisplay} />
           <br />
           {diagnosticTestNormalRange.resultType === 'LOV' &&

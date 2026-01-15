@@ -326,8 +326,11 @@ export const newLaboratory: modelTypes.Laboratory = {
 
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   name: '',
-  resultUnit: '',
-  resultType: ''
+  resultUnit: null,
+  resultType: null,
+  listOfValueId: null,
+  isDefault: false,
+  isActive: true
 };
 
 export const newPathology: modelTypes.Pathology = {

@@ -67,7 +67,7 @@ type PatientEMRProps = {
   inModal?: boolean;
   patient?: ApPatient;
   encounter?: any;
-  hideProfileSidebar?: boolean; // ✅ جديد
+  hideProfileSidebar?: boolean;
 };
 
 const PatientEMR: React.FC<PatientEMRProps> = ({
