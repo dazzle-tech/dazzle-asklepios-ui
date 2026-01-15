@@ -133,7 +133,5 @@ export const {
   useToggleProcedureIsActiveMutation,
    useGetProceduresByFacilityQuery,      
   useLazyGetProceduresByFacilityQuery,  
-  useGetActiveAppointableProceduresQuery 
-  useGetProceduresByFacilityQuery,
-  useLazyGetProceduresByFacilityQuery,
+  useGetActiveAppointableProceduresQuery
 } = procedureSetupService;
