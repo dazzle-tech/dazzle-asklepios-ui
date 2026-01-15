@@ -134,6 +134,4 @@ export const {
    useGetProceduresByFacilityQuery,      
   useLazyGetProceduresByFacilityQuery,  
   useGetActiveAppointableProceduresQuery 
-  useGetProceduresByFacilityQuery,
-  useLazyGetProceduresByFacilityQuery,
 } = procedureSetupService;

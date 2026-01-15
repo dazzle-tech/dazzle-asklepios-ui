@@ -199,7 +199,7 @@ export const {
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
-  useGetActiveAppointablePractitionerQuery
+  useGetActiveAppointablePractitionerQuery,
   useGetPractitionerByUserIdQuery,
   useLazyGetPractitionerByUserIdQuery,
   useExistsPractitionerByUserIdQuery,
